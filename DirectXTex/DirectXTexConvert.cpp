@@ -132,6 +132,7 @@ void _CopyScanline( LPVOID pDestination, size_t outSize, LPCVOID pSource, size_t
                 uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
                 for( size_t count = 0; count < outSize; count += 4 )
                 {
+#pragma warning(suppress: 6001 6101) // PREFast doesn't properly understand the aliasing here.
                     *dPtr |= 0xC0000000;
                     ++dPtr;
                 }
@@ -273,6 +274,7 @@ void _SwizzleScanline( LPVOID pDestination, size_t outSize, LPCVOID pSource, siz
                 uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
                 for( size_t count = 0; count < outSize; count += 4 )
                 {
+#pragma warning(suppress: 6001 6101) // PREFast doesn't properly understand the aliasing here.
                     uint32_t t = *dPtr;
 
                     uint32_t t1 = (t & 0x3ff00000) >> 20;
@@ -460,8 +462,9 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
                 if ( dPtr >= ePtr ) break;\
                 *(dPtr++) = func( sPtr++ );\
             }\
+            return true;\
         }\
-        return true;
+        return false;
 
 #define LOAD_SCANLINE3( type, func, defvec )\
         if ( size >= sizeof(type) )\
@@ -473,8 +476,9 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
                 if ( dPtr >= ePtr ) break;\
                 *(dPtr++) = XMVectorSelect( defvec, v, g_XMSelect1110 );\
             }\
+            return true;\
         }\
-        return true;
+        return false;
 
 #define LOAD_SCANLINE2( type, func, defvec )\
         if ( size >= sizeof(type) )\
@@ -486,8 +490,9 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
                 if ( dPtr >= ePtr ) break;\
                 *(dPtr++) = XMVectorSelect( defvec, v, g_XMSelect1100 );\
             }\
+            return true;\
         }\
-        return true;
+        return false;
 
 bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                     LPCVOID pSource, size_t size, DXGI_FORMAT format )
@@ -561,8 +566,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 *(dPtr++) = XMVectorSet( sPtr[0], static_cast<float>( *ps8 ), 0.f, 1.f );
                 sPtr += 2;
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R10G10B10A2_UNORM:
     case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
@@ -613,8 +619,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSelect( g_XMIdentityR3, v, g_XMSelect1000 );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R32_UINT:
         if ( size >= sizeof(uint32_t) )
@@ -627,8 +634,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSelect( g_XMIdentityR3, v, g_XMSelect1000 );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R32_SINT:
         if ( size >= sizeof(int32_t) )
@@ -641,8 +649,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSelect( g_XMIdentityR3, v, g_XMSelect1000 );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_D24_UNORM_S8_UINT:
         if ( size >= sizeof(uint32_t) )
@@ -656,8 +665,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( d, s, 0.f, 1.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R8G8_UNORM:
         LOAD_SCANLINE2( XMUBYTEN2, XMLoadUByteN2, g_XMIdentityR3 )
@@ -680,8 +690,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( XMConvertHalfToFloat(*sPtr++), 0.f, 0.f, 1.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_D16_UNORM:
     case DXGI_FORMAT_R16_UNORM:
@@ -693,8 +704,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++) / 65535.f, 0.f, 0.f, 1.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R16_UINT:
         if ( size >= sizeof(uint16_t) )
@@ -705,8 +717,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++), 0.f, 0.f, 1.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R16_SNORM:
         if ( size >= sizeof(int16_t) )
@@ -717,8 +730,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++) / 32767.f, 0.f, 0.f, 1.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R16_SINT:
         if ( size >= sizeof(int16_t) )
@@ -729,8 +743,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++), 0.f, 0.f, 1.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R8_UNORM:
         if ( size >= sizeof(uint8_t) )
@@ -741,8 +756,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++) / 255.f, 0.f, 0.f, 1.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R8_UINT:
         if ( size >= sizeof(uint8_t) )
@@ -753,8 +769,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++), 0.f, 0.f, 1.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R8_SNORM:
         if ( size >= sizeof(char) )
@@ -765,8 +782,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++) / 127.f, 0.f, 0.f, 1.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R8_SINT:
         if ( size >= sizeof(char) )
@@ -777,8 +795,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++), 0.f, 0.f, 1.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_A8_UNORM:
         if ( size >= sizeof(uint8_t) )
@@ -789,8 +808,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( 0.f, 0.f, 0.f, static_cast<float>(*sPtr++) / 255.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R1_UNORM:
         if ( size >= sizeof(uint8_t) )
@@ -806,8 +826,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 
                 ++sPtr;
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
         LOAD_SCANLINE3( XMFLOAT3SE, XMLoadFloat3SE, g_XMIdentityR3 )
@@ -825,8 +846,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSelect( g_XMIdentityR3, v1, g_XMSelect1110 );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_G8R8_G8B8_UNORM:
         if ( size >= sizeof(XMUBYTEN4) )
@@ -842,8 +864,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSelect( g_XMIdentityR3, v1, g_XMSelect1110 );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_B5G6R5_UNORM:
         if ( size >= sizeof(XMU565) )
@@ -858,8 +881,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSelect( g_XMIdentityR3, v, g_XMSelect1110 );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_B5G5R5A1_UNORM:
         if ( size >= sizeof(XMU555) )
@@ -873,8 +897,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSwizzle<2, 1, 0, 3>( v );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_B8G8R8A8_UNORM:
     case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
@@ -887,8 +912,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSwizzle<2, 1, 0, 3>( v );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_B8G8R8X8_UNORM:
     case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
@@ -902,8 +928,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSelect( g_XMIdentityR3, v, g_XMSelect1110 );
             }
+            return true;
         }
-        return true;
+        return false;
 
 #ifdef DXGI_1_2_FORMATS
     case DXGI_FORMAT_B4G4R4A4_UNORM:
@@ -918,8 +945,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSwizzle<2, 1, 0, 3>( v );
             }
+            return true;
         }
-        return true;
+        return false;
 
     // we don't support the video formats ( see IsVideo function )
 #endif // DXGI_1_2_FORMATS

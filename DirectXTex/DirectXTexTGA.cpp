@@ -801,6 +801,7 @@ static HRESULT _EncodeTGAHeader( _In_ const Image& image, _Out_ TGA_HEADER& head
 //-------------------------------------------------------------------------------------
 // Copies BGRX data to form BGR 24bpp data
 //-------------------------------------------------------------------------------------
+#pragma warning(suppress: 6001 6101) // In the case where outSize is insufficient we do not write to pDestination
 static void _Copy24bppScanline( _Out_bytecap_(outSize) LPVOID pDestination, _In_ size_t outSize, 
                                 _In_bytecount_(inSize) LPCVOID pSource, _In_ size_t inSize )
 {

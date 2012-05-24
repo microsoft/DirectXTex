@@ -121,6 +121,11 @@ bool _SetupImageArray( uint8_t *pMemory, size_t pixelSize,
     {
     case TEX_DIMENSION_TEXTURE1D:
     case TEX_DIMENSION_TEXTURE2D:
+        if (metadata.arraySize == 0 || metadata.mipLevels == 0)
+        {
+            return false;
+        }
+
         for( size_t item = 0; item < metadata.arraySize; ++item )
         {
             size_t w = metadata.width;
@@ -161,6 +166,11 @@ bool _SetupImageArray( uint8_t *pMemory, size_t pixelSize,
 
     case TEX_DIMENSION_TEXTURE3D:
         {
+            if (metadata.mipLevels == 0 || metadata.depth == 0)
+            {
+                return false;
+            }
+
             size_t w = metadata.width;
             size_t h = metadata.height;
             size_t d = metadata.depth;

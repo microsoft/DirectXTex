@@ -1264,7 +1264,7 @@ void D3DX_BC6H::Encode(bool bSigned, const HDRColorA* const pIn)
         // pick the best uItems shapes and refine these.
         for(EP.uShape = 0; EP.uShape < uShapes; ++EP.uShape)
         {
-            size_t uShape = EP.uShape; // make prefast happy
+            size_t uShape = EP.uShape;
             afRoughMSE[uShape] = RoughMSE(&EP);
             auShape[uShape] = static_cast<uint8_t>(uShape);
         }
