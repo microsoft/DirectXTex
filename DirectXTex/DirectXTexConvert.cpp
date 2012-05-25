@@ -1818,7 +1818,7 @@ static int __cdecl _ConvertCompare( void *context, const void* ptr1, const void 
 
 DWORD _GetConvertFlags( DXGI_FORMAT format )
 {
-#ifdef DEBUG
+#ifdef _DEBUG
     // Ensure conversion table is in ascending order
     assert( _countof(g_ConvertTable) > 0 );
     DXGI_FORMAT lastvalue = g_ConvertTable[0].format;
@@ -1844,7 +1844,7 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
     if ( !pBuffer )
         return;
 
-#ifdef DEBUG
+#ifdef _DEBUG
     // Ensure conversion table is in ascending order
     assert( _countof(g_ConvertTable) > 0 );
     DXGI_FORMAT lastvalue = g_ConvertTable[0].format;
