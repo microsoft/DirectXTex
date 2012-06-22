@@ -58,22 +58,6 @@ struct IWICImagingFactory;
 
 namespace DirectX
 {
-
-#ifdef USE_XNAMATH
-    template<uint32_t SwizzleX, uint32_t SwizzleY, uint32_t SwizzleZ, uint32_t SwizzleW>
-        inline XMVECTOR XMVectorSwizzle(FXMVECTOR V)
-    {
-        return XMVectorSwizzle( V, SwizzleX, SwizzleY, SwizzleZ, SwizzleW );
-    }
-
-    template<uint32_t PermuteX, uint32_t PermuteY, uint32_t PermuteZ, uint32_t PermuteW>
-        inline XMVECTOR XMVectorPermute(FXMVECTOR V1, FXMVECTOR V2)
-    {
-        static XMVECTORI32 control = { PermuteX, PermuteY, PermuteZ, PermuteW };
-        return XMVectorPermute( V1, V2, control );
-    }
-#endif // USE_XNAMATH
-
     //---------------------------------------------------------------------------------
     // WIC helper functions
     DXGI_FORMAT _WICToDXGI( _In_ const GUID& guid );

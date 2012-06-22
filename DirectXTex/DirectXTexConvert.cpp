@@ -16,8 +16,8 @@
 #include "directxtexp.h"
 
 #ifdef USE_XNAMATH
-#if XNAMATH_VERSION < 204
-#error This file requires XNAMATH v2.04 or later
+#if XNAMATH_VERSION < 205
+#error This file requires XNAMATH v2.05 or later
 #endif
 #else
 using namespace DirectX::PackedVector;
@@ -1400,7 +1400,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
             for( size_t icount = 0; icount < size; icount += sizeof(XMUBYTEN4) )
             {
                 if ( sPtr >= ePtr ) break;
-                XMVECTOR v = XMVectorPermute<XM_PERMUTE_0Z, XM_PERMUTE_0Y, XM_PERMUTE_0X, XM_PERMUTE_1W>( *sPtr++, g_XMIdentityR3 );
+                XMVECTOR v = XMVectorPermute<2, 1, 0, 7>( *sPtr++, g_XMIdentityR3 );
                 XMStoreUByteN4( dPtr++, v );
             }
         }
