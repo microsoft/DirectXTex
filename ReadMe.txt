@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-May 31, 2012
+June 22, 2012
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -14,11 +14,11 @@ writer since this image file format is commonly used for texture content process
 but is not currently supported by a built-in WIC codec.
 
 The source is written for Visual C++ 2010 using the Direct3D headers from either
-a current DirectX SDK or Windows SDK. It can also be compiled using the VS 11 Beta and the
+a current DirectX SDK or Windows SDK. It can also be compiled using the VS 2012 RC and the
 Windows SDK 8.0 headers included with that release.
 
-It is recommended that you make use of Visual C++ 2010 Service Pack 1 or VS 11 Beta, and
-Windows 7 Service Pack 1 or the Windows 8 Consumer Preview.
+It is recommended that you make use of Visual C++ 2010 Service Pack 1 or VS 2012 RC, and
+Windows 7 Service Pack 1 or the Windows 8 Release Preview.
 
 DDSTextureLoader\
     This contains a streamlined version of the DirectX SDK sample DDSWithoutD3DX11 texture
@@ -69,10 +69,11 @@ DDSView\
     The "1" through "0" keys can also be used to jump to a specific image index.
 
 XNAMath\
-    This contains a copy of XNA Math version 2.04, which is an updated version of the library. This is
-    required if building content with USE_XNAMATH (the default for the VS 2010 projects). The VS 11
+    This contains a copy of XNA Math version 2.05, which is an updated version of the library. This is
+    required if building content with USE_XNAMATH (the default for the VS 2010 projects). The VS 2012
     projects use DirectXMath in the Windows SDK 8.0 instead.
-    For details see <http://blogs.msdn.com/b/chuckw/archive/2011/02/23/xna-math-version-2-04.aspx>
+    For details see
+    <http://blogs.msdn.com/b/chuckw/archive/2012/06/22/xna-math-version-2-05-smoothing-the-transition-to-directxmath.aspx>
 
 All content and source code for this package except XNA Math are bound to the Microsoft Public License (Ms-PL)
 <http://www.microsoft.com/en-us/openness/licenses.aspx#MPL>. The XNA Math library is subject
@@ -114,6 +115,10 @@ RELEASE NOTES
 ------------------------------------
 RELEASE HISTORY
 
+June 22, 2012: Moved to using XNA Math 2.05 instead of XNA Math 2.04 for USE_XNAMATH builds
+               Fixed BGR vs. RGB color channel swizzle problem with 24bpp legacy .DDS files in DirectXTex
+               Update to DirectXTex WIC and WICTextureLoader for additional 96bpp float format handling on Windows 8
+
 May 31, 2012: Minor fix for DDSTextureLoader's retry fallback that can happen with 10level9 feature levels
               Switched to use "_DEBUG" instead of "DEBUG" and cleaned up debug warnings
               added Metro style application project files for DirectXTex
@@ -124,7 +129,7 @@ March 30, 2012: WICTextureLoader updated with Windows 8 WIC pixel formats
                 DirectXTex updated with limited non-power-of-2 texture support and TEX_FILTER_SEPARATE_ALPHA option
                 Texconv updated with '-sepalpha' command-line option
 		Added USE_XNAMATH control define to build DirectXTex using either XNAMath or DirectXMath
-                Added VS 11 project files (which use DirectXMath instead of XNAMath and define DXGI_1_2_FORMATS)
+                Added VS 2012 project files (which use DirectXMath instead of XNAMath and define DXGI_1_2_FORMATS)
 
 March 15, 2012: Fix for resource leak in CreateShaderResourceView() Direct3D 11 helper function in DirectXTex
 
