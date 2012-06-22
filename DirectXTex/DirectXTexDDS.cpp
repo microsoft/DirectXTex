@@ -689,9 +689,10 @@ static bool _LegacyExpandScanline( _Out_bytecap_(outSize) LPVOID pDestination, s
 
             for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); icount += 3, ocount += 4 )
             {
-                uint32_t t1 = *sPtr;
+                // 24bpp Direct3D 9 files are actually BGR, so need to swizzle as well
+                uint32_t t1 = ( *(sPtr) << 16 );
                 uint32_t t2 = ( *(sPtr+1) << 8 ); 
-                uint32_t t3 = ( *(sPtr+2) << 16 );
+                uint32_t t3 = *(sPtr+2);
 
                 *(dPtr++) = t1 | t2 | t3 | 0xff000000;
                 sPtr += 3;
