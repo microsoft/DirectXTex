@@ -594,6 +594,32 @@ void ScratchImage::Release()
     memset(&_metadata, 0, sizeof(_metadata));
 }
 
+bool ScratchImage::OverrideFormat( DXGI_FORMAT f )
+{
+    if ( !_image )
+        return false;
+
+    if ( !IsValid( f ) || IsVideo( f ) )
+        return false;
+
+    if ( ( BitsPerPixel( f ) != BitsPerPixel( _metadata.format ) )
+         || ( IsCompressed( f ) != IsCompressed( _metadata.format ) )
+         || ( IsPacked( f ) != IsPacked( _metadata.format ) ) )
+    {
+         // Can't change the effective pitch of the format this way
+         return false;
+    }
+
+    for( size_t index = 0; index < _nimages; ++index )
+    {
+        _image[ index ].format = f;
+    }
+
+    _metadata.format = f;
+
+    return true;
+}
+
 const Image* ScratchImage::GetImage(size_t mip, size_t item, size_t slice) const
 {
     if ( mip >= _metadata.mipLevels )

@@ -57,6 +57,9 @@ namespace DirectX
     size_t ComputeScanlines( _In_ DXGI_FORMAT fmt, _In_ size_t height );
 
     DXGI_FORMAT MakeSRGB( _In_ DXGI_FORMAT fmt );
+    DXGI_FORMAT MakeTypeless( _In_ DXGI_FORMAT fmt );
+    DXGI_FORMAT MakeTypelessUNORM( _In_ DXGI_FORMAT fmt );
+    DXGI_FORMAT MakeTypelessFLOAT( _In_ DXGI_FORMAT fmt );
 
     //---------------------------------------------------------------------------------
     // Texture metadata
@@ -190,6 +193,8 @@ namespace DirectX
         HRESULT Initialize3DFromImages( _In_count_(depth) const Image* images, _In_ size_t depth );
 
         void Release();
+
+        bool OverrideFormat( _In_ DXGI_FORMAT f );
 
         const TexMetadata& GetMetadata() const { return _metadata; }
         const Image* GetImage(_In_ size_t mip, _In_ size_t item, _In_ size_t slice) const;

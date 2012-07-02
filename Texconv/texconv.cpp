@@ -35,7 +35,9 @@ enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
     OPT_DDS_DWORD_ALIGN,
     OPT_USE_DX10,
     OPT_NOLOGO,
-    OPT_SEPALPHA
+    OPT_SEPALPHA,
+    OPT_TYPELESS_UNORM,
+    OPT_TYPELESS_FLOAT,
 };
 
 struct SConversion
@@ -76,6 +78,8 @@ SValue g_pOptions[] =
     { L"dx10",          OPT_USE_DX10  },
     { L"nologo",        OPT_NOLOGO    },
     { L"sepalpha",      OPT_SEPALPHA  },
+    { L"tu",            OPT_TYPELESS_UNORM },
+    { L"tf",            OPT_TYPELESS_FLOAT },
     { nullptr,          0             }
 };
 
@@ -332,6 +336,7 @@ void PrintUsage()
     wprintf( L"   -hflip              horizonal flip of source image\n");
     wprintf( L"   -vflip              vertical flip of source image\n");
     wprintf( L"   -sepalpha           resize/generate mips alpha channel separately from color channels\n");
+    wprintf( L"   -t{u|f}             DDS files with TYPELESS format is treated as UNORM or FLOAT\n");
     wprintf( L"   -dword              Use DWORD instead of BYTE alignment (DDS input only)\n");
     wprintf( L"   -dx10               Force use of 'DX10' extended header (DDS output only)\n");
     wprintf( L"   -nologo             suppress copyright message\n");
@@ -412,7 +417,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             dwOptions |= 1 << dwOption;
 
-            if( (OPT_NOLOGO != dwOption) && (OPT_SEPALPHA != dwOption)
+            if( (OPT_NOLOGO != dwOption) && (OPT_SEPALPHA != dwOption) && (OPT_TYPELESS_UNORM != dwOption) && (OPT_TYPELESS_FLOAT != dwOption) 
                 && (OPT_SRGB != dwOption) && (OPT_SRGBI != dwOption) && (OPT_SRGBO != dwOption)
                 && (OPT_HFLIP != dwOption) && (OPT_VFLIP != dwOption)
                 && (OPT_DDS_DWORD_ALIGN != dwOption) && (OPT_USE_DX10 != dwOption) )
@@ -612,6 +617,27 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 delete image;
                 continue;
             }
+
+            if ( IsTypeless( info.format ) )
+            {
+                if ( dwOptions & (1 << OPT_TYPELESS_UNORM) )
+                {
+                    info.format = MakeTypelessUNORM( info.format );
+                }
+                else if ( dwOptions & (1 << OPT_TYPELESS_FLOAT) )
+                {
+                    info.format = MakeTypelessFLOAT( info.format );
+                }
+
+                if ( IsTypeless( info.format ) )
+                {
+                    wprintf( L" FAILED due to Typeless format %d\n", info.format );
+                    delete image;
+                    continue;
+                }
+
+                image->OverrideFormat( info.format );
+            }
         }
         else if ( _wcsicmp( ext, L".tga" ) == 0 )
         {
@@ -694,6 +720,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Flip/Rotate -------------------------------------------------------------
+        // TODO - OPT_ROTATE ? (90, 180, 270)
         if ( dwOptions & ( (1 << OPT_HFLIP) | (1 << OPT_VFLIP) ) )
         {
             ScratchImage *timage = new ScratchImage;

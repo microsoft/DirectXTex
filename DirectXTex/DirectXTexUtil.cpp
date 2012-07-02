@@ -434,6 +434,214 @@ DXGI_FORMAT MakeSRGB( _In_ DXGI_FORMAT fmt )
 }
 
 
+//-------------------------------------------------------------------------------------
+// Converts to a format to an equivalent TYPELESS format if available
+//-------------------------------------------------------------------------------------
+DXGI_FORMAT MakeTypeless( _In_ DXGI_FORMAT fmt )
+{
+    switch( fmt )
+    {
+    case DXGI_FORMAT_R32G32B32A32_FLOAT:
+    case DXGI_FORMAT_R32G32B32A32_UINT:
+    case DXGI_FORMAT_R32G32B32A32_SINT:
+        return DXGI_FORMAT_R32G32B32A32_TYPELESS;
+
+    case DXGI_FORMAT_R32G32B32_FLOAT:
+    case DXGI_FORMAT_R32G32B32_UINT:
+    case DXGI_FORMAT_R32G32B32_SINT:
+        return DXGI_FORMAT_R32G32B32_TYPELESS;
+
+    case DXGI_FORMAT_R16G16B16A16_FLOAT:
+    case DXGI_FORMAT_R16G16B16A16_UNORM:
+    case DXGI_FORMAT_R16G16B16A16_UINT:
+    case DXGI_FORMAT_R16G16B16A16_SNORM:
+    case DXGI_FORMAT_R16G16B16A16_SINT:
+        return DXGI_FORMAT_R16G16B16A16_TYPELESS;
+
+    case DXGI_FORMAT_R32G32_FLOAT:
+    case DXGI_FORMAT_R32G32_UINT:
+    case DXGI_FORMAT_R32G32_SINT:
+        return DXGI_FORMAT_R32G32_TYPELESS;
+
+    case DXGI_FORMAT_R10G10B10A2_UNORM:
+    case DXGI_FORMAT_R10G10B10A2_UINT:
+        return DXGI_FORMAT_R10G10B10A2_TYPELESS;
+
+    case DXGI_FORMAT_R8G8B8A8_UNORM:
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+    case DXGI_FORMAT_R8G8B8A8_UINT:
+    case DXGI_FORMAT_R8G8B8A8_SNORM:
+    case DXGI_FORMAT_R8G8B8A8_SINT:
+        return DXGI_FORMAT_R8G8B8A8_TYPELESS;
+
+    case DXGI_FORMAT_R16G16_FLOAT:
+    case DXGI_FORMAT_R16G16_UNORM:
+    case DXGI_FORMAT_R16G16_UINT:
+    case DXGI_FORMAT_R16G16_SNORM:
+    case DXGI_FORMAT_R16G16_SINT:
+        return DXGI_FORMAT_R16G16_TYPELESS;
+
+    case DXGI_FORMAT_D32_FLOAT:
+    case DXGI_FORMAT_R32_FLOAT:
+    case DXGI_FORMAT_R32_UINT:
+    case DXGI_FORMAT_R32_SINT:
+        return DXGI_FORMAT_R32_TYPELESS;
+
+    case DXGI_FORMAT_R8G8_UNORM:
+    case DXGI_FORMAT_R8G8_UINT:
+    case DXGI_FORMAT_R8G8_SNORM:
+    case DXGI_FORMAT_R8G8_SINT:
+        return DXGI_FORMAT_R8G8_TYPELESS;
+
+    case DXGI_FORMAT_R16_FLOAT:
+    case DXGI_FORMAT_D16_UNORM:
+    case DXGI_FORMAT_R16_UNORM:
+    case DXGI_FORMAT_R16_UINT:
+    case DXGI_FORMAT_R16_SNORM:
+    case DXGI_FORMAT_R16_SINT:
+        return DXGI_FORMAT_R16_TYPELESS;
+
+    case DXGI_FORMAT_R8_UNORM:
+    case DXGI_FORMAT_R8_UINT:
+    case DXGI_FORMAT_R8_SNORM:
+    case DXGI_FORMAT_R8_SINT:
+    case DXGI_FORMAT_A8_UNORM:
+        return DXGI_FORMAT_R8_TYPELESS;
+
+    case DXGI_FORMAT_BC1_UNORM:
+    case DXGI_FORMAT_BC1_UNORM_SRGB:
+        return DXGI_FORMAT_BC1_TYPELESS;
+
+    case DXGI_FORMAT_BC2_UNORM:
+    case DXGI_FORMAT_BC2_UNORM_SRGB:
+        return DXGI_FORMAT_BC2_TYPELESS;
+
+    case DXGI_FORMAT_BC3_UNORM:
+    case DXGI_FORMAT_BC3_UNORM_SRGB:
+        return DXGI_FORMAT_BC3_TYPELESS;
+
+    case DXGI_FORMAT_BC4_UNORM:
+    case DXGI_FORMAT_BC4_SNORM:
+        return DXGI_FORMAT_BC4_TYPELESS;
+
+    case DXGI_FORMAT_BC5_UNORM:
+    case DXGI_FORMAT_BC5_SNORM:
+        return DXGI_FORMAT_BC5_TYPELESS;
+
+    case DXGI_FORMAT_B8G8R8A8_UNORM:
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        return DXGI_FORMAT_B8G8R8A8_TYPELESS;
+
+    case DXGI_FORMAT_B8G8R8X8_UNORM:
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+        return DXGI_FORMAT_B8G8R8X8_TYPELESS;
+
+    case DXGI_FORMAT_BC6H_UF16:
+    case DXGI_FORMAT_BC6H_SF16:
+        return DXGI_FORMAT_BC6H_TYPELESS;
+
+    case DXGI_FORMAT_BC7_UNORM:
+    case DXGI_FORMAT_BC7_UNORM_SRGB:
+        return DXGI_FORMAT_BC7_TYPELESS;
+
+    default:
+        return fmt;
+    }
+}
+
+
+//-------------------------------------------------------------------------------------
+// Converts to a TYPELESS format to an equivalent UNORM format if available
+//-------------------------------------------------------------------------------------
+DXGI_FORMAT MakeTypelessUNORM( _In_ DXGI_FORMAT fmt )
+{
+    switch( fmt )
+    {
+    case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+        return DXGI_FORMAT_R16G16B16A16_UNORM;
+
+    case DXGI_FORMAT_R10G10B10A2_TYPELESS:
+        return DXGI_FORMAT_R10G10B10A2_UNORM;
+
+    case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+        return DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    case DXGI_FORMAT_R16G16_TYPELESS:
+        return DXGI_FORMAT_R16G16_UNORM;
+
+    case DXGI_FORMAT_R8G8_TYPELESS:
+        return DXGI_FORMAT_R8G8_UNORM;
+
+    case DXGI_FORMAT_R16_TYPELESS:
+        return DXGI_FORMAT_R16_UNORM;
+
+    case DXGI_FORMAT_R8_TYPELESS:
+        return DXGI_FORMAT_R8_UNORM;
+
+    case DXGI_FORMAT_BC1_TYPELESS:
+        return DXGI_FORMAT_BC1_UNORM;
+
+    case DXGI_FORMAT_BC2_TYPELESS:
+        return DXGI_FORMAT_BC2_UNORM;
+
+    case DXGI_FORMAT_BC3_TYPELESS:
+        return DXGI_FORMAT_BC3_UNORM;
+
+    case DXGI_FORMAT_BC4_TYPELESS:
+        return DXGI_FORMAT_BC4_UNORM;
+
+    case DXGI_FORMAT_BC5_TYPELESS:
+        return DXGI_FORMAT_BC5_UNORM;
+
+    case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+        return DXGI_FORMAT_B8G8R8A8_UNORM;
+
+    case DXGI_FORMAT_B8G8R8X8_TYPELESS:
+        return DXGI_FORMAT_B8G8R8X8_UNORM;
+
+    case DXGI_FORMAT_BC7_TYPELESS:
+        return DXGI_FORMAT_BC7_UNORM;
+
+    default:
+        return fmt;
+    }
+}
+
+
+//-------------------------------------------------------------------------------------
+// Converts to a TYPELESS format to an equivalent FLOAT format if available
+//-------------------------------------------------------------------------------------
+DXGI_FORMAT MakeTypelessFLOAT( _In_ DXGI_FORMAT fmt )
+{
+    switch( fmt )
+    {
+    case DXGI_FORMAT_R32G32B32A32_TYPELESS:
+        return DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+    case DXGI_FORMAT_R32G32B32_TYPELESS:
+        return DXGI_FORMAT_R32G32B32_FLOAT;
+
+    case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+        return DXGI_FORMAT_R16G16B16A16_FLOAT;
+
+    case DXGI_FORMAT_R32G32_TYPELESS:
+        return DXGI_FORMAT_R32G32_FLOAT;
+
+    case DXGI_FORMAT_R16G16_TYPELESS:
+        return DXGI_FORMAT_R16G16_FLOAT;
+
+    case DXGI_FORMAT_R32_TYPELESS:
+        return DXGI_FORMAT_R32_FLOAT;
+
+    case DXGI_FORMAT_R16_TYPELESS:
+        return DXGI_FORMAT_R16_FLOAT;
+
+    default:
+        return fmt;
+    }
+}
+
+
 //=====================================================================================
 // TexMetadata
 //=====================================================================================
