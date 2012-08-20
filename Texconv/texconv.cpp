@@ -816,7 +816,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 goto LError;
             }
 
-            hr = Convert( image->GetImages(), image->GetImageCount(), image->GetMetadata(), tformat, dwFilter | dwSRGB, 05.f, *timage );
+            hr = Convert( image->GetImages(), image->GetImageCount(), image->GetMetadata(), tformat, dwFilter | dwSRGB, 0.5f, *timage );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [convert] (%x)\n", hr);
