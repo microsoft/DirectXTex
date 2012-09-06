@@ -864,6 +864,66 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
         }
 
+        if ( (!tMips || info.mipLevels != tMips) && ( info.mipLevels != 1 ) )
+        {
+            // Mips generation only works on a single base image, so strip off existing mip levels
+            ScratchImage *timage = new ScratchImage;
+            if ( !timage )
+            {
+                wprintf( L" ERROR: Memory allocation failed\n" );
+                delete image;
+                goto LError;
+            }
+
+            TexMetadata mdata = info;
+            mdata.mipLevels = 1;
+            hr = timage->Initialize( mdata );
+            if ( FAILED(hr) )
+            {
+                wprintf( L" FAILED [copy to single level] (%x)\n", hr);
+                delete timage;
+                delete image;
+                goto LError;
+            }
+
+            if ( info.dimension == TEX_DIMENSION_TEXTURE3D )
+            {
+                for( size_t d = 0; d < info.depth; ++d )
+                {
+                    hr = CopyRectangle( *image->GetImage( 0, 0, d ), Rect( 0, 0, info.width, info.height ),
+                                        *timage->GetImage( 0, 0, d ), TEX_FILTER_DEFAULT, 0, 0 );
+                    if ( FAILED(hr) )
+                    {
+                        wprintf( L" FAILED [copy to single level] (%x)\n", hr);
+                        delete timage;
+                        delete image;
+                        goto LError;
+                    }
+                }
+            }
+            else
+            {
+                for( size_t i = 0; i < info.arraySize; ++i )
+                {
+                    hr = CopyRectangle( *image->GetImage( 0, i, 0 ), Rect( 0, 0, info.width, info.height ),
+                                        *timage->GetImage( 0, i, 0 ), TEX_FILTER_DEFAULT, 0, 0 );
+                    if ( FAILED(hr) )
+                    {
+                        wprintf( L" FAILED [copy to single level] (%x)\n", hr);
+                        delete timage;
+                        delete image;
+                        goto LError;
+                    }
+                }
+            }
+
+            delete image;
+            image = timage;
+
+            const TexMetadata& tinfo = timage->GetMetadata();
+            info.mipLevels = tinfo.mipLevels;
+        }
+
         if ( !tMips || info.mipLevels != tMips )
         {
             ScratchImage *timage = new ScratchImage;
