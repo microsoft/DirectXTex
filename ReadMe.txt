@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-June 22, 2012
+September 28, 2012
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -114,6 +114,12 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+September 28, 2012: Added ScreenGrab module for creating runtime screenshots
+                    Renamed project files for better naming consistency
+                    New Typeless utilities for DirectXTex
+                    Some minor code cleanup for DirectXTex's WIC writer function
+                    Bug fixes and new -tu/-tf options for texconv
 
 June 22, 2012: Moved to using XNA Math 2.05 instead of XNA Math 2.04 for USE_XNAMATH builds
                Fixed BGR vs. RGB color channel swizzle problem with 24bpp legacy .DDS files in DirectXTex
