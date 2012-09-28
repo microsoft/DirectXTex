@@ -113,34 +113,6 @@ bool _DXGIToWIC( DXGI_FORMAT format, GUID& guid )
     return false;
 }
 
-size_t _WICBitsPerPixel( REFGUID targetGuid )
-{
-    IWICImagingFactory* pWIC = _GetWIC();
-    if ( !pWIC )
-        return 0;
- 
-    ScopedObject<IWICComponentInfo> cinfo;
-    if ( FAILED( pWIC->CreateComponentInfo( targetGuid, &cinfo ) ) )
-        return 0;
-
-    WICComponentType type;
-    if ( FAILED( cinfo->GetComponentType( &type ) ) )
-        return 0;
-
-    if ( type != WICPixelFormat )
-        return 0;
-
-    ScopedObject<IWICPixelFormatInfo> pfinfo;
-    if ( FAILED( cinfo->QueryInterface( __uuidof(IWICPixelFormatInfo), reinterpret_cast<void**>( &pfinfo )  ) ) )
-        return 0;
-
-    UINT bpp;
-    if ( FAILED( pfinfo->GetBitsPerPixel( &bpp ) ) )
-        return 0;
-
-    return bpp;
-}
-
 IWICImagingFactory* _GetWIC()
 {
     static IWICImagingFactory* s_Factory = nullptr;

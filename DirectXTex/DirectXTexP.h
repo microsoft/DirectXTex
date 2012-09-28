@@ -63,8 +63,6 @@ namespace DirectX
     DXGI_FORMAT _WICToDXGI( _In_ const GUID& guid );
     bool _DXGIToWIC( _In_ DXGI_FORMAT format, _Out_ GUID& guid );
 
-    size_t _WICBitsPerPixel( _In_ REFGUID targetGuid );
-
     IWICImagingFactory* _GetWIC();
 
     inline WICBitmapDitherType _GetWICDither( _In_ DWORD flags )

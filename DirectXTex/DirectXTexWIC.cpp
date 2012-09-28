@@ -426,22 +426,8 @@ static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ IWI
         if ( FAILED(hr) )
             return hr;
 
-        size_t bpp = _WICBitsPerPixel( targetGuid );
-        if ( bpp == 0 )
-            return E_FAIL;
-
-        size_t rowPitch = ( image.width * bpp + 7 ) / 8;
-        size_t slicePitch = rowPitch * image.height;
-
-        std::unique_ptr<uint8_t[]> temp( new uint8_t[ slicePitch ] );
-        if ( !temp )
-            return E_OUTOFMEMORY;
-
-        hr = FC->CopyPixels( 0, static_cast<UINT>( rowPitch ), static_cast<UINT>( slicePitch ), temp.get() );
-        if ( FAILED(hr) )
-            return hr;
-
-        hr = frame->WritePixels( static_cast<UINT>( image.height ), static_cast<UINT>( rowPitch ), static_cast<UINT>( slicePitch ), temp.get() );
+        WICRect rect = { 0, 0, static_cast<UINT>( image.width ), static_cast<UINT>( image.height ) };
+        hr = frame->WriteSource( FC.Get(), &rect );
         if ( FAILED(hr) )
             return hr;
     }
