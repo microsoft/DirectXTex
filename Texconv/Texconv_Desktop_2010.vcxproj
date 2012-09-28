@@ -371,7 +371,7 @@
     <ResourceCompile Include="Texconv.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DirectXTex\DirectXTex_2010.vcxproj">
+    <ProjectReference Include="..\DirectXTex\DirectXTex_Desktop_2010.vcxproj">
       <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
     </ProjectReference>
   </ItemGroup>

@@ -1,8 +1,8 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DDSView", "DDSView_11_Desktop.vcxproj", "{9D3EDCAD-A800-43F0-B77F-FE6E4DFA3D84}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DDSView", "DDSView_Desktop_2010.vcxproj", "{9D3EDCAD-A800-43F0-B77F-FE6E4DFA3D84}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex", "..\DirectXTex\DirectXTex_11_Desktop.vcxproj", "{371B9FA9-4C90-4AC6-A123-ACED756D6C77}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex", "..\DirectXTex\DirectXTex_Desktop_2010.vcxproj", "{371B9FA9-4C90-4AC6-A123-ACED756D6C77}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
