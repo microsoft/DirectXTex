@@ -274,11 +274,14 @@ namespace DirectX
                              _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
 
     HRESULT SaveToWICMemory( _In_ const Image& image, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
-                             _Out_ Blob& blob );
-    HRESULT SaveToWICMemory( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags, _In_ REFGUID guidContainerFormat, _Out_ Blob& blob );
+                             _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr );
+    HRESULT SaveToWICMemory( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
+                             _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr );
 
-    HRESULT SaveToWICFile( _In_ const Image& image, _In_ DWORD flags, _In_ REFGUID guidContainerFormat, _In_z_ LPCWSTR szFile );
-    HRESULT SaveToWICFile( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags, _In_ REFGUID guidContainerFormat, _In_z_ LPCWSTR szFile );
+    HRESULT SaveToWICFile( _In_ const Image& image, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
+                           _In_z_ LPCWSTR szFile, _In_opt_ const GUID* targetFormat = nullptr );
+    HRESULT SaveToWICFile( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
+                           _In_z_ LPCWSTR szFile, _In_opt_ const GUID* targetFormat = nullptr );
 
     enum WICCodecs
     {

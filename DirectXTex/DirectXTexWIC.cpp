@@ -369,7 +369,7 @@ static HRESULT _DecodeMultiframe( _In_ DWORD flags, _In_ const TexMetadata& meta
 //-------------------------------------------------------------------------------------
 // Encodes a single frame
 //-------------------------------------------------------------------------------------
-static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ IWICBitmapFrameEncode* frame, _In_opt_ IPropertyBag2* props )
+static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ IWICBitmapFrameEncode* frame, _In_opt_ IPropertyBag2* props, _In_opt_ const GUID* targetFormat )
 {
     if ( !frame )
         return E_INVALIDARG;
@@ -398,7 +398,7 @@ static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ IWI
     if ( FAILED(hr) )
         return hr;
 
-    WICPixelFormatGUID targetGuid = pfGuid;
+    WICPixelFormatGUID targetGuid = (targetFormat) ? (*targetFormat) : pfGuid;
     hr = frame->SetPixelFormat( &targetGuid );
     if ( FAILED(hr) )
         return hr;
@@ -448,7 +448,7 @@ static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ IWI
 }
 
 static HRESULT _EncodeSingleFrame( _In_ const Image& image, _In_ DWORD flags,
-                                   _In_ REFGUID guidContainerFormat, _Inout_ IStream* stream )
+                                   _In_ REFGUID guidContainerFormat, _Inout_ IStream* stream, _In_opt_ const GUID* targetFormat )
 {
     if ( !stream )
         return E_INVALIDARG;
@@ -490,7 +490,7 @@ static HRESULT _EncodeSingleFrame( _In_ const Image& image, _In_ DWORD flags,
         }
     }
 
-    hr = _EncodeImage( image, flags, frame.Get(), props.Get() );
+    hr = _EncodeImage( image, flags, frame.Get(), props.Get(), targetFormat );
     if ( FAILED(hr) )
         return hr;
 
@@ -506,7 +506,7 @@ static HRESULT _EncodeSingleFrame( _In_ const Image& image, _In_ DWORD flags,
 // Encodes an image array
 //-------------------------------------------------------------------------------------
 static HRESULT _EncodeMultiframe( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags,
-                                  _In_ REFGUID guidContainerFormat, _Inout_ IStream* stream )
+                                  _In_ REFGUID guidContainerFormat, _Inout_ IStream* stream, _In_opt_ const GUID* targetFormat )
 {
     if ( !stream || nimages < 2 )
         return E_INVALIDARG;
@@ -548,7 +548,7 @@ static HRESULT _EncodeMultiframe( _In_count_(nimages) const Image* images, _In_ 
         if ( FAILED(hr) )
             return hr;
 
-        hr = _EncodeImage( images[index], flags, frame.Get(), nullptr );
+        hr = _EncodeImage( images[index], flags, frame.Get(), nullptr, targetFormat );
         if ( FAILED(hr) )
             return hr;
     }
@@ -771,7 +771,7 @@ HRESULT LoadFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, Scr
 //-------------------------------------------------------------------------------------
 // Save a WIC-supported file to memory
 //-------------------------------------------------------------------------------------
-HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID guidContainerFormat, Blob& blob )
+HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID guidContainerFormat, Blob& blob, const GUID* targetFormat )
 {
     if ( !image.pixels )
         return E_POINTER;
@@ -783,7 +783,7 @@ HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID guidContainerF
     if ( FAILED(hr) )
         return hr;
 
-    hr = _EncodeSingleFrame( image, flags, guidContainerFormat, stream.Get() );
+    hr = _EncodeSingleFrame( image, flags, guidContainerFormat, stream.Get(), targetFormat );
     if ( FAILED(hr) )
         return hr;
 
@@ -816,7 +816,7 @@ HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID guidContainerF
     return S_OK;
 }
 
-HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGUID guidContainerFormat, Blob& blob )
+HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGUID guidContainerFormat, Blob& blob, const GUID* targetFormat )
 {
     if ( !images || nimages == 0 )
         return E_INVALIDARG;
@@ -829,9 +829,9 @@ HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGU
         return hr;
 
     if ( nimages > 1 )
-        hr = _EncodeMultiframe( images, nimages, flags, guidContainerFormat, stream.Get() );
+        hr = _EncodeMultiframe( images, nimages, flags, guidContainerFormat, stream.Get(), targetFormat );
     else
-        hr = _EncodeSingleFrame( images[0], flags, guidContainerFormat, stream.Get() );
+        hr = _EncodeSingleFrame( images[0], flags, guidContainerFormat, stream.Get(), targetFormat );
 
     if ( FAILED(hr) )
         return hr;
@@ -869,7 +869,7 @@ HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGU
 //-------------------------------------------------------------------------------------
 // Save a WIC-supported file to disk
 //-------------------------------------------------------------------------------------
-HRESULT SaveToWICFile( const Image& image, DWORD flags, REFGUID guidContainerFormat, LPCWSTR szFile )
+HRESULT SaveToWICFile( const Image& image, DWORD flags, REFGUID guidContainerFormat, LPCWSTR szFile, const GUID* targetFormat )
 {
     if ( !szFile )
         return E_INVALIDARG;
@@ -890,14 +890,14 @@ HRESULT SaveToWICFile( const Image& image, DWORD flags, REFGUID guidContainerFor
     if ( FAILED(hr) )
         return hr;
 
-    hr = _EncodeSingleFrame( image, flags, guidContainerFormat, stream.Get() );
+    hr = _EncodeSingleFrame( image, flags, guidContainerFormat, stream.Get(), targetFormat );
     if ( FAILED(hr) )
         return hr;
 
     return S_OK;
 }
 
-HRESULT SaveToWICFile( const Image* images, size_t nimages, DWORD flags, REFGUID guidContainerFormat, LPCWSTR szFile )
+HRESULT SaveToWICFile( const Image* images, size_t nimages, DWORD flags, REFGUID guidContainerFormat, LPCWSTR szFile, const GUID* targetFormat )
 {
     if ( !szFile || !images || nimages == 0 )
         return E_INVALIDARG;
@@ -916,9 +916,9 @@ HRESULT SaveToWICFile( const Image* images, size_t nimages, DWORD flags, REFGUID
         return hr;
 
     if ( nimages > 1 )
-        hr = _EncodeMultiframe( images, nimages, flags, guidContainerFormat, stream.Get() );
+        hr = _EncodeMultiframe( images, nimages, flags, guidContainerFormat, stream.Get(), targetFormat );
     else
-        hr = _EncodeSingleFrame( images[0], flags, guidContainerFormat, stream.Get() );
+        hr = _EncodeSingleFrame( images[0], flags, guidContainerFormat, stream.Get(), targetFormat );
 
     if ( FAILED(hr) )
         return hr;
