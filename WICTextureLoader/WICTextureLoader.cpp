@@ -44,6 +44,10 @@
 #define DXGI_1_2_FORMATS
 #endif
 
+#if defined(_DEBUG) || defined(PROFILE)
+#pragma comment(lib,"dxguid.lib")
+#endif
+
 //---------------------------------------------------------------------------------
 template<class T> class ScopedObject
 {
@@ -74,6 +78,16 @@ private:
         
     T* _pointer;
 };
+
+//--------------------------------------------------------------------------------------
+
+template<UINT TNameLength>
+inline void SetDebugObjectName(_In_ ID3D11DeviceChild* resource, _In_z_ const char (&name)[TNameLength])
+{
+#if defined(_DEBUG) || defined(PROFILE)
+    resource->SetPrivateData(WKPDID_D3DDebugObjectName, TNameLength - 1, name);
+#endif
+}
 
 //-------------------------------------------------------------------------------------
 // WIC Pixel Format Translation Data
@@ -544,12 +558,7 @@ static HRESULT CreateTextureFromWIC( _In_ ID3D11Device* d3dDevice,
         }
         else
         {
-#if defined(_DEBUG) || defined(PROFILE)
-            tex->SetPrivateData( WKPDID_D3DDebugObjectName,
-                                 sizeof("WICTextureLoader")-1,
-                                 "WICTextureLoader"
-                               );
-#endif
+            SetDebugObjectName(tex, "WICTextureLoader");
             tex->Release();
         }
     }
@@ -611,23 +620,15 @@ HRESULT DirectX::CreateWICTextureFromMemory( _In_ ID3D11Device* d3dDevice,
     if ( FAILED(hr)) 
         return hr;
 
-#if defined(_DEBUG) || defined(PROFILE)
     if (texture != 0 && *texture != 0)
     {
-        (*texture)->SetPrivateData( WKPDID_D3DDebugObjectName,
-                                    sizeof("WICTextureLoader")-1,
-                                    "WICTextureLoader"
-                                  );
+        SetDebugObjectName(*texture, "WICTextureLoader");
     }
 
     if (textureView != 0 && *textureView != 0)
     {
-        (*textureView)->SetPrivateData( WKPDID_D3DDebugObjectName,
-                                        sizeof("WICTextureLoader")-1,
-                                        "WICTextureLoader"
-                                      );
+        SetDebugObjectName(*textureView, "WICTextureLoader");
     }
-#endif
 
     return hr;
 }
