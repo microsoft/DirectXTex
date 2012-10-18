@@ -683,12 +683,32 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
 
                 assert( pTemp.Get() );
 
+                DXGI_FORMAT fmt = desc.Format;
+                if ( IsTypeless(fmt) )
+                {
+                    // Assume a UNORM if it exists otherwise use FLOAT
+                    fmt = MakeTypelessUNORM( fmt );
+                    fmt = MakeTypelessFLOAT( fmt );
+                }
+
+                UINT support = 0;
+                hr = pDevice->CheckFormatSupport( fmt, &support );
+                if ( FAILED(hr) )
+                    break;
+
+                if ( !(support & D3D11_FORMAT_SUPPORT_MULTISAMPLE_RESOLVE) )
+                {
+                    hr = E_FAIL;
+                    break;
+                }
+
                 for( UINT item = 0; item < desc.ArraySize; ++item )
                 {
                     for( UINT level = 0; level < desc.MipLevels; ++level )
                     {
                         UINT index = D3D11CalcSubresource( level, item, desc.MipLevels );
-                        pContext->ResolveSubresource( pTemp.Get(), index, pSource, index, desc.Format );
+
+                        pContext->ResolveSubresource( pTemp.Get(), index, pSource, index, fmt );
                     }
                 }
 
