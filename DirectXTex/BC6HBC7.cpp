@@ -2130,6 +2130,9 @@ void D3DX_BC7::Encode(const HDRColorA* const pIn)
     for(EP.uMode = 0; EP.uMode < 8 && fMSEBest > 0; ++EP.uMode)
     {
         const size_t uShapes = 1 << ms_aInfo[EP.uMode].uPartitionBits;
+        assert( uShapes < BC7_MAX_SHAPES );
+        __analysis_assume( uShapes < BC7_MAX_SHAPES );
+
         const size_t uNumRots = 1 << ms_aInfo[EP.uMode].uRotationBits;
         const size_t uNumIdxMode = 1 << ms_aInfo[EP.uMode].uIndexModeBits;
         // Number of rough cases to look at. reasonable values of this are 1, uShapes/4, and uShapes
