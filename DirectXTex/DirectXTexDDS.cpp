@@ -531,8 +531,8 @@ HRESULT _EncodeDDSHeader( _In_ const TexMetadata& metadata, DWORD flags,
             return E_INVALIDARG;
 #endif
 
-        header->dwHeight = static_cast<uint32_t>( metadata.height ); 
-        header->dwWidth = header->dwDepth = 1;
+        header->dwWidth = static_cast<uint32_t>( metadata.width ); 
+        header->dwHeight = header->dwDepth = 1;
         break;
 
     case TEX_DIMENSION_TEXTURE2D:
