@@ -28,10 +28,12 @@
 #include <dxgiformat.h>
 #include <assert.h>
 
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #include <wincodec.h>
 #pragma warning(pop)
+#endif
 
 #include <memory>
 
@@ -620,6 +622,8 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
 
 
 //--------------------------------------------------------------------------------------
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
+
 static IWICImagingFactory* _GetWIC()
 {
     static IWICImagingFactory* s_Factory = nullptr;
@@ -643,6 +647,8 @@ static IWICImagingFactory* _GetWIC()
 
     return s_Factory;
 }
+
+#endif
 
 
 //--------------------------------------------------------------------------------------
@@ -793,6 +799,8 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
 }
 
 //--------------------------------------------------------------------------------------
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
+
 HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
                                        _In_ ID3D11Resource* pSource,
                                        _In_ REFGUID guidContainerFormat, 
@@ -1006,3 +1014,5 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
 
     return S_OK;
 }
+
+#endif // !WINAPI_FAMILY || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
