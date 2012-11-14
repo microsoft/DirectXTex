@@ -50,11 +50,9 @@ static WICTranslate g_WICFormats[] =
     { GUID_WICPixelFormat8bppAlpha,             DXGI_FORMAT_A8_UNORM },
 
     { GUID_WICPixelFormatBlackWhite,            DXGI_FORMAT_R1_UNORM },
-
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/)
-    { GUID_WICPixelFormat96bppRGBFloat,         DXGI_FORMAT_R32G32B32_FLOAT },
-#endif
 };
+
+static bool g_WIC2 = false;
 
 namespace DirectX
 {
@@ -71,21 +69,19 @@ DXGI_FORMAT _WICToDXGI( const GUID& guid )
             return g_WICFormats[i].format;
     }
 
+#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+    if ( g_WIC2 )
+    {
+        if ( memcmp( &GUID_WICPixelFormat96bppRGBFloat, &guid, sizeof(GUID) ) == 0 )
+            return DXGI_FORMAT_R32G32B32_FLOAT;
+    }
+#endif
+
     return DXGI_FORMAT_UNKNOWN;
 }
 
 bool _DXGIToWIC( DXGI_FORMAT format, GUID& guid )
 {
-    for( size_t i=0; i < _countof(g_WICFormats); ++i )
-    {
-        if ( g_WICFormats[i].format == format )
-        {
-            memcpy( &guid, &g_WICFormats[i].wic, sizeof(GUID) );
-            return true;
-        }
-    }
-
-    // Special cases
     switch( format )
     {
     case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
@@ -107,10 +103,36 @@ bool _DXGIToWIC( DXGI_FORMAT format, GUID& guid )
     case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
         memcpy( &guid, &GUID_WICPixelFormat32bppBGR, sizeof(GUID) );
         return true;
+
+#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+    case DXGI_FORMAT_R32G32B32_FLOAT:
+        if ( g_WIC2 )
+        {
+            memcpy( &guid, &GUID_WICPixelFormat96bppRGBFloat, sizeof(GUID) );
+            return true;
+        }
+        break;
+#endif
+
+    default:
+        for( size_t i=0; i < _countof(g_WICFormats); ++i )
+        {
+            if ( g_WICFormats[i].format == format )
+            {
+                memcpy( &guid, &g_WICFormats[i].wic, sizeof(GUID) );
+                return true;
+            }
+        }
+        break;
     }
 
     memcpy( &guid, &GUID_NULL, sizeof(GUID) );
     return false;
+}
+
+bool _IsWIC2()
+{
+    return g_WIC2;
 }
 
 IWICImagingFactory* _GetWIC()
@@ -120,6 +142,36 @@ IWICImagingFactory* _GetWIC()
     if ( s_Factory )
         return s_Factory;
 
+#if(_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+    HRESULT hr = CoCreateInstance(
+        CLSID_WICImagingFactory2,
+        nullptr,
+        CLSCTX_INPROC_SERVER,
+        __uuidof(IWICImagingFactory2),
+        (LPVOID*)&s_Factory
+        );
+
+    if ( SUCCEEDED(hr) )
+    {
+        g_WIC2 = true;
+    }
+    else
+    {
+        hr = CoCreateInstance(
+            CLSID_WICImagingFactory1,
+            nullptr,
+            CLSCTX_INPROC_SERVER,
+            __uuidof(IWICImagingFactory),
+            (LPVOID*)&s_Factory
+            );
+
+        if ( FAILED(hr) )
+        {
+            s_Factory = nullptr;
+            return nullptr;
+        }
+    }
+#else
     HRESULT hr = CoCreateInstance(
         CLSID_WICImagingFactory,
         nullptr,
@@ -133,6 +185,7 @@ IWICImagingFactory* _GetWIC()
         s_Factory = nullptr;
         return nullptr;
     }
+#endif
 
     return s_Factory;
 }

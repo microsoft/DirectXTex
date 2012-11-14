@@ -39,6 +39,10 @@
 
 #include <ole2.h>
 
+#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+#include <d2d1.h>
+#endif
+
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #include <wincodec.h>
@@ -64,6 +68,8 @@ namespace DirectX
     bool _DXGIToWIC( _In_ DXGI_FORMAT format, _Out_ GUID& guid );
 
     IWICImagingFactory* _GetWIC();
+
+    bool _IsWIC2();
 
     inline WICBitmapDitherType _GetWICDither( _In_ DWORD flags )
     {

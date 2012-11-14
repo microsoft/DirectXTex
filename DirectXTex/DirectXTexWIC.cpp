@@ -73,13 +73,10 @@ static WICConvert g_WICConvert[] =
     { GUID_WICPixelFormat40bppCMYKAlpha,        GUID_WICPixelFormat64bppRGBA }, // DXGI_FORMAT_R16G16B16A16_UNORM
     { GUID_WICPixelFormat80bppCMYKAlpha,        GUID_WICPixelFormat64bppRGBA }, // DXGI_FORMAT_R16G16B16A16_UNORM
 
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/)
+#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
     { GUID_WICPixelFormat32bppRGB,              GUID_WICPixelFormat32bppRGBA }, // DXGI_FORMAT_R8G8B8A8_UNORM
     { GUID_WICPixelFormat64bppRGB,              GUID_WICPixelFormat64bppRGBA }, // DXGI_FORMAT_R16G16B16A16_UNORM
     { GUID_WICPixelFormat64bppPRGBAHalf,        GUID_WICPixelFormat64bppRGBAHalf }, // DXGI_FORMAT_R16G16B16A16_FLOAT 
-    { GUID_WICPixelFormat96bppRGBFixedPoint,    GUID_WICPixelFormat96bppRGBFloat }, // DXGI_FORMAT_R32G32B32_FLOAT 
-#else
-    { GUID_WICPixelFormat96bppRGBFixedPoint,    GUID_WICPixelFormat128bppRGBAFloat }, // DXGI_FORMAT_R32G32B32A32_FLOAT 
 #endif
 
     // We don't support n-channel formats
@@ -101,16 +98,36 @@ static DXGI_FORMAT _DetermineFormat( _In_ const WICPixelFormatGUID& pixelFormat,
 
     if ( format == DXGI_FORMAT_UNKNOWN )
     {
-        for( size_t i=0; i < _countof(g_WICConvert); ++i )
+        if ( memcmp( &GUID_WICPixelFormat96bppRGBFixedPoint, &pixelFormat, sizeof(WICPixelFormatGUID) ) == 0 )
         {
-            if ( memcmp( &g_WICConvert[i].source, &pixelFormat, sizeof(WICPixelFormatGUID) ) == 0 )
+#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+            if ( _IsWIC2() )
             {
                 if ( pConvert )
-                    memcpy( pConvert, &g_WICConvert[i].target, sizeof(WICPixelFormatGUID) );
+                    memcpy( pConvert, &GUID_WICPixelFormat96bppRGBFloat, sizeof(WICPixelFormatGUID) );
+                format = DXGI_FORMAT_R32G32B32_FLOAT;
+            }
+            else
+#endif
+            {
+                if ( pConvert )
+                    memcpy( pConvert, &GUID_WICPixelFormat128bppRGBAFloat, sizeof(WICPixelFormatGUID) );
+                format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            }
+        }
+        else
+        {
+            for( size_t i=0; i < _countof(g_WICConvert); ++i )
+            {
+                if ( memcmp( &g_WICConvert[i].source, &pixelFormat, sizeof(WICPixelFormatGUID) ) == 0 )
+                {
+                    if ( pConvert )
+                        memcpy( pConvert, &g_WICConvert[i].target, sizeof(WICPixelFormatGUID) );
 
-                format = _WICToDXGI( g_WICConvert[i].target );
-                assert( format != DXGI_FORMAT_UNKNOWN );
-                break;
+                    format = _WICToDXGI( g_WICConvert[i].target );
+                    assert( format != DXGI_FORMAT_UNKNOWN );
+                    break;
+                }
             }
         }
     }
