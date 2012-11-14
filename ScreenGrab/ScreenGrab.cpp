@@ -624,6 +624,8 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
 //--------------------------------------------------------------------------------------
 #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
 
+static bool g_WIC2 = false;
+
 static IWICImagingFactory* _GetWIC()
 {
     static IWICImagingFactory* s_Factory = nullptr;
@@ -631,6 +633,37 @@ static IWICImagingFactory* _GetWIC()
     if ( s_Factory )
         return s_Factory;
 
+#if(_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+    HRESULT hr = CoCreateInstance(
+        CLSID_WICImagingFactory2,
+        nullptr,
+        CLSCTX_INPROC_SERVER,
+        __uuidof(IWICImagingFactory2),
+        (LPVOID*)&s_Factory
+        );
+
+    if ( SUCCEEDED(hr) )
+    {
+        // WIC2 is available on Windows 8 and Windows 7 SP1 with KB 2670838 installed
+        g_WIC2 = true;
+    }
+    else
+    {
+        hr = CoCreateInstance(
+            CLSID_WICImagingFactory1,
+            nullptr,
+            CLSCTX_INPROC_SERVER,
+            __uuidof(IWICImagingFactory),
+            (LPVOID*)&s_Factory
+            );
+
+        if ( FAILED(hr) )
+        {
+            s_Factory = nullptr;
+            return nullptr;
+        }
+    }
+#else
     HRESULT hr = CoCreateInstance(
         CLSID_WICImagingFactory,
         nullptr,
@@ -644,10 +677,10 @@ static IWICImagingFactory* _GetWIC()
         s_Factory = nullptr;
         return nullptr;
     }
+#endif
 
     return s_Factory;
 }
-
 #endif
 
 
@@ -923,11 +956,18 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
         // Screenshots don’t typically include the alpha channel of the render target
         switch ( desc.Format )
         {
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/)
+#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
         case DXGI_FORMAT_R32G32B32A32_FLOAT:            
         case DXGI_FORMAT_R16G16B16A16_FLOAT:
         case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
-            targetGuid = GUID_WICPixelFormat96bppRGBFloat;
+            if ( g_WIC2 )
+            {
+                targetGuid = GUID_WICPixelFormat96bppRGBFloat;
+            }
+            else
+            {
+                targetGuid = GUID_WICPixelFormat24bppBGR;
+            }
             break;
 #endif
 

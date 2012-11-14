@@ -153,6 +153,7 @@ IWICImagingFactory* _GetWIC()
 
     if ( SUCCEEDED(hr) )
     {
+        // WIC2 is available on Windows 8 and Windows 7 SP1 with KB 2670838 installed
         g_WIC2 = true;
     }
     else
