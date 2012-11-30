@@ -339,6 +339,15 @@ bool IsSupportedTexture( ID3D11Device* pDevice, const TexMetadata& metadata )
 HRESULT CreateTexture( ID3D11Device* pDevice, const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                        ID3D11Resource** ppResource )
 {
+    return CreateTextureEx( pDevice, srcImages, nimages, metadata,
+                            D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0,
+                            ppResource );
+}
+
+HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t nimages, const TexMetadata& metadata,
+                         D3D11_USAGE usage, unsigned int bindFlags, unsigned int cpuAccessFlags, unsigned int miscFlags,
+                         ID3D11Resource** ppResource )
+{
     if ( !pDevice || !srcImages || !nimages || !ppResource )
         return E_INVALIDARG;
 
@@ -465,10 +474,10 @@ HRESULT CreateTexture( ID3D11Device* pDevice, const Image* srcImages, size_t nim
             desc.MipLevels = static_cast<UINT>( metadata.mipLevels );
             desc.ArraySize = static_cast<UINT>( metadata.arraySize );
             desc.Format = metadata.format;
-            desc.Usage = D3D11_USAGE_DEFAULT;
-            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-            desc.CPUAccessFlags = 0;
-            desc.MiscFlags = 0;
+            desc.Usage = usage;
+            desc.BindFlags = bindFlags;
+            desc.CPUAccessFlags = cpuAccessFlags;
+            desc.MiscFlags = miscFlags & ~D3D11_RESOURCE_MISC_TEXTURECUBE;
 
             hr = pDevice->CreateTexture1D( &desc, initData.get(), reinterpret_cast<ID3D11Texture1D**>(ppResource) );
         }
@@ -484,10 +493,13 @@ HRESULT CreateTexture( ID3D11Device* pDevice, const Image* srcImages, size_t nim
             desc.Format = metadata.format;
             desc.SampleDesc.Count = 1;
             desc.SampleDesc.Quality = 0;
-            desc.Usage = D3D11_USAGE_DEFAULT;
-            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-            desc.CPUAccessFlags = 0;
-            desc.MiscFlags = (metadata.miscFlags & TEX_MISC_TEXTURECUBE) ? D3D11_RESOURCE_MISC_TEXTURECUBE : 0;
+            desc.Usage = usage;
+            desc.BindFlags = bindFlags;
+            desc.CPUAccessFlags = cpuAccessFlags;
+            if (metadata.miscFlags & TEX_MISC_TEXTURECUBE)
+                desc.MiscFlags =  miscFlags | D3D11_RESOURCE_MISC_TEXTURECUBE;
+            else
+                desc.MiscFlags =  miscFlags & ~D3D11_RESOURCE_MISC_TEXTURECUBE;
 
             hr = pDevice->CreateTexture2D( &desc, initData.get(), reinterpret_cast<ID3D11Texture2D**>(ppResource) );
         }
@@ -501,10 +513,10 @@ HRESULT CreateTexture( ID3D11Device* pDevice, const Image* srcImages, size_t nim
             desc.Depth = static_cast<UINT>( metadata.depth );
             desc.MipLevels = static_cast<UINT>( metadata.mipLevels );
             desc.Format = metadata.format;
-            desc.Usage = D3D11_USAGE_DEFAULT;
-            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-            desc.CPUAccessFlags = 0;
-            desc.MiscFlags = 0;
+            desc.Usage = usage;
+            desc.BindFlags = bindFlags;
+            desc.CPUAccessFlags = cpuAccessFlags;
+            desc.MiscFlags = miscFlags & ~D3D11_RESOURCE_MISC_TEXTURECUBE;
 
             hr = pDevice->CreateTexture3D( &desc, initData.get(), reinterpret_cast<ID3D11Texture3D**>(ppResource) );
         }
@@ -521,11 +533,23 @@ HRESULT CreateTexture( ID3D11Device* pDevice, const Image* srcImages, size_t nim
 HRESULT CreateShaderResourceView( ID3D11Device* pDevice, const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                                   ID3D11ShaderResourceView** ppSRV )
 {
+    return CreateShaderResourceViewEx( pDevice, srcImages, nimages, metadata,
+                                       D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0,
+                                       ppSRV );
+}
+
+
+HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImages, size_t nimages, const TexMetadata& metadata,
+                                    D3D11_USAGE usage, unsigned int bindFlags, unsigned int cpuAccessFlags, unsigned int miscFlags,
+                                    ID3D11ShaderResourceView** ppSRV )
+{
     if ( !ppSRV )
         return E_INVALIDARG;
 
     ScopedObject<ID3D11Resource> resource;
-    HRESULT hr = CreateTexture( pDevice, srcImages, nimages, metadata, &resource );
+    HRESULT hr = CreateTextureEx( pDevice, srcImages, nimages, metadata,
+                                  usage, bindFlags, cpuAccessFlags, miscFlags,
+                                  &resource );
     if ( FAILED(hr) )
         return hr;
 
