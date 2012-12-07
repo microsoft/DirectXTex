@@ -317,7 +317,7 @@ static void OptimizeRGB(_Out_ HDRColorA *pX, _Out_ HDRColorA *pY,
 
 
 //-------------------------------------------------------------------------------------
-inline static void DecodeBC1( _Out_cap_c_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_ const D3DX_BC1 *pBC )
+inline static void DecodeBC1( _Out_cap_c_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_ const D3DX_BC1 *pBC, _In_ bool isbc1 )
 {
     assert( pColor && pBC );
     static_assert( sizeof(D3DX_BC1) == 8, "D3DX_BC1 should be 8 bytes" );
@@ -337,7 +337,7 @@ inline static void DecodeBC1( _Out_cap_c_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor
     clr1 = XMVectorSelect( g_XMIdentityR3, clr1, g_XMSelect1110 );
 
     XMVECTOR clr2, clr3;
-    if(pBC->rgb[0] <= pBC->rgb[1])
+    if ( isbc1 && (pBC->rgb[0] <= pBC->rgb[1]) )
     {
         clr2 = XMVectorLerp( clr0, clr1, 0.5f );
         clr3 = XMVectorZero();  // Alpha of 0
@@ -720,7 +720,7 @@ static void EncodeSolidBC1(_Out_ D3DX_BC1 *pBC, _In_count_c_(NUM_PIXELS_PER_BLOC
 void D3DXDecodeBC1(XMVECTOR *pColor, const uint8_t *pBC)
 {
     const D3DX_BC1 *pBC1 = reinterpret_cast<const D3DX_BC1 *>(pBC);
-    DecodeBC1( pColor, pBC1 );
+    DecodeBC1( pColor, pBC1, true );
 }
 
 void D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float alphaRef, DWORD flags)
@@ -795,7 +795,7 @@ void D3DXDecodeBC2(XMVECTOR *pColor, const uint8_t *pBC)
     const D3DX_BC2 *pBC2 = reinterpret_cast<const D3DX_BC2 *>(pBC);
 
     // RGB part
-    DecodeBC1(pColor, &pBC2->bc1);
+    DecodeBC1(pColor, &pBC2->bc1, false);
 
     // 4-bit alpha part
     DWORD dw = pBC2->bitmap[0];
@@ -893,7 +893,7 @@ void D3DXDecodeBC3(XMVECTOR *pColor, const uint8_t *pBC)
     const D3DX_BC3 *pBC3 = reinterpret_cast<const D3DX_BC3 *>(pBC);
 
     // RGB part
-    DecodeBC1(pColor, &pBC3->bc1);
+    DecodeBC1(pColor, &pBC3->bc1, false);
 
     // Adaptive 3-bit alpha part
     float fAlpha[8];
