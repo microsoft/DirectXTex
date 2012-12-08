@@ -164,10 +164,10 @@ static void inline FloatToSNorm( _In_ float fVal, _Out_ int8_t *piSNorm )
         fVal = 0;
     else
         if( fVal > 1 )
-            fVal = 1;	// Clamp to 1
+            fVal = 1;    // Clamp to 1
         else
             if( fVal < -1 )
-                fVal = -1;	// Clamp to -1
+                fVal = -1;    // Clamp to -1
 
     fVal = fVal * (int8_t) ( dwMostNeg - 1 );
 
@@ -181,7 +181,7 @@ static void inline FloatToSNorm( _In_ float fVal, _Out_ int8_t *piSNorm )
 
 
 //------------------------------------------------------------------------------
-static void FindEndPointsBC4U( _In_count_c_(BLOCK_SIZE) const float theTexelsU[], _Out_ uint8_t &endpointU_0, _Out_ uint8_t &endpointU_1)
+static void FindEndPointsBC4U( _In_reads_(BLOCK_SIZE) const float theTexelsU[], _Out_ uint8_t &endpointU_0, _Out_ uint8_t &endpointU_1)
 {
     // The boundary of codec for signed/unsigned format
     float MIN_NORM;
@@ -235,7 +235,7 @@ static void FindEndPointsBC4U( _In_count_c_(BLOCK_SIZE) const float theTexelsU[]
     }
 }
 
-static void FindEndPointsBC4S(_In_count_c_(BLOCK_SIZE) const float theTexelsU[], _Out_ int8_t &endpointU_0, _Out_ int8_t &endpointU_1)
+static void FindEndPointsBC4S(_In_reads_(BLOCK_SIZE) const float theTexelsU[], _Out_ int8_t &endpointU_0, _Out_ int8_t &endpointU_1)
 {
     //  The boundary of codec for signed/unsigned format
     float MIN_NORM;
@@ -291,7 +291,7 @@ static void FindEndPointsBC4S(_In_count_c_(BLOCK_SIZE) const float theTexelsU[],
 
 
 //------------------------------------------------------------------------------
-static inline void FindEndPointsBC5U( _In_count_c_(BLOCK_SIZE) const float theTexelsU[], _In_count_c_(BLOCK_SIZE) const float theTexelsV[],
+static inline void FindEndPointsBC5U( _In_reads_(BLOCK_SIZE) const float theTexelsU[], _In_reads_(BLOCK_SIZE) const float theTexelsV[],
                                       _Out_ uint8_t &endpointU_0, _Out_ uint8_t &endpointU_1, _Out_ uint8_t &endpointV_0, _Out_ uint8_t &endpointV_1)
 {
     //Encoding the U and V channel by BC4 codec separately.
@@ -299,7 +299,7 @@ static inline void FindEndPointsBC5U( _In_count_c_(BLOCK_SIZE) const float theTe
     FindEndPointsBC4U( theTexelsV, endpointV_0, endpointV_1);
 }
 
-static inline void FindEndPointsBC5S( _In_count_c_(BLOCK_SIZE) const float theTexelsU[], _In_count_c_(BLOCK_SIZE) const float theTexelsV[],
+static inline void FindEndPointsBC5S( _In_reads_(BLOCK_SIZE) const float theTexelsU[], _In_reads_(BLOCK_SIZE) const float theTexelsV[],
                                       _Out_ int8_t &endpointU_0, _Out_ int8_t &endpointU_1, _Out_ int8_t &endpointV_0, _Out_ int8_t &endpointV_1)
 {
     //Encoding the U and V channel by BC4 codec separately.
@@ -309,7 +309,7 @@ static inline void FindEndPointsBC5S( _In_count_c_(BLOCK_SIZE) const float theTe
 
 
 //------------------------------------------------------------------------------
-static void FindClosestUNORM(_Inout_ BC4_UNORM* pBC, _In_count_c_(NUM_PIXELS_PER_BLOCK) const float theTexelsU[])
+static void FindClosestUNORM(_Inout_ BC4_UNORM* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const float theTexelsU[])
 {
     float rGradient[8];
     int i;
@@ -334,7 +334,7 @@ static void FindClosestUNORM(_Inout_ BC4_UNORM* pBC, _In_count_c_(NUM_PIXELS_PER
     }
 }
 
-static void FindClosestSNORM(_Inout_ BC4_SNORM* pBC, _In_count_c_(NUM_PIXELS_PER_BLOCK) const float theTexelsU[])
+static void FindClosestSNORM(_Inout_ BC4_SNORM* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const float theTexelsU[])
 {    
     float rGradient[8];
     int i;
@@ -367,6 +367,7 @@ static void FindClosestSNORM(_Inout_ BC4_SNORM* pBC, _In_count_c_(NUM_PIXELS_PER
 //-------------------------------------------------------------------------------------
 // BC4 Compression
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 void D3DXDecodeBC4U( XMVECTOR *pColor, const uint8_t *pBC )
 {
     assert( pColor && pBC );
@@ -380,6 +381,7 @@ void D3DXDecodeBC4U( XMVECTOR *pColor, const uint8_t *pBC )
     }       
 }
 
+_Use_decl_annotations_
 void D3DXDecodeBC4S(XMVECTOR *pColor, const uint8_t *pBC)
 {
     assert( pColor && pBC );
@@ -393,6 +395,7 @@ void D3DXDecodeBC4S(XMVECTOR *pColor, const uint8_t *pBC)
     }       
 }
 
+_Use_decl_annotations_
 void D3DXEncodeBC4U( uint8_t *pBC, const XMVECTOR *pColor, DWORD flags )
 {
     UNREFERENCED_PARAMETER( flags );
@@ -413,6 +416,7 @@ void D3DXEncodeBC4U( uint8_t *pBC, const XMVECTOR *pColor, DWORD flags )
     FindClosestUNORM(pBC4, theTexelsU);
 }
 
+_Use_decl_annotations_
 void D3DXEncodeBC4S( uint8_t *pBC, const XMVECTOR *pColor, DWORD flags )
 {
     UNREFERENCED_PARAMETER( flags );
@@ -437,6 +441,7 @@ void D3DXEncodeBC4S( uint8_t *pBC, const XMVECTOR *pColor, DWORD flags )
 //-------------------------------------------------------------------------------------
 // BC5 Compression
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 void D3DXDecodeBC5U(XMVECTOR *pColor, const uint8_t *pBC)
 {
     assert( pColor && pBC );
@@ -451,6 +456,7 @@ void D3DXDecodeBC5U(XMVECTOR *pColor, const uint8_t *pBC)
     }       
 }
 
+_Use_decl_annotations_
 void D3DXDecodeBC5S(XMVECTOR *pColor, const uint8_t *pBC)
 {
     assert( pColor && pBC );
@@ -465,6 +471,7 @@ void D3DXDecodeBC5S(XMVECTOR *pColor, const uint8_t *pBC)
     }       
 }
 
+_Use_decl_annotations_
 void D3DXEncodeBC5U( uint8_t *pBC, const XMVECTOR *pColor, DWORD flags )
 {
     UNREFERENCED_PARAMETER( flags );
@@ -498,6 +505,7 @@ void D3DXEncodeBC5U( uint8_t *pBC, const XMVECTOR *pColor, DWORD flags )
     FindClosestUNORM(pBCG, theTexelsV);
 }
 
+_Use_decl_annotations_
 void D3DXEncodeBC5S( uint8_t *pBC, const XMVECTOR *pColor, DWORD flags )
 {
     UNREFERENCED_PARAMETER( flags );

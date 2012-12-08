@@ -30,7 +30,11 @@ namespace DirectX
 // Copies an image row with optional clearing of alpha value to 1.0
 // (can be used in place as well) otherwise copies the image row unmodified.
 //-------------------------------------------------------------------------------------
-void _CopyScanline( LPVOID pDestination, size_t outSize, LPCVOID pSource, size_t inSize, DXGI_FORMAT format, DWORD flags )
+void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize))
+                   _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
+                   LPVOID pDestination, _In_ size_t outSize,
+                   _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
+                   _In_ DXGI_FORMAT format, _In_ DWORD flags)
 {
     assert( pDestination && outSize > 0 );
     assert( pSource && inSize > 0 );
@@ -253,6 +257,7 @@ void _CopyScanline( LPVOID pDestination, size_t outSize, LPCVOID pSource, size_t
 // Swizzles (RGB <-> BGR) an image row with optional clearing of alpha value to 1.0
 // (can be used in place as well) otherwise copies the image row unmodified.
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 void _SwizzleScanline( LPVOID pDestination, size_t outSize, LPCVOID pSource, size_t inSize, DXGI_FORMAT format, DWORD flags )
 {
     assert( pDestination && outSize > 0 );
@@ -365,6 +370,7 @@ void _SwizzleScanline( LPVOID pDestination, size_t outSize, LPCVOID pSource, siz
 // Converts an image row with optional clearing of alpha value to 1.0
 // Returns true if supported, false if expansion case not supported
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat,  
                       LPCVOID pSource, size_t inSize, DXGI_FORMAT inFormat, DWORD flags )
 {
@@ -494,6 +500,7 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
         }\
         return false;
 
+_Use_decl_annotations_
 bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                     LPCVOID pSource, size_t size, DXGI_FORMAT format )
 {
@@ -973,6 +980,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         }\
         return true;
 
+_Use_decl_annotations_
 bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                      const XMVECTOR* pSource, size_t count )
 {
@@ -1434,6 +1442,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
 //-------------------------------------------------------------------------------------
 // Convert DXGI image to/from GUID_WICPixelFormat128bppRGBAFloat (no range conversions)
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT _ConvertToR32G32B32A32( const Image& srcImage, ScratchImage& image )
 {
     if ( !srcImage.pixels )
@@ -1473,7 +1482,8 @@ HRESULT _ConvertToR32G32B32A32( const Image& srcImage, ScratchImage& image )
     return S_OK;
 }
 
-HRESULT _ConvertFromR32G32B32A32( _In_ const Image& srcImage, _In_ const Image& destImage )
+_Use_decl_annotations_
+HRESULT _ConvertFromR32G32B32A32( const Image& srcImage, const Image& destImage )
 {
     assert( srcImage.format == DXGI_FORMAT_R32G32B32A32_FLOAT );
 
@@ -1498,6 +1508,7 @@ HRESULT _ConvertFromR32G32B32A32( _In_ const Image& srcImage, _In_ const Image& 
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT _ConvertFromR32G32B32A32( const Image& srcImage, DXGI_FORMAT format, ScratchImage& image )
 {
     if ( !srcImage.pixels )
@@ -1524,6 +1535,7 @@ HRESULT _ConvertFromR32G32B32A32( const Image& srcImage, DXGI_FORMAT format, Scr
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT _ConvertFromR32G32B32A32( const Image* srcImages, size_t nimages, const TexMetadata& metadata, DXGI_FORMAT format, ScratchImage& result )
 {
     if ( !srcImages )
@@ -1816,6 +1828,7 @@ static int __cdecl _ConvertCompare( void *context, const void* ptr1, const void 
     else return (p1->format < p2->format ) ? -1 : 1;
 }
 
+_Use_decl_annotations_
 DWORD _GetConvertFlags( DXGI_FORMAT format )
 {
 #ifdef _DEBUG
@@ -1835,6 +1848,7 @@ DWORD _GetConvertFlags( DXGI_FORMAT format )
     return (in) ? in->flags : 0;
 }
 
+_Use_decl_annotations_
 void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, DXGI_FORMAT inFormat, DWORD flags )
 {
     assert( pBuffer && count > 0 && (((uintptr_t)pBuffer & 0xF) == 0) );
@@ -2031,7 +2045,7 @@ static HRESULT _ConvertUsingWIC( _In_ const Image& srcImage, _In_ const WICPixel
     if ( FAILED(hr) )
         return hr;
 
-    // Need to implement usage of TEX_FILTER_SRGB_IN/TEX_FILTER_SRGB_OUT
+// Need to add logic to use TEX_FILTER_SRGB_IN/TEX_FILTER_SRGB_OUT
 
     BOOL canConvert = FALSE;
     hr = FC->CanConvert( pfGUID, targetGUID, &canConvert );
@@ -2247,6 +2261,7 @@ static HRESULT _Convert( _In_ const Image& srcImage, _In_ DWORD filter, _In_ con
 //-------------------------------------------------------------------------------------
 // Convert image
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT Convert( const Image& srcImage, DXGI_FORMAT format, DWORD filter, float threshold, ScratchImage& image )
 {
     if ( (srcImage.format == format) || !IsValid( format ) )
@@ -2319,6 +2334,7 @@ HRESULT Convert( const Image& srcImage, DXGI_FORMAT format, DWORD filter, float 
 //-------------------------------------------------------------------------------------
 // Convert image (complex)
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT Convert( const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                  DXGI_FORMAT format, DWORD filter, float threshold, ScratchImage& result )
 {

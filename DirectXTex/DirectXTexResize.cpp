@@ -159,6 +159,7 @@ static HRESULT _PerformResizeViaF32( _In_ const Image& srcImage, _In_ DWORD filt
 //-------------------------------------------------------------------------------------
 // Resize image
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT Resize( const Image& srcImage, size_t width, size_t height, DWORD filter, ScratchImage& image )
 {
     if ( width == 0 || height == 0 )
@@ -216,6 +217,7 @@ HRESULT Resize( const Image& srcImage, size_t width, size_t height, DWORD filter
 //-------------------------------------------------------------------------------------
 // Resize image (complex)
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT Resize( const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                 size_t width, size_t height, DWORD filter, ScratchImage& result )
 {

@@ -150,6 +150,7 @@ static HRESULT _Capture( _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource
 //-------------------------------------------------------------------------------------
 // Determine if given texture metadata is supported on the given device
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 bool IsSupportedTexture( ID3D11Device* pDevice, const TexMetadata& metadata )
 {
     if ( !pDevice )
@@ -336,6 +337,7 @@ bool IsSupportedTexture( ID3D11Device* pDevice, const TexMetadata& metadata )
 //-------------------------------------------------------------------------------------
 // Create a texture resource
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT CreateTexture( ID3D11Device* pDevice, const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                        ID3D11Resource** ppResource )
 {
@@ -344,6 +346,7 @@ HRESULT CreateTexture( ID3D11Device* pDevice, const Image* srcImages, size_t nim
                             ppResource );
 }
 
+_Use_decl_annotations_
 HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                          D3D11_USAGE usage, unsigned int bindFlags, unsigned int cpuAccessFlags, unsigned int miscFlags,
                          ID3D11Resource** ppResource )
@@ -530,6 +533,7 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
 //-------------------------------------------------------------------------------------
 // Create a shader resource view and associated texture
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT CreateShaderResourceView( ID3D11Device* pDevice, const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                                   ID3D11ShaderResourceView** ppSRV )
 {
@@ -538,7 +542,7 @@ HRESULT CreateShaderResourceView( ID3D11Device* pDevice, const Image* srcImages,
                                        ppSRV );
 }
 
-
+_Use_decl_annotations_
 HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                                     D3D11_USAGE usage, unsigned int bindFlags, unsigned int cpuAccessFlags, unsigned int miscFlags,
                                     ID3D11ShaderResourceView** ppSRV )
@@ -627,6 +631,7 @@ HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImage
 //-------------------------------------------------------------------------------------
 // Save a texture resource to a DDS file in memory/on disk
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID3D11Resource* pSource, ScratchImage& result )
 {
     if ( !pDevice || !pContext || !pSource )

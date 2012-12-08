@@ -27,10 +27,30 @@
 #include <dxgiformat.h>
 #include <d3d11.h>
 
-#define DIRECTX_TEX_VERSION 100
+#define DIRECTX_TEX_VERSION 101
+
+#if defined(_MSC_VER) && (_MSC_VER<1610) && !defined(_In_reads_)
+#define _Analysis_assume_(exp)
+#define _In_reads_(exp)
+#define _In_reads_opt_(exp)
+#define _Out_writes_(exp)
+#define _Out_writes_opt_(exp)
+#define _In_reads_bytes_(exp)
+#define _Out_writes_bytes_(exp)
+#define _Out_writes_bytes_to_opt_(a,b)
+#define _Inout_updates_bytes_(exp)
+#define _Inout_updates_all_(exp)
+#define _Outptr_
+#define _When_(a,b)
+#endif
+
+#ifndef _Use_decl_annotations_
+#define _Use_decl_annotations_
+#endif
 
 namespace DirectX
 {
+
     //---------------------------------------------------------------------------------
     // DXGI Format Utilities
     bool IsValid( _In_ DXGI_FORMAT fmt );
@@ -66,9 +86,9 @@ namespace DirectX
     enum TEX_DIMENSION
         // Subset here matches D3D10_RESOURCE_DIMENSION and D3D11_RESOURCE_DIMENSION
     {
-        TEX_DIMENSION_TEXTURE1D	= 2,
-        TEX_DIMENSION_TEXTURE2D	= 3,
-        TEX_DIMENSION_TEXTURE3D	= 4,
+        TEX_DIMENSION_TEXTURE1D    = 2,
+        TEX_DIMENSION_TEXTURE2D    = 3,
+        TEX_DIMENSION_TEXTURE3D    = 4,
     };
 
     enum TEX_MISC_FLAG
@@ -147,17 +167,17 @@ namespace DirectX
             // Filtering mode to use for any required image resizing (only needed when loading arrays of differently sized images; defaults to Fant)
     };
 
-    HRESULT GetMetadataFromDDSMemory( _In_bytecount_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
+    HRESULT GetMetadataFromDDSMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
                                       _Out_ TexMetadata& metadata );
-    HRESULT GetMetadataFromDDSFile( _In_z_ LPCWSTR szFile, DWORD flags,
+    HRESULT GetMetadataFromDDSFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
                                     _Out_ TexMetadata& metadata );
 
-    HRESULT GetMetadataFromTGAMemory( _In_bytecount_(size) LPCVOID pSource, _In_ size_t size,
+    HRESULT GetMetadataFromTGAMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size,
                                       _Out_ TexMetadata& metadata );
     HRESULT GetMetadataFromTGAFile( _In_z_ LPCWSTR szFile,
                                     _Out_ TexMetadata& metadata );
 
-    HRESULT GetMetadataFromWICMemory( _In_bytecount_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
+    HRESULT GetMetadataFromWICMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
                                       _Out_ TexMetadata& metadata );
     HRESULT GetMetadataFromWICFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
                                     _Out_ TexMetadata& metadata );
@@ -188,9 +208,9 @@ namespace DirectX
         HRESULT InitializeCube( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t nCubes, _In_ size_t mipLevels );
 
         HRESULT InitializeFromImage( _In_ const Image& srcImage, _In_ bool allow1D = false );
-        HRESULT InitializeArrayFromImages( _In_count_(nImages) const Image* images, _In_ size_t nImages, _In_ bool allow1D = false ); 
-        HRESULT InitializeCubeFromImages( _In_count_(nImages) const Image* images, _In_ size_t nImages );
-        HRESULT Initialize3DFromImages( _In_count_(depth) const Image* images, _In_ size_t depth );
+        HRESULT InitializeArrayFromImages( _In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ bool allow1D = false ); 
+        HRESULT InitializeCubeFromImages( _In_reads_(nImages) const Image* images, _In_ size_t nImages );
+        HRESULT Initialize3DFromImages( _In_reads_(depth) const Image* images, _In_ size_t depth );
 
         void Release();
 
@@ -245,21 +265,21 @@ namespace DirectX
     // Image I/O
 
     // DDS operations
-    HRESULT LoadFromDDSMemory( _In_bytecount_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
+    HRESULT LoadFromDDSMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
                                _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
     HRESULT LoadFromDDSFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
                              _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
 
     HRESULT SaveToDDSMemory( _In_ const Image& image, _In_ DWORD flags,
                              _Out_ Blob& blob );
-    HRESULT SaveToDDSMemory( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags,
+    HRESULT SaveToDDSMemory( _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags,
                              _Out_ Blob& blob );
 
     HRESULT SaveToDDSFile( _In_ const Image& image, _In_ DWORD flags, _In_z_ LPCWSTR szFile );
-    HRESULT SaveToDDSFile( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags, _In_z_ LPCWSTR szFile );
+    HRESULT SaveToDDSFile( _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags, _In_z_ LPCWSTR szFile );
 
     // TGA operations
-    HRESULT LoadFromTGAMemory( _In_bytecount_(size) LPCVOID pSource, _In_ size_t size,
+    HRESULT LoadFromTGAMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size,
                                _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
     HRESULT LoadFromTGAFile( _In_z_ LPCWSTR szFile,
                              _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
@@ -268,7 +288,7 @@ namespace DirectX
     HRESULT SaveToTGAFile( _In_ const Image& image, _In_z_ LPCWSTR szFile );
 
     // WIC operations
-    HRESULT LoadFromWICMemory( _In_bytecount_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
+    HRESULT LoadFromWICMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
                                _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
     HRESULT LoadFromWICFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
                              _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
@@ -310,7 +330,7 @@ namespace DirectX
     };
 
     HRESULT FlipRotate( _In_ const Image& srcImage, _In_ DWORD flags, _Out_ ScratchImage& image );
-    HRESULT FlipRotate( _In_count_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+    HRESULT FlipRotate( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                         _In_ DWORD flags, _Out_ ScratchImage& result );
         // Flip and/or rotate image
 
@@ -344,27 +364,27 @@ namespace DirectX
 
     HRESULT Resize( _In_ const Image& srcImage, _In_ size_t width, _In_ size_t height, _In_ DWORD filter,
                     _Out_ ScratchImage& image );
-    HRESULT Resize( _In_count_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+    HRESULT Resize( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                     _In_ size_t width, _In_ size_t height, _In_ DWORD filter, _Out_ ScratchImage& result );
         // Resize the image to width x height. Defaults to Fant filtering.
         // Note for a complex resize, the result will always have mipLevels == 1
 
     HRESULT Convert( _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD filter, _In_ float threshold,
                      _Out_ ScratchImage& image );
-    HRESULT Convert( _In_count_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+    HRESULT Convert( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                      _In_ DXGI_FORMAT format, _In_ DWORD filter, _In_ float threshold, _Out_ ScratchImage& result );
         // Convert the image to a new format
     
     HRESULT GenerateMipMaps( _In_ const Image& baseImage, _In_ DWORD filter, _In_ size_t levels,
-                             _Out_ ScratchImage& mipChain, bool allow1D = false );
-    HRESULT GenerateMipMaps( _In_count_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                             _In_ DWORD filter, _In_ size_t levels, _Out_ ScratchImage& mipChain );
+                             _Inout_ ScratchImage& mipChain, _In_ bool allow1D = false );
+    HRESULT GenerateMipMaps( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                             _In_ DWORD filter, _In_ size_t levels, _Inout_ ScratchImage& mipChain );
         // levels of '0' indicates a full mipchain, otherwise is generates that number of total levels (including the source base image)
         // Defaults to Fant filtering which is equivalent to a box filter
 
-    HRESULT GenerateMipMaps3D( _In_count_(depth) const Image* baseImages, _In_ size_t depth, _In_ DWORD filter, _In_ size_t levels,
+    HRESULT GenerateMipMaps3D( _In_reads_(depth) const Image* baseImages, _In_ size_t depth, _In_ DWORD filter, _In_ size_t levels,
                                _Out_ ScratchImage& mipChain );
-    HRESULT GenerateMipMaps3D( _In_count_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+    HRESULT GenerateMipMaps3D( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                                _In_ DWORD filter, _In_ size_t levels, _Out_ ScratchImage& mipChain );
         // levels of '0' indicates a full mipchain, otherwise is generates that number of total levels (including the source base image)
         // Defaults to Fant filtering which is equivalent to a box filter
@@ -391,12 +411,12 @@ namespace DirectX
 
     HRESULT Compress( _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaRef,
                       _Out_ ScratchImage& cImage );
-    HRESULT Compress( _In_count_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+    HRESULT Compress( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                       _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaRef, _Out_ ScratchImage& cImages );
         // Note that alphaRef is only used by BC1. 0.5f is a typical value to use
 
     HRESULT Decompress( _In_ const Image& cImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image );
-    HRESULT Decompress( _In_count_(nimages) const Image* cImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+    HRESULT Decompress( _In_reads_(nimages) const Image* cImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                         _In_ DXGI_FORMAT format, _Out_ ScratchImage& images );
 
     //---------------------------------------------------------------------------------
@@ -428,7 +448,7 @@ namespace DirectX
 
     HRESULT ComputeNormalMap( _In_ const Image& srcImage, _In_ DWORD flags, _In_ float amplitude,
                               _In_ DXGI_FORMAT format, _Out_ ScratchImage& normalMap );
-    HRESULT ComputeNormalMap( _In_count_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+    HRESULT ComputeNormalMap( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                               _In_ DWORD flags, _In_ float amplitude, _In_ DXGI_FORMAT format, _Out_ ScratchImage& normalMaps );
 
     //---------------------------------------------------------------------------------
@@ -447,25 +467,25 @@ namespace DirectX
     HRESULT CopyRectangle( _In_ const Image& srcImage, _In_ const Rect& srcRect, _In_ const Image& dstImage,
                            _In_ DWORD filter, _In_ size_t xOffset, _In_ size_t yOffset );
 
-    HRESULT ComputeMSE( _In_ const Image& image1, _In_ const Image& image2, _Out_ float& mse, _Out_opt_cap_c_(4) float* mseV );
+    HRESULT ComputeMSE( _In_ const Image& image1, _In_ const Image& image2, _Out_ float& mse, _Out_writes_opt_(4) float* mseV );
 
     //---------------------------------------------------------------------------------
     // Direct3D 11 functions
     bool IsSupportedTexture( _In_ ID3D11Device* pDevice, _In_ const TexMetadata& metadata );
 
-    HRESULT CreateTexture( _In_ ID3D11Device* pDevice, _In_count_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                           _Deref_out_ ID3D11Resource** ppResource );
+    HRESULT CreateTexture( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                           _Outptr_ ID3D11Resource** ppResource );
 
-    HRESULT CreateShaderResourceView( _In_ ID3D11Device* pDevice, _In_count_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                                      _Deref_out_ ID3D11ShaderResourceView** ppSRV );
+    HRESULT CreateShaderResourceView( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                      _Outptr_ ID3D11ShaderResourceView** ppSRV );
 
-    HRESULT CreateTextureEx( _In_ ID3D11Device* pDevice, _In_count_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+    HRESULT CreateTextureEx( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                              _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags,
-                             _Deref_out_ ID3D11Resource** ppResource );
+                             _Outptr_ ID3D11Resource** ppResource );
 
-    HRESULT CreateShaderResourceViewEx( _In_ ID3D11Device* pDevice, _In_count_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+    HRESULT CreateShaderResourceViewEx( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                                         _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags,
-                                        _Deref_out_ ID3D11ShaderResourceView** ppSRV );
+                                        _Outptr_ ID3D11ShaderResourceView** ppSRV );
 
     HRESULT CaptureTexture( _In_ ID3D11Device* pDevice, _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource* pSource, _Out_ ScratchImage& result );
 

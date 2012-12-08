@@ -202,7 +202,7 @@ static DXGI_FORMAT _GetDXGIFormat( const DDS_PIXELFORMAT& ddpf, DWORD flags, _In
 //-------------------------------------------------------------------------------------
 // Decodes DDS header including optional DX10 extended header
 //-------------------------------------------------------------------------------------
-static HRESULT _DecodeDDSHeader( _In_bytecount_(size) LPCVOID pSource, size_t size, DWORD flags, _Out_ TexMetadata& metadata,
+static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t size, DWORD flags, _Out_ TexMetadata& metadata,
                                  _Inout_opt_ DWORD* convFlags )
 {
     if ( !pSource )
@@ -417,8 +417,9 @@ static HRESULT _DecodeDDSHeader( _In_bytecount_(size) LPCVOID pSource, size_t si
 //-------------------------------------------------------------------------------------
 // Encodes DDS file header (magic value, header, optional DX10 extended header)
 //-------------------------------------------------------------------------------------
-HRESULT _EncodeDDSHeader( _In_ const TexMetadata& metadata, DWORD flags, 
-                          _Out_opt_cap_x_(maxsize) LPVOID pDestination, _In_ size_t maxsize, _Out_ size_t& required )
+_Use_decl_annotations_
+HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags, 
+                          LPVOID pDestination, size_t maxsize, size_t& required )
 {
     assert( IsValid( metadata.format ) && !IsVideo( metadata.format ) );
 
@@ -668,9 +669,10 @@ inline static TEXP_LEGACY_FORMAT _FindLegacyFormat( DWORD flags )
     return lformat;
 }
 
-static bool _LegacyExpandScanline( _Out_bytecap_(outSize) LPVOID pDestination, size_t outSize, _In_ DXGI_FORMAT outFormat, 
-                                   _In_bytecount_(inSize) LPCVOID pSource, size_t inSize, _In_ TEXP_LEGACY_FORMAT inFormat,
-                                   _In_opt_count_c_(256) const uint32_t* pal8, _In_ DWORD flags )
+_Success_(return != false)
+static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestination, size_t outSize, _In_ DXGI_FORMAT outFormat, 
+                                   _In_reads_bytes_(inSize) LPCVOID pSource, size_t inSize, _In_ TEXP_LEGACY_FORMAT inFormat,
+                                   _In_reads_opt_(256) const uint32_t* pal8, _In_ DWORD flags )
 {
     assert( pDestination && outSize > 0 );
     assert( pSource && inSize > 0 );
@@ -881,8 +883,8 @@ static bool _LegacyExpandScanline( _Out_bytecap_(outSize) LPVOID pDestination, s
 //-------------------------------------------------------------------------------------
 // Converts or copies image data from pPixels into scratch image data
 //-------------------------------------------------------------------------------------
-static HRESULT _CopyImage( _In_bytecount_(size) const void* pPixels, _In_ size_t size, 
-                           _In_ const TexMetadata& metadata, _In_ DWORD cpFlags, _In_ DWORD convFlags, _In_opt_count_c_(256) const uint32_t *pal8, _In_ const ScratchImage& image )
+static HRESULT _CopyImage( _In_reads_bytes_(size) const void* pPixels, _In_ size_t size, 
+                           _In_ const TexMetadata& metadata, _In_ DWORD cpFlags, _In_ DWORD convFlags, _In_reads_opt_(256) const uint32_t *pal8, _In_ const ScratchImage& image )
 {
     assert( pPixels );
     assert( image.GetPixels() );
@@ -1146,6 +1148,7 @@ static HRESULT _CopyImageInPlace( DWORD convFlags, _In_ const ScratchImage& imag
 // Obtain metadata from DDS file in memory/on disk
 //-------------------------------------------------------------------------------------
 
+_Use_decl_annotations_
 HRESULT GetMetadataFromDDSMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadata& metadata )
 {
     if ( !pSource || size == 0 )
@@ -1154,6 +1157,7 @@ HRESULT GetMetadataFromDDSMemory( LPCVOID pSource, size_t size, DWORD flags, Tex
     return _DecodeDDSHeader( pSource, size, flags, metadata, 0 );
 }
 
+_Use_decl_annotations_
 HRESULT GetMetadataFromDDSFile( LPCWSTR szFile, DWORD flags, TexMetadata& metadata )
 {
     if ( !szFile )
@@ -1216,6 +1220,7 @@ HRESULT GetMetadataFromDDSFile( LPCWSTR szFile, DWORD flags, TexMetadata& metada
 //-------------------------------------------------------------------------------------
 // Load a DDS file in memory
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT LoadFromDDSMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadata* metadata, ScratchImage& image )
 {
     if ( !pSource || size == 0 )
@@ -1268,6 +1273,7 @@ HRESULT LoadFromDDSMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadat
 //-------------------------------------------------------------------------------------
 // Load a DDS file from disk
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT LoadFromDDSFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, ScratchImage& image )
 {
     if ( !szFile )
@@ -1442,6 +1448,7 @@ HRESULT LoadFromDDSFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, Scr
 //-------------------------------------------------------------------------------------
 // Save a DDS file to memory
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT SaveToDDSMemory( const Image* images, size_t nimages, const TexMetadata& metadata, DWORD flags, Blob& blob )
 {
     if ( !images || (nimages == 0) )
@@ -1569,6 +1576,7 @@ HRESULT SaveToDDSMemory( const Image* images, size_t nimages, const TexMetadata&
 //-------------------------------------------------------------------------------------
 // Save a DDS file to disk
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT SaveToDDSFile( const Image* images, size_t nimages, const TexMetadata& metadata, DWORD flags, LPCWSTR szFile )
 {
     if ( !szFile )

@@ -126,6 +126,7 @@ static HRESULT _PerformFlipRotateViaF32( _In_ const Image& srcImage, _In_ DWORD 
 //-------------------------------------------------------------------------------------
 // Flip/rotate image
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT FlipRotate( const Image& srcImage, DWORD flags, ScratchImage& image )
 {
     if ( !srcImage.pixels )
@@ -207,6 +208,7 @@ HRESULT FlipRotate( const Image& srcImage, DWORD flags, ScratchImage& image )
 //-------------------------------------------------------------------------------------
 // Flip/rotate image (complex)
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT FlipRotate( const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                     DWORD flags, ScratchImage& result )
 {

@@ -522,7 +522,7 @@ static HRESULT _EncodeSingleFrame( _In_ const Image& image, _In_ DWORD flags,
 //-------------------------------------------------------------------------------------
 // Encodes an image array
 //-------------------------------------------------------------------------------------
-static HRESULT _EncodeMultiframe( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags,
+static HRESULT _EncodeMultiframe( _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags,
                                   _In_ REFGUID guidContainerFormat, _Inout_ IStream* stream, _In_opt_ const GUID* targetFormat )
 {
     if ( !stream || nimages < 2 )
@@ -585,6 +585,7 @@ static HRESULT _EncodeMultiframe( _In_count_(nimages) const Image* images, _In_ 
 //-------------------------------------------------------------------------------------
 // Obtain metadata from WIC-supported file in memory
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT GetMetadataFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadata& metadata )
 {
     if ( !pSource || size == 0 )
@@ -633,6 +634,7 @@ HRESULT GetMetadataFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, Tex
 //-------------------------------------------------------------------------------------
 // Obtain metadata from WIC-supported file on disk
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT GetMetadataFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata& metadata )
 {
     if ( !szFile )
@@ -665,6 +667,7 @@ HRESULT GetMetadataFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata& metada
 //-------------------------------------------------------------------------------------
 // Load a WIC-supported file in memory
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT LoadFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadata* metadata, ScratchImage& image )
 {
     if ( !pSource || size == 0 )
@@ -734,6 +737,7 @@ HRESULT LoadFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadat
 //-------------------------------------------------------------------------------------
 // Load a WIC-supported file from disk
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT LoadFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, ScratchImage& image )
 {
     if ( !szFile )
@@ -788,6 +792,7 @@ HRESULT LoadFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, Scr
 //-------------------------------------------------------------------------------------
 // Save a WIC-supported file to memory
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID guidContainerFormat, Blob& blob, const GUID* targetFormat )
 {
     if ( !image.pixels )
@@ -833,6 +838,7 @@ HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID guidContainerF
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGUID guidContainerFormat, Blob& blob, const GUID* targetFormat )
 {
     if ( !images || nimages == 0 )
@@ -886,6 +892,7 @@ HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGU
 //-------------------------------------------------------------------------------------
 // Save a WIC-supported file to disk
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT SaveToWICFile( const Image& image, DWORD flags, REFGUID guidContainerFormat, LPCWSTR szFile, const GUID* targetFormat )
 {
     if ( !szFile )
@@ -914,6 +921,7 @@ HRESULT SaveToWICFile( const Image& image, DWORD flags, REFGUID guidContainerFor
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT SaveToWICFile( const Image* images, size_t nimages, DWORD flags, REFGUID guidContainerFormat, LPCWSTR szFile, const GUID* targetFormat )
 {
     if ( !szFile || !images || nimages == 0 )

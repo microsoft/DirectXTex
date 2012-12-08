@@ -24,6 +24,7 @@ extern bool _CalculateMipLevels3D( _In_ size_t width, _In_ size_t height, _In_ s
 //-------------------------------------------------------------------------------------
 // Determines number of image array entries and pixel size
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 void _DetermineImageArray( const TexMetadata& metadata, DWORD cpFlags,
                            size_t& nImages, size_t& pixelSize )
 {
@@ -102,6 +103,7 @@ void _DetermineImageArray( const TexMetadata& metadata, DWORD cpFlags,
 //-------------------------------------------------------------------------------------
 // Fills in the image array entries
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 bool _SetupImageArray( uint8_t *pMemory, size_t pixelSize,
                        const TexMetadata& metadata, DWORD cpFlags,
                        Image* images, size_t nImages )
@@ -229,6 +231,7 @@ bool _SetupImageArray( uint8_t *pMemory, size_t pixelSize,
 //-------------------------------------------------------------------------------------
 // Methods
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
 {
     if ( !IsValid(mdata.format) || IsVideo(mdata.format) )
@@ -309,6 +312,7 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT ScratchImage::Initialize1D( DXGI_FORMAT fmt, size_t length, size_t arraySize, size_t mipLevels )
 {
     if ( !IsValid(fmt) || IsVideo(fmt) || !length || !arraySize )
@@ -324,6 +328,7 @@ HRESULT ScratchImage::Initialize1D( DXGI_FORMAT fmt, size_t length, size_t array
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT ScratchImage::Initialize2D( DXGI_FORMAT fmt, size_t width, size_t height, size_t arraySize, size_t mipLevels )
 {
     if ( !IsValid(fmt) || IsVideo(fmt) || !width || !height || !arraySize )
@@ -369,6 +374,7 @@ HRESULT ScratchImage::Initialize2D( DXGI_FORMAT fmt, size_t width, size_t height
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT ScratchImage::Initialize3D( DXGI_FORMAT fmt, size_t width, size_t height, size_t depth, size_t mipLevels )
 {
     if ( !IsValid(fmt) || IsVideo(fmt) || !width || !height || !depth )
@@ -417,6 +423,7 @@ HRESULT ScratchImage::Initialize3D( DXGI_FORMAT fmt, size_t width, size_t height
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT ScratchImage::InitializeCube( DXGI_FORMAT fmt, size_t width, size_t height, size_t nCubes, size_t mipLevels )
 {
     if ( !IsValid(fmt) || IsVideo(fmt)  || !width || !height || !nCubes )
@@ -432,6 +439,7 @@ HRESULT ScratchImage::InitializeCube( DXGI_FORMAT fmt, size_t width, size_t heig
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT ScratchImage::InitializeFromImage( const Image& srcImage, bool allow1D )
 {
     HRESULT hr = ( srcImage.height > 1 || !allow1D )
@@ -459,6 +467,7 @@ HRESULT ScratchImage::InitializeFromImage( const Image& srcImage, bool allow1D )
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT ScratchImage::InitializeArrayFromImages( const Image* images, size_t nImages, bool allow1D )
 {
     if ( !images || !nImages )
@@ -509,6 +518,7 @@ HRESULT ScratchImage::InitializeArrayFromImages( const Image* images, size_t nIm
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT ScratchImage::InitializeCubeFromImages( const Image* images, size_t nImages )
 {
     if ( !images || !nImages )
@@ -527,6 +537,7 @@ HRESULT ScratchImage::InitializeCubeFromImages( const Image* images, size_t nIma
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT ScratchImage::Initialize3DFromImages( const Image* images, size_t depth )
 {
     if ( !images || !depth )
@@ -594,6 +605,7 @@ void ScratchImage::Release()
     memset(&_metadata, 0, sizeof(_metadata));
 }
 
+_Use_decl_annotations_
 bool ScratchImage::OverrideFormat( DXGI_FORMAT f )
 {
     if ( !_image )
@@ -620,6 +632,7 @@ bool ScratchImage::OverrideFormat( DXGI_FORMAT f )
     return true;
 }
 
+_Use_decl_annotations_
 const Image* ScratchImage::GetImage(size_t mip, size_t item, size_t slice) const
 {
     if ( mip >= _metadata.mipLevels )

@@ -21,6 +21,7 @@
 // DXGI Format Utilities
 //=====================================================================================
 
+_Use_decl_annotations_
 inline bool IsValid( DXGI_FORMAT fmt )
 {
 #ifdef DXGI_1_2_FORMATS
@@ -30,6 +31,7 @@ inline bool IsValid( DXGI_FORMAT fmt )
 #endif
 }
 
+_Use_decl_annotations_
 inline bool IsCompressed( DXGI_FORMAT fmt )
 {
     switch ( fmt )
@@ -62,11 +64,14 @@ inline bool IsCompressed( DXGI_FORMAT fmt )
     }
 }
 
+_Use_decl_annotations_
 inline bool IsPacked( DXGI_FORMAT fmt )
 {
     return ( (fmt == DXGI_FORMAT_R8G8_B8G8_UNORM) || (fmt == DXGI_FORMAT_G8R8_G8B8_UNORM) );
 }
 
+
+_Use_decl_annotations_
 inline bool IsVideo( DXGI_FORMAT fmt )
 {
 #ifdef DXGI_1_2_FORMATS
@@ -102,6 +107,7 @@ inline bool IsVideo( DXGI_FORMAT fmt )
 #endif
 }
 
+_Use_decl_annotations_
 inline bool IsSRGB( DXGI_FORMAT fmt )
 {
     switch( fmt )
@@ -120,6 +126,7 @@ inline bool IsSRGB( DXGI_FORMAT fmt )
     }
 }
 
+_Use_decl_annotations_
 inline bool IsTypeless( DXGI_FORMAT fmt )
 {
     switch( fmt )
@@ -157,7 +164,8 @@ inline bool IsTypeless( DXGI_FORMAT fmt )
     }
 }
 
-inline size_t ComputeScanlines( _In_ DXGI_FORMAT fmt, _In_ size_t height )
+_Use_decl_annotations_
+inline size_t ComputeScanlines( DXGI_FORMAT fmt, size_t height )
 {
     switch ( fmt )
     {
@@ -192,6 +200,7 @@ inline size_t ComputeScanlines( _In_ DXGI_FORMAT fmt, _In_ size_t height )
 //=====================================================================================
 // Image I/O
 //=====================================================================================
+_Use_decl_annotations_
 inline HRESULT SaveToDDSMemory( const Image& image, DWORD flags, Blob& blob )
 {
     TexMetadata mdata;
@@ -207,6 +216,7 @@ inline HRESULT SaveToDDSMemory( const Image& image, DWORD flags, Blob& blob )
     return SaveToDDSMemory( &image, 1, mdata, flags, blob );
 }
 
+_Use_decl_annotations_
 inline HRESULT SaveToDDSFile( const Image& image, DWORD flags, LPCWSTR szFile )
 {
     TexMetadata mdata;

@@ -22,6 +22,7 @@
 
 #include "bc.h"
 
+
 namespace DirectX
 {
 
@@ -432,6 +433,7 @@ static HRESULT _DecompressBC( _In_ const Image& cImage, _In_ const Image& result
 //-------------------------------------------------------------------------------------
 // Compression
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT Compress( const Image& srcImage, DXGI_FORMAT format, DWORD compress, float alphaRef, ScratchImage& image )
 {
     if ( IsCompressed(srcImage.format) || !IsCompressed(format) || IsTypeless(format) )
@@ -490,6 +492,7 @@ HRESULT Compress( const Image& srcImage, DXGI_FORMAT format, DWORD compress, flo
     return hr;
 }
 
+_Use_decl_annotations_
 HRESULT Compress( const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                   DXGI_FORMAT format, DWORD compress, float alphaRef, ScratchImage& cImages )
 {
@@ -585,6 +588,7 @@ HRESULT Compress( const Image* srcImages, size_t nimages, const TexMetadata& met
 //-------------------------------------------------------------------------------------
 // Decompression
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT Decompress( const Image& cImage, DXGI_FORMAT format, ScratchImage& image )
 {
     if ( IsCompressed(format) || IsTypeless(format) )
@@ -623,6 +627,7 @@ HRESULT Decompress( const Image& cImage, DXGI_FORMAT format, ScratchImage& image
     return hr;
 }
 
+_Use_decl_annotations_
 HRESULT Decompress( const Image* cImages, size_t nimages, const TexMetadata& metadata,
                     DXGI_FORMAT format, ScratchImage& images )
 {

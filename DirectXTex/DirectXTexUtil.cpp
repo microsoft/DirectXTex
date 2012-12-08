@@ -61,6 +61,7 @@ namespace DirectX
 // WIC Utilities
 //=====================================================================================
 
+_Use_decl_annotations_
 DXGI_FORMAT _WICToDXGI( const GUID& guid )
 {
     for( size_t i=0; i < _countof(g_WICFormats); ++i )
@@ -80,6 +81,7 @@ DXGI_FORMAT _WICToDXGI( const GUID& guid )
     return DXGI_FORMAT_UNKNOWN;
 }
 
+_Use_decl_annotations_
 bool _DXGIToWIC( DXGI_FORMAT format, GUID& guid )
 {
     switch( format )
@@ -195,7 +197,8 @@ IWICImagingFactory* _GetWIC()
 //-------------------------------------------------------------------------------------
 // Public helper function to get common WIC codec GUIDs
 //-------------------------------------------------------------------------------------
-REFGUID GetWICCodec( _In_ WICCodecs codec )
+_Use_decl_annotations_
+REFGUID GetWICCodec( WICCodecs codec )
 {
     switch( codec )
     {
@@ -233,6 +236,7 @@ REFGUID GetWICCodec( _In_ WICCodecs codec )
 //-------------------------------------------------------------------------------------
 // Returns bits-per-pixel for a given DXGI format, or 0 on failure
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 size_t BitsPerPixel( DXGI_FORMAT fmt )
 {
     switch( fmt )
@@ -359,7 +363,6 @@ size_t BitsPerPixel( DXGI_FORMAT fmt )
         return 16;
 
     // We don't support the video formats ( see IsVideo function )
-
 #endif // DXGI_1_2_FORMATS
 
     default:
@@ -372,6 +375,7 @@ size_t BitsPerPixel( DXGI_FORMAT fmt )
 // Computes the image row pitch in bytes, and the slice ptich (size in bytes of the image)
 // based on DXGI format, width, and height
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 void ComputePitch( DXGI_FORMAT fmt, size_t width, size_t height,
                    size_t& rowPitch, size_t& slicePitch, DWORD flags )
 {
@@ -429,7 +433,8 @@ void ComputePitch( DXGI_FORMAT fmt, size_t width, size_t height,
 //-------------------------------------------------------------------------------------
 // Converts to an SRGB equivalent type if available
 //-------------------------------------------------------------------------------------
-DXGI_FORMAT MakeSRGB( _In_ DXGI_FORMAT fmt )
+_Use_decl_annotations_
+DXGI_FORMAT MakeSRGB( DXGI_FORMAT fmt )
 {
     switch( fmt )
     {
@@ -463,7 +468,8 @@ DXGI_FORMAT MakeSRGB( _In_ DXGI_FORMAT fmt )
 //-------------------------------------------------------------------------------------
 // Converts to a format to an equivalent TYPELESS format if available
 //-------------------------------------------------------------------------------------
-DXGI_FORMAT MakeTypeless( _In_ DXGI_FORMAT fmt )
+_Use_decl_annotations_
+DXGI_FORMAT MakeTypeless( DXGI_FORMAT fmt )
 {
     switch( fmt )
     {
@@ -579,7 +585,8 @@ DXGI_FORMAT MakeTypeless( _In_ DXGI_FORMAT fmt )
 //-------------------------------------------------------------------------------------
 // Converts to a TYPELESS format to an equivalent UNORM format if available
 //-------------------------------------------------------------------------------------
-DXGI_FORMAT MakeTypelessUNORM( _In_ DXGI_FORMAT fmt )
+_Use_decl_annotations_
+DXGI_FORMAT MakeTypelessUNORM( DXGI_FORMAT fmt )
 {
     switch( fmt )
     {
@@ -637,7 +644,8 @@ DXGI_FORMAT MakeTypelessUNORM( _In_ DXGI_FORMAT fmt )
 //-------------------------------------------------------------------------------------
 // Converts to a TYPELESS format to an equivalent FLOAT format if available
 //-------------------------------------------------------------------------------------
-DXGI_FORMAT MakeTypelessFLOAT( _In_ DXGI_FORMAT fmt )
+_Use_decl_annotations_
+DXGI_FORMAT MakeTypelessFLOAT( DXGI_FORMAT fmt )
 {
     switch( fmt )
     {
@@ -672,7 +680,8 @@ DXGI_FORMAT MakeTypelessFLOAT( _In_ DXGI_FORMAT fmt )
 // TexMetadata
 //=====================================================================================
 
-size_t TexMetadata::ComputeIndex( _In_ size_t mip, _In_ size_t item, _In_ size_t slice ) const
+_Use_decl_annotations_
+size_t TexMetadata::ComputeIndex( size_t mip, size_t item, size_t slice ) const
 {
     if ( mip >= mipLevels )
         return size_t(-1);
@@ -737,6 +746,7 @@ void Blob::Release()
     _size = 0;
 }
 
+_Use_decl_annotations_
 HRESULT Blob::Initialize( size_t size )
 {
     if ( !size )

@@ -48,7 +48,7 @@ static inline float _EvaluateColor( _In_ FXMVECTOR val, _In_ DWORD flags )
     }
 }
 
-static void _EvaluateRow( _In_count_(width) const XMVECTOR* pSource, _Out_cap_(width+2) float* pDest,
+static void _EvaluateRow( _In_reads_(width) const XMVECTOR* pSource, _Out_writes_(width+2) float* pDest,
                           _In_ size_t width, _In_ DWORD flags )
 {
     assert( pSource && pDest );
@@ -253,6 +253,7 @@ static HRESULT _ComputeNMap( _In_ const Image& srcImage, _In_ DWORD flags, _In_ 
 //-------------------------------------------------------------------------------------
 // Generates a normal map from a height-map
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT ComputeNormalMap( const Image& srcImage, DWORD flags, float amplitude,
                           DXGI_FORMAT format, ScratchImage& normalMap )
 {
@@ -301,6 +302,7 @@ HRESULT ComputeNormalMap( const Image& srcImage, DWORD flags, float amplitude,
     return S_OK;
 }
 
+_Use_decl_annotations_
 HRESULT ComputeNormalMap( const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                           DWORD flags, float amplitude, DXGI_FORMAT format, ScratchImage& normalMaps )
 {

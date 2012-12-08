@@ -122,9 +122,10 @@ namespace DirectX
     void _DetermineImageArray( _In_ const TexMetadata& metadata, _In_ DWORD cpFlags,
                                _Out_ size_t& nImages, _Out_ size_t& pixelSize );
 
-    bool _SetupImageArray( _In_bytecount_(pixelSize) uint8_t *pMemory, _In_ size_t pixelSize,
+    _Success_(return != false)
+    bool _SetupImageArray( _In_reads_bytes_(pixelSize) uint8_t *pMemory, _In_ size_t pixelSize,
                            _In_ const TexMetadata& metadata, _In_ DWORD cpFlags,
-                           _Out_cap_(nImages) Image* images, _In_ size_t nImages );
+                           _Out_writes_(nImages) Image* images, _In_ size_t nImages );
 
     //---------------------------------------------------------------------------------
     // Conversion helper functions
@@ -160,38 +161,45 @@ namespace DirectX
 
     DWORD _GetConvertFlags( _In_ DXGI_FORMAT format );
 
-    void _CopyScanline( _Out_bytecap_(outSize) LPVOID pDestination, _In_ size_t outSize, 
-                        _In_bytecount_(inSize) LPCVOID pSource, _In_ size_t inSize,
+    void _CopyScanline( _When_(pDestination == pSource, _Inout_updates_bytes_(outSize))
+                        _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
+                        LPVOID pDestination, _In_ size_t outSize, 
+                        _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
                         _In_ DXGI_FORMAT format, _In_ DWORD flags );
 
-    void _SwizzleScanline( _Out_bytecap_(outSize) LPVOID pDestination, _In_ size_t outSize, 
-                           _In_bytecount_(inSize) LPCVOID pSource, _In_ size_t inSize,
+    void _SwizzleScanline( _When_(pDestination == pSource, _In_)
+                           _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
+                           LPVOID pDestination, _In_ size_t outSize, 
+                           _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
                            _In_ DXGI_FORMAT format, _In_ DWORD flags );
 
-    bool _ExpandScanline( _Out_bytecap_(outSize) LPVOID pDestination, _In_ size_t outSize,
+    _Success_(return != false)
+    bool _ExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestination, _In_ size_t outSize,
                           _In_ DXGI_FORMAT outFormat, 
-                          _In_bytecount_(inSize) LPCVOID pSource, _In_ size_t inSize,
+                          _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
                           _In_ DXGI_FORMAT inFormat, _In_ DWORD flags );
 
-    bool _LoadScanline( _Out_cap_(count) XMVECTOR* pDestination, _In_ size_t count,
-                        _In_bytecount_(size) LPCVOID pSource, _In_ size_t size, _In_ DXGI_FORMAT format );
+    _Success_(return != false)
+    bool _LoadScanline( _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,
+                        _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DXGI_FORMAT format );
 
-    bool _StoreScanline( _Out_bytecap_(size) LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
-                         _In_count_(count) const XMVECTOR* pSource, _In_ size_t count );
+    _Success_(return != false)
+    bool _StoreScanline( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
+                         _In_reads_(count) const XMVECTOR* pSource, _In_ size_t count );
 
     HRESULT _ConvertToR32G32B32A32( _In_ const Image& srcImage, _Inout_ ScratchImage& image );
 
     HRESULT _ConvertFromR32G32B32A32( _In_ const Image& srcImage, _In_ const Image& destImage );
     HRESULT _ConvertFromR32G32B32A32( _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _Inout_ ScratchImage& image );
-    HRESULT _ConvertFromR32G32B32A32( _In_count_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+    HRESULT _ConvertFromR32G32B32A32( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                                       _In_ DXGI_FORMAT format, _Out_ ScratchImage& result );
 
-    void _ConvertScanline( _Inout_count_(count) XMVECTOR* pBuffer, _In_ size_t count,
+    void _ConvertScanline( _Inout_updates_all_(count) XMVECTOR* pBuffer, _In_ size_t count,
                            _In_ DXGI_FORMAT outFormat, _In_ DXGI_FORMAT inFormat, _In_ DWORD flags );
 
     //---------------------------------------------------------------------------------
     // DDS helper functions
     HRESULT _EncodeDDSHeader( _In_ const TexMetadata& metadata, DWORD flags,
-                              _Out_opt_cap_x_(maxsize) LPVOID pDestination, _In_ size_t maxsize, _Out_ size_t& required );
+                              _Out_writes_bytes_to_opt_(maxsize, required) LPVOID pDestination, _In_ size_t maxsize, _Out_ size_t& required );
 
 }; // namespace

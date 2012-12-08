@@ -20,7 +20,7 @@ namespace DirectX
 
 //-------------------------------------------------------------------------------------
 static HRESULT _ComputeMSE( _In_ const Image& image1, _In_ const Image& image2,
-                            _Out_ float& mse, _Out_opt_cap_c_(4) float* mseV )
+                            _Out_ float& mse, _Out_writes_opt_(4) float* mseV )
 {
     if ( !image1.pixels || !image2.pixels )
         return E_POINTER;
@@ -89,6 +89,7 @@ static HRESULT _ComputeMSE( _In_ const Image& image1, _In_ const Image& image2,
 //-------------------------------------------------------------------------------------
 // Copies a rectangle from one image into another
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT CopyRectangle( const Image& srcImage, const Rect& srcRect, const Image& dstImage, DWORD filter, size_t xOffset, size_t yOffset )
 {
     if ( !srcImage.pixels || !dstImage.pixels )
@@ -193,6 +194,7 @@ HRESULT CopyRectangle( const Image& srcImage, const Rect& srcRect, const Image& 
 //-------------------------------------------------------------------------------------
 // Computes the Mean-Squared-Error (MSE) between two images
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT ComputeMSE( const Image& image1, const Image& image2, float& mse, float* mseV  )
 {
     if ( !image1.pixels || !image2.pixels )

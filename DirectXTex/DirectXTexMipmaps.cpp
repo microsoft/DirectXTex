@@ -29,7 +29,7 @@ inline static bool ispow2( _In_ size_t x )
     return ((x != 0) && !(x & (x - 1)));
 }
 
-static size_t _CountMips( _In_ size_t width, _In_ size_t height)
+static size_t _CountMips( _In_ size_t width, _In_ size_t height )
 {
     size_t mipLevels = 1;
 
@@ -66,7 +66,7 @@ bool _CalculateMipLevels( _In_ size_t width, _In_ size_t height, _Inout_ size_t&
     return true;
 }
 
-static size_t _CountMips3D( _In_ size_t width, _In_ size_t height, _In_ size_t depth)
+static size_t _CountMips3D( _In_ size_t width, _In_ size_t height, _In_ size_t depth )
 {
     size_t mipLevels = 1;
 
@@ -337,6 +337,7 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBi
                     }
                     else
                     {
+#pragma prefast( suppress : 26014, "No overflow possible here" );
                         memcpy_s( colorWithAlphaData + colorWithAlphaIndex, colorWithAlphaBytesPerPixel, colorData + colorIndex, colorBytesInPixel );
                     }
                 }
@@ -486,7 +487,7 @@ static HRESULT _GenerateMipMapsUsingWIC( _In_ const Image& baseImage, _In_ DWORD
 //-------------------------------------------------------------------------------------
 // Generate volume mip-map helpers
 //-------------------------------------------------------------------------------------
-static HRESULT _Setup3DMips( _In_count_(depth) const Image* baseImages, _In_ size_t depth, size_t levels,
+static HRESULT _Setup3DMips( _In_reads_(depth) const Image* baseImages, _In_ size_t depth, size_t levels,
                              _Out_ ScratchImage& mipChain )
 {
     if ( !baseImages || !depth )
@@ -841,6 +842,7 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
 //-------------------------------------------------------------------------------------
 // Generate mipmap chain
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, ScratchImage& mipChain, bool allow1D )
 {
     if ( !IsValid( baseImage.format ) )
@@ -908,6 +910,7 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
     }
 }
 
+_Use_decl_annotations_
 HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                          DWORD filter, size_t levels, ScratchImage& mipChain )
 {
@@ -1010,6 +1013,7 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
 //-------------------------------------------------------------------------------------
 // Generate mipmap chain for volume texture
 //-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, size_t levels, ScratchImage& mipChain )
 {
     if ( !baseImages || !depth )
@@ -1083,6 +1087,7 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
     }
 }
 
+_Use_decl_annotations_
 HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                            DWORD filter, size_t levels, ScratchImage& mipChain )
 {
