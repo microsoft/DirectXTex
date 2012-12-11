@@ -40,11 +40,21 @@
 #include <stdint.h>
 #pragma warning(pop)
 
+#if defined(_MSC_VER) && (_MSC_VER<1610) && !defined(_In_reads_)
+#define _In_reads_(exp)
+#define _Out_writes_(exp)
+#define _In_reads_bytes_(exp)
+#endif
+
+#ifndef _Use_decl_annotations_
+#define _Use_decl_annotations_
+#endif
+
 namespace DirectX
 {
     HRESULT CreateWICTextureFromMemory( _In_ ID3D11Device* d3dDevice,
                                         _In_opt_ ID3D11DeviceContext* d3dContext,
-                                        _In_bytecount_(wicDataSize) const uint8_t* wicData,
+                                        _In_reads_bytes_(wicDataSize) const uint8_t* wicData,
                                         _In_ size_t wicDataSize,
                                         _Out_opt_ ID3D11Resource** texture,
                                         _Out_opt_ ID3D11ShaderResourceView** textureView,
@@ -61,7 +71,7 @@ namespace DirectX
 
     HRESULT CreateWICTextureFromMemoryEx( _In_ ID3D11Device* d3dDevice,
                                           _In_opt_ ID3D11DeviceContext* d3dContext,
-                                          _In_bytecount_(wicDataSize) const uint8_t* wicData,
+                                          _In_reads_bytes_(wicDataSize) const uint8_t* wicData,
                                           _In_ size_t wicDataSize,
                                           _In_ size_t maxsize,
                                           _In_ D3D11_USAGE usage,
