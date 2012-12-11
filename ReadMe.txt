@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-November 15, 2012
+December 11, 2012
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -14,11 +14,14 @@ writer since this image file format is commonly used for texture content process
 but is not currently supported by a built-in WIC codec.
 
 The source is written for Visual C++ 2010 using the Direct3D headers from either
-a current DirectX SDK or Windows SDK. It can also be compiled using Visual Studio 2012 and the
-Windows SDK 8.0 headers.
+the legacy DirectX SDK or recent Windows SDK. It can also be compiled using Visual Studio 2012
+and the Windows SDK 8.0 headers.
 
-It is recommended that you make use of Visual C++ 2010 Service Pack 1 or VS 2012, and
-Windows 7 Service Pack 1 or Windows 8.
+It is recommended that you make use of Visual C++ 2010 Service Pack 1 or VS 2012 with
+the Windows 8.0 SDK, and Windows 7 Service Pack 1 or Windows 8.
+
+Details on using the Windows 8.0 SDK with VS 2010 are described on the Visual C++ Team Blog:
+<http://blogs.msdn.com/b/vcblog/archive/2012/11/23/using-the-windows-8-sdk-with-visual-studio-2010-configuring-multiple-projects.aspx>
 
 DDSTextureLoader\
     This contains a streamlined version of the DirectX SDK sample DDSWithoutD3DX11 texture
@@ -118,6 +121,12 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+December 11, 2012 
+    Ex versions of CreateTexture, CreateShaderResourceView, DDSTextureLoader and WICTextureLoader
+    Fixed BC2 and BC3 decompression issue for unusual color encoding case
+    Converted annotation to SAL2 for improved VS 2012 /analyze experience
+    Updated DirectXTex, DDSView, and Texconv with VS 2010 + Windows 8.0 SDK project using official 'property sheets'
 
 November 15, 2012
     Added support for WIC2 when available on Windows 8 and Windows 7 with KB 2670838
