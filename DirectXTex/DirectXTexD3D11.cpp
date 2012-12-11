@@ -538,13 +538,13 @@ HRESULT CreateShaderResourceView( ID3D11Device* pDevice, const Image* srcImages,
                                   ID3D11ShaderResourceView** ppSRV )
 {
     return CreateShaderResourceViewEx( pDevice, srcImages, nimages, metadata,
-                                       D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0,
+                                       D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0, false,
                                        ppSRV );
 }
 
 _Use_decl_annotations_
 HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImages, size_t nimages, const TexMetadata& metadata,
-                                    D3D11_USAGE usage, unsigned int bindFlags, unsigned int cpuAccessFlags, unsigned int miscFlags,
+                                    D3D11_USAGE usage, unsigned int bindFlags, unsigned int cpuAccessFlags, unsigned int miscFlags, bool forceSRGB,
                                     ID3D11ShaderResourceView** ppSRV )
 {
     if ( !ppSRV )
@@ -561,7 +561,10 @@ HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImage
 
     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
     memset( &SRVDesc, 0, sizeof(SRVDesc) );
-    SRVDesc.Format = metadata.format;
+    if ( forceSRGB )
+        SRVDesc.Format = MakeSRGB( metadata.format );
+    else
+        SRVDesc.Format = metadata.format;
 
     switch ( metadata.dimension )
     {
