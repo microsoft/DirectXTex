@@ -38,6 +38,7 @@ enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
     OPT_SEPALPHA,
     OPT_TYPELESS_UNORM,
     OPT_TYPELESS_FLOAT,
+    OPT_PREMUL_ALPHA,
 };
 
 struct SConversion
@@ -80,6 +81,7 @@ SValue g_pOptions[] =
     { L"sepalpha",      OPT_SEPALPHA  },
     { L"tu",            OPT_TYPELESS_UNORM },
     { L"tf",            OPT_TYPELESS_FLOAT },
+    { L"pmalpha",       OPT_PREMUL_ALPHA },
     { nullptr,          0             }
 };
 
@@ -336,6 +338,7 @@ void PrintUsage()
     wprintf( L"   -hflip              horizonal flip of source image\n");
     wprintf( L"   -vflip              vertical flip of source image\n");
     wprintf( L"   -sepalpha           resize/generate mips alpha channel separately from color channels\n");
+    wprintf( L"   -pmalpha            convert final texture to premultiply alpha\n");
     wprintf( L"   -t{u|f}             DDS files with TYPELESS format is treated as UNORM or FLOAT\n");
     wprintf( L"   -dword              Use DWORD instead of BYTE alignment (DDS input only)\n");
     wprintf( L"   -dx10               Force use of 'DX10' extended header (DDS output only)\n");
@@ -417,7 +420,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             dwOptions |= 1 << dwOption;
 
-            if( (OPT_NOLOGO != dwOption) && (OPT_SEPALPHA != dwOption) && (OPT_TYPELESS_UNORM != dwOption) && (OPT_TYPELESS_FLOAT != dwOption) 
+            if( (OPT_NOLOGO != dwOption) && (OPT_TYPELESS_UNORM != dwOption) && (OPT_TYPELESS_FLOAT != dwOption)
+                && (OPT_SEPALPHA != dwOption) && (OPT_PREMUL_ALPHA != dwOption)
                 && (OPT_SRGB != dwOption) && (OPT_SRGBI != dwOption) && (OPT_SRGBO != dwOption)
                 && (OPT_HFLIP != dwOption) && (OPT_VFLIP != dwOption)
                 && (OPT_DDS_DWORD_ALIGN != dwOption) && (OPT_USE_DX10 != dwOption) )
@@ -960,6 +964,36 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.mipLevels == tinfo.mipLevels );
             assert( info.miscFlags == tinfo.miscFlags );
             assert( info.dimension == tinfo.dimension );
+
+            delete image;
+            image = timage;
+        }
+
+        // --- Premultiplied alpha (if requested) --------------------------------------
+        if ( ( dwOptions & (1 << OPT_PREMUL_ALPHA) )
+             && HasAlpha( info.format )
+             && info.format != DXGI_FORMAT_A8_UNORM )
+        {
+            const Image* img = image->GetImage(0,0,0);
+            assert( img );
+            size_t nimg = image->GetImageCount();
+
+            ScratchImage *timage = new ScratchImage;
+            if ( !timage )
+            {
+                wprintf( L" ERROR: Memory allocation failed\n" );
+                delete image;
+                goto LError;
+            }
+
+            hr = PremultiplyAlpha( img, nimg, info, *timage );
+            if ( FAILED(hr) )
+            {
+                wprintf( L" FAILED [premultiply alpha] (%x)\n", hr);
+                delete timage;
+                delete image;
+                continue;
+            }
 
             delete image;
             image = timage;

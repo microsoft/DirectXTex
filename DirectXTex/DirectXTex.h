@@ -60,6 +60,8 @@ namespace DirectX
     bool IsSRGB( _In_ DXGI_FORMAT fmt );
     bool IsTypeless( _In_ DXGI_FORMAT fmt );
 
+    bool HasAlpha( _In_ DXGI_FORMAT fmt );
+
     size_t BitsPerPixel( _In_ DXGI_FORMAT fmt );
 
     enum CP_FLAGS
@@ -388,6 +390,10 @@ namespace DirectX
                                _In_ DWORD filter, _In_ size_t levels, _Out_ ScratchImage& mipChain );
         // levels of '0' indicates a full mipchain, otherwise is generates that number of total levels (including the source base image)
         // Defaults to Fant filtering which is equivalent to a box filter
+
+    HRESULT PremultiplyAlpha( _In_ const Image& srcImage, _Out_ ScratchImage& image );
+    HRESULT PremultiplyAlpha( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata, _Out_ ScratchImage& result );
+        // Converts to a premultiplied alpha version of the texture
 
     enum TEX_COMPRESS_FLAGS
     {
