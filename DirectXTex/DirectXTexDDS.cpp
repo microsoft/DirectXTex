@@ -528,7 +528,7 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
     {
     case TEX_DIMENSION_TEXTURE1D:
 #ifdef _AMD64_
-        if ( metadata.height > 0xFFFFFFFF )
+        if ( metadata.width > 0xFFFFFFFF )
             return E_INVALIDARG;
 #endif
 
