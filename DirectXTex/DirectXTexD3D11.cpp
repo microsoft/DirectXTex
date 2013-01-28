@@ -342,13 +342,13 @@ HRESULT CreateTexture( ID3D11Device* pDevice, const Image* srcImages, size_t nim
                        ID3D11Resource** ppResource )
 {
     return CreateTextureEx( pDevice, srcImages, nimages, metadata,
-                            D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0,
+                            D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0, false,
                             ppResource );
 }
 
 _Use_decl_annotations_
 HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t nimages, const TexMetadata& metadata,
-                         D3D11_USAGE usage, unsigned int bindFlags, unsigned int cpuAccessFlags, unsigned int miscFlags,
+                         D3D11_USAGE usage, unsigned int bindFlags, unsigned int cpuAccessFlags, unsigned int miscFlags, bool forceSRGB,
                          ID3D11Resource** ppResource )
 {
     if ( !pDevice || !srcImages || !nimages || !ppResource )
@@ -468,6 +468,8 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
     // Create texture using static initialization data
     HRESULT hr = E_FAIL;
 
+    DXGI_FORMAT tformat = ( forceSRGB ) ? MakeSRGB( metadata.format ) : metadata.format;
+
     switch ( metadata.dimension )
     {
     case TEX_DIMENSION_TEXTURE1D:
@@ -476,7 +478,7 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
             desc.Width = static_cast<UINT>( metadata.width );
             desc.MipLevels = static_cast<UINT>( metadata.mipLevels );
             desc.ArraySize = static_cast<UINT>( metadata.arraySize );
-            desc.Format = metadata.format;
+            desc.Format = tformat;
             desc.Usage = usage;
             desc.BindFlags = bindFlags;
             desc.CPUAccessFlags = cpuAccessFlags;
@@ -493,7 +495,7 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
             desc.Height = static_cast<UINT>( metadata.height ); 
             desc.MipLevels = static_cast<UINT>( metadata.mipLevels );
             desc.ArraySize = static_cast<UINT>( metadata.arraySize );
-            desc.Format = metadata.format;
+            desc.Format = tformat;
             desc.SampleDesc.Count = 1;
             desc.SampleDesc.Quality = 0;
             desc.Usage = usage;
@@ -515,7 +517,7 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
             desc.Height = static_cast<UINT>( metadata.height );
             desc.Depth = static_cast<UINT>( metadata.depth );
             desc.MipLevels = static_cast<UINT>( metadata.mipLevels );
-            desc.Format = metadata.format;
+            desc.Format = tformat;
             desc.Usage = usage;
             desc.BindFlags = bindFlags;
             desc.CPUAccessFlags = cpuAccessFlags;
@@ -552,7 +554,7 @@ HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImage
 
     ScopedObject<ID3D11Resource> resource;
     HRESULT hr = CreateTextureEx( pDevice, srcImages, nimages, metadata,
-                                  usage, bindFlags, cpuAccessFlags, miscFlags,
+                                  usage, bindFlags, cpuAccessFlags, miscFlags, forceSRGB,
                                   &resource );
     if ( FAILED(hr) )
         return hr;

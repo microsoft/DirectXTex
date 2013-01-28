@@ -486,7 +486,7 @@ namespace DirectX
                                       _Outptr_ ID3D11ShaderResourceView** ppSRV );
 
     HRESULT CreateTextureEx( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                             _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags,
+                             _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ bool forceSRGB,
                              _Outptr_ ID3D11Resource** ppResource );
 
     HRESULT CreateShaderResourceViewEx( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
