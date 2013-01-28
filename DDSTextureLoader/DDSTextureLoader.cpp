@@ -207,7 +207,7 @@ static HRESULT LoadTextureDataFromFile( _In_z_ const wchar_t* fileName,
     }
 
     // create enough space for the file data
-    ddsData.reset( new uint8_t[ FileSize.LowPart ] );
+    ddsData.reset( new (std::nothrow) uint8_t[ FileSize.LowPart ] );
     if (!ddsData )
     {
         return E_OUTOFMEMORY;
@@ -763,7 +763,9 @@ static HRESULT FillInitData( _In_ size_t width,
                              _Out_writes_(mipCount*arraySize) D3D11_SUBRESOURCE_DATA* initData )
 {
     if ( !bitData || !initData )
+    {
         return E_POINTER;
+    }
 
     skipMip = 0;
     twidth = 0;
@@ -801,6 +803,8 @@ static HRESULT FillInitData( _In_ size_t width,
                     tdepth = d;
                 }
 
+                assert(index < mipCount * arraySize);
+                _Analysis_assume_(index < mipCount * arraySize);
                 initData[index].pSysMem = ( const void* )pSrcBits;
                 initData[index].SysMemPitch = static_cast<UINT>( RowBytes );
                 initData[index].SysMemSlicePitch = static_cast<UINT>( NumBytes );
@@ -862,6 +866,11 @@ static HRESULT CreateD3DResources( _In_ ID3D11Device* d3dDevice,
 
     HRESULT hr = E_FAIL;
 
+    if ( forceSRGB )
+    {
+        format = MakeSRGB( format );
+    }
+
     switch ( resDim ) 
     {
         case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
@@ -887,12 +896,7 @@ static HRESULT CreateD3DResources( _In_ ID3D11Device* d3dDevice,
                     {
                         D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
                         memset( &SRVDesc, 0, sizeof( SRVDesc ) );
-                        if ( forceSRGB )
-                        {
-                            SRVDesc.Format = MakeSRGB( format );
-                        }
-                        else
-                            SRVDesc.Format = format;
+                        SRVDesc.Format = format;
 
                         if (arraySize > 1)
                         {
@@ -959,12 +963,7 @@ static HRESULT CreateD3DResources( _In_ ID3D11Device* d3dDevice,
                     {
                         D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
                         memset( &SRVDesc, 0, sizeof( SRVDesc ) );
-                        if ( forceSRGB )
-                        {
-                            SRVDesc.Format = MakeSRGB( format );
-                        }
-                        else
-                            SRVDesc.Format = format;
+                        SRVDesc.Format = format;
 
                         if (isCubeMap)
                         {
@@ -1042,12 +1041,7 @@ static HRESULT CreateD3DResources( _In_ ID3D11Device* d3dDevice,
                     {
                         D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
                         memset( &SRVDesc, 0, sizeof( SRVDesc ) );
-                        if ( forceSRGB )
-                        {
-                            SRVDesc.Format = MakeSRGB( format );
-                        }
-                        else
-                            SRVDesc.Format = format;
+                        SRVDesc.Format = format;
 
                         SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
                         SRVDesc.Texture3D.MipLevels = desc.MipLevels;
@@ -1251,7 +1245,7 @@ static HRESULT CreateTextureFromDDS( _In_ ID3D11Device* d3dDevice,
     }
 
     // Create the texture
-    std::unique_ptr<D3D11_SUBRESOURCE_DATA[]> initData( new D3D11_SUBRESOURCE_DATA[ mipCount * arraySize ] );
+    std::unique_ptr<D3D11_SUBRESOURCE_DATA[]> initData( new (std::nothrow) D3D11_SUBRESOURCE_DATA[ mipCount * arraySize ] );
     if ( !initData )
     {
         return E_OUTOFMEMORY;
@@ -1343,6 +1337,15 @@ HRESULT DirectX::CreateDDSTextureFromMemoryEx( ID3D11Device* d3dDevice,
                                                ID3D11Resource** texture,
                                                ID3D11ShaderResourceView** textureView )
 {
+    if ( texture )
+    {
+        *texture = nullptr;
+    }
+    if ( textureView )
+    {
+        *textureView = nullptr;
+    }
+
     if (!d3dDevice || !ddsData || (!texture && !textureView))
     {
         return E_INVALIDARG;
@@ -1430,6 +1433,15 @@ HRESULT DirectX::CreateDDSTextureFromFileEx( ID3D11Device* d3dDevice,
                                              ID3D11Resource** texture,
                                              ID3D11ShaderResourceView** textureView )
 {
+    if ( texture )
+    {
+        *texture = nullptr;
+    }
+    if ( textureView )
+    {
+        *textureView = nullptr;
+    }
+
     if (!d3dDevice || !fileName || (!texture && !textureView))
     {
         return E_INVALIDARG;
