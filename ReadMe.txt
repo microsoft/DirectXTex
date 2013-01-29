@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-December 11, 2012
+January 29, 2013
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -89,19 +89,20 @@ http://go.microsoft.com/fwlink/?LinkId=248926
 RELEASE NOTES
 
 * The DirectXTex library does not support block compression or decompression of mipmapped non-power-of-2 textures,
-  although DDSTextureLoader will load these files correctly if the underlying device supports it.
+  although DDSTextureLoader will load these files correctly if the underlying device supports it. [CodePlex issue 640]
 
 * The DirectXTex library only supports CLAMP filtering, and does not yet support MIRROR or WRAP filtering
-  (WIC operations only support CLAMP filtering).
+  (WIC operations only support CLAMP filtering). [CodePlex issue 641]
 
 * The DirectXTex library only supports box and POINT filtering, and does not support LINEAR or CUBIC filtering,
-  for 3D volume mipmap-generation.
+  for 3D volume mipmap-generation. [CodePlex issue 642]
+
+* The WIC conversion cases currently ignore TEX_FILTER_SRGB_IN and TEX_FILTER_SRGB_OUT out, which results in incorrect sRGB handling in
+  a number of cases. [CodePlex issue 643]
 
 * Due to the underlying Windows BMP WIC codec, alpha channels are not supported for 16bpp or 32bpp BMP pixel format files. The Windows 8
   version of the Windows BMP WIC codec does support 32bpp pixel formats with alpha when using the BITMAPV5HEADER file header. Note the updated
   WIC is available on Windows 7 SP1 with KB 2670838 installed.
-
-* The WIC conversion cases currently ignore TEX_FILTER_SRGB_IN and TEX_FILTER_SRGB_OUT out.
 
 * For the DXGI 1.1 version of DirectXTex, 4:4:4:4 pixel format DDS files are always expanded to 8:8:8:8 upon load since DXGI 1.0
   and DXGI 1.1 versions of Direct3D do not support these resource formats. The DXGI 1.2 versions of DirectXTex and DDSTextureLoader
@@ -122,6 +123,10 @@ RELEASE NOTES
 ------------------------------------
 RELEASE HISTORY
 
+January 29, 2013
+    Added PremultiplyAlpha to DirectXTex; -pmalpha switch for texconv command-line tool
+    Fixed problem with forceSRGB implementation for Ex versions of CreateTexture, CreateShaderResourceView, DDSTextureLoader and WICTextureLoader
+ 
 December 11, 2012 
     Ex versions of CreateTexture, CreateShaderResourceView, DDSTextureLoader and WICTextureLoader
     Fixed BC2 and BC3 decompression issue for unusual color encoding case
