@@ -289,7 +289,7 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
     size_t pixelSize, nimages;
     _DetermineImageArray( _metadata, CP_FLAGS_NONE, nimages, pixelSize );
 
-    _image = new Image[ nimages ];
+    _image = new (std::nothrow) Image[ nimages ];
     if ( !_image )
         return E_OUTOFMEMORY;
 
@@ -351,7 +351,7 @@ HRESULT ScratchImage::Initialize2D( DXGI_FORMAT fmt, size_t width, size_t height
     size_t pixelSize, nimages;
     _DetermineImageArray( _metadata, CP_FLAGS_NONE, nimages, pixelSize );
 
-    _image = new Image[ nimages ];
+    _image = new (std::nothrow) Image[ nimages ];
     if ( !_image )
         return E_OUTOFMEMORY;
 
@@ -397,7 +397,7 @@ HRESULT ScratchImage::Initialize3D( DXGI_FORMAT fmt, size_t width, size_t height
     size_t pixelSize, nimages;
     _DetermineImageArray( _metadata, CP_FLAGS_NONE, nimages, pixelSize );
 
-    _image = new Image[ nimages ];
+    _image = new (std::nothrow) Image[ nimages ];
     if ( !_image )
     {
         Release();

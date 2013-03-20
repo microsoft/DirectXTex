@@ -911,7 +911,7 @@ static HRESULT _CopyImage( _In_reads_bytes_(size) const void* pPixels, _In_ size
 
     assert( pixelSize <= size );
 
-    std::unique_ptr<Image[]> timages( new Image[nimages] );
+    std::unique_ptr<Image[]> timages( new (std::nothrow) Image[nimages] );
     if ( !_SetupImageArray( (uint8_t*)pPixels, size, metadata, cpFlags, timages.get(), nimages ) )
     {
         return E_FAIL;
@@ -1355,7 +1355,7 @@ HRESULT LoadFromDDSFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, Scr
     std::unique_ptr<uint32_t[]> pal8;
     if ( convFlags & CONV_FLAGS_PAL8 )
     {
-        pal8.reset( new uint32_t[256] );
+        pal8.reset( new (std::nothrow) uint32_t[256] );
         if ( !pal8 )
         {
             return E_OUTOFMEMORY;
@@ -1384,7 +1384,7 @@ HRESULT LoadFromDDSFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, Scr
 
     if ( (convFlags & CONV_FLAGS_EXPAND) || (flags & DDS_FLAGS_LEGACY_DWORD) )
     {
-        std::unique_ptr<uint8_t[]> temp( new uint8_t[ remaining ] );
+        std::unique_ptr<uint8_t[]> temp( new (std::nothrow) uint8_t[ remaining ] );
         if ( !temp )
         {
             image.Release();

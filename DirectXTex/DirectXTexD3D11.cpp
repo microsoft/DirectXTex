@@ -202,7 +202,11 @@ bool IsSupportedTexture( ID3D11Device* pDevice, const TexMetadata& metadata )
 
     // Most cases are known apriori based on feature level, but we use this for robustness to handle the few optional cases
     UINT formatSupport = 0;
-    pDevice->CheckFormatSupport( fmt, &formatSupport );
+    HRESULT hr = pDevice->CheckFormatSupport( fmt, &formatSupport );
+    if ( FAILED(hr) )
+    {
+        formatSupport = 0;
+    }
 
     switch ( metadata.dimension )
     {
@@ -363,7 +367,7 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
         return E_INVALIDARG;
 #endif
 
-    std::unique_ptr<D3D11_SUBRESOURCE_DATA[]> initData( new D3D11_SUBRESOURCE_DATA[ metadata.mipLevels * metadata.arraySize ] );
+    std::unique_ptr<D3D11_SUBRESOURCE_DATA[]> initData( new (std::nothrow) D3D11_SUBRESOURCE_DATA[ metadata.mipLevels * metadata.arraySize ] );
     if ( !initData )
         return E_OUTOFMEMORY;
 

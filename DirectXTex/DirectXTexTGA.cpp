@@ -1167,7 +1167,7 @@ HRESULT LoadFromTGAFile( LPCWSTR szFile, TexMetadata* metadata, ScratchImage& im
     }
     else // RLE || EXPAND || INVERTX || !INVERTY
     {
-        std::unique_ptr<uint8_t[]> temp( new uint8_t[ remaining ] );
+        std::unique_ptr<uint8_t[]> temp( new (std::nothrow) uint8_t[ remaining ] );
         if ( !temp )
         {
             image.Release();
@@ -1342,7 +1342,7 @@ HRESULT SaveToTGAFile( const Image& image, LPCWSTR szFile )
     else
     {
         // Otherwise, write the image one scanline at a time...
-        std::unique_ptr<uint8_t[]> temp( new uint8_t[ rowPitch ] );
+        std::unique_ptr<uint8_t[]> temp( new (std::nothrow) uint8_t[ rowPitch ] );
         if ( !temp )
             return E_OUTOFMEMORY;
 
