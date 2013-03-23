@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-January 29, 2013
+March 22, 2013
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -122,6 +122,10 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+March 22, 2013
+    Supports reading and writing alpha-mode (straight, premultiplied, etc.) metadata in .DDS files
+    Added build option to use WICCreateImagingFactory_Proxy instead of CoCreateInstance to obtain WIC factory
 
 January 29, 2013
     Added PremultiplyAlpha to DirectXTex; -pmalpha switch for texconv command-line tool
