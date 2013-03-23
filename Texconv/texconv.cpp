@@ -270,7 +270,7 @@ void PrintInfo( const TexMetadata& info )
         break;
 
     case TEX_DIMENSION_TEXTURE2D:
-        if ( info.miscFlags & TEX_MISC_TEXTURECUBE )
+        if ( info.IsCubemap() )
         {
             wprintf( (info.arraySize > 1) ? L" CubeArray" : L" Cube" );
         }
@@ -717,6 +717,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.arraySize == tinfo.arraySize );
             assert( info.mipLevels == tinfo.mipLevels );
             assert( info.miscFlags == tinfo.miscFlags );
+            assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.dimension == tinfo.dimension );
 
             delete image;
@@ -724,7 +725,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Flip/Rotate -------------------------------------------------------------
-        // TODO - OPT_ROTATE ? (90, 180, 270)
         if ( dwOptions & ( (1 << OPT_HFLIP) | (1 << OPT_VFLIP) ) )
         {
             ScratchImage *timage = new ScratchImage;
@@ -765,6 +765,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.arraySize == tinfo.arraySize );
             assert( info.mipLevels == tinfo.mipLevels );
             assert( info.miscFlags == tinfo.miscFlags );
+            assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.format == tinfo.format );
             assert( info.dimension == tinfo.dimension );
 
@@ -802,6 +803,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.depth == tinfo.depth );
             assert( info.arraySize == tinfo.arraySize );
             assert( info.miscFlags == tinfo.miscFlags );
+            assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.format == tinfo.format );
             assert( info.dimension == tinfo.dimension );
 
@@ -840,6 +842,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.arraySize == tinfo.arraySize );
             assert( info.mipLevels == tinfo.mipLevels );
             assert( info.miscFlags == tinfo.miscFlags );
+            assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.dimension == tinfo.dimension );
 
             delete image;
@@ -963,6 +966,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.arraySize == tinfo.arraySize );
             assert( info.mipLevels == tinfo.mipLevels );
             assert( info.miscFlags == tinfo.miscFlags );
+            assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.dimension == tinfo.dimension );
 
             delete image;
@@ -974,29 +978,48 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
              && HasAlpha( info.format )
              && info.format != DXGI_FORMAT_A8_UNORM )
         {
-            const Image* img = image->GetImage(0,0,0);
-            assert( img );
-            size_t nimg = image->GetImageCount();
-
-            ScratchImage *timage = new ScratchImage;
-            if ( !timage )
+            if ( info.IsPMAlpha() )
             {
-                wprintf( L" ERROR: Memory allocation failed\n" );
-                delete image;
-                goto LError;
+                printf("WARNING: Image is already using premultiplied alpha\n");
             }
-
-            hr = PremultiplyAlpha( img, nimg, info, *timage );
-            if ( FAILED(hr) )
+            else
             {
-                wprintf( L" FAILED [premultiply alpha] (%x)\n", hr);
-                delete timage;
-                delete image;
-                continue;
-            }
+                const Image* img = image->GetImage(0,0,0);
+                assert( img );
+                size_t nimg = image->GetImageCount();
 
-            delete image;
-            image = timage;
+                ScratchImage *timage = new ScratchImage;
+                if ( !timage )
+                {
+                    wprintf( L" ERROR: Memory allocation failed\n" );
+                    delete image;
+                    goto LError;
+                }
+
+                hr = PremultiplyAlpha( img, nimg, info, *timage );
+                if ( FAILED(hr) )
+                {
+                    wprintf( L" FAILED [premultiply alpha] (%x)\n", hr);
+                    delete timage;
+                    delete image;
+                    continue;
+                }
+
+                const TexMetadata& tinfo = timage->GetMetadata();
+                info.miscFlags2 = tinfo.miscFlags2;
+ 
+                assert( info.width == tinfo.width );
+                assert( info.height == tinfo.height );
+                assert( info.depth == tinfo.depth );
+                assert( info.arraySize == tinfo.arraySize );
+                assert( info.mipLevels == tinfo.mipLevels );
+                assert( info.miscFlags == tinfo.miscFlags );
+                assert( info.miscFlags2 == tinfo.miscFlags2 );
+                assert( info.dimension == tinfo.dimension );
+
+                delete image;
+                image = timage;
+            }
         }
 
         // --- Compress ----------------------------------------------------------------
@@ -1032,10 +1055,33 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.arraySize == tinfo.arraySize );
             assert( info.mipLevels == tinfo.mipLevels );
             assert( info.miscFlags == tinfo.miscFlags );
+            assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.dimension == tinfo.dimension );
 
             delete image;
             image = timage;
+        }
+
+        // --- Set alpha mode ----------------------------------------------------------
+        if ( HasAlpha( info.format )
+             && info.format != DXGI_FORMAT_A8_UNORM )
+        {
+            if ( image->IsAlphaAllOpaque() )
+            {
+                info.SetAlphaMode(TEX_ALPHA_MODE_OPAQUE);
+            }
+            else if ( info.IsPMAlpha() )
+            {
+                // Aleady set TEX_ALPHA_MODE_PREMULTIPLIED
+            }
+            else if ( dwOptions & (1 << OPT_SEPALPHA) )
+            {
+                info.SetAlphaMode(TEX_ALPHA_MODE_4TH_CHANNEL);
+            }
+        }
+        else
+        {
+            info.miscFlags2 &= ~TEX_MISC2_ALPHA_MODE_MASK;
         }
 
         // --- Save result -------------------------------------------------------------
@@ -1074,7 +1120,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
             case CODEC_DDS:
                 hr = SaveToDDSFile( img, nimg, info,
-                                    (dwOptions & (1 << OPT_USE_DX10) ) ? DDS_FLAGS_FORCE_DX10_EXT : DDS_FLAGS_NONE, 
+                                    (dwOptions & (1 << OPT_USE_DX10) ) ? (DDS_FLAGS_FORCE_DX10_EXT|DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE, 
                                     pConv->szDest );
                 break;
 

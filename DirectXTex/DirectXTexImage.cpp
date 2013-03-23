@@ -20,6 +20,7 @@ namespace DirectX
 
 extern bool _CalculateMipLevels( _In_ size_t width, _In_ size_t height, _Inout_ size_t& mipLevels );
 extern bool _CalculateMipLevels3D( _In_ size_t width, _In_ size_t height, _In_ size_t depth, _Inout_ size_t& mipLevels );
+extern bool _IsAlphaAllOpaqueBC( _In_ const Image& cImage );
 
 //-------------------------------------------------------------------------------------
 // Determines number of image array entries and pixel size
@@ -253,7 +254,7 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
         if ( !mdata.width || !mdata.height || mdata.depth != 1 || !mdata.arraySize )
             return E_INVALIDARG;
 
-        if ( mdata.miscFlags & TEX_MISC_TEXTURECUBE )
+        if ( mdata.IsCubemap() )
         {
             if ( (mdata.arraySize % 6) != 0 )
                 return E_INVALIDARG;
@@ -282,7 +283,8 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
     _metadata.depth = mdata.depth;
     _metadata.arraySize = mdata.arraySize;
     _metadata.mipLevels = mipLevels;
-    _metadata.miscFlags = mdata.miscFlags & TEX_MISC_TEXTURECUBE;
+    _metadata.miscFlags = mdata.miscFlags;
+    _metadata.miscFlags2 = mdata.miscFlags2;
     _metadata.format = mdata.format;
     _metadata.dimension = mdata.dimension;
 
@@ -345,6 +347,7 @@ HRESULT ScratchImage::Initialize2D( DXGI_FORMAT fmt, size_t width, size_t height
     _metadata.arraySize = arraySize;
     _metadata.mipLevels = mipLevels;
     _metadata.miscFlags = 0;
+    _metadata.miscFlags2 = 0;
     _metadata.format = fmt;
     _metadata.dimension = TEX_DIMENSION_TEXTURE2D;
 
@@ -391,6 +394,7 @@ HRESULT ScratchImage::Initialize3D( DXGI_FORMAT fmt, size_t width, size_t height
     _metadata.arraySize = 1;    // Direct3D 10.x/11 does not support arrays of 3D textures
     _metadata.mipLevels = mipLevels;
     _metadata.miscFlags = 0;
+    _metadata.miscFlags2 = 0;
     _metadata.format = fmt;
     _metadata.dimension = TEX_DIMENSION_TEXTURE3D;
 
@@ -682,6 +686,56 @@ const Image* ScratchImage::GetImage(size_t mip, size_t item, size_t slice) const
     }
  
     return &_image[index];
+}
+
+bool ScratchImage::IsAlphaAllOpaque() const
+{
+    if ( !HasAlpha( _metadata.format ) )
+        return true;
+
+    if ( IsCompressed( _metadata.format ) )
+    {
+        for( size_t index = 0; index < _nimages; ++index )
+        {
+            if ( !_IsAlphaAllOpaqueBC( _image[ index ] ) )
+                return false;
+        }
+    }
+    else
+    {
+        ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( (sizeof(XMVECTOR)*_metadata.width), 16 ) ) );
+        if ( !scanline )
+            return false;
+
+        static const XMVECTORF32 threshold = { 0.99f, 0.99f, 0.99f, 0.99f };
+
+        for( size_t index = 0; index < _nimages; ++index )
+        {
+            const Image& img = _image[ index ];
+
+            const uint8_t *pPixels = img.pixels;
+            assert( pPixels );
+
+            for( size_t h = 0; h < img.height; ++h )
+            {
+                if ( !_LoadScanline( scanline.get(), img.width, pPixels, img.rowPitch, img.format ) )
+                    return false;
+
+                XMVECTOR* ptr = scanline.get();
+                for( size_t w = 0; w < img.width; ++w )
+                {
+                    XMVECTOR alpha = XMVectorSplatW( *ptr );
+                    if ( XMVector4Less( alpha, threshold ) )
+                        return false;
+                    ++ptr;
+                }
+
+                pPixels += img.rowPitch;
+            }
+        }
+    }
+
+    return true;
 }
 
 }; // namespace

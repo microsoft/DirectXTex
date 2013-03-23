@@ -123,7 +123,15 @@ HRESULT PremultiplyAlpha( const Image* srcImages, size_t nimages, const TexMetad
         return E_INVALIDARG;
 #endif
 
-    HRESULT hr = result.Initialize( metadata );
+    if ( metadata.IsPMAlpha() )
+    {
+        // Already premultiplied
+        return E_FAIL;
+    }
+
+    TexMetadata mdata2 = metadata;
+    mdata2.SetAlphaMode(TEX_ALPHA_MODE_PREMULTIPLIED);
+    HRESULT hr = result.Initialize( mdata2 );
     if ( FAILED(hr) )
         return hr;
 

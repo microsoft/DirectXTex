@@ -236,7 +236,7 @@ bool IsSupportedTexture( ID3D11Device* pDevice, const TexMetadata& metadata )
         break;
 
     case TEX_DIMENSION_TEXTURE2D:
-        if ( metadata.miscFlags & TEX_MISC_TEXTURECUBE )
+        if ( metadata.IsCubemap() )
         {
             if ( !(formatSupport & D3D11_FORMAT_SUPPORT_TEXTURECUBE) )
                 return false;
@@ -505,7 +505,7 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
             desc.Usage = usage;
             desc.BindFlags = bindFlags;
             desc.CPUAccessFlags = cpuAccessFlags;
-            if (metadata.miscFlags & TEX_MISC_TEXTURECUBE)
+            if ( metadata.IsCubemap() )
                 desc.MiscFlags =  miscFlags | D3D11_RESOURCE_MISC_TEXTURECUBE;
             else
                 desc.MiscFlags =  miscFlags & ~D3D11_RESOURCE_MISC_TEXTURECUBE;
@@ -589,7 +589,7 @@ HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImage
         break;
 
     case TEX_DIMENSION_TEXTURE2D:
-        if ( metadata.miscFlags & TEX_MISC_TEXTURECUBE )
+        if ( metadata.IsCubemap() )
         {
             if (metadata.arraySize > 6)
             {
@@ -685,6 +685,7 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
             mdata.arraySize = desc.ArraySize;
             mdata.mipLevels = desc.MipLevels;
             mdata.miscFlags = 0;
+            mdata.miscFlags2 = 0;
             mdata.format = desc.Format;
             mdata.dimension = TEX_DIMENSION_TEXTURE1D;
 
@@ -786,6 +787,7 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
             mdata.arraySize = desc.ArraySize;
             mdata.mipLevels = desc.MipLevels;
             mdata.miscFlags = (desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE) ? TEX_MISC_TEXTURECUBE : 0;
+            mdata.miscFlags2 = 0;
             mdata.format = desc.Format;
             mdata.dimension = TEX_DIMENSION_TEXTURE2D;
 
@@ -830,6 +832,7 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
             mdata.arraySize = 1;
             mdata.mipLevels = desc.MipLevels;
             mdata.miscFlags = 0;
+            mdata.miscFlags2 = 0;
             mdata.format = desc.Format;
             mdata.dimension = TEX_DIMENSION_TEXTURE3D;
 

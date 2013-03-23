@@ -39,6 +39,7 @@ enum CONVERSION_FLAGS
     CONV_FLAGS_8332     = 0x400,    // Source is a 8:3:3:2 (16bpp) format
     CONV_FLAGS_A8P8     = 0x800,    // Has an 8-bit palette with an alpha channel
     CONV_FLAGS_DX10     = 0x10000,  // Has the 'DX10' extension header
+    CONV_FLAGS_PMALPHA  = 0x20000,  // Contains premultiplied alpha data
 };
 
 struct LegacyDDS
@@ -54,8 +55,8 @@ const LegacyDDS g_LegacyDDSMap[] =
     { DXGI_FORMAT_BC2_UNORM,          CONV_FLAGS_NONE,        DDSPF_DXT3 }, // D3DFMT_DXT3
     { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        DDSPF_DXT5 }, // D3DFMT_DXT5
 
-    { DXGI_FORMAT_BC2_UNORM,          CONV_FLAGS_NONE,        DDSPF_DXT2 }, // D3DFMT_DXT2 (ignore premultiply)
-    { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        DDSPF_DXT4 }, // D3DFMT_DXT4 (ignore premultiply)
+    { DXGI_FORMAT_BC2_UNORM,          CONV_FLAGS_PMALPHA,     DDSPF_DXT2 }, // D3DFMT_DXT2
+    { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_PMALPHA,     DDSPF_DXT4 }, // D3DFMT_DXT4
 
     { DXGI_FORMAT_BC4_UNORM,          CONV_FLAGS_NONE,        DDSPF_BC4_UNORM },
     { DXGI_FORMAT_BC4_SNORM,          CONV_FLAGS_NONE,        DDSPF_BC4_SNORM },
@@ -146,7 +147,7 @@ const LegacyDDS g_LegacyDDSMap[] =
 //      ZBuffer D3DFMT_D16_LOCKABLE
 //      FourCC 82 D3DFMT_D32F_LOCKABLE
 
-static DXGI_FORMAT _GetDXGIFormat( const DDS_PIXELFORMAT& ddpf, DWORD flags, _Inout_opt_ DWORD* convFlags )
+static DXGI_FORMAT _GetDXGIFormat( const DDS_PIXELFORMAT& ddpf, DWORD flags, _Inout_ DWORD& convFlags )
 {
     const size_t MAP_SIZE = sizeof(g_LegacyDDSMap) / sizeof(LegacyDDS);
     size_t index = 0;
@@ -192,8 +193,7 @@ static DXGI_FORMAT _GetDXGIFormat( const DDS_PIXELFORMAT& ddpf, DWORD flags, _In
         cflags ^= CONV_FLAGS_SWIZZLE;
     }
 
-    if ( convFlags )
-        *convFlags = cflags;
+    convFlags = cflags;
 
     return format;
 }
@@ -203,7 +203,7 @@ static DXGI_FORMAT _GetDXGIFormat( const DDS_PIXELFORMAT& ddpf, DWORD flags, _In
 // Decodes DDS header including optional DX10 extended header
 //-------------------------------------------------------------------------------------
 static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t size, DWORD flags, _Out_ TexMetadata& metadata,
-                                 _Inout_opt_ DWORD* convFlags )
+                                 _Inout_ DWORD& convFlags )
 {
     if ( !pSource )
         return E_INVALIDARG;
@@ -247,8 +247,7 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
         }
 
         const DDS_HEADER_DXT10* d3d10ext = reinterpret_cast<const DDS_HEADER_DXT10*>( (const uint8_t*)pSource + sizeof( uint32_t ) + sizeof(DDS_HEADER) );
-        if ( convFlags )
-            *convFlags |= CONV_FLAGS_DX10;
+        convFlags |= CONV_FLAGS_DX10;
 
         metadata.arraySize = d3d10ext->arraySize;
         if ( metadata.arraySize == 0 )
@@ -261,6 +260,10 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
         {
             HRESULT_FROM_WIN32( ERROR_INVALID_DATA );
         }
+
+        static_assert( TEX_MISC_TEXTURECUBE == DDS_RESOURCE_MISC_TEXTURECUBE, "DDS header mismatch");
+
+        metadata.miscFlags = d3d10ext->miscFlag & ~TEX_MISC_TEXTURECUBE;
 
         switch ( d3d10ext->resourceDimension )
         {
@@ -309,6 +312,15 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
         default:
             return HRESULT_FROM_WIN32( ERROR_INVALID_DATA );
         }
+
+        static_assert( TEX_MISC2_ALPHA_MODE_MASK == DDS_MISC_FLAGS2_ALPHA_MODE_MASK, "DDS header mismatch");
+
+        static_assert( TEX_ALPHA_MODE_STRAIGHT == DDS_ALPHA_MODE_STRAIGHT, "DDS header mismatch");
+        static_assert( TEX_ALPHA_MODE_PREMULTIPLIED == DDS_ALPHA_MODE_PREMULTIPLIED, "DDS header mismatch");
+        static_assert( TEX_ALPHA_MODE_4TH_CHANNEL == DDS_ALPHA_MODE_4TH_CHANNEL, "DDS header mismatch");
+        static_assert( TEX_ALPHA_MODE_OPAQUE == DDS_ALPHA_MODE_OPAQUE, "DDS header mismatch");
+
+        metadata.miscFlags2 = d3d10ext->miscFlags2;
     }
     else
     {
@@ -345,6 +357,9 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
 
         if ( metadata.format == DXGI_FORMAT_UNKNOWN )
             return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+
+        if ( convFlags & CONV_FLAGS_PMALPHA )
+            metadata.miscFlags2 |= TEX_ALPHA_MODE_PREMULTIPLIED;
     }
 
     // Special flag for handling BGR DXGI 1.1 formats
@@ -354,38 +369,32 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
         {
         case DXGI_FORMAT_B8G8R8A8_UNORM:
             metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
-            if ( convFlags )
-                *convFlags |= CONV_FLAGS_SWIZZLE;
+            convFlags |= CONV_FLAGS_SWIZZLE;
             break;
 
         case DXGI_FORMAT_B8G8R8X8_UNORM:
             metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
-            if ( convFlags )
-                *convFlags |= CONV_FLAGS_SWIZZLE | CONV_FLAGS_NOALPHA;
+            convFlags |= CONV_FLAGS_SWIZZLE | CONV_FLAGS_NOALPHA;
             break;
 
         case DXGI_FORMAT_B8G8R8A8_TYPELESS:
             metadata.format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
-            if ( convFlags )
-                *convFlags |= CONV_FLAGS_SWIZZLE;
+            convFlags |= CONV_FLAGS_SWIZZLE;
             break;
 
         case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
             metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-            if ( convFlags )
-                *convFlags |= CONV_FLAGS_SWIZZLE;
+            convFlags |= CONV_FLAGS_SWIZZLE;
             break;
 
         case DXGI_FORMAT_B8G8R8X8_TYPELESS:
             metadata.format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
-            if ( convFlags )
-                *convFlags |= CONV_FLAGS_SWIZZLE | CONV_FLAGS_NOALPHA;
+            convFlags |= CONV_FLAGS_SWIZZLE | CONV_FLAGS_NOALPHA;
             break;
 
         case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
             metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-            if ( convFlags )
-                *convFlags |= CONV_FLAGS_SWIZZLE | CONV_FLAGS_NOALPHA;
+            convFlags |= CONV_FLAGS_SWIZZLE | CONV_FLAGS_NOALPHA;
             break;
         }
     }
@@ -401,12 +410,9 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
         case DXGI_FORMAT_B4G4R4A4_UNORM:
 #endif
             metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
-            if ( convFlags )
-            {
-                *convFlags |= CONV_FLAGS_EXPAND;
-                if ( metadata.format == DXGI_FORMAT_B5G6R5_UNORM )
-                    *convFlags |= CONV_FLAGS_NOALPHA;
-            }
+            convFlags |= CONV_FLAGS_EXPAND;
+            if ( metadata.format == DXGI_FORMAT_B5G6R5_UNORM )
+                convFlags |= CONV_FLAGS_NOALPHA;
         }
     }
 
@@ -425,10 +431,16 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
 
     if ( metadata.arraySize > 1 )
     {
-        if ( (metadata.arraySize != 6) || (metadata.dimension != TEX_DIMENSION_TEXTURE2D) || !(metadata.miscFlags & TEX_MISC_TEXTURECUBE) )
+        if ( (metadata.arraySize != 6) || (metadata.dimension != TEX_DIMENSION_TEXTURE2D) || !(metadata.IsCubemap()) )
         {
+            // Texture1D arrays, Texture2D arrays, and Cubemap arrays must be stored using 'DX10' extended header
             flags |= DDS_FLAGS_FORCE_DX10_EXT;
         }
+    }
+
+    if ( flags & DDS_FLAGS_FORCE_DX10_EXT_MISC2 )
+    {
+        flags |= DDS_FLAGS_FORCE_DX10_EXT;
     }
 
     DDS_PIXELFORMAT ddpf = { 0 };
@@ -445,8 +457,8 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
         case DXGI_FORMAT_R8G8_B8G8_UNORM:       memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_R8G8_B8G8, sizeof(DDS_PIXELFORMAT) ); break;
         case DXGI_FORMAT_G8R8_G8B8_UNORM:       memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_G8R8_G8B8, sizeof(DDS_PIXELFORMAT) ); break;
         case DXGI_FORMAT_BC1_UNORM:             memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_DXT1, sizeof(DDS_PIXELFORMAT) ); break;
-        case DXGI_FORMAT_BC2_UNORM:             memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_DXT3, sizeof(DDS_PIXELFORMAT) ); break;
-        case DXGI_FORMAT_BC3_UNORM:             memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_DXT5, sizeof(DDS_PIXELFORMAT) ); break;
+        case DXGI_FORMAT_BC2_UNORM:             memcpy_s( &ddpf, sizeof(ddpf), metadata.IsPMAlpha() ? (&DDSPF_DXT2) : (&DDSPF_DXT3), sizeof(DDS_PIXELFORMAT) ); break;
+        case DXGI_FORMAT_BC3_UNORM:             memcpy_s( &ddpf, sizeof(ddpf), metadata.IsPMAlpha() ? (&DDSPF_DXT4) : (&DDSPF_DXT5), sizeof(DDS_PIXELFORMAT) ); break;
         case DXGI_FORMAT_BC4_UNORM:             memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_BC4_UNORM, sizeof(DDS_PIXELFORMAT) ); break;
         case DXGI_FORMAT_BC4_SNORM:             memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_BC4_SNORM, sizeof(DDS_PIXELFORMAT) ); break;
         case DXGI_FORMAT_BC5_UNORM:             memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_BC5_UNORM, sizeof(DDS_PIXELFORMAT) ); break;
@@ -547,7 +559,7 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
         header->dwWidth = static_cast<uint32_t>( metadata.width );
         header->dwDepth = 1;
 
-        if ( metadata.miscFlags & TEX_MISC_TEXTURECUBE )
+        if ( metadata.IsCubemap() )
         {
             header->dwCaps |= DDS_SURFACE_FLAGS_CUBEMAP;
             header->dwCaps2 |= DDS_CUBEMAP_ALLFACES;
@@ -609,6 +621,10 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
             return E_INVALIDARG;
 #endif
 
+        static_assert( TEX_MISC_TEXTURECUBE == DDS_RESOURCE_MISC_TEXTURECUBE, "DDS header mismatch");
+        
+        ext->miscFlag = metadata.miscFlags & ~TEX_MISC_TEXTURECUBE;
+
         if ( metadata.miscFlags & TEX_MISC_TEXTURECUBE )
         {
             ext->miscFlag |= TEX_MISC_TEXTURECUBE;
@@ -618,6 +634,19 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
         else
         {
             ext->arraySize = static_cast<UINT>( metadata.arraySize );
+        }
+
+        static_assert( TEX_MISC2_ALPHA_MODE_MASK == DDS_MISC_FLAGS2_ALPHA_MODE_MASK, "DDS header mismatch");
+
+        static_assert( TEX_ALPHA_MODE_STRAIGHT == DDS_ALPHA_MODE_STRAIGHT, "DDS header mismatch");
+        static_assert( TEX_ALPHA_MODE_PREMULTIPLIED == DDS_ALPHA_MODE_PREMULTIPLIED, "DDS header mismatch");
+        static_assert( TEX_ALPHA_MODE_4TH_CHANNEL == DDS_ALPHA_MODE_4TH_CHANNEL, "DDS header mismatch");
+        static_assert( TEX_ALPHA_MODE_OPAQUE == DDS_ALPHA_MODE_OPAQUE, "DDS header mismatch");
+
+        if ( flags & DDS_FLAGS_FORCE_DX10_EXT_MISC2 )
+        {
+            // This was formerly 'reserved'. D3DX10 and D3DX11 will fail if this value is anything other than 0
+            ext->miscFlags2 = metadata.miscFlags2;
         }
     }
     else
@@ -891,7 +920,7 @@ static HRESULT _CopyImage( _In_reads_bytes_(size) const void* pPixels, _In_ size
 
     if ( !size )
         return E_FAIL;
-
+     
     if ( convFlags & CONV_FLAGS_EXPAND )
     {
         if ( convFlags & CONV_FLAGS_888 )
@@ -1154,7 +1183,8 @@ HRESULT GetMetadataFromDDSMemory( LPCVOID pSource, size_t size, DWORD flags, Tex
     if ( !pSource || size == 0 )
         return E_INVALIDARG;
 
-    return _DecodeDDSHeader( pSource, size, flags, metadata, 0 );
+    DWORD convFlags = 0;
+    return _DecodeDDSHeader( pSource, size, flags, metadata, convFlags );
 }
 
 _Use_decl_annotations_
@@ -1213,7 +1243,8 @@ HRESULT GetMetadataFromDDSFile( LPCWSTR szFile, DWORD flags, TexMetadata& metada
         return HRESULT_FROM_WIN32( GetLastError() );
     }
 
-    return _DecodeDDSHeader( header, bytesRead, flags, metadata, 0 );
+    DWORD convFlags = 0;
+    return _DecodeDDSHeader( header, bytesRead, flags, metadata, convFlags );
 }
 
 
@@ -1230,7 +1261,7 @@ HRESULT LoadFromDDSMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadat
 
     DWORD convFlags = 0;
     TexMetadata mdata;
-    HRESULT hr = _DecodeDDSHeader( pSource, size, flags, mdata, &convFlags );  
+    HRESULT hr = _DecodeDDSHeader( pSource, size, flags, mdata, convFlags );  
     if ( FAILED(hr) )
         return hr;
 
@@ -1334,7 +1365,7 @@ HRESULT LoadFromDDSFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, Scr
 
     DWORD convFlags = 0;
     TexMetadata mdata;
-    HRESULT hr = _DecodeDDSHeader( header, bytesRead, flags, mdata, &convFlags );
+    HRESULT hr = _DecodeDDSHeader( header, bytesRead, flags, mdata, convFlags );
     if ( FAILED(hr) )
         return hr;
 

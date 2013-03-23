@@ -426,6 +426,85 @@ static HRESULT _DecompressBC( _In_ const Image& cImage, _In_ const Image& result
 }
 
 
+//-------------------------------------------------------------------------------------
+bool _IsAlphaAllOpaqueBC( _In_ const Image& cImage )
+{
+    if ( !cImage.pixels )
+        return false;
+
+    // Image must be a multiple of 4 (degenerate cases of 1x1, 1x2, 2x1, and 2x2 are allowed)
+    size_t width = cImage.width;
+    if ( (width % 4) != 0 )
+    {
+        if ( width != 1 && width != 2 )
+            return false;
+    }
+
+    size_t height = cImage.height;
+    if ( (height % 4) != 0 )
+    {
+        if ( height != 1 && height != 2 )
+            return false;
+    }
+
+    // Promote "typeless" BC formats
+    DXGI_FORMAT cformat;
+    switch( cImage.format )
+    {
+    case DXGI_FORMAT_BC1_TYPELESS:  cformat = DXGI_FORMAT_BC1_UNORM; break;
+    case DXGI_FORMAT_BC2_TYPELESS:  cformat = DXGI_FORMAT_BC2_UNORM; break;
+    case DXGI_FORMAT_BC3_TYPELESS:  cformat = DXGI_FORMAT_BC3_UNORM; break;
+    case DXGI_FORMAT_BC7_TYPELESS:  cformat = DXGI_FORMAT_BC7_UNORM; break;
+    default:                        cformat = cImage.format;         break;
+    }
+
+    // Determine BC format decoder
+    BC_DECODE pfDecode;
+    size_t sbpp;
+    switch(cformat)
+    {
+    case DXGI_FORMAT_BC1_UNORM:
+    case DXGI_FORMAT_BC1_UNORM_SRGB:    pfDecode = D3DXDecodeBC1;   sbpp = 8;   break;
+    case DXGI_FORMAT_BC2_UNORM:
+    case DXGI_FORMAT_BC2_UNORM_SRGB:    pfDecode = D3DXDecodeBC2;   sbpp = 16;  break;
+    case DXGI_FORMAT_BC3_UNORM:
+    case DXGI_FORMAT_BC3_UNORM_SRGB:    pfDecode = D3DXDecodeBC3;   sbpp = 16;  break;
+    case DXGI_FORMAT_BC7_UNORM:
+    case DXGI_FORMAT_BC7_UNORM_SRGB:    pfDecode = D3DXDecodeBC7;   sbpp = 16;  break;
+    default:
+        // BC4, BC5, and BC6 don't have alpha channels
+        return false;
+    }
+
+    // Scan blocks for non-opaque alpha
+    static const XMVECTORF32 threshold = { 0.99f, 0.99f, 0.99f, 0.99f };
+
+    XMVECTOR temp[16];
+    const uint8_t *pPixels = cImage.pixels;
+    for( size_t h=0; h < cImage.height; h += 4 )
+    {
+        const uint8_t *ptr = pPixels;
+        for( size_t count = 0; count < cImage.rowPitch; count += sbpp )
+        {
+            pfDecode( temp, ptr );
+
+            for( size_t j = 0; j < 16; ++j )
+            {
+                XMVECTOR alpha = XMVectorSplatW( temp[j] );
+                if ( XMVector4Less( alpha, threshold ) )
+                    return false;
+            }
+
+            ptr += sbpp;
+        }
+
+        pPixels += cImage.rowPitch;
+    }
+
+    return true;
+}
+
+
 //=====================================================================================
 // Entry-points
 //=====================================================================================

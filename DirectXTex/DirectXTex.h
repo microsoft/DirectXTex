@@ -27,7 +27,7 @@
 #include <dxgiformat.h>
 #include <d3d11.h>
 
-#define DIRECTX_TEX_VERSION 101
+#define DIRECTX_TEX_VERSION 102
 
 #if defined(_MSC_VER) && (_MSC_VER<1610) && !defined(_In_reads_)
 #define _Analysis_assume_(exp)
@@ -99,6 +99,20 @@ namespace DirectX
         TEX_MISC_TEXTURECUBE = 0x4L,
     };
 
+    enum TEX_MISC_FLAG2
+    {
+        TEX_MISC2_ALPHA_MODE_MASK = 0x3L,
+    };
+
+    enum TEX_ALPHA_MODE
+        // Matches DDS_ALPHA_MODE, encoded in MISC_FLAGS2
+    {
+        TEX_ALPHA_MODE_STRAIGHT      = 0,
+        TEX_ALPHA_MODE_PREMULTIPLIED = 1,
+        TEX_ALPHA_MODE_4TH_CHANNEL   = 2,
+        TEX_ALPHA_MODE_OPAQUE        = 3,
+    };
+
     struct TexMetadata
     {
         size_t          width;
@@ -107,11 +121,19 @@ namespace DirectX
         size_t          arraySize;  // For cubemap, this is a multiple of 6
         size_t          mipLevels;
         uint32_t        miscFlags;
+        uint32_t        miscFlags2;
         DXGI_FORMAT     format;
         TEX_DIMENSION   dimension;
 
         size_t ComputeIndex( _In_ size_t mip, _In_ size_t item, _In_ size_t slice ) const;
             // Returns size_t(-1) to indicate an out-of-range error
+
+        bool IsCubemap() const { return (miscFlags & TEX_MISC_TEXTURECUBE) != 0; }
+            // Helpers for miscFlags
+
+        bool IsPMAlpha() const { return ((miscFlags2 & TEX_MISC2_ALPHA_MODE_MASK) == TEX_ALPHA_MODE_PREMULTIPLIED) != 0; }
+        void SetAlphaMode( TEX_ALPHA_MODE mode ) { miscFlags2 = (miscFlags2 & ~TEX_MISC2_ALPHA_MODE_MASK) | static_cast<uint32_t>(mode); }
+            // Helpers for miscFlags2
     };
 
     enum DDS_FLAGS
@@ -135,6 +157,9 @@ namespace DirectX
 
         DDS_FLAGS_FORCE_DX10_EXT        = 0x10000,
             // Always use the 'DX10' header extension for DDS writer (i.e. don't try to write DX9 compatible DDS files)
+
+        DDS_FLAGS_FORCE_DX10_EXT_MISC2  = 0x20000,
+            // DDS_FLAGS_FORCE_DX10_EXT including miscFlags2 information (result may not be compatible with D3DX10 or D3DX11)
     };
 
     enum WIC_FLAGS
@@ -226,6 +251,8 @@ namespace DirectX
 
         uint8_t* GetPixels() const { return _memory; }
         size_t GetPixelsSize() const { return _size; }
+
+        bool IsAlphaAllOpaque() const;
 
     private:
         size_t      _nimages;
