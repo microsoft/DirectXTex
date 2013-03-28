@@ -258,7 +258,7 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
         metadata.format = d3d10ext->dxgiFormat;
         if ( !IsValid( metadata.format ) )
         {
-            HRESULT_FROM_WIN32( ERROR_INVALID_DATA );
+            return HRESULT_FROM_WIN32( ERROR_INVALID_DATA );
         }
 
         static_assert( TEX_MISC_TEXTURECUBE == DDS_RESOURCE_MISC_TEXTURECUBE, "DDS header mismatch");
@@ -467,7 +467,6 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
         case DXGI_FORMAT_B5G5R5A1_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A1R5G5B5, sizeof(DDS_PIXELFORMAT) ); break;
         case DXGI_FORMAT_B8G8R8A8_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT) ); break; // DXGI 1.1
         case DXGI_FORMAT_B8G8R8X8_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT) ); break; // DXGI 1.1
-
 #ifdef DXGI_1_2_FORMATS
         case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT) ); break;
 #endif
@@ -941,6 +940,11 @@ static HRESULT _CopyImage( _In_reads_bytes_(size) const void* pPixels, _In_ size
     assert( pixelSize <= size );
 
     std::unique_ptr<Image[]> timages( new (std::nothrow) Image[nimages] );
+    if ( !timages )
+    {
+        return E_OUTOFMEMORY;
+    }
+
     if ( !_SetupImageArray( (uint8_t*)pPixels, size, metadata, cpFlags, timages.get(), nimages ) )
     {
         return E_FAIL;

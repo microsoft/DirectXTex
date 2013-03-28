@@ -50,7 +50,7 @@ const uint16_t F16S_MASK    = 0x8000;   // f16 sign mask
 const uint16_t F16EM_MASK   = 0x7fff;   // f16 exp & mantissa mask
 const uint16_t F16MAX       = 0x7bff;   // MAXFLT bit pattern for XMHALF
 
-#define    SIGN_EXTEND(x,nb) ((((x)&(1<<((nb)-1)))?((~0)<<(nb)):0)|(x))
+#define SIGN_EXTEND(x,nb) ((((x)&(1<<((nb)-1)))?((~0)<<(nb)):0)|(x))
 
 // Because these are used in SAL annotations, they need to remain macros rather than const values
 #define NUM_PIXELS_PER_BLOCK 16

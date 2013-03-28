@@ -481,7 +481,7 @@ bool _IsAlphaAllOpaqueBC( _In_ const Image& cImage )
 
     XMVECTOR temp[16];
     const uint8_t *pPixels = cImage.pixels;
-    for( size_t h=0; h < cImage.height; h += 4 )
+    for( size_t h = 0; h < cImage.height; h += 4 )
     {
         const uint8_t *ptr = pPixels;
         for( size_t count = 0; count < cImage.rowPitch; count += sbpp )

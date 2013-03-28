@@ -746,7 +746,6 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
                     for( UINT level = 0; level < desc.MipLevels; ++level )
                     {
                         UINT index = D3D11CalcSubresource( level, item, desc.MipLevels );
-
                         pContext->ResolveSubresource( pTemp.Get(), index, pSource, index, fmt );
                     }
                 }

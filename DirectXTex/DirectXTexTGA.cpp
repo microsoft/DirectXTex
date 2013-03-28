@@ -1109,7 +1109,6 @@ HRESULT LoadFromTGAFile( LPCWSTR szFile, TexMetadata* metadata, ScratchImage& im
                 for( size_t h = 0; h < img->height; ++h )
                 {
                     _SwizzleScanline( pPixels, rowPitch, pPixels, rowPitch, mdata.format, tflags );
-
                     pPixels += rowPitch;
                 }
             }

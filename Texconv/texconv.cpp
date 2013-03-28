@@ -212,6 +212,8 @@ inline static bool ispow2(size_t x)
     return ((x != 0) && !(x & (x - 1)));
 }
 
+#pragma prefast(disable : 26018, "Only used with static internal arrays")
+
 DWORD LookupByName(const WCHAR *pName, const SValue *pArray)
 {
     while(pArray->pName)
@@ -361,6 +363,8 @@ void PrintUsage()
 //--------------------------------------------------------------------------------------
 // Entry-point
 //--------------------------------------------------------------------------------------
+#pragma prefast(disable : 28198, "Command-line tool, frees all memory on exit")
+
 int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 {
     // Parameters and defaults
