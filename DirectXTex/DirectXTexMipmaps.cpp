@@ -579,7 +579,7 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
 
                 size_t rowPitch = src->rowPitch;
 
-                size_t nheight = height >> 1;
+                size_t nheight = (height > 1) ? (height >> 1) : 1;
 
                 for( size_t y = 0; y < nheight; ++y )
                 {
@@ -587,7 +587,7 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
                         return E_FAIL;
                     pSrc += rowPitch*2;
 
-                    size_t nwidth = width >> 1;
+                    size_t nwidth = (width > 1) ? (width >> 1) : 1;
 
                     for( size_t x = 0; x < nwidth; ++x )
                     {
@@ -614,7 +614,7 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
 
             size_t rowPitch = src->rowPitch;
 
-            size_t nheight = height >> 1;
+            size_t nheight = (height > 1) ? (height >> 1) : 1;
 
             for( size_t y = 0; y < nheight; ++y )
             {
@@ -622,7 +622,7 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
                     return E_FAIL;
                 pSrc += rowPitch*2;
 
-                size_t nwidth = width >> 1;
+                size_t nwidth = (width > 1) ? (width >> 1) : 1;
 
                 for( size_t x = 0; x < nwidth; ++x )
                 {
@@ -717,7 +717,7 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
                 size_t aRowPitch = srca->rowPitch;
                 size_t bRowPitch = srcb->rowPitch;
 
-                size_t nheight = height >> 1;
+                size_t nheight = (height > 1) ? (height >> 1) : 1;
 
                 for( size_t y = 0; y < nheight; ++y )
                 {
@@ -746,7 +746,7 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
                         pSrc2 += bRowPitch;
                     }
 
-                    size_t nwidth = width >> 1;
+                    size_t nwidth = (width > 1) ? (width >> 1) : 1;
 
                     for( size_t x = 0; x < nwidth; ++x )
                     {
@@ -784,7 +784,7 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
 
             size_t rowPitch = src->rowPitch;
 
-            size_t nheight = height >> 1;
+            size_t nheight = (height > 1) ? (height >> 1) : 1;
 
             for( size_t y = 0; y < nheight; ++y )
             {
@@ -799,7 +799,7 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
                     pSrc += rowPitch;
                 }
 
-                size_t nwidth = width >> 1;
+                size_t nwidth = (width > 1) ? (width >> 1) : 1;
 
                 for( size_t x = 0; x < nwidth; ++x )
                 {
