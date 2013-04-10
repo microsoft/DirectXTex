@@ -1014,13 +1014,12 @@ static float OptimizeRGBA(_In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* cons
 
 
 //-------------------------------------------------------------------------------------
-#pragma warning(disable: 4616 6001 6297)
 
 static float ComputeError(_Inout_ const LDRColorA& pixel, _In_reads_(1 << uIndexPrec) const LDRColorA aPalette[],
                           _In_ uint8_t uIndexPrec, _In_ uint8_t uIndexPrec2, _Out_opt_ size_t* pBestIndex = nullptr, _Out_opt_ size_t* pBestIndex2 = nullptr)
 {
-    const size_t uNumIndices = 1 << uIndexPrec;
-    const size_t uNumIndices2 = 1 << uIndexPrec2;
+    const size_t uNumIndices = size_t(1) << uIndexPrec;
+    const size_t uNumIndices2 = size_t(1) << uIndexPrec2;
     float fTotalErr = 0;
     float fBestErr = FLT_MAX;
 
@@ -1419,7 +1418,7 @@ void D3DX_BC6H::GeneratePaletteQuantized(const EncodeParams* pEP, const INTEndPn
 {
     assert( pEP );
     const size_t uIndexPrec = ms_aInfo[pEP->uMode].uIndexPrec;
-    const size_t uNumIndices = 1 << uIndexPrec;
+    const size_t uNumIndices = size_t(1) << uIndexPrec;
     assert( uNumIndices > 0 );
     _Analysis_assume_( uNumIndices > 0 );
     const LDRColorA& Prec = ms_aInfo[pEP->uMode].RGBAPrec[0][0];
@@ -1625,7 +1624,7 @@ void D3DX_BC6H::SwapIndices(const EncodeParams* pEP, INTEndPntPair aEndPts[], si
 {
     assert( pEP );
     const size_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
-    const size_t uNumIndices = 1 << ms_aInfo[pEP->uMode].uIndexPrec;
+    const size_t uNumIndices = size_t(1) << ms_aInfo[pEP->uMode].uIndexPrec;
     const size_t uHighIndexBit = uNumIndices >> 1;
 
     assert( uPartitions < BC6H_MAX_REGIONS && pEP->uShape < BC6H_MAX_SHAPES );
@@ -2150,12 +2149,12 @@ void D3DX_BC7::Encode(const HDRColorA* const pIn)
 
     for(EP.uMode = 0; EP.uMode < 8 && fMSEBest > 0; ++EP.uMode)
     {
-        const size_t uShapes = 1 << ms_aInfo[EP.uMode].uPartitionBits;
+        const size_t uShapes = size_t(1) << ms_aInfo[EP.uMode].uPartitionBits;
         assert( uShapes <= BC7_MAX_SHAPES );
         _Analysis_assume_( uShapes <= BC7_MAX_SHAPES );
 
-        const size_t uNumRots = 1 << ms_aInfo[EP.uMode].uRotationBits;
-        const size_t uNumIdxMode = 1 << ms_aInfo[EP.uMode].uIndexModeBits;
+        const size_t uNumRots = size_t(1) << ms_aInfo[EP.uMode].uRotationBits;
+        const size_t uNumIdxMode = size_t(1) << ms_aInfo[EP.uMode].uIndexModeBits;
         // Number of rough cases to look at. reasonable values of this are 1, uShapes/4, and uShapes
         // uShapes/4 gets nearly all the cases; you can increase that a bit (say by 3 or 4) if you really want to squeeze the last bit out
         const size_t uItems = std::max<size_t>(1, uShapes >> 2);
@@ -2224,8 +2223,8 @@ void D3DX_BC7::GeneratePaletteQuantized(const EncodeParams* pEP, size_t uIndexMo
     assert( pEP );
     const size_t uIndexPrec = uIndexMode ? ms_aInfo[pEP->uMode].uIndexPrec2 : ms_aInfo[pEP->uMode].uIndexPrec;
     const size_t uIndexPrec2 = uIndexMode ? ms_aInfo[pEP->uMode].uIndexPrec : ms_aInfo[pEP->uMode].uIndexPrec2;
-    const size_t uNumIndices = 1 << uIndexPrec;
-    const size_t uNumIndices2 = 1 << uIndexPrec2;
+    const size_t uNumIndices = size_t(1) << uIndexPrec;
+    const size_t uNumIndices2 = size_t(1) << uIndexPrec2;
     assert( uNumIndices > 0 && uNumIndices2 > 0 );
     _Analysis_assume_( uNumIndices > 0 && uNumIndices2 > 0 );
     assert( (uNumIndices <= BC7_MAX_INDICES) && (uNumIndices2 <= BC7_MAX_INDICES) );
@@ -2553,7 +2552,7 @@ void D3DX_BC7::EmitBlock(const EncodeParams* pEP, size_t uShape, size_t uRotatio
 
     if(uPBits)
     {
-        const size_t uNumEP = (1 + uPartitions) << 1;
+        const size_t uNumEP = size_t(1 + uPartitions) << 1;
         uint8_t aPVote[BC7_MAX_REGIONS << 1] = {0,0,0,0,0,0};
         uint8_t aCount[BC7_MAX_REGIONS << 1] = {0,0,0,0,0,0};
         for(uint8_t ch = 0; ch < BC7_NUM_CHANNELS; ch++)

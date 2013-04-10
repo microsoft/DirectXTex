@@ -529,9 +529,6 @@ private:
     uint8_t m_uBits[ SizeInBytes ];
 };
 
-#pragma warning(push)
-#pragma warning(disable : 4127 4480 4512)
-
 // BC6H compression (16 bits per texel)
 class D3DX_BC6H : private CBits< 16 >
 {
@@ -540,6 +537,8 @@ public:
     void Encode(_In_ bool bSigned, _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pIn);
 
 private:
+#pragma warning(push)
+#pragma warning(disable : 4480)
     enum EField : uint8_t
     {
         NA, // N/A
@@ -558,6 +557,7 @@ private:
         BY,
         BZ,
     };
+#pragma warning(pop)
 
     struct ModeDescriptor
     {
@@ -574,6 +574,8 @@ private:
         LDRColorA RGBAPrec[BC6H_MAX_REGIONS][2];
     };
 
+#pragma warning(push)
+#pragma warning(disable : 4512)
     struct EncodeParams
     {
         float fBestErr;
@@ -593,6 +595,7 @@ private:
             }
         }
     };
+#pragma warning(pop)
 
     static int Quantize(_In_ int iValue, _In_ int prec, _In_ bool bSigned);
     static int Unquantize(_In_ int comp, _In_ uint8_t uBitsPerComp, _In_ bool bSigned);
@@ -651,6 +654,8 @@ private:
         LDRColorA RGBAPrecWithP;
     };
 
+#pragma warning(push)
+#pragma warning(disable : 4512)
     struct EncodeParams
     {
         uint8_t uMode;
@@ -660,6 +665,7 @@ private:
 
         EncodeParams(const HDRColorA* const aOriginal) : aHDRPixels(aOriginal) {}
     };
+#pragma warning(pop)
 
     static uint8_t Quantize(_In_ uint8_t comp, _In_ uint8_t uPrec)
     {
@@ -713,7 +719,7 @@ private:
                            _Out_writes_(BC7_MAX_REGIONS) LDREndPntPair opt_endpts[]) const;
     void AssignIndices(_In_ const EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uIndexMode,
                        _In_reads_(BC7_MAX_REGIONS) LDREndPntPair endpts[],
-                       _Inout_updates_all_(NUM_PIXELS_PER_BLOCK) size_t aIndices[], _Inout_updates_all_(NUM_PIXELS_PER_BLOCK) size_t aIndices2[],
+                       _Out_writes_(NUM_PIXELS_PER_BLOCK) size_t aIndices[], _Out_writes_(NUM_PIXELS_PER_BLOCK) size_t aIndices2[],
                        _Out_writes_(BC7_MAX_REGIONS) float afTotErr[]) const;
     void EmitBlock(_In_ const EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uRotation, _In_ size_t uIndexMode,
                    _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair aEndPts[],
@@ -730,6 +736,8 @@ private:
 };
 
 //-------------------------------------------------------------------------------------
+#pragma warning(push)
+#pragma warning(disable : 4127)
 template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPoints, size_t cSteps)
 {
     static const float pC6[] = { 5.0f/5.0f, 4.0f/5.0f, 3.0f/5.0f, 2.0f/5.0f, 1.0f/5.0f, 0.0f/5.0f };

@@ -370,7 +370,6 @@ inline static void DecodeBC1( _Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColo
 
 
 //-------------------------------------------------------------------------------------
-#pragma warning(disable: 4616 6001 6201)
 
 static void EncodeBC1(_Out_ D3DX_BC1 *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA *pColor,
                       _In_ bool bColorKey, _In_ float alphaRef, _In_ DWORD flags)

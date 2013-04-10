@@ -17,7 +17,7 @@
 
 #ifdef _OPENMP
 #include <omp.h>
-#pragma warning(disable : 4616 6001 6993)
+#pragma warning(disable : 4616 6993)
 #endif
 
 #include "bc.h"

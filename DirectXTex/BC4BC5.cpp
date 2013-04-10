@@ -17,8 +17,6 @@
 
 #include "BC.h"
 
-#pragma warning(disable : 4201)
-
 namespace DirectX
 {
 
@@ -36,6 +34,9 @@ namespace DirectX
 //------------------------------------------------------------------------------------
 // Structures
 //-------------------------------------------------------------------------------------
+
+#pragma warning(push)
+#pragma warning(disable : 4201)
 
 // BC4U/BC5U
 struct BC4_UNORM
@@ -152,6 +153,7 @@ struct BC4_SNORM
     };
 };
 
+#pragma warning(pop)
 
 //-------------------------------------------------------------------------------------
 // Convert a floating point value to an 8-bit SNORM
