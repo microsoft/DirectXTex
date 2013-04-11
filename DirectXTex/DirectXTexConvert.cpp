@@ -23,6 +23,28 @@
 using namespace DirectX::PackedVector;
 #endif
 
+namespace
+{
+    inline float round_to_nearest( float x )
+    {
+        float i = floorf(x);
+        x -= i;
+        if(x < 0.5f)
+            return i;
+        if(x > 0.5f)
+            return i + 1.f;
+
+        float int_part;
+        modff( i / 2.f, &int_part );
+        if ( (2.f*int_part) == i )
+        {
+            return i;
+        }
+
+        return i + 1.f;
+    }
+};
+
 namespace DirectX
 {
 
@@ -578,8 +600,34 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         return false;
 
     case DXGI_FORMAT_R10G10B10A2_UNORM:
-    case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
         LOAD_SCANLINE( XMUDECN4, XMLoadUDecN4 );
+
+    case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
+        if ( size >= sizeof(XMUDECN4) )
+        {
+            const XMUDECN4 * __restrict sPtr = reinterpret_cast<const XMUDECN4*>(pSource);
+            for( size_t icount = 0; icount < size; icount += sizeof(XMUDECN4) )
+            {
+                if ( dPtr >= ePtr ) break;
+
+                int32_t ElementX = sPtr->v & 0x3FF;
+                int32_t ElementY = (sPtr->v >> 10) & 0x3FF;
+                int32_t ElementZ = (sPtr->v >> 20) & 0x3FF;
+
+                XMVECTORF32 vResult = {
+                    (float)(ElementX - 0x180) / 510.0f,
+                    (float)(ElementY - 0x180) / 510.0f,
+                    (float)(ElementZ - 0x180) / 510.0f,
+                    (float)(sPtr->v >> 30) / 3.0f
+                };
+
+                ++sPtr;
+
+                *(dPtr++) = vResult.v;
+            }
+            return true;
+        }
+        return false;
 
     case DXGI_FORMAT_R10G10B10A2_UINT:
         LOAD_SCANLINE( XMUDEC4, XMLoadUDec4 );
@@ -825,10 +873,10 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
             const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
             for( size_t icount = 0; icount < size; icount += sizeof(uint8_t) )
             {
-                for( size_t bcount = 0; bcount < 8; ++bcount )
+                for( size_t bcount = 8; bcount > 0; --bcount )
                 {
                     if ( dPtr >= ePtr ) break;
-                    *(dPtr++) = XMVectorSet( (((*sPtr >> bcount) & 0x1) ? 1.f : 0.f), 0.f, 0.f, 1.f );
+                    *(dPtr++) = XMVectorSet( (((*sPtr >> (bcount-1)) & 0x1) ? 1.f : 0.f), 0.f, 0.f, 1.f );
                 }
                 
                 ++sPtr;
@@ -838,7 +886,27 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         return false;
 
     case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
-        LOAD_SCANLINE3( XMFLOAT3SE, XMLoadFloat3SE, g_XMIdentityR3 )
+        if ( size >= sizeof(XMFLOAT3SE) )
+        {
+            const XMFLOAT3SE * __restrict sPtr = reinterpret_cast<const XMFLOAT3SE*>(pSource);
+            for( size_t icount = 0; icount < size; icount += sizeof(XMFLOAT3SE) )
+            {
+                union { float f; int32_t i; } fi;
+                fi.i = 0x33800000 + (sPtr->e << 23);
+                float Scale = fi.f;
+
+                XMVECTORF32 v = {
+                    Scale * float( sPtr->xm ),
+                    Scale * float( sPtr->ym ),
+                    Scale * float( sPtr->zm ),
+                    1.0f };
+
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = v;
+            }
+            return true;
+        }
+        return false;
 
     case DXGI_FORMAT_R8G8_B8G8_UNORM:
         if ( size >= sizeof(XMUBYTEN4) )
@@ -1057,8 +1125,35 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         return true;
 
     case DXGI_FORMAT_R10G10B10A2_UNORM:
-    case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
         STORE_SCANLINE( XMUDECN4, XMStoreUDecN4 );
+
+    case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
+        if ( size >= sizeof(XMUDECN4) )
+        {
+            static const XMVECTORF32  Scale = { 510.0f, 510.0f, 510.0f, 3.0f };
+            static const XMVECTORF32  Bias  = { 384.0f, 384.0f, 384.0f, 0.0f };
+            static const XMVECTORF32  C     = { 1023.f, 1023.f, 1023.f, 3.f };
+
+            XMUDECN4 * __restrict dPtr = reinterpret_cast<XMUDECN4*>(pDestination);
+            for( size_t icount = 0; icount < size; icount += sizeof(XMUDECN4) )
+            {
+                if ( sPtr >= ePtr ) break;
+
+                XMVECTOR N = XMVectorMultiply(*sPtr++, Scale);
+                N = XMVectorAdd( N, Bias );
+                N = XMVectorClamp( N, g_XMZero, C );
+
+                XMFLOAT4A tmp;
+                XMStoreFloat4A(&tmp, N );
+
+                dPtr->v = ((uint32_t)tmp.w << 30)
+                           | (((uint32_t)tmp.z & 0x3FF) << 20)
+                           | (((uint32_t)tmp.y & 0x3FF) << 10)
+                           | (((uint32_t)tmp.x & 0x3FF));
+                ++dPtr;
+            }
+        }
+        return true;
 
     case DXGI_FORMAT_R10G10B10A2_UINT:
         STORE_SCANLINE( XMUDEC4, XMStoreUDec4 );
@@ -1309,12 +1404,16 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
             for( size_t icount = 0; icount < size; icount += sizeof(uint8_t) )
             {
                 uint8_t pixels = 0;
-                for( size_t bcount = 0; bcount < 8; ++bcount )
+                for( size_t bcount = 8; bcount > 0; --bcount )
                 {
                     if ( sPtr >= ePtr ) break;
                     float v = XMVectorGetX( *sPtr++ );
-                    if ( v > 0.5f )
-                        pixels |= 1 << bcount;
+
+                    // Absolute thresholding generally doesn't give good results for all images
+                    // Picking the 'right' threshold automatically requires whole-image analysis
+
+                    if ( v > 0.25f )
+                        pixels |= 1 << (bcount-1);
                 }
                 *(dPtr++) = pixels;
             }
@@ -1322,7 +1421,44 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         return true;
 
     case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
-        STORE_SCANLINE( XMFLOAT3SE, XMStoreFloat3SE )
+        if ( size >= sizeof(XMFLOAT3SE) )
+        {
+            static const float maxf9 = float(0x1FF << 7);
+            static const float minf9 = float(1.f / (1 << 16));
+
+            XMFLOAT3SE * __restrict dPtr = reinterpret_cast<XMFLOAT3SE*>(pDestination);
+            for( size_t icount = 0; icount < size; icount += sizeof(XMFLOAT3SE) )
+            {
+                if ( sPtr >= ePtr ) break;
+
+                XMFLOAT3 rgb;
+                XMStoreFloat3( &rgb, *(sPtr++) );
+
+                float r = (rgb.x >= 0.f) ? ( (rgb.x > maxf9) ? maxf9 : rgb.x ) : 0.f;
+                float g = (rgb.y >= 0.f) ? ( (rgb.y > maxf9) ? maxf9 : rgb.y ) : 0.f;
+                float b = (rgb.z >= 0.f) ? ( (rgb.z > maxf9) ? maxf9 : rgb.z ) : 0.f;
+
+                const float max_rg = (r > g) ? r : g;
+                const float max_rgb = (max_rg > b) ? max_rg : b;
+
+                const float maxColor = (max_rgb > minf9) ? max_rgb : minf9;
+
+                union { float f; INT32 i; } fi;
+                fi.f = maxColor;
+                fi.i &= 0xFF800000; // cut off fraction
+
+                dPtr->e = (fi.i - 0x37800000) >> 23;
+
+                fi.i = 0x83000000 - fi.i;
+                float ScaleR = fi.f;
+
+                dPtr->xm = static_cast<uint32_t>( round_to_nearest(r * ScaleR) );
+                dPtr->ym = static_cast<uint32_t>( round_to_nearest(g * ScaleR) );
+                dPtr->zm = static_cast<uint32_t>( round_to_nearest(b * ScaleR) );
+                ++dPtr;
+            }
+        }
+        return true;
 
     case DXGI_FORMAT_R8G8_B8G8_UNORM:
         if ( size >= sizeof(XMUBYTEN4) )
