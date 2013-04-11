@@ -315,10 +315,11 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
 
         static_assert( TEX_MISC2_ALPHA_MODE_MASK == DDS_MISC_FLAGS2_ALPHA_MODE_MASK, "DDS header mismatch");
 
+        static_assert( TEX_ALPHA_MODE_UNKNOWN == DDS_ALPHA_MODE_UNKNOWN, "DDS header mismatch");
         static_assert( TEX_ALPHA_MODE_STRAIGHT == DDS_ALPHA_MODE_STRAIGHT, "DDS header mismatch");
         static_assert( TEX_ALPHA_MODE_PREMULTIPLIED == DDS_ALPHA_MODE_PREMULTIPLIED, "DDS header mismatch");
-        static_assert( TEX_ALPHA_MODE_4TH_CHANNEL == DDS_ALPHA_MODE_4TH_CHANNEL, "DDS header mismatch");
         static_assert( TEX_ALPHA_MODE_OPAQUE == DDS_ALPHA_MODE_OPAQUE, "DDS header mismatch");
+        static_assert( TEX_ALPHA_MODE_CUSTOM == DDS_ALPHA_MODE_CUSTOM, "DDS header mismatch");
 
         metadata.miscFlags2 = d3d10ext->miscFlags2;
     }
@@ -637,10 +638,11 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
 
         static_assert( TEX_MISC2_ALPHA_MODE_MASK == DDS_MISC_FLAGS2_ALPHA_MODE_MASK, "DDS header mismatch");
 
+        static_assert( TEX_ALPHA_MODE_UNKNOWN == DDS_ALPHA_MODE_UNKNOWN, "DDS header mismatch");
         static_assert( TEX_ALPHA_MODE_STRAIGHT == DDS_ALPHA_MODE_STRAIGHT, "DDS header mismatch");
         static_assert( TEX_ALPHA_MODE_PREMULTIPLIED == DDS_ALPHA_MODE_PREMULTIPLIED, "DDS header mismatch");
-        static_assert( TEX_ALPHA_MODE_4TH_CHANNEL == DDS_ALPHA_MODE_4TH_CHANNEL, "DDS header mismatch");
         static_assert( TEX_ALPHA_MODE_OPAQUE == DDS_ALPHA_MODE_OPAQUE, "DDS header mismatch");
+        static_assert( TEX_ALPHA_MODE_CUSTOM == DDS_ALPHA_MODE_CUSTOM, "DDS header mismatch");
 
         if ( flags & DDS_FLAGS_FORCE_DX10_EXT_MISC2 )
         {

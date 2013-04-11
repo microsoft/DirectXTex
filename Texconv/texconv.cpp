@@ -1080,7 +1080,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             else if ( dwOptions & (1 << OPT_SEPALPHA) )
             {
-                info.SetAlphaMode(TEX_ALPHA_MODE_4TH_CHANNEL);
+                info.SetAlphaMode(TEX_ALPHA_MODE_CUSTOM);
+            }
+            else
+            {
+                info.SetAlphaMode(TEX_ALPHA_MODE_STRAIGHT);
             }
         }
         else

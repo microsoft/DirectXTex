@@ -101,16 +101,17 @@ namespace DirectX
 
     enum TEX_MISC_FLAG2
     {
-        TEX_MISC2_ALPHA_MODE_MASK = 0x3L,
+        TEX_MISC2_ALPHA_MODE_MASK = 0x7L,
     };
 
     enum TEX_ALPHA_MODE
         // Matches DDS_ALPHA_MODE, encoded in MISC_FLAGS2
     {
-        TEX_ALPHA_MODE_STRAIGHT      = 0,
-        TEX_ALPHA_MODE_PREMULTIPLIED = 1,
-        TEX_ALPHA_MODE_4TH_CHANNEL   = 2,
+        TEX_ALPHA_MODE_UNKNOWN       = 0,
+        TEX_ALPHA_MODE_STRAIGHT      = 1,
+        TEX_ALPHA_MODE_PREMULTIPLIED = 2,
         TEX_ALPHA_MODE_OPAQUE        = 3,
+        TEX_ALPHA_MODE_CUSTOM        = 4,
     };
 
     struct TexMetadata
