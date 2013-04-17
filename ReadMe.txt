@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-March 22, 2013
+April 16, 2013
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -88,6 +88,10 @@ http://go.microsoft.com/fwlink/?LinkId=248926
 ------------------------------------
 RELEASE NOTES
 
+* The alpha mode specification for DDS files was updated between the March 2013 and April 2013 releases. Any
+  DDS files created using the DDS_FLAGS_FORCE_DX10_EXT_MISC2 flag or the texconv -dx10 switch using the
+  March 2013 release should be refreshed.
+
 * The DirectXTex library does not support block compression or decompression of mipmapped non-power-of-2 textures,
   although DDSTextureLoader will load these files correctly if the underlying device supports it. [CodePlex issue 640]
 
@@ -122,6 +126,16 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+April 16, 2013
+    Updated alpha-mode metadata details in .DDS files
+    Added new control flags for Convert
+    Added new optional flags for ComputeMSE
+    Fixed conversion handling for sRGB formats
+    Fixed internal routines for handling R10G10B10_XR_BIAS_A2_UNORM, R9G9B9E5_SHAREDEXP, and FORMAT_R1_UNORM
+    Fixed WIC I/O for GUID_WICPixelFormat32bppRGBE pixel format files (HD Photo)
+    Fixed non-square image handling in GenerateMipMaps3D
+    Fixed some error handling in the DDS load code
 
 March 22, 2013
     Supports reading and writing alpha-mode (straight, premultiplied, etc.) metadata in .DDS files
