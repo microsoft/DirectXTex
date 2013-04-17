@@ -177,7 +177,7 @@ namespace DirectX
             // Loads 565, 5551, and 4444 formats as 8888 to avoid use of optional WDDM 1.2 formats
 
         WIC_FLAGS_ALLOW_MONO            = 0x8,
-            // Loads 1-bit monochrome (black & white) as R1_UNORM rather than 8-bit greyscale
+            // Loads 1-bit monochrome (black & white) as R1_UNORM rather than 8-bit grayscale
 
         WIC_FLAGS_ALL_FRAMES            = 0x10,
             // Loads all images in a multi-frame file, converting/resizing to match the first frame as needed, defaults to 0th frame otherwise
@@ -373,6 +373,12 @@ namespace DirectX
         TEX_FILTER_SEPARATE_ALPHA   = 0x100,
             // Resize color and alpha channel independently
 
+        TEX_FILTER_RGB_COPY_RED     = 0x1000,
+        TEX_FILTER_RGB_COPY_GREEN   = 0x2000,
+        TEX_FILTER_RGB_COPY_BLUE    = 0x4000,
+            // When converting RGB to R, defaults to using grayscale. These flags indicate copying a specific channel instead
+            // When converting RGB to RG, defaults to copying RED | GREEN. These flags control which channels are selected instead.
+
         TEX_FILTER_DITHER           = 0x10000,
             // Use ordered 4x4 dithering for any required conversions
         TEX_FILTER_DITHER_DIFFUSION = 0x20000,
@@ -390,6 +396,12 @@ namespace DirectX
             // sRGB <-> RGB for use in conversion operations
             // if the input format type is IsSRGB(), then SRGB_IN is on by default
             // if the output format type is IsSRGB(), then SRGB_OUT is on by default
+
+        TEX_FILTER_FORCE_NON_WIC    = 0x10000000,
+            // Forces use of the non-WIC path when both are an option
+
+        TEX_FILTER_FORCE_WIC        = 0x20000000,
+            // Forces use of the WIC path even when logic would have picked a non-WIC path when both are an option
     };
 
     HRESULT Resize( _In_ const Image& srcImage, _In_ size_t width, _In_ size_t height, _In_ DWORD filter,
@@ -501,7 +513,22 @@ namespace DirectX
     HRESULT CopyRectangle( _In_ const Image& srcImage, _In_ const Rect& srcRect, _In_ const Image& dstImage,
                            _In_ DWORD filter, _In_ size_t xOffset, _In_ size_t yOffset );
 
-    HRESULT ComputeMSE( _In_ const Image& image1, _In_ const Image& image2, _Out_ float& mse, _Out_writes_opt_(4) float* mseV );
+    enum CMSE_FLAGS
+    {
+        CMSE_DEFAULT                = 0,
+
+        CMSE_IMAGE1_SRGB            = 0x1,
+        CMSE_IMAGE2_SRGB            = 0x2,
+            // Indicates that image needs gamma correction before comparision
+
+        CMSE_IGNORE_RED             = 0x10,
+        CMSE_IGNORE_GREEN           = 0x20,
+        CMSE_IGNORE_BLUE            = 0x40,
+        CMSE_IGNORE_ALPHA           = 0x80,
+            // Ignore the channel when computing MSE
+    };
+
+    HRESULT ComputeMSE( _In_ const Image& image1, _In_ const Image& image2, _Out_ float& mse, _Out_writes_opt_(4) float* mseV, _In_ DWORD flags = 0 );
 
     //---------------------------------------------------------------------------------
     // Direct3D 11 functions

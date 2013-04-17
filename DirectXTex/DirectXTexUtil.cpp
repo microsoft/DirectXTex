@@ -1,3 +1,5 @@
+
+
 //-------------------------------------------------------------------------------------
 // DirectXTexUtil.cpp
 //  
@@ -22,33 +24,34 @@ struct WICTranslate
 {
     GUID        wic;
     DXGI_FORMAT format;
+    bool        srgb;
 };
 
 static WICTranslate g_WICFormats[] = 
 {
-    { GUID_WICPixelFormat128bppRGBAFloat,       DXGI_FORMAT_R32G32B32A32_FLOAT },
+    { GUID_WICPixelFormat128bppRGBAFloat,       DXGI_FORMAT_R32G32B32A32_FLOAT,         false },
 
-    { GUID_WICPixelFormat64bppRGBAHalf,         DXGI_FORMAT_R16G16B16A16_FLOAT },
-    { GUID_WICPixelFormat64bppRGBA,             DXGI_FORMAT_R16G16B16A16_UNORM },
+    { GUID_WICPixelFormat64bppRGBAHalf,         DXGI_FORMAT_R16G16B16A16_FLOAT,         false },
+    { GUID_WICPixelFormat64bppRGBA,             DXGI_FORMAT_R16G16B16A16_UNORM,         true },
 
-    { GUID_WICPixelFormat32bppRGBA,             DXGI_FORMAT_R8G8B8A8_UNORM },
-    { GUID_WICPixelFormat32bppBGRA,             DXGI_FORMAT_B8G8R8A8_UNORM }, // DXGI 1.1
-    { GUID_WICPixelFormat32bppBGR,              DXGI_FORMAT_B8G8R8X8_UNORM }, // DXGI 1.1
+    { GUID_WICPixelFormat32bppRGBA,             DXGI_FORMAT_R8G8B8A8_UNORM,             true },
+    { GUID_WICPixelFormat32bppBGRA,             DXGI_FORMAT_B8G8R8A8_UNORM,             true }, // DXGI 1.1
+    { GUID_WICPixelFormat32bppBGR,              DXGI_FORMAT_B8G8R8X8_UNORM,             true }, // DXGI 1.1
 
-    { GUID_WICPixelFormat32bppRGBA1010102XR,    DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM }, // DXGI 1.1
-    { GUID_WICPixelFormat32bppRGBA1010102,      DXGI_FORMAT_R10G10B10A2_UNORM },
+    { GUID_WICPixelFormat32bppRGBA1010102XR,    DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM, true }, // DXGI 1.1
+    { GUID_WICPixelFormat32bppRGBA1010102,      DXGI_FORMAT_R10G10B10A2_UNORM,          true },
 
-    { GUID_WICPixelFormat16bppBGRA5551,         DXGI_FORMAT_B5G5R5A1_UNORM },
-    { GUID_WICPixelFormat16bppBGR565,           DXGI_FORMAT_B5G6R5_UNORM },
+    { GUID_WICPixelFormat16bppBGRA5551,         DXGI_FORMAT_B5G5R5A1_UNORM,             true },
+    { GUID_WICPixelFormat16bppBGR565,           DXGI_FORMAT_B5G6R5_UNORM,               true },
 
-    { GUID_WICPixelFormat32bppGrayFloat,        DXGI_FORMAT_R32_FLOAT },
-    { GUID_WICPixelFormat16bppGrayHalf,         DXGI_FORMAT_R16_FLOAT },
-    { GUID_WICPixelFormat16bppGray,             DXGI_FORMAT_R16_UNORM },
-    { GUID_WICPixelFormat8bppGray,              DXGI_FORMAT_R8_UNORM },
+    { GUID_WICPixelFormat32bppGrayFloat,        DXGI_FORMAT_R32_FLOAT,                  false },
+    { GUID_WICPixelFormat16bppGrayHalf,         DXGI_FORMAT_R16_FLOAT,                  false },
+    { GUID_WICPixelFormat16bppGray,             DXGI_FORMAT_R16_UNORM,                  true },
+    { GUID_WICPixelFormat8bppGray,              DXGI_FORMAT_R8_UNORM,                   true },
 
-    { GUID_WICPixelFormat8bppAlpha,             DXGI_FORMAT_A8_UNORM },
+    { GUID_WICPixelFormat8bppAlpha,             DXGI_FORMAT_A8_UNORM,                   false },
 
-    { GUID_WICPixelFormatBlackWhite,            DXGI_FORMAT_R1_UNORM },
+    { GUID_WICPixelFormatBlackWhite,            DXGI_FORMAT_R1_UNORM,                   false },
 };
 
 static bool g_WIC2 = false;
@@ -129,6 +132,33 @@ bool _DXGIToWIC( DXGI_FORMAT format, GUID& guid )
 
     memcpy( &guid, &GUID_NULL, sizeof(GUID) );
     return false;
+}
+
+DWORD _CheckWICColorSpace( _In_ const GUID& sourceGUID, _In_ const GUID& targetGUID )
+{
+    DWORD srgb = 0;
+
+    for( size_t i=0; i < _countof(g_WICFormats); ++i )
+    {
+        if ( memcmp( &g_WICFormats[i].wic, &sourceGUID, sizeof(GUID) ) == 0 )
+        {
+            if ( g_WICFormats[i].srgb )
+                srgb |= TEX_FILTER_SRGB_IN;
+        }
+
+        if ( memcmp( &g_WICFormats[i].wic, &targetGUID, sizeof(GUID) ) == 0 )
+        {
+            if ( g_WICFormats[i].srgb )
+                srgb |= TEX_FILTER_SRGB_OUT;
+        }
+    }
+
+    if ( (srgb & (TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT)) == (TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT) )
+    {
+        srgb &= ~(TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT);
+    }
+
+    return srgb;
 }
 
 bool _IsWIC2()

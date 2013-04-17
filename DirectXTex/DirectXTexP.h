@@ -67,6 +67,8 @@ namespace DirectX
     DXGI_FORMAT _WICToDXGI( _In_ const GUID& guid );
     bool _DXGIToWIC( _In_ DXGI_FORMAT format, _Out_ GUID& guid );
 
+    DWORD _CheckWICColorSpace( _In_ const GUID& sourceGUID, _In_ const GUID& targetGUID );
+
     IWICImagingFactory* _GetWIC();
 
     bool _IsWIC2();

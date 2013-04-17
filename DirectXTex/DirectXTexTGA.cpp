@@ -19,7 +19,7 @@
 // The implementation here has the following limitations:
 //      * Does not support files that contain color maps (these are rare in practice)
 //      * Interleaved files are not supported (deprecated aspect of TGA format)
-//      * Only supports 8-bit greyscale; 16-, 24-, and 32-bit truecolor images
+//      * Only supports 8-bit grayscale; 16-, 24-, and 32-bit truecolor images
 //      * Always writes uncompressed files (i.e. can read RLE compression, but does not write it)
 //
 

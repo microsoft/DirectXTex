@@ -27,6 +27,7 @@ namespace
 {
     inline float round_to_nearest( float x )
     {
+        // Round to nearest (even)
         float i = floorf(x);
         x -= i;
         if(x < 0.5f)
@@ -47,6 +48,7 @@ namespace
 
 namespace DirectX
 {
+static const XMVECTORF32 g_Grayscale = { 0.2125f, 0.7154f, 0.0721f, 0.0f };
 
 //-------------------------------------------------------------------------------------
 // Copies an image row with optional clearing of alpha value to 1.0
@@ -2028,12 +2030,6 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
     if ( IsSRGB( outFormat ) )
         flags |= TEX_FILTER_SRGB_OUT;
 
-    if ( in->flags & CONVF_SNORM )
-        flags &= ~TEX_FILTER_SRGB_IN;
-
-    if ( out->flags & CONVF_SNORM )
-        flags &= ~TEX_FILTER_SRGB_OUT;
-
     if ( (flags & (TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT)) == (TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT) )
     {
         flags &= ~(TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT);
@@ -2049,6 +2045,8 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
             {
                 // rgb = rgb^(2.2); a=a
                 XMVECTOR v = *ptr;
+                // Use table instead of XMVectorPow( v, [2.2f 2.2f 2.2f 1]).
+                // Note table lookup will also saturate the result
                 XMVECTOR v1 = _TableDecodeGamma22( v );
                 *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
             }
@@ -2131,15 +2129,113 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
                 *ptr++ = XMVectorSplatW( v );
             }
         }
-        else if ( ((in->flags & CONVF_RGB_MASK) == CONVF_R) && ((out->flags & CONVF_RGB_MASK) == (CONVF_R|CONVF_G|CONVF_B)) )
+        else if ( (in->flags & CONVF_RGB_MASK) == CONVF_R )
         {
-            // R format -> RGB format
-            XMVECTOR* ptr = pBuffer;
-            for( size_t i=0; i < count; ++i )
+            if ( (out->flags & CONVF_RGB_MASK) == (CONVF_R|CONVF_G|CONVF_B) )
             {
-                XMVECTOR v = *ptr;
-                XMVECTOR v1 = XMVectorSplatX( v );
-                *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
+                // R format -> RGB format
+                XMVECTOR* ptr = pBuffer;
+                for( size_t i=0; i < count; ++i )
+                {
+                    XMVECTOR v = *ptr;
+                    XMVECTOR v1 = XMVectorSplatX( v );
+                    *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
+                }
+            }
+            else if ( (out->flags & CONVF_RGB_MASK) == (CONVF_R|CONVF_G) )
+            {
+                // R format -> RG format
+                XMVECTOR* ptr = pBuffer;
+                for( size_t i=0; i < count; ++i )
+                {
+                    XMVECTOR v = *ptr;
+                    XMVECTOR v1 = XMVectorSplatX( v );
+                    *ptr++ = XMVectorSelect( v, v1, g_XMSelect1100 );
+                }
+            }
+        }
+        else if ( (in->flags & CONVF_RGB_MASK) == (CONVF_R|CONVF_G|CONVF_B) )
+        {
+            if ( (out->flags & CONVF_RGB_MASK) == CONVF_R )
+            {
+                // RGB format -> R format
+                switch( flags & ( TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE ) )
+                {
+                case TEX_FILTER_RGB_COPY_RED:
+                    // Leave data unchanged and the store will handle this...
+                    break;
+
+                case TEX_FILTER_RGB_COPY_GREEN:
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorSplatY( v );
+                            *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
+                        }
+                    }
+                    break;
+
+                case TEX_FILTER_RGB_COPY_BLUE:
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorSplatZ( v );
+                            *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
+                        }
+                    }
+                    break;
+
+                default:
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVector3Dot( v, g_Grayscale );
+                            *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
+                        }
+                    }
+                    break;
+                }
+            }
+            else if ( (out->flags & CONVF_RGB_MASK) == (CONVF_R|CONVF_G) )
+            {
+                // RGB format -> RG format
+                switch( flags & ( TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE ) )
+                {
+                case TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_BLUE:
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorSwizzle<0,2,0,2>( v );
+                            *ptr++ = XMVectorSelect( v, v1, g_XMSelect1100 );
+                        }
+                    }
+                    break;
+
+                case TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE:
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorSwizzle<1,2,3,0>( v );
+                            *ptr++ = XMVectorSelect( v, v1, g_XMSelect1100 );
+                        }
+                    }
+                    break;
+
+                case TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN:
+                default:
+                    // Leave data unchanged and the store will handle this...
+                    break;
+                }
             }
         }
     }
@@ -2155,10 +2251,106 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
                 // rgb = rgb^(1/2.2); a=a
                 XMVECTOR v = *ptr;
                 XMVECTOR v1 = _TableEncodeGamma22( v );
+                // Use table instead of XMVectorPow( v, [1/2.2f 1/2.2f 1/2.2f 1]).
+                // Note table lookup will also saturate the result
                 *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
             }
         }
     }
+}
+
+
+//-------------------------------------------------------------------------------------
+// Selection logic for using WIC vs. our own routines
+//-------------------------------------------------------------------------------------
+static inline bool _UseWICConversion( _In_ DWORD filter, _In_ DXGI_FORMAT sformat, _In_ DXGI_FORMAT tformat,
+                                      _Out_ WICPixelFormatGUID& pfGUID, _Out_ WICPixelFormatGUID& targetGUID )
+{
+    memcpy( &pfGUID, &GUID_NULL, sizeof(GUID) );
+    memcpy( &targetGUID, &GUID_NULL, sizeof(GUID) );
+
+    if ( filter & TEX_FILTER_FORCE_NON_WIC )
+    {
+        // Explicit flag indicates use of non-WIC code paths
+        return false;
+    }
+
+    if ( !_DXGIToWIC( sformat, pfGUID ) || !_DXGIToWIC( tformat, targetGUID ) )
+    {
+        // Source or target format are not WIC supported native pixel formats
+        return false;
+    }
+
+    if ( filter & TEX_FILTER_FORCE_WIC )
+    {
+        // Explicit flag to use WIC code paths, skips all the case checks below
+        return true;
+    }
+
+    // Check for special cases
+    switch ( sformat )
+    {
+    case DXGI_FORMAT_R32G32B32A32_FLOAT:
+    case DXGI_FORMAT_R32G32B32_FLOAT:
+    case DXGI_FORMAT_R16G16B16A16_FLOAT:
+        switch( tformat )
+        {
+        case DXGI_FORMAT_R16_FLOAT:
+        case DXGI_FORMAT_R32_FLOAT:
+        case DXGI_FORMAT_D32_FLOAT:
+            // WIC converts via UNORM formats and ends up converting colorspaces for these cases
+        case DXGI_FORMAT_A8_UNORM:
+            // Conversion logic for these kinds of textures is unintuitive for WIC code paths
+            return false;
+        }
+        break;
+    
+    case DXGI_FORMAT_R16_FLOAT:
+        switch( tformat )
+        {
+        case DXGI_FORMAT_R32_FLOAT:
+        case DXGI_FORMAT_D32_FLOAT:
+            // WIC converts via UNORM formats and ends up converting colorspaces for these cases
+        case DXGI_FORMAT_A8_UNORM:
+            // Conversion logic for these kinds of textures is unintuitive for WIC code paths
+            return false;
+        }
+        break;
+
+    case DXGI_FORMAT_A8_UNORM:
+        // Conversion logic for these kinds of textures is unintuitive for WIC code paths
+        return false;
+
+    default:
+        switch( tformat )
+        {
+        case DXGI_FORMAT_A8_UNORM:
+            // Conversion logic for these kinds of textures is unintuitive for WIC code paths
+            return false;
+        }
+    }
+    
+    // Check for implicit color space changes
+    if ( IsSRGB( sformat ) )
+        filter |= TEX_FILTER_SRGB_IN;
+
+    if ( IsSRGB( tformat ) )
+        filter |= TEX_FILTER_SRGB_OUT;
+
+    if ( (filter & (TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT)) == (TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT) )
+    {
+        filter &= ~(TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT);
+    }
+
+    DWORD wicsrgb = _CheckWICColorSpace( pfGUID, targetGUID );
+
+    if ( wicsrgb != (filter & (TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT)) )
+    {
+        // WIC will perform a colorspace conversion we didn't request
+        return false;
+    }
+
+    return true;
 }
 
 
@@ -2181,7 +2373,8 @@ static HRESULT _ConvertUsingWIC( _In_ const Image& srcImage, _In_ const WICPixel
     if ( FAILED(hr) )
         return hr;
 
-// Need to add logic to use TEX_FILTER_SRGB_IN/TEX_FILTER_SRGB_OUT
+    // Note that WIC conversion ignores the TEX_FILTER_SRGB_IN and TEX_FILTER_SRGB_OUT flags,
+    // but also always assumes UNORM <-> FLOAT conversions are changing color spaces sRGB <-> scRGB
 
     BOOL canConvert = FALSE;
     hr = FC->CanConvert( pfGUID, targetGUID, &canConvert );
@@ -2195,151 +2388,6 @@ static HRESULT _ConvertUsingWIC( _In_ const Image& srcImage, _In_ const WICPixel
     hr = pWIC->CreateBitmapFromMemory( static_cast<UINT>( srcImage.width ), static_cast<UINT>( srcImage.height ), pfGUID,
                                        static_cast<UINT>( srcImage.rowPitch ), static_cast<UINT>( srcImage.slicePitch ),
                                        srcImage.pixels, &source );
-    if ( FAILED(hr) )
-        return hr;
-
-    hr = FC->Initialize( source.Get(), targetGUID, _GetWICDither( filter ), 0, threshold, WICBitmapPaletteTypeCustom );
-    if ( FAILED(hr) )
-        return hr;
-
-    hr = FC->CopyPixels( 0, static_cast<UINT>( destImage.rowPitch ), static_cast<UINT>( destImage.slicePitch ), destImage.pixels );  
-    if ( FAILED(hr) )
-        return hr;
-
-    return S_OK;
-}
-
-
-//-------------------------------------------------------------------------------------
-// Convert the source using WIC and then convert to DXGI format from there
-//-------------------------------------------------------------------------------------
-static HRESULT _ConvertFromWIC( _In_ const Image& srcImage, _In_ const WICPixelFormatGUID& pfGUID,
-                                _In_ DWORD filter, _In_ float threshold,  _In_ const Image& destImage )
-{
-    assert( srcImage.width == destImage.width );
-    assert( srcImage.height == destImage.height );
-
-    IWICImagingFactory* pWIC = _GetWIC();
-    if ( !pWIC )
-        return E_NOINTERFACE;
-
-    ScopedObject<IWICFormatConverter> FC;
-    HRESULT hr = pWIC->CreateFormatConverter( &FC );
-    if ( FAILED(hr) )
-        return hr;
-
-    BOOL canConvert = FALSE;
-    hr = FC->CanConvert( pfGUID, GUID_WICPixelFormat128bppRGBAFloat, &canConvert );
-    if ( FAILED(hr) || !canConvert )
-    {
-        // This case is not an issue for the subset of WIC formats that map directly to DXGI
-        return E_UNEXPECTED;
-    }
-
-    ScratchImage temp;
-    hr = temp.Initialize2D( DXGI_FORMAT_R32G32B32A32_FLOAT, srcImage.width, srcImage.height, 1, 1 );
-    if ( FAILED(hr) )
-        return hr;
-
-    const Image *timg = temp.GetImage( 0, 0, 0 );
-    if ( !timg )
-        return E_POINTER;
-
-    ScopedObject<IWICBitmap> source;
-    hr = pWIC->CreateBitmapFromMemory( static_cast<UINT>( srcImage.width ), static_cast<UINT>( srcImage.height ), pfGUID,
-                                       static_cast<UINT>( srcImage.rowPitch ), static_cast<UINT>( srcImage.slicePitch ),
-                                       srcImage.pixels, &source );
-    if ( FAILED(hr) )
-        return hr;
-
-    hr = FC->Initialize( source.Get(), GUID_WICPixelFormat128bppRGBAFloat, _GetWICDither( filter ), 0, threshold, WICBitmapPaletteTypeCustom );
-    if ( FAILED(hr) )
-        return hr;
-
-    hr = FC->CopyPixels( 0, static_cast<UINT>( timg->rowPitch ), static_cast<UINT>( timg->slicePitch ), timg->pixels );  
-    if ( FAILED(hr) )
-        return hr;
-
-    // Perform conversion on temp image which is now in R32G32B32A32_FLOAT format to final image
-    uint8_t *pSrc = timg->pixels;
-    uint8_t *pDest = destImage.pixels;
-    if ( !pSrc || !pDest )
-        return E_POINTER;
-
-    for( size_t h = 0; h < srcImage.height; ++h )
-    {
-        _ConvertScanline( reinterpret_cast<XMVECTOR*>(pSrc), srcImage.width, destImage.format, DXGI_FORMAT_R32G32B32A32_FLOAT, filter );
-
-        if ( !_StoreScanline( pDest, destImage.rowPitch, destImage.format, reinterpret_cast<const XMVECTOR*>(pSrc), srcImage.width ) )
-            return E_FAIL;
-
-        pSrc += timg->rowPitch;
-        pDest += destImage.rowPitch;
-    }
-
-    return S_OK;
-}
-
-
-//-------------------------------------------------------------------------------------
-// Convert the source from DXGI format then use WIC to convert to final format
-//-------------------------------------------------------------------------------------
-static HRESULT _ConvertToWIC( _In_ const Image& srcImage, 
-                              _In_ const WICPixelFormatGUID& targetGUID, _In_ DWORD filter, _In_ float threshold,  _In_ const Image& destImage )
-{
-    assert( srcImage.width == destImage.width );
-    assert( srcImage.height == destImage.height );
-
-    IWICImagingFactory* pWIC = _GetWIC();
-    if ( !pWIC )
-        return E_NOINTERFACE;
-
-    ScopedObject<IWICFormatConverter> FC;
-    HRESULT hr = pWIC->CreateFormatConverter( &FC );
-    if ( FAILED(hr) )
-        return hr;
-
-    BOOL canConvert = FALSE;
-    hr = FC->CanConvert( GUID_WICPixelFormat128bppRGBAFloat, targetGUID, &canConvert );
-    if ( FAILED(hr) || !canConvert )
-    {
-        // This case is not an issue for the subset of WIC formats that map directly to DXGI
-        return E_UNEXPECTED;
-    }
-
-    ScratchImage temp;
-    hr = temp.Initialize2D( DXGI_FORMAT_R32G32B32A32_FLOAT, srcImage.width, srcImage.height, 1, 1 );
-    if ( FAILED(hr) )
-        return hr;
-
-    const Image *timg = temp.GetImage( 0, 0, 0 );
-    if ( !timg )
-        return E_POINTER;
-
-    const uint8_t *pSrc = srcImage.pixels;
-    if ( !pSrc )
-        return E_POINTER;
-
-    uint8_t *pDest = timg->pixels;
-    if ( !pDest )
-        return E_POINTER;
-
-    for( size_t h = 0; h < srcImage.height; ++h )
-    {
-        if ( !_LoadScanline( reinterpret_cast<XMVECTOR*>(pDest), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format ) )
-            return E_FAIL;
-
-        _ConvertScanline( reinterpret_cast<XMVECTOR*>(pDest), srcImage.width, DXGI_FORMAT_R32G32B32A32_FLOAT, srcImage.format, filter );
-
-        pSrc += srcImage.rowPitch;
-        pDest += timg->rowPitch;
-    }
-
-    // Perform conversion on temp image which is now in R32G32B32A32_FLOAT format
-    ScopedObject<IWICBitmap> source;
-    hr = pWIC->CreateBitmapFromMemory( static_cast<UINT>( timg->width ), static_cast<UINT>( timg->height ), GUID_WICPixelFormat128bppRGBAFloat,
-                                       static_cast<UINT>( timg->rowPitch ), static_cast<UINT>( timg->slicePitch ),
-                                       timg->pixels, &source );
     if ( FAILED(hr) )
         return hr;
 
@@ -2427,34 +2475,14 @@ HRESULT Convert( const Image& srcImage, DXGI_FORMAT format, DWORD filter, float 
         return E_POINTER;
     }
 
-    WICPixelFormatGUID pfGUID;
-    if ( _DXGIToWIC( srcImage.format, pfGUID ) )
+    WICPixelFormatGUID pfGUID, targetGUID;
+    if ( _UseWICConversion( filter, srcImage.format, format, pfGUID, targetGUID ) )
     {
-        WICPixelFormatGUID targetGUID;
-        if ( _DXGIToWIC( format, targetGUID ) )
-        {
-            // Case 1: Both source and target formats are WIC supported
-            hr = _ConvertUsingWIC( srcImage, pfGUID, targetGUID, filter, threshold, *rimage );
-        }
-        else
-        {
-            // Case 2: Source format is supported by WIC, but not the target format
-            hr = _ConvertFromWIC( srcImage, pfGUID, filter, threshold, *rimage );
-        }
+        hr = _ConvertUsingWIC( srcImage, pfGUID, targetGUID, filter, threshold, *rimage );
     }
     else
     {
-        WICPixelFormatGUID targetGUID;
-        if ( _DXGIToWIC( format, targetGUID ) )
-        {
-            // Case 3: Source format is not supported by WIC, but does support the target format
-            hr = _ConvertToWIC( srcImage, targetGUID, filter, threshold, *rimage );
-        }
-        else
-        {
-            // Case 4: Both source and target format are not supported by WIC
-            hr = _Convert( srcImage, filter, *rimage );
-        }
+        hr = _Convert( srcImage, filter, *rimage );
     }
 
     if ( FAILED(hr) )
@@ -2507,8 +2535,7 @@ HRESULT Convert( const Image* srcImages, size_t nimages, const TexMetadata& meta
     }
 
     WICPixelFormatGUID pfGUID, targetGUID;
-    bool wicpf = _DXGIToWIC( metadata.format, pfGUID );
-    bool wictargetpf = _DXGIToWIC( format, targetGUID );
+    bool usewic = _UseWICConversion( filter, metadata.format, format, pfGUID, targetGUID );
 
     for( size_t index=0; index < nimages; ++index )
     {
@@ -2533,31 +2560,13 @@ HRESULT Convert( const Image* srcImages, size_t nimages, const TexMetadata& meta
             return E_FAIL;
         }
 
-        if ( wicpf )
+        if ( usewic )
         {
-            if ( wictargetpf )
-            {
-                // Case 1: Both source and target formats are WIC supported
-                hr = _ConvertUsingWIC( src, pfGUID, targetGUID, filter, threshold, dst );
-            }
-            else
-            {
-                // Case 2: Source format is supported by WIC, but not the target format
-                hr = _ConvertFromWIC( src, pfGUID, filter, threshold, dst );
-            }
+            hr = _ConvertUsingWIC( src, pfGUID, targetGUID, filter, threshold, dst );
         }
         else
         {
-            if ( wictargetpf )
-            {
-                // Case 3: Source format is not supported by WIC, but does support the target format
-                hr = _ConvertToWIC( src, targetGUID, filter, threshold, dst );
-            }
-            else
-            {
-                // Case 4: Both source and target format are not supported by WIC
-                hr = _Convert( src, filter, dst );
-            }
+            hr = _Convert( src, filter, dst );
         }
 
         if ( FAILED(hr) )
