@@ -566,10 +566,14 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
         if ( depth > 1 )
         {
             // 3D point filter
-            for( size_t slice=0; slice < depth; slice += 2 )
+            size_t ndepth = depth >> 1;
+
+            for( size_t slice=0; slice < ndepth; ++slice )
             {
-                const Image* src = mipChain.GetImage( level-1, 0, slice );
-                const Image* dest = mipChain.GetImage( level, 0, slice >> 1 );
+                size_t slicesrc = std::min<size_t>( slice * 2, depth-1 );
+
+                const Image* src = mipChain.GetImage( level-1, 0, slicesrc );
+                const Image* dest = mipChain.GetImage( level, 0, slice );
 
                 if ( !src || !dest )
                     return E_POINTER;
@@ -579,6 +583,7 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
 
                 size_t rowPitch = src->rowPitch;
 
+                size_t nwidth = (width > 1) ? (width >> 1) : 1;
                 size_t nheight = (height > 1) ? (height >> 1) : 1;
 
                 for( size_t y = 0; y < nheight; ++y )
@@ -587,11 +592,9 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
                         return E_FAIL;
                     pSrc += rowPitch*2;
 
-                    size_t nwidth = (width > 1) ? (width >> 1) : 1;
-
                     for( size_t x = 0; x < nwidth; ++x )
                     {
-                        target[ x ] = row[ x*2 ];
+                        target[ x ] = row[ x << 1 ];
                     }
 
                     if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
@@ -614,6 +617,7 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
 
             size_t rowPitch = src->rowPitch;
 
+            size_t nwidth = (width > 1) ? (width >> 1) : 1;
             size_t nheight = (height > 1) ? (height >> 1) : 1;
 
             for( size_t y = 0; y < nheight; ++y )
@@ -622,11 +626,9 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
                     return E_FAIL;
                 pSrc += rowPitch*2;
 
-                size_t nwidth = (width > 1) ? (width >> 1) : 1;
-
                 for( size_t x = 0; x < nwidth; ++x )
                 {
-                    target[ x ] = row[ x*2 ];
+                    target[ x ] = row[ x << 1 ];
                 }
 
                 if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
@@ -644,8 +646,6 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
         if ( depth > 1 )
             depth >>= 1;
     }
-
-    assert( height == 1 && width == 1 && depth == 1 );
 
     return S_OK;
 }
@@ -684,13 +684,13 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
     // Resize base image to each target mip level
     for( size_t level=1; level < levels; ++level )
     {
-        if ( height == 1)
+        if ( height <= 1)
         {
-            urow0 = vrow0;
-            urow1 = vrow1;
+            urow1 = urow0;
+            vrow1 = vrow0;
         }
 
-        if ( width == 1 )
+        if ( width <= 1 )
         {
             urow2 = urow0;
             urow3 = urow1;
@@ -701,11 +701,16 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
         if ( depth > 1 )
         {
             // 3D box filter
-            for( size_t slice=0; slice < depth; slice += 2 )
+            size_t ndepth = depth >> 1;
+
+            for( size_t slice=0; slice < ndepth; ++slice )
             {
-                const Image* srca = mipChain.GetImage( level-1, 0, slice );
-                const Image* srcb = mipChain.GetImage( level-1, 0, slice+1 );
-                const Image* dest = mipChain.GetImage( level, 0, slice >> 1 );
+                size_t slicea = std::min<size_t>( slice * 2, depth-1 );
+                size_t sliceb = std::min<size_t>( slicea + 1, depth-1 );
+
+                const Image* srca = mipChain.GetImage( level-1, 0, slicea );
+                const Image* srcb = mipChain.GetImage( level-1, 0, sliceb );
+                const Image* dest = mipChain.GetImage( level, 0, slice );
 
                 if ( !srca || !srcb || !dest )
                     return E_POINTER;
@@ -717,6 +722,7 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
                 size_t aRowPitch = srca->rowPitch;
                 size_t bRowPitch = srcb->rowPitch;
 
+                size_t nwidth = (width > 1) ? (width >> 1) : 1;
                 size_t nheight = (height > 1) ? (height >> 1) : 1;
 
                 for( size_t y = 0; y < nheight; ++y )
@@ -732,25 +738,20 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
                         pSrc1 += aRowPitch;
                     }
 
-                    if ( urow0 != vrow0 )
-                    {
-                        if ( !_LoadScanline( vrow0, width, pSrc2, bRowPitch, srcb->format ) )
-                            return E_FAIL;
-                        pSrc2 += bRowPitch;
-                    }
+                    if ( !_LoadScanline( vrow0, width, pSrc2, bRowPitch, srcb->format ) )
+                        return E_FAIL;
+                    pSrc2 += bRowPitch;
 
-                    if ( urow0 != vrow1 && vrow0 != vrow1 )
+                    if ( vrow0 != vrow1 )
                     {
                         if ( !_LoadScanline( vrow1, width, pSrc2, bRowPitch, srcb->format ) )
                             return E_FAIL;
                         pSrc2 += bRowPitch;
                     }
 
-                    size_t nwidth = (width > 1) ? (width >> 1) : 1;
-
                     for( size_t x = 0; x < nwidth; ++x )
                     {
-                        size_t x2 = x*2;
+                        size_t x2 = x << 1;
 
                         // Box filter: Average 2x2x2 pixels
                         XMVECTOR v = XMVectorAdd( urow0[ x2 ], urow1[ x2 ] );
@@ -784,6 +785,7 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
 
             size_t rowPitch = src->rowPitch;
 
+            size_t nwidth = (width > 1) ? (width >> 1) : 1;
             size_t nheight = (height > 1) ? (height >> 1) : 1;
 
             for( size_t y = 0; y < nheight; ++y )
@@ -799,11 +801,9 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
                     pSrc += rowPitch;
                 }
 
-                size_t nwidth = (width > 1) ? (width >> 1) : 1;
-
                 for( size_t x = 0; x < nwidth; ++x )
                 {
-                    size_t x2 = x*2;
+                    size_t x2 = x << 1;
 
                     // Box filter: Average 2x2 pixels
                     XMVECTOR v = XMVectorAdd( urow0[ x2 ], urow1[ x2 ] );
@@ -828,8 +828,6 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
         if ( depth > 1 )
             depth >>= 1;
     }
-
-    assert( height == 1 && width == 1 && depth == 1 );
 
     return S_OK;
 }
@@ -1005,7 +1003,7 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
         break;
 
     default:
-        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );;
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
     }
 }
 
@@ -1083,7 +1081,7 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
         return E_NOTIMPL;
 
     default:
-        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );;
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
     }
 }
 
@@ -1161,7 +1159,7 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
         return E_NOTIMPL;
 
     default:
-        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );;
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
     }
 }
 
