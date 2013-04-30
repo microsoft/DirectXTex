@@ -127,7 +127,7 @@ inline bool IsSRGB( DXGI_FORMAT fmt )
 }
 
 _Use_decl_annotations_
-inline bool IsTypeless( DXGI_FORMAT fmt )
+inline bool IsTypeless( DXGI_FORMAT fmt, bool partialTypeless )
 {
     switch( fmt )
     {
@@ -136,15 +136,11 @@ inline bool IsTypeless( DXGI_FORMAT fmt )
     case DXGI_FORMAT_R16G16B16A16_TYPELESS:
     case DXGI_FORMAT_R32G32_TYPELESS:
     case DXGI_FORMAT_R32G8X24_TYPELESS:
-    case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
-    case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
     case DXGI_FORMAT_R10G10B10A2_TYPELESS:
     case DXGI_FORMAT_R8G8B8A8_TYPELESS:
     case DXGI_FORMAT_R16G16_TYPELESS:
     case DXGI_FORMAT_R32_TYPELESS:
     case DXGI_FORMAT_R24G8_TYPELESS:
-    case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
-    case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
     case DXGI_FORMAT_R8G8_TYPELESS:
     case DXGI_FORMAT_R16_TYPELESS:
     case DXGI_FORMAT_R8_TYPELESS:
@@ -158,6 +154,12 @@ inline bool IsTypeless( DXGI_FORMAT fmt )
     case DXGI_FORMAT_BC6H_TYPELESS:
     case DXGI_FORMAT_BC7_TYPELESS:
         return true;
+
+    case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+    case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+    case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+    case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+        return partialTypeless;
 
     default:
         return false;

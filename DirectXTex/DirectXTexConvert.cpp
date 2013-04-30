@@ -530,7 +530,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
 {
     assert( pDestination && count > 0 && (((uintptr_t)pDestination & 0xF) == 0) );
     assert( pSource && size > 0 );
-    assert( IsValid(format) && !IsVideo(format) && !IsTypeless(format) && !IsCompressed(format) );
+    assert( IsValid(format) && !IsVideo(format) && !IsTypeless(format,false) && !IsCompressed(format) );
 
     XMVECTOR* __restrict dPtr = pDestination;
     if ( !dPtr )
@@ -595,6 +595,35 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 const uint8_t* ps8 = reinterpret_cast<const uint8_t*>( &sPtr[1] );
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( sPtr[0], static_cast<float>( *ps8 ), 0.f, 1.f );
+                sPtr += 2;
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+        if ( size >= (sizeof(float)+sizeof(uint32_t)) )
+        {
+            const float * sPtr = reinterpret_cast<const float*>(pSource);
+            for( size_t icount = 0; icount < size; icount += (sizeof(float)+sizeof(uint32_t)) )
+            {
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( sPtr[0], 0.f /* typeless component assumed zero */, 0.f, 1.f );
+                sPtr += 2;
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+        if ( size >= (sizeof(float)+sizeof(uint32_t)) )
+        {
+            const float * sPtr = reinterpret_cast<const float*>(pSource);
+            for( size_t icount = 0; icount < size; icount += (sizeof(float)+sizeof(uint32_t)) )
+            {
+                const uint8_t* pg8 = reinterpret_cast<const uint8_t*>( &sPtr[1] );
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( 0.f /* typeless component assumed zero */, static_cast<float>( *pg8 ), 0.f, 1.f );
                 sPtr += 2;
             }
             return true;
@@ -721,6 +750,36 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 ++sPtr;
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( d, s, 0.f, 1.f );
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+        if ( size >= sizeof(uint32_t) )
+        {
+            const uint32_t * sPtr = reinterpret_cast<const uint32_t*>(pSource);
+            for( size_t icount = 0; icount < size; icount += sizeof(uint32_t) )
+            {
+                float r = static_cast<float>( *sPtr & 0xFFFFFF ) / 16777215.f;
+                ++sPtr;
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( r, 0.f /* typeless component assumed zero */, 0.f, 1.f );
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+        if ( size >= sizeof(uint32_t) )
+        {
+            const uint32_t * sPtr = reinterpret_cast<const uint32_t*>(pSource);
+            for( size_t icount = 0; icount < size; icount += sizeof(uint32_t) )
+            {
+                float g = static_cast<float>( ( *sPtr & 0xFF000000 ) >> 24 );
+                ++sPtr;
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( 0.f /* typeless component assumed zero */, g, 0.f, 1.f );
             }
             return true;
         }
