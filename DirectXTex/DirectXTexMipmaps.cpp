@@ -867,7 +867,7 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
     case TEX_FILTER_CUBIC:
         {
             WICPixelFormatGUID pfGUID;
-            if ( _DXGIToWIC( baseImage.format, pfGUID ) )
+            if ( _DXGIToWIC( baseImage.format, pfGUID, true ) )
             {
                 // Case 1: Base image format is supported by Windows Imaging Component
                 HRESULT hr = (baseImage.height > 1 || !allow1D)
@@ -932,7 +932,7 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
     case TEX_FILTER_CUBIC:
         {
             WICPixelFormatGUID pfGUID;
-            if ( _DXGIToWIC( metadata.format, pfGUID ) )
+            if ( _DXGIToWIC( metadata.format, pfGUID, true ) )
             {
                 // Case 1: Base image format is supported by Windows Imaging Component
                 TexMetadata mdata2 = metadata;

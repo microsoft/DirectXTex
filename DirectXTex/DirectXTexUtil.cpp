@@ -82,12 +82,22 @@ DXGI_FORMAT _WICToDXGI( const GUID& guid )
 }
 
 _Use_decl_annotations_
-bool _DXGIToWIC( DXGI_FORMAT format, GUID& guid )
+bool _DXGIToWIC( DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR )
 {
     switch( format )
     {
+    case DXGI_FORMAT_R8G8B8A8_UNORM:
     case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-        memcpy( &guid, &GUID_WICPixelFormat32bppRGBA, sizeof(GUID) );
+        if ( ignoreRGBvsBGR )
+        {
+            // If we are not doing conversion so don't really care about BGR vs RGB color-order,
+            // we can use the canonical WIC 32bppBGRA format which avoids an extra format conversion when using the WIC scaler
+            memcpy( &guid, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID) );
+        }
+        else
+        {
+            memcpy( &guid, &GUID_WICPixelFormat32bppRGBA, sizeof(GUID) );      
+        }
         return true;
 
     case DXGI_FORMAT_D32_FLOAT:

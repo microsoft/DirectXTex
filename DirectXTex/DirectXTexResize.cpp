@@ -193,7 +193,7 @@ HRESULT Resize( const Image& srcImage, size_t width, size_t height, DWORD filter
     // WIC only supports CLAMP
 
     WICPixelFormatGUID pfGUID;
-    if ( _DXGIToWIC( srcImage.format, pfGUID ) )
+    if ( _DXGIToWIC( srcImage.format, pfGUID, true ) )
     {
         // Case 1: Source format is supported by Windows Imaging Component
         hr = _PerformResizeUsingWIC( srcImage, filter, pfGUID, *rimage );
@@ -238,7 +238,7 @@ HRESULT Resize( const Image* srcImages, size_t nimages, const TexMetadata& metad
         return hr;
 
     WICPixelFormatGUID pfGUID;
-    bool wicpf = _DXGIToWIC( metadata.format, pfGUID );
+    bool wicpf = _DXGIToWIC( metadata.format, pfGUID, true );
 
     switch ( metadata.dimension )
     {
