@@ -421,6 +421,12 @@ static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ IWI
     if ( FAILED(hr) )
         return hr;
 
+    if ( targetFormat && memcmp( targetFormat, &targetGuid, sizeof(WICPixelFormatGUID) ) != 0 )
+    {
+        // Requested output pixel format is not supported by the WIC codec
+        return E_FAIL;
+    }
+
     if ( memcmp( &targetGuid, &pfGuid, sizeof(WICPixelFormatGUID) ) != 0 )
     {
         // Conversion required to write
