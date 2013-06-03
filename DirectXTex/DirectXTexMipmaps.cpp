@@ -866,6 +866,8 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
     case TEX_FILTER_LINEAR:
     case TEX_FILTER_CUBIC:
         {
+            static_assert( TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flags alias mismatch" );
+
             WICPixelFormatGUID pfGUID;
             if ( _DXGIToWIC( baseImage.format, pfGUID, true ) )
             {
@@ -931,6 +933,8 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
     case TEX_FILTER_LINEAR:
     case TEX_FILTER_CUBIC:
         {
+            static_assert( TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flags alias mismatch" );
+
             WICPixelFormatGUID pfGUID;
             if ( _DXGIToWIC( metadata.format, pfGUID, true ) )
             {
@@ -1051,7 +1055,7 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
     switch( filter & TEX_FILTER_MASK )
     {
     case 0:
-    case TEX_FILTER_FANT:
+    case TEX_FILTER_BOX:
         hr = _Setup3DMips( baseImages, depth, levels, mipChain );
         if ( FAILED(hr) )
             return hr;
@@ -1129,7 +1133,7 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
     switch( filter & TEX_FILTER_MASK )
     {
     case 0:
-    case TEX_FILTER_FANT:
+    case TEX_FILTER_BOX:
         hr = _Setup3DMips( &baseImages[0], metadata.depth, levels, mipChain );
         if ( FAILED(hr) )
             return hr;

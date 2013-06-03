@@ -389,6 +389,7 @@ namespace DirectX
         TEX_FILTER_POINT            = 0x100000,
         TEX_FILTER_LINEAR           = 0x200000,
         TEX_FILTER_CUBIC            = 0x300000,
+        TEX_FILTER_BOX              = 0x400000,
         TEX_FILTER_FANT             = 0x400000, // Equiv to Box filtering for mipmap generation
             // Filtering mode to use for any required image resizing
 
