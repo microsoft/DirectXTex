@@ -1062,7 +1062,7 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
             mipChain.Release();
         return hr;
 
-    case WIC_FLAGS_FILTER_POINT:
+    case TEX_FILTER_POINT:
         hr = _Setup3DMips( baseImages, depth, levels, mipChain );
         if ( FAILED(hr) )
             return hr;
@@ -1072,11 +1072,11 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
             mipChain.Release();
         return hr;
 
-    case WIC_FLAGS_FILTER_LINEAR:
+    case TEX_FILTER_LINEAR:
         // Need to implement a 3D bi-linear filter (2x2x2)
         return E_NOTIMPL;
 
-    case WIC_FLAGS_FILTER_CUBIC:
+    case TEX_FILTER_CUBIC:
         // Need to implement a 3D bi-cubic filter (3x3x3)
         return E_NOTIMPL;
 
@@ -1140,7 +1140,7 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
             mipChain.Release();
         return hr;
 
-    case WIC_FLAGS_FILTER_POINT:
+    case TEX_FILTER_POINT:
         hr = _Setup3DMips( &baseImages[0], metadata.depth, levels, mipChain );
         if ( FAILED(hr) )
             return hr;
@@ -1150,11 +1150,11 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
             mipChain.Release();
         return hr;
 
-    case WIC_FLAGS_FILTER_LINEAR:
+    case TEX_FILTER_LINEAR:
         // Need to implement a 3D bi-linear filter (2x2x2)
         return E_NOTIMPL;
 
-    case WIC_FLAGS_FILTER_CUBIC:
+    case TEX_FILTER_CUBIC:
         // Need to implement a 3D bi-cubic filter (3x3x3)
         return E_NOTIMPL;
 
