@@ -64,6 +64,8 @@ namespace DirectX
 
     size_t BitsPerPixel( _In_ DXGI_FORMAT fmt );
 
+    size_t BitsPerColor( _In_ DXGI_FORMAT fmt );
+
     enum CP_FLAGS
     {
         CP_FLAGS_NONE               = 0x0,      // Normal operation
