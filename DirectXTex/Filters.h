@@ -65,13 +65,15 @@ struct LinearFilter
     float   weight1;
 };
 
-static void _CreateLinearFilter( _In_ size_t source, _In_ size_t dest, _In_ bool wrap, _Out_writes_(dest) LinearFilter* lf )
+inline void _CreateLinearFilter( _In_ size_t source, _In_ size_t dest, _In_ bool wrap, _Out_writes_(dest) LinearFilter* lf )
 {
     assert( source > 0 );
     assert( dest > 0 );
     assert( lf != 0 );
 
     float scale = float(source) / float(dest);
+
+    // Mirror is the same case as clamp for linear
 
     for( size_t u = 0; u < dest; ++u )
     {
@@ -145,6 +147,7 @@ inline ptrdiff_t bounduvw( ptrdiff_t u, ptrdiff_t maxu, bool wrap, bool mirror )
         }
     }
 
+    // Handles clamp, but also a safety factor for degenerate images for wrap/mirror
     u = std::min<ptrdiff_t>( u, maxu );
     u = std::max<ptrdiff_t>( u, 0 );
 
@@ -160,7 +163,7 @@ struct CubicFilter
     float   x;
 };
 
-static void _CreateCubicFilter( _In_ size_t source, _In_ size_t dest, _In_ bool wrap, bool mirror, _Out_writes_(dest) CubicFilter* cf )
+inline void _CreateCubicFilter( _In_ size_t source, _In_ size_t dest, _In_ bool wrap, bool mirror, _Out_writes_(dest) CubicFilter* cf )
 {
     assert( source > 0 );
     assert( dest > 0 );

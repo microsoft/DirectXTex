@@ -366,18 +366,18 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBi
 
 
 //--- determine when to use WIC vs. non-WIC paths ---
-static HRESULT _UseWICFiltering( _In_ DXGI_FORMAT format, _In_ DWORD filter )
+static bool _UseWICFiltering( _In_ DXGI_FORMAT format, _In_ DWORD filter )
 {
     if ( filter & TEX_FILTER_FORCE_NON_WIC )
     {
         // Explicit flag indicates use of non-WIC code paths
-        return S_FALSE;
+        return false;
     }
 
     if ( filter & TEX_FILTER_FORCE_WIC )
     {
         // Explicit flag to use WIC code paths, skips all the case checks below
-        return S_OK;
+        return true;
     }
 
     static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
@@ -388,13 +388,13 @@ static HRESULT _UseWICFiltering( _In_ DXGI_FORMAT format, _In_ DWORD filter )
         if ( filter & TEX_FILTER_WRAP )
         {
             // WIC only supports 'clamp' semantics (MIRROR is equivalent to clamp for linear)
-            return S_FALSE;
+            return false;
         }
 
         if ( BitsPerColor(format) > 8 )
         {
             // Avoid the WIC bitmap scaler when doing Linear filtering of XR/HDR formats
-            return S_FALSE;
+            return false;
         }
         break;
 
@@ -402,21 +402,18 @@ static HRESULT _UseWICFiltering( _In_ DXGI_FORMAT format, _In_ DWORD filter )
         if ( filter & ( TEX_FILTER_WRAP | TEX_FILTER_MIRROR ) )
         {
             // WIC only supports 'clamp' semantics
-            return S_FALSE;
+            return false;
         }
 
         if ( BitsPerColor(format) > 8 )
         {
             // Avoid the WIC bitmap scaler when doing Cubic filtering of XR/HDR formats
-            return S_FALSE;
+            return false;
         }
-        break;
-
-    default:
         break;
     }
 
-    return S_OK;
+    return true;
 }
 
 
@@ -2054,13 +2051,65 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
     }
 
-    HRESULT hr = _UseWICFiltering( baseImage.format, filter );
-    if ( FAILED(hr) )
-        return hr;
+    HRESULT hr;
 
     static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
 
-    if ( hr == S_FALSE )
+    if ( _UseWICFiltering( baseImage.format, filter ) )
+    {
+        //--- Use WIC filtering to generate mipmaps -----------------------------------
+        switch(filter & TEX_FILTER_MASK)
+        {
+            case 0:
+            case TEX_FILTER_POINT:
+            case TEX_FILTER_FANT: // Equivalent to Box filter
+            case TEX_FILTER_LINEAR:
+            case TEX_FILTER_CUBIC:
+                {
+                    static_assert( TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flag alias mismatch" );
+
+                    WICPixelFormatGUID pfGUID;
+                    if ( _DXGIToWIC( baseImage.format, pfGUID, true ) )
+                    {
+                        // Case 1: Base image format is supported by Windows Imaging Component
+                        HRESULT hr = (baseImage.height > 1 || !allow1D)
+                                     ? mipChain.Initialize2D( baseImage.format, baseImage.width, baseImage.height, 1, levels )
+                                     : mipChain.Initialize1D( baseImage.format, baseImage.width, 1, levels ); 
+                        if ( FAILED(hr) )
+                            return hr;
+
+                        return _GenerateMipMapsUsingWIC( baseImage, filter, levels, pfGUID, mipChain, 0 );
+                    }
+                    else
+                    {
+                        // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
+                        assert( baseImage.format != DXGI_FORMAT_R32G32B32A32_FLOAT );
+                        ScratchImage temp;
+                        HRESULT hr = _ConvertToR32G32B32A32( baseImage, temp );
+                        if ( FAILED(hr) )
+                            return hr;
+
+                        const Image *timg = temp.GetImage( 0, 0, 0 );
+                        if ( !timg )
+                            return E_POINTER;
+
+                        ScratchImage tMipChain;
+                        hr = _GenerateMipMapsUsingWIC( *timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, 0 );
+                        if ( FAILED(hr) )
+                            return hr;
+
+                        temp.Release();
+
+                        return _ConvertFromR32G32B32A32( tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), baseImage.format, mipChain );
+                    }
+                }
+                break;
+
+            default:
+                return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+        }
+    }
+    else
     {
         //--- Use custom filters to generate mipmaps ----------------------------------
         TexMetadata mdata;
@@ -2133,60 +2182,6 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
                 return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
         }
     }
-    else
-    {
-        //--- Use WIC filtering to generate mipmaps -----------------------------------
-        switch(filter & TEX_FILTER_MASK)
-        {
-            case 0:
-            case TEX_FILTER_POINT:
-            case TEX_FILTER_FANT: // Equivalent to Box filter
-            case TEX_FILTER_LINEAR:
-            case TEX_FILTER_CUBIC:
-                {
-                    static_assert( TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flag alias mismatch" );
-
-                    WICPixelFormatGUID pfGUID;
-                    if ( _DXGIToWIC( baseImage.format, pfGUID, true ) )
-                    {
-                        // Case 1: Base image format is supported by Windows Imaging Component
-                        HRESULT hr = (baseImage.height > 1 || !allow1D)
-                                     ? mipChain.Initialize2D( baseImage.format, baseImage.width, baseImage.height, 1, levels )
-                                     : mipChain.Initialize1D( baseImage.format, baseImage.width, 1, levels ); 
-                        if ( FAILED(hr) )
-                            return hr;
-
-                        return _GenerateMipMapsUsingWIC( baseImage, filter, levels, pfGUID, mipChain, 0 );
-                    }
-                    else
-                    {
-                        // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
-                        assert( baseImage.format != DXGI_FORMAT_R32G32B32A32_FLOAT );
-                        ScratchImage temp;
-                        HRESULT hr = _ConvertToR32G32B32A32( baseImage, temp );
-                        if ( FAILED(hr) )
-                            return hr;
-
-                        const Image *timg = temp.GetImage( 0, 0, 0 );
-                        if ( !timg )
-                            return E_POINTER;
-
-                        ScratchImage tMipChain;
-                        hr = _GenerateMipMapsUsingWIC( *timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, 0 );
-                        if ( FAILED(hr) )
-                            return hr;
-
-                        temp.Release();
-
-                        return _ConvertFromR32G32B32A32( tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), baseImage.format, mipChain );
-                    }
-                }
-                break;
-
-            default:
-                return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-        }
-    }
 }
 
 _Use_decl_annotations_
@@ -2226,84 +2221,11 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
 
     assert( baseImages.size() == metadata.arraySize );
 
-    HRESULT hr = _UseWICFiltering( metadata.format, filter );
-    if ( FAILED(hr) )
-        return hr;
+    HRESULT hr;
 
     static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
 
-    if ( hr == S_FALSE )
-    {
-        //--- Use custom filters to generate mipmaps ----------------------------------
-        TexMetadata mdata2 = metadata;
-        mdata2.mipLevels = levels;
-
-        DWORD filter_select = ( filter & TEX_FILTER_MASK );
-        if ( !filter_select )
-        {
-            // Default filter choice
-            filter_select = ( ispow2(metadata.width) && ispow2(metadata.height) ) ? TEX_FILTER_BOX : TEX_FILTER_LINEAR;
-        }
-
-        switch( filter_select )
-        {
-            case TEX_FILTER_BOX:
-                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
-                if ( FAILED(hr) )
-                    return hr;
-
-                for( size_t item = 0; item < metadata.arraySize; ++item )
-                {
-                    hr = _Generate2DMipsBoxFilter( levels, mipChain, item );
-                    if ( FAILED(hr) )
-                        mipChain.Release();
-                }
-                return hr;
-
-            case TEX_FILTER_POINT:
-                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
-                if ( FAILED(hr) )
-                    return hr;
-
-                for( size_t item = 0; item < metadata.arraySize; ++item )
-                {
-                    hr = _Generate2DMipsPointFilter( levels, mipChain, item );
-                    if ( FAILED(hr) )
-                        mipChain.Release();
-                }
-                return hr;
-
-            case TEX_FILTER_LINEAR:
-                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
-                if ( FAILED(hr) )
-                    return hr;
-
-                for( size_t item = 0; item < metadata.arraySize; ++item )
-                {
-                    hr = _Generate2DMipsLinearFilter( levels, filter, mipChain, item );
-                    if ( FAILED(hr) )
-                        mipChain.Release();
-                }
-                return hr;
-
-            case TEX_FILTER_CUBIC:
-                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
-                if ( FAILED(hr) )
-                    return hr;
-
-                for( size_t item = 0; item < metadata.arraySize; ++item )
-                {
-                    hr = _Generate2DMipsCubicFilter( levels, filter, mipChain, item );
-                    if ( FAILED(hr) )
-                        mipChain.Release();
-                }
-                return hr;
-
-            default:
-                return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-        }
-    }
-    else
+    if ( _UseWICFiltering( metadata.format, filter ) )
     {
         //--- Use WIC filtering to generate mipmaps -----------------------------------
         switch(filter & TEX_FILTER_MASK)
@@ -2374,6 +2296,77 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
 
         default:
             return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+        }
+    }
+    else
+    {
+        //--- Use custom filters to generate mipmaps ----------------------------------
+        TexMetadata mdata2 = metadata;
+        mdata2.mipLevels = levels;
+
+        DWORD filter_select = ( filter & TEX_FILTER_MASK );
+        if ( !filter_select )
+        {
+            // Default filter choice
+            filter_select = ( ispow2(metadata.width) && ispow2(metadata.height) ) ? TEX_FILTER_BOX : TEX_FILTER_LINEAR;
+        }
+
+        switch( filter_select )
+        {
+            case TEX_FILTER_BOX:
+                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                for( size_t item = 0; item < metadata.arraySize; ++item )
+                {
+                    hr = _Generate2DMipsBoxFilter( levels, mipChain, item );
+                    if ( FAILED(hr) )
+                        mipChain.Release();
+                }
+                return hr;
+
+            case TEX_FILTER_POINT:
+                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                for( size_t item = 0; item < metadata.arraySize; ++item )
+                {
+                    hr = _Generate2DMipsPointFilter( levels, mipChain, item );
+                    if ( FAILED(hr) )
+                        mipChain.Release();
+                }
+                return hr;
+
+            case TEX_FILTER_LINEAR:
+                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                for( size_t item = 0; item < metadata.arraySize; ++item )
+                {
+                    hr = _Generate2DMipsLinearFilter( levels, filter, mipChain, item );
+                    if ( FAILED(hr) )
+                        mipChain.Release();
+                }
+                return hr;
+
+            case TEX_FILTER_CUBIC:
+                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                for( size_t item = 0; item < metadata.arraySize; ++item )
+                {
+                    hr = _Generate2DMipsCubicFilter( levels, filter, mipChain, item );
+                    if ( FAILED(hr) )
+                        mipChain.Release();
+                }
+                return hr;
+
+            default:
+                return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
         }
     }
 }
