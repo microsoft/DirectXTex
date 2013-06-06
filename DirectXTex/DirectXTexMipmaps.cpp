@@ -15,11 +15,10 @@
 
 #include "directxtexp.h"
 
+#include "filters.h"
+
 namespace DirectX
 {
-
-static const XMVECTORF32 s_boxScale = { 0.25f, 0.25f, 0.25f, 0.25f };
-static const XMVECTORF32 s_boxScale3D = { 0.125f, 0.125f, 0.125f, 0.125f };
 
 //-------------------------------------------------------------------------------------
 // Mipmap helper functions
@@ -29,6 +28,8 @@ inline static bool ispow2( _In_ size_t x )
     return ((x != 0) && !(x & (x - 1)));
 }
 
+
+//--- mipmap (1D/2D) levels computation ---
 static size_t _CountMips( _In_ size_t width, _In_ size_t height )
 {
     size_t mipLevels = 1;
@@ -66,6 +67,8 @@ bool _CalculateMipLevels( _In_ size_t width, _In_ size_t height, _Inout_ size_t&
     return true;
 }
 
+
+//--- volume mipmap (3D) levels computation ---
 static size_t _CountMips3D( _In_ size_t width, _In_ size_t height, _In_ size_t depth )
 {
     size_t mipLevels = 1;
@@ -91,14 +94,11 @@ bool _CalculateMipLevels3D( _In_ size_t width, _In_ size_t height, _In_ size_t d
 {
     if ( mipLevels > 1 )
     {
-        if ( !ispow2(width) || !ispow2(height) || !ispow2(depth) )
-            return false;
-
         size_t maxMips = _CountMips3D(width,height,depth);
         if ( mipLevels > maxMips )
             return false;
     }
-    else if ( mipLevels == 0 && ispow2(width) && ispow2(height) && ispow2(depth) )
+    else if ( mipLevels == 0 )
     {
         mipLevels = _CountMips3D(width,height,depth);
     }
@@ -109,6 +109,10 @@ bool _CalculateMipLevels3D( _In_ size_t width, _In_ size_t height, _In_ size_t d
     return true;
 }
 
+
+//-------------------------------------------------------------------------------------
+// WIC related helper functions
+//-------------------------------------------------------------------------------------
 static HRESULT _EnsureWicBitmapPixelFormat( _In_ IWICImagingFactory* pWIC, _In_ IWICBitmap* src, _In_ DWORD filter,
                                             _In_ const WICPixelFormatGUID& desiredPixelFormat,
                                             _Deref_out_ IWICBitmap** dest )
@@ -147,6 +151,8 @@ static HRESULT _EnsureWicBitmapPixelFormat( _In_ IWICImagingFactory* pWIC, _In_ 
     return hr;
 }
 
+
+//--- Resizing color and alpha channels separately using WIC ---
 HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBitmap* original,
                                       _In_ size_t newWidth, _In_ size_t newHeight, _In_ DWORD filter, _Inout_ const Image* img )
 {
@@ -359,9 +365,62 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBi
 }
 
 
-//-------------------------------------------------------------------------------------
-// Generate a (2D) mip-map chain from a base image using WIC's image scaler
-//-------------------------------------------------------------------------------------
+//--- determine when to use WIC vs. non-WIC paths ---
+static HRESULT _UseWICFiltering( _In_ DXGI_FORMAT format, _In_ DWORD filter )
+{
+    if ( filter & TEX_FILTER_FORCE_NON_WIC )
+    {
+        // Explicit flag indicates use of non-WIC code paths
+        return S_FALSE;
+    }
+
+    if ( filter & TEX_FILTER_FORCE_WIC )
+    {
+        // Explicit flag to use WIC code paths, skips all the case checks below
+        return S_OK;
+    }
+
+    static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
+
+    switch ( filter & TEX_FILTER_MASK )
+    {
+    case TEX_FILTER_LINEAR:
+        if ( filter & TEX_FILTER_WRAP )
+        {
+            // WIC only supports 'clamp' semantics (MIRROR is equivalent to clamp for linear)
+            return S_FALSE;
+        }
+
+        if ( BitsPerColor(format) > 8 )
+        {
+            // Avoid the WIC bitmap scaler when doing Linear filtering of XR/HDR formats
+            return S_FALSE;
+        }
+        break;
+
+    case TEX_FILTER_CUBIC:
+        if ( filter & ( TEX_FILTER_WRAP | TEX_FILTER_MIRROR ) )
+        {
+            // WIC only supports 'clamp' semantics
+            return S_FALSE;
+        }
+
+        if ( BitsPerColor(format) > 8 )
+        {
+            // Avoid the WIC bitmap scaler when doing Cubic filtering of XR/HDR formats
+            return S_FALSE;
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return S_OK;
+}
+
+
+//--- mipmap (1D/2D) generation using WIC image scalar ---
 static HRESULT _GenerateMipMapsUsingWIC( _In_ const Image& baseImage, _In_ DWORD filter, _In_ size_t levels,
                                          _In_ const WICPixelFormatGUID& pfGUID, _In_ const ScratchImage& mipChain, _In_ size_t item )
 {
@@ -485,6 +544,542 @@ static HRESULT _GenerateMipMapsUsingWIC( _In_ const Image& baseImage, _In_ DWORD
 
 
 //-------------------------------------------------------------------------------------
+// Generate (1D/2D) mip-map helpers (custom filtering)
+//-------------------------------------------------------------------------------------
+static HRESULT _Setup2DMips( _In_reads_(nimages) const Image* baseImages, _In_ size_t nimages, _In_ const TexMetadata& mdata,
+                             _Out_ ScratchImage& mipChain )
+{
+    if ( !baseImages || !nimages )
+        return E_INVALIDARG;
+
+    assert( mdata.mipLevels > 1 );
+    assert( mdata.arraySize == nimages );
+    assert( mdata.depth == 1 && mdata.dimension != TEX_DIMENSION_TEXTURE3D );
+    assert( mdata.width == baseImages[0].width );
+    assert( mdata.height == baseImages[0].height );
+    assert( mdata.format == baseImages[0].format );
+ 
+    HRESULT hr = mipChain.Initialize( mdata );
+    if ( FAILED(hr) )
+        return hr;
+
+    // Copy base image(s) to top of mip chain
+    for( size_t item=0; item < nimages; ++item )
+    {
+        const Image& src = baseImages[item];
+
+        const Image *dest = mipChain.GetImage( 0, item, 0 );
+        if ( !dest )
+        {
+            mipChain.Release();
+            return E_POINTER;
+        }
+
+        assert( src.format == dest->format );
+
+        uint8_t* pDest = dest->pixels;
+        if ( !pDest )
+        {
+            mipChain.Release();
+            return E_POINTER;
+        }
+
+        const uint8_t *pSrc = src.pixels;
+        size_t rowPitch = src.rowPitch;
+        for( size_t h=0; h < mdata.height; ++h )
+        {
+            size_t msize = std::min<size_t>( dest->rowPitch, rowPitch );
+            memcpy_s( pDest, dest->rowPitch, pSrc, msize );  
+            pSrc += rowPitch;
+            pDest += dest->rowPitch;
+        }
+    }
+
+    return S_OK;
+}
+
+//--- 2D Point Filter ---
+static HRESULT _Generate2DMipsPointFilter( _In_ size_t levels, _In_ const ScratchImage& mipChain, _In_ size_t item )
+{
+    if ( !mipChain.GetImages() )
+        return E_INVALIDARG;
+
+    // This assumes that the base image is already placed into the mipChain at the top level... (see _Setup2DMips)
+
+    assert( levels > 1 );
+
+    size_t width = mipChain.GetMetadata().width;
+    size_t height = mipChain.GetMetadata().height;
+
+    if ( !ispow2(width) || !ispow2(height) )
+        return E_FAIL;
+
+    // Allocate temporary space (2 scanlines)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( (sizeof(XMVECTOR)*width*2), 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    XMVECTOR* target = scanline.get();
+
+    XMVECTOR* row = target + width;
+
+    // Resize base image to each target mip level
+    for( size_t level=1; level < levels; ++level )
+    {
+#ifdef _DEBUG
+        memset( row, 0xCD, sizeof(XMVECTOR)*width );
+#endif
+
+        // 2D point filter
+        const Image* src = mipChain.GetImage( level-1, item, 0 );
+        const Image* dest = mipChain.GetImage( level, item, 0 );
+
+        if ( !src || !dest )
+            return E_POINTER;
+
+        const uint8_t* pSrc = src->pixels;
+        uint8_t* pDest = dest->pixels;
+
+        size_t rowPitch = src->rowPitch;
+
+        size_t nwidth = (width > 1) ? (width >> 1) : 1;
+        size_t nheight = (height > 1) ? (height >> 1) : 1;
+
+        size_t xinc = ( width << 16 ) / nwidth;
+        size_t yinc = ( height << 16 ) / nheight;
+
+        size_t lasty = size_t(-1);
+
+        size_t sy = 0;
+        for( size_t y = 0; y < nheight; ++y )
+        {
+            if ( (lasty ^ sy) >> 16 )
+            {
+                if ( !_LoadScanline( row, width, pSrc + ( rowPitch * (sy >> 16) ), rowPitch, src->format ) )
+                    return E_FAIL;
+                lasty = sy;
+            }
+
+            size_t sx = 0;
+            for( size_t x = 0; x < nwidth; ++x )
+            {
+                target[ x ] = row[ sx >> 16 ];
+                sx += xinc;
+            }
+
+            if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                return E_FAIL;
+            pDest += dest->rowPitch;
+
+            sy += yinc;
+        }
+
+        if ( height > 1 )
+            height >>= 1;
+
+        if ( width > 1 )
+            width >>= 1;
+    }
+
+    return S_OK;
+}
+
+
+//--- 2D Box Filter ---
+static HRESULT _Generate2DMipsBoxFilter( _In_ size_t levels, _In_ const ScratchImage& mipChain, _In_ size_t item )
+{
+    if ( !mipChain.GetImages() )
+        return E_INVALIDARG;
+
+    // This assumes that the base image is already placed into the mipChain at the top level... (see _Setup2DMips)
+
+    assert( levels > 1 );
+
+    size_t width = mipChain.GetMetadata().width;
+    size_t height = mipChain.GetMetadata().height;
+
+    // Allocate temporary space (3 scanlines)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( (sizeof(XMVECTOR)*width*3), 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    XMVECTOR* target = scanline.get();
+
+    XMVECTOR* urow0 = target + width;
+    XMVECTOR* urow1 = target + width*2;
+
+    const XMVECTOR* urow2 = urow0 + 1;
+    const XMVECTOR* urow3 = urow1 + 1;
+
+    // Resize base image to each target mip level
+    for( size_t level=1; level < levels; ++level )
+    {
+        if ( height <= 1 )
+        {
+            urow1 = urow0;
+        }
+
+        if ( width <= 1 )
+        {
+            urow2 = urow0;
+            urow3 = urow1;
+        }
+
+#ifdef _DEBUG
+        memset( urow0, 0xCD, sizeof(XMVECTOR)*width );
+        memset( urow1, 0xDD, sizeof(XMVECTOR)*width );
+#endif
+
+        // 2D box filter
+        const Image* src = mipChain.GetImage( level-1, item, 0 );
+        const Image* dest = mipChain.GetImage( level, item, 0 );
+
+        if ( !src || !dest )
+            return E_POINTER;
+
+        const uint8_t* pSrc = src->pixels;
+        uint8_t* pDest = dest->pixels;
+
+        size_t rowPitch = src->rowPitch;
+
+        size_t nwidth = (width > 1) ? (width >> 1) : 1;
+        size_t nheight = (height > 1) ? (height >> 1) : 1;
+
+        for( size_t y = 0; y < nheight; ++y )
+        {
+            if ( !_LoadScanline( urow0, width, pSrc, rowPitch, src->format ) )
+                return E_FAIL;
+            pSrc += rowPitch;
+
+            if ( urow0 != urow1 )
+            {
+                if ( !_LoadScanline( urow1, width, pSrc, rowPitch, src->format ) )
+                    return E_FAIL;
+                pSrc += rowPitch;
+            }
+
+            for( size_t x = 0; x < nwidth; ++x )
+            {
+                size_t x2 = x << 1;
+
+                AVERAGE4( target[ x ], urow0[ x2 ], urow1[ x2 ], urow2[ x2 ], urow3[ x2 ] );
+            }
+
+            if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                return E_FAIL;
+            pDest += dest->rowPitch;
+        }
+
+        if ( height > 1 )
+            height >>= 1;
+
+        if ( width > 1 )
+            width >>= 1;
+    }
+
+    return S_OK;
+}
+
+
+//--- 2D Linear Filter ---
+static HRESULT _Generate2DMipsLinearFilter( _In_ size_t levels, _In_ DWORD filter, _In_ const ScratchImage& mipChain, _In_ size_t item )
+{
+    if ( !mipChain.GetImages() )
+        return E_INVALIDARG;
+
+    // This assumes that the base image is already placed into the mipChain at the top level... (see _Setup2DMips)
+
+    assert( levels > 1 );
+
+    size_t width = mipChain.GetMetadata().width;
+    size_t height = mipChain.GetMetadata().height;
+
+    // Allocate temporary space (3 scanlines, plus X and Y filters)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( (sizeof(XMVECTOR)*width*3), 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    std::unique_ptr<LinearFilter[]> lf( new (std::nothrow) LinearFilter[ width+height ] );
+    if ( !lf )
+        return E_OUTOFMEMORY;
+
+    LinearFilter* lfX = lf.get();
+    LinearFilter* lfY = lf.get() + width;
+ 
+    XMVECTOR* target = scanline.get();
+
+    XMVECTOR* row0 = target + width;
+    XMVECTOR* row1 = target + width*2;
+
+    // Resize base image to each target mip level
+    for( size_t level=1; level < levels; ++level )
+    {
+        // 2D linear filter
+        const Image* src = mipChain.GetImage( level-1, item, 0 );
+        const Image* dest = mipChain.GetImage( level, item, 0 );
+
+        if ( !src || !dest )
+            return E_POINTER;
+
+        const uint8_t* pSrc = src->pixels;
+        uint8_t* pDest = dest->pixels;
+
+        size_t rowPitch = src->rowPitch;
+
+        size_t nwidth = (width > 1) ? (width >> 1) : 1;
+        _CreateLinearFilter( width, nwidth, (filter & TEX_FILTER_WRAP_U) != 0, lfX );
+
+        size_t nheight = (height > 1) ? (height >> 1) : 1;
+        _CreateLinearFilter( height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, lfY );
+
+#ifdef _DEBUG
+        memset( row0, 0xCD, sizeof(XMVECTOR)*width );
+        memset( row1, 0xDD, sizeof(XMVECTOR)*width );
+#endif
+
+        size_t u0 = size_t(-1);
+        size_t u1 = size_t(-1);
+
+        for( size_t y = 0; y < nheight; ++y )
+        {
+            auto& toY = lfY[ y ];
+
+            if ( toY.u0 != u0 )
+            {
+                if ( toY.u0 != u1 )
+                {
+                    u0 = toY.u0;
+
+                    if ( !_LoadScanline( row0, width, pSrc + (rowPitch * u0), rowPitch, src->format ) )
+                        return E_FAIL;
+                }
+                else
+                {
+                    u0 = u1;
+                    u1 = size_t(-1);
+
+                    std::swap( row0, row1 );
+                }
+            }
+
+            if ( toY.u1 != u1 )
+            {
+                u1 = toY.u1;
+
+                if ( !_LoadScanline( row1, width, pSrc + (rowPitch * u1), rowPitch, src->format ) )
+                    return E_FAIL;
+            }
+
+            for( size_t x = 0; x < nwidth; ++x )
+            {
+                auto& toX = lfX[ x ];
+
+                BILINEAR_INTERPOLATE( target[x], toX, toY, row0, row1 );
+            }
+
+            if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                return E_FAIL;
+            pDest += dest->rowPitch;
+        }
+
+        if ( height > 1 )
+            height >>= 1;
+
+        if ( width > 1 )
+            width >>= 1;
+    }
+
+    return S_OK;
+}
+
+
+//--- 2D Cubic Filter ---
+static HRESULT _Generate2DMipsCubicFilter( _In_ size_t levels, _In_ DWORD filter, _In_ const ScratchImage& mipChain, _In_ size_t item )
+{
+    if ( !mipChain.GetImages() )
+        return E_INVALIDARG;
+
+    // This assumes that the base image is already placed into the mipChain at the top level... (see _Setup2DMips)
+
+    assert( levels > 1 );
+
+    size_t width = mipChain.GetMetadata().width;
+    size_t height = mipChain.GetMetadata().height;
+
+    // Allocate temporary space (5 scanlines, plus X and Y filters)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( (sizeof(XMVECTOR)*width*5), 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    std::unique_ptr<CubicFilter[]> cf( new (std::nothrow) CubicFilter[ width+height ] );
+    if ( !cf )
+        return E_OUTOFMEMORY;
+
+    CubicFilter* cfX = cf.get();
+    CubicFilter* cfY = cf.get() + width;
+ 
+    XMVECTOR* target = scanline.get();
+
+    XMVECTOR* row0 = target + width;
+    XMVECTOR* row1 = target + width*2;
+    XMVECTOR* row2 = target + width*3;
+    XMVECTOR* row3 = target + width*4;
+
+    // Resize base image to each target mip level
+    for( size_t level=1; level < levels; ++level )
+    {
+        // 2D cubic filter
+        const Image* src = mipChain.GetImage( level-1, item, 0 );
+        const Image* dest = mipChain.GetImage( level, item, 0 );
+
+        if (  !src || !dest )
+            return E_POINTER;
+
+        const uint8_t* pSrc = src->pixels;
+        uint8_t* pDest = dest->pixels;
+
+        size_t rowPitch = src->rowPitch;
+
+        size_t nwidth = (width > 1) ? (width >> 1) : 1;
+        _CreateCubicFilter( width, nwidth, (filter & TEX_FILTER_WRAP_U) != 0, (filter & TEX_FILTER_MIRROR_U) != 0, cfX );
+
+        size_t nheight = (height > 1) ? (height >> 1) : 1;
+        _CreateCubicFilter( height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, (filter & TEX_FILTER_MIRROR_V) != 0, cfY );
+
+#ifdef _DEBUG
+        memset( row0, 0xCD, sizeof(XMVECTOR)*width );
+        memset( row1, 0xDD, sizeof(XMVECTOR)*width );
+        memset( row2, 0xED, sizeof(XMVECTOR)*width );
+        memset( row3, 0xFD, sizeof(XMVECTOR)*width );
+#endif
+
+        size_t u0 = size_t(-1);
+        size_t u1 = size_t(-1);
+        size_t u2 = size_t(-1);
+        size_t u3 = size_t(-1);
+
+        for( size_t y = 0; y < nheight; ++y )
+        {
+            auto& toY = cfY[ y ];
+
+            // Scanline 1
+            if ( toY.u0 != u0 )
+            {
+                if ( toY.u0 != u1 && toY.u0 != u2 && toY.u0 != u3 )
+                {
+                    u0 = toY.u0;
+
+                    if ( !_LoadScanline( row0, width, pSrc + (rowPitch * u0), rowPitch, src->format ) )
+                        return E_FAIL;
+                }
+                else if ( toY.u0 == u1 )
+                {
+                    u0 = u1;
+                    u1 = size_t(-1);
+
+                    std::swap( row0, row1 );
+                }
+                else if ( toY.u0 == u2 )
+                {
+                    u0 = u2;
+                    u2 = size_t(-1);
+
+                    std::swap( row0, row2 );
+                }
+                else if ( toY.u0 == u3 )
+                {
+                    u0 = u3;
+                    u3 = size_t(-1);
+
+                    std::swap( row0, row3 );
+                }
+            }
+
+            // Scanline 2
+            if ( toY.u1 != u1 )
+            {
+                if ( toY.u1 != u2 && toY.u1 != u3 )
+                {
+                    u1 = toY.u1;
+
+                    if ( !_LoadScanline( row1, width, pSrc + (rowPitch * u1), rowPitch, src->format ) )
+                        return E_FAIL;
+                }
+                else if ( toY.u1 == u2 )
+                {
+                    u1 = u2;
+                    u2 = size_t(-1);
+
+                    std::swap( row1, row2 );
+                }
+                else if ( toY.u1 == u3 )
+                {
+                    u1 = u3;
+                    u3 = size_t(-1);
+
+                    std::swap( row1, row3 );
+                }
+            }
+
+            // Scanline 3
+            if ( toY.u2 != u2 )
+            {
+                if ( toY.u2 != u3 )
+                {
+                    u2 = toY.u2;
+
+                    if ( !_LoadScanline( row2, width, pSrc + (rowPitch * u2), rowPitch, src->format ) )
+                        return E_FAIL;
+                }
+                else
+                {
+                    u2 = u3;
+                    u3 = size_t(-1);
+
+                    std::swap( row2, row3 );
+                }
+            }
+
+            // Scanline 4
+            if ( toY.u3 != u3 )
+            {
+                u3 = toY.u3;
+
+                if ( !_LoadScanline( row3, width, pSrc + (rowPitch * u3), rowPitch, src->format ) )
+                    return E_FAIL;
+            }
+
+            for( size_t x = 0; x < nwidth; ++x )
+            {
+                auto& toX = cfX[ x ];
+
+                XMVECTOR C0, C1, C2, C3;
+
+                CUBIC_INTERPOLATE( C0, toX.x, row0[ toX.u0 ], row0[ toX.u1 ], row0[ toX.u2 ], row0[ toX.u3 ] );
+                CUBIC_INTERPOLATE( C1, toX.x, row1[ toX.u0 ], row1[ toX.u1 ], row1[ toX.u2 ], row1[ toX.u3 ] );
+                CUBIC_INTERPOLATE( C2, toX.x, row2[ toX.u0 ], row2[ toX.u1 ], row2[ toX.u2 ], row2[ toX.u3 ] );
+                CUBIC_INTERPOLATE( C3, toX.x, row3[ toX.u0 ], row3[ toX.u1 ], row3[ toX.u2 ], row3[ toX.u3 ] );
+
+                CUBIC_INTERPOLATE( target[x], toY.x, C0, C1, C2, C3 );
+            }
+
+            if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                return E_FAIL;
+            pDest += dest->rowPitch;
+        }
+
+        if ( height > 1 )
+            height >>= 1;
+
+        if ( width > 1 )
+            width >>= 1;
+    }
+
+    return S_OK;
+}
+
+
+//-------------------------------------------------------------------------------------
 // Generate volume mip-map helpers
 //-------------------------------------------------------------------------------------
 static HRESULT _Setup3DMips( _In_reads_(depth) const Image* baseImages, _In_ size_t depth, size_t levels,
@@ -537,6 +1132,8 @@ static HRESULT _Setup3DMips( _In_reads_(depth) const Image* baseImages, _In_ siz
     return S_OK;
 }
 
+
+//--- 3D Point Filter ---
 static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels, _In_ const ScratchImage& mipChain )
 {
     if ( !depth || !mipChain.GetImages() )
@@ -548,8 +1145,6 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
 
     size_t width = mipChain.GetMetadata().width;
     size_t height = mipChain.GetMetadata().height;
-
-    assert( ispow2(width) && ispow2(height) && ispow2(depth) );
 
     // Allocate temporary space (2 scanlines)
     ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( (sizeof(XMVECTOR)*width*2), 16 ) ) );
@@ -563,16 +1158,21 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
     // Resize base image to each target mip level
     for( size_t level=1; level < levels; ++level )
     {
+#ifdef _DEBUG
+        memset( row, 0xCD, sizeof(XMVECTOR)*width );
+#endif
+
         if ( depth > 1 )
         {
             // 3D point filter
             size_t ndepth = depth >> 1;
 
+            size_t zinc = ( depth << 16 ) / ndepth;
+
+            size_t sz = 0;
             for( size_t slice=0; slice < ndepth; ++slice )
             {
-                size_t slicesrc = std::min<size_t>( slice * 2, depth-1 );
-
-                const Image* src = mipChain.GetImage( level-1, 0, slicesrc );
+                const Image* src = mipChain.GetImage( level-1, 0, (sz >> 16) );
                 const Image* dest = mipChain.GetImage( level, 0, slice );
 
                 if ( !src || !dest )
@@ -586,21 +1186,36 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
                 size_t nwidth = (width > 1) ? (width >> 1) : 1;
                 size_t nheight = (height > 1) ? (height >> 1) : 1;
 
+                size_t xinc = ( width << 16 ) / nwidth;
+                size_t yinc = ( height << 16 ) / nheight;
+
+                size_t lasty = size_t(-1);
+
+                size_t sy = 0;
                 for( size_t y = 0; y < nheight; ++y )
                 {
-                    if ( !_LoadScanline( row, width, pSrc, rowPitch, src->format ) )
-                        return E_FAIL;
-                    pSrc += rowPitch*2;
+                    if ( (lasty ^ sy) >> 16 )
+                    {
+                        if ( !_LoadScanline( row, width, pSrc + ( rowPitch * (sy >> 16) ), rowPitch, src->format ) )
+                            return E_FAIL;
+                        lasty = sy;
+                    }
 
+                    size_t sx = 0;
                     for( size_t x = 0; x < nwidth; ++x )
                     {
-                        target[ x ] = row[ x << 1 ];
+                        target[ x ] = row[ sx >> 16 ];
+                        sx += xinc;
                     }
 
                     if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
                         return E_FAIL;
                     pDest += dest->rowPitch;
+
+                    sy += yinc;
                 }
+
+                sz += zinc;
             }
         }
         else
@@ -620,20 +1235,33 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
             size_t nwidth = (width > 1) ? (width >> 1) : 1;
             size_t nheight = (height > 1) ? (height >> 1) : 1;
 
+            size_t xinc = ( width << 16 ) / nwidth;
+            size_t yinc = ( height << 16 ) / nheight;
+
+            size_t lasty = size_t(-1);
+
+            size_t sy = 0;
             for( size_t y = 0; y < nheight; ++y )
             {
-                if ( !_LoadScanline( row, width, pSrc, rowPitch, src->format ) )
-                    return E_FAIL;
-                pSrc += rowPitch*2;
+                if ( (lasty ^ sy) >> 16 )
+                {
+                    if ( !_LoadScanline( row, width, pSrc + ( rowPitch * (sy >> 16) ), rowPitch, src->format ) )
+                        return E_FAIL;
+                    lasty = sy;
+                }
 
+                size_t sx = 0;
                 for( size_t x = 0; x < nwidth; ++x )
                 {
-                    target[ x ] = row[ x << 1 ];
+                    target[ x ] = row[ sx >> 16 ];
+                    sx += xinc;
                 }
 
                 if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
                     return E_FAIL;
                 pDest += dest->rowPitch;
+
+                sy += yinc;
             }
         }
 
@@ -650,6 +1278,8 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
     return S_OK;
 }
 
+
+//--- 3D Box Filter ---
 static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, _In_ const ScratchImage& mipChain )
 {
     if ( !depth || !mipChain.GetImages() )
@@ -662,7 +1292,8 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
     size_t width = mipChain.GetMetadata().width;
     size_t height = mipChain.GetMetadata().height;
 
-    assert( ispow2(width) && ispow2(height) && ispow2(depth) );
+    if ( !ispow2(width) || !ispow2(height) || !ispow2(depth) )
+        return E_FAIL;
 
     // Allocate temporary space (5 scanlines)
     ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( (sizeof(XMVECTOR)*width*5), 16 ) ) );
@@ -684,7 +1315,7 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
     // Resize base image to each target mip level
     for( size_t level=1; level < levels; ++level )
     {
-        if ( height <= 1)
+        if ( height <= 1 )
         {
             urow1 = urow0;
             vrow1 = vrow0;
@@ -697,6 +1328,13 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
             vrow2 = vrow0;
             vrow3 = vrow1;
         }
+
+#ifdef _DEBUG
+        memset( urow0, 0xCD, sizeof(XMVECTOR)*width );
+        memset( urow1, 0xDD, sizeof(XMVECTOR)*width );
+        memset( vrow0, 0xED, sizeof(XMVECTOR)*width );
+        memset( vrow1, 0xFD, sizeof(XMVECTOR)*width );
+#endif
 
         if ( depth > 1 )
         {
@@ -753,16 +1391,8 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
                     {
                         size_t x2 = x << 1;
 
-                        // Box filter: Average 2x2x2 pixels
-                        XMVECTOR v = XMVectorAdd( urow0[ x2 ], urow1[ x2 ] );
-                        v = XMVectorAdd( v, urow2[ x2 ] );
-                        v = XMVectorAdd( v, urow3[ x2 ] );
-                        v = XMVectorAdd( v, vrow0[ x2 ] );
-                        v = XMVectorAdd( v, vrow1[ x2 ] );
-                        v = XMVectorAdd( v, vrow2[ x2 ] );
-                        v = XMVectorAdd( v, vrow3[ x2 ] );
-
-                        target[ x ] = XMVectorMultiply( v, s_boxScale3D );
+                        AVERAGE8( target[x], urow0[ x2 ], urow1[ x2 ], urow2[ x2 ], urow3[ x2 ],
+                                             vrow0[ x2 ], vrow1[ x2 ], vrow2[ x2 ], vrow3[ x2 ] );
                     }
 
                     if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
@@ -805,12 +1435,579 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
                 {
                     size_t x2 = x << 1;
 
-                    // Box filter: Average 2x2 pixels
-                    XMVECTOR v = XMVectorAdd( urow0[ x2 ], urow1[ x2 ] );
-                    v = XMVectorAdd( v, urow2[ x2 ] );
-                    v = XMVectorAdd( v, urow3[ x2 ] );
+                    AVERAGE4( target[ x ], urow0[ x2 ], urow1[ x2 ], urow2[ x2 ], urow3[ x2 ] );
+                }
 
-                    target[ x ] = XMVectorMultiply( v, s_boxScale );
+                if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                    return E_FAIL;
+                pDest += dest->rowPitch;
+            }
+        }
+
+        if ( height > 1 )
+            height >>= 1;
+
+        if ( width > 1 )
+            width >>= 1;
+
+        if ( depth > 1 )
+            depth >>= 1;
+    }
+
+    return S_OK;
+}
+
+
+//--- 3D Linear Filter ---
+static HRESULT _Generate3DMipsLinearFilter( _In_ size_t depth, _In_ size_t levels, _In_ DWORD filter, _In_ const ScratchImage& mipChain )
+{
+    if ( !depth || !mipChain.GetImages() )
+        return E_INVALIDARG;
+
+    // This assumes that the base images are already placed into the mipChain at the top level... (see _Setup3DMips)
+
+    assert( levels > 1 );
+
+    size_t width = mipChain.GetMetadata().width;
+    size_t height = mipChain.GetMetadata().height;
+
+    // Allocate temporary space (5 scanlines, plus X/Y/Z filters)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( (sizeof(XMVECTOR)*width*5), 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    std::unique_ptr<LinearFilter[]> lf( new (std::nothrow) LinearFilter[ width+height+depth ] );
+    if ( !lf )
+        return E_OUTOFMEMORY;
+
+    LinearFilter* lfX = lf.get();
+    LinearFilter* lfY = lf.get() + width;
+    LinearFilter* lfZ = lf.get() + width + height;
+
+    XMVECTOR* target = scanline.get();
+
+    XMVECTOR* urow0 = target + width;
+    XMVECTOR* urow1 = target + width*2;
+    XMVECTOR* vrow0 = target + width*3;
+    XMVECTOR* vrow1 = target + width*4;
+
+    // Resize base image to each target mip level
+    for( size_t level=1; level < levels; ++level )
+    {
+        size_t nwidth = (width > 1) ? (width >> 1) : 1;
+        _CreateLinearFilter( width, nwidth, (filter & TEX_FILTER_WRAP_U) != 0, lfX );
+
+        size_t nheight = (height > 1) ? (height >> 1) : 1;
+        _CreateLinearFilter( height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, lfY );
+
+#ifdef _DEBUG
+        memset( urow0, 0xCD, sizeof(XMVECTOR)*width );
+        memset( urow1, 0xDD, sizeof(XMVECTOR)*width );
+        memset( vrow0, 0xED, sizeof(XMVECTOR)*width );
+        memset( vrow1, 0xFD, sizeof(XMVECTOR)*width );
+#endif
+
+        if ( depth > 1 )
+        {
+            // 3D linear filter
+            size_t ndepth = depth >> 1;
+            _CreateLinearFilter( depth, ndepth, (filter & TEX_FILTER_WRAP_W) != 0, lfZ );
+
+            for( size_t slice=0; slice < ndepth; ++slice )
+            {
+                auto& toZ = lfZ[ slice ];
+
+                const Image* srca = mipChain.GetImage( level-1, 0, toZ.u0 );
+                const Image* srcb = mipChain.GetImage( level-1, 0, toZ.u1 );
+                if ( !srca || !srcb )
+                    return E_POINTER;
+
+                size_t u0 = size_t(-1);
+                size_t u1 = size_t(-1);
+
+                const Image* dest = mipChain.GetImage( level, 0, slice );
+                if ( !dest )
+                    return E_POINTER;
+
+                uint8_t* pDest = dest->pixels;
+
+                for( size_t y = 0; y < nheight; ++y )
+                {
+                    auto& toY = lfY[ y ];
+
+                    if ( toY.u0 != u0 )
+                    {
+                        if ( toY.u0 != u1 )
+                        {
+                            u0 = toY.u0;
+
+                            if ( !_LoadScanline( urow0, width, srca->pixels + (srca->rowPitch * u0), srca->rowPitch, srca->format )
+                                 || !_LoadScanline( vrow0, width, srcb->pixels + (srcb->rowPitch * u0), srcb->rowPitch, srcb->format ) )
+                                return E_FAIL;
+                        }
+                        else
+                        {
+                            u0 = u1;
+                            u1 = size_t(-1);
+
+                            std::swap( urow0, urow1 );
+                            std::swap( vrow0, vrow1 );
+                        }
+                    }
+
+                    if ( toY.u1 != u1 )
+                    {
+                        u1 = toY.u1;
+
+                        if ( !_LoadScanline( urow1, width, srca->pixels + (srca->rowPitch * u1), srca->rowPitch, srca->format )
+                                || !_LoadScanline( vrow1, width, srcb->pixels + (srcb->rowPitch * u1), srcb->rowPitch, srcb->format ) )
+                            return E_FAIL;
+                    }
+
+                    for( size_t x = 0; x < nwidth; ++x )
+                    {
+                        auto& toX = lfX[ x ];
+
+                        TRILINEAR_INTERPOLATE( target[x], toX, toY, toZ, urow0, urow1, vrow0, vrow1 );
+                    }
+
+                    if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                        return E_FAIL;
+                    pDest += dest->rowPitch;
+                }
+            }
+        }
+        else
+        {
+            // 2D linear filter
+            const Image* src = mipChain.GetImage( level-1, 0, 0 );
+            const Image* dest = mipChain.GetImage( level, 0, 0 );
+
+            if ( !src || !dest )
+                return E_POINTER;
+
+            const uint8_t* pSrc = src->pixels;
+            uint8_t* pDest = dest->pixels;
+
+            size_t rowPitch = src->rowPitch;
+
+            size_t u0 = size_t(-1);
+            size_t u1 = size_t(-1);
+
+            for( size_t y = 0; y < nheight; ++y )
+            {
+                auto& toY = lfY[ y ];
+
+                if ( toY.u0 != u0 )
+                {
+                    if ( toY.u0 != u1 )
+                    {
+                        u0 = toY.u0;
+
+                        if ( !_LoadScanline( urow0, width, pSrc + (rowPitch * u0), rowPitch, src->format ) )
+                            return E_FAIL;
+                    }
+                    else
+                    {
+                        u0 = u1;
+                        u1 = size_t(-1);
+
+                        std::swap( urow0, urow1 );
+                    }
+                }
+
+                if ( toY.u1 != u1 )
+                {
+                    u1 = toY.u1;
+
+                    if ( !_LoadScanline( urow1, width, pSrc + (rowPitch * u1), rowPitch, src->format ) )
+                        return E_FAIL;
+                }
+
+                for( size_t x = 0; x < nwidth; ++x )
+                {
+                    auto& toX = lfX[ x ];
+
+                    BILINEAR_INTERPOLATE( target[x], toX, toY, urow0, urow1 );
+                }
+
+                if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                    return E_FAIL;
+                pDest += dest->rowPitch;
+            }
+        }
+
+        if ( height > 1 )
+            height >>= 1;
+
+        if ( width > 1 )
+            width >>= 1;
+
+        if ( depth > 1 )
+            depth >>= 1;
+    }
+
+    return S_OK;
+}
+
+
+//--- 3D Cubic Filter ---
+static HRESULT _Generate3DMipsCubicFilter( _In_ size_t depth, _In_ size_t levels, _In_ DWORD filter, _In_ const ScratchImage& mipChain )
+{
+    if ( !depth || !mipChain.GetImages() )
+        return E_INVALIDARG;
+
+    // This assumes that the base images are already placed into the mipChain at the top level... (see _Setup3DMips)
+
+    assert( levels > 1 );
+
+    size_t width = mipChain.GetMetadata().width;
+    size_t height = mipChain.GetMetadata().height;
+
+    // Allocate temporary space (17 scanlines, plus X/Y/Z filters)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( (sizeof(XMVECTOR)*width*17), 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    std::unique_ptr<CubicFilter[]> cf( new (std::nothrow) CubicFilter[ width+height+depth ] );
+    if ( !cf )
+        return E_OUTOFMEMORY;
+
+    CubicFilter* cfX = cf.get();
+    CubicFilter* cfY = cf.get() + width;
+    CubicFilter* cfZ = cf.get() + width + height;
+
+    XMVECTOR* target = scanline.get();
+
+    XMVECTOR* urow[4];
+    XMVECTOR* vrow[4];
+    XMVECTOR* srow[4];
+    XMVECTOR* trow[4];
+
+    XMVECTOR *ptr = scanline.get() + width;
+    for( size_t j = 0; j < 4; ++j )
+    {
+        urow[j] = ptr;  ptr += width;
+        vrow[j] = ptr;  ptr += width;
+        srow[j] = ptr;  ptr += width;
+        trow[j] = ptr;  ptr += width;
+    }
+
+    // Resize base image to each target mip level
+    for( size_t level=1; level < levels; ++level )
+    {
+        size_t nwidth = (width > 1) ? (width >> 1) : 1;
+        _CreateCubicFilter( width, nwidth, (filter & TEX_FILTER_WRAP_U) != 0, (filter & TEX_FILTER_MIRROR_U) != 0, cfX );
+
+        size_t nheight = (height > 1) ? (height >> 1) : 1;
+        _CreateCubicFilter( height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, (filter & TEX_FILTER_MIRROR_V) != 0, cfY );
+
+#ifdef _DEBUG
+        for( size_t j = 0; j < 4; ++j )
+        {
+            memset( urow[j], 0xCD, sizeof(XMVECTOR)*width );
+            memset( vrow[j], 0xDD, sizeof(XMVECTOR)*width );
+            memset( srow[j], 0xED, sizeof(XMVECTOR)*width );
+            memset( trow[j], 0xFD, sizeof(XMVECTOR)*width );
+        }
+#endif
+
+        if ( depth > 1 )
+        {
+            // 3D cubic filter
+            size_t ndepth = depth >> 1;
+            _CreateCubicFilter( depth, ndepth, (filter & TEX_FILTER_WRAP_W) != 0, (filter & TEX_FILTER_MIRROR_W) != 0, cfZ );
+
+            for( size_t slice=0; slice < ndepth; ++slice )
+            {
+                auto& toZ = cfZ[ slice ];
+
+                const Image* srca = mipChain.GetImage( level-1, 0, toZ.u0 );
+                const Image* srcb = mipChain.GetImage( level-1, 0, toZ.u1 );
+                const Image* srcc = mipChain.GetImage( level-1, 0, toZ.u2 );
+                const Image* srcd = mipChain.GetImage( level-1, 0, toZ.u3 );
+                if ( !srca || !srcb || !srcc || !srcd )
+                    return E_POINTER;
+
+                size_t u0 = size_t(-1);
+                size_t u1 = size_t(-1);
+                size_t u2 = size_t(-1);
+                size_t u3 = size_t(-1);
+
+                const Image* dest = mipChain.GetImage( level, 0, slice );
+                if ( !dest )
+                    return E_POINTER;
+
+                uint8_t* pDest = dest->pixels;
+
+                for( size_t y = 0; y < nheight; ++y )
+                {
+                    auto& toY = cfY[ y ];
+
+                    // Scanline 1
+                    if ( toY.u0 != u0 )
+                    {
+                        if ( toY.u0 != u1 && toY.u0 != u2 && toY.u0 != u3 )
+                        {
+                            u0 = toY.u0;
+
+                            if ( !_LoadScanline( urow[0], width, srca->pixels + (srca->rowPitch * u0), srca->rowPitch, srca->format )
+                                    || !_LoadScanline( urow[1], width, srcb->pixels + (srcb->rowPitch * u0), srcb->rowPitch, srcb->format )
+                                    || !_LoadScanline( urow[2], width, srcc->pixels + (srcc->rowPitch * u0), srcc->rowPitch, srcc->format )
+                                    || !_LoadScanline( urow[3], width, srcd->pixels + (srcd->rowPitch * u0), srcd->rowPitch, srcd->format ) )
+                                return E_FAIL;
+                        }
+                        else if ( toY.u0 == u1 )
+                        {
+                            u0 = u1;
+                            u1 = size_t(-1);
+
+                            std::swap( urow[0], vrow[0] );
+                            std::swap( urow[1], vrow[1] );
+                            std::swap( urow[2], vrow[2] );
+                            std::swap( urow[3], vrow[3] );
+                        }
+                        else if ( toY.u0 == u2 )
+                        {
+                            u0 = u2;
+                            u2 = size_t(-1);
+
+                            std::swap( urow[0], srow[0] );
+                            std::swap( urow[1], srow[1] );
+                            std::swap( urow[2], srow[2] );
+                            std::swap( urow[3], srow[3] );
+                        }
+                        else if ( toY.u0 == u3 )
+                        {
+                            u0 = u3;
+                            u3 = size_t(-1);
+
+                            std::swap( urow[0], trow[0] );
+                            std::swap( urow[1], trow[1] );
+                            std::swap( urow[2], trow[2] );
+                            std::swap( urow[3], trow[3] );
+                        }
+                    }
+
+                    // Scanline 2
+                    if ( toY.u1 != u1 )
+                    {
+                        if ( toY.u1 != u2 && toY.u1 != u3 )
+                        {
+                            u1 = toY.u1;
+
+                            if ( !_LoadScanline( vrow[0], width, srca->pixels + (srca->rowPitch * u1), srca->rowPitch, srca->format )
+                                    || !_LoadScanline( vrow[1], width, srcb->pixels + (srcb->rowPitch * u1), srcb->rowPitch, srcb->format )
+                                    || !_LoadScanline( vrow[2], width, srcc->pixels + (srcc->rowPitch * u1), srcc->rowPitch, srcc->format )
+                                    || !_LoadScanline( vrow[3], width, srcd->pixels + (srcd->rowPitch * u1), srcd->rowPitch, srcd->format ) )
+                                return E_FAIL;
+                        }
+                        else if ( toY.u1 == u2 )
+                        {
+                            u1 = u2;
+                            u2 = size_t(-1);
+
+                            std::swap( vrow[0], srow[0] );
+                            std::swap( vrow[1], srow[1] );
+                            std::swap( vrow[2], srow[2] );
+                            std::swap( vrow[3], srow[3] );
+                        }
+                        else if ( toY.u1 == u3 )
+                        {
+                            u1 = u3;
+                            u3 = size_t(-1);
+
+                            std::swap( vrow[0], trow[0] );
+                            std::swap( vrow[1], trow[1] );
+                            std::swap( vrow[2], trow[2] );
+                            std::swap( vrow[3], trow[3] );
+                        }
+                    }
+
+                    // Scanline 3
+                    if ( toY.u2 != u2 )
+                    {
+                        if ( toY.u2 != u3 )
+                        {
+                            u2 = toY.u2;
+
+                            if ( !_LoadScanline( srow[0], width, srca->pixels + (srca->rowPitch * u2), srca->rowPitch, srca->format )
+                                    || !_LoadScanline( srow[1], width, srcb->pixels + (srcb->rowPitch * u2), srcb->rowPitch, srcb->format )
+                                    || !_LoadScanline( srow[2], width, srcc->pixels + (srcc->rowPitch * u2), srcc->rowPitch, srcc->format )
+                                    || !_LoadScanline( srow[3], width, srcd->pixels + (srcd->rowPitch * u2), srcd->rowPitch, srcd->format ) )
+                                return E_FAIL;
+                        }
+                        else
+                        {
+                            u2 = u3;
+                            u3 = size_t(-1);
+
+                            std::swap( srow[0], trow[0] );
+                            std::swap( srow[1], trow[1] );
+                            std::swap( srow[2], trow[2] );
+                            std::swap( srow[3], trow[3] );
+                        }
+                    }
+
+                    // Scanline 4
+                    if ( toY.u3 != u3 )
+                    {
+                        u3 = toY.u3;
+
+                        if ( !_LoadScanline( trow[0], width, srca->pixels + (srca->rowPitch * u3), srca->rowPitch, srca->format )
+                                || !_LoadScanline( trow[1], width, srcb->pixels + (srcb->rowPitch * u3), srcb->rowPitch, srcb->format )
+                                || !_LoadScanline( trow[2], width, srcc->pixels + (srcc->rowPitch * u3), srcc->rowPitch, srcc->format )
+                                || !_LoadScanline( trow[3], width, srcd->pixels + (srcd->rowPitch * u3), srcd->rowPitch, srcd->format ) )
+                            return E_FAIL;
+                    }
+
+                    for( size_t x = 0; x < nwidth; ++x )
+                    {
+                        auto& toX = cfX[ x ];
+
+                        XMVECTOR D[4];
+
+                        for( size_t j=0; j < 4; ++j )
+                        {
+                            XMVECTOR C0, C1, C2, C3;
+                            CUBIC_INTERPOLATE( C0, toX.x, urow[j][ toX.u0 ], urow[j][ toX.u1 ], urow[j][ toX.u2 ], urow[j][ toX.u3 ] );
+                            CUBIC_INTERPOLATE( C1, toX.x, vrow[j][ toX.u0 ], vrow[j][ toX.u1 ], vrow[j][ toX.u2 ], vrow[j][ toX.u3 ] );
+                            CUBIC_INTERPOLATE( C2, toX.x, srow[j][ toX.u0 ], srow[j][ toX.u1 ], srow[j][ toX.u2 ], srow[j][ toX.u3 ] );
+                            CUBIC_INTERPOLATE( C3, toX.x, trow[j][ toX.u0 ], trow[j][ toX.u1 ], trow[j][ toX.u2 ], trow[j][ toX.u3 ] );
+
+                            CUBIC_INTERPOLATE( D[j], toY.x, C0, C1, C2, C3 );
+                        }
+
+                        CUBIC_INTERPOLATE( target[x], toZ.x, D[0], D[1], D[2], D[3] );
+                    }
+
+                    if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                        return E_FAIL;
+                    pDest += dest->rowPitch;
+                }
+            }
+        }
+        else
+        {
+            // 2D cubic filter
+            const Image* src = mipChain.GetImage( level-1, 0, 0 );
+            const Image* dest = mipChain.GetImage( level, 0, 0 );
+
+            if ( !src || !dest )
+                return E_POINTER;
+
+            const uint8_t* pSrc = src->pixels;
+            uint8_t* pDest = dest->pixels;
+
+            size_t rowPitch = src->rowPitch;
+
+            size_t u0 = size_t(-1);
+            size_t u1 = size_t(-1);
+            size_t u2 = size_t(-1);
+            size_t u3 = size_t(-1);
+
+            for( size_t y = 0; y < nheight; ++y )
+            {
+                auto& toY = cfY[ y ];
+
+                // Scanline 1
+                if ( toY.u0 != u0 )
+                {
+                    if ( toY.u0 != u1 && toY.u0 != u2 && toY.u0 != u3 )
+                    {
+                        u0 = toY.u0;
+
+                        if ( !_LoadScanline( urow[0], width, pSrc + (rowPitch * u0), rowPitch, src->format ) )
+                            return E_FAIL;
+                    }
+                    else if ( toY.u0 == u1 )
+                    {
+                        u0 = u1;
+                        u1 = size_t(-1);
+
+                        std::swap( urow[0], vrow[0] );
+                    }
+                    else if ( toY.u0 == u2 )
+                    {
+                        u0 = u2;
+                        u2 = size_t(-1);
+
+                        std::swap( urow[0], srow[0] );
+                    }
+                    else if ( toY.u0 == u3 )
+                    {
+                        u0 = u3;
+                        u3 = size_t(-1);
+
+                        std::swap( urow[0], trow[0] );
+                    }
+                }
+
+                // Scanline 2
+                if ( toY.u1 != u1 )
+                {
+                    if ( toY.u1 != u2 && toY.u1 != u3 )
+                    {
+                        u1 = toY.u1;
+
+                        if ( !_LoadScanline( vrow[0], width, pSrc + (rowPitch * u1), rowPitch, src->format ) )
+                            return E_FAIL;
+                    }
+                    else if ( toY.u1 == u2 )
+                    {
+                        u1 = u2;
+                        u2 = size_t(-1);
+
+                        std::swap( vrow[0], srow[0] );
+                    }
+                    else if ( toY.u1 == u3 )
+                    {
+                        u1 = u3;
+                        u3 = size_t(-1);
+
+                        std::swap( vrow[0], trow[0] );
+                    }
+                }
+
+                // Scanline 3
+                if ( toY.u2 != u2 )
+                {
+                    if ( toY.u2 != u3 )
+                    {
+                        u2 = toY.u2;
+
+                        if ( !_LoadScanline( srow[0], width, pSrc + (rowPitch * u2), rowPitch, src->format ) )
+                            return E_FAIL;
+                    }
+                    else
+                    {
+                        u2 = u3;
+                        u3 = size_t(-1);
+
+                        std::swap( srow[0], trow[0] );
+                    }
+                }
+
+                // Scanline 4
+                if ( toY.u3 != u3 )
+                {
+                    u3 = toY.u3;
+
+                    if ( !_LoadScanline( trow[0], width, pSrc + (rowPitch * u3), rowPitch, src->format ) )
+                        return E_FAIL;
+                }
+
+                for( size_t x = 0; x < nwidth; ++x )
+                {
+                    auto& toX = cfX[ x ];
+
+                    XMVECTOR C0, C1, C2, C3;
+                    CUBIC_INTERPOLATE( C0, toX.x, urow[0][ toX.u0 ], urow[0][ toX.u1 ], urow[0][ toX.u2 ], urow[0][ toX.u3 ] );
+                    CUBIC_INTERPOLATE( C1, toX.x, vrow[0][ toX.u0 ], vrow[0][ toX.u1 ], vrow[0][ toX.u2 ], vrow[0][ toX.u3 ] );
+                    CUBIC_INTERPOLATE( C2, toX.x, srow[0][ toX.u0 ], srow[0][ toX.u1 ], srow[0][ toX.u2 ], srow[0][ toX.u3 ] );
+                    CUBIC_INTERPOLATE( C3, toX.x, trow[0][ toX.u0 ], trow[0][ toX.u1 ], trow[0][ toX.u2 ], trow[0][ toX.u3 ] );
+
+                    CUBIC_INTERPOLATE( target[x], toY.x, C0, C1, C2, C3 );
                 }
 
                 if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
@@ -857,56 +2054,138 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
     }
 
+    HRESULT hr = _UseWICFiltering( baseImage.format, filter );
+    if ( FAILED(hr) )
+        return hr;
+
     static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
-    switch(filter & TEX_FILTER_MASK)
+
+    if ( hr == S_FALSE )
     {
-    case 0:
-    case TEX_FILTER_POINT:
-    case TEX_FILTER_FANT: // Equivalent to Box filter
-    case TEX_FILTER_LINEAR:
-    case TEX_FILTER_CUBIC:
+        //--- Use custom filters to generate mipmaps ----------------------------------
+        TexMetadata mdata;
+        memset( &mdata, 0, sizeof(mdata) );
+        mdata.width = baseImage.width;
+        if ( baseImage.height > 1 || !allow1D )
         {
-            static_assert( TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flags alias mismatch" );
-
-            WICPixelFormatGUID pfGUID;
-            if ( _DXGIToWIC( baseImage.format, pfGUID, true ) )
-            {
-                // Case 1: Base image format is supported by Windows Imaging Component
-                HRESULT hr = (baseImage.height > 1 || !allow1D)
-                             ? mipChain.Initialize2D( baseImage.format, baseImage.width, baseImage.height, 1, levels )
-                             : mipChain.Initialize1D( baseImage.format, baseImage.width, 1, levels ); 
-                if ( FAILED(hr) )
-                    return hr;
-
-                return _GenerateMipMapsUsingWIC( baseImage, filter, levels, pfGUID, mipChain, 0 );
-            }
-            else
-            {
-                // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
-                assert( baseImage.format != DXGI_FORMAT_R32G32B32A32_FLOAT );
-                ScratchImage temp;
-                HRESULT hr = _ConvertToR32G32B32A32( baseImage, temp );
-                if ( FAILED(hr) )
-                    return hr;
-
-                const Image *timg = temp.GetImage( 0, 0, 0 );
-                if ( !timg )
-                    return E_POINTER;
-
-                ScratchImage tMipChain;
-                hr = _GenerateMipMapsUsingWIC( *timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, 0 );
-                if ( FAILED(hr) )
-                    return hr;
-
-                temp.Release();
-
-                return _ConvertFromR32G32B32A32( tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), baseImage.format, mipChain );
-            }
+            mdata.height =  baseImage.height;
+            mdata.dimension = TEX_DIMENSION_TEXTURE2D;
         }
-        break;
+        else
+        {
+            mdata.height = 1;
+            mdata.dimension= TEX_DIMENSION_TEXTURE1D;
+        }
+        mdata.depth = mdata.arraySize = 1;
+        mdata.mipLevels = levels;
+        mdata.format = baseImage.format;
 
-    default:
-        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+        DWORD filter_select = ( filter & TEX_FILTER_MASK );
+        if ( !filter_select )
+        {
+            // Default filter choice
+            filter_select = ( ispow2(baseImage.width) && ispow2(baseImage.height) ) ? TEX_FILTER_BOX : TEX_FILTER_LINEAR;
+        }
+
+        switch( filter_select )
+        {
+            case TEX_FILTER_BOX:
+                hr = _Setup2DMips( &baseImage, 1, mdata, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                hr = _Generate2DMipsBoxFilter( levels, mipChain, 0 );
+                if ( FAILED(hr) )
+                    mipChain.Release();
+                return hr;
+
+            case TEX_FILTER_POINT:
+                hr = _Setup2DMips( &baseImage, 1, mdata, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                hr = _Generate2DMipsPointFilter( levels, mipChain, 0 );
+                if ( FAILED(hr) )
+                    mipChain.Release();
+                return hr;
+
+            case TEX_FILTER_LINEAR:
+                hr = _Setup2DMips( &baseImage, 1, mdata, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                hr = _Generate2DMipsLinearFilter( levels, filter, mipChain, 0 );
+                if ( FAILED(hr) )
+                    mipChain.Release();
+                return hr;
+
+            case TEX_FILTER_CUBIC:
+                hr = _Setup2DMips( &baseImage, 1, mdata, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                hr = _Generate2DMipsCubicFilter( levels, filter, mipChain, 0 );
+                if ( FAILED(hr) )
+                    mipChain.Release();
+                return hr;
+
+            default:
+                return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+        }
+    }
+    else
+    {
+        //--- Use WIC filtering to generate mipmaps -----------------------------------
+        switch(filter & TEX_FILTER_MASK)
+        {
+            case 0:
+            case TEX_FILTER_POINT:
+            case TEX_FILTER_FANT: // Equivalent to Box filter
+            case TEX_FILTER_LINEAR:
+            case TEX_FILTER_CUBIC:
+                {
+                    static_assert( TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flag alias mismatch" );
+
+                    WICPixelFormatGUID pfGUID;
+                    if ( _DXGIToWIC( baseImage.format, pfGUID, true ) )
+                    {
+                        // Case 1: Base image format is supported by Windows Imaging Component
+                        HRESULT hr = (baseImage.height > 1 || !allow1D)
+                                     ? mipChain.Initialize2D( baseImage.format, baseImage.width, baseImage.height, 1, levels )
+                                     : mipChain.Initialize1D( baseImage.format, baseImage.width, 1, levels ); 
+                        if ( FAILED(hr) )
+                            return hr;
+
+                        return _GenerateMipMapsUsingWIC( baseImage, filter, levels, pfGUID, mipChain, 0 );
+                    }
+                    else
+                    {
+                        // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
+                        assert( baseImage.format != DXGI_FORMAT_R32G32B32A32_FLOAT );
+                        ScratchImage temp;
+                        HRESULT hr = _ConvertToR32G32B32A32( baseImage, temp );
+                        if ( FAILED(hr) )
+                            return hr;
+
+                        const Image *timg = temp.GetImage( 0, 0, 0 );
+                        if ( !timg )
+                            return E_POINTER;
+
+                        ScratchImage tMipChain;
+                        hr = _GenerateMipMapsUsingWIC( *timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, 0 );
+                        if ( FAILED(hr) )
+                            return hr;
+
+                        temp.Release();
+
+                        return _ConvertFromR32G32B32A32( tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), baseImage.format, mipChain );
+                    }
+                }
+                break;
+
+            default:
+                return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+        }
     }
 }
 
@@ -924,90 +2203,178 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
     if ( !_CalculateMipLevels(metadata.width, metadata.height, levels) )
         return E_INVALIDARG;
 
-    static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
-    switch(filter & TEX_FILTER_MASK)
+    std::vector<const Image> baseImages;
+    baseImages.reserve( metadata.arraySize );
+    for( size_t item=0; item < metadata.arraySize; ++item )
     {
-    case 0:
-    case TEX_FILTER_POINT:
-    case TEX_FILTER_FANT: // Equivalent to Box filter
-    case TEX_FILTER_LINEAR:
-    case TEX_FILTER_CUBIC:
+        size_t index = metadata.ComputeIndex( 0, item, 0);
+        if ( index >= nimages )
+            return E_FAIL;
+
+        const Image& src = srcImages[ index ];
+        if ( !src.pixels )
+            return E_POINTER;
+
+        if ( src.format != metadata.format || src.width != metadata.width || src.height != metadata.height )
         {
-            static_assert( TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flags alias mismatch" );
-
-            WICPixelFormatGUID pfGUID;
-            if ( _DXGIToWIC( metadata.format, pfGUID, true ) )
-            {
-                // Case 1: Base image format is supported by Windows Imaging Component
-                TexMetadata mdata2 = metadata;
-                mdata2.mipLevels = levels;
-                HRESULT hr = mipChain.Initialize( mdata2 ); 
-                if ( FAILED(hr) )
-                    return hr;
-
-                for( size_t item = 0; item < metadata.arraySize; ++item )
-                {
-                    size_t index = metadata.ComputeIndex( 0, item, 0 );
-                    if ( index >= nimages )
-                    {
-                        mipChain.Release();
-                        return E_FAIL;
-                    }
-
-                    const Image& baseImage = srcImages[ index ];
-
-                    hr = _GenerateMipMapsUsingWIC( baseImage, filter, levels, pfGUID, mipChain, item );
-                    if ( FAILED(hr) )
-                    {
-                        mipChain.Release();
-                        return hr;
-                    }
-                }
-
-                return S_OK;
-            }
-            else
-            {
-                // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
-                assert( metadata.format != DXGI_FORMAT_R32G32B32A32_FLOAT );
-
-                TexMetadata mdata2 = metadata;
-                mdata2.mipLevels = levels;
-                mdata2.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-                ScratchImage tMipChain;
-                HRESULT hr = tMipChain.Initialize( mdata2 ); 
-                if ( FAILED(hr) )
-                    return hr;
-
-                for( size_t item = 0; item < metadata.arraySize; ++item )
-                {
-                    size_t index = metadata.ComputeIndex( 0, item, 0 );
-                    if ( index >= nimages )
-                        return E_FAIL;
-
-                    const Image& baseImage = srcImages[ index ];
-
-                    ScratchImage temp;
-                    hr = _ConvertToR32G32B32A32( baseImage, temp );
-                    if ( FAILED(hr) )
-                        return hr;
-
-                    const Image *timg = temp.GetImage( 0, 0, 0 );
-                    if ( !timg )
-                        return E_POINTER;
-
-                    hr = _GenerateMipMapsUsingWIC( *timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, item );
-                    if ( FAILED(hr) )
-                        return hr;
-                }
-
-                return _ConvertFromR32G32B32A32( tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), metadata.format, mipChain );
-            }
+            // All base images must be the same format, width, and height
+            return E_FAIL;
         }
-        break;
 
-    default:
-        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+        baseImages.push_back( src );
+    }
+
+    assert( baseImages.size() == metadata.arraySize );
+
+    HRESULT hr = _UseWICFiltering( metadata.format, filter );
+    if ( FAILED(hr) )
+        return hr;
+
+    static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
+
+    if ( hr == S_FALSE )
+    {
+        //--- Use custom filters to generate mipmaps ----------------------------------
+        TexMetadata mdata2 = metadata;
+        mdata2.mipLevels = levels;
+
+        DWORD filter_select = ( filter & TEX_FILTER_MASK );
+        if ( !filter_select )
+        {
+            // Default filter choice
+            filter_select = ( ispow2(metadata.width) && ispow2(metadata.height) ) ? TEX_FILTER_BOX : TEX_FILTER_LINEAR;
+        }
+
+        switch( filter_select )
+        {
+            case TEX_FILTER_BOX:
+                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                for( size_t item = 0; item < metadata.arraySize; ++item )
+                {
+                    hr = _Generate2DMipsBoxFilter( levels, mipChain, item );
+                    if ( FAILED(hr) )
+                        mipChain.Release();
+                }
+                return hr;
+
+            case TEX_FILTER_POINT:
+                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                for( size_t item = 0; item < metadata.arraySize; ++item )
+                {
+                    hr = _Generate2DMipsPointFilter( levels, mipChain, item );
+                    if ( FAILED(hr) )
+                        mipChain.Release();
+                }
+                return hr;
+
+            case TEX_FILTER_LINEAR:
+                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                for( size_t item = 0; item < metadata.arraySize; ++item )
+                {
+                    hr = _Generate2DMipsLinearFilter( levels, filter, mipChain, item );
+                    if ( FAILED(hr) )
+                        mipChain.Release();
+                }
+                return hr;
+
+            case TEX_FILTER_CUBIC:
+                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                for( size_t item = 0; item < metadata.arraySize; ++item )
+                {
+                    hr = _Generate2DMipsCubicFilter( levels, filter, mipChain, item );
+                    if ( FAILED(hr) )
+                        mipChain.Release();
+                }
+                return hr;
+
+            default:
+                return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+        }
+    }
+    else
+    {
+        //--- Use WIC filtering to generate mipmaps -----------------------------------
+        switch(filter & TEX_FILTER_MASK)
+        {
+        case 0:
+        case TEX_FILTER_POINT:
+        case TEX_FILTER_FANT: // Equivalent to Box filter
+        case TEX_FILTER_LINEAR:
+        case TEX_FILTER_CUBIC:
+            {
+                static_assert( TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flag alias mismatch" );
+
+                WICPixelFormatGUID pfGUID;
+                if ( _DXGIToWIC( metadata.format, pfGUID, true ) )
+                {
+                    // Case 1: Base image format is supported by Windows Imaging Component
+                    TexMetadata mdata2 = metadata;
+                    mdata2.mipLevels = levels;
+                    HRESULT hr = mipChain.Initialize( mdata2 ); 
+                    if ( FAILED(hr) )
+                        return hr;
+
+                    for( size_t item = 0; item < metadata.arraySize; ++item )
+                    {
+                        hr = _GenerateMipMapsUsingWIC( baseImages[item], filter, levels, pfGUID, mipChain, item );
+                        if ( FAILED(hr) )
+                        {
+                            mipChain.Release();
+                            return hr;
+                        }
+                    }
+
+                    return S_OK;
+                }
+                else
+                {
+                    // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
+                    assert( metadata.format != DXGI_FORMAT_R32G32B32A32_FLOAT );
+
+                    TexMetadata mdata2 = metadata;
+                    mdata2.mipLevels = levels;
+                    mdata2.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+                    ScratchImage tMipChain;
+                    HRESULT hr = tMipChain.Initialize( mdata2 ); 
+                    if ( FAILED(hr) )
+                        return hr;
+
+                    for( size_t item = 0; item < metadata.arraySize; ++item )
+                    {
+                        ScratchImage temp;
+                        hr = _ConvertToR32G32B32A32( baseImages[item], temp );
+                        if ( FAILED(hr) )
+                            return hr;
+
+                        const Image *timg = temp.GetImage( 0, 0, 0 );
+                        if ( !timg )
+                            return E_POINTER;
+
+                        hr = _GenerateMipMapsUsingWIC( *timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, item );
+                        if ( FAILED(hr) )
+                            return hr;
+                    }
+
+                    return _ConvertFromR32G32B32A32( tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), metadata.format, mipChain );
+                }
+            }
+            break;
+
+        default:
+            return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+        }
     }
 }
 
@@ -1021,12 +2388,12 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
     if ( !baseImages || !depth )
         return E_INVALIDARG;
 
+    if ( filter & TEX_FILTER_FORCE_WIC )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+
     DXGI_FORMAT format = baseImages[0].format;
     size_t width = baseImages[0].width;
     size_t height = baseImages[0].height;
-
-    if ( !ispow2(width) || !ispow2(height) || !ispow2(depth) )
-        return E_INVALIDARG;
 
     if ( !_CalculateMipLevels3D(width, height, depth, levels) )
         return E_INVALIDARG;
@@ -1049,18 +2416,24 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
     }
 
+    static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
+
     HRESULT hr;
 
-    static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
-    switch( filter & TEX_FILTER_MASK )
+    DWORD filter_select = ( filter & TEX_FILTER_MASK );
+    if ( !filter_select )
     {
-    case 0:
+        // Default filter choice
+        filter_select = ( ispow2(width) && ispow2(height) && ispow2(depth) ) ? TEX_FILTER_BOX : TEX_FILTER_LINEAR;
+    }
+
+    switch( filter_select )
+    {
     case TEX_FILTER_BOX:
         hr = _Setup3DMips( baseImages, depth, levels, mipChain );
         if ( FAILED(hr) )
             return hr;
 
-        // For decimation, Fant is equivalent to a Box filter
         hr = _Generate3DMipsBoxFilter( depth, levels, mipChain );
         if ( FAILED(hr) )
             mipChain.Release();
@@ -1077,12 +2450,24 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
         return hr;
 
     case TEX_FILTER_LINEAR:
-        // Need to implement a 3D bi-linear filter (2x2x2)
-        return E_NOTIMPL;
+        hr = _Setup3DMips( baseImages, depth, levels, mipChain );
+        if ( FAILED(hr) )
+            return hr;
+
+        hr = _Generate3DMipsLinearFilter( depth, levels, filter, mipChain );
+        if ( FAILED(hr) )
+            mipChain.Release();
+        return hr;
 
     case TEX_FILTER_CUBIC:
-        // Need to implement a 3D bi-cubic filter (3x3x3)
-        return E_NOTIMPL;
+        hr = _Setup3DMips( baseImages, depth, levels, mipChain );
+        if ( FAILED(hr) )
+            return hr;
+
+        hr = _Generate3DMipsCubicFilter( depth, levels, filter, mipChain );
+        if ( FAILED(hr) )
+            mipChain.Release();
+        return hr;
 
     default:
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
@@ -1093,9 +2478,11 @@ _Use_decl_annotations_
 HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMetadata& metadata,
                            DWORD filter, size_t levels, ScratchImage& mipChain )
 {
-    if ( !srcImages || !nimages || !IsValid(metadata.format)
-         || !ispow2(metadata.width) || !ispow2(metadata.height) || !ispow2(metadata.depth) )
+    if ( !srcImages || !nimages || !IsValid(metadata.format) )
         return E_INVALIDARG;
+
+    if ( filter & TEX_FILTER_FORCE_WIC )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     if ( metadata.dimension != TEX_DIMENSION_TEXTURE3D
          || IsCompressed( metadata.format ) || IsVideo( metadata.format ) )
@@ -1103,7 +2490,7 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
 
     if ( !_CalculateMipLevels3D(metadata.width, metadata.height, metadata.depth, levels) )
         return E_INVALIDARG;
-    
+
     std::vector<const Image> baseImages;
     baseImages.reserve( metadata.depth );
     for( size_t slice=0; slice < metadata.depth; ++slice )
@@ -1130,15 +2517,21 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
     HRESULT hr;
 
     static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
-    switch( filter & TEX_FILTER_MASK )
+
+    DWORD filter_select = ( filter & TEX_FILTER_MASK );
+    if ( !filter_select )
     {
-    case 0:
+        // Default filter choice
+        filter_select = ( ispow2(metadata.width) && ispow2(metadata.height) && ispow2(metadata.depth) ) ? TEX_FILTER_BOX : TEX_FILTER_LINEAR;
+    }
+
+    switch( filter_select )
+    {
     case TEX_FILTER_BOX:
         hr = _Setup3DMips( &baseImages[0], metadata.depth, levels, mipChain );
         if ( FAILED(hr) )
             return hr;
 
-        // For decimation, Fant is equivalent to a Box filter
         hr = _Generate3DMipsBoxFilter( metadata.depth, levels, mipChain );
         if ( FAILED(hr) )
             mipChain.Release();
@@ -1155,12 +2548,24 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
         return hr;
 
     case TEX_FILTER_LINEAR:
-        // Need to implement a 3D bi-linear filter (2x2x2)
-        return E_NOTIMPL;
+        hr = _Setup3DMips( &baseImages[0], metadata.depth, levels, mipChain );
+        if ( FAILED(hr) )
+            return hr;
+
+        hr = _Generate3DMipsLinearFilter( metadata.depth, levels, filter, mipChain );
+        if ( FAILED(hr) )
+            mipChain.Release();
+        return hr;
 
     case TEX_FILTER_CUBIC:
-        // Need to implement a 3D bi-cubic filter (3x3x3)
-        return E_NOTIMPL;
+        hr = _Setup3DMips( &baseImages[0], metadata.depth, levels, mipChain );
+        if ( FAILED(hr) )
+            return hr;
+
+        hr = _Generate3DMipsCubicFilter( metadata.depth, levels, filter, mipChain );
+        if ( FAILED(hr) )
+            mipChain.Release();
+        return hr;
 
     default:
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );

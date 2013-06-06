@@ -370,7 +370,15 @@ namespace DirectX
     {
         TEX_FILTER_DEFAULT          = 0,
 
-        // Clamp filtering only
+        TEX_FILTER_WRAP_U           = 0x1,
+        TEX_FILTER_WRAP_V           = 0x2,
+        TEX_FILTER_WRAP_W           = 0x4,
+        TEX_FILTER_WRAP             = ( TEX_FILTER_WRAP_U | TEX_FILTER_WRAP_V | TEX_FILTER_WRAP_W ),
+        TEX_FILTER_MIRROR_U         = 0x10,
+        TEX_FILTER_MIRROR_V         = 0x20,
+        TEX_FILTER_MIRROR_W         = 0x40,
+        TEX_FILTER_MIRROR          = ( TEX_FILTER_MIRROR_U | TEX_FILTER_MIRROR_V | TEX_FILTER_MIRROR_W ),
+            // Wrap vs. Mirror vs. Clamp filtering options
 
         TEX_FILTER_SEPARATE_ALPHA   = 0x100,
             // Resize color and alpha channel independently
@@ -395,7 +403,7 @@ namespace DirectX
 
         TEX_FILTER_SRGB_IN          = 0x1000000,
         TEX_FILTER_SRGB_OUT         = 0x2000000,
-        TEX_FILTER_SRGB             = 0x3000000,
+        TEX_FILTER_SRGB             = ( TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT ),
             // sRGB <-> RGB for use in conversion operations
             // if the input format type is IsSRGB(), then SRGB_IN is on by default
             // if the output format type is IsSRGB(), then SRGB_OUT is on by default
