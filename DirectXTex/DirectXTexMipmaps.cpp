@@ -611,9 +611,6 @@ static HRESULT _Generate2DMipsPointFilter( _In_ size_t levels, _In_ const Scratc
     size_t width = mipChain.GetMetadata().width;
     size_t height = mipChain.GetMetadata().height;
 
-    if ( !ispow2(width) || !ispow2(height) )
-        return E_FAIL;
-
     // Allocate temporary space (2 scanlines)
     ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( (sizeof(XMVECTOR)*width*2), 16 ) ) );
     if ( !scanline )
@@ -697,6 +694,9 @@ static HRESULT _Generate2DMipsBoxFilter( _In_ size_t levels, _In_ const ScratchI
 
     size_t width = mipChain.GetMetadata().width;
     size_t height = mipChain.GetMetadata().height;
+
+    if ( !ispow2(width) || !ispow2(height) )
+        return E_FAIL;
 
     // Allocate temporary space (3 scanlines)
     ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( (sizeof(XMVECTOR)*width*3), 16 ) ) );
