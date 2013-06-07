@@ -1862,6 +1862,75 @@ static inline XMVECTOR _TableEncodeGamma22( FXMVECTOR v )
     return XMLoadFloat4( (XMFLOAT4*)f );
 }
 
+_Use_decl_annotations_
+bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
+                           XMVECTOR* pSource, size_t count, DWORD flags )
+{
+    assert( pDestination && size > 0 );
+    assert( pSource && count > 0 && (((uintptr_t)pSource & 0xF) == 0) );
+    assert( IsValid(format) && !IsVideo(format) && !IsTypeless(format) && !IsCompressed(format) );
+
+    switch ( format )
+    {
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+        flags |= TEX_FILTER_SRGB;
+        break;
+
+    case DXGI_FORMAT_R32G32B32A32_FLOAT:
+    case DXGI_FORMAT_R32G32B32_FLOAT:
+    case DXGI_FORMAT_R16G16B16A16_FLOAT:
+    case DXGI_FORMAT_R16G16B16A16_UNORM:
+    case DXGI_FORMAT_R32G32_FLOAT:
+    case DXGI_FORMAT_R10G10B10A2_UNORM:
+    case DXGI_FORMAT_R11G11B10_FLOAT:
+    case DXGI_FORMAT_R8G8B8A8_UNORM:
+    case DXGI_FORMAT_R16G16_FLOAT:
+    case DXGI_FORMAT_R16G16_UNORM:
+    case DXGI_FORMAT_R32_FLOAT:
+    case DXGI_FORMAT_R8G8_UNORM:
+    case DXGI_FORMAT_R16_FLOAT:
+    case DXGI_FORMAT_R16_UNORM:
+    case DXGI_FORMAT_R8_UNORM:
+    case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
+    case DXGI_FORMAT_R8G8_B8G8_UNORM:
+    case DXGI_FORMAT_G8R8_G8B8_UNORM:
+    case DXGI_FORMAT_B5G6R5_UNORM:
+    case DXGI_FORMAT_B5G5R5A1_UNORM:
+    case DXGI_FORMAT_B8G8R8A8_UNORM:
+    case DXGI_FORMAT_B8G8R8X8_UNORM:
+#ifdef DXGI_1_2_FORMATS
+    case DXGI_FORMAT_B4G4R4A4_UNORM:
+#endif
+        break;
+
+    default:
+        // can't treat A8, XR, Depth, SNORM, UINT, or SINT as sRGB
+        flags &= ~TEX_FILTER_SRGB;
+        break;
+    }
+
+    // sRGB output processing (RGB -> sRGB)
+    if ( flags & TEX_FILTER_SRGB_OUT )
+    {
+        // To avoid the need for another temporary scanline buffer, we allow this function to overwrite the source buffer in-place
+        // Given the intended usage in the filtering routines, this is not a problem.
+        XMVECTOR* ptr = pSource;
+        for( size_t i=0; i < count; ++i )
+        {
+            // rgb = rgb^(1/2.2); a=a
+            XMVECTOR v = *ptr;
+            XMVECTOR v1 = _TableEncodeGamma22( v );
+            // Use table instead of XMVectorPow( v, [1/2.2f 1/2.2f 1/2.2f 1]).
+            // Note table lookup will also saturate the result
+            *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
+        }
+    }
+
+    return _StoreScanline( pDestination, size, format, pSource, count );
+}
+
 
 //-------------------------------------------------------------------------------------
 // sRGB -> RGB
@@ -1902,7 +1971,6 @@ static const uint32_t g_fDecodeGamma22[] =
     0x3f795b20, 0x3f7a7651, 0x3f7b91a2, 0x3f7cad0e, 0x3f7dc896, 0x3f7ee43c, 0x3f800000, 0x3f800000
 };
 
-
 #pragma prefast(suppress : 25000, "FXMVECTOR is 16 bytes")
 static inline XMVECTOR _TableDecodeGamma22( FXMVECTOR v )
 {
@@ -1923,6 +1991,78 @@ static inline XMVECTOR _TableDecodeGamma22( FXMVECTOR v )
     }
 
     return XMLoadFloat4( (XMFLOAT4*)f );
+}
+
+_Use_decl_annotations_
+bool _LoadScanlineLinear( XMVECTOR* pDestination, size_t count,
+                          LPCVOID pSource, size_t size, DXGI_FORMAT format, DWORD flags )
+{
+    assert( pDestination && count > 0 && (((uintptr_t)pDestination & 0xF) == 0) );
+    assert( pSource && size > 0 );
+    assert( IsValid(format) && !IsVideo(format) && !IsTypeless(format,false) && !IsCompressed(format) );
+
+    switch ( format )
+    {
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+        flags |= TEX_FILTER_SRGB;
+        break;
+
+    case DXGI_FORMAT_R32G32B32A32_FLOAT:
+    case DXGI_FORMAT_R32G32B32_FLOAT:
+    case DXGI_FORMAT_R16G16B16A16_FLOAT:
+    case DXGI_FORMAT_R16G16B16A16_UNORM:
+    case DXGI_FORMAT_R32G32_FLOAT:
+    case DXGI_FORMAT_R10G10B10A2_UNORM:
+    case DXGI_FORMAT_R11G11B10_FLOAT:
+    case DXGI_FORMAT_R8G8B8A8_UNORM:
+    case DXGI_FORMAT_R16G16_FLOAT:
+    case DXGI_FORMAT_R16G16_UNORM:
+    case DXGI_FORMAT_R32_FLOAT:
+    case DXGI_FORMAT_R8G8_UNORM:
+    case DXGI_FORMAT_R16_FLOAT:
+    case DXGI_FORMAT_R16_UNORM:
+    case DXGI_FORMAT_R8_UNORM:
+    case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
+    case DXGI_FORMAT_R8G8_B8G8_UNORM:
+    case DXGI_FORMAT_G8R8_G8B8_UNORM:
+    case DXGI_FORMAT_B5G6R5_UNORM:
+    case DXGI_FORMAT_B5G5R5A1_UNORM:
+    case DXGI_FORMAT_B8G8R8A8_UNORM:
+    case DXGI_FORMAT_B8G8R8X8_UNORM:
+#ifdef DXGI_1_2_FORMATS
+    case DXGI_FORMAT_B4G4R4A4_UNORM:
+#endif
+        break;
+
+    default:
+        // can't treat A8, XR, Depth, SNORM, UINT, or SINT as sRGB
+        flags &= ~TEX_FILTER_SRGB;
+        break;
+    }
+
+    if ( _LoadScanline( pDestination, count, pSource, size, format ) )
+    {
+        // sRGB input processing (sRGB -> RGB)
+        if ( flags & TEX_FILTER_SRGB_IN )
+        {
+            XMVECTOR* ptr = pDestination;
+            for( size_t i=0; i < count; ++i )
+            {
+                // rgb = rgb^(2.2); a=a
+                XMVECTOR v = *ptr;
+                // Use table instead of XMVectorPow( v, [2.2f 2.2f 2.2f 1]).
+                // Note table lookup will also saturate the result
+                XMVECTOR v1 = _TableDecodeGamma22( v );
+                *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
+            }
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 
@@ -2083,11 +2223,41 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
     assert( _GetConvertFlags( outFormat ) == out->flags );
 
     // Handle SRGB filtering modes
-    if ( IsSRGB( inFormat ) )
+    switch ( inFormat )
+    {
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+    case DXGI_FORMAT_BC1_UNORM_SRGB:
+    case DXGI_FORMAT_BC2_UNORM_SRGB:
+    case DXGI_FORMAT_BC3_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+    case DXGI_FORMAT_BC7_UNORM_SRGB:
         flags |= TEX_FILTER_SRGB_IN;
+        break;
 
-    if ( IsSRGB( outFormat ) )
+    case DXGI_FORMAT_A8_UNORM:
+    case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
+        flags &= ~TEX_FILTER_SRGB_IN;
+        break;
+    }
+
+    switch ( outFormat )
+    {
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+    case DXGI_FORMAT_BC1_UNORM_SRGB:
+    case DXGI_FORMAT_BC2_UNORM_SRGB:
+    case DXGI_FORMAT_BC3_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+    case DXGI_FORMAT_BC7_UNORM_SRGB:
         flags |= TEX_FILTER_SRGB_OUT;
+        break;
+
+    case DXGI_FORMAT_A8_UNORM:
+    case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
+        flags &= ~TEX_FILTER_SRGB_OUT;
+        break;
+    }
 
     if ( (flags & (TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT)) == (TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT) )
     {
@@ -2097,7 +2267,7 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
     // sRGB input processing (sRGB -> RGB)
     if ( flags & TEX_FILTER_SRGB_IN )
     {
-        if ( (in->flags & CONVF_FLOAT) || (in->flags & CONVF_UNORM) )
+        if ( !(in->flags & CONVF_DEPTH) && ( (in->flags & CONVF_FLOAT) || (in->flags & CONVF_UNORM) ) )
         {
             XMVECTOR* ptr = pBuffer;
             for( size_t i=0; i < count; ++i )
@@ -2302,7 +2472,7 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
     // sRGB output processing (RGB -> sRGB)
     if ( flags & TEX_FILTER_SRGB_OUT )
     {
-        if ( (out->flags & CONVF_FLOAT) || (out->flags & CONVF_UNORM) )
+        if ( !(out->flags & CONVF_DEPTH) && ( (out->flags & CONVF_FLOAT) || (out->flags & CONVF_UNORM) ) )
         {
             XMVECTOR* ptr = pBuffer;
             for( size_t i=0; i < count; ++i )

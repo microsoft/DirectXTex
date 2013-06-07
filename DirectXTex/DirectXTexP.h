@@ -186,8 +186,16 @@ namespace DirectX
                         _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DXGI_FORMAT format );
 
     _Success_(return != false)
+    bool _LoadScanlineLinear( _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,
+                             _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DXGI_FORMAT format, _In_ DWORD flags  );
+
+    _Success_(return != false)
     bool _StoreScanline( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
-                         _In_reads_(count) const XMVECTOR* pSource, _In_ size_t count );
+                         _In_reads_(count) const XMVECTOR* pSource, _In_ size_t count);
+
+    _Success_(return != false)
+    bool _StoreScanlineLinear( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
+                               _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ DWORD flags );
 
     HRESULT _ConvertToR32G32B32A32( _In_ const Image& srcImage, _Inout_ ScratchImage& image );
 

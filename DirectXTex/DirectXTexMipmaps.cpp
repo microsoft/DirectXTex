@@ -380,6 +380,12 @@ static bool _UseWICFiltering( _In_ DXGI_FORMAT format, _In_ DWORD filter )
         return true;
     }
 
+    if ( IsSRGB(format) || (filter & TEX_FILTER_SRGB) )
+    {
+        // Use non-WIC code paths for sRGB correct filtering
+        return false;
+    }
+
     static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
 
     switch ( filter & TEX_FILTER_MASK )
@@ -680,7 +686,7 @@ static HRESULT _Generate2DMipsPointFilter( _In_ size_t levels, _In_ const Scratc
 
 
 //--- 2D Box Filter ---
-static HRESULT _Generate2DMipsBoxFilter( _In_ size_t levels, _In_ const ScratchImage& mipChain, _In_ size_t item )
+static HRESULT _Generate2DMipsBoxFilter( _In_ size_t levels, _In_ DWORD filter, _In_ const ScratchImage& mipChain, _In_ size_t item )
 {
     if ( !mipChain.GetImages() )
         return E_INVALIDARG;
@@ -744,13 +750,13 @@ static HRESULT _Generate2DMipsBoxFilter( _In_ size_t levels, _In_ const ScratchI
 
         for( size_t y = 0; y < nheight; ++y )
         {
-            if ( !_LoadScanline( urow0, width, pSrc, rowPitch, src->format ) )
+            if ( !_LoadScanlineLinear( urow0, width, pSrc, rowPitch, src->format, filter ) )
                 return E_FAIL;
             pSrc += rowPitch;
 
             if ( urow0 != urow1 )
             {
-                if ( !_LoadScanline( urow1, width, pSrc, rowPitch, src->format ) )
+                if ( !_LoadScanlineLinear( urow1, width, pSrc, rowPitch, src->format, filter ) )
                     return E_FAIL;
                 pSrc += rowPitch;
             }
@@ -762,7 +768,7 @@ static HRESULT _Generate2DMipsBoxFilter( _In_ size_t levels, _In_ const ScratchI
                 AVERAGE4( target[ x ], urow0[ x2 ], urow1[ x2 ], urow2[ x2 ], urow3[ x2 ] );
             }
 
-            if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+            if ( !_StoreScanlineLinear( pDest, dest->rowPitch, dest->format, target, nwidth, filter ) )
                 return E_FAIL;
             pDest += dest->rowPitch;
         }
@@ -847,7 +853,7 @@ static HRESULT _Generate2DMipsLinearFilter( _In_ size_t levels, _In_ DWORD filte
                 {
                     u0 = toY.u0;
 
-                    if ( !_LoadScanline( row0, width, pSrc + (rowPitch * u0), rowPitch, src->format ) )
+                    if ( !_LoadScanlineLinear( row0, width, pSrc + (rowPitch * u0), rowPitch, src->format, filter ) )
                         return E_FAIL;
                 }
                 else
@@ -863,7 +869,7 @@ static HRESULT _Generate2DMipsLinearFilter( _In_ size_t levels, _In_ DWORD filte
             {
                 u1 = toY.u1;
 
-                if ( !_LoadScanline( row1, width, pSrc + (rowPitch * u1), rowPitch, src->format ) )
+                if ( !_LoadScanlineLinear( row1, width, pSrc + (rowPitch * u1), rowPitch, src->format, filter ) )
                     return E_FAIL;
             }
 
@@ -874,7 +880,7 @@ static HRESULT _Generate2DMipsLinearFilter( _In_ size_t levels, _In_ DWORD filte
                 BILINEAR_INTERPOLATE( target[x], toX, toY, row0, row1 );
             }
 
-            if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+            if ( !_StoreScanlineLinear( pDest, dest->rowPitch, dest->format, target, nwidth, filter ) )
                 return E_FAIL;
             pDest += dest->rowPitch;
         }
@@ -966,7 +972,7 @@ static HRESULT _Generate2DMipsCubicFilter( _In_ size_t levels, _In_ DWORD filter
                 {
                     u0 = toY.u0;
 
-                    if ( !_LoadScanline( row0, width, pSrc + (rowPitch * u0), rowPitch, src->format ) )
+                    if ( !_LoadScanlineLinear( row0, width, pSrc + (rowPitch * u0), rowPitch, src->format, filter ) )
                         return E_FAIL;
                 }
                 else if ( toY.u0 == u1 )
@@ -999,7 +1005,7 @@ static HRESULT _Generate2DMipsCubicFilter( _In_ size_t levels, _In_ DWORD filter
                 {
                     u1 = toY.u1;
 
-                    if ( !_LoadScanline( row1, width, pSrc + (rowPitch * u1), rowPitch, src->format ) )
+                    if ( !_LoadScanlineLinear( row1, width, pSrc + (rowPitch * u1), rowPitch, src->format, filter ) )
                         return E_FAIL;
                 }
                 else if ( toY.u1 == u2 )
@@ -1025,7 +1031,7 @@ static HRESULT _Generate2DMipsCubicFilter( _In_ size_t levels, _In_ DWORD filter
                 {
                     u2 = toY.u2;
 
-                    if ( !_LoadScanline( row2, width, pSrc + (rowPitch * u2), rowPitch, src->format ) )
+                    if ( !_LoadScanlineLinear( row2, width, pSrc + (rowPitch * u2), rowPitch, src->format, filter ) )
                         return E_FAIL;
                 }
                 else
@@ -1042,7 +1048,7 @@ static HRESULT _Generate2DMipsCubicFilter( _In_ size_t levels, _In_ DWORD filter
             {
                 u3 = toY.u3;
 
-                if ( !_LoadScanline( row3, width, pSrc + (rowPitch * u3), rowPitch, src->format ) )
+                if ( !_LoadScanlineLinear( row3, width, pSrc + (rowPitch * u3), rowPitch, src->format, filter ) )
                     return E_FAIL;
             }
 
@@ -1060,7 +1066,7 @@ static HRESULT _Generate2DMipsCubicFilter( _In_ size_t levels, _In_ DWORD filter
                 CUBIC_INTERPOLATE( target[x], toY.x, C0, C1, C2, C3 );
             }
 
-            if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+            if ( !_StoreScanlineLinear( pDest, dest->rowPitch, dest->format, target, nwidth, filter ) )
                 return E_FAIL;
             pDest += dest->rowPitch;
         }
@@ -1277,7 +1283,7 @@ static HRESULT _Generate3DMipsPointFilter( _In_ size_t depth, _In_ size_t levels
 
 
 //--- 3D Box Filter ---
-static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, _In_ const ScratchImage& mipChain )
+static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, _In_ DWORD filter, _In_ const ScratchImage& mipChain )
 {
     if ( !depth || !mipChain.GetImages() )
         return E_INVALIDARG;
@@ -1362,24 +1368,24 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
 
                 for( size_t y = 0; y < nheight; ++y )
                 {
-                    if ( !_LoadScanline( urow0, width, pSrc1, aRowPitch, srca->format ) )
+                    if ( !_LoadScanlineLinear( urow0, width, pSrc1, aRowPitch, srca->format, filter ) )
                         return E_FAIL;
                     pSrc1 += aRowPitch;
 
                     if ( urow0 != urow1 )
                     {
-                        if ( !_LoadScanline( urow1, width, pSrc1, aRowPitch, srca->format ) )
+                        if ( !_LoadScanlineLinear( urow1, width, pSrc1, aRowPitch, srca->format, filter ) )
                             return E_FAIL;
                         pSrc1 += aRowPitch;
                     }
 
-                    if ( !_LoadScanline( vrow0, width, pSrc2, bRowPitch, srcb->format ) )
+                    if ( !_LoadScanlineLinear( vrow0, width, pSrc2, bRowPitch, srcb->format, filter ) )
                         return E_FAIL;
                     pSrc2 += bRowPitch;
 
                     if ( vrow0 != vrow1 )
                     {
-                        if ( !_LoadScanline( vrow1, width, pSrc2, bRowPitch, srcb->format ) )
+                        if ( !_LoadScanlineLinear( vrow1, width, pSrc2, bRowPitch, srcb->format, filter ) )
                             return E_FAIL;
                         pSrc2 += bRowPitch;
                     }
@@ -1392,7 +1398,7 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
                                              vrow0[ x2 ], vrow1[ x2 ], vrow2[ x2 ], vrow3[ x2 ] );
                     }
 
-                    if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                    if ( !_StoreScanlineLinear( pDest, dest->rowPitch, dest->format, target, nwidth, filter ) )
                         return E_FAIL;
                     pDest += dest->rowPitch;
                 }
@@ -1417,13 +1423,13 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
 
             for( size_t y = 0; y < nheight; ++y )
             {
-                if ( !_LoadScanline( urow0, width, pSrc, rowPitch, src->format ) )
+                if ( !_LoadScanlineLinear( urow0, width, pSrc, rowPitch, src->format, filter ) )
                     return E_FAIL;
                 pSrc += rowPitch;
 
                 if ( urow0 != urow1 )
                 {
-                    if ( !_LoadScanline( urow1, width, pSrc, rowPitch, src->format ) )
+                    if ( !_LoadScanlineLinear( urow1, width, pSrc, rowPitch, src->format, filter ) )
                         return E_FAIL;
                     pSrc += rowPitch;
                 }
@@ -1435,7 +1441,7 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
                     AVERAGE4( target[ x ], urow0[ x2 ], urow1[ x2 ], urow2[ x2 ], urow3[ x2 ] );
                 }
 
-                if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                if ( !_StoreScanlineLinear( pDest, dest->rowPitch, dest->format, target, nwidth, filter ) )
                     return E_FAIL;
                 pDest += dest->rowPitch;
             }
@@ -1538,8 +1544,8 @@ static HRESULT _Generate3DMipsLinearFilter( _In_ size_t depth, _In_ size_t level
                         {
                             u0 = toY.u0;
 
-                            if ( !_LoadScanline( urow0, width, srca->pixels + (srca->rowPitch * u0), srca->rowPitch, srca->format )
-                                 || !_LoadScanline( vrow0, width, srcb->pixels + (srcb->rowPitch * u0), srcb->rowPitch, srcb->format ) )
+                            if ( !_LoadScanlineLinear( urow0, width, srca->pixels + (srca->rowPitch * u0), srca->rowPitch, srca->format, filter )
+                                 || !_LoadScanlineLinear( vrow0, width, srcb->pixels + (srcb->rowPitch * u0), srcb->rowPitch, srcb->format, filter ) )
                                 return E_FAIL;
                         }
                         else
@@ -1556,8 +1562,8 @@ static HRESULT _Generate3DMipsLinearFilter( _In_ size_t depth, _In_ size_t level
                     {
                         u1 = toY.u1;
 
-                        if ( !_LoadScanline( urow1, width, srca->pixels + (srca->rowPitch * u1), srca->rowPitch, srca->format )
-                                || !_LoadScanline( vrow1, width, srcb->pixels + (srcb->rowPitch * u1), srcb->rowPitch, srcb->format ) )
+                        if ( !_LoadScanlineLinear( urow1, width, srca->pixels + (srca->rowPitch * u1), srca->rowPitch, srca->format, filter )
+                                || !_LoadScanlineLinear( vrow1, width, srcb->pixels + (srcb->rowPitch * u1), srcb->rowPitch, srcb->format, filter ) )
                             return E_FAIL;
                     }
 
@@ -1568,7 +1574,7 @@ static HRESULT _Generate3DMipsLinearFilter( _In_ size_t depth, _In_ size_t level
                         TRILINEAR_INTERPOLATE( target[x], toX, toY, toZ, urow0, urow1, vrow0, vrow1 );
                     }
 
-                    if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                    if ( !_StoreScanlineLinear( pDest, dest->rowPitch, dest->format, target, nwidth, filter ) )
                         return E_FAIL;
                     pDest += dest->rowPitch;
                 }
@@ -1601,7 +1607,7 @@ static HRESULT _Generate3DMipsLinearFilter( _In_ size_t depth, _In_ size_t level
                     {
                         u0 = toY.u0;
 
-                        if ( !_LoadScanline( urow0, width, pSrc + (rowPitch * u0), rowPitch, src->format ) )
+                        if ( !_LoadScanlineLinear( urow0, width, pSrc + (rowPitch * u0), rowPitch, src->format, filter ) )
                             return E_FAIL;
                     }
                     else
@@ -1617,7 +1623,7 @@ static HRESULT _Generate3DMipsLinearFilter( _In_ size_t depth, _In_ size_t level
                 {
                     u1 = toY.u1;
 
-                    if ( !_LoadScanline( urow1, width, pSrc + (rowPitch * u1), rowPitch, src->format ) )
+                    if ( !_LoadScanlineLinear( urow1, width, pSrc + (rowPitch * u1), rowPitch, src->format, filter ) )
                         return E_FAIL;
                 }
 
@@ -1628,7 +1634,7 @@ static HRESULT _Generate3DMipsLinearFilter( _In_ size_t depth, _In_ size_t level
                     BILINEAR_INTERPOLATE( target[x], toX, toY, urow0, urow1 );
                 }
 
-                if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                if ( !_StoreScanlineLinear( pDest, dest->rowPitch, dest->format, target, nwidth, filter ) )
                     return E_FAIL;
                 pDest += dest->rowPitch;
             }
@@ -1748,10 +1754,10 @@ static HRESULT _Generate3DMipsCubicFilter( _In_ size_t depth, _In_ size_t levels
                         {
                             u0 = toY.u0;
 
-                            if ( !_LoadScanline( urow[0], width, srca->pixels + (srca->rowPitch * u0), srca->rowPitch, srca->format )
-                                    || !_LoadScanline( urow[1], width, srcb->pixels + (srcb->rowPitch * u0), srcb->rowPitch, srcb->format )
-                                    || !_LoadScanline( urow[2], width, srcc->pixels + (srcc->rowPitch * u0), srcc->rowPitch, srcc->format )
-                                    || !_LoadScanline( urow[3], width, srcd->pixels + (srcd->rowPitch * u0), srcd->rowPitch, srcd->format ) )
+                            if ( !_LoadScanlineLinear( urow[0], width, srca->pixels + (srca->rowPitch * u0), srca->rowPitch, srca->format, filter )
+                                    || !_LoadScanlineLinear( urow[1], width, srcb->pixels + (srcb->rowPitch * u0), srcb->rowPitch, srcb->format, filter )
+                                    || !_LoadScanlineLinear( urow[2], width, srcc->pixels + (srcc->rowPitch * u0), srcc->rowPitch, srcc->format, filter )
+                                    || !_LoadScanlineLinear( urow[3], width, srcd->pixels + (srcd->rowPitch * u0), srcd->rowPitch, srcd->format, filter ) )
                                 return E_FAIL;
                         }
                         else if ( toY.u0 == u1 )
@@ -1793,10 +1799,10 @@ static HRESULT _Generate3DMipsCubicFilter( _In_ size_t depth, _In_ size_t levels
                         {
                             u1 = toY.u1;
 
-                            if ( !_LoadScanline( vrow[0], width, srca->pixels + (srca->rowPitch * u1), srca->rowPitch, srca->format )
-                                    || !_LoadScanline( vrow[1], width, srcb->pixels + (srcb->rowPitch * u1), srcb->rowPitch, srcb->format )
-                                    || !_LoadScanline( vrow[2], width, srcc->pixels + (srcc->rowPitch * u1), srcc->rowPitch, srcc->format )
-                                    || !_LoadScanline( vrow[3], width, srcd->pixels + (srcd->rowPitch * u1), srcd->rowPitch, srcd->format ) )
+                            if ( !_LoadScanlineLinear( vrow[0], width, srca->pixels + (srca->rowPitch * u1), srca->rowPitch, srca->format, filter )
+                                    || !_LoadScanlineLinear( vrow[1], width, srcb->pixels + (srcb->rowPitch * u1), srcb->rowPitch, srcb->format, filter )
+                                    || !_LoadScanlineLinear( vrow[2], width, srcc->pixels + (srcc->rowPitch * u1), srcc->rowPitch, srcc->format, filter )
+                                    || !_LoadScanlineLinear( vrow[3], width, srcd->pixels + (srcd->rowPitch * u1), srcd->rowPitch, srcd->format, filter ) )
                                 return E_FAIL;
                         }
                         else if ( toY.u1 == u2 )
@@ -1828,10 +1834,10 @@ static HRESULT _Generate3DMipsCubicFilter( _In_ size_t depth, _In_ size_t levels
                         {
                             u2 = toY.u2;
 
-                            if ( !_LoadScanline( srow[0], width, srca->pixels + (srca->rowPitch * u2), srca->rowPitch, srca->format )
-                                    || !_LoadScanline( srow[1], width, srcb->pixels + (srcb->rowPitch * u2), srcb->rowPitch, srcb->format )
-                                    || !_LoadScanline( srow[2], width, srcc->pixels + (srcc->rowPitch * u2), srcc->rowPitch, srcc->format )
-                                    || !_LoadScanline( srow[3], width, srcd->pixels + (srcd->rowPitch * u2), srcd->rowPitch, srcd->format ) )
+                            if ( !_LoadScanlineLinear( srow[0], width, srca->pixels + (srca->rowPitch * u2), srca->rowPitch, srca->format, filter )
+                                    || !_LoadScanlineLinear( srow[1], width, srcb->pixels + (srcb->rowPitch * u2), srcb->rowPitch, srcb->format, filter )
+                                    || !_LoadScanlineLinear( srow[2], width, srcc->pixels + (srcc->rowPitch * u2), srcc->rowPitch, srcc->format, filter )
+                                    || !_LoadScanlineLinear( srow[3], width, srcd->pixels + (srcd->rowPitch * u2), srcd->rowPitch, srcd->format, filter ) )
                                 return E_FAIL;
                         }
                         else
@@ -1851,10 +1857,10 @@ static HRESULT _Generate3DMipsCubicFilter( _In_ size_t depth, _In_ size_t levels
                     {
                         u3 = toY.u3;
 
-                        if ( !_LoadScanline( trow[0], width, srca->pixels + (srca->rowPitch * u3), srca->rowPitch, srca->format )
-                                || !_LoadScanline( trow[1], width, srcb->pixels + (srcb->rowPitch * u3), srcb->rowPitch, srcb->format )
-                                || !_LoadScanline( trow[2], width, srcc->pixels + (srcc->rowPitch * u3), srcc->rowPitch, srcc->format )
-                                || !_LoadScanline( trow[3], width, srcd->pixels + (srcd->rowPitch * u3), srcd->rowPitch, srcd->format ) )
+                        if ( !_LoadScanlineLinear( trow[0], width, srca->pixels + (srca->rowPitch * u3), srca->rowPitch, srca->format, filter )
+                                || !_LoadScanlineLinear( trow[1], width, srcb->pixels + (srcb->rowPitch * u3), srcb->rowPitch, srcb->format, filter )
+                                || !_LoadScanlineLinear( trow[2], width, srcc->pixels + (srcc->rowPitch * u3), srcc->rowPitch, srcc->format, filter )
+                                || !_LoadScanlineLinear( trow[3], width, srcd->pixels + (srcd->rowPitch * u3), srcd->rowPitch, srcd->format, filter ) )
                             return E_FAIL;
                     }
 
@@ -1878,7 +1884,7 @@ static HRESULT _Generate3DMipsCubicFilter( _In_ size_t depth, _In_ size_t levels
                         CUBIC_INTERPOLATE( target[x], toZ.x, D[0], D[1], D[2], D[3] );
                     }
 
-                    if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                    if ( !_StoreScanlineLinear( pDest, dest->rowPitch, dest->format, target, nwidth, filter ) )
                         return E_FAIL;
                     pDest += dest->rowPitch;
                 }
@@ -1914,7 +1920,7 @@ static HRESULT _Generate3DMipsCubicFilter( _In_ size_t depth, _In_ size_t levels
                     {
                         u0 = toY.u0;
 
-                        if ( !_LoadScanline( urow[0], width, pSrc + (rowPitch * u0), rowPitch, src->format ) )
+                        if ( !_LoadScanlineLinear( urow[0], width, pSrc + (rowPitch * u0), rowPitch, src->format, filter ) )
                             return E_FAIL;
                     }
                     else if ( toY.u0 == u1 )
@@ -1947,7 +1953,7 @@ static HRESULT _Generate3DMipsCubicFilter( _In_ size_t depth, _In_ size_t levels
                     {
                         u1 = toY.u1;
 
-                        if ( !_LoadScanline( vrow[0], width, pSrc + (rowPitch * u1), rowPitch, src->format ) )
+                        if ( !_LoadScanlineLinear( vrow[0], width, pSrc + (rowPitch * u1), rowPitch, src->format, filter ) )
                             return E_FAIL;
                     }
                     else if ( toY.u1 == u2 )
@@ -1973,7 +1979,7 @@ static HRESULT _Generate3DMipsCubicFilter( _In_ size_t depth, _In_ size_t levels
                     {
                         u2 = toY.u2;
 
-                        if ( !_LoadScanline( srow[0], width, pSrc + (rowPitch * u2), rowPitch, src->format ) )
+                        if ( !_LoadScanlineLinear( srow[0], width, pSrc + (rowPitch * u2), rowPitch, src->format, filter ) )
                             return E_FAIL;
                     }
                     else
@@ -1990,7 +1996,7 @@ static HRESULT _Generate3DMipsCubicFilter( _In_ size_t depth, _In_ size_t levels
                 {
                     u3 = toY.u3;
 
-                    if ( !_LoadScanline( trow[0], width, pSrc + (rowPitch * u3), rowPitch, src->format ) )
+                    if ( !_LoadScanlineLinear( trow[0], width, pSrc + (rowPitch * u3), rowPitch, src->format, filter ) )
                         return E_FAIL;
                 }
 
@@ -2007,7 +2013,7 @@ static HRESULT _Generate3DMipsCubicFilter( _In_ size_t depth, _In_ size_t levels
                     CUBIC_INTERPOLATE( target[x], toY.x, C0, C1, C2, C3 );
                 }
 
-                if ( !_StoreScanline( pDest, dest->rowPitch, dest->format, target, nwidth ) )
+                if ( !_StoreScanlineLinear( pDest, dest->rowPitch, dest->format, target, nwidth, filter ) )
                     return E_FAIL;
                 pDest += dest->rowPitch;
             }
@@ -2143,7 +2149,7 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
                 if ( FAILED(hr) )
                     return hr;
 
-                hr = _Generate2DMipsBoxFilter( levels, mipChain, 0 );
+                hr = _Generate2DMipsBoxFilter( levels, filter, mipChain, 0 );
                 if ( FAILED(hr) )
                     mipChain.Release();
                 return hr;
@@ -2320,7 +2326,7 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
 
                 for( size_t item = 0; item < metadata.arraySize; ++item )
                 {
-                    hr = _Generate2DMipsBoxFilter( levels, mipChain, item );
+                    hr = _Generate2DMipsBoxFilter( levels, filter, mipChain, item );
                     if ( FAILED(hr) )
                         mipChain.Release();
                 }
@@ -2427,7 +2433,7 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
         if ( FAILED(hr) )
             return hr;
 
-        hr = _Generate3DMipsBoxFilter( depth, levels, mipChain );
+        hr = _Generate3DMipsBoxFilter( depth, levels, filter, mipChain );
         if ( FAILED(hr) )
             mipChain.Release();
         return hr;
@@ -2525,7 +2531,7 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
         if ( FAILED(hr) )
             return hr;
 
-        hr = _Generate3DMipsBoxFilter( metadata.depth, levels, mipChain );
+        hr = _Generate3DMipsBoxFilter( metadata.depth, levels, filter, mipChain );
         if ( FAILED(hr) )
             mipChain.Release();
         return hr;
