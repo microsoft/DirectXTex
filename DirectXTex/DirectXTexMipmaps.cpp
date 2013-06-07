@@ -728,11 +728,6 @@ static HRESULT _Generate2DMipsBoxFilter( _In_ size_t levels, _In_ DWORD filter, 
             urow3 = urow1;
         }
 
-#ifdef _DEBUG
-        memset( urow0, 0xCD, sizeof(XMVECTOR)*width );
-        memset( urow1, 0xDD, sizeof(XMVECTOR)*width );
-#endif
-
         // 2D box filter
         const Image* src = mipChain.GetImage( level-1, item, 0 );
         const Image* dest = mipChain.GetImage( level, item, 0 );
@@ -1331,13 +1326,6 @@ static HRESULT _Generate3DMipsBoxFilter( _In_ size_t depth, _In_ size_t levels, 
             vrow2 = vrow0;
             vrow3 = vrow1;
         }
-
-#ifdef _DEBUG
-        memset( urow0, 0xCD, sizeof(XMVECTOR)*width );
-        memset( urow1, 0xDD, sizeof(XMVECTOR)*width );
-        memset( vrow0, 0xED, sizeof(XMVECTOR)*width );
-        memset( vrow1, 0xFD, sizeof(XMVECTOR)*width );
-#endif
 
         if ( depth > 1 )
         {
