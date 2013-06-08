@@ -890,10 +890,10 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         return false;
 
     case DXGI_FORMAT_R8_SNORM:
-        if ( size >= sizeof(char) )
+        if ( size >= sizeof(int8_t) )
         {
-            const char * __restrict sPtr = reinterpret_cast<const char*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(char) )
+            const int8_t * __restrict sPtr = reinterpret_cast<const int8_t*>(pSource);
+            for( size_t icount = 0; icount < size; icount += sizeof(int8_t) )
             {
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++) / 127.f, 0.f, 0.f, 1.f );
@@ -903,10 +903,10 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         return false;
 
     case DXGI_FORMAT_R8_SINT:
-        if ( size >= sizeof(char) )
+        if ( size >= sizeof(int8_t) )
         {
-            const char * __restrict sPtr = reinterpret_cast<const char*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(char) )
+            const int8_t * __restrict sPtr = reinterpret_cast<const int8_t*>(pSource);
+            for( size_t icount = 0; icount < size; icount += sizeof(int8_t) )
             {
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++), 0.f, 0.f, 1.f );
@@ -1093,6 +1093,10 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
     }
 }
 
+#undef LOAD_SCANLINE
+#undef LOAD_SCANLINE3
+#undef LOAD_SCANLINE2
+
 
 //-------------------------------------------------------------------------------------
 // Stores an image row from standard RGBA XMVECTOR (aligned) array
@@ -1111,7 +1115,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
 
 _Use_decl_annotations_
 bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
-                     const XMVECTOR* pSource, size_t count )
+                     const XMVECTOR* pSource, size_t count, float threshold )
 {
     assert( pDestination && size > 0 );
     assert( pSource && count > 0 && (((uintptr_t)pSource & 0xF) == 0) );
@@ -1333,10 +1337,10 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
 
     case DXGI_FORMAT_D16_UNORM:
     case DXGI_FORMAT_R16_UNORM:
-        if ( size >= sizeof(int16_t) )
+        if ( size >= sizeof(uint16_t) )
         {
-            int16_t * __restrict dPtr = reinterpret_cast<int16_t*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(int16_t) )
+            uint16_t * __restrict dPtr = reinterpret_cast<uint16_t*>(pDestination);
+            for( size_t icount = 0; icount < size; icount += sizeof(uint16_t) )
             {
                 if ( sPtr >= ePtr ) break;
                 float v = XMVectorGetX( *sPtr++ );
@@ -1417,29 +1421,29 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         return true;
 
     case DXGI_FORMAT_R8_SNORM:
-        if ( size >= sizeof(char) )
+        if ( size >= sizeof(int8_t) )
         {
-            char * __restrict dPtr = reinterpret_cast<char*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(char) )
+            int8_t * __restrict dPtr = reinterpret_cast<int8_t*>(pDestination);
+            for( size_t icount = 0; icount < size; icount += sizeof(int8_t) )
             {
                 if ( sPtr >= ePtr ) break;
                 float v = XMVectorGetX( *sPtr++ );
                 v = std::max<float>( std::min<float>( v, 1.f ), -1.f );
-                *(dPtr++) = static_cast<char>( v * 127.f );
+                *(dPtr++) = static_cast<int8_t>( v * 127.f );
             }
         }
         return true;
 
     case DXGI_FORMAT_R8_SINT:
-        if ( size >= sizeof(char) )
+        if ( size >= sizeof(int8_t) )
         {
-            char * __restrict dPtr = reinterpret_cast<char*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(char) )
+            int8_t * __restrict dPtr = reinterpret_cast<int8_t*>(pDestination);
+            for( size_t icount = 0; icount < size; icount += sizeof(int8_t) )
             {
                 if ( sPtr >= ePtr ) break;
                 float v = XMVectorGetX( *sPtr++ );
                 v = std::max<float>( std::min<float>( v, 127.f ), -127.f );
-                *(dPtr++) = static_cast<char>( v );
+                *(dPtr++) = static_cast<int8_t>( v );
             }
         }
         return true;
@@ -1578,7 +1582,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 if ( sPtr >= ePtr ) break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>( *sPtr++ );
                 v = XMVectorMultiply( v, s_Scale );
-                XMStoreU555( dPtr++, v );
+                XMStoreU555( dPtr, v );
+                dPtr->w = ( XMVectorGetW( v ) > threshold ) ? 1 : 0;
+                ++dPtr;
             }
         }
         return true;
@@ -1634,6 +1640,8 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         return false;
     }
 }
+
+#undef STORE_SCANLINE
 
 
 //-------------------------------------------------------------------------------------
@@ -2516,6 +2524,12 @@ static inline bool _UseWICConversion( _In_ DWORD filter, _In_ DXGI_FORMAT sforma
         return true;
     }
 
+    if ( filter & TEX_FILTER_SEPARATE_ALPHA )
+    {
+        // Alpha is not premultiplied, so use non-WIC code paths
+        return false;
+    }
+
     // Check for special cases
     switch ( sformat )
     {
@@ -2620,7 +2634,7 @@ static HRESULT _ConvertUsingWIC( _In_ const Image& srcImage, _In_ const WICPixel
     if ( FAILED(hr) )
         return hr;
 
-    hr = FC->Initialize( source.Get(), targetGUID, _GetWICDither( filter ), 0, threshold, WICBitmapPaletteTypeCustom );
+    hr = FC->Initialize( source.Get(), targetGUID, _GetWICDither( filter ), 0, threshold * 100.f, WICBitmapPaletteTypeCustom );
     if ( FAILED(hr) )
         return hr;
 
@@ -2635,7 +2649,7 @@ static HRESULT _ConvertUsingWIC( _In_ const Image& srcImage, _In_ const WICPixel
 //-------------------------------------------------------------------------------------
 // Convert the source image (not using WIC)
 //-------------------------------------------------------------------------------------
-static HRESULT _Convert( _In_ const Image& srcImage, _In_ DWORD filter, _In_ const Image& destImage )
+static HRESULT _Convert( _In_ const Image& srcImage, _In_ DWORD filter, _In_ const Image& destImage, _In_ float threshold )
 {
     assert( srcImage.width == destImage.width );
     assert( srcImage.height == destImage.height );
@@ -2656,7 +2670,7 @@ static HRESULT _Convert( _In_ const Image& srcImage, _In_ DWORD filter, _In_ con
 
         _ConvertScanline( scanline.get(), srcImage.width, destImage.format, srcImage.format, filter );
 
-        if ( !_StoreScanline( pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width ) )
+        if ( !_StoreScanline( pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width, threshold ) )
             return E_FAIL;
 
         pSrc += srcImage.rowPitch;
@@ -2711,7 +2725,7 @@ HRESULT Convert( const Image& srcImage, DXGI_FORMAT format, DWORD filter, float 
     }
     else
     {
-        hr = _Convert( srcImage, filter, *rimage );
+        hr = _Convert( srcImage, filter, *rimage, threshold );
     }
 
     if ( FAILED(hr) )
@@ -2795,7 +2809,7 @@ HRESULT Convert( const Image* srcImages, size_t nimages, const TexMetadata& meta
         }
         else
         {
-            hr = _Convert( src, filter, dst );
+            hr = _Convert( src, filter, dst, threshold );
         }
 
         if ( FAILED(hr) )
