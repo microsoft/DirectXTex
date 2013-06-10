@@ -1110,8 +1110,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                 if ( sPtr >= ePtr ) break;\
                 func( dPtr++, *sPtr++ );\
             }\
+            return true; \
         }\
-        return true;
+        return false;
 
 _Use_decl_annotations_
 bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
@@ -1186,8 +1187,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 ps8[1] = ps8[2] = ps8[3] = 0;
                 dPtr += 2;
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R10G10B10A2_UNORM:
         STORE_SCANLINE( XMUDECN4, XMStoreUDecN4 );
@@ -1204,8 +1206,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
             {
                 if ( sPtr >= ePtr ) break;
 
-                XMVECTOR N = XMVectorMultiply(*sPtr++, Scale);
-                N = XMVectorAdd( N, Bias );
+                XMVECTOR N = XMVectorMultiplyAdd( *sPtr++, Scale, Bias );
                 N = XMVectorClamp( N, g_XMZero, C );
 
                 XMFLOAT4A tmp;
@@ -1217,8 +1218,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                            | (((uint32_t)tmp.x & 0x3FF));
                 ++dPtr;
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R10G10B10A2_UINT:
         STORE_SCANLINE( XMUDEC4, XMStoreUDec4 );
@@ -1264,8 +1266,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 if ( sPtr >= ePtr ) break;
                 XMStoreFloat( dPtr++, *(sPtr++) );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R32_UINT:
         if ( size >= sizeof(uint32_t) )
@@ -1277,8 +1280,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 XMVECTOR v = XMConvertVectorFloatToUInt( *(sPtr++), 0 );
                 XMStoreInt( dPtr++, v );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R32_SINT:
         if ( size >= sizeof(uint32_t) )
@@ -1290,8 +1294,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 XMVECTOR v = XMConvertVectorFloatToInt( *(sPtr++), 0 );
                 XMStoreInt( dPtr++, v );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_D24_UNORM_S8_UINT:
         if ( size >= sizeof(uint32_t) )
@@ -1307,8 +1312,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 *dPtr++ = (static_cast<uint32_t>( f.x * 16777215.f ) & 0xFFFFFF)
                           | ((static_cast<uint32_t>( f.y ) & 0xFF) << 24);
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R8G8_UNORM:
         STORE_SCANLINE( XMUBYTEN2, XMStoreUByteN2 )
@@ -1332,8 +1338,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 float v = XMVectorGetX( *sPtr++ );
                 *(dPtr++) = XMConvertFloatToHalf(v);
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_D16_UNORM:
     case DXGI_FORMAT_R16_UNORM:
@@ -1347,8 +1354,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 v = std::max<float>( std::min<float>( v, 1.f ), 0.f );
                 *(dPtr++) = static_cast<uint16_t>( v*65535.f + 0.5f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R16_UINT:
         if ( size >= sizeof(uint16_t) )
@@ -1361,8 +1369,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 v = std::max<float>( std::min<float>( v, 65535.f ), 0.f );
                 *(dPtr++) = static_cast<uint16_t>(v);
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R16_SNORM:
         if ( size >= sizeof(int16_t) )
@@ -1375,8 +1384,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 v = std::max<float>( std::min<float>( v, 1.f ), -1.f );
                 *(dPtr++) = static_cast<uint16_t>( v * 32767.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R16_SINT:
         if ( size >= sizeof(int16_t) )
@@ -1389,8 +1399,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 v = std::max<float>( std::min<float>( v, 32767.f ), -32767.f );
                 *(dPtr++) = static_cast<int16_t>(v);
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R8_UNORM:
         if ( size >= sizeof(uint8_t) )
@@ -1403,8 +1414,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 v = std::max<float>( std::min<float>( v, 1.f ), 0.f );
                 *(dPtr++) = static_cast<uint8_t>( v * 255.f);
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R8_UINT:
         if ( size >= sizeof(uint8_t) )
@@ -1417,8 +1429,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 v = std::max<float>( std::min<float>( v, 255.f ), 0.f );
                 *(dPtr++) = static_cast<uint8_t>(v);
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R8_SNORM:
         if ( size >= sizeof(int8_t) )
@@ -1431,8 +1444,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 v = std::max<float>( std::min<float>( v, 1.f ), -1.f );
                 *(dPtr++) = static_cast<int8_t>( v * 127.f );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R8_SINT:
         if ( size >= sizeof(int8_t) )
@@ -1445,8 +1459,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 v = std::max<float>( std::min<float>( v, 127.f ), -127.f );
                 *(dPtr++) = static_cast<int8_t>( v );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_A8_UNORM:
         if ( size >= sizeof(uint8_t) )
@@ -1459,8 +1474,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 v = std::max<float>( std::min<float>( v, 1.f ), 0.f );
                 *(dPtr++) = static_cast<uint8_t>( v * 255.f);
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R1_UNORM:
         if ( size >= sizeof(uint8_t) )
@@ -1482,8 +1498,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 }
                 *(dPtr++) = pixels;
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
         if ( size >= sizeof(XMFLOAT3SE) )
@@ -1522,8 +1539,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 dPtr->zm = static_cast<uint32_t>( round_to_nearest(b * ScaleR) );
                 ++dPtr;
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_R8G8_B8G8_UNORM:
         if ( size >= sizeof(XMUBYTEN4) )
@@ -1537,8 +1555,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 XMVECTOR v = XMVectorSelect( v1, v0, g_XMSelect1110 );
                 XMStoreUByteN4( dPtr++, v );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_G8R8_G8B8_UNORM:
         if ( size >= sizeof(XMUBYTEN4) )
@@ -1554,8 +1573,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 XMVECTOR v = XMVectorSelect( v1, v0, select1101 );
                 XMStoreUByteN4( dPtr++, v );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_B5G6R5_UNORM:
         if ( size >= sizeof(XMU565) )
@@ -1569,8 +1589,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 v = XMVectorMultiply( v, s_Scale );
                 XMStoreU565( dPtr++, v );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_B5G5R5A1_UNORM:
         if ( size >= sizeof(XMU555) )
@@ -1586,8 +1607,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 dPtr->w = ( XMVectorGetW( v ) > threshold ) ? 1 : 0;
                 ++dPtr;
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_B8G8R8A8_UNORM:
     case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
@@ -1600,8 +1622,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>( *sPtr++ );
                 XMStoreUByteN4( dPtr++, v );
             }
+            return true;
         }
-        return true;
+        return false;
 
     case DXGI_FORMAT_B8G8R8X8_UNORM:
     case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
@@ -1614,8 +1637,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 XMVECTOR v = XMVectorPermute<2, 1, 0, 7>( *sPtr++, g_XMIdentityR3 );
                 XMStoreUByteN4( dPtr++, v );
             }
+            return true;
         }
-        return true;
+        return false;
 
 #ifdef DXGI_1_2_FORMATS
     case DXGI_FORMAT_B4G4R4A4_UNORM:
@@ -1630,8 +1654,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 v = XMVectorMultiply( v, s_Scale );
                 XMStoreUNibble4( dPtr++, v );
             }
+            return true;
         }
-        return true;
+        return false;
 
     // We don't support the video formats ( see IsVideo function )
 #endif // DXGI_1_2_FORMATS
