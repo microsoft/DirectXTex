@@ -158,6 +158,9 @@ namespace DirectX
         DDS_FLAGS_NO_16BPP              = 0x10,
             // Conversions avoid use of 565, 5551, and 4444 formats and instead expand to 8888 to avoid use of optional WDDM 1.2 formats
 
+        DDS_FLAGS_EXPAND_LUMINANCE      = 0x20,
+            // When loading legacy luminance formats expand replicating the color channels rather than leaving them packed (L8, L16, A8L8)
+
         DDS_FLAGS_FORCE_DX10_EXT        = 0x10000,
             // Always use the 'DX10' header extension for DDS writer (i.e. don't try to write DX9 compatible DDS files)
 

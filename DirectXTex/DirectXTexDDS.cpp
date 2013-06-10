@@ -40,6 +40,9 @@ enum CONVERSION_FLAGS
     CONV_FLAGS_A8P8     = 0x800,    // Has an 8-bit palette with an alpha channel
     CONV_FLAGS_DX10     = 0x10000,  // Has the 'DX10' extension header
     CONV_FLAGS_PMALPHA  = 0x20000,  // Contains premultiplied alpha data
+    CONV_FLAGS_L8       = 0x40000,  // Source is a 8 luminance format 
+    CONV_FLAGS_L16      = 0x80000,  // Source is a 16 luminance format 
+    CONV_FLAGS_A8L8     = 0x100000, // Source is a 8:8 luminance format 
 };
 
 struct LegacyDDS
@@ -361,6 +364,28 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
 
         if ( convFlags & CONV_FLAGS_PMALPHA )
             metadata.miscFlags2 |= TEX_ALPHA_MODE_PREMULTIPLIED;
+
+        // Special flag for handling LUMINANCE legacy formats
+        if ( flags & DDS_FLAGS_EXPAND_LUMINANCE )
+        {
+            switch ( metadata.format )
+            {
+            case DXGI_FORMAT_R8_UNORM:
+                metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                convFlags |= CONV_FLAGS_L8 | CONV_FLAGS_EXPAND;
+                break;
+
+            case DXGI_FORMAT_R8G8_UNORM:
+                metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                convFlags |= CONV_FLAGS_A8L8 | CONV_FLAGS_EXPAND;
+                break;
+
+            case DXGI_FORMAT_R16_UNORM:
+                metadata.format = DXGI_FORMAT_R16G16B16A16_UNORM;
+                convFlags |= CONV_FLAGS_L16 | CONV_FLAGS_EXPAND;
+                break;
+            }
+        }
     }
 
     // Special flag for handling BGR DXGI 1.1 formats
@@ -673,6 +698,9 @@ enum TEXP_LEGACY_FORMAT
     TEXP_LEGACY_A8P8,
     TEXP_LEGACY_A4L4,
     TEXP_LEGACY_B4G4R4A4,
+    TEXP_LEGACY_L8,
+    TEXP_LEGACY_L16,
+    TEXP_LEGACY_A8L8
 };
 
 inline static TEXP_LEGACY_FORMAT _FindLegacyFormat( DWORD flags )
@@ -695,6 +723,12 @@ inline static TEXP_LEGACY_FORMAT _FindLegacyFormat( DWORD flags )
     else if ( flags & CONV_FLAGS_4444 )
         lformat = TEXP_LEGACY_B4G4R4A4;
 #endif
+    else if ( flags & CONV_FLAGS_L8 )
+        lformat = TEXP_LEGACY_L8;
+    else if ( flags & CONV_FLAGS_L16 )
+        lformat = TEXP_LEGACY_L16;
+    else if ( flags & CONV_FLAGS_A8L8 )
+        lformat = TEXP_LEGACY_A8L8;
 
     return lformat;
 }
@@ -904,6 +938,71 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
         }
         return true;
 #endif
+
+    case TEXP_LEGACY_L8:
+        if (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM)
+            return false;
+
+        // D3DFMT_L8 -> DXGI_FORMAT_R8G8B8A8_UNORM
+        {
+            const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
+            uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+
+            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); ++icount, ocount += 4 )
+            {
+                uint32_t t1 = *(sPtr++);
+                uint32_t t2 = (t1 << 8);
+                uint32_t t3 = (t1 << 16);
+
+                *(dPtr++) = t1 | t2 | t3 | 0xff000000;
+            }
+        }
+        return true;
+
+    case TEXP_LEGACY_L16:
+        if (outFormat != DXGI_FORMAT_R16G16B16A16_UNORM)
+            return false;
+
+        // D3DFMT_L16 -> DXGI_FORMAT_R16G16B16A16_UNORM
+        {
+            const uint16_t* __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
+            uint64_t * __restrict dPtr = reinterpret_cast<uint64_t*>(pDestination);
+
+            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); icount += 2, ocount += 8 )
+            {
+                uint16_t t = *(sPtr++);
+
+                uint64_t t1 = t;
+                uint64_t t2 = (t1 << 16);
+                uint64_t t3 = (t1 << 32);
+
+                *(dPtr++) = t1 | t2 | t3 | 0xffff000000000000;
+            }
+        }
+        return true;
+
+    case TEXP_LEGACY_A8L8:
+        if (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM)
+            return false;
+
+        // D3DFMT_A8L8 -> DXGI_FORMAT_R8G8B8A8_UNORM
+        {
+            const uint16_t* __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
+            uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+
+            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); icount += 2, ocount += 4 )
+            {
+                uint16_t t = *(sPtr++);
+
+                uint32_t t1 = (t & 0xff);
+                uint32_t t2 = (t1 << 8);
+                uint32_t t3 = (t1 << 16);
+                uint32_t ta = ( flags & TEXP_SCANLINE_SETALPHA ) ? 0xff000000 : ((t & 0xff00) << 16);
+
+                *(dPtr++) = t1 | t2 | t3 | ta;
+            }
+        }
+        return true;
     }
 
     return false;
@@ -926,9 +1025,9 @@ static HRESULT _CopyImage( _In_reads_bytes_(size) const void* pPixels, _In_ size
     {
         if ( convFlags & CONV_FLAGS_888 )
             cpFlags |= CP_FLAGS_24BPP;
-        else if ( convFlags & (CONV_FLAGS_565 | CONV_FLAGS_5551 | CONV_FLAGS_4444 | CONV_FLAGS_8332 | CONV_FLAGS_A8P8 ) )
+        else if ( convFlags & (CONV_FLAGS_565 | CONV_FLAGS_5551 | CONV_FLAGS_4444 | CONV_FLAGS_8332 | CONV_FLAGS_A8P8 | CONV_FLAGS_L16 | CONV_FLAGS_A8L8) )
             cpFlags |= CP_FLAGS_16BPP;
-        else if ( convFlags & (CONV_FLAGS_44 | CONV_FLAGS_332 | CONV_FLAGS_PAL8) )
+        else if ( convFlags & (CONV_FLAGS_44 | CONV_FLAGS_332 | CONV_FLAGS_PAL8 | CONV_FLAGS_L8) )
             cpFlags |= CP_FLAGS_8BPP;
     }
 
