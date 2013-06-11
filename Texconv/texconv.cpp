@@ -348,12 +348,16 @@ void PrintUsage()
     wprintf( L"   -ft <filetype>      output file type\n");
     wprintf( L"   -hflip              horizonal flip of source image\n");
     wprintf( L"   -vflip              vertical flip of source image\n");
-    wprintf( L"   -sepalpha           resize/generate mips alpha channel separately from color channels\n");
+    wprintf( L"   -sepalpha           resize/generate mips alpha channel separately\n");
+    wprintf( L"                       from color channels\n");
     wprintf( L"   -pmalpha            convert final texture to use premultiplied alpha\n");
-    wprintf( L"   -t{u|f}             DDS files with TYPELESS format is treated as UNORM or FLOAT\n");
-    wprintf( L"   -dword              Use DWORD instead of BYTE alignment (DDS input only)\n");
-    wprintf( L"   -dx10               Force use of 'DX10' extended header (DDS output only)\n");
-    wprintf( L"   -nologo             suppress copyright message\n");
+    wprintf( L"\n                       (DDS input only)\n");
+    wprintf( L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
+    wprintf( L"   -dword              Use DWORD instead of BYTE alignment\n");
+    wprintf( L"   -xlum               expand legacy L8, L16, and A8P8 formats\n");
+    wprintf( L"\n                       (DDS output only)\n");
+    wprintf( L"   -dx10               Force use of 'DX10' extended header\n");
+    wprintf( L"\n   -nologo             suppress copyright message\n");
 
     wprintf( L"\n");
     wprintf( L"   <format>: ");
