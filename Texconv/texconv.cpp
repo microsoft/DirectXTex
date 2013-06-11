@@ -39,6 +39,7 @@ enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
     OPT_TYPELESS_UNORM,
     OPT_TYPELESS_FLOAT,
     OPT_PREMUL_ALPHA,
+    OPT_EXPAND_LUMINANCE
 };
 
 struct SConversion
@@ -82,6 +83,7 @@ SValue g_pOptions[] =
     { L"tu",            OPT_TYPELESS_UNORM },
     { L"tf",            OPT_TYPELESS_FLOAT },
     { L"pmalpha",       OPT_PREMUL_ALPHA },
+    { L"xlum",          OPT_EXPAND_LUMINANCE },
     { nullptr,          0             }
 };
 
@@ -432,7 +434,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             dwOptions |= 1 << dwOption;
 
             if( (OPT_NOLOGO != dwOption) && (OPT_TYPELESS_UNORM != dwOption) && (OPT_TYPELESS_FLOAT != dwOption)
-                && (OPT_SEPALPHA != dwOption) && (OPT_PREMUL_ALPHA != dwOption)
+                && (OPT_SEPALPHA != dwOption) && (OPT_PREMUL_ALPHA != dwOption) && (OPT_EXPAND_LUMINANCE != dwOption)
                 && (OPT_SRGB != dwOption) && (OPT_SRGBI != dwOption) && (OPT_SRGBO != dwOption)
                 && (OPT_HFLIP != dwOption) && (OPT_VFLIP != dwOption)
                 && (OPT_DDS_DWORD_ALIGN != dwOption) && (OPT_USE_DX10 != dwOption) )
@@ -623,9 +625,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
         if ( _wcsicmp( ext, L".dds" ) == 0 )
         {
-            hr = LoadFromDDSFile( pConv->szSrc,
-                                  (dwOptions & (1 << OPT_DDS_DWORD_ALIGN)) ? DDS_FLAGS_LEGACY_DWORD : DDS_FLAGS_NONE,
-                                  &info, *image );
+            DWORD ddsFlags = DDS_FLAGS_NONE;
+            if ( dwOptions & (1 << OPT_DDS_DWORD_ALIGN) )
+                ddsFlags |= DDS_FLAGS_LEGACY_DWORD;
+            if ( dwOptions & (1 << OPT_EXPAND_LUMINANCE) )
+                ddsFlags |= DDS_FLAGS_EXPAND_LUMINANCE;
+
+            hr = LoadFromDDSFile( pConv->szSrc, ddsFlags, &info, *image );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED (%x)\n", hr);
