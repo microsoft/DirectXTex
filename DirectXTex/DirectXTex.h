@@ -40,6 +40,7 @@
 #define _Out_writes_bytes_to_opt_(a,b)
 #define _Inout_updates_bytes_(exp)
 #define _Inout_updates_all_(exp)
+#define _Inout_updates_all_opt_(exp)
 #define _Outptr_
 #define _When_(a,b)
 #endif

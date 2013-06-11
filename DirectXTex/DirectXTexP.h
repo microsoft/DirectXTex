@@ -150,7 +150,7 @@ namespace DirectX
         CONVF_STENCIL   = 0x40,
         CONVF_SHAREDEXP = 0x80,
         CONVF_BGR       = 0x100,
-        CONVF_X2        = 0x200,
+        CONVF_XR        = 0x200,
         CONVF_PACKED    = 0x400,
         CONVF_BC        = 0x800,
         CONVF_R         = 0x10000,
@@ -196,6 +196,11 @@ namespace DirectX
     _Success_(return != false)
     bool _StoreScanlineLinear( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
                                _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ DWORD flags );
+
+    _Success_(return != false)
+    bool _StoreScanlineDither( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
+                               _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ float threshold, size_t y, size_t z,
+                               _Inout_updates_all_opt_(count+2) XMVECTOR* pDiffusionErrors );
 
     HRESULT _ConvertToR32G32B32A32( _In_ const Image& srcImage, _Inout_ ScratchImage& image );
 

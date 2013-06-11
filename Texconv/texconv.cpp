@@ -172,15 +172,22 @@ SValue g_pFormats[] =
 
 SValue g_pFilters[] = 
 {
-    { L"POINT",         TEX_FILTER_POINT                                },
-    { L"LINEAR",        TEX_FILTER_LINEAR                               },
-    { L"CUBIC",         TEX_FILTER_CUBIC                                },
-    { L"FANT",          TEX_FILTER_FANT                                 },
-    { L"POINT_DITHER",  TEX_FILTER_POINT | TEX_FILTER_DITHER_DIFFUSION  },
-    { L"LINEAR_DITHER", TEX_FILTER_LINEAR | TEX_FILTER_DITHER_DIFFUSION },
-    { L"CUBIC_DITHER",  TEX_FILTER_CUBIC | TEX_FILTER_DITHER_DIFFUSION  },
-    { L"FANT_DITHER",   TEX_FILTER_FANT  | TEX_FILTER_DITHER_DIFFUSION  },
-    { nullptr,          TEX_FILTER_DEFAULT                              }
+    { L"POINT",                     TEX_FILTER_POINT },
+    { L"LINEAR",                    TEX_FILTER_LINEAR },
+    { L"CUBIC",                     TEX_FILTER_CUBIC },
+    { L"FANT",                      TEX_FILTER_FANT },
+    { L"BOX",                       TEX_FILTER_BOX },
+    { L"POINT_DITHER",              TEX_FILTER_POINT  | TEX_FILTER_DITHER },
+    { L"LINEAR_DITHER",             TEX_FILTER_LINEAR | TEX_FILTER_DITHER },
+    { L"CUBIC_DITHER",              TEX_FILTER_CUBIC  | TEX_FILTER_DITHER },
+    { L"FANT_DITHER",               TEX_FILTER_FANT   | TEX_FILTER_DITHER },
+    { L"BOX_DITHER",                TEX_FILTER_BOX    | TEX_FILTER_DITHER },
+    { L"POINT_DITHER_DIFFUSION",    TEX_FILTER_POINT  | TEX_FILTER_DITHER_DIFFUSION },
+    { L"LINEAR_DITHER_DIFFUSION",   TEX_FILTER_LINEAR | TEX_FILTER_DITHER_DIFFUSION },
+    { L"CUBIC_DITHER_DIFFUSION",    TEX_FILTER_CUBIC  | TEX_FILTER_DITHER_DIFFUSION },
+    { L"FANT_DITHER_DIFFUSION",     TEX_FILTER_FANT   | TEX_FILTER_DITHER_DIFFUSION },
+    { L"BOX_DITHER_DIFFUSION",      TEX_FILTER_BOX    | TEX_FILTER_DITHER_DIFFUSION },
+    { nullptr,                      TEX_FILTER_DEFAULT                              }
 };
 
 #define CODEC_DDS 0xFFFF0001 
