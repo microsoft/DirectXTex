@@ -98,7 +98,8 @@ LRESULT CALLBACK WndProc( HWND, UINT, WPARAM, LPARAM );
 void Render();
 
 //--------------------------------------------------------------------------------------
-int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
+#pragma warning( suppress : 6262 )
+int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow )
 {
     UNREFERENCED_PARAMETER( hPrevInstance );
     UNREFERENCED_PARAMETER( lpCmdLine );
@@ -122,6 +123,8 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
     if( FAILED( InitWindow( hInstance, nCmdShow, mdata ) ) )
         return 0;
 
+    SetWindowTextW( g_hWnd, lpCmdLine );
+
     if( FAILED( InitDevice( mdata ) ) )
     {
         CleanupDevice();
@@ -133,7 +136,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
         if ( mdata.arraySize > 1 )
         {
             WCHAR buff[2048];
-            swprintf_s( buff, L"Arrays of volume textures are not supported\n\nFilename = %s\nArray size %d", lpCmdLine, mdata.arraySize );
+            swprintf_s( buff, L"Arrays of volume textures are not supported\n\nFilename = %s\nArray size %Iu", lpCmdLine, mdata.arraySize );
             MessageBox( NULL, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
             return 0;
         }
