@@ -1834,65 +1834,23 @@ HRESULT _ConvertFromR32G32B32A32( const Image* srcImages, size_t nimages, const 
 
 
 //-------------------------------------------------------------------------------------
-// RGB -> sRGB
+// Linear RGB -> sRGB
 //-------------------------------------------------------------------------------------
-static const uint32_t g_fEncodeGamma22[] =
+
+static inline XMVECTOR RGBToSRGB( FXMVECTOR rgb )
 {
-    0x00000000, 0x3bd56bd3, 0x3c486344, 0x3c90da15, 0x3cbc2677, 0x3ce67704, 0x3d080183, 0x3d1c7728,
-    0x3d30a8fb, 0x3d44a03c, 0x3d586400, 0x3d6bf9e7, 0x3d7f6679, 0x3d8956bd, 0x3d92e906, 0x3d9c6b70,
-    0x3da5df22, 0x3daf451b, 0x3db89e3e, 0x3dc1eb50, 0x3dcb2d04, 0x3dd463f7, 0x3ddd90b9, 0x3de6b3ca,
-    0x3defcda0, 0x3df8dea6, 0x3e00f3a0, 0x3e0573e3, 0x3e09f046, 0x3e0e68f0, 0x3e12de06, 0x3e174fa6,
-    0x3e1bbdf2, 0x3e202906, 0x3e2490fd, 0x3e28f5f1, 0x3e2d57fb, 0x3e31b72f, 0x3e3613a4, 0x3e3a6d6e,
-    0x3e3ec4a0, 0x3e43194d, 0x3e476b84, 0x3e4bbb57, 0x3e5008d7, 0x3e54540f, 0x3e589d0f, 0x3e5ce3e5,
-    0x3e61289d, 0x3e656b44, 0x3e69abe5, 0x3e6dea8d, 0x3e722745, 0x3e766217, 0x3e7a9b0e, 0x3e7ed235,
-    0x3e8183c9, 0x3e839d98, 0x3e85b68c, 0x3e87cea8, 0x3e89e5f2, 0x3e8bfc6b, 0x3e8e1219, 0x3e9026ff,
-    0x3e923b20, 0x3e944e7f, 0x3e966120, 0x3e987307, 0x3e9a8436, 0x3e9c94af, 0x3e9ea476, 0x3ea0b38e,
-    0x3ea2c1fb, 0x3ea4cfbb, 0x3ea6dcd5, 0x3ea8e94a, 0x3eaaf51c, 0x3ead004e, 0x3eaf0ae2, 0x3eb114d9,
-    0x3eb31e37, 0x3eb526fe, 0x3eb72f2f, 0x3eb936cd, 0x3ebb3dd8, 0x3ebd4454, 0x3ebf4a43, 0x3ec14fa5,
-    0x3ec3547e, 0x3ec558cd, 0x3ec75c95, 0x3ec95fd8, 0x3ecb6297, 0x3ecd64d4, 0x3ecf6690, 0x3ed167ce,
-    0x3ed3688e, 0x3ed568d1, 0x3ed76899, 0x3ed967e9, 0x3edb66bf, 0x3edd651f, 0x3edf630a, 0x3ee16080,
-    0x3ee35d84, 0x3ee55a16, 0x3ee75636, 0x3ee951e8, 0x3eeb4d2a, 0x3eed4800, 0x3eef4269, 0x3ef13c68,
-    0x3ef335fc, 0x3ef52f26, 0x3ef727ea, 0x3ef92046, 0x3efb183c, 0x3efd0fcd, 0x3eff06fa, 0x3f007ee2,
-    0x3f017a16, 0x3f027519, 0x3f036fec, 0x3f046a8f, 0x3f056502, 0x3f065f47, 0x3f07595d, 0x3f085344,
-    0x3f094cfe, 0x3f0a468b, 0x3f0b3feb, 0x3f0c391e, 0x3f0d3224, 0x3f0e2aff, 0x3f0f23af, 0x3f101c32,
-    0x3f11148c, 0x3f120cba, 0x3f1304bf, 0x3f13fc9a, 0x3f14f44b, 0x3f15ebd3, 0x3f16e333, 0x3f17da6b,
-    0x3f18d17a, 0x3f19c860, 0x3f1abf1f, 0x3f1bb5b7, 0x3f1cac28, 0x3f1da272, 0x3f1e9895, 0x3f1f8e92,
-    0x3f20846a, 0x3f217a1c, 0x3f226fa8, 0x3f23650f, 0x3f245a52, 0x3f254f70, 0x3f264469, 0x3f27393f,
-    0x3f282df1, 0x3f29227f, 0x3f2a16ea, 0x3f2b0b31, 0x3f2bff56, 0x3f2cf358, 0x3f2de738, 0x3f2edaf6,
-    0x3f2fce91, 0x3f30c20b, 0x3f31b564, 0x3f32a89b, 0x3f339bb1, 0x3f348ea6, 0x3f35817a, 0x3f36742f,
-    0x3f3766c3, 0x3f385936, 0x3f394b8a, 0x3f3a3dbe, 0x3f3b2fd3, 0x3f3c21c8, 0x3f3d139e, 0x3f3e0556,
-    0x3f3ef6ee, 0x3f3fe868, 0x3f40d9c4, 0x3f41cb01, 0x3f42bc20, 0x3f43ad22, 0x3f449e06, 0x3f458ecc,
-    0x3f467f75, 0x3f477001, 0x3f486071, 0x3f4950c2, 0x3f4a40f8, 0x3f4b3111, 0x3f4c210d, 0x3f4d10ed,
-    0x3f4e00b2, 0x3f4ef05a, 0x3f4fdfe7, 0x3f50cf58, 0x3f51beae, 0x3f52ade8, 0x3f539d07, 0x3f548c0c,
-    0x3f557af5, 0x3f5669c4, 0x3f575878, 0x3f584711, 0x3f593590, 0x3f5a23f6, 0x3f5b1241, 0x3f5c0072,
-    0x3f5cee89, 0x3f5ddc87, 0x3f5eca6b, 0x3f5fb835, 0x3f60a5e7, 0x3f619380, 0x3f6280ff, 0x3f636e65,
-    0x3f645bb3, 0x3f6548e8, 0x3f663604, 0x3f672309, 0x3f680ff4, 0x3f68fcc8, 0x3f69e983, 0x3f6ad627,
-    0x3f6bc2b3, 0x3f6caf27, 0x3f6d9b83, 0x3f6e87c8, 0x3f6f73f5, 0x3f70600c, 0x3f714c0b, 0x3f7237f4,
-    0x3f7323c4, 0x3f740f7f, 0x3f74fb22, 0x3f75e6af, 0x3f76d225, 0x3f77bd85, 0x3f78a8ce, 0x3f799401,
-    0x3f7a7f1e, 0x3f7b6a25, 0x3f7c5516, 0x3f7d3ff1, 0x3f7e2ab6, 0x3f7f1566, 0x3f800000, 0x3f800000
-};
+    static const XMVECTORF32 Cutoff = { 0.0031308f, 0.0031308f, 0.0031308f, 1.f };
+    static const XMVECTORF32 Linear = { 12.92f, 12.92f, 12.92f, 1.f };
+    static const XMVECTORF32 Scale = { 1.055f, 1.055f, 1.055f, 1.f };
+    static const XMVECTORF32 Bias = { 0.055f, 0.055f, 0.055f, 0.f };
+    static const XMVECTORF32 InvGamma = { 1.0f/2.4f, 1.0f/2.4f, 1.0f/2.4f, 1.f };
 
-#pragma prefast(suppress : 25000, "FXMVECTOR is 16 bytes")
-static inline XMVECTOR _TableEncodeGamma22( FXMVECTOR v )
-{
-    float f[4];
-    XMStoreFloat4( (XMFLOAT4*)f, v );
-
-    for( size_t i=0; i < 4; ++i )
-    {
-        float f2 = sqrtf(f[i]) * 254.0f;
-
-        uint32_t  i2 = static_cast<uint32_t>(f2);
-        i2 = std::min<uint32_t>( i2, _countof( g_fEncodeGamma22 )-2 );
-
-        float fS = f2 - (float) i2;
-        float fA = ((float *) g_fEncodeGamma22)[i2];
-        float fB = ((float *) g_fEncodeGamma22)[i2 + 1];
-
-        f[i] = fA + fS * (fB - fA);
-    }
-
-    return XMLoadFloat4( (XMFLOAT4*)f );
+    XMVECTOR V = XMVectorSaturate(rgb);
+    XMVECTOR V0 = XMVectorMultiply( V, Linear );
+    XMVECTOR V1 = Scale * XMVectorPow( V, InvGamma ) - Bias;
+    XMVECTOR select = XMVectorLess( V, Cutoff );
+    V = XMVectorSelect( V1, V0, select );
+    return XMVectorSelect( rgb, V, g_XMSelect1110 );
 }
 
 _Use_decl_annotations_
@@ -1944,20 +1902,15 @@ bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         break;
     }
 
-    // sRGB output processing (RGB -> sRGB)
+    // sRGB output processing (Linear RGB -> sRGB)
     if ( flags & TEX_FILTER_SRGB_OUT )
     {
         // To avoid the need for another temporary scanline buffer, we allow this function to overwrite the source buffer in-place
         // Given the intended usage in the filtering routines, this is not a problem.
         XMVECTOR* ptr = pSource;
-        for( size_t i=0; i < count; ++i )
+        for( size_t i=0; i < count; ++i, ++ptr )
         {
-            // rgb = rgb^(1/2.2); a=a
-            XMVECTOR v = *ptr;
-            XMVECTOR v1 = _TableEncodeGamma22( v );
-            // Use table instead of XMVectorPow( v, [1/2.2f 1/2.2f 1/2.2f 1]).
-            // Note table lookup will also saturate the result
-            *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
+            *ptr = RGBToSRGB( *ptr );
         }
     }
 
@@ -1966,64 +1919,23 @@ bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
 
 
 //-------------------------------------------------------------------------------------
-// sRGB -> RGB
+// sRGB -> Linear RGB
 //-------------------------------------------------------------------------------------
-static const uint32_t g_fDecodeGamma22[] =
+
+static inline XMVECTOR SRGBToRGB( FXMVECTOR srgb )
 {
-    0x00000000, 0x3b144eb0, 0x3b9ef3b0, 0x3bf84b42, 0x3c2a5c46, 0x3c59c180, 0x3c850eb5, 0x3c9da52a,
-    0x3cb6967a, 0x3ccfd852, 0x3ce9628b, 0x3d01974b, 0x3d0e9b82, 0x3d1bbba3, 0x3d28f5bc, 0x3d364822,
-    0x3d43b159, 0x3d51301d, 0x3d5ec344, 0x3d6c69c9, 0x3d7a22c4, 0x3d83f6ad, 0x3d8ae465, 0x3d91da35,
-    0x3d98d7c7, 0x3d9fdcd2, 0x3da6e914, 0x3dadfc47, 0x3db51635, 0x3dbc36a3, 0x3dc35d62, 0x3dca8a3a,
-    0x3dd1bd02, 0x3dd8f591, 0x3de033bb, 0x3de7775d, 0x3deec050, 0x3df60e74, 0x3dfd61a6, 0x3e025ce5,
-    0x3e060b61, 0x3e09bc38, 0x3e0d6f5f, 0x3e1124c8, 0x3e14dc68, 0x3e189630, 0x3e1c521a, 0x3e201016,
-    0x3e23d01d, 0x3e279225, 0x3e2b5624, 0x3e2f1c10, 0x3e32e3e4, 0x3e36ad94, 0x3e3a7918, 0x3e3e4668,
-    0x3e42157f, 0x3e45e654, 0x3e49b8e0, 0x3e4d8d1d, 0x3e516304, 0x3e553a8d, 0x3e5913b4, 0x3e5cee70,
-    0x3e60cabf, 0x3e64a89b, 0x3e6887fb, 0x3e6c68db, 0x3e704b3a, 0x3e742f0e, 0x3e781454, 0x3e7bfb04,
-    0x3e7fe321, 0x3e81e650, 0x3e83dbc0, 0x3e85d1dc, 0x3e87c8a3, 0x3e89c015, 0x3e8bb830, 0x3e8db0ee,
-    0x3e8faa51, 0x3e91a454, 0x3e939ef9, 0x3e959a3b, 0x3e97961b, 0x3e999295, 0x3e9b8fa7, 0x3e9d8d52,
-    0x3e9f8b93, 0x3ea18a6a, 0x3ea389d2, 0x3ea589cb, 0x3ea78a56, 0x3ea98b6e, 0x3eab8d15, 0x3ead8f47,
-    0x3eaf9204, 0x3eb1954a, 0x3eb39917, 0x3eb59d6c, 0x3eb7a246, 0x3eb9a7a5, 0x3ebbad88, 0x3ebdb3ec,
-    0x3ebfbad3, 0x3ec1c237, 0x3ec3ca1a, 0x3ec5d27c, 0x3ec7db58, 0x3ec9e4b4, 0x3ecbee85, 0x3ecdf8d3,
-    0x3ed0039a, 0x3ed20ed8, 0x3ed41a8a, 0x3ed626b5, 0x3ed83351, 0x3eda4065, 0x3edc4de9, 0x3ede5be0,
-    0x3ee06a4a, 0x3ee27923, 0x3ee4886a, 0x3ee69821, 0x3ee8a845, 0x3eeab8d8, 0x3eecc9d6, 0x3eeedb3f,
-    0x3ef0ed13, 0x3ef2ff53, 0x3ef511fb, 0x3ef7250a, 0x3ef93883, 0x3efb4c61, 0x3efd60a7, 0x3eff7553,
-    0x3f00c531, 0x3f01cfeb, 0x3f02dad9, 0x3f03e5f5, 0x3f04f145, 0x3f05fcc4, 0x3f070875, 0x3f081456,
-    0x3f092067, 0x3f0a2ca8, 0x3f0b3917, 0x3f0c45b7, 0x3f0d5284, 0x3f0e5f7f, 0x3f0f6caa, 0x3f107a03,
-    0x3f118789, 0x3f12953b, 0x3f13a31d, 0x3f14b12b, 0x3f15bf64, 0x3f16cdca, 0x3f17dc5e, 0x3f18eb1b,
-    0x3f19fa05, 0x3f1b091b, 0x3f1c185c, 0x3f1d27c7, 0x3f1e375c, 0x3f1f471d, 0x3f205707, 0x3f21671b,
-    0x3f227759, 0x3f2387c2, 0x3f249852, 0x3f25a90c, 0x3f26b9ef, 0x3f27cafb, 0x3f28dc30, 0x3f29ed8b,
-    0x3f2aff11, 0x3f2c10bd, 0x3f2d2290, 0x3f2e348b, 0x3f2f46ad, 0x3f3058f7, 0x3f316b66, 0x3f327dfd,
-    0x3f3390ba, 0x3f34a39d, 0x3f35b6a7, 0x3f36c9d6, 0x3f37dd2b, 0x3f38f0a5, 0x3f3a0443, 0x3f3b1808,
-    0x3f3c2bf2, 0x3f3d4000, 0x3f3e5434, 0x3f3f688c, 0x3f407d07, 0x3f4191a8, 0x3f42a66c, 0x3f43bb54,
-    0x3f44d05f, 0x3f45e58e, 0x3f46fadf, 0x3f481054, 0x3f4925ed, 0x3f4a3ba8, 0x3f4b5186, 0x3f4c6789,
-    0x3f4d7daa, 0x3f4e93f0, 0x3f4faa57, 0x3f50c0e0, 0x3f51d78b, 0x3f52ee58, 0x3f540545, 0x3f551c55,
-    0x3f563386, 0x3f574ad7, 0x3f58624b, 0x3f5979de, 0x3f5a9191, 0x3f5ba965, 0x3f5cc15b, 0x3f5dd971,
-    0x3f5ef1a6, 0x3f6009fc, 0x3f612272, 0x3f623b08, 0x3f6353bc, 0x3f646c90, 0x3f658586, 0x3f669e98,
-    0x3f67b7cb, 0x3f68d11b, 0x3f69ea8d, 0x3f6b041b, 0x3f6c1dc9, 0x3f6d3795, 0x3f6e5180, 0x3f6f6b8b,
-    0x3f7085b2, 0x3f719ff7, 0x3f72ba5b, 0x3f73d4dc, 0x3f74ef7c, 0x3f760a38, 0x3f772512, 0x3f78400b,
-    0x3f795b20, 0x3f7a7651, 0x3f7b91a2, 0x3f7cad0e, 0x3f7dc896, 0x3f7ee43c, 0x3f800000, 0x3f800000
-};
+    static const XMVECTORF32 Cutoff = { 0.04045f, 0.04045f, 0.04045f, 1.f };
+    static const XMVECTORF32 ILinear = { 1.f/12.92f, 1.f/12.92f, 1.f/12.92f, 1.f };
+    static const XMVECTORF32 Scale = { 1.f/1.055f, 1.f/1.055f, 1.f/1.055f, 1.f };
+    static const XMVECTORF32 Bias = { 0.055f, 0.055f, 0.055f, 0.f };
+    static const XMVECTORF32 Gamma = { 2.4f, 2.4f, 2.4f, 1.f };
 
-#pragma prefast(suppress : 25000, "FXMVECTOR is 16 bytes")
-static inline XMVECTOR _TableDecodeGamma22( FXMVECTOR v )
-{
-    float f[4];
-    XMStoreFloat4( (XMFLOAT4*)f, v );
-
-    for( size_t i=0; i < 4; ++i )
-    {
-        float f2 = f[i] * f[i] * 254.0f;
-        uint32_t  i2 = static_cast<uint32_t>(f2);
-        i2 = std::min<uint32_t>( i2, _countof(g_fDecodeGamma22)-2 );
-
-        float fS = f2 - (float) i2;
-        float fA = ((float *) g_fDecodeGamma22)[i2];
-        float fB = ((float *) g_fDecodeGamma22)[i2 + 1];
-
-        f[i] = fA + fS * (fB - fA);
-    }
-
-    return XMLoadFloat4( (XMFLOAT4*)f );
+    XMVECTOR V = XMVectorSaturate(srgb);
+    XMVECTOR V0 = XMVectorMultiply( V, ILinear );
+    XMVECTOR V1 = XMVectorPow( (V + Bias) * Scale, Gamma );
+    XMVECTOR select = XMVectorGreater( V, Cutoff );
+    V = XMVectorSelect( V0, V1, select );
+    return XMVectorSelect( srgb, V, g_XMSelect1110 );
 }
 
 _Use_decl_annotations_
@@ -2077,18 +1989,13 @@ bool _LoadScanlineLinear( XMVECTOR* pDestination, size_t count,
 
     if ( _LoadScanline( pDestination, count, pSource, size, format ) )
     {
-        // sRGB input processing (sRGB -> RGB)
+        // sRGB input processing (sRGB -> Linear RGB)
         if ( flags & TEX_FILTER_SRGB_IN )
         {
             XMVECTOR* ptr = pDestination;
-            for( size_t i=0; i < count; ++i )
+            for( size_t i=0; i < count; ++i, ++ptr )
             {
-                // rgb = rgb^(2.2); a=a
-                XMVECTOR v = *ptr;
-                // Use table instead of XMVectorPow( v, [2.2f 2.2f 2.2f 1]).
-                // Note table lookup will also saturate the result
-                XMVECTOR v1 = _TableDecodeGamma22( v );
-                *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
+                *ptr = SRGBToRGB( *ptr );
             }
         }
 
@@ -2297,20 +2204,15 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
         flags &= ~(TEX_FILTER_SRGB_IN|TEX_FILTER_SRGB_OUT);
     }
 
-    // sRGB input processing (sRGB -> RGB)
+    // sRGB input processing (sRGB -> Linear RGB)
     if ( flags & TEX_FILTER_SRGB_IN )
     {
         if ( !(in->flags & CONVF_DEPTH) && ( (in->flags & CONVF_FLOAT) || (in->flags & CONVF_UNORM) ) )
         {
             XMVECTOR* ptr = pBuffer;
-            for( size_t i=0; i < count; ++i )
+            for( size_t i=0; i < count; ++i, ++ptr )
             {
-                // rgb = rgb^(2.2); a=a
-                XMVECTOR v = *ptr;
-                // Use table instead of XMVectorPow( v, [2.2f 2.2f 2.2f 1]).
-                // Note table lookup will also saturate the result
-                XMVECTOR v1 = _TableDecodeGamma22( v );
-                *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
+                *ptr = SRGBToRGB( *ptr );
             }
         }
     }
@@ -2502,20 +2404,15 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
         }
     }
 
-    // sRGB output processing (RGB -> sRGB)
+    // sRGB output processing (Linear RGB -> sRGB)
     if ( flags & TEX_FILTER_SRGB_OUT )
     {
         if ( !(out->flags & CONVF_DEPTH) && ( (out->flags & CONVF_FLOAT) || (out->flags & CONVF_UNORM) ) )
         {
             XMVECTOR* ptr = pBuffer;
-            for( size_t i=0; i < count; ++i )
+            for( size_t i=0; i < count; ++i, ++ptr )
             {
-                // rgb = rgb^(1/2.2); a=a
-                XMVECTOR v = *ptr;
-                XMVECTOR v1 = _TableEncodeGamma22( v );
-                // Use table instead of XMVectorPow( v, [1/2.2f 1/2.2f 1/2.2f 1]).
-                // Note table lookup will also saturate the result
-                *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
+                *ptr = RGBToSRGB( *ptr );
             }
         }
     }
