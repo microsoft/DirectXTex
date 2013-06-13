@@ -173,7 +173,7 @@ inline void _CreateCubicFilter( _In_ size_t source, _In_ size_t dest, _In_ bool 
 
     for( size_t u = 0; u < dest; ++u )
     {
-        float srcB = ( float(u) + 0.5f ) * scale + 0.5f;
+        float srcB = ( float(u) + 0.5f ) * scale - 0.5f;
 
         ptrdiff_t isrcB = bounduvw( ptrdiff_t(srcB), source - 1, wrap, mirror );
         ptrdiff_t isrcA = bounduvw( isrcB - 1, source - 1, wrap, mirror );
@@ -191,7 +191,6 @@ inline void _CreateCubicFilter( _In_ size_t source, _In_ size_t dest, _In_ bool 
     }
 }
 
-// Bicubic B-Spline
 #define CUBIC_INTERPOLATE( res, dx, p0, p1, p2, p3 ) \
 { \
     XMVECTOR a0 = (p1); \
