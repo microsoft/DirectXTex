@@ -15,15 +15,19 @@
 
 #include "directxtexp.h"
 
+#include "filters.h"
+
 namespace DirectX
 {
+
+//-------------------------------------------------------------------------------------
+// WIC related helper functions
+//-------------------------------------------------------------------------------------
 
 extern HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBitmap* original,
                                              _In_ size_t newWidth, _In_ size_t newHeight, _In_ DWORD filter, _Inout_ const Image* img );
 
-//-------------------------------------------------------------------------------------
-// Do image resize using WIC
-//-------------------------------------------------------------------------------------
+//--- Do image resize using WIC ---
 static HRESULT _PerformResizeUsingWIC( _In_ const Image& srcImage, _In_ DWORD filter,
                                        _In_ const WICPixelFormatGUID& pfGUID, _In_ const Image& destImage )
 {
@@ -109,9 +113,7 @@ static HRESULT _PerformResizeUsingWIC( _In_ const Image& srcImage, _In_ DWORD fi
 }
 
 
-//-------------------------------------------------------------------------------------
-// Do conversion, resize using WIC, conversion cycle
-//-------------------------------------------------------------------------------------
+//--- Do conversion, resize using WIC, conversion cycle ---
 static HRESULT _PerformResizeViaF32( _In_ const Image& srcImage, _In_ DWORD filter, _In_ const Image& destImage )
 {
     if ( !srcImage.pixels || !destImage.pixels )
@@ -149,6 +151,470 @@ static HRESULT _PerformResizeViaF32( _In_ const Image& srcImage, _In_ DWORD filt
         return hr;
 
     return S_OK;
+}
+
+
+//--- determine when to use WIC vs. non-WIC paths ---
+static bool _UseWICFiltering( _In_ DXGI_FORMAT format, _In_ DWORD filter )
+{
+    if ( filter & TEX_FILTER_FORCE_NON_WIC )
+    {
+        // Explicit flag indicates use of non-WIC code paths
+        return false;
+    }
+
+    if ( filter & TEX_FILTER_FORCE_WIC )
+    {
+        // Explicit flag to use WIC code paths, skips all the case checks below
+        return true;
+    }
+
+    if ( IsSRGB(format) || (filter & TEX_FILTER_SRGB) )
+    {
+        // Use non-WIC code paths for sRGB correct filtering
+        return false;
+    }
+
+    static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
+
+    switch ( filter & TEX_FILTER_MASK )
+    {
+    case TEX_FILTER_LINEAR:
+        if ( filter & TEX_FILTER_WRAP )
+        {
+            // WIC only supports 'clamp' semantics (MIRROR is equivalent to clamp for linear)
+            return false;
+        }
+
+        if ( BitsPerColor(format) > 8 )
+        {
+            // Avoid the WIC bitmap scaler when doing Linear filtering of XR/HDR formats
+            return false;
+        }
+        break;
+
+    case TEX_FILTER_CUBIC:
+        if ( filter & ( TEX_FILTER_WRAP | TEX_FILTER_MIRROR ) )
+        {
+            // WIC only supports 'clamp' semantics
+            return false;
+        }
+
+        if ( BitsPerColor(format) > 8 )
+        {
+            // Avoid the WIC bitmap scaler when doing Cubic filtering of XR/HDR formats
+            return false;
+        }
+        break;
+    }
+
+    return true;
+}
+
+
+//-------------------------------------------------------------------------------------
+// Resize custom filters
+//-------------------------------------------------------------------------------------
+
+//--- Point Filter ---
+static HRESULT _ResizePointFilter( _In_ const Image& srcImage, _In_ const Image& destImage )
+{
+    assert( srcImage.pixels && destImage.pixels );
+    assert( srcImage.format == destImage.format );
+
+    // Allocate temporary space (2 scanlines)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc(
+                                         ( sizeof(XMVECTOR) * (srcImage.width + destImage.width ) ), 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    XMVECTOR* target = scanline.get();
+
+    XMVECTOR* row = target + destImage.width;
+
+#ifdef _DEBUG
+    memset( row, 0xCD, sizeof(XMVECTOR)*srcImage.width );
+#endif
+
+    const uint8_t* pSrc = srcImage.pixels;
+    uint8_t* pDest = destImage.pixels;
+
+    size_t rowPitch = srcImage.rowPitch;
+
+    size_t xinc = ( srcImage.width << 16 ) / destImage.width;
+    size_t yinc = ( srcImage.height << 16 ) / destImage.height;
+
+    size_t lasty = size_t(-1);
+
+    size_t sy = 0;
+    for( size_t y = 0; y < destImage.height; ++y )
+    {
+        if ( (lasty ^ sy) >> 16 )
+        {
+            if ( !_LoadScanline( row, srcImage.width, pSrc + ( rowPitch * (sy >> 16) ), rowPitch, srcImage.format ) )
+                return E_FAIL;
+            lasty = sy;
+        }
+
+        size_t sx = 0;
+        for( size_t x = 0; x < destImage.width; ++x )
+        {
+            target[ x ] = row[ sx >> 16 ];
+            sx += xinc;
+        }
+
+        if ( !_StoreScanline( pDest, destImage.rowPitch, destImage.format, target, destImage.width ) )
+            return E_FAIL;
+        pDest += destImage.rowPitch;
+
+        sy += yinc;
+    }
+
+    return S_OK;
+}
+
+
+//--- Box Filter ---
+static HRESULT _ResizeBoxFilter( _In_ const Image& srcImage, _In_ DWORD filter, _In_ const Image& destImage )
+{
+    assert( srcImage.pixels && destImage.pixels );
+    assert( srcImage.format == destImage.format );
+
+    if ( ( (srcImage.width << 1) != destImage.width ) || ( (srcImage.height << 1) != destImage.height ) )
+        return E_FAIL;
+
+    // Allocate temporary space (3 scanlines)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc(
+                                         ( sizeof(XMVECTOR) * ( srcImage.width*2 + destImage.width ) ), 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    XMVECTOR* target = scanline.get();
+
+    XMVECTOR* urow0 = target + destImage.width;
+    XMVECTOR* urow1 = urow0 + srcImage.width;
+
+#ifdef _DEBUG
+    memset( urow0, 0xCD, sizeof(XMVECTOR)*srcImage.width );
+    memset( urow1, 0xDD, sizeof(XMVECTOR)*srcImage.width );
+#endif
+
+    const XMVECTOR* urow2 = urow0 + 1;
+    const XMVECTOR* urow3 = urow1 + 1;
+
+    const uint8_t* pSrc = srcImage.pixels;
+    uint8_t* pDest = destImage.pixels;
+
+    size_t rowPitch = srcImage.rowPitch;
+
+    for( size_t y = 0; y < destImage.height; ++y )
+    {
+        if ( !_LoadScanlineLinear( urow0, srcImage.width, pSrc, rowPitch, srcImage.format, filter ) )
+            return E_FAIL;
+        pSrc += rowPitch;
+
+        if ( urow0 != urow1 )
+        {
+            if ( !_LoadScanlineLinear( urow1, srcImage.width, pSrc, rowPitch, srcImage.format, filter ) )
+                return E_FAIL;
+            pSrc += rowPitch;
+        }
+
+        for( size_t x = 0; x < destImage.width; ++x )
+        {
+            size_t x2 = x << 1;
+
+            AVERAGE4( target[ x ], urow0[ x2 ], urow1[ x2 ], urow2[ x2 ], urow3[ x2 ] );
+        }
+
+        if ( !_StoreScanlineLinear( pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter ) )
+            return E_FAIL;
+        pDest += destImage.rowPitch;
+    }
+
+    return S_OK;
+}
+
+
+//--- Linear Filter ---
+static HRESULT _ResizeLinearFilter( _In_ const Image& srcImage, _In_ DWORD filter, _In_ const Image& destImage )
+{
+    assert( srcImage.pixels && destImage.pixels );
+    assert( srcImage.format == destImage.format );
+
+    // Allocate temporary space (3 scanlines, plus X and Y filters)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc(
+                                         ( sizeof(XMVECTOR) * ( srcImage.width*2 + destImage.width ) ), 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    std::unique_ptr<LinearFilter[]> lf( new (std::nothrow) LinearFilter[ destImage.width + destImage.height ] );
+    if ( !lf )
+        return E_OUTOFMEMORY;
+
+    LinearFilter* lfX = lf.get();
+    LinearFilter* lfY = lf.get() + destImage.width;
+
+    _CreateLinearFilter( srcImage.width, destImage.width, (filter & TEX_FILTER_WRAP_U) != 0, lfX );
+    _CreateLinearFilter( srcImage.height, destImage.height, (filter & TEX_FILTER_WRAP_V) != 0, lfY );
+
+    XMVECTOR* target = scanline.get();
+
+    XMVECTOR* row0 = target + destImage.width;
+    XMVECTOR* row1 = row0 + srcImage.width;
+
+#ifdef _DEBUG
+    memset( row0, 0xCD, sizeof(XMVECTOR)*srcImage.width );
+    memset( row1, 0xDD, sizeof(XMVECTOR)*srcImage.width );
+#endif
+
+    const uint8_t* pSrc = srcImage.pixels;
+    uint8_t* pDest = destImage.pixels;
+
+    size_t rowPitch = srcImage.rowPitch;
+
+    size_t u0 = size_t(-1);
+    size_t u1 = size_t(-1);
+
+    for( size_t y = 0; y < destImage.height; ++y )
+    {
+        auto& toY = lfY[ y ];
+
+        if ( toY.u0 != u0 )
+        {
+            if ( toY.u0 != u1 )
+            {
+                u0 = toY.u0;
+
+                if ( !_LoadScanlineLinear( row0, srcImage.width, pSrc + (rowPitch * u0), rowPitch, srcImage.format, filter ) )
+                    return E_FAIL;
+            }
+            else
+            {
+                u0 = u1;
+                u1 = size_t(-1);
+
+                std::swap( row0, row1 );
+            }
+        }
+
+        if ( toY.u1 != u1 )
+        {
+            u1 = toY.u1;
+
+            if ( !_LoadScanlineLinear( row1, srcImage.width, pSrc + (rowPitch * u1), rowPitch, srcImage.format, filter ) )
+                return E_FAIL;
+        }
+
+        for( size_t x = 0; x < destImage.width; ++x )
+        {
+            auto& toX = lfX[ x ];
+
+            BILINEAR_INTERPOLATE( target[x], toX, toY, row0, row1 );
+        }
+
+        if ( !_StoreScanlineLinear( pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter ) )
+            return E_FAIL;
+        pDest += destImage.rowPitch;
+    }
+
+    return S_OK;
+}
+
+
+//--- Cubic Filter ---
+static HRESULT _ResizeCubicFilter( _In_ const Image& srcImage, _In_ DWORD filter, _In_ const Image& destImage )
+{
+    assert( srcImage.pixels && destImage.pixels );
+    assert( srcImage.format == destImage.format );
+
+    // Allocate temporary space (5 scanlines, plus X and Y filters)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc(
+                                         ( sizeof(XMVECTOR) * ( srcImage.width*4 + destImage.width ) ), 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    std::unique_ptr<CubicFilter[]> cf( new (std::nothrow) CubicFilter[ destImage.width + destImage.height ] );
+    if ( !cf )
+        return E_OUTOFMEMORY;
+
+    CubicFilter* cfX = cf.get();
+    CubicFilter* cfY = cf.get() + destImage.width;
+
+    _CreateCubicFilter( srcImage.width, destImage.width, (filter & TEX_FILTER_WRAP_U) != 0, (filter & TEX_FILTER_MIRROR_U) != 0, cfX );
+    _CreateCubicFilter( srcImage.height, destImage.height, (filter & TEX_FILTER_WRAP_V) != 0, (filter & TEX_FILTER_MIRROR_V) != 0, cfY );
+
+    XMVECTOR* target = scanline.get();
+
+    XMVECTOR* row0 = target + destImage.width;
+    XMVECTOR* row1 = row0 + srcImage.width;
+    XMVECTOR* row2 = row0 + srcImage.width*2;
+    XMVECTOR* row3 = row0 + srcImage.width*3;
+
+#ifdef _DEBUG
+    memset( row0, 0xCD, sizeof(XMVECTOR)*srcImage.width );
+    memset( row1, 0xDD, sizeof(XMVECTOR)*srcImage.width );
+    memset( row2, 0xED, sizeof(XMVECTOR)*srcImage.width );
+    memset( row3, 0xFD, sizeof(XMVECTOR)*srcImage.width );
+#endif
+
+    const uint8_t* pSrc = srcImage.pixels;
+    uint8_t* pDest = destImage.pixels;
+
+    size_t rowPitch = srcImage.rowPitch;
+
+    size_t u0 = size_t(-1);
+    size_t u1 = size_t(-1);
+    size_t u2 = size_t(-1);
+    size_t u3 = size_t(-1);
+
+    for( size_t y = 0; y < destImage.height; ++y )
+    {
+        auto& toY = cfY[ y ];
+
+        // Scanline 1
+        if ( toY.u0 != u0 )
+        {
+            if ( toY.u0 != u1 && toY.u0 != u2 && toY.u0 != u3 )
+            {
+                u0 = toY.u0;
+
+                if ( !_LoadScanlineLinear( row0, srcImage.width, pSrc + (rowPitch * u0), rowPitch, srcImage.format, filter ) )
+                    return E_FAIL;
+            }
+            else if ( toY.u0 == u1 )
+            {
+                u0 = u1;
+                u1 = size_t(-1);
+
+                std::swap( row0, row1 );
+            }
+            else if ( toY.u0 == u2 )
+            {
+                u0 = u2;
+                u2 = size_t(-1);
+
+                std::swap( row0, row2 );
+            }
+            else if ( toY.u0 == u3 )
+            {
+                u0 = u3;
+                u3 = size_t(-1);
+
+                std::swap( row0, row3 );
+            }
+        }
+
+        // Scanline 2
+        if ( toY.u1 != u1 )
+        {
+            if ( toY.u1 != u2 && toY.u1 != u3 )
+            {
+                u1 = toY.u1;
+
+                if ( !_LoadScanlineLinear( row1, srcImage.width, pSrc + (rowPitch * u1), rowPitch, srcImage.format, filter ) )
+                    return E_FAIL;
+            }
+            else if ( toY.u1 == u2 )
+            {
+                u1 = u2;
+                u2 = size_t(-1);
+
+                std::swap( row1, row2 );
+            }
+            else if ( toY.u1 == u3 )
+            {
+                u1 = u3;
+                u3 = size_t(-1);
+
+                std::swap( row1, row3 );
+            }
+        }
+
+        // Scanline 3
+        if ( toY.u2 != u2 )
+        {
+            if ( toY.u2 != u3 )
+            {
+                u2 = toY.u2;
+
+                if ( !_LoadScanlineLinear( row2, srcImage.width, pSrc + (rowPitch * u2), rowPitch, srcImage.format, filter ) )
+                    return E_FAIL;
+            }
+            else
+            {
+                u2 = u3;
+                u3 = size_t(-1);
+
+                std::swap( row2, row3 );
+            }
+        }
+
+        // Scanline 4
+        if ( toY.u3 != u3 )
+        {
+            u3 = toY.u3;
+
+            if ( !_LoadScanlineLinear( row3, srcImage.width, pSrc + (rowPitch * u3), rowPitch, srcImage.format, filter ) )
+                return E_FAIL;
+        }
+
+        for( size_t x = 0; x < destImage.width; ++x )
+        {
+            auto& toX = cfX[ x ];
+
+            XMVECTOR C0, C1, C2, C3;
+
+            CUBIC_INTERPOLATE( C0, toX.x, row0[ toX.u0 ], row0[ toX.u1 ], row0[ toX.u2 ], row0[ toX.u3 ] );
+            CUBIC_INTERPOLATE( C1, toX.x, row1[ toX.u0 ], row1[ toX.u1 ], row1[ toX.u2 ], row1[ toX.u3 ] );
+            CUBIC_INTERPOLATE( C2, toX.x, row2[ toX.u0 ], row2[ toX.u1 ], row2[ toX.u2 ], row2[ toX.u3 ] );
+            CUBIC_INTERPOLATE( C3, toX.x, row3[ toX.u0 ], row3[ toX.u1 ], row3[ toX.u2 ], row3[ toX.u3 ] );
+
+            CUBIC_INTERPOLATE( target[x], toY.x, C0, C1, C2, C3 );
+        }
+
+        if ( !_StoreScanlineLinear( pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter ) )
+            return E_FAIL;
+        pDest += destImage.rowPitch;
+    }
+
+    return S_OK;
+}
+
+
+//--- Custom filter resize ---
+static HRESULT _PerformResizeUsingCustomFilters( _In_ const Image& srcImage, _In_ DWORD filter, _In_ const Image& destImage )
+{
+    if ( !srcImage.pixels || !destImage.pixels )
+        return E_POINTER;
+
+    static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
+
+    DWORD filter_select = ( filter & TEX_FILTER_MASK );
+    if ( !filter_select )
+    {
+        // Default filter choice
+        filter_select = ( ( (srcImage.width << 1) == destImage.width ) && ( (srcImage.height << 1) == destImage.height ) )
+                        ? TEX_FILTER_BOX : TEX_FILTER_LINEAR;
+    }
+
+    switch( filter_select )
+    {
+    case TEX_FILTER_POINT:
+        return _ResizePointFilter( srcImage, destImage );
+        
+    case TEX_FILTER_BOX:
+        return _ResizeBoxFilter( srcImage, filter, destImage );
+
+    case TEX_FILTER_LINEAR:
+        return _ResizeLinearFilter( srcImage, filter, destImage );
+
+    case TEX_FILTER_CUBIC:
+        return _ResizeCubicFilter( srcImage, filter, destImage );
+
+    default:
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+    }
 }
 
 
@@ -190,18 +656,23 @@ HRESULT Resize( const Image& srcImage, size_t width, size_t height, DWORD filter
     if ( !rimage )
         return E_POINTER;
 
-    // WIC only supports CLAMP
-
-    WICPixelFormatGUID pfGUID;
-    if ( _DXGIToWIC( srcImage.format, pfGUID, true ) )
+    if ( _UseWICFiltering( srcImage.format, filter ) )
     {
-        // Case 1: Source format is supported by Windows Imaging Component
-        hr = _PerformResizeUsingWIC( srcImage, filter, pfGUID, *rimage );
+        WICPixelFormatGUID pfGUID;
+        if ( _DXGIToWIC( srcImage.format, pfGUID, true ) )
+        {
+            // Case 1: Source format is supported by Windows Imaging Component
+            hr = _PerformResizeUsingWIC( srcImage, filter, pfGUID, *rimage );
+        }
+        else
+        {
+            // Case 2: Source format is not supported by WIC, so we have to convert, resize, and convert back
+            hr = _PerformResizeViaF32( srcImage, filter, *rimage );
+        }
     }
     else
     {
-        // Case 2: Source format is not supported by WIC, so we have to convert, resize, and convert back
-        hr = _PerformResizeViaF32( srcImage, filter, *rimage );
+        hr = _PerformResizeUsingCustomFilters( srcImage, filter, *rimage );
     }
 
     if ( FAILED(hr) )
@@ -237,8 +708,10 @@ HRESULT Resize( const Image* srcImages, size_t nimages, const TexMetadata& metad
     if ( FAILED(hr) )
         return hr;
 
-    WICPixelFormatGUID pfGUID;
-    bool wicpf = _DXGIToWIC( metadata.format, pfGUID, true );
+    bool usewic = _UseWICFiltering( metadata.format, filter );
+
+    WICPixelFormatGUID pfGUID = {0};
+    bool wicpf = ( usewic ) ? _DXGIToWIC( metadata.format, pfGUID, true ) : false;
 
     switch ( metadata.dimension )
     {
@@ -277,15 +750,23 @@ HRESULT Resize( const Image* srcImages, size_t nimages, const TexMetadata& metad
             }
 #endif
 
-            if ( wicpf )
+            if ( usewic )
             {
-                // Case 1: Source format is supported by Windows Imaging Component
-                hr = _PerformResizeUsingWIC( *srcimg, filter, pfGUID, *destimg );
+                if ( wicpf )
+                {
+                    // Case 1: Source format is supported by Windows Imaging Component
+                    hr = _PerformResizeUsingWIC( *srcimg, filter, pfGUID, *destimg );
+                }
+                else
+                {
+                    // Case 2: Source format is not supported by WIC, so we have to convert, resize, and convert back
+                    hr = _PerformResizeViaF32( *srcimg, filter, *destimg );
+                }
             }
             else
             {
-                // Case 2: Source format is not supported by WIC, so we have to convert, resize, and convert back
-                hr = _PerformResizeViaF32( *srcimg, filter, *destimg );
+                // Case 3: not using WIC resizing
+                hr = _PerformResizeUsingCustomFilters( *srcimg, filter, *destimg );
             }
 
             if ( FAILED(hr) )
@@ -330,15 +811,23 @@ HRESULT Resize( const Image* srcImages, size_t nimages, const TexMetadata& metad
             }
 #endif
 
-            if ( wicpf )
+            if ( usewic )
             {
-                // Case 1: Source format is supported by Windows Imaging Component
-                hr = _PerformResizeUsingWIC( *srcimg, filter, pfGUID, *destimg );
+                if ( wicpf )
+                {
+                    // Case 1: Source format is supported by Windows Imaging Component
+                    hr = _PerformResizeUsingWIC( *srcimg, filter, pfGUID, *destimg );
+                }
+                else
+                {
+                    // Case 2: Source format is not supported by WIC, so we have to convert, resize, and convert back
+                    hr = _PerformResizeViaF32( *srcimg, filter, *destimg );
+                }
             }
             else
             {
-                // Case 2: Source format is not supported by WIC, so we have to convert, resize, and convert back
-                hr = _PerformResizeViaF32( *srcimg, filter, *destimg );
+                // Case 3: not using WIC resizing
+                hr = _PerformResizeUsingCustomFilters( *srcimg, filter, *destimg );
             }
 
             if ( FAILED(hr) )
