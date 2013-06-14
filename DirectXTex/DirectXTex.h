@@ -27,7 +27,7 @@
 #include <dxgiformat.h>
 #include <d3d11.h>
 
-#define DIRECTX_TEX_VERSION 102
+#define DIRECTX_TEX_VERSION 110
 
 #if defined(_MSC_VER) && (_MSC_VER<1610) && !defined(_In_reads_)
 #define _Analysis_assume_(exp)
@@ -403,6 +403,7 @@ namespace DirectX
         TEX_FILTER_CUBIC            = 0x300000,
         TEX_FILTER_BOX              = 0x400000,
         TEX_FILTER_FANT             = 0x400000, // Equiv to Box filtering for mipmap generation
+        TEX_FILTER_TRIANGLE         = 0x500000,
             // Filtering mode to use for any required image resizing
 
         TEX_FILTER_SRGB_IN          = 0x1000000,

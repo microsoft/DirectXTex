@@ -417,6 +417,10 @@ static bool _UseWICFiltering( _In_ DXGI_FORMAT format, _In_ DWORD filter )
             return false;
         }
         break;
+
+    case TEX_FILTER_TRIANGLE:
+        // WIC does not implement this filter
+        return false;
     }
 
     return true;
@@ -1064,6 +1068,193 @@ static HRESULT _Generate2DMipsCubicFilter( _In_ size_t levels, _In_ DWORD filter
             if ( !_StoreScanlineLinear( pDest, dest->rowPitch, dest->format, target, nwidth, filter ) )
                 return E_FAIL;
             pDest += dest->rowPitch;
+        }
+
+        if ( height > 1 )
+            height >>= 1;
+
+        if ( width > 1 )
+            width >>= 1;
+    }
+
+    return S_OK;
+}
+
+
+//--- 2D Triangle Filter ---
+static HRESULT _Generate2DMipsTriangleFilter( _In_ size_t levels, _In_ DWORD filter, _In_ const ScratchImage& mipChain, _In_ size_t item )
+{
+    if ( !mipChain.GetImages() )
+        return E_INVALIDARG;
+
+    using namespace TriangleFilter;
+
+    // This assumes that the base image is already placed into the mipChain at the top level... (see _Setup2DMips)
+
+    assert( levels > 1 );
+
+    size_t width = mipChain.GetMetadata().width;
+    size_t height = mipChain.GetMetadata().height;
+
+    // Allocate initial temporary space (1 scanline, accumulation rows, plus X and Y filters)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( sizeof(XMVECTOR) * width, 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    std::unique_ptr<TriangleRow[]> rowActive( new (std::nothrow) TriangleRow[ height ] );
+    if ( !rowActive )
+        return E_OUTOFMEMORY;
+
+    TriangleRow * rowFree = nullptr;
+
+    std::unique_ptr<Filter> tfX, tfY;
+
+    XMVECTOR* row = scanline.get();
+
+    // Resize base image to each target mip level
+    for( size_t level=1; level < levels; ++level )
+    {
+        // 2D triangle filter
+        const Image* src = mipChain.GetImage( level-1, item, 0 );
+        const Image* dest = mipChain.GetImage( level, item, 0 );
+
+        if ( !src || !dest )
+            return E_POINTER;
+
+        const uint8_t* pSrc = src->pixels;
+        size_t rowPitch = src->rowPitch;
+        const uint8_t* pEndSrc = pSrc + rowPitch * height;
+
+        uint8_t* pDest = dest->pixels;
+
+        size_t nwidth = (width > 1) ? (width >> 1) : 1;
+        HRESULT hr = _Create( width, nwidth, (filter & TEX_FILTER_WRAP_U) != 0, tfX );
+        if ( FAILED(hr) )
+            return hr;
+        
+        size_t nheight = (height > 1) ? (height >> 1) : 1;
+        hr = _Create( height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, tfY );
+        if ( FAILED(hr) )
+            return hr;
+
+#ifdef _DEBUG
+        memset( row, 0xCD, sizeof(XMVECTOR)*width );
+#endif
+
+        auto xFromEnd = reinterpret_cast<const FilterFrom*>( reinterpret_cast<const uint8_t*>( tfX.get() ) + tfX->sizeInBytes );
+        auto yFromEnd = reinterpret_cast<const FilterFrom*>( reinterpret_cast<const uint8_t*>( tfY.get() ) + tfY->sizeInBytes );
+
+        // Count times rows get written (and clear out any leftover accumulation rows from last miplevel)
+        for( FilterFrom* yFrom = tfY->from; yFrom < yFromEnd; )
+        {
+            for ( size_t j = 0; j < yFrom->count; ++j )
+            {
+                size_t v = yFrom->to[ j ].u;
+                assert( v < nheight );
+                TriangleRow* rowAcc = &rowActive.get()[ v ];
+
+                ++rowAcc->remaining;
+
+                if ( rowAcc->scanline )
+                {
+                    memset( rowAcc->scanline.get(), 0, sizeof(XMVECTOR) * nwidth );
+                }
+            }
+
+            yFrom = reinterpret_cast<FilterFrom*>( reinterpret_cast<uint8_t*>( yFrom ) + yFrom->sizeInBytes );
+        }
+
+        // Filter image
+        for( FilterFrom* yFrom = tfY->from; yFrom < yFromEnd; )
+        {
+            // Create accumulation rows as needed
+            for ( size_t j = 0; j < yFrom->count; ++j )
+            {
+                size_t v = yFrom->to[ j ].u;
+                assert( v < nheight );
+                TriangleRow* rowAcc = &rowActive.get()[ v ];
+
+                if ( !rowAcc->scanline )
+                {
+                    if ( rowFree )
+                    {
+                        // Steal and reuse scanline from 'free row' list
+                        // (it will always be at least as wide as nwidth due to loop decending order)
+                        assert( rowFree->scanline != 0 );
+                        rowAcc->scanline.reset( rowFree->scanline.release() );
+                        rowFree = rowFree->next;
+                    }
+                    else
+                    {
+                        rowAcc->scanline.reset( reinterpret_cast<XMVECTOR*>( _aligned_malloc( sizeof(XMVECTOR) * nwidth, 16 ) ) );
+                        if ( !rowAcc->scanline )
+                            return E_OUTOFMEMORY;
+                    }
+
+                    memset( rowAcc->scanline.get(), 0, sizeof(XMVECTOR) * nwidth );
+                }
+            }
+
+            // Load source scanline
+            if ( (pSrc + rowPitch) > pEndSrc )
+                return E_FAIL;
+
+            if ( !_LoadScanlineLinear( row, width, pSrc, rowPitch, src->format, filter ) )
+                return E_FAIL;
+
+            pSrc += rowPitch;
+
+            // Process row
+            size_t x = 0;
+            for( FilterFrom* xFrom = tfX->from; xFrom < xFromEnd; ++x )
+            {
+                for ( size_t j = 0; j < yFrom->count; ++j )
+                {
+                    size_t v = yFrom->to[ j ].u;
+                    assert( v < nheight );
+                    float yweight = yFrom->to[ j ].weight;
+
+                    XMVECTOR* accPtr = rowActive[ v ].scanline.get();
+                    if ( !accPtr )
+                        return E_POINTER;
+
+                    for ( size_t k = 0; k < xFrom->count; ++k )
+                    {
+                        size_t u = xFrom->to[ k ].u;
+                        assert( u < nwidth );
+
+                        XMVECTOR weight = XMVectorReplicate( yweight * xFrom->to[ k ].weight );
+
+                        assert( x < width );
+                        accPtr[ u ] = XMVectorMultiplyAdd( row[ x ], weight, accPtr[ u ] );
+                    }
+                }
+
+                xFrom = reinterpret_cast<FilterFrom*>( reinterpret_cast<uint8_t*>( xFrom ) + xFrom->sizeInBytes );
+            }
+
+            // Write completed accumulation rows
+            for ( size_t j = 0; j < yFrom->count; ++j )
+            {
+                size_t v = yFrom->to[ j ].u;
+                assert( v < nheight );
+                TriangleRow* rowAcc = &rowActive.get()[ v ];
+
+                assert( rowAcc->remaining > 0 );
+                --rowAcc->remaining;
+
+                if ( !rowAcc->remaining )
+                {
+                    if ( !_StoreScanlineLinear( pDest + (dest->rowPitch * v), dest->rowPitch, dest->format, rowAcc->scanline.get(), dest->width, filter ) )
+                        return E_FAIL;
+
+                    // Put row on freelist to reuse it's allocated scanline
+                    rowAcc->next = rowFree;
+                    rowFree = rowAcc;
+                }
+            }
+
+            yFrom = reinterpret_cast<FilterFrom*>( reinterpret_cast<uint8_t*>( yFrom ) + yFrom->sizeInBytes );
         }
 
         if ( height > 1 )
@@ -2021,6 +2212,226 @@ static HRESULT _Generate3DMipsCubicFilter( _In_ size_t depth, _In_ size_t levels
 }
 
 
+//--- 3D Triangle Filter ---
+static HRESULT _Generate3DMipsTriangleFilter( _In_ size_t depth, _In_ size_t levels, _In_ DWORD filter, _In_ const ScratchImage& mipChain )
+{
+    if ( !depth || !mipChain.GetImages() )
+        return E_INVALIDARG;
+
+    using namespace TriangleFilter;
+
+    // This assumes that the base images are already placed into the mipChain at the top level... (see _Setup3DMips)
+
+    assert( levels > 1 );
+
+    size_t width = mipChain.GetMetadata().width;
+    size_t height = mipChain.GetMetadata().height;
+
+    // Allocate initial temporary space (1 scanline, accumulation rows, plus X/Y/Z filters)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( sizeof(XMVECTOR) * width, 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    std::unique_ptr<TriangleRow[]> sliceActive( new (std::nothrow) TriangleRow[ depth ] );
+    if ( !sliceActive )
+        return E_OUTOFMEMORY;
+
+    TriangleRow * sliceFree = nullptr;
+
+    std::unique_ptr<Filter> tfX, tfY, tfZ;
+
+    XMVECTOR* row = scanline.get();
+
+    // Resize base image to each target mip level
+    for( size_t level=1; level < levels; ++level )
+    {
+        size_t nwidth = (width > 1) ? (width >> 1) : 1;
+        HRESULT hr = _Create( width, nwidth, (filter & TEX_FILTER_WRAP_U) != 0, tfX );
+        if ( FAILED(hr) )
+            return hr;
+
+        size_t nheight = (height > 1) ? (height >> 1) : 1;
+        hr = _Create( height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, tfY );
+        if ( FAILED(hr) )
+            return hr;
+
+        size_t ndepth = (depth > 1 ) ? (depth >> 1) : 1;
+        hr = _Create( depth, ndepth, (filter & TEX_FILTER_WRAP_W) != 0, tfZ );
+        if ( FAILED(hr) )
+            return hr;
+
+#ifdef _DEBUG
+        memset( row, 0xCD, sizeof(XMVECTOR)*width );
+#endif
+
+        auto xFromEnd = reinterpret_cast<const FilterFrom*>( reinterpret_cast<const uint8_t*>( tfX.get() ) + tfX->sizeInBytes );
+        auto yFromEnd = reinterpret_cast<const FilterFrom*>( reinterpret_cast<const uint8_t*>( tfY.get() ) + tfY->sizeInBytes );
+        auto zFromEnd = reinterpret_cast<const FilterFrom*>( reinterpret_cast<const uint8_t*>( tfZ.get() ) + tfZ->sizeInBytes );
+
+        // Count times slices get written (and clear out any leftover accumulation slices from last miplevel)
+        for( FilterFrom* zFrom = tfZ->from; zFrom < zFromEnd; )
+        {
+            for ( size_t j = 0; j < zFrom->count; ++j )
+            {
+                size_t w = zFrom->to[ j ].u;
+                assert( w < ndepth );
+                TriangleRow* sliceAcc = &sliceActive.get()[ w ];
+
+                ++sliceAcc->remaining;
+
+                if ( sliceAcc->scanline )
+                {
+                    memset( sliceAcc->scanline.get(), 0, sizeof(XMVECTOR) * nwidth * nheight );
+                }
+            }
+
+            zFrom = reinterpret_cast<FilterFrom*>( reinterpret_cast<uint8_t*>( zFrom ) + zFrom->sizeInBytes );
+        }
+
+        // Filter image
+        size_t z = 0;
+        for( FilterFrom* zFrom = tfZ->from; zFrom < zFromEnd; ++z )
+        {
+            // Create accumulation slices as needed
+            for ( size_t j = 0; j < zFrom->count; ++j )
+            {
+                size_t w = zFrom->to[ j ].u;
+                assert( w < ndepth );
+                TriangleRow* sliceAcc = &sliceActive.get()[ w ];
+
+                if ( !sliceAcc->scanline )
+                {
+                    if ( sliceFree )
+                    {
+                        // Steal and reuse scanline from 'free slice' list
+                        // (it will always be at least as large as nwidth*nheight due to loop decending order)
+                        assert( sliceFree->scanline != 0 );
+                        sliceAcc->scanline.reset( sliceFree->scanline.release() );
+                        sliceFree = sliceFree->next;
+                    }
+                    else
+                    {
+                        sliceAcc->scanline.reset( reinterpret_cast<XMVECTOR*>( _aligned_malloc( sizeof(XMVECTOR) * nwidth * nheight, 16 ) ) );
+                        if ( !sliceAcc->scanline )
+                            return E_OUTOFMEMORY;
+                    }
+
+                    memset( sliceAcc->scanline.get(), 0, sizeof(XMVECTOR) * nwidth * nheight );
+                }
+            }
+
+            assert( z < depth );
+            const Image* src = mipChain.GetImage( level-1, 0, z );
+            if ( !src )
+                return E_POINTER;
+
+            const uint8_t* pSrc = src->pixels;
+            size_t rowPitch = src->rowPitch;
+            const uint8_t* pEndSrc = pSrc + rowPitch * height;
+
+            for( FilterFrom* yFrom = tfY->from; yFrom < yFromEnd; )
+            {
+                // Load source scanline
+                if ( (pSrc + rowPitch) > pEndSrc )
+                    return E_FAIL;
+
+                if ( !_LoadScanlineLinear( row, width, pSrc, rowPitch, src->format, filter ) )
+                    return E_FAIL;
+
+                pSrc += rowPitch;
+
+                // Process row
+                size_t x = 0;
+                for( FilterFrom* xFrom = tfX->from; xFrom < xFromEnd; ++x )
+                {
+                    for ( size_t j = 0; j < zFrom->count; ++j )
+                    {
+                        size_t w = zFrom->to[ j ].u;
+                        assert( w < ndepth );
+                        float zweight = zFrom->to[ j ].weight;
+
+                        XMVECTOR* accSlice = sliceActive[ w ].scanline.get();
+                        if ( !accSlice )
+                            return E_POINTER;
+
+                        for ( size_t k = 0; k < yFrom->count; ++k )
+                        {
+                            size_t v = yFrom->to[ k ].u;
+                            assert( v < nheight );
+                            float yweight = yFrom->to[ k ].weight;
+
+                            XMVECTOR * accPtr = accSlice + v * nwidth;
+
+                            for ( size_t l = 0; l < xFrom->count; ++l )
+                            {
+                                size_t u = xFrom->to[ l ].u;
+                                assert( u < nwidth );
+
+                                XMVECTOR weight = XMVectorReplicate( zweight * yweight * xFrom->to[ l ].weight );
+
+                                assert( x < width );
+                                accPtr[ u ] = XMVectorMultiplyAdd( row[ x ], weight, accPtr[ u ] );
+                            }
+                        }
+                    }
+
+                    xFrom = reinterpret_cast<FilterFrom*>( reinterpret_cast<uint8_t*>( xFrom ) + xFrom->sizeInBytes );
+                }
+
+                yFrom = reinterpret_cast<FilterFrom*>( reinterpret_cast<uint8_t*>( yFrom ) + yFrom->sizeInBytes );
+            }
+
+            // Write completed accumulation slices
+            for ( size_t j = 0; j < zFrom->count; ++j )
+            {
+                size_t w = zFrom->to[ j ].u;
+                assert( w < ndepth );
+                TriangleRow* sliceAcc = &sliceActive.get()[ w ];
+
+                assert( sliceAcc->remaining > 0 );
+                --sliceAcc->remaining;
+
+                if ( !sliceAcc->remaining )
+                {
+                    const Image* dest = mipChain.GetImage( level, 0, w );
+                    XMVECTOR* pAccSrc = sliceAcc->scanline.get();
+                    if ( !dest || !pAccSrc )
+                        return E_POINTER;
+
+                    uint8_t* pDest = dest->pixels;
+
+                    for( size_t h = 0; h < nheight; ++h )
+                    {
+                        if ( !_StoreScanlineLinear( pDest, dest->rowPitch, dest->format, pAccSrc, dest->width, filter ) )
+                            return E_FAIL;
+
+                        pDest += dest->rowPitch;
+                        pAccSrc += nwidth;
+                    }
+
+                    // Put slice on freelist to reuse it's allocated scanline
+                    sliceAcc->next = sliceFree;
+                    sliceFree = sliceAcc;
+                }
+            }
+
+            zFrom = reinterpret_cast<FilterFrom*>( reinterpret_cast<uint8_t*>( zFrom ) + zFrom->sizeInBytes );
+        }
+
+        if ( height > 1 )
+            height >>= 1;
+
+        if ( width > 1 )
+            width >>= 1;
+
+        if ( depth > 1 )
+            depth >>= 1;
+    }
+
+    return S_OK;
+}
+
+
 //=====================================================================================
 // Entry-points
 //=====================================================================================
@@ -2168,6 +2579,16 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
                     return hr;
 
                 hr = _Generate2DMipsCubicFilter( levels, filter, mipChain, 0 );
+                if ( FAILED(hr) )
+                    mipChain.Release();
+                return hr;
+
+            case TEX_FILTER_TRIANGLE:
+                hr = _Setup2DMips( &baseImage, 1, mdata, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                hr = _Generate2DMipsTriangleFilter( levels, filter, mipChain, 0 );
                 if ( FAILED(hr) )
                     mipChain.Release();
                 return hr;
@@ -2359,6 +2780,19 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
                 }
                 return hr;
 
+            case TEX_FILTER_TRIANGLE:
+                hr = _Setup2DMips( &baseImages[0], metadata.arraySize, mdata2, mipChain );
+                if ( FAILED(hr) )
+                    return hr;
+
+                for( size_t item = 0; item < metadata.arraySize; ++item )
+                {
+                    hr = _Generate2DMipsTriangleFilter( levels, filter, mipChain, item );
+                    if ( FAILED(hr) )
+                        mipChain.Release();
+                }
+                return hr;
+
             default:
                 return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
         }
@@ -2452,6 +2886,16 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
             return hr;
 
         hr = _Generate3DMipsCubicFilter( depth, levels, filter, mipChain );
+        if ( FAILED(hr) )
+            mipChain.Release();
+        return hr;
+
+    case TEX_FILTER_TRIANGLE:
+        hr = _Setup3DMips( baseImages, depth, levels, mipChain );
+        if ( FAILED(hr) )
+            return hr;
+
+        hr = _Generate3DMipsTriangleFilter( depth, levels, filter, mipChain );
         if ( FAILED(hr) )
             mipChain.Release();
         return hr;
@@ -2550,6 +2994,16 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
             return hr;
 
         hr = _Generate3DMipsCubicFilter( metadata.depth, levels, filter, mipChain );
+        if ( FAILED(hr) )
+            mipChain.Release();
+        return hr;
+
+    case TEX_FILTER_TRIANGLE:
+        hr = _Setup3DMips( &baseImages[0], metadata.depth, levels, mipChain );
+        if ( FAILED(hr) )
+            return hr;
+
+        hr = _Generate3DMipsTriangleFilter( metadata.depth, levels, filter, mipChain );
         if ( FAILED(hr) )
             mipChain.Release();
         return hr;

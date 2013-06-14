@@ -206,6 +206,10 @@ static bool _UseWICFiltering( _In_ DXGI_FORMAT format, _In_ DWORD filter )
             return false;
         }
         break;
+
+    case TEX_FILTER_TRIANGLE:
+        // WIC does not implement this filter
+        return false;
     }
 
     return true;
@@ -582,6 +586,159 @@ static HRESULT _ResizeCubicFilter( _In_ const Image& srcImage, _In_ DWORD filter
 }
 
 
+//--- Triangle Filter ---
+static HRESULT _ResizeTriangleFilter( _In_ const Image& srcImage, _In_ DWORD filter, _In_ const Image& destImage )
+{
+    assert( srcImage.pixels && destImage.pixels );
+    assert( srcImage.format == destImage.format );
+
+    using namespace TriangleFilter;
+
+    // Allocate initial temporary space (1 scanline, accumulation rows, plus X and Y filters)
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( sizeof(XMVECTOR) * srcImage.width, 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    std::unique_ptr<TriangleRow[]> rowActive( new (std::nothrow) TriangleRow[ destImage.height ] );
+    if ( !rowActive )
+        return E_OUTOFMEMORY;
+
+    TriangleRow * rowFree = nullptr;
+
+    std::unique_ptr<Filter> tfX;
+    HRESULT hr = _Create( srcImage.width, destImage.width, (filter & TEX_FILTER_WRAP_U) != 0, tfX );
+    if ( FAILED(hr) )
+        return hr;
+
+    std::unique_ptr<Filter> tfY;
+    hr = _Create( srcImage.height, destImage.height, (filter & TEX_FILTER_WRAP_V) != 0, tfY );
+    if ( FAILED(hr) )
+        return hr;
+
+    XMVECTOR* row = scanline.get();
+
+#ifdef _DEBUG
+    memset( row, 0xCD, sizeof(XMVECTOR)*srcImage.width );
+#endif
+
+    auto xFromEnd = reinterpret_cast<const FilterFrom*>( reinterpret_cast<const uint8_t*>( tfX.get() ) + tfX->sizeInBytes );
+    auto yFromEnd = reinterpret_cast<const FilterFrom*>( reinterpret_cast<const uint8_t*>( tfY.get() ) + tfY->sizeInBytes );
+
+    // Count times rows get written
+    for( FilterFrom* yFrom = tfY->from; yFrom < yFromEnd; )
+    {
+        for ( size_t j = 0; j < yFrom->count; ++j )
+        {
+            size_t v = yFrom->to[ j ].u;
+            assert( v < destImage.height );
+            ++rowActive.get()[ v ].remaining;
+        }
+
+        yFrom = reinterpret_cast<FilterFrom*>( reinterpret_cast<uint8_t*>( yFrom ) + yFrom->sizeInBytes );
+    }
+
+    // Filter image
+    const uint8_t* pSrc = srcImage.pixels;
+    size_t rowPitch = srcImage.rowPitch;
+    const uint8_t* pEndSrc = pSrc + rowPitch * srcImage.height;
+
+    uint8_t* pDest = destImage.pixels;
+
+    for( FilterFrom* yFrom = tfY->from; yFrom < yFromEnd; )
+    {
+        // Create accumulation rows as needed
+        for ( size_t j = 0; j < yFrom->count; ++j )
+        {
+            size_t v = yFrom->to[ j ].u;
+            assert( v < destImage.height );
+            TriangleRow* rowAcc = &rowActive.get()[ v ];
+
+            if ( !rowAcc->scanline )
+            {
+                if ( rowFree )
+                {
+                    // Steal and reuse scanline from 'free row' list
+                    assert( rowFree->scanline != 0 );
+                    rowAcc->scanline.reset( rowFree->scanline.release() );
+                    rowFree = rowFree->next;
+                }
+                else
+                {
+                    rowAcc->scanline.reset( reinterpret_cast<XMVECTOR*>( _aligned_malloc( sizeof(XMVECTOR) * destImage.width, 16 ) ) );
+                    if ( !rowAcc->scanline )
+                        return E_OUTOFMEMORY;
+                }
+
+                memset( rowAcc->scanline.get(), 0, sizeof(XMVECTOR) * destImage.width );
+            }
+        }
+
+        // Load source scanline
+        if ( (pSrc + rowPitch) > pEndSrc )
+            return E_FAIL;
+
+        if ( !_LoadScanlineLinear( row, srcImage.width, pSrc, rowPitch, srcImage.format, filter ) )
+            return E_FAIL;
+
+        pSrc += rowPitch;
+
+        // Process row
+        size_t x = 0;
+        for( FilterFrom* xFrom = tfX->from; xFrom < xFromEnd; ++x )
+        {
+            for ( size_t j = 0; j < yFrom->count; ++j )
+            {
+                size_t v = yFrom->to[ j ].u;
+                assert( v < destImage.height );
+                float yweight = yFrom->to[ j ].weight;
+
+                XMVECTOR* accPtr = rowActive[ v ].scanline.get();
+                if ( !accPtr )
+                    return E_POINTER;
+
+                for ( size_t k = 0; k < xFrom->count; ++k )
+                {
+                    size_t u = xFrom->to[ k ].u;
+                    assert( u < destImage.width );
+
+                    XMVECTOR weight = XMVectorReplicate( yweight * xFrom->to[ k ].weight );
+
+                    assert( x < srcImage.width );
+                    accPtr[ u ] = XMVectorMultiplyAdd( row[ x ], weight, accPtr[ u ] );
+                }
+            }
+
+            xFrom = reinterpret_cast<FilterFrom*>( reinterpret_cast<uint8_t*>( xFrom ) + xFrom->sizeInBytes );
+        }
+
+        // Write completed accumulation rows
+        for ( size_t j = 0; j < yFrom->count; ++j )
+        {
+            size_t v = yFrom->to[ j ].u;
+            assert( v < destImage.height );
+            TriangleRow* rowAcc = &rowActive.get()[ v ];
+
+            assert( rowAcc->remaining > 0 );
+            --rowAcc->remaining;
+
+            if ( !rowAcc->remaining )
+            {
+                if ( !_StoreScanlineLinear( pDest + (destImage.rowPitch * v), destImage.rowPitch, destImage.format, rowAcc->scanline.get(), destImage.width, filter ) )
+                    return E_FAIL;
+
+                // Put row on freelist to reuse it's allocated scanline
+                rowAcc->next = rowFree;
+                rowFree = rowAcc;
+            }
+        }
+
+        yFrom = reinterpret_cast<FilterFrom*>( reinterpret_cast<uint8_t*>( yFrom ) + yFrom->sizeInBytes );
+    }
+
+    return S_OK;
+}
+
+
 //--- Custom filter resize ---
 static HRESULT _PerformResizeUsingCustomFilters( _In_ const Image& srcImage, _In_ DWORD filter, _In_ const Image& destImage )
 {
@@ -611,6 +768,9 @@ static HRESULT _PerformResizeUsingCustomFilters( _In_ const Image& srcImage, _In
 
     case TEX_FILTER_CUBIC:
         return _ResizeCubicFilter( srcImage, filter, destImage );
+
+    case TEX_FILTER_TRIANGLE:
+        return _ResizeTriangleFilter( srcImage, filter, destImage );
 
     default:
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
