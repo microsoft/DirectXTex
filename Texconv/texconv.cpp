@@ -39,7 +39,9 @@ enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
     OPT_TYPELESS_UNORM,
     OPT_TYPELESS_FLOAT,
     OPT_PREMUL_ALPHA,
-    OPT_EXPAND_LUMINANCE
+    OPT_EXPAND_LUMINANCE,
+    OPT_TA_WRAP,
+    OPT_TA_MIRROR,
 };
 
 struct SConversion
@@ -84,6 +86,8 @@ SValue g_pOptions[] =
     { L"tf",            OPT_TYPELESS_FLOAT },
     { L"pmalpha",       OPT_PREMUL_ALPHA },
     { L"xlum",          OPT_EXPAND_LUMINANCE },
+    { L"wrap",          OPT_TA_WRAP },
+    { L"mirror",        OPT_TA_MIRROR },
     { nullptr,          0             }
 };
 
@@ -350,6 +354,7 @@ void PrintUsage()
     wprintf( L"   -vflip              vertical flip of source image\n");
     wprintf( L"   -sepalpha           resize/generate mips alpha channel separately\n");
     wprintf( L"                       from color channels\n");
+    wprintf( L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
     wprintf( L"   -pmalpha            convert final texture to use premultiplied alpha\n");
     wprintf( L"\n                       (DDS input only)\n");
     wprintf( L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
@@ -439,6 +444,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             if( (OPT_NOLOGO != dwOption) && (OPT_TYPELESS_UNORM != dwOption) && (OPT_TYPELESS_FLOAT != dwOption)
                 && (OPT_SEPALPHA != dwOption) && (OPT_PREMUL_ALPHA != dwOption) && (OPT_EXPAND_LUMINANCE != dwOption)
+                && (OPT_TA_WRAP != dwOption) && (OPT_TA_MIRROR != dwOption)
                 && (OPT_SRGB != dwOption) && (OPT_SRGBI != dwOption) && (OPT_SRGBO != dwOption)
                 && (OPT_HFLIP != dwOption) && (OPT_VFLIP != dwOption)
                 && (OPT_DDS_DWORD_ALIGN != dwOption) && (OPT_USE_DX10 != dwOption) )
@@ -547,6 +553,26 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     PrintUsage();
                     return 1;
                 }
+                break;
+
+            case OPT_TA_WRAP:
+                if ( dwFilterOpts & TEX_FILTER_MIRROR )
+                {
+                    wprintf( L"Can't use -wrap and -mirror at same time\n\n");
+                    PrintUsage();
+                    return 1;
+                }
+                dwFilterOpts |= TEX_FILTER_WRAP;
+                break;
+
+            case OPT_TA_MIRROR:
+                if ( dwFilterOpts & TEX_FILTER_WRAP )
+                {
+                    wprintf( L"Can't use -wrap and -mirror at same time\n\n");
+                    PrintUsage();
+                    return 1;
+                }
+                dwFilterOpts |= TEX_FILTER_MIRROR;
                 break;
             }
         }
