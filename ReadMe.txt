@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-April 16, 2013
+June 15, 2013
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -62,9 +62,13 @@ Texconv\
     It supports the same arguments as the Texture Conversion Tool Extended (texconvex.exe) DirectX
     SDK utility. See <http://msdn.microsoft.com/en-us/library/ee422506.aspx>. The primary differences
     are the -10 and -11 arguments are not applicable; the filter names (POINT, LINEAR, CUBIC,
-    FANT, POINT_DITHER, LINEAR_DITHER, CUBIC_DITHER, FANT_DITHER); and support for the .TGA file format.
+    FANT or BOX, TRIANGLE, *_DITHER, *_DITHER_DIFFUSION); and support for the .TGA file format.
     This also includes support for JPEG XR/HD Photo bitmap formats (see
     <http://blogs.msdn.com/b/chuckw/archive/2011/01/19/known-issue-texconvex.aspx>)
+
+Texassemble\
+    This DirectXTex sample is a command-line utility for creating cubemaps, volume maps, or
+    texture arrays from a set of individual input image files.
     
 DDSView\
     This DirectXTex sample is a simple Direct3D 11-based viewer for DDS files. For array textures
@@ -95,15 +99,6 @@ RELEASE NOTES
 * The DirectXTex library does not support block compression or decompression of mipmapped non-power-of-2 textures,
   although DDSTextureLoader will load these files correctly if the underlying device supports it. [CodePlex issue 640]
 
-* The DirectXTex library only supports CLAMP filtering, and does not yet support MIRROR or WRAP filtering
-  (WIC operations only support CLAMP filtering). [CodePlex issue 641]
-
-* The DirectXTex library only supports box and POINT filtering, and does not support LINEAR or CUBIC filtering,
-  for 3D volume mipmap-generation. [CodePlex issue 642]
-
-* The WIC conversion cases currently ignore TEX_FILTER_SRGB_IN and TEX_FILTER_SRGB_OUT out, which results in incorrect sRGB handling in
-  a number of cases. [CodePlex issue 643]
-
 * Due to the underlying Windows BMP WIC codec, alpha channels are not supported for 16bpp or 32bpp BMP pixel format files. The Windows 8
   version of the Windows BMP WIC codec does support 32bpp pixel formats with alpha when using the BITMAPV5HEADER file header. Note the updated
   WIC is available on Windows 7 SP1 with KB 2670838 installed.
@@ -126,6 +121,22 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+June 15, 2013
+    Custom filtering implementation for Resize & GenerateMipMaps(3D) - Point, Box, Linear, Cubic, and Triangle
+        TEX_FILTER_TRIANGLE finite low-pass triangle filter
+        TEX_FILTER_WRAP, TEX_FILTER_MIRROR texture semantics for custom filtering
+        TEX_FILTER_BOX alias for TEX_FILTER_FANT WIC
+    Ordered and error diffusion dithering for non-WIC conversion
+    sRGB gamma correct custom filtering and conversion
+    DDS_FLAGS_EXPAND_LUMINANCE - Reader conversion option for L8, L16, and A8L8 legacy DDS files
+    Added use of WIC metadata for sRGB pixel formats
+    Added BitsPerColor utility function
+    Fixed Convert threshold parameter usage
+    Non-power-of-2 volume map support, fixed bug with non-square volume maps
+    Texconv utility update with -xlum, -wrap, and -mirror options; reworked -if options for improved dithering
+    Texassemble utility for creating cubemaps, volume maps, and texture arrays
+    DDSTextureLoader and WICTextureLoader sync'd with DirectXTK versions
 
 April 16, 2013
     Updated alpha-mode metadata details in .DDS files
