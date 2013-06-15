@@ -290,7 +290,7 @@ void PrintInfo( const TexMetadata& info )
     case TEX_DIMENSION_TEXTURE2D:
         if ( info.IsCubemap() )
         {
-            wprintf( (info.arraySize > 1) ? L" CubeArray" : L" Cube" );
+            wprintf( (info.arraySize > 6) ? L" CubeArray" : L" Cube" );
         }
         else
         {
