@@ -723,7 +723,30 @@ static HRESULT _ResizeTriangleFilter( _In_ const Image& srcImage, _In_ DWORD fil
 
             if ( !rowAcc->remaining )
             {
-                if ( !_StoreScanlineLinear( pDest + (destImage.rowPitch * v), destImage.rowPitch, destImage.format, rowAcc->scanline.get(), destImage.width, filter ) )
+                XMVECTOR* pAccSrc = rowAcc->scanline.get();
+                if ( !pAccSrc )
+                    return E_POINTER;
+
+                switch( destImage.format )
+                {
+                case DXGI_FORMAT_R10G10B10A2_UNORM:
+                case DXGI_FORMAT_R10G10B10A2_UINT:
+                    {
+                        // Need to slightly bias results for floating-point error accumulation which can
+                        // be visible with harshly quantized values
+                        static const XMVECTORF32 Bias = { 0.f, 0.f, 0.f, 0.1f };
+                       
+                        XMVECTOR* ptr = pAccSrc;
+                        for( size_t i=0; i < destImage.width; ++i, ++ptr )
+                        {
+                            *ptr = XMVectorAdd( *ptr, Bias );
+                        }
+                    }
+                    break;
+                }
+
+                // This performs any required clamping
+                if ( !_StoreScanlineLinear( pDest + (destImage.rowPitch * v), destImage.rowPitch, destImage.format, pAccSrc, destImage.width, filter ) )
                     return E_FAIL;
 
                 // Put row on freelist to reuse it's allocated scanline

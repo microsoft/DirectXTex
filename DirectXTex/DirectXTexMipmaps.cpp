@@ -1245,7 +1245,30 @@ static HRESULT _Generate2DMipsTriangleFilter( _In_ size_t levels, _In_ DWORD fil
 
                 if ( !rowAcc->remaining )
                 {
-                    if ( !_StoreScanlineLinear( pDest + (dest->rowPitch * v), dest->rowPitch, dest->format, rowAcc->scanline.get(), dest->width, filter ) )
+                    XMVECTOR* pAccSrc = rowAcc->scanline.get();
+                    if ( !pAccSrc )
+                        return E_POINTER;
+
+                    switch( dest->format )
+                    {
+                    case DXGI_FORMAT_R10G10B10A2_UNORM:
+                    case DXGI_FORMAT_R10G10B10A2_UINT:
+                        {
+                            // Need to slightly bias results for floating-point error accumulation which can
+                            // be visible with harshly quantized values
+                            static const XMVECTORF32 Bias = { 0.f, 0.f, 0.f, 0.1f };
+                       
+                            XMVECTOR* ptr = pAccSrc;
+                            for( size_t i=0; i < dest->width; ++i, ++ptr )
+                            {
+                                *ptr = XMVectorAdd( *ptr, Bias );
+                            }
+                        }
+                        break;
+                    }
+
+                    // This performs any required clamping
+                    if ( !_StoreScanlineLinear( pDest + (dest->rowPitch * v), dest->rowPitch, dest->format, pAccSrc, dest->width, filter ) )
                         return E_FAIL;
 
                     // Put row on freelist to reuse it's allocated scanline
@@ -2402,6 +2425,25 @@ static HRESULT _Generate3DMipsTriangleFilter( _In_ size_t depth, _In_ size_t lev
 
                     for( size_t h = 0; h < nheight; ++h )
                     {
+                        switch( dest->format )
+                        {
+                        case DXGI_FORMAT_R10G10B10A2_UNORM:
+                        case DXGI_FORMAT_R10G10B10A2_UINT:
+                            {
+                                // Need to slightly bias results for floating-point error accumulation which can
+                                // be visible with harshly quantized values
+                                static const XMVECTORF32 Bias = { 0.f, 0.f, 0.f, 0.1f };
+                       
+                                XMVECTOR* ptr = pAccSrc;
+                                for( size_t i=0; i < dest->width; ++i, ++ptr )
+                                {
+                                    *ptr = XMVectorAdd( *ptr, Bias );
+                                }
+                            }
+                            break;
+                        }
+
+                        // This performs any required clamping
                         if ( !_StoreScanlineLinear( pDest, dest->rowPitch, dest->format, pAccSrc, dest->width, filter ) )
                             return E_FAIL;
 
@@ -2845,7 +2887,7 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
     if ( !filter_select )
     {
         // Default filter choice
-        filter_select = ( ispow2(width) && ispow2(height) && ispow2(depth) ) ? TEX_FILTER_BOX : TEX_FILTER_LINEAR;
+        filter_select = ( ispow2(width) && ispow2(height) && ispow2(depth) ) ? TEX_FILTER_BOX : TEX_FILTER_TRIANGLE;
     }
 
     switch( filter_select )
@@ -2953,7 +2995,7 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
     if ( !filter_select )
     {
         // Default filter choice
-        filter_select = ( ispow2(metadata.width) && ispow2(metadata.height) && ispow2(metadata.depth) ) ? TEX_FILTER_BOX : TEX_FILTER_LINEAR;
+        filter_select = ( ispow2(metadata.width) && ispow2(metadata.height) && ispow2(metadata.depth) ) ? TEX_FILTER_BOX : TEX_FILTER_TRIANGLE;
     }
 
     switch( filter_select )
