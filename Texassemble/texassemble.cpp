@@ -24,6 +24,8 @@ enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
     OPT_VOLUME,
     OPT_ARRAY,
     OPT_CUBEARRAY,
+    OPT_WIDTH,
+    OPT_HEIGHT,
     OPT_FORMAT,
     OPT_FILTER,
     OPT_OUTPUTFILE,
@@ -55,6 +57,8 @@ SValue g_pOptions[] =
     { L"volume",        OPT_VOLUME    },
     { L"array",         OPT_ARRAY     },
     { L"cubearray",     OPT_CUBEARRAY },
+    { L"w",             OPT_WIDTH     },
+    { L"h",             OPT_HEIGHT    },
     { L"f",             OPT_FORMAT    },
     { L"if",            OPT_FILTER    },
     { L"o",             OPT_OUTPUTFILE },
@@ -280,11 +284,12 @@ void PrintUsage()
     wprintf( L"   -volume             create volume map\n");
     wprintf( L"   -array              create texture array\n");
     wprintf( L"   -cubearray          create cubemap array\n");
+    wprintf( L"   -w <n>              width\n");
+    wprintf( L"   -h <n>              height\n");
     wprintf( L"   -f <format>         format\n");
     wprintf( L"   -if <filter>        image filtering\n");
     wprintf( L"   -o <filename>       output filename\n");
-    wprintf( L"   -sepalpha           resize/generate mips alpha channel separately\n");
-    wprintf( L"                       from color channels\n");
+    wprintf( L"   -sepalpha           resize alpha channel separately from color channels\n");
     wprintf( L"   -dx10               Force use of 'DX10' extended header\n");
     wprintf( L"   -nologo             suppress copyright message\n");
 
@@ -308,6 +313,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     // Parameters and defaults
     HRESULT hr;
     INT nReturn;
+
+    size_t width = 0;
+    size_t height = 0; 
 
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
     DWORD dwFilter = TEX_FILTER_DEFAULT;
@@ -371,6 +379,22 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             switch(dwOption)
             {
+            case OPT_WIDTH:
+                if (swscanf_s(pValue, L"%Iu", &width) != 1)
+                {
+                    wprintf( L"Invalid value specified with -w (%s)\n", pValue);
+                    return 1;
+                }
+                break;
+
+            case OPT_HEIGHT:
+                if (swscanf_s(pValue, L"%Iu", &height) != 1)
+                {
+                    wprintf( L"Invalid value specified with -h (%s)\n", pValue);
+                    return 1;
+                }
+                break;
+
             case OPT_FORMAT:
                 format = (DXGI_FORMAT) LookupByName(pValue, g_pFormats);
                 if ( !format )
@@ -453,9 +477,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         PrintLogo();
 
     // Convert images
-    size_t width = 0;
-    size_t height = 0;
-
     std::vector<ScratchImage*> loadedImages; 
 
     for( SConversion *pConv = pConversion; pConv; pConv = pConv->pNext )
@@ -582,12 +603,15 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Resize ------------------------------------------------------------------
-        if ( !width && !height )
+        if ( !width )
         {
             width = info.width;
+        }
+        if ( !height )
+        {
             height = info.height;
         }
-        else if ( info.width != width || info.height != height )
+        if ( info.width != width || info.height != height )
         {
             ScratchImage *timage = new ScratchImage;
             if ( !timage )
