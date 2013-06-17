@@ -59,7 +59,7 @@ namespace DirectX
     bool IsPacked( _In_ DXGI_FORMAT fmt );
     bool IsVideo( _In_ DXGI_FORMAT fmt );
     bool IsSRGB( _In_ DXGI_FORMAT fmt );
-    bool IsTypeless( _In_ DXGI_FORMAT fmt, _In_ bool partialTypeless=true );
+    bool IsTypeless( _In_ DXGI_FORMAT fmt, _In_ bool partialTypeless = true );
 
     bool HasAlpha( _In_ DXGI_FORMAT fmt );
 

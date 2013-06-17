@@ -530,7 +530,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
 {
     assert( pDestination && count > 0 && (((uintptr_t)pDestination & 0xF) == 0) );
     assert( pSource && size > 0 );
-    assert( IsValid(format) && !IsVideo(format) && !IsTypeless(format,false) && !IsCompressed(format) );
+    assert( IsValid(format) && !IsVideo(format) && !IsTypeless(format, false) && !IsCompressed(format) );
 
     XMVECTOR* __restrict dPtr = pDestination;
     if ( !dPtr )
@@ -1834,9 +1834,12 @@ HRESULT _ConvertFromR32G32B32A32( const Image* srcImages, size_t nimages, const 
 
 
 //-------------------------------------------------------------------------------------
-// Linear RGB -> sRGB
+// Convert from Linear RGB to sRGB
+//
+// if C_linear <= 0.0031308 -> C_srgb = 12.92 * C_linear
+// if C_linear >  0.0031308 -> C_srgb = ( 1 + a ) * pow( C_Linear, 1 / 2.4 ) - a
+//                             where a = 0.055
 //-------------------------------------------------------------------------------------
-
 static inline XMVECTOR RGBToSRGB( FXMVECTOR rgb )
 {
     static const XMVECTORF32 Cutoff = { 0.0031308f, 0.0031308f, 0.0031308f, 1.f };
@@ -1919,9 +1922,12 @@ bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
 
 
 //-------------------------------------------------------------------------------------
-// sRGB -> Linear RGB
+// Convert from sRGB to Linear RGB
+//
+// if C_srgb <= 0.04045 -> C_linear = C_srgb / 12.92
+// if C_srgb >  0.04045 -> C_linear = pow( ( C_srgb + a ) / ( 1 + a ), 2.4 )
+//                         where a = 0.055
 //-------------------------------------------------------------------------------------
-
 static inline XMVECTOR SRGBToRGB( FXMVECTOR srgb )
 {
     static const XMVECTORF32 Cutoff = { 0.04045f, 0.04045f, 0.04045f, 1.f };
@@ -2502,6 +2508,7 @@ static const XMVECTORF32 g_ErrorWeight7 = { 7.f/16.f, 7.f/16.f, 7.f/16.f, 7.f/16
         return false;
 
 #define STORE_SCANLINE2( type, scalev, clampzero, norm, itype, mask, row ) \
+        /* The 2 component cases are always bgr=false */ \
         if ( size >= sizeof(type) ) \
         { \
             type * __restrict dest = reinterpret_cast<type*>(pDestination); \
@@ -2553,6 +2560,7 @@ static const XMVECTORF32 g_ErrorWeight7 = { 7.f/16.f, 7.f/16.f, 7.f/16.f, 7.f/16
         return false;
 
 #define STORE_SCANLINE1( type, scalev, clampzero, norm, mask, row, selectw ) \
+        /* The 1 component cases are always bgr=false */ \
         if ( size >= sizeof(type) ) \
         { \
             type * __restrict dest = reinterpret_cast<type*>(pDestination); \

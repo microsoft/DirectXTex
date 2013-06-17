@@ -449,8 +449,8 @@ size_t BitsPerPixel( DXGI_FORMAT fmt )
 
 
 //-------------------------------------------------------------------------------------
-// Returns bits-per-color (i.e. bit-depth) for a given DXGI format, or 0 on failure
-// For mixed formats, it returns the largest bit-depth in the format
+// Returns bits-per-color-channel for a given DXGI format, or 0 on failure
+// For mixed formats, it returns the largest color-depth in the format
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 size_t BitsPerColor( DXGI_FORMAT fmt )
