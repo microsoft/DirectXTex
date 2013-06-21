@@ -51,7 +51,7 @@ using namespace DirectX;
 //--------------------------------------------------------------------------------------
 #pragma pack(push,1)
 
-#define DDS_MAGIC 0x20534444 // "DDS "
+const uint32_t DDS_MAGIC = 0x20534444; // "DDS "
 
 struct DDS_PIXELFORMAT
 {
@@ -93,7 +93,7 @@ enum DDS_MISC_FLAGS2
     DDS_MISC_FLAGS2_ALPHA_MODE_MASK = 0x7L,
 };
 
-typedef struct
+struct DDS_HEADER
 {
     uint32_t        size;
     uint32_t        flags;
@@ -109,27 +109,28 @@ typedef struct
     uint32_t        caps3;
     uint32_t        caps4;
     uint32_t        reserved2;
-} DDS_HEADER;
+};
 
-typedef struct
+struct DDS_HEADER_DXT10
 {
     DXGI_FORMAT     dxgiFormat;
     uint32_t        resourceDimension;
     uint32_t        miscFlag; // see D3D11_RESOURCE_MISC_FLAG
     uint32_t        arraySize;
     uint32_t        miscFlags2;
-} DDS_HEADER_DXT10;
+};
 
 #pragma pack(pop)
 
-//---------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
+namespace
+{
+
 struct handle_closer { void operator()(HANDLE h) { if (h) CloseHandle(h); } };
 
 typedef public std::unique_ptr<void, handle_closer> ScopedHandle;
 
 inline HANDLE safe_handle( HANDLE h ) { return (h == INVALID_HANDLE_VALUE) ? 0 : h; }
-
-//--------------------------------------------------------------------------------------
 
 template<UINT TNameLength>
 inline void SetDebugObjectName(_In_ ID3D11DeviceChild* resource, _In_ const char (&name)[TNameLength])
@@ -141,6 +142,8 @@ inline void SetDebugObjectName(_In_ ID3D11DeviceChild* resource, _In_ const char
     UNREFERENCED_PARAMETER(name);
 #endif
 }
+
+};
 
 //--------------------------------------------------------------------------------------
 static HRESULT LoadTextureDataFromFile( _In_z_ const wchar_t* fileName,
