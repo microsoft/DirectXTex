@@ -43,7 +43,7 @@ static HRESULT _Capture( _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource
             if ( FAILED(hr) )
                 return hr;
 
-            const uint8_t* pslice = reinterpret_cast<const uint8_t*>( mapped.pData );
+            auto pslice = reinterpret_cast<const uint8_t*>( mapped.pData );
             if ( !pslice )
             {
                 pContext->Unmap( pSource, dindex );
@@ -121,7 +121,7 @@ static HRESULT _Capture( _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource
 
                 size_t lines = ComputeScanlines( metadata.format, height );
 
-                const uint8_t* sptr = reinterpret_cast<const uint8_t*>( mapped.pData );
+                auto sptr = reinterpret_cast<const uint8_t*>( mapped.pData );
                 uint8_t* dptr = img->pixels;
                 for( size_t h = 0; h < lines; ++h )
                 {
@@ -361,7 +361,7 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
     if ( !metadata.mipLevels || !metadata.arraySize )
         return E_INVALIDARG;
 
-#ifdef _AMD64_
+#ifdef _M_X64
     if ( (metadata.width > 0xFFFFFFFF) || (metadata.height > 0xFFFFFFFF)
          || (metadata.mipLevels > 0xFFFFFFFF) || (metadata.arraySize > 0xFFFFFFFF) )
         return E_INVALIDARG;
@@ -378,7 +378,7 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
         if ( !metadata.depth )
             return E_INVALIDARG;
 
-#ifdef _AMD64_
+#ifdef _M_X64
         if ( metadata.depth > 0xFFFFFFFF )
             return E_INVALIDARG;
 #endif

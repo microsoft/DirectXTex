@@ -457,7 +457,7 @@ HRESULT ScratchImage::InitializeFromImage( const Image& srcImage, bool allow1D )
     if ( !sptr )
         return E_POINTER;
 
-    uint8_t* dptr = reinterpret_cast<uint8_t*>( _image[0].pixels );
+    auto dptr = reinterpret_cast<uint8_t*>( _image[0].pixels );
     if ( !dptr )
         return E_POINTER;
 
@@ -502,12 +502,12 @@ HRESULT ScratchImage::InitializeArrayFromImages( const Image* images, size_t nIm
 
     for( size_t index=0; index < nImages; ++index )
     {
-        const uint8_t* sptr = reinterpret_cast<const uint8_t*>( images[index].pixels );
+        auto sptr = reinterpret_cast<const uint8_t*>( images[index].pixels );
         if ( !sptr )
             return E_POINTER;
 
         assert( index < _nimages );
-        uint8_t* dptr = reinterpret_cast<uint8_t*>( _image[index].pixels );
+        auto dptr = reinterpret_cast<uint8_t*>( _image[index].pixels );
         if ( !dptr )
             return E_POINTER;
 
@@ -569,12 +569,12 @@ HRESULT ScratchImage::Initialize3DFromImages( const Image* images, size_t depth 
 
     for( size_t slice=0; slice < depth; ++slice )
     {
-        const uint8_t* sptr = reinterpret_cast<const uint8_t*>( images[slice].pixels );
+        auto sptr = reinterpret_cast<const uint8_t*>( images[slice].pixels );
         if ( !sptr )
             return E_POINTER;
 
         assert( slice < _nimages );
-        uint8_t* dptr = reinterpret_cast<uint8_t*>( _image[slice].pixels );
+        auto dptr = reinterpret_cast<uint8_t*>( _image[slice].pixels );
         if ( !dptr )
             return E_POINTER;
 

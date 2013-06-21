@@ -76,7 +76,7 @@ HRESULT PremultiplyAlpha( const Image& srcImage, ScratchImage& image )
          || !HasAlpha(srcImage.format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-#ifdef _AMD64_
+#ifdef _M_X64
     if ( (srcImage.width > 0xFFFFFFFF) || (srcImage.height > 0xFFFFFFFF) )
         return E_INVALIDARG;
 #endif
@@ -118,7 +118,7 @@ HRESULT PremultiplyAlpha( const Image* srcImages, size_t nimages, const TexMetad
          || !HasAlpha(metadata.format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-#ifdef _AMD64_
+#ifdef _M_X64
     if ( (metadata.width > 0xFFFFFFFF) || (metadata.height > 0xFFFFFFFF) )
         return E_INVALIDARG;
 #endif
@@ -157,7 +157,7 @@ HRESULT PremultiplyAlpha( const Image* srcImages, size_t nimages, const TexMetad
             return E_FAIL;
         }
 
-#ifdef _AMD64_
+#ifdef _M_X64
         if ( (src.width > 0xFFFFFFFF) || (src.height > 0xFFFFFFFF) )
             return E_FAIL;
 #endif

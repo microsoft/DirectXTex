@@ -814,7 +814,7 @@ HRESULT Resize( const Image& srcImage, size_t width, size_t height, DWORD filter
     if ( width == 0 || height == 0 )
         return E_INVALIDARG;
 
-#ifdef _AMD64_
+#ifdef _M_X64
     if ( (srcImage.width > 0xFFFFFFFF) || (srcImage.height > 0xFFFFFFFF) )
         return E_INVALIDARG;
 
@@ -878,7 +878,7 @@ HRESULT Resize( const Image* srcImages, size_t nimages, const TexMetadata& metad
     if ( !srcImages || !nimages || width == 0 || height == 0 )
         return E_INVALIDARG;
 
-#ifdef _AMD64_
+#ifdef _M_X64
     if ( (width > 0xFFFFFFFF) || (height > 0xFFFFFFFF) )
         return E_INVALIDARG;
 #endif
@@ -925,7 +925,7 @@ HRESULT Resize( const Image* srcImages, size_t nimages, const TexMetadata& metad
                 return E_FAIL;
             }
 
-#ifdef _AMD64_
+#ifdef _M_X64
             if ( (srcimg->width > 0xFFFFFFFF) || (srcimg->height > 0xFFFFFFFF) )
             {
                 result.Release();
@@ -986,7 +986,7 @@ HRESULT Resize( const Image* srcImages, size_t nimages, const TexMetadata& metad
                 return E_FAIL;
             }
 
-#ifdef _AMD64_
+#ifdef _M_X64
             if ( (srcimg->width > 0xFFFFFFFF) || (srcimg->height > 0xFFFFFFFF) )
             {
                 result.Release();

@@ -225,8 +225,7 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
         return E_FAIL;
     }
 
-    const DDS_HEADER* pHeader = reinterpret_cast<const DDS_HEADER*>( (const uint8_t*)pSource + sizeof( uint32_t ) );
-    assert( pHeader );
+    auto pHeader = reinterpret_cast<const DDS_HEADER*>( (const uint8_t*)pSource + sizeof( uint32_t ) );
 
     // Verify header to validate DDS file
     if ( pHeader->dwSize != sizeof(DDS_HEADER)
@@ -244,12 +243,12 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
          && (MAKEFOURCC( 'D', 'X', '1', '0' ) == pHeader->ddspf.dwFourCC) )
     {
         // Buffer must be big enough for both headers and magic value
-        if ( size < (sizeof(DDS_HEADER)+sizeof(uint32_t)+sizeof(DDS_HEADER_DXT10)) )
+        if ( size < ( sizeof(DDS_HEADER) + sizeof(uint32_t) + sizeof(DDS_HEADER_DXT10) ) )
         {
             return E_FAIL;
         }
 
-        const DDS_HEADER_DXT10* d3d10ext = reinterpret_cast<const DDS_HEADER_DXT10*>( (const uint8_t*)pSource + sizeof( uint32_t ) + sizeof(DDS_HEADER) );
+        auto d3d10ext = reinterpret_cast<const DDS_HEADER_DXT10*>( (const uint8_t*)pSource + sizeof( uint32_t ) + sizeof(DDS_HEADER) );
         convFlags |= CONV_FLAGS_DX10;
 
         metadata.arraySize = d3d10ext->arraySize;
@@ -538,7 +537,7 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
 
     *reinterpret_cast<uint32_t*>(pDestination) = DDS_MAGIC;
 
-    DDS_HEADER* header = reinterpret_cast<DDS_HEADER*>( reinterpret_cast<uint8_t*>(pDestination) + sizeof(uint32_t) );
+    auto header = reinterpret_cast<DDS_HEADER*>( reinterpret_cast<uint8_t*>(pDestination) + sizeof(uint32_t) );
     assert( header );
 
     memset( header, 0, sizeof(DDS_HEADER ) );
@@ -550,7 +549,7 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
     {
         header->dwFlags |= DDS_HEADER_FLAGS_MIPMAP;
 
-#ifdef _AMD64_
+#ifdef _M_X64
         if ( metadata.mipLevels > 0xFFFFFFFF )
             return E_INVALIDARG;
 #endif
@@ -564,7 +563,7 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
     switch( metadata.dimension )
     {
     case TEX_DIMENSION_TEXTURE1D:
-#ifdef _AMD64_
+#ifdef _M_X64
         if ( metadata.width > 0xFFFFFFFF )
             return E_INVALIDARG;
 #endif
@@ -574,7 +573,7 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
         break;
 
     case TEX_DIMENSION_TEXTURE2D:
-#ifdef _AMD64_
+#ifdef _M_X64
         if ( metadata.height > 0xFFFFFFFF
              || metadata.width > 0xFFFFFFFF)
             return E_INVALIDARG;
@@ -592,7 +591,7 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
         break;
 
     case TEX_DIMENSION_TEXTURE3D:
-#ifdef _AMD64_
+#ifdef _M_X64
         if ( metadata.height > 0xFFFFFFFF
              || metadata.width > 0xFFFFFFFF
              || metadata.depth > 0xFFFFFFFF )
@@ -613,7 +612,7 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
     size_t rowPitch, slicePitch;
     ComputePitch( metadata.format, metadata.width, metadata.height, rowPitch, slicePitch, CP_FLAGS_NONE );
 
-#ifdef _AMD64_
+#ifdef _M_X64
     if ( slicePitch > 0xFFFFFFFF
          || rowPitch > 0xFFFFFFFF )
         return E_FAIL;
@@ -634,14 +633,14 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
     {
         memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_DX10, sizeof(DDS_PIXELFORMAT) );
 
-        DDS_HEADER_DXT10* ext = reinterpret_cast<DDS_HEADER_DXT10*>( reinterpret_cast<uint8_t*>(header) + sizeof(DDS_HEADER) );
+        auto ext = reinterpret_cast<DDS_HEADER_DXT10*>( reinterpret_cast<uint8_t*>(header) + sizeof(DDS_HEADER) );
         assert( ext );
 
         memset( ext, 0, sizeof(DDS_HEADER_DXT10) );
         ext->dxgiFormat = metadata.format;
         ext->resourceDimension = metadata.dimension;
 
-#ifdef _AMD64_
+#ifdef _M_X64
         if ( metadata.arraySize > 0xFFFFFFFF )
             return E_INVALIDARG;
 #endif
@@ -1390,7 +1389,7 @@ HRESULT LoadFromDDSMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadat
     if ( FAILED(hr) )
         return hr;
 
-    LPCVOID pPixels = reinterpret_cast<LPCVOID>( reinterpret_cast<const uint8_t*>(pSource) + offset );
+    auto pPixels = reinterpret_cast<LPCVOID>( reinterpret_cast<const uint8_t*>(pSource) + offset );
     assert( pPixels );
     hr = _CopyImage( pPixels, size - offset, mdata,
                      (flags & DDS_FLAGS_LEGACY_DWORD) ? CP_FLAGS_LEGACY_DWORD : CP_FLAGS_NONE, convFlags, pal8, image );
@@ -1611,7 +1610,7 @@ HRESULT SaveToDDSMemory( const Image* images, size_t nimages, const TexMetadata&
     if ( FAILED(hr) )
         return hr;
 
-    uint8_t* pDestination = reinterpret_cast<uint8_t*>( blob.GetBufferPointer() );
+    auto pDestination = reinterpret_cast<uint8_t*>( blob.GetBufferPointer() );
     assert( pDestination );
 
     hr = _EncodeDDSHeader( metadata, flags, pDestination, blob.GetBufferSize(), required );

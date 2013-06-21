@@ -135,7 +135,7 @@ HRESULT FlipRotate( const Image& srcImage, DWORD flags, ScratchImage& image )
     if ( !flags )
         return E_INVALIDARG;
 
-#ifdef _AMD64_
+#ifdef _M_X64
     if ( (srcImage.width > 0xFFFFFFFF) || (srcImage.height > 0xFFFFFFFF) )
         return E_INVALIDARG;
 #endif
@@ -280,7 +280,7 @@ HRESULT FlipRotate( const Image* srcImages, size_t nimages, const TexMetadata& m
             return E_FAIL;
         }
 
-#ifdef _AMD64_
+#ifdef _M_X64
         if ( (src.width > 0xFFFFFFFF) || (src.height > 0xFFFFFFFF) )
             return E_FAIL;
 #endif

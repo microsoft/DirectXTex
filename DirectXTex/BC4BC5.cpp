@@ -375,7 +375,7 @@ void D3DXDecodeBC4U( XMVECTOR *pColor, const uint8_t *pBC )
     assert( pColor && pBC );
     static_assert( sizeof(BC4_UNORM) == 8, "BC4_UNORM should be 8 bytes" );
 
-    const BC4_UNORM * pBC4 = reinterpret_cast<const BC4_UNORM*>(pBC);
+    auto pBC4 = reinterpret_cast<const BC4_UNORM*>(pBC);
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
@@ -389,7 +389,7 @@ void D3DXDecodeBC4S(XMVECTOR *pColor, const uint8_t *pBC)
     assert( pColor && pBC );
     static_assert( sizeof(BC4_SNORM) == 8, "BC4_SNORM should be 8 bytes" );
 
-    const BC4_SNORM * pBC4 = reinterpret_cast<const BC4_SNORM*>(pBC);
+    auto pBC4 = reinterpret_cast<const BC4_SNORM*>(pBC);
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
@@ -406,7 +406,7 @@ void D3DXEncodeBC4U( uint8_t *pBC, const XMVECTOR *pColor, DWORD flags )
     static_assert( sizeof(BC4_UNORM) == 8, "BC4_UNORM should be 8 bytes" );
 
     memset(pBC, 0, sizeof(BC4_UNORM));
-    BC4_UNORM * pBC4 = reinterpret_cast<BC4_UNORM*>(pBC);
+    auto pBC4 = reinterpret_cast<BC4_UNORM*>(pBC);
     float theTexelsU[NUM_PIXELS_PER_BLOCK];
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
@@ -427,7 +427,7 @@ void D3DXEncodeBC4S( uint8_t *pBC, const XMVECTOR *pColor, DWORD flags )
     static_assert( sizeof(BC4_SNORM) == 8, "BC4_SNORM should be 8 bytes" );
 
     memset(pBC, 0, sizeof(BC4_UNORM));
-    BC4_SNORM * pBC4 = reinterpret_cast<BC4_SNORM*>(pBC);
+    auto pBC4 = reinterpret_cast<BC4_SNORM*>(pBC);
     float theTexelsU[NUM_PIXELS_PER_BLOCK];
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
@@ -449,8 +449,8 @@ void D3DXDecodeBC5U(XMVECTOR *pColor, const uint8_t *pBC)
     assert( pColor && pBC );
     static_assert( sizeof(BC4_UNORM) == 8, "BC4_UNORM should be 8 bytes" );
 
-    const BC4_UNORM * pBCR = reinterpret_cast<const BC4_UNORM*>(pBC);
-    const BC4_UNORM * pBCG = reinterpret_cast<const BC4_UNORM*>(pBC+sizeof(BC4_UNORM));
+    auto pBCR = reinterpret_cast<const BC4_UNORM*>(pBC);
+    auto pBCG = reinterpret_cast<const BC4_UNORM*>(pBC+sizeof(BC4_UNORM));
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
@@ -464,8 +464,8 @@ void D3DXDecodeBC5S(XMVECTOR *pColor, const uint8_t *pBC)
     assert( pColor && pBC );
     static_assert( sizeof(BC4_SNORM) == 8, "BC4_SNORM should be 8 bytes" );
 
-    const BC4_SNORM * pBCR = reinterpret_cast<const BC4_SNORM*>(pBC);
-    const BC4_SNORM * pBCG = reinterpret_cast<const BC4_SNORM*>(pBC+sizeof(BC4_SNORM));
+    auto pBCR = reinterpret_cast<const BC4_SNORM*>(pBC);
+    auto pBCG = reinterpret_cast<const BC4_SNORM*>(pBC+sizeof(BC4_SNORM));
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
@@ -482,8 +482,8 @@ void D3DXEncodeBC5U( uint8_t *pBC, const XMVECTOR *pColor, DWORD flags )
     static_assert( sizeof(BC4_UNORM) == 8, "BC4_UNORM should be 8 bytes" );
 
     memset(pBC, 0, sizeof(BC4_UNORM)*2);
-    BC4_UNORM * pBCR = reinterpret_cast<BC4_UNORM*>(pBC);
-    BC4_UNORM * pBCG = reinterpret_cast<BC4_UNORM*>(pBC+sizeof(BC4_UNORM));
+    auto pBCR = reinterpret_cast<BC4_UNORM*>(pBC);
+    auto pBCG = reinterpret_cast<BC4_UNORM*>(pBC+sizeof(BC4_UNORM));
     float theTexelsU[NUM_PIXELS_PER_BLOCK];
     float theTexelsV[NUM_PIXELS_PER_BLOCK];
 
@@ -516,8 +516,8 @@ void D3DXEncodeBC5S( uint8_t *pBC, const XMVECTOR *pColor, DWORD flags )
     static_assert( sizeof(BC4_SNORM) == 8, "BC4_SNORM should be 8 bytes" );
 
     memset(pBC, 0, sizeof(BC4_UNORM)*2);
-    BC4_SNORM * pBCR = reinterpret_cast<BC4_SNORM*>(pBC);
-    BC4_SNORM * pBCG = reinterpret_cast<BC4_SNORM*>(pBC+sizeof(BC4_SNORM));
+    auto pBCR = reinterpret_cast<BC4_SNORM*>(pBC);
+    auto pBCG = reinterpret_cast<BC4_SNORM*>(pBC+sizeof(BC4_SNORM));
     float theTexelsU[NUM_PIXELS_PER_BLOCK];
     float theTexelsV[NUM_PIXELS_PER_BLOCK];
 

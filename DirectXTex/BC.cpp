@@ -723,7 +723,7 @@ static void EncodeSolidBC1(_Out_ D3DX_BC1 *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK)
 _Use_decl_annotations_
 void D3DXDecodeBC1(XMVECTOR *pColor, const uint8_t *pBC)
 {
-    const D3DX_BC1 *pBC1 = reinterpret_cast<const D3DX_BC1 *>(pBC);
+    auto pBC1 = reinterpret_cast<const D3DX_BC1 *>(pBC);
     DecodeBC1( pColor, pBC1, true );
 }
 
@@ -784,7 +784,7 @@ void D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float alphaRef, DWORD f
         }
     }
 
-    D3DX_BC1 *pBC1 = reinterpret_cast<D3DX_BC1 *>(pBC);
+    auto pBC1 = reinterpret_cast<D3DX_BC1 *>(pBC);
     EncodeBC1(pBC1, Color, true, alphaRef, flags);
 }
 
@@ -798,7 +798,7 @@ void D3DXDecodeBC2(XMVECTOR *pColor, const uint8_t *pBC)
     assert( pColor && pBC );
     static_assert( sizeof(D3DX_BC2) == 16, "D3DX_BC2 should be 16 bytes" );
 
-    const D3DX_BC2 *pBC2 = reinterpret_cast<const D3DX_BC2 *>(pBC);
+    auto pBC2 = reinterpret_cast<const D3DX_BC2 *>(pBC);
 
     // RGB part
     DecodeBC1(pColor, &pBC2->bc1, false);
@@ -827,7 +827,7 @@ void D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
         XMStoreFloat4( reinterpret_cast<XMFLOAT4*>( &Color[i] ), pColor[i] );
     }
 
-    D3DX_BC2 *pBC2 = reinterpret_cast<D3DX_BC2 *>(pBC);
+    auto pBC2 = reinterpret_cast<D3DX_BC2 *>(pBC);
 
     // 4-bit alpha part.  Dithered using Floyd Stienberg error diffusion.
     pBC2->bitmap[0] = 0;
@@ -898,7 +898,7 @@ void D3DXDecodeBC3(XMVECTOR *pColor, const uint8_t *pBC)
     assert( pColor && pBC );
     static_assert( sizeof(D3DX_BC3) == 16, "D3DX_BC3 should be 16 bytes" );
 
-    const D3DX_BC3 *pBC3 = reinterpret_cast<const D3DX_BC3 *>(pBC);
+    auto pBC3 = reinterpret_cast<const D3DX_BC3 *>(pBC);
 
     // RGB part
     DecodeBC1(pColor, &pBC3->bc1, false);
@@ -946,7 +946,7 @@ void D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
         XMStoreFloat4( reinterpret_cast<XMFLOAT4*>( &Color[i] ), pColor[i] );
     }
 
-    D3DX_BC3 *pBC3 = reinterpret_cast<D3DX_BC3 *>(pBC);
+    auto pBC3 = reinterpret_cast<D3DX_BC3 *>(pBC);
 
     // Quantize block to A8, using Floyd Stienberg error diffusion.  This 
     // increases the chance that colors will map directly to the quantized 

@@ -129,8 +129,7 @@ static HRESULT _DecodeTGAHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
         return HRESULT_FROM_WIN32( ERROR_INVALID_DATA );
     }
 
-    const TGA_HEADER* pHeader = reinterpret_cast<const TGA_HEADER*>( pSource );
-    assert( pHeader );
+    auto pHeader = reinterpret_cast<const TGA_HEADER*>( pSource );
 
     if ( pHeader->bColorMapType != 0
          || pHeader->wColorMapLength != 0 )
@@ -236,7 +235,7 @@ static HRESULT _SetAlphaChannelToOpaque( _In_ const Image* image )
 {
     assert( image );
 
-    uint8_t* pPixels = reinterpret_cast<uint8_t*>( image->pixels );
+    auto pPixels = reinterpret_cast<uint8_t*>( image->pixels );
     if ( !pPixels )
         return E_POINTER;
 
@@ -272,7 +271,7 @@ static HRESULT _UncompressPixels( _In_reads_bytes_(size) LPCVOID pSource, size_t
         ComputePitch( image->format, image->width, image->height, rowPitch, slicePitch, CP_FLAGS_NONE );
     }
 
-    const uint8_t* sPtr = reinterpret_cast<const uint8_t*>( pSource );
+    auto sPtr = reinterpret_cast<const uint8_t*>( pSource );
     const uint8_t* endPtr = sPtr + size;
 
     switch( image->format )
@@ -926,8 +925,7 @@ HRESULT LoadFromTGAMemory( LPCVOID pSource, size_t size, TexMetadata* metadata, 
     if ( offset > size )
         return E_FAIL;
 
-    LPCVOID pPixels = reinterpret_cast<LPCVOID>( reinterpret_cast<const uint8_t*>(pSource) + offset );
-    assert( pPixels );
+    auto pPixels = reinterpret_cast<LPCVOID>( reinterpret_cast<const uint8_t*>(pSource) + offset );
 
     size_t remaining = size - offset;
     if ( remaining == 0 )
@@ -1242,12 +1240,12 @@ HRESULT SaveToTGAMemory( const Image& image, Blob& blob )
         return hr;
 
     // Copy header
-    uint8_t* dPtr = reinterpret_cast<uint8_t*>( blob.GetBufferPointer() );
+    auto dPtr = reinterpret_cast<uint8_t*>( blob.GetBufferPointer() );
     assert( dPtr != 0 );
     memcpy_s( dPtr, blob.GetBufferSize(), &tga_header, sizeof(TGA_HEADER) );
     dPtr += sizeof(TGA_HEADER);
 
-    const uint8_t* pPixels = reinterpret_cast<const uint8_t*>( image.pixels );
+    auto pPixels = reinterpret_cast<const uint8_t*>( image.pixels );
     assert( pPixels );
 
     for( size_t y = 0; y < image.height; ++y )
@@ -1356,7 +1354,7 @@ HRESULT SaveToTGAFile( const Image& image, LPCWSTR szFile )
             return E_FAIL;
 
         // Write pixels
-        const uint8_t* pPixels = reinterpret_cast<const uint8_t*>( image.pixels );
+        auto pPixels = reinterpret_cast<const uint8_t*>( image.pixels );
 
         for( size_t y = 0; y < image.height; ++y )
         {

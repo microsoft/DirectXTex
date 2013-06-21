@@ -500,7 +500,7 @@ static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ REF
     if ( FAILED(hr) )
         return hr;
 
-#ifdef _AMD64_
+#ifdef _M_X64
     if ( (image.width > 0xFFFFFFFF) || (image.height > 0xFFFFFFFF) )
         return E_INVALIDARG;
 #endif
@@ -699,7 +699,7 @@ HRESULT GetMetadataFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, Tex
     if ( !pSource || size == 0 )
         return E_INVALIDARG;
 
-#ifdef _AMD64_
+#ifdef _M_X64
     if ( size > 0xFFFFFFFF )
         return HRESULT_FROM_WIN32( ERROR_FILE_TOO_LARGE );
 #endif
@@ -781,7 +781,7 @@ HRESULT LoadFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadat
     if ( !pSource || size == 0 )
         return E_INVALIDARG;
 
-#ifdef _AMD64_
+#ifdef _M_X64
     if ( size > 0xFFFFFFFF )
         return HRESULT_FROM_WIN32( ERROR_FILE_TOO_LARGE );
 #endif
