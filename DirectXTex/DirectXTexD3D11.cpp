@@ -358,6 +358,8 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
     if ( !pDevice || !srcImages || !nimages || !ppResource )
         return E_INVALIDARG;
 
+    *ppResource = nullptr;
+
     if ( !metadata.mipLevels || !metadata.arraySize )
         return E_INVALIDARG;
 
@@ -555,6 +557,8 @@ HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImage
 {
     if ( !ppSRV )
         return E_INVALIDARG;
+
+    *ppSRV = nullptr;
 
     ScopedObject<ID3D11Resource> resource;
     HRESULT hr = CreateTextureEx( pDevice, srcImages, nimages, metadata,
