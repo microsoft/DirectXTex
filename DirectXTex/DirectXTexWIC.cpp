@@ -573,7 +573,8 @@ static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ REF
 }
 
 static HRESULT _EncodeSingleFrame( _In_ const Image& image, _In_ DWORD flags,
-                                   _In_ REFGUID containerFormat, _Inout_ IStream* stream, _In_opt_ const GUID* targetFormat )
+                                   _In_ REFGUID containerFormat, _Inout_ IStream* stream,
+                                   _In_opt_ const GUID* targetFormat, _In_opt_ std::function<void(IPropertyBag2*)> setCustomProps )
 {
     if ( !stream )
         return E_INVALIDARG;
@@ -598,21 +599,21 @@ static HRESULT _EncodeSingleFrame( _In_ const Image& image, _In_ DWORD flags,
     if ( FAILED(hr) )
         return hr;
 
-    if ( memcmp( &containerFormat, &GUID_ContainerFormatBmp, sizeof(WICPixelFormatGUID) ) == 0  )
+    if ( memcmp( &containerFormat, &GUID_ContainerFormatBmp, sizeof(WICPixelFormatGUID) ) == 0 && _IsWIC2() )
     {
-        // Opt-in to the Windows 8 support for writing 32-bit Windows BMP files with an alpha channel if supported
+        // Opt-in to the WIC2 support for writing 32-bit Windows BMP files with an alpha channel
         PROPBAG2 option = { 0 };
         option.pstrName = L"EnableV5Header32bppBGRA";
 
         VARIANT varValue;    
         varValue.vt = VT_BOOL;
         varValue.boolVal = VARIANT_TRUE;      
-        hr = props->Write( 1, &option, &varValue ); 
-        if ( FAILED(hr) )
-        {
-            // Fails on older versions of WIC, so we default to the null property bag
-            props.Reset();
-        }
+        (void)props->Write( 1, &option, &varValue ); 
+    }
+
+    if ( setCustomProps )
+    {
+        setCustomProps( props.Get() );
     }
 
     hr = _EncodeImage( image, flags, containerFormat, frame.Get(), props.Get(), targetFormat );
@@ -631,7 +632,8 @@ static HRESULT _EncodeSingleFrame( _In_ const Image& image, _In_ DWORD flags,
 // Encodes an image array
 //-------------------------------------------------------------------------------------
 static HRESULT _EncodeMultiframe( _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags,
-                                  _In_ REFGUID containerFormat, _Inout_ IStream* stream, _In_opt_ const GUID* targetFormat )
+                                  _In_ REFGUID containerFormat, _Inout_ IStream* stream,
+                                  _In_opt_ const GUID* targetFormat, _In_opt_ std::function<void(IPropertyBag2*)> setCustomProps )
 {
     if ( !stream || nimages < 2 )
         return E_INVALIDARG;
@@ -669,11 +671,17 @@ static HRESULT _EncodeMultiframe( _In_reads_(nimages) const Image* images, _In_ 
     for( size_t index=0; index < nimages; ++index )
     {
         ScopedObject<IWICBitmapFrameEncode> frame;
-        hr = encoder->CreateNewFrame( &frame, nullptr );
+        ScopedObject<IPropertyBag2> props;
+        hr = encoder->CreateNewFrame( &frame, &props );
         if ( FAILED(hr) )
             return hr;
 
-        hr = _EncodeImage( images[index], flags, containerFormat, frame.Get(), nullptr, targetFormat );
+        if ( setCustomProps )
+        {
+            setCustomProps( props.Get() );
+        }
+
+        hr = _EncodeImage( images[index], flags, containerFormat, frame.Get(), props.Get(), targetFormat );
         if ( FAILED(hr) )
             return hr;
     }
@@ -901,7 +909,8 @@ HRESULT LoadFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, Scr
 // Save a WIC-supported file to memory
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID containerFormat, Blob& blob, const GUID* targetFormat )
+HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID containerFormat, Blob& blob,
+                         const GUID* targetFormat, std::function<void(IPropertyBag2*)> setCustomProps )
 {
     if ( !image.pixels )
         return E_POINTER;
@@ -913,7 +922,7 @@ HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID containerForma
     if ( FAILED(hr) )
         return hr;
 
-    hr = _EncodeSingleFrame( image, flags, containerFormat, stream.Get(), targetFormat );
+    hr = _EncodeSingleFrame( image, flags, containerFormat, stream.Get(), targetFormat, setCustomProps );
     if ( FAILED(hr) )
         return hr;
 
@@ -947,7 +956,8 @@ HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID containerForma
 }
 
 _Use_decl_annotations_
-HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGUID containerFormat, Blob& blob, const GUID* targetFormat )
+HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGUID containerFormat, Blob& blob,
+                         const GUID* targetFormat, std::function<void(IPropertyBag2*)> setCustomProps )
 {
     if ( !images || nimages == 0 )
         return E_INVALIDARG;
@@ -960,9 +970,9 @@ HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGU
         return hr;
 
     if ( nimages > 1 )
-        hr = _EncodeMultiframe( images, nimages, flags, containerFormat, stream.Get(), targetFormat );
+        hr = _EncodeMultiframe( images, nimages, flags, containerFormat, stream.Get(), targetFormat, setCustomProps );
     else
-        hr = _EncodeSingleFrame( images[0], flags, containerFormat, stream.Get(), targetFormat );
+        hr = _EncodeSingleFrame( images[0], flags, containerFormat, stream.Get(), targetFormat, setCustomProps );
 
     if ( FAILED(hr) )
         return hr;
@@ -1001,7 +1011,8 @@ HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGU
 // Save a WIC-supported file to disk
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT SaveToWICFile( const Image& image, DWORD flags, REFGUID containerFormat, LPCWSTR szFile, const GUID* targetFormat )
+HRESULT SaveToWICFile( const Image& image, DWORD flags, REFGUID containerFormat, LPCWSTR szFile,
+                       const GUID* targetFormat, std::function<void(IPropertyBag2*)> setCustomProps )
 {
     if ( !szFile )
         return E_INVALIDARG;
@@ -1022,7 +1033,7 @@ HRESULT SaveToWICFile( const Image& image, DWORD flags, REFGUID containerFormat,
     if ( FAILED(hr) )
         return hr;
 
-    hr = _EncodeSingleFrame( image, flags, containerFormat, stream.Get(), targetFormat );
+    hr = _EncodeSingleFrame( image, flags, containerFormat, stream.Get(), targetFormat, setCustomProps );
     if ( FAILED(hr) )
         return hr;
 
@@ -1030,7 +1041,8 @@ HRESULT SaveToWICFile( const Image& image, DWORD flags, REFGUID containerFormat,
 }
 
 _Use_decl_annotations_
-HRESULT SaveToWICFile( const Image* images, size_t nimages, DWORD flags, REFGUID containerFormat, LPCWSTR szFile, const GUID* targetFormat )
+HRESULT SaveToWICFile( const Image* images, size_t nimages, DWORD flags, REFGUID containerFormat, LPCWSTR szFile, const GUID* targetFormat,
+                       std::function<void(IPropertyBag2*)> setCustomProps )
 {
     if ( !szFile || !images || nimages == 0 )
         return E_INVALIDARG;
@@ -1049,9 +1061,9 @@ HRESULT SaveToWICFile( const Image* images, size_t nimages, DWORD flags, REFGUID
         return hr;
 
     if ( nimages > 1 )
-        hr = _EncodeMultiframe( images, nimages, flags, containerFormat, stream.Get(), targetFormat );
+        hr = _EncodeMultiframe( images, nimages, flags, containerFormat, stream.Get(), targetFormat, setCustomProps );
     else
-        hr = _EncodeSingleFrame( images[0], flags, containerFormat, stream.Get(), targetFormat );
+        hr = _EncodeSingleFrame( images[0], flags, containerFormat, stream.Get(), targetFormat, setCustomProps );
 
     if ( FAILED(hr) )
         return hr;
