@@ -748,11 +748,12 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
             return false;
 
         // D3DFMT_R8G8B8 -> DXGI_FORMAT_R8G8B8A8_UNORM
+        if ( inSize >= 3 && outSize >= 4 )
         {
             const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
             uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
 
-            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); icount += 3, ocount += 4 )
+            for( size_t ocount = 0, icount = 0; ( ( icount < ( inSize - 2 ) ) && ( ocount < ( outSize - 3 ) ) ); icount += 3, ocount += 4 )
             {
                 // 24bpp Direct3D 9 files are actually BGR, so need to swizzle as well
                 uint32_t t1 = ( *(sPtr) << 16 );
@@ -762,19 +763,21 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
                 *(dPtr++) = t1 | t2 | t3 | 0xff000000;
                 sPtr += 3;
             }
+            return true;
         }
-        return true;
+        return false;
 
     case TEXP_LEGACY_R3G3B2:
         switch( outFormat )
         {
         case DXGI_FORMAT_R8G8B8A8_UNORM:
             // D3DFMT_R3G3B2 -> DXGI_FORMAT_R8G8B8A8_UNORM
+            if ( inSize >= 1 && outSize >= 4 )
             {
                 const uint8_t* __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
                 uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
 
-                for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); ++icount, ocount += 4 )
+                for( size_t ocount = 0, icount = 0; ( ( icount < inSize ) && ( ocount < ( outSize - 3 ) ) ); ++icount, ocount += 4 )
                 {
                     uint8_t t = *(sPtr++);
 
@@ -784,16 +787,18 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
 
                     *(dPtr++) = t1 | t2 | t3 | 0xff000000;
                 }
+                return true;
             }
-            return true;
+            return false;
 
         case DXGI_FORMAT_B5G6R5_UNORM:
             // D3DFMT_R3G3B2 -> DXGI_FORMAT_B5G6R5_UNORM
+            if ( inSize >= 1 && outSize >= 2 )
             {
                 const uint8_t* __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
                 uint16_t * __restrict dPtr = reinterpret_cast<uint16_t*>(pDestination);
 
-                for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); ++icount, ocount += 2 )
+                for( size_t ocount = 0, icount = 0; ( ( icount < inSize ) && ( ocount < ( outSize - 1 ) ) ); ++icount, ocount += 2 )
                 {
                     uint8_t t = *(sPtr++);
 
@@ -803,8 +808,9 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
 
                     *(dPtr++) = t1 | t2 | t3;
                 }
+                return true;
             }
-            return true;
+            return false;
         }
         break;
 
@@ -813,11 +819,12 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
             return false;
 
         // D3DFMT_A8R3G3B2 -> DXGI_FORMAT_R8G8B8A8_UNORM
+        if ( inSize >= 2 && outSize >= 4 )
         {
             const uint16_t* __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
             uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
 
-            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); icount += 2, ocount += 4 )
+            for( size_t ocount = 0, icount = 0; ( ( icount < ( inSize - 1 ) ) && ( ocount < ( outSize - 3 ) ) ); icount += 2, ocount += 4 )
             {
                 uint16_t t = *(sPtr++);
 
@@ -828,37 +835,41 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
 
                 *(dPtr++) = t1 | t2 | t3 | ta;
             }
+            return true;
         }
-        return true;
+        return false;
 
     case TEXP_LEGACY_P8:
         if ( (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM) || !pal8 )
             return false;
 
         // D3DFMT_P8 -> DXGI_FORMAT_R8G8B8A8_UNORM
+        if ( inSize >= 1 && outSize >= 4 )
         {
             const uint8_t* __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
             uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
 
-            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); ++icount, ocount += 4 )
+            for( size_t ocount = 0, icount = 0; ( ( icount < inSize ) && ( ocount < ( outSize - 3 ) ) ); ++icount, ocount += 4 )
             {
                 uint8_t t = *(sPtr++);
 
                 *(dPtr++) = pal8[ t ];
             }
+            return true;
         }
-        return true;
+        return false;
 
     case TEXP_LEGACY_A8P8:
         if ( (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM) || !pal8 )
             return false;
 
         // D3DFMT_A8P8 -> DXGI_FORMAT_R8G8B8A8_UNORM
+        if ( inSize >= 2 && outSize >= 4 )
         {
             const uint16_t* __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
             uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
 
-            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); icount += 2, ocount += 4 )
+            for( size_t ocount = 0, icount = 0; ( ( icount < ( inSize - 1 ) ) && ( ocount < ( outSize - 3 ) ) ); icount += 2, ocount += 4 )
             {
                 uint16_t t = *(sPtr++);
 
@@ -867,8 +878,9 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
 
                 *(dPtr++) = t1 | ta;
             }
+            return true;
         }
-        return true;
+        return false;
 
     case TEXP_LEGACY_A4L4:
         switch( outFormat )
@@ -876,11 +888,12 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
 #ifdef DXGI_1_2_FORMATS
         case DXGI_FORMAT_B4G4R4A4_UNORM :
             // D3DFMT_A4L4 -> DXGI_FORMAT_B4G4R4A4_UNORM 
+            if ( inSize >= 1 && outSize >= 2 )
             {
                 const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
                 uint16_t * __restrict dPtr = reinterpret_cast<uint16_t*>(pDestination);
 
-                for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); ++icount, ocount += 2 )
+                for( size_t ocount = 0, icount = 0; ( ( icount < inSize ) && ( ocount < ( outSize - 1 ) ) ); ++icount, ocount += 2 )
                 {
                     uint8_t t = *(sPtr++);
 
@@ -889,17 +902,19 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
 
                     *(dPtr++) = t1 | (t1 << 4) | (t1 << 8) | ta;
                 }
+                return true;
             }
-            return true;
+            return false;
 #endif // DXGI_1_2_FORMATS
 
         case DXGI_FORMAT_R8G8B8A8_UNORM:
             // D3DFMT_A4L4 -> DXGI_FORMAT_R8G8B8A8_UNORM
+            if ( inSize >= 1 && outSize >= 4 )
             {
                 const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
                 uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
 
-                for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); ++icount, ocount += 4 )
+                for( size_t ocount = 0, icount = 0; ( ( icount < inSize ) && ( ocount < ( outSize - 3 ) ) ); ++icount, ocount += 4 )
                 {
                     uint8_t t = *(sPtr++);
 
@@ -908,8 +923,9 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
 
                     *(dPtr++) = t1 | (t1 << 8) | (t1 << 16) | ta;
                 }
+                return true;
             }
-            return true;
+            return false;
         }
         break;
 
@@ -919,11 +935,12 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
             return false;
 
         // D3DFMT_A4R4G4B4 -> DXGI_FORMAT_R8G8B8A8_UNORM
+        if ( inSize >= 2 && outSize >= 4 )
         {
             const uint16_t * __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
             uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
 
-            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); icount += 2, ocount += 4 )
+            for( size_t ocount = 0, icount = 0; ( ( icount < ( inSize - 1 ) ) && ( ocount < ( outSize - 3 ) ) ); icount += 2, ocount += 4 )
             {
                 uint16_t t = *(sPtr++);
 
@@ -934,20 +951,22 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
 
                 *(dPtr++) = t1 | t2 | t3 | ta;
             }
+            return true;
         }
-        return true;
-#endif
+        return false;
+#endif // DXGI_1_2_FORMATS
 
     case TEXP_LEGACY_L8:
         if (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM)
             return false;
 
         // D3DFMT_L8 -> DXGI_FORMAT_R8G8B8A8_UNORM
+        if ( inSize >= 1 && outSize >= 4 )
         {
             const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
             uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
 
-            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); ++icount, ocount += 4 )
+            for( size_t ocount = 0, icount = 0; ( ( icount < inSize ) && ( ocount < ( outSize - 3 ) ) ); ++icount, ocount += 4 )
             {
                 uint32_t t1 = *(sPtr++);
                 uint32_t t2 = (t1 << 8);
@@ -955,19 +974,21 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
 
                 *(dPtr++) = t1 | t2 | t3 | 0xff000000;
             }
+            return true;
         }
-        return true;
+        return false;
 
     case TEXP_LEGACY_L16:
         if (outFormat != DXGI_FORMAT_R16G16B16A16_UNORM)
             return false;
 
         // D3DFMT_L16 -> DXGI_FORMAT_R16G16B16A16_UNORM
+        if ( inSize >= 2 && outSize >= 8 )
         {
             const uint16_t* __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
             uint64_t * __restrict dPtr = reinterpret_cast<uint64_t*>(pDestination);
 
-            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); icount += 2, ocount += 8 )
+            for( size_t ocount = 0, icount = 0; ( ( icount < ( inSize - 1 ) ) && ( ocount < ( outSize - 7 ) ) ); icount += 2, ocount += 8 )
             {
                 uint16_t t = *(sPtr++);
 
@@ -977,19 +998,21 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
 
                 *(dPtr++) = t1 | t2 | t3 | 0xffff000000000000;
             }
+            return true;
         }
-        return true;
+        return false;
 
     case TEXP_LEGACY_A8L8:
         if (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM)
             return false;
 
         // D3DFMT_A8L8 -> DXGI_FORMAT_R8G8B8A8_UNORM
+        if ( inSize >= 2 && outSize >= 4 )
         {
             const uint16_t* __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
             uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
 
-            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); icount += 2, ocount += 4 )
+            for( size_t ocount = 0, icount = 0; ( ( icount < ( inSize - 1 ) ) && ( ocount < ( outSize - 3 ) ) ); icount += 2, ocount += 4 )
             {
                 uint16_t t = *(sPtr++);
 
@@ -1000,8 +1023,9 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
 
                 *(dPtr++) = t1 | t2 | t3 | ta;
             }
+            return true;
         }
-        return true;
+        return false;
     }
 
     return false;

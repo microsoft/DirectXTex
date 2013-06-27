@@ -73,6 +73,7 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
         case DXGI_FORMAT_R32G32B32A32_FLOAT:
         case DXGI_FORMAT_R32G32B32A32_UINT:
         case DXGI_FORMAT_R32G32B32A32_SINT:
+            if ( inSize >= 16 && outSize >= 16 )
             {
                 uint32_t alpha;
                 if ( format == DXGI_FORMAT_R32G32B32A32_FLOAT )
@@ -84,8 +85,8 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
 
                 if ( pDestination == pSource )
                 {
-                    uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
-                    for( size_t count = 0; count < outSize; count += 16 )
+                    uint32_t *dPtr = reinterpret_cast<uint32_t*> (pDestination);
+                    for( size_t count = 0; count < ( outSize - 15 ); count += 16 )
                     {
                         dPtr += 3;
                         *(dPtr++) = alpha;
@@ -96,7 +97,7 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
                     const uint32_t * __restrict sPtr = reinterpret_cast<const uint32_t*>(pSource);
                     uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
                     size_t size = std::min<size_t>( outSize, inSize );
-                    for( size_t count = 0; count < size; count += 16 )
+                    for( size_t count = 0; count < ( size - 15 ); count += 16 )
                     {
                         *(dPtr++) = *(sPtr++);
                         *(dPtr++) = *(sPtr++);
@@ -115,6 +116,7 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
         case DXGI_FORMAT_R16G16B16A16_UINT:
         case DXGI_FORMAT_R16G16B16A16_SNORM:
         case DXGI_FORMAT_R16G16B16A16_SINT:
+            if ( inSize >= 8 && outSize >= 8 )
             {
                 uint16_t alpha;
                 if ( format == DXGI_FORMAT_R16G16B16A16_FLOAT )
@@ -127,7 +129,7 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
                 if ( pDestination == pSource )
                 {
                     uint16_t *dPtr = reinterpret_cast<uint16_t*>(pDestination);
-                    for( size_t count = 0; count < outSize; count += 8 )
+                    for( size_t count = 0; count < ( outSize - 7 ); count += 8 )
                     {
                         dPtr += 3;
                         *(dPtr++) = alpha;
@@ -138,7 +140,7 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
                     const uint16_t * __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
                     uint16_t * __restrict dPtr = reinterpret_cast<uint16_t*>(pDestination);
                     size_t size = std::min<size_t>( outSize, inSize );
-                    for( size_t count = 0; count < size; count += 8 )
+                    for( size_t count = 0; count < ( size - 7 ); count += 8 )
                     {
                         *(dPtr++) = *(sPtr++);
                         *(dPtr++) = *(sPtr++);
@@ -155,24 +157,26 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
         case DXGI_FORMAT_R10G10B10A2_UNORM:
         case DXGI_FORMAT_R10G10B10A2_UINT:
         case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
-            if ( pDestination == pSource )
+            if ( inSize >= 4 && outSize >= 4 )
             {
-                uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
-                for( size_t count = 0; count < outSize; count += 4 )
+                if ( pDestination == pSource )
                 {
-#pragma warning(suppress: 6001 6101) // PREFast doesn't properly understand the aliasing here.
-                    *dPtr |= 0xC0000000;
-                    ++dPtr;
+                    uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                    for( size_t count = 0; count < ( outSize - 3 ); count += 4 )
+                    {
+                        *dPtr |= 0xC0000000;
+                        ++dPtr;
+                    }
                 }
-            }
-            else
-            {
-                const uint32_t * __restrict sPtr = reinterpret_cast<const uint32_t*>(pSource);
-                uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
-                size_t size = std::min<size_t>( outSize, inSize );
-                for( size_t count = 0; count < size; count += 4 )
+                else
                 {
-                    *(dPtr++) = *(sPtr++) | 0xC0000000;
+                    const uint32_t * __restrict sPtr = reinterpret_cast<const uint32_t*>(pSource);
+                    uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                    size_t size = std::min<size_t>( outSize, inSize );
+                    for( size_t count = 0; count < ( size - 3 ); count += 4 )
+                    {
+                        *(dPtr++) = *(sPtr++) | 0xC0000000;
+                    }
                 }
             }
             return;
@@ -187,13 +191,14 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
         case DXGI_FORMAT_B8G8R8A8_UNORM:
         case DXGI_FORMAT_B8G8R8A8_TYPELESS:
         case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+            if ( inSize >= 4 && outSize >= 4 )
             {
                 const uint32_t alpha = ( format == DXGI_FORMAT_R8G8B8A8_SNORM || format == DXGI_FORMAT_R8G8B8A8_SINT ) ? 0x7f000000 : 0xff000000;
 
                 if ( pDestination == pSource )
                 {
                     uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
-                    for( size_t count = 0; count < outSize; count += 4 )
+                    for( size_t count = 0; count < ( outSize - 3 ); count += 4 )
                     {
                         uint32_t t = *dPtr & 0xFFFFFF;
                         t |= alpha;
@@ -205,7 +210,7 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
                     const uint32_t * __restrict sPtr = reinterpret_cast<const uint32_t*>(pSource);
                     uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
                     size_t size = std::min<size_t>( outSize, inSize );
-                    for( size_t count = 0; count < size; count += 4 )
+                    for( size_t count = 0; count < ( size - 3 ); count += 4 )
                     {
                         uint32_t t = *(sPtr++) & 0xFFFFFF;
                         t |= alpha;
@@ -217,22 +222,25 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
 
         //-----------------------------------------------------------------------------
         case DXGI_FORMAT_B5G5R5A1_UNORM:
-            if ( pDestination == pSource )
+            if ( inSize >= 2 && outSize >= 2 )
             {
-                uint16_t *dPtr = reinterpret_cast<uint16_t*>(pDestination);
-                for( size_t count = 0; count < outSize; count += 2 )
+                if ( pDestination == pSource )
                 {
-                    *(dPtr++) |= 0x8000;
+                    uint16_t *dPtr = reinterpret_cast<uint16_t*>(pDestination);
+                    for( size_t count = 0; count < ( outSize - 1 ); count += 2 )
+                    {
+                        *(dPtr++) |= 0x8000;
+                    }
                 }
-            }
-            else
-            {
-                const uint16_t * __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
-                uint16_t * __restrict dPtr = reinterpret_cast<uint16_t*>(pDestination);
-                size_t size = std::min<size_t>( outSize, inSize );
-                for( size_t count = 0; count < size; count += 2 )
+                else
                 {
-                    *(dPtr++) = *(sPtr++) | 0x8000;
+                    const uint16_t * __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
+                    uint16_t * __restrict dPtr = reinterpret_cast<uint16_t*>(pDestination);
+                    size_t size = std::min<size_t>( outSize, inSize );
+                    for( size_t count = 0; count < ( size - 1 ); count += 2 )
+                    {
+                        *(dPtr++) = *(sPtr++) | 0x8000;
+                    }
                 }
             }
             return;
@@ -245,22 +253,25 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
 #ifdef DXGI_1_2_FORMATS
         //-----------------------------------------------------------------------------
         case DXGI_FORMAT_B4G4R4A4_UNORM:
-            if ( pDestination == pSource )
+            if ( inSize >= 2 && outSize >= 2 )
             {
-                uint16_t *dPtr = reinterpret_cast<uint16_t*>(pDestination);
-                for( size_t count = 0; count < outSize; count += 2 )
+                if ( pDestination == pSource )
                 {
-                    *(dPtr++) |= 0xF000;
+                    uint16_t *dPtr = reinterpret_cast<uint16_t*>(pDestination);
+                    for( size_t count = 0; count < ( outSize - 1 ); count += 2 )
+                    {
+                        *(dPtr++) |= 0xF000;
+                    }
                 }
-            }
-            else
-            {
-                const uint16_t * __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
-                uint16_t * __restrict dPtr = reinterpret_cast<uint16_t*>(pDestination);
-                size_t size = std::min<size_t>( outSize, inSize );
-                for( size_t count = 0; count < size; count += 2 )
+                else
                 {
-                    *(dPtr++) = *(sPtr++) | 0xF000;
+                    const uint16_t * __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
+                    uint16_t * __restrict dPtr = reinterpret_cast<uint16_t*>(pDestination);
+                    size_t size = std::min<size_t>( outSize, inSize );
+                    for( size_t count = 0; count < ( size - 1 ); count += 2 )
+                    {
+                        *(dPtr++) = *(sPtr++) | 0xF000;
+                    }
                 }
             }
             return;
@@ -295,45 +306,46 @@ void _SwizzleScanline( LPVOID pDestination, size_t outSize, LPCVOID pSource, siz
     case DXGI_FORMAT_R10G10B10A2_UNORM:
     case DXGI_FORMAT_R10G10B10A2_UINT:
     case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
-        if ( flags & TEXP_SCANLINE_LEGACY )
+        if ( inSize >= 4 && outSize >= 4 )
         {
-            // Swap Red (R) and Blue (B) channel (used for D3DFMT_A2R10G10B10 legacy sources)
-            if ( pDestination == pSource )
+            if ( flags & TEXP_SCANLINE_LEGACY )
             {
-                uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
-                for( size_t count = 0; count < outSize; count += 4 )
+                // Swap Red (R) and Blue (B) channel (used for D3DFMT_A2R10G10B10 legacy sources)
+                if ( pDestination == pSource )
                 {
-#pragma warning(suppress: 6001 6101) // PREFast doesn't properly understand the aliasing here.
-                    uint32_t t = *dPtr;
+                    uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                    for( size_t count = 0; count < ( outSize - 3 ); count += 4 )
+                    {
+                        uint32_t t = *dPtr;
 
-                    uint32_t t1 = (t & 0x3ff00000) >> 20;
-                    uint32_t t2 = (t & 0x000003ff) << 20;
-                    uint32_t t3 = (t & 0x000ffc00);
-                    uint32_t ta = ( flags & TEXP_SCANLINE_SETALPHA ) ? 0xC0000000 : (t & 0xC0000000);
+                        uint32_t t1 = (t & 0x3ff00000) >> 20;
+                        uint32_t t2 = (t & 0x000003ff) << 20;
+                        uint32_t t3 = (t & 0x000ffc00);
+                        uint32_t ta = ( flags & TEXP_SCANLINE_SETALPHA ) ? 0xC0000000 : (t & 0xC0000000);
 
-                    *(dPtr++) = t1 | t2 | t3 | ta;
+                        *(dPtr++) = t1 | t2 | t3 | ta;
+                    }
+                }
+                else
+                {
+                    const uint32_t * __restrict sPtr = reinterpret_cast<const uint32_t*>(pSource);
+                    uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                    size_t size = std::min<size_t>( outSize, inSize );
+                    for( size_t count = 0; count < ( size - 3 ); count += 4 )
+                    {
+                        uint32_t t = *(sPtr++);
+
+                        uint32_t t1 = (t & 0x3ff00000) >> 20;
+                        uint32_t t2 = (t & 0x000003ff) << 20;
+                        uint32_t t3 = (t & 0x000ffc00);
+                        uint32_t ta = ( flags & TEXP_SCANLINE_SETALPHA ) ? 0xC0000000 : (t & 0xC0000000);
+
+                        *(dPtr++) = t1 | t2 | t3 | ta;
+                    }
                 }
             }
-            else
-            {
-                const uint32_t * __restrict sPtr = reinterpret_cast<const uint32_t*>(pSource);
-                uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
-                size_t size = std::min<size_t>( outSize, inSize );
-                for( size_t count = 0; count < size; count += 4 )
-                {
-                    uint32_t t = *(sPtr++);
-
-                    uint32_t t1 = (t & 0x3ff00000) >> 20;
-                    uint32_t t2 = (t & 0x000003ff) << 20;
-                    uint32_t t3 = (t & 0x000ffc00);
-                    uint32_t ta = ( flags & TEXP_SCANLINE_SETALPHA ) ? 0xC0000000 : (t & 0xC0000000);
-
-                    *(dPtr++) = t1 | t2 | t3 | ta;
-                }
-            }
-            return;
         }
-        break;
+        return;
 
     //---------------------------------------------------------------------------------
     case DXGI_FORMAT_R8G8B8A8_TYPELESS:
@@ -345,37 +357,40 @@ void _SwizzleScanline( LPVOID pDestination, size_t outSize, LPCVOID pSource, siz
     case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
     case DXGI_FORMAT_B8G8R8X8_TYPELESS:
     case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-        // Swap Red (R) and Blue (B) channels (used to convert from DXGI 1.1 BGR formats to DXGI 1.0 RGB)
-        if ( pDestination == pSource )
+        if ( inSize >= 4 && outSize >= 4 )
         {
-            uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
-            for( size_t count = 0; count < outSize; count += 4 )
+            // Swap Red (R) and Blue (B) channels (used to convert from DXGI 1.1 BGR formats to DXGI 1.0 RGB)
+            if ( pDestination == pSource )
             {
-                uint32_t t = *dPtr;
+                uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                for( size_t count = 0; count < ( outSize - 3 ); count += 4 )
+                {
+                    uint32_t t = *dPtr;
 
-                uint32_t t1 = (t & 0x00ff0000) >> 16;
-                uint32_t t2 = (t & 0x000000ff) << 16;
-                uint32_t t3 = (t & 0x0000ff00);
-                uint32_t ta = ( flags & TEXP_SCANLINE_SETALPHA ) ? 0xff000000 : (t & 0xFF000000);
+                    uint32_t t1 = (t & 0x00ff0000) >> 16;
+                    uint32_t t2 = (t & 0x000000ff) << 16;
+                    uint32_t t3 = (t & 0x0000ff00);
+                    uint32_t ta = ( flags & TEXP_SCANLINE_SETALPHA ) ? 0xff000000 : (t & 0xFF000000);
 
-                *(dPtr++) = t1 | t2 | t3 | ta;
+                    *(dPtr++) = t1 | t2 | t3 | ta;
+                }
             }
-        }
-        else
-        {
-            const uint32_t * __restrict sPtr = reinterpret_cast<const uint32_t*>(pSource);
-            uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
-            size_t size = std::min<size_t>( outSize, inSize );
-            for( size_t count = 0; count < size; count += 4 )
+            else
             {
-                uint32_t t = *(sPtr++);
+                const uint32_t * __restrict sPtr = reinterpret_cast<const uint32_t*>(pSource);
+                uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                size_t size = std::min<size_t>( outSize, inSize );
+                for( size_t count = 0; count < ( size - 3 ); count += 4 )
+                {
+                    uint32_t t = *(sPtr++);
 
-                uint32_t t1 = (t & 0x00ff0000) >> 16;
-                uint32_t t2 = (t & 0x000000ff) << 16;
-                uint32_t t3 = (t & 0x0000ff00);
-                uint32_t ta = ( flags & TEXP_SCANLINE_SETALPHA ) ? 0xff000000 : (t & 0xFF000000);
+                    uint32_t t1 = (t & 0x00ff0000) >> 16;
+                    uint32_t t2 = (t & 0x000000ff) << 16;
+                    uint32_t t3 = (t & 0x0000ff00);
+                    uint32_t ta = ( flags & TEXP_SCANLINE_SETALPHA ) ? 0xff000000 : (t & 0xFF000000);
 
-                *(dPtr++) = t1 | t2 | t3 | ta;
+                    *(dPtr++) = t1 | t2 | t3 | ta;
+                }
             }
         }
         return;
@@ -410,11 +425,12 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
             return false;
 
         // DXGI_FORMAT_B5G6R5_UNORM -> DXGI_FORMAT_R8G8B8A8_UNORM
+        if ( inSize >= 2 && outSize >= 4 )
         {
             const uint16_t * __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
             uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
 
-            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); icount += 2, ocount += 4 )
+            for( size_t ocount = 0, icount = 0; ( ( icount < ( inSize - 1 ) ) && ( ocount < ( outSize - 3 ) ) ); icount += 2, ocount += 4 )
             {
                 uint16_t t = *(sPtr++);
 
@@ -424,19 +440,21 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
 
                 *(dPtr++) = t1 | t2 | t3 | 0xff000000;
             }
+            return true;
         }
-        return true;
+        return false;
         
     case DXGI_FORMAT_B5G5R5A1_UNORM:
         if ( outFormat != DXGI_FORMAT_R8G8B8A8_UNORM )
             return false;
 
         // DXGI_FORMAT_B5G5R5A1_UNORM -> DXGI_FORMAT_R8G8B8A8_UNORM
+        if ( inSize >= 2 && outSize >= 4 )
         {
             const uint16_t * __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
             uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
 
-            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); icount += 2, ocount += 4 )
+            for( size_t ocount = 0, icount = 0; ( ( icount < ( inSize - 1 ) ) && ( ocount < ( outSize - 3 ) ) ); icount += 2, ocount += 4 )
             {
                 uint16_t t = *(sPtr++);
 
@@ -447,8 +465,9 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
 
                 *(dPtr++) = t1 | t2 | t3 | ta;
             }
+            return true;
         }
-        return true;
+        return false;
 
 #ifdef DXGI_1_2_FORMATS
     case DXGI_FORMAT_B4G4R4A4_UNORM:
@@ -456,11 +475,12 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
             return false;
 
         // DXGI_FORMAT_B4G4R4A4_UNORM -> DXGI_FORMAT_R8G8B8A8_UNORM
+        if ( inSize >= 2 && outSize >= 4 )
         {
             const uint16_t * __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
             uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
 
-            for( size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < outSize)); icount += 2, ocount += 4 )
+            for( size_t ocount = 0, icount = 0; ( ( icount < ( inSize - 1 ) ) && ( ocount < ( outSize - 3 ) ) ); icount += 2, ocount += 4 )
             {
                 uint16_t t = *(sPtr++);
 
@@ -471,8 +491,9 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
 
                 *(dPtr++) = t1 | t2 | t3 | ta;
             }
+            return true;
         }
-        return true;
+        return false;
 #endif // DXGI_1_2_FORMATS
     }
 
@@ -487,7 +508,7 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
         if ( size >= sizeof(type) )\
         {\
             const type * __restrict sPtr = reinterpret_cast<const type*>(pSource);\
-            for( size_t icount = 0; icount < size; icount += sizeof(type) )\
+            for( size_t icount = 0; icount < ( size - sizeof(type) + 1 ); icount += sizeof(type) )\
             {\
                 if ( dPtr >= ePtr ) break;\
                 *(dPtr++) = func( sPtr++ );\
@@ -500,7 +521,7 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
         if ( size >= sizeof(type) )\
         {\
             const type * __restrict sPtr = reinterpret_cast<const type*>(pSource);\
-            for( size_t icount = 0; icount < size; icount += sizeof(type) )\
+            for( size_t icount = 0; icount < ( size - sizeof(type) + 1 ); icount += sizeof(type) )\
             {\
                 XMVECTOR v = func( sPtr++ );\
                 if ( dPtr >= ePtr ) break;\
@@ -514,7 +535,7 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
         if ( size >= sizeof(type) )\
         {\
             const type * __restrict sPtr = reinterpret_cast<const type*>(pSource);\
-            for( size_t icount = 0; icount < size; icount += sizeof(type) )\
+            for( size_t icount = 0; icount < ( size - sizeof(type) + 1 ); icount += sizeof(type) )\
             {\
                 XMVECTOR v = func( sPtr++ );\
                 if ( dPtr >= ePtr ) break;\
@@ -587,46 +608,55 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         LOAD_SCANLINE2( XMINT2, XMLoadSInt2, g_XMIdentityR3 )
 
     case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
-        if ( size >= (sizeof(float)+sizeof(uint32_t)) )
         {
-            const float * sPtr = reinterpret_cast<const float*>(pSource);
-            for( size_t icount = 0; icount < size; icount += (sizeof(float)+sizeof(uint32_t)) )
+            const size_t psize = sizeof(float)+sizeof(uint32_t);
+            if ( size >= psize )
             {
-                const uint8_t* ps8 = reinterpret_cast<const uint8_t*>( &sPtr[1] );
-                if ( dPtr >= ePtr ) break;
-                *(dPtr++) = XMVectorSet( sPtr[0], static_cast<float>( *ps8 ), 0.f, 1.f );
-                sPtr += 2;
+                const float * sPtr = reinterpret_cast<const float*>(pSource);
+                for( size_t icount = 0; icount < ( size - psize + 1 ); icount += psize )
+                {
+                    const uint8_t* ps8 = reinterpret_cast<const uint8_t*>( &sPtr[1] );
+                    if ( dPtr >= ePtr ) break;
+                    *(dPtr++) = XMVectorSet( sPtr[0], static_cast<float>( *ps8 ), 0.f, 1.f );
+                    sPtr += 2;
+                }
+                return true;
             }
-            return true;
         }
         return false;
 
     case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
-        if ( size >= (sizeof(float)+sizeof(uint32_t)) )
         {
-            const float * sPtr = reinterpret_cast<const float*>(pSource);
-            for( size_t icount = 0; icount < size; icount += (sizeof(float)+sizeof(uint32_t)) )
+            const size_t psize = sizeof(float)+sizeof(uint32_t);
+            if ( size >= psize )
             {
-                if ( dPtr >= ePtr ) break;
-                *(dPtr++) = XMVectorSet( sPtr[0], 0.f /* typeless component assumed zero */, 0.f, 1.f );
-                sPtr += 2;
+                const float * sPtr = reinterpret_cast<const float*>(pSource);
+                for( size_t icount = 0; icount < ( size - psize + 1 ); icount += psize )
+                {
+                    if ( dPtr >= ePtr ) break;
+                    *(dPtr++) = XMVectorSet( sPtr[0], 0.f /* typeless component assumed zero */, 0.f, 1.f );
+                    sPtr += 2;
+                }
+                return true;
             }
-            return true;
         }
         return false;
 
     case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
-        if ( size >= (sizeof(float)+sizeof(uint32_t)) )
         {
-            const float * sPtr = reinterpret_cast<const float*>(pSource);
-            for( size_t icount = 0; icount < size; icount += (sizeof(float)+sizeof(uint32_t)) )
+            const size_t psize = sizeof(float)+sizeof(uint32_t);
+            if ( size >= psize )
             {
-                const uint8_t* pg8 = reinterpret_cast<const uint8_t*>( &sPtr[1] );
-                if ( dPtr >= ePtr ) break;
-                *(dPtr++) = XMVectorSet( 0.f /* typeless component assumed zero */, static_cast<float>( *pg8 ), 0.f, 1.f );
-                sPtr += 2;
+                const float * sPtr = reinterpret_cast<const float*>(pSource);
+                for( size_t icount = 0; icount < ( size - psize + 1 ); icount += psize )
+                {
+                    const uint8_t* pg8 = reinterpret_cast<const uint8_t*>( &sPtr[1] );
+                    if ( dPtr >= ePtr ) break;
+                    *(dPtr++) = XMVectorSet( 0.f /* typeless component assumed zero */, static_cast<float>( *pg8 ), 0.f, 1.f );
+                    sPtr += 2;
+                }
+                return true;
             }
-            return true;
         }
         return false;
 
@@ -637,7 +667,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(XMUDECN4) )
         {
             const XMUDECN4 * __restrict sPtr = reinterpret_cast<const XMUDECN4*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMUDECN4) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMUDECN4) + 1 ); icount += sizeof(XMUDECN4) )
             {
                 if ( dPtr >= ePtr ) break;
 
@@ -699,7 +729,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(float) )
         {
             const float* __restrict sPtr = reinterpret_cast<const float*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(float) )
+            for( size_t icount = 0; icount < ( size - sizeof(float) + 1 ); icount += sizeof(float) )
             {
                 XMVECTOR v = XMLoadFloat( sPtr++ );
                 if ( dPtr >= ePtr ) break;
@@ -713,7 +743,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(uint32_t) )
         {
             const uint32_t* __restrict sPtr = reinterpret_cast<const uint32_t*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(uint32_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(uint32_t) + 1 ); icount += sizeof(uint32_t) )
             {
                 XMVECTOR v = XMLoadInt( sPtr++ );
                 v = XMConvertVectorUIntToFloat( v, 0 );
@@ -728,7 +758,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(int32_t) )
         {
             const int32_t * __restrict sPtr = reinterpret_cast<const int32_t*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(int32_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(int32_t) + 1 ); icount += sizeof(int32_t) )
             {
                 XMVECTOR v = XMLoadInt( reinterpret_cast<const uint32_t*> (sPtr++) );
                 v = XMConvertVectorIntToFloat( v, 0 );
@@ -743,7 +773,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(uint32_t) )
         {
             const uint32_t * sPtr = reinterpret_cast<const uint32_t*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(uint32_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(uint32_t) + 1 ); icount += sizeof(uint32_t) )
             {
                 float d = static_cast<float>( *sPtr & 0xFFFFFF ) / 16777215.f;
                 float s = static_cast<float>( ( *sPtr & 0xFF000000 ) >> 24 );
@@ -759,7 +789,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(uint32_t) )
         {
             const uint32_t * sPtr = reinterpret_cast<const uint32_t*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(uint32_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(uint32_t) + 1 ); icount += sizeof(uint32_t) )
             {
                 float r = static_cast<float>( *sPtr & 0xFFFFFF ) / 16777215.f;
                 ++sPtr;
@@ -774,7 +804,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(uint32_t) )
         {
             const uint32_t * sPtr = reinterpret_cast<const uint32_t*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(uint32_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(uint32_t) + 1 ); icount += sizeof(uint32_t) )
             {
                 float g = static_cast<float>( ( *sPtr & 0xFF000000 ) >> 24 );
                 ++sPtr;
@@ -801,7 +831,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(HALF) )
         {
             const HALF * __restrict sPtr = reinterpret_cast<const HALF*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(HALF) )
+            for( size_t icount = 0; icount < ( size - sizeof(HALF) + 1 ); icount += sizeof(HALF) )
             {
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( XMConvertHalfToFloat(*sPtr++), 0.f, 0.f, 1.f );
@@ -815,7 +845,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(uint16_t) )
         {
             const uint16_t* __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(uint16_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(uint16_t) + 1 ); icount += sizeof(uint16_t) )
             {
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++) / 65535.f, 0.f, 0.f, 1.f );
@@ -828,7 +858,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(uint16_t) )
         {
             const uint16_t * __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(uint16_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(uint16_t) + 1 ); icount += sizeof(uint16_t) )
             {
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++), 0.f, 0.f, 1.f );
@@ -841,7 +871,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(int16_t) )
         {
             const int16_t * __restrict sPtr = reinterpret_cast<const int16_t*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(int16_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(int16_t) + 1 ); icount += sizeof(int16_t) )
             {
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++) / 32767.f, 0.f, 0.f, 1.f );
@@ -854,7 +884,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(int16_t) )
         {
             const int16_t * __restrict sPtr = reinterpret_cast<const int16_t*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(int16_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(int16_t) + 1 ); icount += sizeof(int16_t) )
             {
                 if ( dPtr >= ePtr ) break;
                 *(dPtr++) = XMVectorSet( static_cast<float>(*sPtr++), 0.f, 0.f, 1.f );
@@ -950,7 +980,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(XMFLOAT3SE) )
         {
             const XMFLOAT3SE * __restrict sPtr = reinterpret_cast<const XMFLOAT3SE*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMFLOAT3SE) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMFLOAT3SE) + 1 ); icount += sizeof(XMFLOAT3SE) )
             {
                 union { float f; int32_t i; } fi;
                 fi.i = 0x33800000 + (sPtr->e << 23);
@@ -973,7 +1003,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(XMUBYTEN4) )
         {
             const XMUBYTEN4 * __restrict sPtr = reinterpret_cast<const XMUBYTEN4*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMUBYTEN4) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
             {
                 XMVECTOR v = XMLoadUByteN4( sPtr++ );
                 XMVECTOR v1 = XMVectorSwizzle<0, 3, 2, 1>( v );
@@ -990,7 +1020,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(XMUBYTEN4) )
         {
             const XMUBYTEN4 * __restrict sPtr = reinterpret_cast<const XMUBYTEN4*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMUBYTEN4) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
             {
                 XMVECTOR v = XMLoadUByteN4( sPtr++ );
                 XMVECTOR v0 = XMVectorSwizzle<1, 0, 3, 2>( v );
@@ -1009,7 +1039,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         {
             static XMVECTORF32 s_Scale = { 1.f/31.f, 1.f/63.f, 1.f/31.f, 1.f };
             const XMU565 * __restrict sPtr = reinterpret_cast<const XMU565*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMU565) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMU565) + 1 ); icount += sizeof(XMU565) )
             {
                 XMVECTOR v = XMLoadU565( sPtr++ );
                 v = XMVectorMultiply( v, s_Scale );
@@ -1026,7 +1056,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         {
             static XMVECTORF32 s_Scale = { 1.f/31.f, 1.f/31.f, 1.f/31.f, 1.f };
             const XMU555 * __restrict sPtr = reinterpret_cast<const XMU555*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMU555) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMU555) + 1 ); icount += sizeof(XMU555) )
             {
                 XMVECTOR v = XMLoadU555( sPtr++ );
                 v = XMVectorMultiply( v, s_Scale );
@@ -1042,7 +1072,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(XMUBYTEN4) )
         {
             const XMUBYTEN4 * __restrict sPtr = reinterpret_cast<const XMUBYTEN4*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMUBYTEN4) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
             {
                 XMVECTOR v = XMLoadUByteN4( sPtr++ );
                 if ( dPtr >= ePtr ) break;
@@ -1057,7 +1087,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(XMUBYTEN4) )
         {
             const XMUBYTEN4 * __restrict sPtr = reinterpret_cast<const XMUBYTEN4*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMUBYTEN4) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
             {
                 XMVECTOR v = XMLoadUByteN4( sPtr++ );
                 v = XMVectorSwizzle<2, 1, 0, 3>( v );
@@ -1074,7 +1104,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         {
             static XMVECTORF32 s_Scale = { 1.f/15.f, 1.f/15.f, 1.f/15.f, 1.f/15.f };
             const XMUNIBBLE4 * __restrict sPtr = reinterpret_cast<const XMUNIBBLE4*>(pSource);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMUNIBBLE4) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMUNIBBLE4) + 1 ); icount += sizeof(XMUNIBBLE4) )
             {
                 XMVECTOR v = XMLoadUNibble4( sPtr++ );
                 v = XMVectorMultiply( v, s_Scale );
@@ -1105,7 +1135,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         if ( size >= sizeof(type) )\
         {\
             type * __restrict dPtr = reinterpret_cast<type*>(pDestination);\
-            for( size_t icount = 0; icount < size; icount += sizeof(type) )\
+            for( size_t icount = 0; icount < ( size - sizeof(type) + 1 ); icount += sizeof(type) )\
             {\
                 if ( sPtr >= ePtr ) break;\
                 func( dPtr++, *sPtr++ );\
@@ -1173,21 +1203,24 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         STORE_SCANLINE( XMINT2, XMStoreSInt2 )
 
     case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
-        if ( size >= (sizeof(float)+sizeof(uint32_t)) )
         {
-            float *dPtr = reinterpret_cast<float*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += (sizeof(float)+sizeof(uint32_t)) )
+            const size_t psize = sizeof(float)+sizeof(uint32_t);
+            if ( size >= psize )
             {
-                if ( sPtr >= ePtr ) break;
-                XMFLOAT4 f;
-                XMStoreFloat4( &f, *sPtr++ );
-                dPtr[0] = f.x;
-                uint8_t* ps8 = reinterpret_cast<uint8_t*>( &dPtr[1] );
-                ps8[0] = static_cast<uint8_t>( std::min<float>( 255.f, std::max<float>( 0.f, f.y ) ) );
-                ps8[1] = ps8[2] = ps8[3] = 0;
-                dPtr += 2;
+                float *dPtr = reinterpret_cast<float*>(pDestination);
+                for( size_t icount = 0; icount < ( size - psize + 1 ); icount += psize )
+                {
+                    if ( sPtr >= ePtr ) break;
+                    XMFLOAT4 f;
+                    XMStoreFloat4( &f, *sPtr++ );
+                    dPtr[0] = f.x;
+                    uint8_t* ps8 = reinterpret_cast<uint8_t*>( &dPtr[1] );
+                    ps8[0] = static_cast<uint8_t>( std::min<float>( 255.f, std::max<float>( 0.f, f.y ) ) );
+                    ps8[1] = ps8[2] = ps8[3] = 0;
+                    dPtr += 2;
+                }
+                return true;
             }
-            return true;
         }
         return false;
 
@@ -1202,7 +1235,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
             static const XMVECTORF32  C     = { 1023.f, 1023.f, 1023.f, 3.f };
 
             XMUDECN4 * __restrict dPtr = reinterpret_cast<XMUDECN4*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMUDECN4) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMUDECN4) + 1 ); icount += sizeof(XMUDECN4) )
             {
                 if ( sPtr >= ePtr ) break;
 
@@ -1261,7 +1294,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         if ( size >= sizeof(float) )
         {
             float * __restrict dPtr = reinterpret_cast<float*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(float) )
+            for( size_t icount = 0; icount < ( size - sizeof(float) + 1 ); icount += sizeof(float) )
             {
                 if ( sPtr >= ePtr ) break;
                 XMStoreFloat( dPtr++, *(sPtr++) );
@@ -1274,7 +1307,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         if ( size >= sizeof(uint32_t) )
         {
             uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(uint32_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(uint32_t) + 1 ); icount += sizeof(uint32_t) )
             {
                 if ( sPtr >= ePtr ) break;
                 XMVECTOR v = XMConvertVectorFloatToUInt( *(sPtr++), 0 );
@@ -1285,10 +1318,10 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         return false;
 
     case DXGI_FORMAT_R32_SINT:
-        if ( size >= sizeof(uint32_t) )
+        if ( size >= sizeof(int32_t) )
         {
             uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(uint32_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(int32_t) + 1 ); icount += sizeof(int32_t) )
             {
                 if ( sPtr >= ePtr ) break;
                 XMVECTOR v = XMConvertVectorFloatToInt( *(sPtr++), 0 );
@@ -1304,7 +1337,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
             static const XMVECTORF32 clamp = { 1.f, 255.f, 0.f, 0.f };
             XMVECTOR zero = XMVectorZero();
             uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(uint32_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(uint32_t) + 1 ); icount += sizeof(uint32_t) )
             {
                 if ( sPtr >= ePtr ) break;
                 XMFLOAT4 f;
@@ -1332,7 +1365,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         if ( size >= sizeof(HALF) )
         {
             HALF * __restrict dPtr = reinterpret_cast<HALF*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(HALF) )
+            for( size_t icount = 0; icount < ( size - sizeof(HALF) + 1 ); icount += sizeof(HALF) )
             {
                 if ( sPtr >= ePtr ) break;
                 float v = XMVectorGetX( *sPtr++ );
@@ -1347,7 +1380,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         if ( size >= sizeof(uint16_t) )
         {
             uint16_t * __restrict dPtr = reinterpret_cast<uint16_t*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(uint16_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(uint16_t) + 1 ); icount += sizeof(uint16_t) )
             {
                 if ( sPtr >= ePtr ) break;
                 float v = XMVectorGetX( *sPtr++ );
@@ -1362,7 +1395,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         if ( size >= sizeof(uint16_t) )
         {
             uint16_t * __restrict dPtr = reinterpret_cast<uint16_t*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(uint16_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(uint16_t) + 1 ); icount += sizeof(uint16_t) )
             {
                 if ( sPtr >= ePtr ) break;
                 float v = XMVectorGetX( *sPtr++ );
@@ -1377,7 +1410,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         if ( size >= sizeof(int16_t) )
         {
             int16_t * __restrict dPtr = reinterpret_cast<int16_t*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(int16_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(int16_t) + 1 ); icount += sizeof(int16_t) )
             {
                 if ( sPtr >= ePtr ) break;
                 float v = XMVectorGetX( *sPtr++ );
@@ -1392,7 +1425,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         if ( size >= sizeof(int16_t) )
         {
             int16_t * __restrict dPtr = reinterpret_cast<int16_t*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(int16_t) )
+            for( size_t icount = 0; icount < ( size - sizeof(int16_t) + 1 ); icount += sizeof(int16_t) )
             {
                 if ( sPtr >= ePtr ) break;
                 float v = XMVectorGetX( *sPtr++ );
@@ -1509,7 +1542,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
             static const float minf9 = float(1.f / (1 << 16));
 
             XMFLOAT3SE * __restrict dPtr = reinterpret_cast<XMFLOAT3SE*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMFLOAT3SE) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMFLOAT3SE) + 1 ); icount += sizeof(XMFLOAT3SE) )
             {
                 if ( sPtr >= ePtr ) break;
 
@@ -1547,7 +1580,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         if ( size >= sizeof(XMUBYTEN4) )
         {
             XMUBYTEN4 * __restrict dPtr = reinterpret_cast<XMUBYTEN4*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMUBYTEN4) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
             {
                 if ( sPtr >= ePtr ) break;
                 XMVECTOR v0 = *sPtr++;
@@ -1565,7 +1598,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
             static XMVECTORI32 select1101 = {XM_SELECT_1, XM_SELECT_1, XM_SELECT_0, XM_SELECT_1};
 
             XMUBYTEN4 * __restrict dPtr = reinterpret_cast<XMUBYTEN4*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMUBYTEN4) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
             {
                 if ( sPtr >= ePtr ) break;
                 XMVECTOR v0 = XMVectorSwizzle<1, 0, 3, 2>( *sPtr++ );
@@ -1582,7 +1615,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         {
             static XMVECTORF32 s_Scale = { 31.f, 63.f, 31.f, 1.f };
             XMU565 * __restrict dPtr = reinterpret_cast<XMU565*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMU565) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMU565) + 1 ); icount += sizeof(XMU565) )
             {
                 if ( sPtr >= ePtr ) break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>( *sPtr++ );
@@ -1598,7 +1631,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         {
             static XMVECTORF32 s_Scale = { 31.f, 31.f, 31.f, 1.f };
             XMU555 * __restrict dPtr = reinterpret_cast<XMU555*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMU555) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMU555) + 1 ); icount += sizeof(XMU555) )
             {
                 if ( sPtr >= ePtr ) break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>( *sPtr++ );
@@ -1616,7 +1649,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         if ( size >= sizeof(XMUBYTEN4) )
         {
             XMUBYTEN4 * __restrict dPtr = reinterpret_cast<XMUBYTEN4*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMUBYTEN4) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
             {
                 if ( sPtr >= ePtr ) break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>( *sPtr++ );
@@ -1631,7 +1664,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         if ( size >= sizeof(XMUBYTEN4) )
         {
             XMUBYTEN4 * __restrict dPtr = reinterpret_cast<XMUBYTEN4*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMUBYTEN4) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
             {
                 if ( sPtr >= ePtr ) break;
                 XMVECTOR v = XMVectorPermute<2, 1, 0, 7>( *sPtr++, g_XMIdentityR3 );
@@ -1647,7 +1680,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         {
             static XMVECTORF32 s_Scale = { 15.f, 15.f, 15.f, 15.f };
             XMUNIBBLE4 * __restrict dPtr = reinterpret_cast<XMUNIBBLE4*>(pDestination);
-            for( size_t icount = 0; icount < size; icount += sizeof(XMUNIBBLE4) )
+            for( size_t icount = 0; icount < ( size - sizeof(XMUNIBBLE4) + 1 ); icount += sizeof(XMUNIBBLE4) )
             {
                 if ( sPtr >= ePtr ) break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>( *sPtr++ );
@@ -1901,7 +1934,7 @@ bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
 
     default:
         // can't treat A8, XR, Depth, SNORM, UINT, or SINT as sRGB
-        flags &= ~TEX_FILTER_SRGB;
+	        flags &= ~TEX_FILTER_SRGB;
         break;
     }
 

@@ -812,18 +812,21 @@ static void _Copy24bppScanline( _Out_writes_bytes_(outSize) LPVOID pDestination,
     const uint32_t * __restrict sPtr = reinterpret_cast<const uint32_t*>(pSource);
     uint8_t * __restrict dPtr = reinterpret_cast<uint8_t*>(pDestination);
 
-    const uint8_t* endPtr = dPtr + outSize;
-
-    for( size_t count = 0; count < inSize; count += 4 )
+    if ( inSize >= 4 && outSize >= 3 )
     {
-        uint32_t t = *(sPtr++);
+        const uint8_t* endPtr = dPtr + outSize;
 
-        if ( dPtr+2 > endPtr )
-            return;
+        for( size_t count = 0; count < ( inSize - 3 ); count += 4 )
+        {
+            uint32_t t = *(sPtr++);
 
-        *(dPtr++) = uint8_t(t & 0xFF);              // Blue
-        *(dPtr++) = uint8_t((t & 0xFF00) >> 8);     // Green
-        *(dPtr++) = uint8_t((t & 0xFF0000) >> 16);  // Red
+            if ( dPtr+3 > endPtr )
+                return;
+
+            *(dPtr++) = uint8_t(t & 0xFF);              // Blue
+            *(dPtr++) = uint8_t((t & 0xFF00) >> 8);     // Green
+            *(dPtr++) = uint8_t((t & 0xFF0000) >> 16);  // Red
+        }
     }
 }
 
