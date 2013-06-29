@@ -15,11 +15,6 @@
 
 #include "directxtexp.h"
 
-#ifdef __cplusplus_winrt
-#include <shcore.h>
-#pragma comment(lib,"shcore.lib")
-#endif
-
 //-------------------------------------------------------------------------------------
 // WIC Pixel Format nearest conversion table
 //-------------------------------------------------------------------------------------
@@ -923,12 +918,7 @@ HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID containerForma
     blob.Release();
 
     ScopedObject<IStream> stream;
-#ifdef __cplusplus_winrt
-    auto randomAccessStream = ref new Windows::Storage::Streams::InMemoryRandomAccessStream();
-    HRESULT hr = CreateStreamOverRandomAccessStream( randomAccessStream, __uuidof(IStream), reinterpret_cast<void **>( &stream ) );
-#else
     HRESULT hr = CreateStreamOnHGlobal( 0, TRUE, &stream );
-#endif
     if ( FAILED(hr) )
         return hr;
 
@@ -975,12 +965,7 @@ HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGU
     blob.Release();
 
     ScopedObject<IStream> stream;
-#ifdef __cplusplus_winrt
-    auto randomAccessStream = ref new Windows::Storage::Streams::InMemoryRandomAccessStream();
-    HRESULT hr = CreateStreamOverRandomAccessStream( randomAccessStream, __uuidof(IStream), reinterpret_cast<void **>( &stream ) );
-#else
     HRESULT hr = CreateStreamOnHGlobal( 0, TRUE, &stream );
-#endif
     if ( FAILED(hr) )
         return hr;
 
