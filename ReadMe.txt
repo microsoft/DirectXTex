@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-June 15, 2013
+July 1, 2013
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -13,14 +13,10 @@ use of the Windows Image Component (WIC) APIs. It also includes a simple .TGA re
 writer since this image file format is commonly used for texture content processing pipelines,
 but is not currently supported by a built-in WIC codec.
 
-The source is written for Visual C++ 2010 using the Direct3D headers from either
-the legacy DirectX SDK or recent Windows SDK. It can also be compiled using Visual Studio 2012
-and the Windows SDK 8.0 headers.
+The source is written for Visual Studio 2010, 2012, or 2013. It is recommended that you
+make use of the Windows 8.x SDK and Windows 7 Service Pack 1 or later.
 
-It is recommended that you make use of Visual C++ 2010 Service Pack 1 or VS 2012 with
-the Windows 8.0 SDK, and Windows 7 Service Pack 1 or Windows 8.
-
-Details on using the Windows 8.0 SDK with VS 2010 are described on the Visual C++ Team Blog:
+Details on using the Windows 8.x SDK with VS 2010 are described on the Visual C++ Team Blog:
 <http://blogs.msdn.com/b/vcblog/archive/2012/11/23/using-the-windows-8-sdk-with-visual-studio-2010-configuring-multiple-projects.aspx>
 
 DDSTextureLoader\
@@ -121,6 +117,10 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+July 1, 2013
+    VS 2013 Preview projects added
+    SaveToWIC functions updated with new optional setCustomProps parameter
 
 June 15, 2013
     Custom filtering implementation for Resize & GenerateMipMaps(3D) - Point, Box, Linear, Cubic, and Triangle
