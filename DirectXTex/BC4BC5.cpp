@@ -379,6 +379,7 @@ void D3DXDecodeBC4U( XMVECTOR *pColor, const uint8_t *pBC )
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
+        #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
         pColor[i] = XMVectorSet( pBC4->R(i), 0, 0, 1.0f);
     }       
 }
@@ -393,6 +394,7 @@ void D3DXDecodeBC4S(XMVECTOR *pColor, const uint8_t *pBC)
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
+        #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
         pColor[i] = XMVectorSet( pBC4->R(i), 0, 0, 1.0f);
     }       
 }
@@ -454,6 +456,7 @@ void D3DXDecodeBC5U(XMVECTOR *pColor, const uint8_t *pBC)
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
+        #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
         pColor[i] = XMVectorSet(pBCR->R(i), pBCG->R(i), 0, 1.0f);
     }       
 }
@@ -469,6 +472,7 @@ void D3DXDecodeBC5S(XMVECTOR *pColor, const uint8_t *pBC)
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
+        #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
         pColor[i] = XMVectorSet(pBCR->R(i), pBCG->R(i), 0, 1.0f);
     }       
 }

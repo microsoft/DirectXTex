@@ -1438,7 +1438,14 @@ void D3DX_BC6H::GeneratePaletteQuantized(const EncodeParams* pEP, const INTEndPn
     {
     case 3: aWeights = g_aWeights3; assert(uNumIndices <= 8); _Analysis_assume_(uNumIndices <= 8); break;
     case 4: aWeights = g_aWeights4; assert(uNumIndices <= 16); _Analysis_assume_(uNumIndices <= 16); break;
-    default: assert(false); for(size_t i=0; i < uNumIndices; ++i) aPalette[i] = INTColor(0,0,0); return;
+    default:
+        assert(false);
+        for(size_t i = 0; i < uNumIndices; ++i)
+        {
+            #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
+            aPalette[i] = INTColor(0,0,0);
+        }
+        return;
     }
 
     for (size_t i = 0; i < uNumIndices; ++i)
@@ -1818,7 +1825,14 @@ void D3DX_BC6H::GeneratePaletteUnquantized(const EncodeParams* pEP, size_t uRegi
     {
     case 3: aWeights = g_aWeights3; assert(uNumIndices <= 8); _Analysis_assume_(uNumIndices <= 8); break;
     case 4: aWeights = g_aWeights4; assert(uNumIndices <= 16); _Analysis_assume_(uNumIndices <= 16); break;
-    default: assert(false); for(size_t i = 0; i < uNumIndices; ++i) aPalette[i] = INTColor(0,0,0); return;
+    default:
+        assert(false);
+        for(size_t i = 0; i < uNumIndices; ++i)
+        {
+            #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
+            aPalette[i] = INTColor(0,0,0);
+        }
+        return;
     }
 
     for(register size_t i = 0; i < uNumIndices; ++i)

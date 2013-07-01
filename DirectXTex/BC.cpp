@@ -807,7 +807,10 @@ void D3DXDecodeBC2(XMVECTOR *pColor, const uint8_t *pBC)
     DWORD dw = pBC2->bitmap[0];
 
     for(size_t i = 0; i < 8; ++i, dw >>= 4)
+    {
+        #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
         pColor[i] = XMVectorSetW( pColor[i], (float) (dw & 0xf) * (1.0f / 15.0f) );
+    }
 
     dw = pBC2->bitmap[1];
 
