@@ -45,6 +45,7 @@
 #define _Inout_updates_all_(exp)
 #define _Inout_updates_all_opt_(exp)
 #define _Outptr_
+#define _COM_Outptr_
 #define _When_(a,b)
 #endif
 

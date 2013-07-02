@@ -16,6 +16,56 @@
 #include "directxtexp.h"
 
 //-------------------------------------------------------------------------------------
+// IStream support for WIC Memory routines
+//-------------------------------------------------------------------------------------
+
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP) && (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
+
+    #include <shcore.h>
+    #pragma comment(lib,"shcore.lib")
+
+#ifdef __cplusplus_winrt
+
+    static inline HRESULT CreateMemoryStream( _COM_Outptr_ IStream** stream )
+    {
+        auto randomAccessStream = ref new ::Windows::Storage::Streams::InMemoryRandomAccessStream();
+        return CreateStreamOverRandomAccessStream( randomAccessStream, __uuidof(IStream), reinterpret_cast<void **>( &stream ) );
+    }
+
+#else
+
+    #include <wrl\client.h>
+    #include <wrl\wrappers\corewrappers.h>
+    #include <windows.storage.streams.h>
+
+    static inline HRESULT CreateMemoryStream( _COM_Outptr_ IStream** stream )
+    {
+        *stream = nullptr;
+        Microsoft::WRL::ComPtr<ABI::Windows::Storage::Streams::IRandomAccessStream> abiStream;
+        HRESULT hr = Windows::Foundation::ActivateInstance(
+            Microsoft::WRL::Wrappers::HStringReference( RuntimeClass_Windows_Storage_Streams_InMemoryRandomAccessStream ).Get(),
+            &abiStream);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = CreateStreamOverRandomAccessStream( abiStream.Get(), __uuidof(IStream), reinterpret_cast<void **>( &stream ) );
+        }
+        return hr;
+    }
+
+#endif // __cplusplus_winrt
+
+#else
+
+    static inline HRESULT CreateMemoryStream( _COM_Outptr_ IStream** stream )
+    {
+        return CreateStreamOnHGlobal( 0, TRUE, stream );
+    }
+
+#endif
+
+
+//-------------------------------------------------------------------------------------
 // WIC Pixel Format nearest conversion table
 //-------------------------------------------------------------------------------------
 
@@ -918,7 +968,7 @@ HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID containerForma
     blob.Release();
 
     ScopedObject<IStream> stream;
-    HRESULT hr = CreateStreamOnHGlobal( 0, TRUE, &stream );
+    HRESULT hr = CreateMemoryStream( &stream );
     if ( FAILED(hr) )
         return hr;
 
@@ -965,7 +1015,7 @@ HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGU
     blob.Release();
 
     ScopedObject<IStream> stream;
-    HRESULT hr = CreateStreamOnHGlobal( 0, TRUE, &stream );
+    HRESULT hr = CreateMemoryStream( &stream );
     if ( FAILED(hr) )
         return hr;
 
