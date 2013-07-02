@@ -26,7 +26,7 @@
 
 #ifdef __cplusplus_winrt
 
-    static inline HRESULT CreateMemoryStream( _COM_Outptr_ IStream** stream )
+    static inline HRESULT CreateMemoryStream( _Outptr_ IStream** stream )
     {
         auto randomAccessStream = ref new ::Windows::Storage::Streams::InMemoryRandomAccessStream();
         return CreateStreamOverRandomAccessStream( randomAccessStream, __uuidof(IStream), reinterpret_cast<void **>( &stream ) );
@@ -38,9 +38,8 @@
     #include <wrl\wrappers\corewrappers.h>
     #include <windows.storage.streams.h>
 
-    static inline HRESULT CreateMemoryStream( _COM_Outptr_ IStream** stream )
+    static inline HRESULT CreateMemoryStream( _Outptr_ IStream** stream )
     {
-        *stream = nullptr;
         Microsoft::WRL::ComPtr<ABI::Windows::Storage::Streams::IRandomAccessStream> abiStream;
         HRESULT hr = Windows::Foundation::ActivateInstance(
             Microsoft::WRL::Wrappers::HStringReference( RuntimeClass_Windows_Storage_Streams_InMemoryRandomAccessStream ).Get(),
@@ -57,7 +56,7 @@
 
 #else
 
-    static inline HRESULT CreateMemoryStream( _COM_Outptr_ IStream** stream )
+    static inline HRESULT CreateMemoryStream( _Outptr_ IStream** stream )
     {
         return CreateStreamOnHGlobal( 0, TRUE, stream );
     }
