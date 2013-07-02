@@ -2334,7 +2334,8 @@ static HRESULT _Generate3DMipsTriangleFilter( _In_ size_t depth, _In_ size_t lev
                     }
                     else
                     {
-                        sliceAcc->scanline.reset( reinterpret_cast<XMVECTOR*>( _aligned_malloc( sizeof(XMVECTOR) * nwidth * nheight, 16 ) ) );
+                        size_t bytes = sizeof(XMVECTOR) * nwidth * nheight;
+                        sliceAcc->scanline.reset( reinterpret_cast<XMVECTOR*>( _aligned_malloc( bytes, 16 ) ) );
                         if ( !sliceAcc->scanline )
                             return E_OUTOFMEMORY;
                     }
