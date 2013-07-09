@@ -29,7 +29,7 @@
     static inline HRESULT CreateMemoryStream( _Outptr_ IStream** stream )
     {
         auto randomAccessStream = ref new ::Windows::Storage::Streams::InMemoryRandomAccessStream();
-        return CreateStreamOverRandomAccessStream( randomAccessStream, __uuidof(IStream), reinterpret_cast<void **>( &stream ) );
+        return CreateStreamOverRandomAccessStream( randomAccessStream, IID_PPV_ARGS( stream ) );
     }
 
 #else
@@ -47,7 +47,7 @@
 
         if (SUCCEEDED(hr))
         {
-            hr = CreateStreamOverRandomAccessStream( abiStream.Get(), __uuidof(IStream), reinterpret_cast<void **>( &stream ) );
+            hr = CreateStreamOverRandomAccessStream( abiStream.Get(), IID_PPV_ARGS( stream ) );
         }
         return hr;
     }

@@ -178,7 +178,7 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBi
         ScopedObject<IWICPixelFormatInfo> pixelFormatInfo;
         if ( SUCCEEDED(hr) )
         {
-            hr = componentInfo->QueryInterface( __uuidof(IWICPixelFormatInfo), (void**)&pixelFormatInfo );
+            hr = componentInfo->QueryInterface( IID_PPV_ARGS( &pixelFormatInfo ) );
         }
 
         UINT bitsPerPixel = 0;
@@ -474,7 +474,7 @@ static HRESULT _GenerateMipMapsUsingWIC( _In_ const Image& baseImage, _In_ DWORD
         return hr;
 
     ScopedObject<IWICPixelFormatInfo2> pixelFormatInfo;
-    hr = componentInfo->QueryInterface( __uuidof(IWICPixelFormatInfo2), (void**)&pixelFormatInfo );
+    hr = componentInfo->QueryInterface( IID_PPV_ARGS( &pixelFormatInfo ) );
     if ( FAILED(hr) )
         return hr;
 
