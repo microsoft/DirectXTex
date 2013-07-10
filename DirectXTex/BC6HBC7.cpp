@@ -1240,9 +1240,21 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const
     else
     {
 #ifdef _DEBUG
-        OutputDebugStringA( "BC6H: Invalid mode encountered during decoding\n" );
+        const char* warnstr = "BC6H: Invalid mode encountered during decoding\n";
+        switch( uMode )
+        {
+        case 0x13:  warnstr = "BC6H: Reserved mode 10011 encountered during decoding\n"; break;
+        case 0x17:  warnstr = "BC6H: Reserved mode 10111 encountered during decoding\n"; break;
+        case 0x1B:  warnstr = "BC6H: Reserved mode 11011 encountered during decoding\n"; break;
+        case 0x1F:  warnstr = "BC6H: Reserved mode 11111 encountered during decoding\n"; break;
+        }
+        OutputDebugStringA( warnstr );
 #endif
-        FillWithErrorColors( pOut );
+        // Per the BC6H format spec, we must return opaque black
+        for(size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
+        {
+            pOut[i] = HDRColorA(0.0f, 0.0f, 0.0f, 1.0f);
+        }
     }
 }
 
@@ -2138,9 +2150,10 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
     else
     {
 #ifdef _DEBUG
-        OutputDebugStringA( "BC7: Invalid mode encountered during decoding\n" );
+        OutputDebugStringA( "BC7: Reserved mode 8 encountered during decoding\n" );
 #endif
-        FillWithErrorColors( pOut );
+        // Per the BC7 format spec, we must return transparent black
+        memset( pOut, 0, sizeof(HDRColorA) * NUM_PIXELS_PER_BLOCK );
     }
 }
 
