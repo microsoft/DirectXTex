@@ -65,9 +65,9 @@ const size_t BC6H_MAX_SHAPES = 32;
 const size_t BC7_NUM_CHANNELS = 4;
 const size_t BC7_MAX_SHAPES = 64;
 
-const uint32_t BC67_WEIGHT_MAX = 64;
+const int32_t BC67_WEIGHT_MAX = 64;
 const uint32_t BC67_WEIGHT_SHIFT = 6;
-const uint32_t BC67_WEIGHT_ROUND = 32;
+const int32_t BC67_WEIGHT_ROUND = 32;
 
 extern const int g_aWeights2[4];
 extern const int g_aWeights3[8];
