@@ -42,6 +42,7 @@ enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
     OPT_EXPAND_LUMINANCE,
     OPT_TA_WRAP,
     OPT_TA_MIRROR,
+    OPT_FORCE_SINGLEPROC,
 };
 
 struct SConversion
@@ -88,6 +89,7 @@ SValue g_pOptions[] =
     { L"xlum",          OPT_EXPAND_LUMINANCE },
     { L"wrap",          OPT_TA_WRAP },
     { L"mirror",        OPT_TA_MIRROR },
+    { L"singleproc",    OPT_FORCE_SINGLEPROC },
     { nullptr,          0             }
 };
 
@@ -366,6 +368,9 @@ void PrintUsage()
     wprintf( L"\n                       (DDS output only)\n");
     wprintf( L"   -dx10               Force use of 'DX10' extended header\n");
     wprintf( L"\n   -nologo             suppress copyright message\n");
+#ifdef _OPENMP
+    wprintf( L"   -singleproc         Do not use multi-threaded compression\n");
+#endif
 
     wprintf( L"\n");
     wprintf( L"   <format>: ");
@@ -448,6 +453,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if( (OPT_NOLOGO != dwOption) && (OPT_TYPELESS_UNORM != dwOption) && (OPT_TYPELESS_FLOAT != dwOption)
                 && (OPT_SEPALPHA != dwOption) && (OPT_PREMUL_ALPHA != dwOption) && (OPT_EXPAND_LUMINANCE != dwOption)
                 && (OPT_TA_WRAP != dwOption) && (OPT_TA_MIRROR != dwOption)
+                && (OPT_FORCE_SINGLEPROC != dwOption)
                 && (OPT_SRGB != dwOption) && (OPT_SRGBI != dwOption) && (OPT_SRGBO != dwOption)
                 && (OPT_HFLIP != dwOption) && (OPT_VFLIP != dwOption)
                 && (OPT_DDS_DWORD_ALIGN != dwOption) && (OPT_USE_DX10 != dwOption) )
@@ -1087,7 +1093,25 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 goto LError;
             }
 
-            hr = Compress( img, nimg, info, tformat, TEX_COMPRESS_DEFAULT, 0.5f, *timage );
+            DWORD cflags = TEX_COMPRESS_DEFAULT;
+#ifdef _OPENMP
+            switch( tformat )
+            {
+            case DXGI_FORMAT_BC6H_TYPELESS:
+            case DXGI_FORMAT_BC6H_UF16:
+            case DXGI_FORMAT_BC6H_SF16:
+            case DXGI_FORMAT_BC7_TYPELESS:
+            case DXGI_FORMAT_BC7_UNORM:
+            case DXGI_FORMAT_BC7_UNORM_SRGB:
+                if ( !(dwOptions & (1 << OPT_FORCE_SINGLEPROC) ) )
+                {
+                    cflags |= TEX_COMPRESS_PARALLEL;
+                }
+                break;
+            }
+#endif
+
+            hr = Compress( img, nimg, info, tformat, cflags, 0.5f, *timage );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [compress] (%x)\n", hr);
