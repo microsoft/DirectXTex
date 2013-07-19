@@ -155,6 +155,8 @@ public:
     }
 };
 
+static_assert( sizeof(LDRColorA) == 4, "Unexpected packing");
+
 class HDRColorA
 {
 public:
@@ -322,6 +324,7 @@ class INTColor
 {
 public:
     int r, g, b;
+    int pad;
 
 public:
     INTColor() {}
@@ -444,6 +447,8 @@ private:
         return h;
     }
 };
+
+static_assert( sizeof(INTColor) == 16, "Unexpected packing");
 
 struct INTEndPntPair
 {

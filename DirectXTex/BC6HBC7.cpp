@@ -560,14 +560,6 @@ const D3DX_BC7::ModeInfo D3DX_BC7::ms_aInfo[] =
 //-------------------------------------------------------------------------------------
 // Helper functions
 //-------------------------------------------------------------------------------------
-template< class T >
-inline static void Swap( T& a, T& b )
-{
-    T temp = a;
-    a = b;
-    b = temp;
-}
-
 inline static bool IsFixUpOffset(_In_range_(0,2) size_t uPartitions, _In_range_(0,63) size_t uShape, _In_range_(0,15) size_t uOffset)
 {
     assert(uPartitions < 3 && uShape < 64 && uOffset < 16);
@@ -580,29 +572,6 @@ inline static bool IsFixUpOffset(_In_range_(0,2) size_t uPartitions, _In_range_(
         }
     }
     return false;
-}
-
-inline static float ErrorMetricRGB(_In_ const LDRColorA& a, _In_ const LDRColorA& b)
-{
-    float er = float(a.r) - float(b.r);
-    float eg = float(a.g) - float(b.g);
-    float eb = float(a.b) - float(b.b);
-    // weigh the components nonuniformly
-    //er *= 0.299;
-    //eg *= 0.587;
-    //eb *= 0.114;
-    return er*er + eg*eg + eb*eb;
-}
-
-inline static float ErrorMetricAlpha(_In_ const LDRColorA& a, _In_ const LDRColorA& b)
-{
-    float ea = float(a.a) - float(b.a);
-    return ea*ea;
-}
-
-inline static float ErrorMetric(_In_ const LDRColorA& a, _In_ const LDRColorA& b)
-{
-    return ErrorMetricRGB(a, b) + ErrorMetricAlpha(a, b);
 }
 
 inline static void TransformForward(_Inout_updates_all_(BC6H_MAX_REGIONS) INTEndPntPair aEndPts[])
@@ -737,8 +706,8 @@ static float OptimizeRGB(_In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const
         }
     }
 
-    if(iDirMax & 2) Swap( X.g, Y.g );
-    if(iDirMax & 1) Swap( X.b, Y.b );
+    if(iDirMax & 2) std::swap( X.g, Y.g );
+    if(iDirMax & 1) std::swap( X.b, Y.b );
 
     // Two color block.. no need to root-find
     if(fAB < 1.0f / 4096.0f)
@@ -924,9 +893,9 @@ static float OptimizeRGBA(_In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* cons
         }
     }
 
-    if(iDirMax & 4) Swap(X.g, Y.g);
-    if(iDirMax & 2) Swap(X.b, Y.b);
-    if(iDirMax & 1) Swap(X.a, Y.a);
+    if(iDirMax & 4) std::swap(X.g, Y.g);
+    if(iDirMax & 2) std::swap(X.b, Y.b);
+    if(iDirMax & 1) std::swap(X.a, Y.a);
 
     // Two color block.. no need to root-find
     if(fAB < 1.0f / 4096.0f)
@@ -1028,11 +997,16 @@ static float ComputeError(_Inout_ const LDRColorA& pixel, _In_reads_(1 << uIndex
     if(pBestIndex2)
         *pBestIndex2 = 0;
 
+    XMVECTOR vpixel = XMLoadUByte4( reinterpret_cast<const XMUBYTE4*>( &pixel ) );
+
     if(uIndexPrec2 == 0)
     {
         for(register size_t i = 0; i < uNumIndices && fBestErr > 0; i++)
         {
-            float fErr = ErrorMetric(pixel, aPalette[i]);
+            XMVECTOR tpixel = XMLoadUByte4( reinterpret_cast<const XMUBYTE4*>( &aPalette[i] ) );
+            // Compute ErrorMetric
+            tpixel = XMVectorSubtract( vpixel, tpixel );
+            float fErr = XMVectorGetX( XMVector4Dot( tpixel, tpixel ) );
             if(fErr > fBestErr)	// error increased, so we're done searching
                 break;
             if(fErr < fBestErr)
@@ -1048,7 +1022,10 @@ static float ComputeError(_Inout_ const LDRColorA& pixel, _In_reads_(1 << uIndex
     {
         for(register size_t i = 0; i < uNumIndices && fBestErr > 0; i++)
         {
-            float fErr = ErrorMetricRGB(pixel, aPalette[i]);
+            XMVECTOR tpixel = XMLoadUByte4( reinterpret_cast<const XMUBYTE4*>( &aPalette[i] ) );
+            // Compute ErrorMetricRGB
+            tpixel = XMVectorSubtract( vpixel, tpixel );
+            float fErr = XMVectorGetX( XMVector3Dot( tpixel, tpixel ) );
             if(fErr > fBestErr)	// error increased, so we're done searching
                 break;
             if(fErr < fBestErr)
@@ -1062,7 +1039,9 @@ static float ComputeError(_Inout_ const LDRColorA& pixel, _In_reads_(1 << uIndex
         fBestErr = FLT_MAX;
         for(register size_t i = 0; i < uNumIndices2 && fBestErr > 0; i++)
         {
-            float fErr = ErrorMetricAlpha(pixel, aPalette[i]);
+            // Compute ErrorMetricAlpha
+            float ea = float(pixel.a) - float(aPalette[i].a);
+            float fErr = ea*ea;
             if(fErr > fBestErr)	// error increased, so we're done searching
                 break;
             if(fErr < fBestErr)
@@ -1289,8 +1268,8 @@ void D3DX_BC6H::Encode(bool bSigned, const HDRColorA* const pIn)
             {
                 if(afRoughMSE[i] > afRoughMSE[j])
                 {
-                    Swap(afRoughMSE[i], afRoughMSE[j]);
-                    Swap(auShape[i], auShape[j]);
+                    std::swap(afRoughMSE[i], afRoughMSE[j]);
+                    std::swap(auShape[i], auShape[j]);
                 }
             }
         }
@@ -1488,10 +1467,19 @@ float D3DX_BC6H::MapColorsQuantized(const EncodeParams* pEP, const INTColor aCol
     float fTotErr = 0;
     for(size_t i = 0; i < np; ++i)
     {
-        float fBestErr = Norm(aColors[i], aPalette[0]);
+        XMVECTOR vcolors = XMLoadSInt4( reinterpret_cast<const XMINT4*>( &aColors[i] ) );
+
+        // Compute ErrorMetricRGB
+        XMVECTOR tpal = XMLoadSInt4( reinterpret_cast<const XMINT4*>( &aPalette[0] ) );
+        tpal = XMVectorSubtract( vcolors, tpal );
+        float fBestErr = XMVectorGetX( XMVector3Dot( tpal, tpal ) );
+
         for(int j = 1; j < uNumIndices && fBestErr > 0; ++j)
         {
-            float fErr = Norm(aColors[i], aPalette[j]);
+            // Compute ErrorMetricRGB
+            tpal = XMLoadSInt4( reinterpret_cast<const XMINT4*>( &aPalette[j] ) );
+            tpal = XMVectorSubtract( vcolors, tpal );
+            float fErr = XMVectorGetX( XMVector3Dot( tpal, tpal ) );
             if(fErr > fBestErr) break;     // error increased, so we're done searching
             if(fErr < fBestErr) fBestErr = fErr;
         }
@@ -1656,7 +1644,7 @@ void D3DX_BC6H::SwapIndices(const EncodeParams* pEP, INTEndPntPair aEndPts[], si
         if(aIndices[i] & uHighIndexBit)
         {
             // high bit is set, swap the aEndPts and indices for this region
-            Swap(aEndPts[p].A, aEndPts[p].B);
+            std::swap(aEndPts[p].A, aEndPts[p].B);
 
             for(size_t j = 0; j < NUM_PIXELS_PER_BLOCK; ++j)
                 if(g_aPartitionTable[uPartitions][pEP->uShape][j] == p)
@@ -2139,9 +2127,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
 
             switch(uRotation)
             {
-            case 1: Swap(outPixel.r, outPixel.a); break;
-            case 2: Swap(outPixel.g, outPixel.a); break;
-            case 3: Swap(outPixel.b, outPixel.a); break;
+            case 1: std::swap(outPixel.r, outPixel.a); break;
+            case 2: std::swap(outPixel.g, outPixel.a); break;
+            case 3: std::swap(outPixel.b, outPixel.a); break;
             }
 
             pOut[i] = HDRColorA(outPixel);
@@ -2192,9 +2180,9 @@ void D3DX_BC7::Encode(const HDRColorA* const pIn)
         {
             switch(r)
             {
-            case 1: for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) Swap(EP.aLDRPixels[i].r, EP.aLDRPixels[i].a); break;
-            case 2: for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) Swap(EP.aLDRPixels[i].g, EP.aLDRPixels[i].a); break;
-            case 3: for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) Swap(EP.aLDRPixels[i].b, EP.aLDRPixels[i].a); break;
+            case 1: for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) std::swap(EP.aLDRPixels[i].r, EP.aLDRPixels[i].a); break;
+            case 2: for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) std::swap(EP.aLDRPixels[i].g, EP.aLDRPixels[i].a); break;
+            case 3: for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) std::swap(EP.aLDRPixels[i].b, EP.aLDRPixels[i].a); break;
             }
 
             for(size_t im = 0; im < uNumIdxMode && fMSEBest > 0; ++im)
@@ -2213,8 +2201,8 @@ void D3DX_BC7::Encode(const HDRColorA* const pIn)
                     {
                         if(afRoughMSE[i] > afRoughMSE[j])
                         {
-                            Swap(afRoughMSE[i], afRoughMSE[j]);
-                            Swap(auShape[i], auShape[j]);
+                            std::swap(afRoughMSE[i], afRoughMSE[j]);
+                            std::swap(auShape[i], auShape[j]);
                         }
                     }
                 }
@@ -2232,9 +2220,9 @@ void D3DX_BC7::Encode(const HDRColorA* const pIn)
 
             switch(r)
             {
-            case 1: for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) Swap(EP.aLDRPixels[i].r, EP.aLDRPixels[i].a); break;
-            case 2: for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) Swap(EP.aLDRPixels[i].g, EP.aLDRPixels[i].a); break;
-            case 3: for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) Swap(EP.aLDRPixels[i].b, EP.aLDRPixels[i].a); break;
+            case 1: for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) std::swap(EP.aLDRPixels[i].r, EP.aLDRPixels[i].a); break;
+            case 2: for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) std::swap(EP.aLDRPixels[i].g, EP.aLDRPixels[i].a); break;
+            case 3: for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) std::swap(EP.aLDRPixels[i].b, EP.aLDRPixels[i].a); break;
             }
         }
     }
@@ -2522,7 +2510,7 @@ void D3DX_BC7::AssignIndices(const EncodeParams* pEP, size_t uShape, size_t uInd
         {
             if(aIndices[g_aFixUp[uPartitions][uShape][p]] & uHighestIndexBit)
             {
-                Swap(endPts[p].A, endPts[p].B);
+                std::swap(endPts[p].A, endPts[p].B);
                 for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
                     if(g_aPartitionTable[uPartitions][uShape][i] == p)
                         aIndices[i] = uNumIndices - 1 - aIndices[i];
@@ -2536,9 +2524,9 @@ void D3DX_BC7::AssignIndices(const EncodeParams* pEP, size_t uShape, size_t uInd
         {
             if(aIndices[g_aFixUp[uPartitions][uShape][p]] & uHighestIndexBit)
             {
-                Swap(endPts[p].A.r, endPts[p].B.r);
-                Swap(endPts[p].A.g, endPts[p].B.g);
-                Swap(endPts[p].A.b, endPts[p].B.b);
+                std::swap(endPts[p].A.r, endPts[p].B.r);
+                std::swap(endPts[p].A.g, endPts[p].B.g);
+                std::swap(endPts[p].A.b, endPts[p].B.b);
                 for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
                     if(g_aPartitionTable[uPartitions][uShape][i] == p)
                         aIndices[i] = uNumIndices - 1 - aIndices[i];
@@ -2547,7 +2535,7 @@ void D3DX_BC7::AssignIndices(const EncodeParams* pEP, size_t uShape, size_t uInd
 
             if(aIndices2[0] & uHighestIndexBit2)
             {
-                Swap(endPts[p].A.a, endPts[p].B.a);
+                std::swap(endPts[p].A.a, endPts[p].B.a);
                 for(register size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
                     aIndices2[i] = uNumIndices2 - 1 - aIndices2[i];
             }
