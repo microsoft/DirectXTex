@@ -20,6 +20,10 @@
 #define NOMINMAX
 #include <windows.h>
 
+#ifndef _WIN32_WINNT_WIN8
+#define _WIN32_WINNT_WIN8 0x0602
+#endif
+
 #ifdef USE_XNAMATH
 #include <xnamath.h>
 #else
@@ -39,7 +43,7 @@
 
 #include <ole2.h>
 
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
 #include <d2d1.h>
 #endif
 
@@ -48,7 +52,7 @@
 #include <wincodec.h>
 #pragma warning(pop)
 
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) && !defined(DXGI_1_2_FORMATS)
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) && !defined(DXGI_1_2_FORMATS)
 #define DXGI_1_2_FORMATS
 #endif
 

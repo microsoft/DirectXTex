@@ -70,7 +70,7 @@ DXGI_FORMAT _WICToDXGI( const GUID& guid )
             return g_WICFormats[i].format;
     }
 
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
     if ( g_WIC2 )
     {
         if ( memcmp( &GUID_WICPixelFormat96bppRGBFloat, &guid, sizeof(GUID) ) == 0 )
@@ -116,7 +116,7 @@ bool _DXGIToWIC( DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR )
         memcpy( &guid, &GUID_WICPixelFormat32bppBGR, sizeof(GUID) );
         return true;
 
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
     case DXGI_FORMAT_R32G32B32_FLOAT:
         if ( g_WIC2 )
         {
@@ -181,7 +181,7 @@ IWICImagingFactory* _GetWIC()
     if ( s_Factory )
         return s_Factory;
 
-#if(_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+#if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
     HRESULT hr = CoCreateInstance(
         CLSID_WICImagingFactory2,
         nullptr,

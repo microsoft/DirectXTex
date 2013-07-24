@@ -39,7 +39,11 @@
 
 #include "ScreenGrab.h"
 
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) && !defined(DXGI_1_2_FORMATS)
+#ifndef _WIN32_WINNT_WIN8
+#define _WIN32_WINNT_WIN8 0x0602
+#endif
+
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) && !defined(DXGI_1_2_FORMATS)
 #define DXGI_1_2_FORMATS
 #endif
 
@@ -632,7 +636,7 @@ static IWICImagingFactory* _GetWIC()
     if ( s_Factory )
         return s_Factory;
 
-#if(_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+#if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
     HRESULT hr = CoCreateInstance(
         CLSID_WICImagingFactory2,
         nullptr,
@@ -698,7 +702,7 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
         return hr;
 
     // Create file
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/)
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
     ScopedHandle hFile( safe_handle( CreateFile2( fileName, GENERIC_WRITE, 0, CREATE_ALWAYS, 0 ) ) );
 #else
     ScopedHandle hFile( safe_handle( CreateFileW( fileName, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0 ) ) );
@@ -968,7 +972,7 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
         // Screenshots don’t typically include the alpha channel of the render target
         switch ( desc.Format )
         {
-#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/) || defined(_WIN7_PLATFORM_UPDATE)
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         case DXGI_FORMAT_R32G32B32A32_FLOAT:            
         case DXGI_FORMAT_R16G16B16A16_FLOAT:
             if ( g_WIC2 )
