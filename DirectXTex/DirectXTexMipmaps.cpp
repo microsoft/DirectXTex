@@ -343,7 +343,7 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBi
                     }
                     else
                     {
-#pragma prefast( suppress : 26014, "No overflow possible here" );
+#pragma warning( suppress : 26014 6386 ) // No overflow possible here
                         memcpy_s( colorWithAlphaData + colorWithAlphaIndex, colorWithAlphaBytesPerPixel, colorData + colorIndex, colorBytesInPixel );
                     }
                 }
