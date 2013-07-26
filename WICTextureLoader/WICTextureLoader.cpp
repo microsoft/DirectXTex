@@ -53,10 +53,21 @@
 #endif
 
 //---------------------------------------------------------------------------------
+#if defined(_MSC_VER) && (_MSC_VER >= 1610)
+
+#include <wrl.h>
+
+template<class T> class ScopedObject : public Microsoft::WRL::ComPtr<T> {};
+
+#else
+
 template<class T> class ScopedObject
 {
 public:
-    explicit ScopedObject( T *p = 0 ) : _pointer(p) {}
+    ScopedObject() : _pointer(nullptr) {}
+    ScopedObject( T *p ) : _pointer(p) { if (_pointer) { _pointer->AddRef(); } }
+    ScopedObject( const ScopedObject& other ) : _pointer(other._pointer) { if (_pointer) { _pointer->AddRef(); } }
+
     ~ScopedObject()
     {
         if ( _pointer )
@@ -66,22 +77,54 @@ public:
         }
     }
 
-    bool IsNull() const { return (!_pointer); }
+    operator bool() const { return (_pointer != nullptr); }
+
+    T& operator= (_In_opt_ T* other)
+    {
+        if ( _pointer != other )
+        {
+            if ( _pointer) { _pointer->Release(); }
+            _pointer = other;
+            if ( other ) { other->AddRef() };
+        }
+        return *this;
+    }
+
+    ScopedObject& operator= (const ScopedObject& other)
+    {
+        if ( _pointer != other._pointer )
+        {
+            if ( _pointer) { _pointer->Release(); }
+            _pointer = other._pointer;
+            if ( other._pointer ) { other._pointer->AddRef(); }
+        }
+        return *this;
+    }
 
     T& operator*() { return *_pointer; }
-    T* operator->() { return _pointer; }
+
+    T* operator->() const { return _pointer; }
+
     T** operator&() { return &_pointer; }
 
-    void Reset(T *p = 0) { if ( _pointer ) { _pointer->Release(); } _pointer = p; }
+    void Reset() { if ( _pointer ) { _pointer->Release(); _pointer = nullptr; } }
 
     T* Get() const { return _pointer; }
+    T** GetAddressOf() { return &_pointer; }
+
+    T** ReleaseAndGetAddressOf() { if ( _pointer ) { _pointer->Release(); _pointer = nullptr; } return &_pointer; }
+
+    template<typename U>
+    HRESULT As(_Inout_ U* p) { return _pointer->QueryInterface( _uuidof(U), reinterpret_cast<void**>( p ) ); }
+
+    template<typename U>
+    HRESULT As(_Out_ ScopedObject<U>* p ) { return _pointer->QueryInterface( _uuidof(U), reinterpret_cast<void**>( p->ReleaseAndGetAddressOf() ) ); }
 
 private:
-    ScopedObject(const ScopedObject&);
-    ScopedObject& operator=(const ScopedObject&);
-        
     T* _pointer;
 };
+
+#endif
 
 //--------------------------------------------------------------------------------------
 
@@ -312,7 +355,7 @@ static size_t _WICBitsPerPixel( REFGUID targetGuid )
         return 0;
 
     ScopedObject<IWICPixelFormatInfo> pfinfo;
-    if ( FAILED( cinfo->QueryInterface( __uuidof(IWICPixelFormatInfo), reinterpret_cast<void**>( &pfinfo )  ) ) )
+    if ( FAILED( cinfo.As( &pfinfo ) ) )
         return 0;
 
     UINT bpp;

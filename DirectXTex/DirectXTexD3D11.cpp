@@ -567,7 +567,7 @@ HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImage
     if ( FAILED(hr) )
         return hr;
 
-    assert( !resource.IsNull() );
+    assert( resource );
 
     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
     memset( &SRVDesc, 0, sizeof(SRVDesc) );
@@ -660,11 +660,11 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
     case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
         {
             ScopedObject<ID3D11Texture1D> pTexture;
-            hr = pSource->QueryInterface( __uuidof(ID3D11Texture1D), (void**) &pTexture );
+            hr = pSource->QueryInterface( __uuidof(ID3D11Texture1D), reinterpret_cast<void**>( pTexture.GetAddressOf() ) );
             if ( FAILED(hr) )
                 break;
 
-            assert( pTexture.Get() );
+            assert( pTexture );
 
             D3D11_TEXTURE1D_DESC desc;
             pTexture->GetDesc( &desc );
@@ -679,7 +679,7 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
             if ( FAILED(hr) )
                 break;
 
-            assert( pStaging.Get() );
+            assert( pStaging );
 
             pContext->CopyResource( pStaging.Get(), pSource );
 
@@ -704,11 +704,11 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
     case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
         {
             ScopedObject<ID3D11Texture2D> pTexture;
-            hr = pSource->QueryInterface( __uuidof(ID3D11Texture2D), (void**) &pTexture );
+            hr = pSource->QueryInterface( __uuidof(ID3D11Texture2D), reinterpret_cast<void**>( pTexture.GetAddressOf() ) );
             if ( FAILED(hr) )
                 break;
 
-            assert( pTexture.Get() );
+            assert( pTexture );
 
             D3D11_TEXTURE2D_DESC desc;
             pTexture->GetDesc( &desc );
@@ -724,7 +724,7 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
                 if ( FAILED(hr) )
                     break;
 
-                assert( pTemp.Get() );
+                assert( pTemp );
 
                 DXGI_FORMAT fmt = desc.Format;
                 if ( IsTypeless(fmt) )
@@ -763,7 +763,7 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
                 if ( FAILED(hr) )
                     break;
 
-                assert( pStaging.Get() );
+                assert( pStaging );
 
                 pContext->CopyResource( pStaging.Get(), pTemp.Get() );
             }
@@ -778,7 +778,7 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
                 if ( FAILED(hr) )
                     break;
 
-                assert( pStaging.Get() );
+                assert( pStaging );
 
                 pContext->CopyResource( pStaging.Get(), pSource );
             }
@@ -805,11 +805,11 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
     case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
         {
             ScopedObject<ID3D11Texture3D> pTexture;
-            hr = pSource->QueryInterface( __uuidof(ID3D11Texture3D), (void**) &pTexture );
+            hr = pSource->QueryInterface( __uuidof(ID3D11Texture3D), reinterpret_cast<void**>( pTexture.GetAddressOf() ) );
             if ( FAILED(hr) )
                 break;
 
-            assert( pTexture.Get() );
+            assert( pTexture );
 
             D3D11_TEXTURE3D_DESC desc;
             pTexture->GetDesc( &desc );
@@ -824,7 +824,7 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
             if ( FAILED(hr) )
                 break;
 
-            assert( pStaging.Get() );
+            assert( pStaging );
 
             pContext->CopyResource( pStaging.Get(), pSource );
 

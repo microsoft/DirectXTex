@@ -46,7 +46,7 @@ static HRESULT _PerformResizeUsingWIC( _In_ const Image& srcImage, _In_ DWORD fi
         return hr;
 
     ScopedObject<IWICPixelFormatInfo2> pixelFormatInfo;
-    hr = componentInfo->QueryInterface( IID_PPV_ARGS( &pixelFormatInfo ) );
+    hr = componentInfo.As( &pixelFormatInfo );
     if ( FAILED(hr) )
         return hr;
 

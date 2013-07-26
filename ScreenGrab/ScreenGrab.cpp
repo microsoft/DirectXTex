@@ -190,10 +190,21 @@ static const DDS_PIXELFORMAT DDSPF_DX10 =
     { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','1','0'), 0, 0, 0, 0, 0 };
 
 //---------------------------------------------------------------------------------
+#if defined(_MSC_VER) && (_MSC_VER >= 1610)
+
+#include <wrl.h>
+
+template<class T> class ScopedObject : public Microsoft::WRL::ComPtr<T> {};
+
+#else
+
 template<class T> class ScopedObject
 {
 public:
-    explicit ScopedObject( T *p = 0 ) : _pointer(p) {}
+    ScopedObject() : _pointer(nullptr) {}
+    ScopedObject( T *p ) : _pointer(p) { if (_pointer) { _pointer->AddRef(); } }
+    ScopedObject( const ScopedObject& other ) : _pointer(other._pointer) { if (_pointer) { _pointer->AddRef(); } }
+
     ~ScopedObject()
     {
         if ( _pointer )
@@ -203,22 +214,54 @@ public:
         }
     }
 
-    bool IsNull() const { return (!_pointer); }
+    operator bool() const { return (_pointer != nullptr); }
+
+    T& operator= (_In_opt_ T* other)
+    {
+        if ( _pointer != other )
+        {
+            if ( _pointer) { _pointer->Release(); }
+            _pointer = other;
+            if ( other ) { other->AddRef() };
+        }
+        return *this;
+    }
+
+    ScopedObject& operator= (const ScopedObject& other)
+    {
+        if ( _pointer != other._pointer )
+        {
+            if ( _pointer) { _pointer->Release(); }
+            _pointer = other._pointer;
+            if ( other._pointer ) { other._pointer->AddRef(); }
+        }
+        return *this;
+    }
 
     T& operator*() { return *_pointer; }
-    T* operator->() { return _pointer; }
+
+    T* operator->() const { return _pointer; }
+
     T** operator&() { return &_pointer; }
 
-    void Reset(T *p = 0) { if ( _pointer ) { _pointer->Release(); } _pointer = p; }
+    void Reset() { if ( _pointer ) { _pointer->Release(); _pointer = nullptr; } }
 
     T* Get() const { return _pointer; }
+    T** GetAddressOf() { return &_pointer; }
+
+    T** ReleaseAndGetAddressOf() { if ( _pointer ) { _pointer->Release(); _pointer = nullptr; } return &_pointer; }
+
+    template<typename U>
+    HRESULT As(_Inout_ U* p) { return _pointer->QueryInterface( _uuidof(U), reinterpret_cast<void**>( p ) ); }
+
+    template<typename U>
+    HRESULT As(_Out_ ScopedObject<U>* p ) { return _pointer->QueryInterface( _uuidof(U), reinterpret_cast<void**>( p->ReleaseAndGetAddressOf() ) ); }
 
 private:
-    ScopedObject(const ScopedObject&);
-    ScopedObject& operator=(const ScopedObject&);
-        
     T* _pointer;
 };
+
+#endif
 
 //---------------------------------------------------------------------------------
 struct handle_closer { void operator()(HANDLE h) { if (h) CloseHandle(h); } };
@@ -541,11 +584,11 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     ScopedObject<ID3D11Texture2D> pTexture;
-    HRESULT hr = pSource->QueryInterface( __uuidof(ID3D11Texture2D), (void**) &pTexture );
+    HRESULT hr = pSource->QueryInterface( __uuidof(ID3D11Texture2D), reinterpret_cast<void**>( pTexture.GetAddressOf() ) );
     if ( FAILED(hr) )
         return hr;
 
-    assert( pTexture.Get() );
+    assert( pTexture );
 
     pTexture->GetDesc( &desc );
 
@@ -563,7 +606,7 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
         if ( FAILED(hr) )
             return hr;
 
-        assert( pTemp.Get() );
+        assert( pTemp );
 
         DXGI_FORMAT fmt = EnsureNotTypeless( desc.Format );
 
@@ -593,15 +636,14 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
         if ( FAILED(hr) )
             return hr;
 
-        assert( pStaging.Get() );
+        assert( pStaging );
 
         pContext->CopyResource( pStaging.Get(), pTemp.Get() );
     }
     else if ( (desc.Usage == D3D11_USAGE_STAGING) && (desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ) )
     {
         // Handle case where the source is already a staging texture we can use directly
-        pTexture->AddRef();
-        pStaging.Reset( pTexture.Get() );
+        pStaging = pTexture;
     }
     else
     {
@@ -615,7 +657,7 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
         if ( FAILED(hr) )
             return hr;
 
-        assert( pStaging.Get() );
+        assert( pStaging );
 
         pContext->CopyResource( pStaging.Get(), pSource );
     }
