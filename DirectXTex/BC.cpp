@@ -258,7 +258,7 @@ static void OptimizeRGB(_Out_ HDRColorA *pX, _Out_ HDRColorA *pY,
             size_t iStep;
             if(fDot <= 0.0f)
                 iStep = 0;
-            if(fDot >= fSteps)
+            else if(fDot >= fSteps)
                 iStep = cSteps - 1;
             else
                 iStep = static_cast<size_t>(fDot + 0.5f);
