@@ -65,13 +65,13 @@ public:
 
     operator bool() const { return (_pointer != nullptr); }
 
-    T& operator= (_In_opt_ T* other)
+    ScopedObject& operator= (_In_opt_ T* other)
     {
         if ( _pointer != other )
         {
             if ( _pointer) { _pointer->Release(); }
             _pointer = other;
-            if ( other ) { other->AddRef() };
+            if ( other ) { other->AddRef(); };
         }
         return *this;
     }
