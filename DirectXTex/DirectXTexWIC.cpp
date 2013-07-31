@@ -272,43 +272,46 @@ static HRESULT _DecodeMetadata( _In_ DWORD flags,
     if ( metadata.format == DXGI_FORMAT_UNKNOWN )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-    GUID containerFormat;
-    hr = decoder->GetContainerFormat( &containerFormat );
-    if ( FAILED(hr) )
-        return hr;
-
-    ScopedObject<IWICMetadataQueryReader> metareader;
-    hr = frame->GetMetadataQueryReader( &metareader );
-    if ( SUCCEEDED(hr) )
+    if ( !( flags & WIC_FLAGS_IGNORE_SRGB ) )
     {
-        // Check for sRGB colorspace metadata
-        bool sRGB = false;
+        GUID containerFormat;
+        hr = decoder->GetContainerFormat( &containerFormat );
+        if ( FAILED(hr) )
+            return hr;
 
-        PROPVARIANT value;
-        PropVariantInit( &value );
-
-        if ( memcmp( &containerFormat, &GUID_ContainerFormatPng, sizeof(GUID) ) == 0 )
+        ScopedObject<IWICMetadataQueryReader> metareader;
+        hr = frame->GetMetadataQueryReader( &metareader );
+        if ( SUCCEEDED(hr) )
         {
-            // Check for sRGB chunk
-            if ( SUCCEEDED( metareader->GetMetadataByName( L"/sRGB/RenderingIntent", &value ) ) && value.vt == VT_UI1 )
+            // Check for sRGB colorspace metadata
+            bool sRGB = false;
+
+            PROPVARIANT value;
+            PropVariantInit( &value );
+
+            if ( memcmp( &containerFormat, &GUID_ContainerFormatPng, sizeof(GUID) ) == 0 )
+            {
+                // Check for sRGB chunk
+                if ( SUCCEEDED( metareader->GetMetadataByName( L"/sRGB/RenderingIntent", &value ) ) && value.vt == VT_UI1 )
+                {
+                    sRGB = true;
+                }
+            }
+            else if ( SUCCEEDED( metareader->GetMetadataByName( L"System.Image.ColorSpace", &value ) ) && value.vt == VT_UI2 && value.uiVal == 1 )
             {
                 sRGB = true;
             }
+
+            PropVariantClear( &value );
+
+            if ( sRGB )
+                metadata.format = MakeSRGB( metadata.format );
         }
-        else if ( SUCCEEDED( metareader->GetMetadataByName( L"System.Image.ColorSpace", &value ) ) && value.vt == VT_UI2 && value.uiVal == 1 )
+        else if ( hr == WINCODEC_ERR_UNSUPPORTEDOPERATION )
         {
-            sRGB = true;
+            // Some formats just don't support metadata (BMP, ICO, etc.), so ignore this failure
+            hr = S_OK;
         }
-
-        PropVariantClear( &value );
-
-        if ( sRGB )
-            metadata.format = MakeSRGB( metadata.format );
-    }
-    else if ( hr == WINCODEC_ERR_UNSUPPORTEDOPERATION )
-    {
-        // Some formats just don't support metadata (BMP, ICO, etc.), so ignore this failure
-        hr = S_OK;
     }
 
     return hr;

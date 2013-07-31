@@ -192,6 +192,9 @@ namespace DirectX
         WIC_FLAGS_ALL_FRAMES            = 0x10,
             // Loads all images in a multi-frame file, converting/resizing to match the first frame as needed, defaults to 0th frame otherwise
 
+        WIC_FLAGS_IGNORE_SRGB           = 0x20,
+            // Ignores sRGB metadata if present in the file
+
         WIC_FLAGS_DITHER                = 0x10000,
             // Use ordered 4x4 dithering for any required conversions
 
