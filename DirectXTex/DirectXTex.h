@@ -549,6 +549,10 @@ namespace DirectX
         CMSE_IGNORE_BLUE            = 0x40,
         CMSE_IGNORE_ALPHA           = 0x80,
             // Ignore the channel when computing MSE
+
+        CMSE_IMAGE1_X2_BIAS         = 0x100,
+        CMSE_IMAGE2_X2_BIAS         = 0x200,
+            // Indicates that image should be scaled and biased before comparison (i.e. UNORM -> SNORM)
     };
 
     HRESULT ComputeMSE( _In_ const Image& image1, _In_ const Image& image2, _Out_ float& mse, _Out_writes_opt_(4) float* mseV, _In_ DWORD flags = 0 );

@@ -84,6 +84,7 @@ static HRESULT _ComputeMSE( _In_ const Image& image1, _In_ const Image& image2,
     const size_t rowPitch2 = image2.rowPitch;
 
     XMVECTOR acc = g_XMZero;
+    static XMVECTORF32 two = { 2.0f, 2.0f, 2.0f, 2.0f };
 
     for( size_t h = 0; h < image1.height; ++h )
     {
@@ -102,11 +103,19 @@ static HRESULT _ComputeMSE( _In_ const Image& image1, _In_ const Image& image2,
             {
                 v1 = XMVectorPow( v1, g_Gamma22 );
             }
+            if ( flags & CMSE_IMAGE1_X2_BIAS )
+            {
+                v1 = XMVectorMultiplyAdd( v1, two, g_XMNegativeOne );
+            }
 
             XMVECTOR v2 = *(ptr2++);
             if ( flags & CMSE_IMAGE2_SRGB )
             {
                 v2 = XMVectorPow( v2, g_Gamma22 );
+            }
+            if ( flags & CMSE_IMAGE2_X2_BIAS )
+            {
+                v1 = XMVectorMultiplyAdd( v2, two, g_XMNegativeOne );
             }
 
             // sum[ (I1 - I2)^2 ]
