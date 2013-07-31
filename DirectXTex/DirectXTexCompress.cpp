@@ -35,6 +35,30 @@ inline static DWORD _GetBCFlags( _In_ DWORD compress )
     return ( compress & (BC_FLAGS_DITHER_RGB|BC_FLAGS_DITHER_A|BC_FLAGS_UNIFORM) );
 }
 
+inline static bool _DetermineEncoderSettings( _In_ DXGI_FORMAT format, _Out_ BC_ENCODE& pfEncode, _Out_ size_t& blocksize, _Out_ DWORD& cflags )
+{
+    switch(format)
+    {
+    case DXGI_FORMAT_BC1_UNORM:
+    case DXGI_FORMAT_BC1_UNORM_SRGB:    pfEncode = nullptr;         blocksize = 8;   cflags = 0; break;
+    case DXGI_FORMAT_BC2_UNORM:
+    case DXGI_FORMAT_BC2_UNORM_SRGB:    pfEncode = D3DXEncodeBC2;   blocksize = 16;  cflags = 0; break;
+    case DXGI_FORMAT_BC3_UNORM:
+    case DXGI_FORMAT_BC3_UNORM_SRGB:    pfEncode = D3DXEncodeBC3;   blocksize = 16;  cflags = 0; break;
+    case DXGI_FORMAT_BC4_UNORM:         pfEncode = D3DXEncodeBC4U;  blocksize = 8;   cflags = TEX_FILTER_RGB_COPY_RED; break;
+    case DXGI_FORMAT_BC4_SNORM:         pfEncode = D3DXEncodeBC4S;  blocksize = 8;   cflags = TEX_FILTER_RGB_COPY_RED; break;
+    case DXGI_FORMAT_BC5_UNORM:         pfEncode = D3DXEncodeBC5U;  blocksize = 16;  cflags = TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN; break;
+    case DXGI_FORMAT_BC5_SNORM:         pfEncode = D3DXEncodeBC5S;  blocksize = 16;  cflags = TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN; break;
+    case DXGI_FORMAT_BC6H_UF16:         pfEncode = D3DXEncodeBC6HU; blocksize = 16;  cflags = 0; break;
+    case DXGI_FORMAT_BC6H_SF16:         pfEncode = D3DXEncodeBC6HS; blocksize = 16;  cflags = 0; break;
+    case DXGI_FORMAT_BC7_UNORM:
+    case DXGI_FORMAT_BC7_UNORM_SRGB:    pfEncode = D3DXEncodeBC7;   blocksize = 16;  cflags = 0; break;
+    default:                            pfEncode = nullptr;         blocksize = 0;   cflags = 0; return false;
+    }
+
+    return true;
+}
+
 
 //-------------------------------------------------------------------------------------
 static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _In_ DWORD bcflags,
@@ -65,25 +89,9 @@ static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _
     // Determine BC format encoder
     BC_ENCODE pfEncode;
     size_t blocksize;
-    switch(result.format)
-    {
-    case DXGI_FORMAT_BC1_UNORM:
-    case DXGI_FORMAT_BC1_UNORM_SRGB:    pfEncode = nullptr;         blocksize = 8;   break;
-    case DXGI_FORMAT_BC2_UNORM:
-    case DXGI_FORMAT_BC2_UNORM_SRGB:    pfEncode = D3DXEncodeBC2;   blocksize = 16;  break;
-    case DXGI_FORMAT_BC3_UNORM:
-    case DXGI_FORMAT_BC3_UNORM_SRGB:    pfEncode = D3DXEncodeBC3;   blocksize = 16;  break;
-    case DXGI_FORMAT_BC4_UNORM:         pfEncode = D3DXEncodeBC4U;  blocksize = 8;   break;
-    case DXGI_FORMAT_BC4_SNORM:         pfEncode = D3DXEncodeBC4S;  blocksize = 8;   break;
-    case DXGI_FORMAT_BC5_UNORM:         pfEncode = D3DXEncodeBC5U;  blocksize = 16;  break;
-    case DXGI_FORMAT_BC5_SNORM:         pfEncode = D3DXEncodeBC5S;  blocksize = 16;  break;
-    case DXGI_FORMAT_BC6H_UF16:         pfEncode = D3DXEncodeBC6HU; blocksize = 16;  break;
-    case DXGI_FORMAT_BC6H_SF16:         pfEncode = D3DXEncodeBC6HS; blocksize = 16;  break;
-    case DXGI_FORMAT_BC7_UNORM:
-    case DXGI_FORMAT_BC7_UNORM_SRGB:    pfEncode = D3DXEncodeBC7;   blocksize = 16;  break;
-    default:
+    DWORD cflags;
+    if ( !_DetermineEncoderSettings( result.format, pfEncode, blocksize, cflags ) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-    }
 
     XMVECTOR temp[16];
     const uint8_t *pSrc = image.pixels;
@@ -148,7 +156,7 @@ static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _
                 }
             }
 
-            _ConvertScanline( temp, 16, result.format, format, 0 );
+            _ConvertScanline( temp, 16, result.format, format, cflags );
             
             if ( pfEncode )
                 pfEncode( dptr, temp, bcflags );
@@ -195,25 +203,9 @@ static HRESULT _CompressBC_Parallel( _In_ const Image& image, _In_ const Image& 
     // Determine BC format encoder
     BC_ENCODE pfEncode;
     size_t blocksize;
-    switch(result.format)
-    {
-    case DXGI_FORMAT_BC1_UNORM:
-    case DXGI_FORMAT_BC1_UNORM_SRGB:    pfEncode = nullptr;         blocksize = 8;   break;
-    case DXGI_FORMAT_BC2_UNORM:
-    case DXGI_FORMAT_BC2_UNORM_SRGB:    pfEncode = D3DXEncodeBC2;   blocksize = 16;  break;
-    case DXGI_FORMAT_BC3_UNORM:
-    case DXGI_FORMAT_BC3_UNORM_SRGB:    pfEncode = D3DXEncodeBC3;   blocksize = 16;  break;
-    case DXGI_FORMAT_BC4_UNORM:         pfEncode = D3DXEncodeBC4U;  blocksize = 8;   break;
-    case DXGI_FORMAT_BC4_SNORM:         pfEncode = D3DXEncodeBC4S;  blocksize = 8;   break;
-    case DXGI_FORMAT_BC5_UNORM:         pfEncode = D3DXEncodeBC5U;  blocksize = 16;  break;
-    case DXGI_FORMAT_BC5_SNORM:         pfEncode = D3DXEncodeBC5S;  blocksize = 16;  break;
-    case DXGI_FORMAT_BC6H_UF16:         pfEncode = D3DXEncodeBC6HU; blocksize = 16;  break;
-    case DXGI_FORMAT_BC6H_SF16:         pfEncode = D3DXEncodeBC6HS; blocksize = 16;  break;
-    case DXGI_FORMAT_BC7_UNORM:
-    case DXGI_FORMAT_BC7_UNORM_SRGB:    pfEncode = D3DXEncodeBC7;   blocksize = 16;  break;
-    default:
+    DWORD cflags;
+    if ( !_DetermineEncoderSettings( result.format, pfEncode, blocksize, cflags ) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-    }
 
     // Refactored version of loop to support parallel independance
     const size_t nBlocks = std::max<size_t>(1, (image.width + 3) / 4 ) * std::max<size_t>(1, (image.height + 3) / 4 );
@@ -289,7 +281,7 @@ static HRESULT _CompressBC_Parallel( _In_ const Image& image, _In_ const Image& 
             }
         }
 
-        _ConvertScanline( temp, 16, result.format, format, 0 );
+        _ConvertScanline( temp, 16, result.format, format, cflags );
             
         if ( pfEncode )
             pfEncode( pDest, temp, bcflags );
