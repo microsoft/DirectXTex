@@ -638,6 +638,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     // Convert images
     bool nonpow2warn = false;
+    bool non4bc = false;
     SConversion *pConv;
 
     for(pConv = pConversion; pConv; pConv = pConv->pNext)
@@ -1111,6 +1112,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 #endif
 
+            if ( (img->width % 4) != 0 || (img->height % 4) != 0 )
+            { 
+                non4bc = true;
+            }
+
             hr = Compress( img, nimg, info, tformat, cflags, 0.5f, *timage );
             if ( FAILED(hr) )
             {
@@ -1225,6 +1231,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     if ( nonpow2warn )
         wprintf( L"\n WARNING: Not all feature levels support non-power-of-2 textures with mipmaps\n" );
+
+    if ( non4bc )
+        wprintf( L"\n WARNING: Direct3D requires BC image to be multiple of 4 in width & height\n" );
+
 
     nReturn = 0;
 

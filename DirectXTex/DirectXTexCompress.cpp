@@ -38,7 +38,7 @@ inline static DWORD _GetBCFlags( _In_ DWORD compress )
 
 //-------------------------------------------------------------------------------------
 static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _In_ DWORD bcflags,
-                            _In_ float alphaRef, _In_ bool degenerate )
+                            _In_ float alphaRef )
 {
     if ( !image.pixels || !result.pixels )
         return E_POINTER;
@@ -92,49 +92,57 @@ static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _
     {
         const uint8_t *sptr = pSrc;
         uint8_t* dptr = pDest;
-        for( size_t count = 0; count < rowPitch; count += sbpp*4 )
+        size_t ph = std::min<size_t>( 4, image.height - h );
+        size_t w = 0;
+        for( size_t count = 0; count < rowPitch; count += sbpp*4, w += 4 )
         {
-            if ( !_LoadScanline( &temp[0], 4, sptr, rowPitch, format ) )
+            size_t pw = std::min<size_t>( 4, image.width - w );
+            assert( pw > 0 && ph > 0 );
+
+            if ( !_LoadScanline( &temp[0], pw, sptr, rowPitch, format ) )
                 return E_FAIL;
 
-            if ( image.height > 1 )
+            if ( ph > 1 )
             {
-                if ( !_LoadScanline( &temp[4], 4, sptr + rowPitch, rowPitch, format ) )
+                if ( !_LoadScanline( &temp[4], pw, sptr + rowPitch, rowPitch, format ) )
                     return E_FAIL;
 
-                if ( image.height > 2 )
+                if ( ph > 2 )
                 {
-                    if ( !_LoadScanline( &temp[8], 4, sptr + rowPitch*2, rowPitch, format ) )
+                    if ( !_LoadScanline( &temp[8], pw, sptr + rowPitch*2, rowPitch, format ) )
                         return E_FAIL;
 
-                    if ( !_LoadScanline( &temp[12], 4, sptr + rowPitch*3, rowPitch, format ) )
-                        return E_FAIL;
+                    if ( ph > 3 )
+                    {
+                        if ( !_LoadScanline( &temp[12], pw, sptr + rowPitch*3, rowPitch, format ) )
+                            return E_FAIL;
+                    }
                 }
             }
 
-            if ( degenerate )
+            if ( pw != 4 || ph != 4 )
             {
-                assert( image.width < 4 || image.height < 4 );
-                const size_t uSrc[] = { 0, 0, 0, 1 };
+                // Replicate pixels for partial block
+                static const size_t uSrc[] = { 0, 0, 0, 1 };
 
-                if ( image.width < 4 )
+                if ( pw < 4 )
                 {
-                    for( size_t t=0; t < image.height && t < 4; ++t )
+                    for( size_t t = 0; t < ph && t < 4; ++t )
                     {
-                        for( size_t s = image.width; s < 4; ++s )
+                        for( size_t s = pw; s < 4; ++s )
                         {
-                            temp[ t*4 + s ] = temp[ t*4 + uSrc[s] ]; 
+                            temp[ (t << 2) | s ] = temp[ (t << 2) | uSrc[s] ]; 
                         }
                     }
                 }
 
-                if ( image.height < 4 )
+                if ( ph < 4 )
                 {
-                    for( size_t t=image.height; t < 4; ++t )
+                    for( size_t t = ph; t < 4; ++t )
                     {
-                        for( size_t s =0; s < 4; ++s )
+                        for( size_t s = 0; s < 4; ++s )
                         {
-                            temp[ t*4 + s ] = temp[ uSrc[t]*4 + s ]; 
+                            temp[ (t << 2) | s ] = temp[ (uSrc[t] << 2) | s ]; 
                         }
                     }
                 }
@@ -166,9 +174,6 @@ static HRESULT _CompressBC_Parallel( _In_ const Image& image, _In_ const Image& 
 {
     if ( !image.pixels || !result.pixels )
         return E_POINTER;
-
-    // Parallel version doesn't support degenerate case
-    assert( ((image.width % 4) == 0) && ((image.height % 4) == 0 ) );
 
     assert( image.width == result.width );
     assert( image.height == result.height );
@@ -211,14 +216,14 @@ static HRESULT _CompressBC_Parallel( _In_ const Image& image, _In_ const Image& 
     }
 
     // Refactored version of loop to support parallel independance
-    const size_t nBlocks = std::max<size_t>(1, image.width / 4) * std::max<size_t>(1, image.height / 4);
+    const size_t nBlocks = std::max<size_t>(1, (image.width + 3) / 4 ) * std::max<size_t>(1, (image.height + 3) / 4 );
 
     bool fail = false;
 
 #pragma omp parallel for
     for( int nb=0; nb < static_cast<int>( nBlocks ); ++nb )
     {
-        const size_t nbWidth = std::max<size_t>(1, image.width / 4);
+        const size_t nbWidth = std::max<size_t>(1, (image.width + 3) / 4 );
 
         const size_t y = nb / nbWidth;
         const size_t x = nb - (y*nbWidth);
@@ -230,18 +235,59 @@ static HRESULT _CompressBC_Parallel( _In_ const Image& image, _In_ const Image& 
 
         uint8_t *pDest = result.pixels + (nb*blocksize);
 
+        size_t ph = std::min<size_t>( 4, image.height - y );
+        size_t pw = std::min<size_t>( 4, image.width - x );
+        assert( pw > 0 && ph > 0 );
+
         XMVECTOR temp[16];
-        if ( !_LoadScanline( &temp[0], 4, pSrc, rowPitch, format ) )
+        if ( !_LoadScanline( &temp[0], pw, pSrc, rowPitch, format ) )
             fail = true;
 
-        if ( !_LoadScanline( &temp[4], 4, pSrc + rowPitch, rowPitch, format ) )
-            fail = true;
+        if ( ph > 1 )
+        {
+            if ( !_LoadScanline( &temp[4], pw, pSrc + rowPitch, rowPitch, format ) )
+                fail = true;
 
-        if ( !_LoadScanline( &temp[8], 4, pSrc + rowPitch*2, rowPitch, format ) )
-            fail = true;
+            if ( ph > 2 )
+            {
+                if ( !_LoadScanline( &temp[8], pw, pSrc + rowPitch*2, rowPitch, format ) )
+                    fail = true;
 
-        if ( !_LoadScanline( &temp[12], 4, pSrc + rowPitch*3, rowPitch, format ) )
-            fail = true;
+                if ( ph > 3 )
+                {
+                    if ( !_LoadScanline( &temp[12], pw, pSrc + rowPitch*3, rowPitch, format ) )
+                        fail = true;
+                }
+            }
+        }
+
+        if ( pw != 4 || ph != 4 )
+        {
+            // Replicate pixels for partial block
+            static const size_t uSrc[] = { 0, 0, 0, 1 };
+
+            if ( pw < 4 )
+            {
+                for( size_t t = 0; t < ph && t < 4; ++t )
+                {
+                    for( size_t s = pw; s < 4; ++s )
+                    {
+                        temp[ (t << 2) | s ] = temp[ (t << 2) | uSrc[s] ]; 
+                    }
+                }
+            }
+
+            if ( ph < 4 )
+            {
+                for( size_t t = ph; t < 4; ++t )
+                {
+                    for( size_t s = 0; s < 4; ++s )
+                    {
+                        temp[ (t << 2) | s ] = temp[ (uSrc[t] << 2) | s ]; 
+                    }
+                }
+            }
+        }
 
         _ConvertScanline( temp, 16, result.format, format, 0 );
             
@@ -314,21 +360,6 @@ static HRESULT _DecompressBC( _In_ const Image& cImage, _In_ const Image& result
     assert( cImage.width == result.width );
     assert( cImage.height == result.height );
 
-    // Image must be a multiple of 4 (degenerate cases of 1x1, 1x2, 2x1, and 2x2 are allowed)
-    size_t width = cImage.width;
-    if ( (width % 4) != 0 )
-    {
-        if ( width != 1 && width != 2 )
-            return E_INVALIDARG;
-    }
-
-    size_t height = cImage.height;
-    if ( (height % 4) != 0 )
-    {
-        if ( height != 1 && height != 2 )
-            return E_INVALIDARG;
-    }
-
     const DXGI_FORMAT format = result.format;
     size_t dbpp = BitsPerPixel( format );
     if ( !dbpp )
@@ -391,26 +422,34 @@ static HRESULT _DecompressBC( _In_ const Image& cImage, _In_ const Image& result
     {
         const uint8_t *sptr = pSrc;
         uint8_t* dptr = pDest;
-        for( size_t count = 0; count < cImage.rowPitch; count += sbpp )
+        size_t ph = std::min<size_t>( 4, cImage.height - h );
+        size_t w = 0;
+        for( size_t count = 0; count < cImage.rowPitch; count += sbpp, w += 4 )
         {
             pfDecode( temp, sptr );
             _ConvertScanline( temp, 16, format, cformat, 0 );
 
-            if ( !_StoreScanline( dptr, rowPitch, format, &temp[0], 4 ) )
+            size_t pw = std::min<size_t>( 4, cImage.width - w );
+            assert( pw > 0 && ph > 0 );
+
+            if ( !_StoreScanline( dptr, rowPitch, format, &temp[0], pw ) )
                 return E_FAIL;
 
-            if ( result.height > 1 )
+            if ( ph > 1 )
             {
-                if ( !_StoreScanline( dptr + rowPitch, rowPitch, format, &temp[4], 4 ) )
+                if ( !_StoreScanline( dptr + rowPitch, rowPitch, format, &temp[4], pw ) )
                     return E_FAIL;
 
-                if ( result.height > 2 )
+                if ( ph > 2 )
                 {
-                    if ( !_StoreScanline( dptr + rowPitch*2, rowPitch, format, &temp[8], 4 ) )
+                    if ( !_StoreScanline( dptr + rowPitch*2, rowPitch, format, &temp[8], pw ) )
                         return E_FAIL;
 
-                    if ( !_StoreScanline( dptr + rowPitch*3, rowPitch, format, &temp[12], 4 ) )
-                        return E_FAIL;
+                    if ( ph > 3 )
+                    {
+                        if ( !_StoreScanline( dptr + rowPitch*3, rowPitch, format, &temp[12], pw ) )
+                            return E_FAIL;
+                    }
                 }
             }
 
@@ -431,21 +470,6 @@ bool _IsAlphaAllOpaqueBC( _In_ const Image& cImage )
 {
     if ( !cImage.pixels )
         return false;
-
-    // Image must be a multiple of 4 (degenerate cases of 1x1, 1x2, 2x1, and 2x2 are allowed)
-    size_t width = cImage.width;
-    if ( (width % 4) != 0 )
-    {
-        if ( width != 1 && width != 2 )
-            return false;
-    }
-
-    size_t height = cImage.height;
-    if ( (height % 4) != 0 )
-    {
-        if ( height != 1 && height != 2 )
-            return false;
-    }
 
     // Promote "typeless" BC formats
     DXGI_FORMAT cformat;
@@ -484,15 +508,37 @@ bool _IsAlphaAllOpaqueBC( _In_ const Image& cImage )
     for( size_t h = 0; h < cImage.height; h += 4 )
     {
         const uint8_t *ptr = pPixels;
-        for( size_t count = 0; count < cImage.rowPitch; count += sbpp )
+        size_t ph = std::min<size_t>( 4, cImage.height - h );
+        size_t w = 0;
+        for( size_t count = 0; count < cImage.rowPitch; count += sbpp, w += 4 )
         {
             pfDecode( temp, ptr );
 
-            for( size_t j = 0; j < 16; ++j )
+            size_t pw = std::min<size_t>( 4, cImage.width - w );
+            assert( pw > 0 && ph > 0 );
+
+            if ( pw == 4 && ph == 4 )
             {
-                XMVECTOR alpha = XMVectorSplatW( temp[j] );
-                if ( XMVector4Less( alpha, threshold ) )
-                    return false;
+                // Full blocks
+                for( size_t j = 0; j < 16; ++j )
+                {
+                    XMVECTOR alpha = XMVectorSplatW( temp[j] );
+                    if ( XMVector4Less( alpha, threshold ) )
+                        return false;
+                }
+            }
+            else
+            {
+                // Handle partial blocks
+                for( size_t y = 0; y < ph; ++y )
+                {
+                    for( size_t x = 0; x < pw; ++x )
+                    {
+                        XMVECTOR alpha = XMVectorSplatW( temp[ y * 4 + x ] );
+                        if ( XMVector4Less( alpha, threshold ) )
+                            return false;
+                    }
+                }
             }
 
             ptr += sbpp;
@@ -518,29 +564,8 @@ HRESULT Compress( const Image& srcImage, DXGI_FORMAT format, DWORD compress, flo
     if ( IsCompressed(srcImage.format) || !IsCompressed(format) || IsTypeless(format) )
         return E_INVALIDARG;
 
-    // Image size must be a multiple of 4 (degenerate cases for mipmaps are allowed)
-    bool degenerate = false;
-
-    size_t width = srcImage.width;
-    if ( (width % 4) != 0 )
-    {
-        if ( width != 1 && width != 2 )
-            return E_INVALIDARG;
-
-        degenerate = true;
-    }
-
-    size_t height = srcImage.height;
-    if ( (height % 4) != 0 )
-    {
-        if ( height != 1 && height != 2 )
-            return E_INVALIDARG;
-
-        degenerate = true;
-    }
-
     // Create compressed image
-    HRESULT hr = image.Initialize2D( format, width, height, 1, 1 );
+    HRESULT hr = image.Initialize2D( format, srcImage.width, srcImage.height, 1, 1 );
     if ( FAILED(hr) )
         return hr;
 
@@ -552,7 +577,7 @@ HRESULT Compress( const Image& srcImage, DXGI_FORMAT format, DWORD compress, flo
     }
 
     // Compress single image
-    if ( (compress & TEX_COMPRESS_PARALLEL) && !degenerate )
+    if (compress & TEX_COMPRESS_PARALLEL)
     {
 #ifndef _OPENMP
         return E_NOTIMPL;
@@ -562,7 +587,7 @@ HRESULT Compress( const Image& srcImage, DXGI_FORMAT format, DWORD compress, flo
     }
     else
     {
-        hr = _CompressBC( srcImage, *img, _GetBCFlags( compress ), alphaRef, degenerate );
+        hr = _CompressBC( srcImage, *img, _GetBCFlags( compress ), alphaRef );
     }
 
     if ( FAILED(hr) )
@@ -580,21 +605,6 @@ HRESULT Compress( const Image* srcImages, size_t nimages, const TexMetadata& met
 
     if ( !IsCompressed(format) || IsTypeless(format) )
         return E_INVALIDARG;
-
-    // Image size must be a multiple of 4 (degenerate cases for mipmaps are allowed)
-    size_t width = srcImages[0].width;
-    if ( (width % 4) != 0 )
-    {
-        if ( width != 1 && width != 2 )
-            return E_INVALIDARG;
-    }
-
-    size_t height = srcImages[0].height;
-    if ( (height % 4) != 0 )
-    {
-        if ( height != 1 && height != 2 )
-            return E_INVALIDARG;
-    }
 
     cImages.Release();
 
@@ -623,17 +633,13 @@ HRESULT Compress( const Image* srcImages, size_t nimages, const TexMetadata& met
 
         const Image& src = srcImages[ index ];
 
-        height = src.height;
-        width = src.width;
-        if ( width != dest[ index ].width || height != dest[ index ].height )
+        if ( src.width != dest[ index ].width || src.height != dest[ index ].height )
         {
             cImages.Release();
             return E_FAIL;
         }
 
-        bool degenerate = ((height < 4) || (width < 4)) != 0;
-
-        if ( (compress & TEX_COMPRESS_PARALLEL) && !degenerate)
+        if ( (compress & TEX_COMPRESS_PARALLEL) )
         {
 #ifndef _OPENMP
             return E_NOTIMPL;
@@ -651,7 +657,7 @@ HRESULT Compress( const Image* srcImages, size_t nimages, const TexMetadata& met
         }
         else
         {
-            hr = _CompressBC( src, dest[ index ], _GetBCFlags( compress ), alphaRef, degenerate );
+            hr = _CompressBC( src, dest[ index ], _GetBCFlags( compress ), alphaRef );
             if ( FAILED(hr) )
             {
                 cImages.Release();
