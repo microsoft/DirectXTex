@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-July 1, 2013
+August 1, 2013
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -73,9 +73,8 @@ DDSView\
 
 XNAMath\
     This contains a copy of XNA Math version 2.05, which is an updated version of the library. This is
-    required if building content with USE_XNAMATH (the default for the VS 2010 projects). The VS 2012
-    projects use DirectXMath in the Windows SDK 8.0 instead.
-    For details see
+    required if building content with USE_XNAMATH. This is only needed for the VS 2010 project that
+    does not use the Windows SDK 8.0 instead.  For details see
     <http://blogs.msdn.com/b/chuckw/archive/2012/06/22/xna-math-version-2-05-smoothing-the-transition-to-directxmath.aspx>
 
 All content and source code for this package except XNA Math are bound to the Microsoft Public License (Ms-PL)
@@ -92,10 +91,7 @@ RELEASE NOTES
   DDS files created using the DDS_FLAGS_FORCE_DX10_EXT_MISC2 flag or the texconv -dx10 switch using the
   March 2013 release should be refreshed.
 
-* The DirectXTex library does not support block compression or decompression of mipmapped non-power-of-2 textures,
-  although DDSTextureLoader will load these files correctly if the underlying device supports it. [CodePlex issue 640]
-
-* Due to the underlying Windows BMP WIC codec, alpha channels are not supported for 16bpp or 32bpp BMP pixel format files. The Windows 8
+* Due to the underlying Windows BMP WIC codec, alpha channels are not supported for 16bpp or 32bpp BMP pixel format files. The Windows 8.x
   version of the Windows BMP WIC codec does support 32bpp pixel formats with alpha when using the BITMAPV5HEADER file header. Note the updated
   WIC is available on Windows 7 SP1 with KB 2670838 installed.
 
@@ -117,6 +113,17 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+August 1, 2013
+    Support for BC compression/decompression of non-power-of-2 mipmapped textures
+    Fixes for BC6H / BC7 codecs to better match published standard
+    Fix for BC4 / BC5 codecs when compressing RGB images
+    Minor fix for the BC1-3 codec
+    New optional flags for ComputeMSE to compare UNORM vs. SNORM images
+    New WIC loading flag added to control use of WIC metadata to return sRGB vs. non-sRGB formats
+    Code cleanup and /analyze fixes
+    Project file cleanup
+    Texconv utility uses parallel BC compression by default for BC6H/BC7, -singleproc disables multithreaded behavior
 
 July 1, 2013
     VS 2013 Preview projects added
