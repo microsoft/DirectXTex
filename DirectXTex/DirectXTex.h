@@ -30,7 +30,7 @@
 
 #include <ocidl.h>
 
-#define DIRECTX_TEX_VERSION 110
+#define DIRECTX_TEX_VERSION 120
 
 #if defined(_MSC_VER) && (_MSC_VER<1610) && !defined(_In_reads_)
 #define _Analysis_assume_(exp)
@@ -483,6 +483,11 @@ namespace DirectX
     HRESULT Compress( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                       _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaRef, _Out_ ScratchImage& cImages );
         // Note that alphaRef is only used by BC1. 0.5f is a typical value to use
+
+    HRESULT Compress( _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image );
+    HRESULT Compress( _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                      _In_ DXGI_FORMAT format, _Out_ ScratchImage& cImages );
+        // DirectCompute-based compression
 
     HRESULT Decompress( _In_ const Image& cImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image );
     HRESULT Decompress( _In_reads_(nimages) const Image* cImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,

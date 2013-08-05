@@ -43,7 +43,11 @@ enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
     OPT_TA_WRAP,
     OPT_TA_MIRROR,
     OPT_FORCE_SINGLEPROC,
+    OPT_NOGPU,
+    OPT_MAX
 };
+
+static_assert( OPT_MAX <= 32, "dwOptions is a DWORD bitfield" );
 
 struct SConversion
 {
@@ -90,6 +94,7 @@ SValue g_pOptions[] =
     { L"wrap",          OPT_TA_WRAP },
     { L"mirror",        OPT_TA_MIRROR },
     { L"singleproc",    OPT_FORCE_SINGLEPROC },
+    { L"nogpu",         OPT_NOGPU     },
     { nullptr,          0             }
 };
 
@@ -371,6 +376,7 @@ void PrintUsage()
 #ifdef _OPENMP
     wprintf( L"   -singleproc         Do not use multi-threaded compression\n");
 #endif
+    wprintf( L"   -nogpu              Do not use DirectCompute-based codecs\n");
 
     wprintf( L"\n");
     wprintf( L"   <format>: ");
@@ -383,6 +389,69 @@ void PrintUsage()
     wprintf( L"\n");
     wprintf( L"   <filetype>: ");
     PrintList(15, g_pSaveFileTypes);
+}
+
+_Success_(return != false)
+bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
+{
+    if ( !pDevice )
+        return false;
+
+    *pDevice  = nullptr;
+
+    typedef HRESULT (WINAPI * LPD3D11CREATEDEVICE)( IDXGIAdapter*, D3D_DRIVER_TYPE, HMODULE, UINT32, D3D_FEATURE_LEVEL*,
+                                                    UINT, UINT32, ID3D11Device**, D3D_FEATURE_LEVEL*, ID3D11DeviceContext** );
+    static LPD3D11CREATEDEVICE s_DynamicD3D11CreateDevice = nullptr;
+   
+    if ( !s_DynamicD3D11CreateDevice )
+    {            
+        HMODULE hModD3D11 = LoadLibrary( L"d3d11.dll" );
+        if ( !hModD3D11 )
+            return false;
+
+        s_DynamicD3D11CreateDevice = ( LPD3D11CREATEDEVICE )GetProcAddress( hModD3D11, "D3D11CreateDevice" );           
+        if ( !s_DynamicD3D11CreateDevice )
+            return false;
+    }
+
+    D3D_FEATURE_LEVEL featureLevels[] =
+    {
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_1,
+        D3D_FEATURE_LEVEL_10_0,
+    };
+
+    UINT createDeviceFlags = 0;
+#ifdef _DEBUG
+    createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+    D3D_FEATURE_LEVEL fl;
+    HRESULT hr = s_DynamicD3D11CreateDevice( nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevels, _countof(featureLevels), 
+                                             D3D11_SDK_VERSION, pDevice, &fl, nullptr );
+    if ( SUCCEEDED(hr) )
+    {
+        if ( fl < D3D_FEATURE_LEVEL_11_0 )
+        {
+            D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS hwopts;
+            hr = (*pDevice)->CheckFeatureSupport( D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &hwopts, sizeof(hwopts) );
+            if ( FAILED(hr) )
+                memset( &hwopts, 0, sizeof(hwopts) );
+
+            if ( !hwopts.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x )
+            {
+                hr = HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+            }
+        }
+    }
+
+    if ( FAILED(hr) && *pDevice )
+    {
+        (*pDevice)->Release();
+        *pDevice = nullptr;
+    }
+
+    return SUCCEEDED(hr);
 }
 
 
@@ -453,7 +522,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if( (OPT_NOLOGO != dwOption) && (OPT_TYPELESS_UNORM != dwOption) && (OPT_TYPELESS_FLOAT != dwOption)
                 && (OPT_SEPALPHA != dwOption) && (OPT_PREMUL_ALPHA != dwOption) && (OPT_EXPAND_LUMINANCE != dwOption)
                 && (OPT_TA_WRAP != dwOption) && (OPT_TA_MIRROR != dwOption)
-                && (OPT_FORCE_SINGLEPROC != dwOption)
+                && (OPT_FORCE_SINGLEPROC != dwOption) && (OPT_NOGPU != dwOption)
                 && (OPT_SRGB != dwOption) && (OPT_SRGBI != dwOption) && (OPT_SRGBO != dwOption)
                 && (OPT_HFLIP != dwOption) && (OPT_VFLIP != dwOption)
                 && (OPT_DDS_DWORD_ALIGN != dwOption) && (OPT_USE_DX10 != dwOption) )
@@ -640,6 +709,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     bool nonpow2warn = false;
     bool non4bc = false;
     SConversion *pConv;
+    ID3D11Device* pDevice = nullptr;
 
     for(pConv = pConversion; pConv; pConv = pConv->pNext)
     {
@@ -1094,8 +1164,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 goto LError;
             }
 
-            DWORD cflags = TEX_COMPRESS_DEFAULT;
-#ifdef _OPENMP
+            bool bc6hbc7=false;
             switch( tformat )
             {
             case DXGI_FORMAT_BC6H_TYPELESS:
@@ -1104,11 +1173,34 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case DXGI_FORMAT_BC7_TYPELESS:
             case DXGI_FORMAT_BC7_UNORM:
             case DXGI_FORMAT_BC7_UNORM_SRGB:
-                if ( !(dwOptions & (1 << OPT_FORCE_SINGLEPROC) ) )
+                bc6hbc7=true;
+
                 {
-                    cflags |= TEX_COMPRESS_PARALLEL;
+                    static bool s_tryonce = false;
+
+                    if ( !s_tryonce )
+                    {
+                        s_tryonce = true;
+
+                        if ( !(dwOptions & (1 << OPT_NOGPU) ) )
+                        {
+                            if ( !CreateDevice( &pDevice ) )
+                                wprintf( L"\nWARNING: DirectCompute is not available, using BC6H / BC7 CPU codec\n" );
+                        }
+                        else
+                        {
+                            wprintf( L"\nWARNING: using BC6H / BC7 CPU codec\n" );
+                        }
+                    }
                 }
                 break;
+            }
+
+            DWORD cflags = TEX_COMPRESS_DEFAULT;
+#ifdef _OPENMP
+            if ( bc6hbc7 && !(dwOptions & (1 << OPT_FORCE_SINGLEPROC) ) )
+            {
+                cflags |= TEX_COMPRESS_PARALLEL;
             }
 #endif
 
@@ -1117,7 +1209,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 non4bc = true;
             }
 
-            hr = Compress( img, nimg, info, tformat, cflags, 0.5f, *timage );
+            if ( bc6hbc7 && pDevice )
+            {
+                hr = Compress( pDevice, img, nimg, info, tformat, *timage );
+            }
+            else
+            {
+                hr = Compress( img, nimg, info, tformat, cflags, 0.5f, *timage );
+            }
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [compress] (%x)\n", hr);
@@ -1250,6 +1349,11 @@ LDone:
         pConv = pConversion;
         pConversion = pConversion->pNext;
         delete pConv;
+    }
+
+    if ( pDevice )
+    {
+        pDevice->Release();
     }
 
     return nReturn;

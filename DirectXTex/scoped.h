@@ -43,7 +43,13 @@ inline HANDLE safe_handle( HANDLE h ) { return (h == INVALID_HANDLE_VALUE) ? 0 :
 
 #include <wrl.h>
 
-template<class T> class ScopedObject : public Microsoft::WRL::ComPtr<T> {};
+template<class T> class ScopedObject : public Microsoft::WRL::ComPtr<T>
+{
+public:
+    ScopedObject() : Microsoft::WRL::ComPtr<T>() {}
+    ScopedObject( T *p ) : Microsoft::WRL::ComPtr<T>(p) {}
+    ScopedObject( const ScopedObject& other ) : Microsoft::WRL::ComPtr( other ) {}
+};
 
 #else
 

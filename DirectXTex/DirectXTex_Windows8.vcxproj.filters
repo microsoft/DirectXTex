@@ -32,8 +32,8 @@
       <ClCompile Include="DirectXTexTGA.cpp" />
       <ClCompile Include="DirectXTexUtil.cpp" />
       <ClCompile Include="DirectXTexWIC.cpp" />
+      <ClInclude Include="BCDirectCompute.h" />
+      <ClCompile Include="BCDirectCompute.cpp" />
+      <ClCompile Include="DirectXTexCompressGPU.cpp" />
   </ItemGroup>
-<ItemGroup></ItemGroup>
-<ItemGroup></ItemGroup>
-<ItemGroup></ItemGroup>
 </Project>
