@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-August 1, 2013
+August 13, 2013
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -113,6 +113,10 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+August 13, 2013
+    DirectCompute 4.0 BC6H/BC7 compressor integration
+    texconv utility uses DirectCompute compression by default for BC6H/BC7, -nogpu disables use of DirectCompute
 
 August 1, 2013
     Support for BC compression/decompression of non-power-of-2 mipmapped textures
