@@ -43,6 +43,8 @@
 
 #include <ole2.h>
 
+#include "directxtex.h"
+
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
 #include <d2d1.h>
 #endif
@@ -55,8 +57,6 @@
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) && !defined(DXGI_1_2_FORMATS)
 #define DXGI_1_2_FORMATS
 #endif
-
-#include "directxtex.h"
 
 #include "scoped.h"
 

@@ -25,8 +25,11 @@
 #include <algorithm>
 #include <functional>
 
-#include <dxgiformat.h>
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+#include <d3d11_1.h>
+#else
 #include <d3d11.h>
+#endif
 
 #include <ocidl.h>
 
