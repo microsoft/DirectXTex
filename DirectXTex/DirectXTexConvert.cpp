@@ -23,6 +23,7 @@
 using namespace DirectX::PackedVector;
 #endif
 
+#if DIRECTX_MATH_VERSION < 306
 namespace
 {
     inline float round_to_nearest( float x )
@@ -45,6 +46,7 @@ namespace
         return i + 1.f;
     }
 };
+#endif
 
 namespace DirectX
 {
@@ -664,6 +666,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         LOAD_SCANLINE( XMUDECN4, XMLoadUDecN4 );
 
     case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
+#if DIRECTX_MATH_VERSION >= 306
+        LOAD_SCANLINE( XMUDECN4, XMLoadUDecN4_XR );
+#else
         if ( size >= sizeof(XMUDECN4) )
         {
             const XMUDECN4 * __restrict sPtr = reinterpret_cast<const XMUDECN4*>(pSource);
@@ -689,6 +694,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
             return true;
         }
         return false;
+#endif
 
     case DXGI_FORMAT_R10G10B10A2_UINT:
         LOAD_SCANLINE( XMUDEC4, XMLoadUDec4 );
@@ -977,6 +983,9 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         return false;
 
     case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
+#if DIRECTX_MATH_VERSION >= 306
+        LOAD_SCANLINE3( XMFLOAT3SE, XMLoadFloat3SE, g_XMIdentityR3 )
+#else
         if ( size >= sizeof(XMFLOAT3SE) )
         {
             const XMFLOAT3SE * __restrict sPtr = reinterpret_cast<const XMFLOAT3SE*>(pSource);
@@ -998,6 +1007,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
             return true;
         }
         return false;
+#endif
 
     case DXGI_FORMAT_R8G8_B8G8_UNORM:
         if ( size >= sizeof(XMUBYTEN4) )
@@ -1228,6 +1238,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         STORE_SCANLINE( XMUDECN4, XMStoreUDecN4 );
 
     case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
+#if DIRECTX_MATH_VERSION >= 306
+        STORE_SCANLINE( XMUDECN4, XMStoreUDecN4_XR );
+#else
         if ( size >= sizeof(XMUDECN4) )
         {
             static const XMVECTORF32  Scale = { 510.0f, 510.0f, 510.0f, 3.0f };
@@ -1254,6 +1267,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
             return true;
         }
         return false;
+#endif
 
     case DXGI_FORMAT_R10G10B10A2_UINT:
         STORE_SCANLINE( XMUDEC4, XMStoreUDec4 );
@@ -1536,6 +1550,9 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         return false;
 
     case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
+#if DIRECTX_MATH_VERSION >= 306
+        STORE_SCANLINE( XMFLOAT3SE, XMStoreFloat3SE )
+#else
         if ( size >= sizeof(XMFLOAT3SE) )
         {
             static const float maxf9 = float(0x1FF << 7);
@@ -1575,6 +1592,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
             return true;
         }
         return false;
+#endif
 
     case DXGI_FORMAT_R8G8_B8G8_UNORM:
         if ( size >= sizeof(XMUBYTEN4) )
@@ -1873,7 +1891,8 @@ HRESULT _ConvertFromR32G32B32A32( const Image* srcImages, size_t nimages, const 
 // if C_linear >  0.0031308 -> C_srgb = ( 1 + a ) * pow( C_Linear, 1 / 2.4 ) - a
 //                             where a = 0.055
 //-------------------------------------------------------------------------------------
-static inline XMVECTOR RGBToSRGB( FXMVECTOR rgb )
+#if DIRECTX_MATH_VERSION < 306
+static inline XMVECTOR XMColorRGBToSRGB( FXMVECTOR rgb )
 {
     static const XMVECTORF32 Cutoff = { 0.0031308f, 0.0031308f, 0.0031308f, 1.f };
     static const XMVECTORF32 Linear = { 12.92f, 12.92f, 12.92f, 1.f };
@@ -1888,6 +1907,7 @@ static inline XMVECTOR RGBToSRGB( FXMVECTOR rgb )
     V = XMVectorSelect( V1, V0, select );
     return XMVectorSelect( rgb, V, g_XMSelect1110 );
 }
+#endif
 
 _Use_decl_annotations_
 bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
@@ -1934,7 +1954,7 @@ bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
 
     default:
         // can't treat A8, XR, Depth, SNORM, UINT, or SINT as sRGB
-	        flags &= ~TEX_FILTER_SRGB;
+        flags &= ~TEX_FILTER_SRGB;
         break;
     }
 
@@ -1946,7 +1966,7 @@ bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         XMVECTOR* ptr = pSource;
         for( size_t i=0; i < count; ++i, ++ptr )
         {
-            *ptr = RGBToSRGB( *ptr );
+            *ptr = XMColorRGBToSRGB( *ptr );
         }
     }
 
@@ -1961,7 +1981,8 @@ bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
 // if C_srgb >  0.04045 -> C_linear = pow( ( C_srgb + a ) / ( 1 + a ), 2.4 )
 //                         where a = 0.055
 //-------------------------------------------------------------------------------------
-static inline XMVECTOR SRGBToRGB( FXMVECTOR srgb )
+#if DIRECTX_MATH_VERSION < 306
+static inline XMVECTOR XMColorSRGBToRGB( FXMVECTOR srgb )
 {
     static const XMVECTORF32 Cutoff = { 0.04045f, 0.04045f, 0.04045f, 1.f };
     static const XMVECTORF32 ILinear = { 1.f/12.92f, 1.f/12.92f, 1.f/12.92f, 1.f };
@@ -1976,6 +1997,7 @@ static inline XMVECTOR SRGBToRGB( FXMVECTOR srgb )
     V = XMVectorSelect( V0, V1, select );
     return XMVectorSelect( srgb, V, g_XMSelect1110 );
 }
+#endif
 
 _Use_decl_annotations_
 bool _LoadScanlineLinear( XMVECTOR* pDestination, size_t count,
@@ -2034,7 +2056,7 @@ bool _LoadScanlineLinear( XMVECTOR* pDestination, size_t count,
             XMVECTOR* ptr = pDestination;
             for( size_t i=0; i < count; ++i, ++ptr )
             {
-                *ptr = SRGBToRGB( *ptr );
+                *ptr = XMColorSRGBToRGB( *ptr );
             }
         }
 
@@ -2251,7 +2273,7 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
             XMVECTOR* ptr = pBuffer;
             for( size_t i=0; i < count; ++i, ++ptr )
             {
-                *ptr = SRGBToRGB( *ptr );
+                *ptr = XMColorSRGBToRGB( *ptr );
             }
         }
     }
@@ -2451,7 +2473,7 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
             XMVECTOR* ptr = pBuffer;
             for( size_t i=0; i < count; ++i, ++ptr )
             {
-                *ptr = RGBToSRGB( *ptr );
+                *ptr = XMColorRGBToSRGB( *ptr );
             }
         }
     }
