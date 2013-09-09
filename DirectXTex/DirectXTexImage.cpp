@@ -690,6 +690,9 @@ const Image* ScratchImage::GetImage(size_t mip, size_t item, size_t slice) const
 
 bool ScratchImage::IsAlphaAllOpaque() const
 {
+    if ( !_image )
+        return false;
+
     if ( !HasAlpha( _metadata.format ) )
         return true;
 
