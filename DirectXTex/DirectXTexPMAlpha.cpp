@@ -56,6 +56,49 @@ static HRESULT _PremultiplyAlpha( _In_ const Image& srcImage, _In_ const Image& 
     return S_OK;
 }
 
+static HRESULT _PremultiplyAlphaLinear( _In_ const Image& srcImage, _In_ DWORD flags, _In_ const Image& destImage )
+{
+    assert( srcImage.width == destImage.width );
+    assert( srcImage.height == destImage.height );
+
+    static_assert( TEX_PMALPHA_SRGB_IN == TEX_FILTER_SRGB_IN, "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*" );
+    static_assert( TEX_PMALPHA_SRGB_OUT == TEX_FILTER_SRGB_OUT, "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*" );
+    static_assert( TEX_PMALPHA_SRGB == TEX_FILTER_SRGB, "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*" );
+    flags &= TEX_PMALPHA_SRGB;
+
+    ScopedAlignedArrayXMVECTOR scanline( reinterpret_cast<XMVECTOR*>( _aligned_malloc( (sizeof(XMVECTOR)*srcImage.width), 16 ) ) );
+    if ( !scanline )
+        return E_OUTOFMEMORY;
+
+    const uint8_t *pSrc = srcImage.pixels;
+    uint8_t *pDest = destImage.pixels;
+    if ( !pSrc || !pDest )
+        return E_POINTER;
+
+    for( size_t h = 0; h < srcImage.height; ++h )
+    {
+        if ( !_LoadScanlineLinear( scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format, flags ) )
+            return E_FAIL;
+
+        XMVECTOR* ptr = scanline.get();
+        for( size_t w = 0; w < srcImage.width; ++w )
+        {
+            XMVECTOR v = *ptr;
+            XMVECTOR alpha = XMVectorSplatW( *ptr );
+            alpha = XMVectorMultiply( v, alpha );
+            *(ptr++) = XMVectorSelect( v, alpha, g_XMSelect1110 );
+        }
+
+        if ( !_StoreScanlineLinear( pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width, flags ) )
+            return E_FAIL;
+
+        pSrc += srcImage.rowPitch;
+        pDest += destImage.rowPitch;
+    }
+
+    return S_OK;
+}
+
 
 //=====================================================================================
 // Entry-points
@@ -65,7 +108,7 @@ static HRESULT _PremultiplyAlpha( _In_ const Image& srcImage, _In_ const Image& 
 // Converts to a premultiplied alpha version of the texture
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT PremultiplyAlpha( const Image& srcImage, ScratchImage& image )
+HRESULT PremultiplyAlpha( const Image& srcImage, DWORD flags, ScratchImage& image )
 {
     if ( !srcImage.pixels )
         return E_POINTER;
@@ -92,7 +135,7 @@ HRESULT PremultiplyAlpha( const Image& srcImage, ScratchImage& image )
         return E_POINTER;
     }
 
-    hr = _PremultiplyAlpha( srcImage, *rimage );
+    hr = ( flags & TEX_PMALPHA_IGNORE_SRGB ) ? _PremultiplyAlpha( srcImage, *rimage ) : _PremultiplyAlphaLinear( srcImage, flags, *rimage );
     if ( FAILED(hr) )
     {
         image.Release();
@@ -107,7 +150,7 @@ HRESULT PremultiplyAlpha( const Image& srcImage, ScratchImage& image )
 // Converts to a premultiplied alpha version of the texture (complex)
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT PremultiplyAlpha( const Image* srcImages, size_t nimages, const TexMetadata& metadata, ScratchImage& result )
+HRESULT PremultiplyAlpha( const Image* srcImages, size_t nimages, const TexMetadata& metadata, DWORD flags, ScratchImage& result )
 {
     if ( !srcImages || !nimages )
         return E_INVALIDARG;
@@ -170,7 +213,7 @@ HRESULT PremultiplyAlpha( const Image* srcImages, size_t nimages, const TexMetad
             return E_FAIL;
         }
 
-        hr = _PremultiplyAlpha( src, dst );
+        hr = ( flags & TEX_PMALPHA_IGNORE_SRGB ) ? _PremultiplyAlpha( src, dst ) : _PremultiplyAlphaLinear( src, flags, dst );
         if ( FAILED(hr) )
         {
             result.Release();

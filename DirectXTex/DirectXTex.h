@@ -457,8 +457,22 @@ namespace DirectX
         // levels of '0' indicates a full mipchain, otherwise is generates that number of total levels (including the source base image)
         // Defaults to Fant filtering which is equivalent to a box filter
 
-    HRESULT PremultiplyAlpha( _In_ const Image& srcImage, _Out_ ScratchImage& image );
-    HRESULT PremultiplyAlpha( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata, _Out_ ScratchImage& result );
+    enum TEX_PMALPHA_FLAGS
+    {
+        TEX_PMALPHA_DEFAULT         = 0,
+
+        TEX_PMALPHA_IGNORE_SRGB     = 0x1,
+            // ignores sRGB colorspace conversions
+
+        TEX_PMALPHA_SRGB_IN         = 0x1000000,
+        TEX_PMALPHA_SRGB_OUT        = 0x2000000,
+        TEX_PMALPHA_SRGB            = ( TEX_PMALPHA_SRGB_IN | TEX_PMALPHA_SRGB_OUT ),
+            // if the input format type is IsSRGB(), then SRGB_IN is on by default
+            // if the output format type is IsSRGB(), then SRGB_OUT is on by default
+    };
+    
+    HRESULT PremultiplyAlpha( _In_ const Image& srcImage, _In_ DWORD flags, _Out_ ScratchImage& image );
+    HRESULT PremultiplyAlpha( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags, _Out_ ScratchImage& result );
         // Converts to a premultiplied alpha version of the texture
 
     enum TEX_COMPRESS_FLAGS

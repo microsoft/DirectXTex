@@ -1123,7 +1123,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     goto LError;
                 }
 
-                hr = PremultiplyAlpha( img, nimg, info, *timage );
+                hr = PremultiplyAlpha( img, nimg, info, dwSRGB, *timage );
                 if ( FAILED(hr) )
                 {
                     wprintf( L" FAILED [premultiply alpha] (%x)\n", hr);
