@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <functional>
 
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+#if (_WIN32_WINNT >= 0x0602) || defined(_WIN7_PLATFORM_UPDATE)
 #include <d3d11_1.h>
 #else
 #include <d3d11.h>
