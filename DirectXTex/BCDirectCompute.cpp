@@ -352,11 +352,12 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
     }
 
     //--- Create input texture --------------------------------------------------------
-    // TODO - non-power-of-2 BCs require handling non-multiple of 4 cases
-
     auto pDevice = m_device.Get();
     if ( !pDevice )
         return E_POINTER;
+
+    // We need to avoid the hardware doing additional colorspace conversion
+    DXGI_FORMAT inputFormat = ( m_srcformat == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB ) ? DXGI_FORMAT_R8G8B8A8_UNORM : m_srcformat;
 
     ScopedObject<ID3D11Texture2D> sourceTex;
     {
@@ -366,7 +367,7 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
         desc.Height = static_cast<UINT>( srcImage.height ); 
         desc.MipLevels = 1;
         desc.ArraySize = 1;
-        desc.Format = srcImage.format;
+        desc.Format = inputFormat;
         desc.SampleDesc.Count = 1;
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -388,7 +389,7 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
         D3D11_SHADER_RESOURCE_VIEW_DESC desc;
         memset( &desc, 0, sizeof(desc) );
         desc.Texture2D.MipLevels = 1;
-        desc.Format = m_srcformat;
+        desc.Format = inputFormat;
         desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 
         HRESULT hr = pDevice->CreateShaderResourceView( sourceTex.Get(), &desc, sourceSRV.ReleaseAndGetAddressOf() );

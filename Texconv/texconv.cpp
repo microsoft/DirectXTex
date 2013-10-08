@@ -440,18 +440,42 @@ bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
 
             if ( !hwopts.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x )
             {
+                if ( *pDevice )
+                {
+                    (*pDevice)->Release();
+                    *pDevice = nullptr;
+                }
                 hr = HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
             }
         }
     }
 
-    if ( FAILED(hr) && *pDevice )
+    if ( SUCCEEDED(hr) )
     {
-        (*pDevice)->Release();
-        *pDevice = nullptr;
-    }
+        IDXGIDevice* dxgiDevice = nullptr;
+        hr = (*pDevice)->QueryInterface( __uuidof( IDXGIDevice ), reinterpret_cast< void** >( &dxgiDevice ) );
+        if ( SUCCEEDED(hr) )
+        {
+            IDXGIAdapter* pAdapter = nullptr;
+            hr = dxgiDevice->GetAdapter( &pAdapter );
+            if ( SUCCEEDED(hr) )
+            {
+                DXGI_ADAPTER_DESC desc;
+                hr = pAdapter->GetDesc( &desc );
+                if ( SUCCEEDED(hr) )
+                {
+                    wprintf( L"\n[Using DirectCompute on \"%s\"]\n", desc.Description );
+                }
+                pAdapter->Release();
+            }
 
-    return SUCCEEDED(hr);
+            dxgiDevice->Release();
+        }
+
+        return true;
+    }
+    else
+        return false;
 }
 
 
