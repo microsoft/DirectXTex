@@ -714,6 +714,7 @@ bool ScratchImage::IsAlphaAllOpaque() const
 
         for( size_t index = 0; index < _nimages; ++index )
         {
+#pragma warning( suppress : 6011 )
             const Image& img = _image[ index ];
 
             const uint8_t *pPixels = img.pixels;
