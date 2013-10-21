@@ -7,10 +7,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Texconv.cpp" />
+    <ClCompile Include="texassemble.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Texconv.rc">
+    <ResourceCompile Include="texassemble.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
