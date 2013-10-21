@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-August 13, 2013
+October 21, 2013
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -113,6 +113,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+October 21, 2013
+    Updated for Visual Studio 2013 and Windows 8.1 SDK RTM
+    PremultiplyAlpha updated with new 'flags' parameter and to use sRGB correct blending
+    Fixed colorspace conversion issue with DirectCompute compressor when compressing for BC7 SRGB
 
 August 13, 2013
     DirectCompute 4.0 BC6H/BC7 compressor integration
