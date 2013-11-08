@@ -32,7 +32,10 @@ enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
     OPT_USE_DX10,
     OPT_NOLOGO,
     OPT_SEPALPHA,
+    OPT_MAX
 };
+
+static_assert( OPT_MAX <= 32, "dwOptions is a DWORD bitfield" );
 
 struct SConversion
 {
