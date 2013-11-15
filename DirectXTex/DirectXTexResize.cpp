@@ -284,7 +284,7 @@ static HRESULT _ResizeBoxFilter( _In_ const Image& srcImage, _In_ DWORD filter, 
     assert( srcImage.pixels && destImage.pixels );
     assert( srcImage.format == destImage.format );
 
-    if ( ( (srcImage.width << 1) != destImage.width ) || ( (srcImage.height << 1) != destImage.height ) )
+    if ( ( (destImage.width << 1) != srcImage.width ) || ( (destImage.height << 1) != srcImage.height ) )
         return E_FAIL;
 
     // Allocate temporary space (3 scanlines)
@@ -774,7 +774,7 @@ static HRESULT _PerformResizeUsingCustomFilters( _In_ const Image& srcImage, _In
     if ( !filter_select )
     {
         // Default filter choice
-        filter_select = ( ( (srcImage.width << 1) == destImage.width ) && ( (srcImage.height << 1) == destImage.height ) )
+        filter_select = ( ( (destImage.width << 1) == srcImage.width ) && ( (destImage.height << 1) == srcImage.height ) )
                         ? TEX_FILTER_BOX : TEX_FILTER_LINEAR;
     }
 
