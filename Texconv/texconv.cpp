@@ -44,6 +44,8 @@ enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
     OPT_TA_MIRROR,
     OPT_FORCE_SINGLEPROC,
     OPT_NOGPU,
+    OPT_FEATURE_LEVEL,
+    OPT_FIT_POWEROF2,
     OPT_MAX
 };
 
@@ -95,6 +97,8 @@ SValue g_pOptions[] =
     { L"mirror",        OPT_TA_MIRROR },
     { L"singleproc",    OPT_FORCE_SINGLEPROC },
     { L"nogpu",         OPT_NOGPU     },
+    { L"fl",            OPT_FEATURE_LEVEL },
+    { L"pow2",          OPT_FIT_POWEROF2 },
     { nullptr,          0             }
 };
 
@@ -222,6 +226,18 @@ SValue g_pSaveFileTypes[] =     // valid formats to write to
     { L"WDP",           WIC_CODEC_WMP  },
     { L"HDP",           WIC_CODEC_WMP  },
     { nullptr,          CODEC_DDS      }
+};
+
+SValue g_pFeatureLevels[] =     // valid feature levels for -fl for maximimum size
+{
+    { L"9.1",           2048 },
+    { L"9.2",           2048 },
+    { L"9.3",           4096 },
+    { L"10.0",          8192 },
+    { L"10.1",          8192 },
+    { L"11.0",          16384 },
+    { L"11.1",          16384 },
+    { nullptr,          0 },
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -366,6 +382,8 @@ void PrintUsage()
     wprintf( L"                       from color channels\n");
     wprintf( L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
     wprintf( L"   -pmalpha            convert final texture to use premultiplied alpha\n");
+    wprintf( L"   -pow2               resize to fit a power-of-2, respecting aspect ratio\n" );
+    wprintf( L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n");
     wprintf( L"\n                       (DDS input only)\n");
     wprintf( L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
     wprintf( L"   -dword              Use DWORD instead of BYTE alignment\n");
@@ -389,6 +407,11 @@ void PrintUsage()
     wprintf( L"\n");
     wprintf( L"   <filetype>: ");
     PrintList(15, g_pSaveFileTypes);
+
+    wprintf( L"\n");
+    wprintf( L"   <feature-level>: ");
+    PrintList(13, g_pFeatureLevels);
+
 }
 
 _Success_(return != false)
@@ -478,6 +501,46 @@ bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
         return false;
 }
 
+void FitPowerOf2( size_t origx, size_t origy, size_t& targetx, size_t& targety, size_t maxsize )
+{
+    float origAR = float(origx) / float(origy);
+
+    if ( origx > origy )
+    {
+        size_t x;
+        for( x = maxsize; x > 1; x >>= 1 ) { if ( x <= targetx ) break; };
+        targetx = x;
+
+        float bestScore = FLT_MAX;
+        for( size_t y = maxsize; y > 0; y >>= 1 )
+        {
+            float score = fabs( (float(x) / float(y)) - origAR );
+            if ( score < bestScore )
+            {
+                bestScore = score;
+                targety = y;
+            }
+        }
+    }
+    else
+    {
+        size_t y;
+        for( y = maxsize; y > 1; y >>= 1 ) { if ( y <= targety ) break; };
+        targety = y;
+
+        float bestScore = FLT_MAX;
+        for( size_t x = maxsize; x > 0; x >>= 1 )
+        {
+            float score = fabs( (float(x) / float(y)) - origAR );
+            if ( score < bestScore )
+            {
+                bestScore = score;
+                targetx = x;
+            }
+        }
+    }
+}
+
 
 //--------------------------------------------------------------------------------------
 // Entry-point
@@ -498,6 +561,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     DWORD dwSRGB = 0;
     DWORD dwFilterOpts = 0;
     DWORD FileType = CODEC_DDS;
+    DWORD maxSize = 16384;
 
     WCHAR szPrefix   [MAX_PATH];
     WCHAR szSuffix   [MAX_PATH];
@@ -546,7 +610,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if( (OPT_NOLOGO != dwOption) && (OPT_TYPELESS_UNORM != dwOption) && (OPT_TYPELESS_FLOAT != dwOption)
                 && (OPT_SEPALPHA != dwOption) && (OPT_PREMUL_ALPHA != dwOption) && (OPT_EXPAND_LUMINANCE != dwOption)
                 && (OPT_TA_WRAP != dwOption) && (OPT_TA_MIRROR != dwOption)
-                && (OPT_FORCE_SINGLEPROC != dwOption) && (OPT_NOGPU != dwOption)
+                && (OPT_FORCE_SINGLEPROC != dwOption) && (OPT_NOGPU != dwOption) && (OPT_FIT_POWEROF2 != dwOption)
                 && (OPT_SRGB != dwOption) && (OPT_SRGBI != dwOption) && (OPT_SRGBO != dwOption)
                 && (OPT_HFLIP != dwOption) && (OPT_VFLIP != dwOption)
                 && (OPT_DDS_DWORD_ALIGN != dwOption) && (OPT_USE_DX10 != dwOption) )
@@ -675,6 +739,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
                 dwFilterOpts |= TEX_FILTER_MIRROR;
+                break;
+
+            case OPT_FEATURE_LEVEL:
+                maxSize = LookupByName( pValue, g_pFeatureLevels );
+                if ( !maxSize )
+                {
+                    wprintf( L"Invalid value specified with -fl (%s)\n", pValue);
+                    wprintf( L"\n");
+                    PrintUsage();
+                    return 1;
+                }
                 break;
             }
         }
@@ -825,10 +900,38 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
         PrintInfo( info );
 
-        size_t twidth = ( !width ) ? info.width : width;
-        size_t theight = ( !height ) ? info.height : height;
         size_t tMips = ( !mipLevels && info.mipLevels > 1 ) ? info.mipLevels : mipLevels;
         DXGI_FORMAT tformat = ( format == DXGI_FORMAT_UNKNOWN ) ? info.format : format;
+
+        bool sizewarn = false;
+
+        size_t twidth = ( !width ) ? info.width : width;
+        if ( twidth > maxSize )
+        {
+            if ( !width )
+                twidth = maxSize;
+            else
+                sizewarn = true;
+        }
+
+        size_t theight = ( !height ) ? info.height : height;
+        if ( theight > maxSize )
+        {
+            if ( !height )
+                theight = maxSize;
+            else
+                sizewarn = true;
+        }
+
+        if ( sizewarn )
+        {
+            wprintf( L"\nWARNING: Target size exceeds maximum size for feature level (%u)\n", maxSize );
+        }
+
+        if (dwOptions & (1 << OPT_FIT_POWEROF2))
+        {
+            FitPowerOf2( info.width, info.height, twidth, theight, maxSize );
+        }
 
         // Convert texture
         wprintf( L" as");
