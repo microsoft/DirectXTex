@@ -15,7 +15,9 @@
 
 #include "directxtexp.h"
 
+#if !defined(_XBOX_ONE) || !defined(_TITLE) || !MONOLITHIC
 #include <d3d10.h>
+#endif
 
 namespace DirectX
 {

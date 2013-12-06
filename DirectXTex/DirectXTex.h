@@ -25,7 +25,10 @@
 #include <algorithm>
 #include <functional>
 
-#if (_WIN32_WINNT >= 0x0602) || defined(_WIN7_PLATFORM_UPDATE)
+#if defined(_XBOX_ONE) && defined(_TITLE) && MONOLITHIC
+#include <d3d11_x.h>
+#define DCOMMON_H_INCLUDED
+#elif (_WIN32_WINNT >= 0x0602) || defined(_WIN7_PLATFORM_UPDATE)
 #include <d3d11_1.h>
 #else
 #include <d3d11.h>
