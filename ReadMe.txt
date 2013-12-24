@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-October 21, 2013
+December 24, 2013
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -14,9 +14,9 @@ writer since this image file format is commonly used for texture content process
 but is not currently supported by a built-in WIC codec.
 
 The source is written for Visual Studio 2010, 2012, or 2013. It is recommended that you
-make use of the Windows 8.x SDK and Windows 7 Service Pack 1 or later.
+make use of the Windows 8.1 SDK and Windows 7 Service Pack 1 or later.
 
-Details on using the Windows 8.x SDK with VS 2010 are described on the Visual C++ Team Blog:
+Details on using the Windows 8.1 SDK with VS 2010 are described on the Visual C++ Team Blog:
 <http://blogs.msdn.com/b/vcblog/archive/2012/11/23/using-the-windows-8-sdk-with-visual-studio-2010-configuring-multiple-projects.aspx>
 
 DDSTextureLoader\
@@ -74,7 +74,7 @@ DDSView\
 XNAMath\
     This contains a copy of XNA Math version 2.05, which is an updated version of the library. This is
     required if building content with USE_XNAMATH. This is only needed for the VS 2010 project that
-    does not use the Windows SDK 8.0 instead.  For details see
+    does not use the Windows SDK 8.x instead.  For details see
     <http://blogs.msdn.com/b/chuckw/archive/2012/06/22/xna-math-version-2-05-smoothing-the-transition-to-directxmath.aspx>
 
 All content and source code for this package except XNA Math are bound to the Microsoft Public License (Ms-PL)
@@ -113,6 +113,12 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+December 24, 2013
+    texconv updated with -fl and -pow2 command-line switches
+    Fixed bug in Resize when doing custom filtering which occurred when exactly doubling the image size
+    Added move operators to ScratchImage and Blob classes
+    Xbox One platform support
 
 October 21, 2013
     Updated for Visual Studio 2013 and Windows 8.1 SDK RTM
