@@ -229,6 +229,27 @@ bool _SetupImageArray( uint8_t *pMemory, size_t pixelSize,
 // ScratchImage - Bitmap image container
 //=====================================================================================
 
+ScratchImage& ScratchImage::operator= (ScratchImage&& moveFrom)
+{
+    if ( this != &moveFrom )
+    {
+        Release();
+
+        _nimages = moveFrom._nimages;
+        _size = moveFrom._size;
+        _metadata = moveFrom._metadata;
+        _image = moveFrom._image;
+        _memory = moveFrom._memory;
+
+        moveFrom._nimages = 0;
+        moveFrom._size = 0;
+        moveFrom._image = nullptr;
+        moveFrom._memory = nullptr;
+    }
+    return *this;
+}
+
+
 //-------------------------------------------------------------------------------------
 // Methods
 //-------------------------------------------------------------------------------------

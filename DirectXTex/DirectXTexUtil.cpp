@@ -915,6 +915,21 @@ size_t TexMetadata::ComputeIndex( size_t mip, size_t item, size_t slice ) const
 // Blob - Bitmap image container
 //=====================================================================================
 
+Blob& Blob::operator= (Blob&& moveFrom)
+{
+    if ( this != &moveFrom )
+    {
+        Release();
+
+        _buffer = moveFrom._buffer;
+        _size = moveFrom._size;
+
+        moveFrom._buffer = nullptr;
+        moveFrom._size = 0;
+    }
+    return *this;
+}
+
 void Blob::Release()
 {
     if ( _buffer )

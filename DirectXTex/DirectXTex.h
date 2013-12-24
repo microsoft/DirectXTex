@@ -244,8 +244,13 @@ namespace DirectX
     class ScratchImage
     {
     public:
-        ScratchImage() : _nimages(0), _size(0), _image(0), _memory(0) {}
+        ScratchImage()
+            : _nimages(0), _size(0), _image(nullptr), _memory(nullptr) {}
+        ScratchImage(ScratchImage&& moveFrom)
+            : _nimages(0), _size(0), _image(nullptr), _memory(nullptr) { *this = std::move(moveFrom); }
         ~ScratchImage() { Release(); }
+
+        ScratchImage& operator= (ScratchImage&& moveFrom);
 
         HRESULT Initialize( _In_ const TexMetadata& mdata );
 
@@ -291,8 +296,11 @@ namespace DirectX
     class Blob
     {
     public:
-        Blob() : _buffer(0), _size(0) {}
+        Blob() : _buffer(nullptr), _size(0) {}
+        Blob(Blob&& moveFrom) : _buffer(nullptr), _size(0) { *this = std::move(moveFrom); }
         ~Blob() { Release(); }
+
+        Blob& operator= (Blob&& moveFrom);
 
         HRESULT Initialize( _In_ size_t size );
 
