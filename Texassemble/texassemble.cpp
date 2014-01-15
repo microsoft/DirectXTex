@@ -134,10 +134,8 @@ SValue g_pFormats[] =
     DEFFMT(B8G8R8A8_UNORM_SRGB),
     DEFFMT(B8G8R8X8_UNORM_SRGB),
 
-#ifdef DXGI_1_2_FORMATS
     // DXGI 1.2 formats
     DEFFMT(B4G4R4A4_UNORM),
-#endif
 
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };

@@ -18,29 +18,11 @@
 #endif
 
 #include <assert.h>
-
-#ifdef USE_XNAMATH
-#include <xnamath.h>
-#else
 #include <directxmath.h>
 #include <directxpackedvector.h>
-#endif
-
-#include <float.h>
-
-#pragma warning(push)
-#pragma warning(disable : 4005)
-#include <stdint.h>
-#pragma warning(pop)
 
 namespace DirectX
 {
-
-#ifndef USE_XNAMATH
-typedef PackedVector::HALF HALF;
-typedef PackedVector::XMHALF4 XMHALF4;
-typedef PackedVector::XMU565 XMU565;
-#endif
 
 //-------------------------------------------------------------------------------------
 // Constants
@@ -369,7 +351,7 @@ public:
 
     void Set(_In_ const HDRColorA& c, _In_ bool bSigned)
     {
-        XMHALF4 aF16;
+        PackedVector::XMHALF4 aF16;
 
         XMVECTOR v = XMLoadFloat4( (const XMFLOAT4*)& c );
         XMStoreHalf4( &aF16, v );
@@ -395,7 +377,7 @@ public:
         return *this;
     }
 
-    void ToF16(_Out_writes_(3) HALF aF16[3], _In_ bool bSigned) const
+    void ToF16(_Out_writes_(3) PackedVector::HALF aF16[3], _In_ bool bSigned) const
     {
         aF16[0] = INT2F16(r, bSigned);
         aF16[1] = INT2F16(g, bSigned);
@@ -403,7 +385,7 @@ public:
     }
 
 private:
-    static int F16ToINT(_In_ const HALF& f, _In_ bool bSigned)
+    static int F16ToINT(_In_ const PackedVector::HALF& f, _In_ bool bSigned)
     {
         uint16_t input = *((const uint16_t*) &f);
         int out, s;
@@ -423,9 +405,9 @@ private:
         return out;
     }
 
-    static HALF INT2F16(_In_ int input, _In_ bool bSigned)
+    static PackedVector::HALF INT2F16(_In_ int input, _In_ bool bSigned)
     {
-        HALF h;
+        PackedVector::HALF h;
         uint16_t out;
         if(bSigned)
         {

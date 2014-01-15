@@ -21,9 +21,7 @@
 
 #include "BC.h"
 
-#ifndef USE_XNAMATH
 using namespace DirectX::PackedVector;
-#endif
 
 namespace DirectX
 {

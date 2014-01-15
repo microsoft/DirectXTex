@@ -15,12 +15,8 @@
 #pragma once
 #endif
 
-#ifdef USE_XNAMATH
-#include <xnamath.h>
-#else
 #include <directxmath.h>
 #include <directxpackedvector.h>
-#endif
 
 #include <memory>
 

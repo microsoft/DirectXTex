@@ -395,12 +395,10 @@ size_t BitsPerPixel( DXGI_FORMAT fmt )
     case DXGI_FORMAT_BC7_UNORM_SRGB:
         return 8;
 
-#ifdef DXGI_1_2_FORMATS
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         return 16;
 
     // We don't support the video formats ( see IsVideo function )
-#endif // DXGI_1_2_FORMATS
 
     default:
         return 0;
@@ -535,12 +533,10 @@ size_t BitsPerColor( DXGI_FORMAT fmt )
     case DXGI_FORMAT_B5G5R5A1_UNORM:
         return 5;
 
-#ifdef DXGI_1_2_FORMATS
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         return 4;
 
     // We don't support the video formats ( see IsVideo function )
-#endif // DXGI_1_2_FORMATS
 
     case DXGI_FORMAT_R1_UNORM:
         return 1;

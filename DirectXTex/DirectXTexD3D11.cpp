@@ -228,10 +228,10 @@ bool IsSupportedTexture( ID3D11Device* pDevice, const TexMetadata& metadata )
 
             if ( fl < D3D_FEATURE_LEVEL_10_0 )
             {
-                if ( (arraySize > 1) || (iWidth > 4096 /*D3D_FL9_3_REQ_TEXTURE1D_U_DIMENSION*/) )
+                if ( (arraySize > 1) || (iWidth > D3D_FL9_3_REQ_TEXTURE1D_U_DIMENSION) )
                     return false;
 
-                if ( (fl < D3D_FEATURE_LEVEL_9_3) && (iWidth > 2048 /*D3D_FL9_1_REQ_TEXTURE1D_U_DIMENSION*/ ) )
+                if ( (fl < D3D_FEATURE_LEVEL_9_3) && (iWidth > D3D_FL9_1_REQ_TEXTURE1D_U_DIMENSION ) )
                     return false;
             }
         }
@@ -260,13 +260,13 @@ bool IsSupportedTexture( ID3D11Device* pDevice, const TexMetadata& metadata )
 
                 if ( fl < D3D_FEATURE_LEVEL_10_0 )
                 {
-                    if ( (iWidth > 4096 /*D3D_FL9_3_REQ_TEXTURECUBE_DIMENSION*/ )
-                         || (iHeight > 4096 /*D3D_FL9_3_REQ_TEXTURECUBE_DIMENSION*/ ) )
+                    if ( (iWidth > D3D_FL9_3_REQ_TEXTURECUBE_DIMENSION )
+                         || (iHeight > D3D_FL9_3_REQ_TEXTURECUBE_DIMENSION ) )
                         return false;
 
                     if ( (fl < D3D_FEATURE_LEVEL_9_3)
-                         && ( (iWidth > 512 /*D3D_FL9_1_REQ_TEXTURECUBE_DIMENSION*/)
-                              || (iHeight > 512 /*D3D_FL9_1_REQ_TEXTURECUBE_DIMENSION*/) ) )
+                         && ( (iWidth > D3D_FL9_1_REQ_TEXTURECUBE_DIMENSION)
+                              || (iHeight > D3D_FL9_1_REQ_TEXTURECUBE_DIMENSION) ) )
                         return false;
                 }
             }
@@ -291,13 +291,13 @@ bool IsSupportedTexture( ID3D11Device* pDevice, const TexMetadata& metadata )
                 if ( fl < D3D_FEATURE_LEVEL_10_0 )
                 {
                     if ( (arraySize > 1)
-                         || (iWidth > 4096 /*D3D_FL9_3_REQ_TEXTURE2D_U_OR_V_DIMENSION*/)
-                         || (iHeight > 4096 /*D3D_FL9_3_REQ_TEXTURE2D_U_OR_V_DIMENSION*/) )
+                         || (iWidth > D3D_FL9_3_REQ_TEXTURE2D_U_OR_V_DIMENSION)
+                         || (iHeight > D3D_FL9_3_REQ_TEXTURE2D_U_OR_V_DIMENSION) )
                         return false;
 
                     if ( (fl < D3D_FEATURE_LEVEL_9_3)
-                         && ( (iWidth > 2048 /*D3D_FL9_1_REQ_TEXTURE2D_U_OR_V_DIMENSION*/)
-                              || (iHeight > 2048 /*D3D_FL9_1_REQ_TEXTURE2D_U_OR_V_DIMENSION*/) ) )
+                         && ( (iWidth > D3D_FL9_1_REQ_TEXTURE2D_U_OR_V_DIMENSION)
+                              || (iHeight > D3D_FL9_1_REQ_TEXTURE2D_U_OR_V_DIMENSION) ) )
                         return false;
                 }
             }
@@ -323,9 +323,9 @@ bool IsSupportedTexture( ID3D11Device* pDevice, const TexMetadata& metadata )
 
             if ( fl < D3D_FEATURE_LEVEL_10_0 )
             {
-                if ( (iWidth > 256 /*D3D_FL9_1_REQ_TEXTURE3D_U_V_OR_W_DIMENSION*/)
-                     || (iHeight > 256 /*D3D_FL9_1_REQ_TEXTURE3D_U_V_OR_W_DIMENSION*/)
-                     || (iDepth > 256 /*D3D_FL9_1_REQ_TEXTURE3D_U_V_OR_W_DIMENSION*/) )
+                if ( (iWidth > D3D_FL9_1_REQ_TEXTURE3D_U_V_OR_W_DIMENSION)
+                     || (iHeight > D3D_FL9_1_REQ_TEXTURE3D_U_V_OR_W_DIMENSION)
+                     || (iDepth > D3D_FL9_1_REQ_TEXTURE3D_U_V_OR_W_DIMENSION) )
                     return false;
             }
         }
@@ -583,13 +583,13 @@ HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImage
     case TEX_DIMENSION_TEXTURE1D:
         if ( metadata.arraySize > 1 )
         {
-            SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE1DARRAY;
+            SRVDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURE1DARRAY;
             SRVDesc.Texture1DArray.MipLevels = static_cast<UINT>( metadata.mipLevels );
             SRVDesc.Texture1DArray.ArraySize = static_cast<UINT>( metadata.arraySize );
         }
         else
         {
-            SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE1D;
+            SRVDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURE1D;
             SRVDesc.Texture1D.MipLevels = static_cast<UINT>( metadata.mipLevels );
         }
         break;
@@ -600,32 +600,32 @@ HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImage
             if (metadata.arraySize > 6)
             {
                 assert( (metadata.arraySize % 6) == 0 );
-                SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBEARRAY;
+                SRVDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURECUBEARRAY;
                 SRVDesc.TextureCubeArray.MipLevels = static_cast<UINT>( metadata.mipLevels );
                 SRVDesc.TextureCubeArray.NumCubes = static_cast<UINT>( metadata.arraySize / 6 );
             }
             else
             {
-                SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+                SRVDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURECUBE;
                 SRVDesc.TextureCube.MipLevels = static_cast<UINT>( metadata.mipLevels );
             }
         }
         else if ( metadata.arraySize > 1 )
         {
-            SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+            SRVDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURE2DARRAY;
             SRVDesc.Texture2DArray.MipLevels = static_cast<UINT>( metadata.mipLevels );
             SRVDesc.Texture2DArray.ArraySize = static_cast<UINT>( metadata.arraySize );
         }
         else
         {
-            SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            SRVDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURE2D;
             SRVDesc.Texture2D.MipLevels = static_cast<UINT>( metadata.mipLevels );
         }
         break;
 
     case TEX_DIMENSION_TEXTURE3D:
         assert( metadata.arraySize == 1 );
-        SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+        SRVDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURE3D;
         SRVDesc.Texture3D.MipLevels = static_cast<UINT>( metadata.mipLevels );
         break;
 

@@ -118,21 +118,11 @@ const LegacyDDS g_LegacyDDSMap[] =
     { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND
                                       | CONV_FLAGS_PAL8,      { sizeof(DDS_PIXELFORMAT), DDS_PAL8,      0,  8, 0,          0,          0,          0         } }, // D3DFMT_P8
 
-#ifdef DXGI_1_2_FORMATS
     { DXGI_FORMAT_B4G4R4A4_UNORM,     CONV_FLAGS_4444,        DDSPF_A4R4G4B4 }, // D3DFMT_A4R4G4B4 (uses DXGI 1.2 format)
     { DXGI_FORMAT_B4G4R4A4_UNORM,     CONV_FLAGS_NOALPHA
                                       | CONV_FLAGS_4444,      { sizeof(DDS_PIXELFORMAT), DDS_RGB,       0, 16, 0x0f00,     0x00f0,     0x000f,     0x0000     } }, // D3DFMT_X4R4G4B4 (uses DXGI 1.2 format)
     { DXGI_FORMAT_B4G4R4A4_UNORM,     CONV_FLAGS_EXPAND
                                       | CONV_FLAGS_44,        { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0,  8, 0x0f,       0x00,       0x00,       0xf0       } }, // D3DFMT_A4L4 (uses DXGI 1.2 format)
-#else // !DXGI_1_2_FORMATS
-    { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND
-                                      | CONV_FLAGS_4444,      DDSPF_A4R4G4B4 }, // D3DFMT_A4R4G4B4
-    { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND
-                                      | CONV_FLAGS_NOALPHA
-                                      | CONV_FLAGS_4444,      { sizeof(DDS_PIXELFORMAT), DDS_RGB,       0, 16, 0x0f00,     0x00f0,     0x000f,     0x0000     } }, // D3DFMT_X4R4G4B4
-    { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND
-                                      | CONV_FLAGS_44,        { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0,  8, 0x0f,       0x00,       0x00,       0xf0       } }, // D3DFMT_A4L4
-#endif
 };
 
 // Note that many common DDS reader/writers (including D3DX) swap the
@@ -431,9 +421,7 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
         {
         case DXGI_FORMAT_B5G6R5_UNORM:
         case DXGI_FORMAT_B5G5R5A1_UNORM:
-#ifdef DXGI_1_2_FORMATS
         case DXGI_FORMAT_B4G4R4A4_UNORM:
-#endif
             metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
             convFlags |= CONV_FLAGS_EXPAND;
             if ( metadata.format == DXGI_FORMAT_B5G6R5_UNORM )
@@ -492,9 +480,7 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
         case DXGI_FORMAT_B5G5R5A1_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A1R5G5B5, sizeof(DDS_PIXELFORMAT) ); break;
         case DXGI_FORMAT_B8G8R8A8_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT) ); break; // DXGI 1.1
         case DXGI_FORMAT_B8G8R8X8_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT) ); break; // DXGI 1.1
-#ifdef DXGI_1_2_FORMATS
         case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT) ); break;
-#endif
 
         // Legacy D3DX formats using D3DFMT enum value as FourCC
         case DXGI_FORMAT_R32G32B32A32_FLOAT:
@@ -718,10 +704,8 @@ inline static TEXP_LEGACY_FORMAT _FindLegacyFormat( DWORD flags )
         lformat = TEXP_LEGACY_A8R3G3B2;
     else if ( flags & CONV_FLAGS_44 )
         lformat = TEXP_LEGACY_A4L4;
-#ifndef DXGI_1_2_FORMATS
     else if ( flags & CONV_FLAGS_4444 )
         lformat = TEXP_LEGACY_B4G4R4A4;
-#endif
     else if ( flags & CONV_FLAGS_L8 )
         lformat = TEXP_LEGACY_L8;
     else if ( flags & CONV_FLAGS_L16 )
@@ -885,7 +869,6 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
     case TEXP_LEGACY_A4L4:
         switch( outFormat )
         {
-#ifdef DXGI_1_2_FORMATS
         case DXGI_FORMAT_B4G4R4A4_UNORM :
             // D3DFMT_A4L4 -> DXGI_FORMAT_B4G4R4A4_UNORM 
             if ( inSize >= 1 && outSize >= 2 )
@@ -905,7 +888,6 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
                 return true;
             }
             return false;
-#endif // DXGI_1_2_FORMATS
 
         case DXGI_FORMAT_R8G8B8A8_UNORM:
             // D3DFMT_A4L4 -> DXGI_FORMAT_R8G8B8A8_UNORM
@@ -929,7 +911,6 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
         }
         break;
 
-#ifndef DXGI_1_2_FORMATS
     case TEXP_LEGACY_B4G4R4A4:
         if (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM)
             return false;
@@ -954,7 +935,6 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
             return true;
         }
         return false;
-#endif // DXGI_1_2_FORMATS
 
     case TEXP_LEGACY_L8:
         if (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM)
@@ -1127,11 +1107,7 @@ static HRESULT _CopyImage( _In_reads_bytes_(size) const void* pPixels, _In_ size
                         {
                             if ( convFlags & CONV_FLAGS_EXPAND )
                             {
-#ifdef DXGI_1_2_FORMATS
                                 if ( convFlags & (CONV_FLAGS_565|CONV_FLAGS_5551|CONV_FLAGS_4444) )
-#else
-                                if ( convFlags & (CONV_FLAGS_565|CONV_FLAGS_5551) )
-#endif
                                 {
                                     if ( !_ExpandScanline( pDest, dpitch, DXGI_FORMAT_R8G8B8A8_UNORM,
                                                            pSrc, spitch,
@@ -1205,11 +1181,7 @@ static HRESULT _CopyImage( _In_reads_bytes_(size) const void* pPixels, _In_ size
                         {
                             if ( convFlags & CONV_FLAGS_EXPAND )
                             {
-#ifdef DXGI_1_2_FORMATS
                                 if ( convFlags & (CONV_FLAGS_565|CONV_FLAGS_5551|CONV_FLAGS_4444) )
-#else
-                                if ( convFlags & (CONV_FLAGS_565|CONV_FLAGS_5551) )
-#endif
                                 {
                                     if ( !_ExpandScanline( pDest, dpitch, DXGI_FORMAT_R8G8B8A8_UNORM,
                                                            pSrc, spitch,

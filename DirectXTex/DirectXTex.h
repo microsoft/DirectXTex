@@ -38,27 +38,6 @@
 
 #define DIRECTX_TEX_VERSION 120
 
-#if defined(_MSC_VER) && (_MSC_VER<1610) && !defined(_In_reads_)
-#define _Analysis_assume_(exp)
-#define _In_reads_(exp)
-#define _In_reads_opt_(exp)
-#define _Out_writes_(exp)
-#define _Out_writes_opt_(exp)
-#define _In_reads_bytes_(exp)
-#define _Out_writes_bytes_(exp)
-#define _Out_writes_bytes_to_opt_(a,b)
-#define _Inout_updates_bytes_(exp)
-#define _Inout_updates_all_(exp)
-#define _Inout_updates_all_opt_(exp)
-#define _Outptr_
-#define _COM_Outptr_
-#define _When_(a,b)
-#endif
-
-#ifndef _Use_decl_annotations_
-#define _Use_decl_annotations_
-#endif
-
 namespace DirectX
 {
 
@@ -481,7 +460,7 @@ namespace DirectX
             // if the input format type is IsSRGB(), then SRGB_IN is on by default
             // if the output format type is IsSRGB(), then SRGB_OUT is on by default
     };
-    
+
     HRESULT PremultiplyAlpha( _In_ const Image& srcImage, _In_ DWORD flags, _Out_ ScratchImage& image );
     HRESULT PremultiplyAlpha( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags, _Out_ ScratchImage& result );
         // Converts to a premultiplied alpha version of the texture

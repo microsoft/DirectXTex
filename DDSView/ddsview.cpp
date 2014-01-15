@@ -12,11 +12,7 @@
 #include <dxgiformat.h>
 #include <d3d11.h>
 
-#ifdef USE_XNAMATH
-#include <xnamath.h>
-#else
 #include <directxmath.h>
-#endif
 
 #include "DirectXTex.h"
 

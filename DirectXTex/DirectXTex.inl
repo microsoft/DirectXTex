@@ -24,11 +24,7 @@
 _Use_decl_annotations_
 inline bool IsValid( DXGI_FORMAT fmt )
 {
-#ifdef DXGI_1_2_FORMATS
     return ( static_cast<size_t>(fmt) >= 1 && static_cast<size_t>(fmt) <= 115 );
-#else
-    return ( static_cast<size_t>(fmt) >= 1 && static_cast<size_t>(fmt) <= 99 );
-#endif
 }
 
 _Use_decl_annotations_
@@ -74,7 +70,6 @@ inline bool IsPacked( DXGI_FORMAT fmt )
 _Use_decl_annotations_
 inline bool IsVideo( DXGI_FORMAT fmt )
 {
-#ifdef DXGI_1_2_FORMATS
     switch ( fmt )
     {
     case DXGI_FORMAT_AYUV:
@@ -101,10 +96,6 @@ inline bool IsVideo( DXGI_FORMAT fmt )
     default:
         return false;
     }
-#else // !DXGI_1_2_FORMATS
-    UNREFERENCED_PARAMETER(fmt);
-    return false;
-#endif
 }
 
 _Use_decl_annotations_
@@ -208,9 +199,7 @@ inline bool HasAlpha( DXGI_FORMAT fmt )
     case DXGI_FORMAT_BC7_TYPELESS:
     case DXGI_FORMAT_BC7_UNORM:
     case DXGI_FORMAT_BC7_UNORM_SRGB:
-#ifdef DXGI_1_2_FORMATS
     case DXGI_FORMAT_B4G4R4A4_UNORM:
-#endif
         return true;
 
     default:

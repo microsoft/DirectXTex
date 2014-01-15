@@ -15,13 +15,7 @@
 
 #include "directxtexp.h"
 
-#ifdef USE_XNAMATH
-#if XNAMATH_VERSION < 205
-#error This file requires XNAMATH v2.05 or later
-#endif
-#else
 using namespace DirectX::PackedVector;
-#endif
 
 #if DIRECTX_MATH_VERSION < 306
 namespace
@@ -252,7 +246,6 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
             memset( pDestination, 0xff, outSize );
             return;
 
-#ifdef DXGI_1_2_FORMATS
         //-----------------------------------------------------------------------------
         case DXGI_FORMAT_B4G4R4A4_UNORM:
             if ( inSize >= 2 && outSize >= 2 )
@@ -277,7 +270,6 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
                 }
             }
             return;
-#endif // DXGI_1_2_FORMATS
         }
     }
 
@@ -471,7 +463,6 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
         }
         return false;
 
-#ifdef DXGI_1_2_FORMATS
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         if ( outFormat != DXGI_FORMAT_R8G8B8A8_UNORM )
             return false;
@@ -496,7 +487,6 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
             return true;
         }
         return false;
-#endif // DXGI_1_2_FORMATS
     }
 
     return false;
@@ -1108,7 +1098,6 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         }
         return false;
 
-#ifdef DXGI_1_2_FORMATS
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         if ( size >= sizeof(XMUNIBBLE4) )
         {
@@ -1126,7 +1115,6 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         return false;
 
     // we don't support the video formats ( see IsVideo function )
-#endif // DXGI_1_2_FORMATS
 
     default:
         return false;
@@ -1692,7 +1680,6 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         }
         return false;
 
-#ifdef DXGI_1_2_FORMATS
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         if ( size >= sizeof(XMUNIBBLE4) )
         {
@@ -1710,7 +1697,6 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         return false;
 
     // We don't support the video formats ( see IsVideo function )
-#endif // DXGI_1_2_FORMATS
 
     default:
         return false;
@@ -1947,9 +1933,7 @@ bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
     case DXGI_FORMAT_B5G5R5A1_UNORM:
     case DXGI_FORMAT_B8G8R8A8_UNORM:
     case DXGI_FORMAT_B8G8R8X8_UNORM:
-#ifdef DXGI_1_2_FORMATS
     case DXGI_FORMAT_B4G4R4A4_UNORM:
-#endif
         break;
 
     default:
@@ -2037,9 +2021,7 @@ bool _LoadScanlineLinear( XMVECTOR* pDestination, size_t count,
     case DXGI_FORMAT_B5G5R5A1_UNORM:
     case DXGI_FORMAT_B8G8R8A8_UNORM:
     case DXGI_FORMAT_B8G8R8X8_UNORM:
-#ifdef DXGI_1_2_FORMATS
     case DXGI_FORMAT_B4G4R4A4_UNORM:
-#endif
         break;
 
     default:
@@ -2151,9 +2133,7 @@ static const ConvertData g_ConvertTable[] = {
     { DXGI_FORMAT_BC6H_SF16,                    16, CONVF_FLOAT | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
     { DXGI_FORMAT_BC7_UNORM,                    8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
     { DXGI_FORMAT_BC7_UNORM_SRGB,               8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-#ifdef DXGI_1_2_FORMATS
     { DXGI_FORMAT_B4G4R4A4_UNORM,               4, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-#endif
 };
 
 #pragma prefast( suppress : 25004, "Signature must match bsearch_s" );
@@ -3049,10 +3029,8 @@ bool _StoreScanlineDither( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         }
         return false;
 
-#ifdef DXGI_1_2_FORMATS
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         STORE_SCANLINE( XMUNIBBLE4, g_Scale4pc, true, true, uint8_t, 0xF, y, true )
-#endif
 
     default:
         return _StoreScanline( pDestination, size, format, pSource, count, threshold );

@@ -179,10 +179,8 @@ SValue g_pFormats[] =
     DEFFMT(BC7_UNORM),
     DEFFMT(BC7_UNORM_SRGB),
 
-#ifdef DXGI_1_2_FORMATS
     // DXGI 1.2 formats
     DEFFMT(B4G4R4A4_UNORM),
-#endif
 
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
