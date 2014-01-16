@@ -17,6 +17,8 @@
 
 #include "filters.h"
 
+using Microsoft::WRL::ComPtr;
+
 namespace DirectX
 {
 
@@ -134,8 +136,8 @@ static HRESULT _EnsureWicBitmapPixelFormat( _In_ IWICImagingFactory* pWIC, _In_ 
         }
         else
         {
-            ScopedObject<IWICFormatConverter> converter;
-            hr = pWIC->CreateFormatConverter( &converter );
+            ComPtr<IWICFormatConverter> converter;
+            hr = pWIC->CreateFormatConverter( converter.GetAddressOf() );
             if ( SUCCEEDED(hr) )
             {
                 hr = converter->Initialize( src, desiredPixelFormat, _GetWICDither(filter), 0, 0, WICBitmapPaletteTypeCustom );
@@ -172,10 +174,10 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBi
 
     if ( SUCCEEDED(hr) )
     {
-        ScopedObject<IWICComponentInfo> componentInfo;
-        hr = pWIC->CreateComponentInfo( desiredPixelFormat, &componentInfo );
+        ComPtr<IWICComponentInfo> componentInfo;
+        hr = pWIC->CreateComponentInfo( desiredPixelFormat, componentInfo.GetAddressOf() );
 
-        ScopedObject<IWICPixelFormatInfo> pixelFormatInfo;
+        ComPtr<IWICPixelFormatInfo> pixelFormatInfo;
         if ( SUCCEEDED(hr) )
         {
             hr = componentInfo.As( &pixelFormatInfo );
@@ -220,17 +222,15 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBi
     }
     
     // Resize color only image (no alpha channel)
-    ScopedObject<IWICBitmap> resizedColor;
+    ComPtr<IWICBitmap> resizedColor;
     if ( SUCCEEDED(hr) )
     { 
-        ScopedObject<IWICBitmapScaler> colorScaler;
-        
-        hr = pWIC->CreateBitmapScaler(&colorScaler);
+        ComPtr<IWICBitmapScaler> colorScaler;
+        hr = pWIC->CreateBitmapScaler( colorScaler.GetAddressOf() );
         if ( SUCCEEDED(hr) )
         {
-            ScopedObject<IWICBitmap> converted;
-
-            hr = _EnsureWicBitmapPixelFormat( pWIC, original, filter, colorPixelFormat, &converted );
+            ComPtr<IWICBitmap> converted;
+            hr = _EnsureWicBitmapPixelFormat( pWIC, original, filter, colorPixelFormat, converted.GetAddressOf() );
             if ( SUCCEEDED(hr) )
             {
                 hr = colorScaler->Initialize( converted.Get(), static_cast<UINT>(newWidth), static_cast<UINT>(newHeight), interpolationMode );
@@ -239,28 +239,25 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBi
             
         if ( SUCCEEDED(hr) )
         {
-            ScopedObject<IWICBitmap> resized;
-
-            hr = pWIC->CreateBitmapFromSource( colorScaler.Get(), WICBitmapCacheOnDemand, &resized );
+            ComPtr<IWICBitmap> resized;
+            hr = pWIC->CreateBitmapFromSource( colorScaler.Get(), WICBitmapCacheOnDemand, resized.GetAddressOf() );
             if ( SUCCEEDED(hr) )
             {
-                hr = _EnsureWicBitmapPixelFormat( pWIC, resized.Get(), filter, colorPixelFormat, &resizedColor );
+                hr = _EnsureWicBitmapPixelFormat( pWIC, resized.Get(), filter, colorPixelFormat, resizedColor.GetAddressOf() );
             }
         }
     }
     
     // Resize color+alpha image
-    ScopedObject<IWICBitmap> resizedColorWithAlpha;
+    ComPtr<IWICBitmap> resizedColorWithAlpha;
     if ( SUCCEEDED(hr) )
     {
-        ScopedObject<IWICBitmapScaler> colorWithAlphaScaler;
-        
-        hr = pWIC->CreateBitmapScaler( &colorWithAlphaScaler );
+        ComPtr<IWICBitmapScaler> colorWithAlphaScaler;
+        hr = pWIC->CreateBitmapScaler( colorWithAlphaScaler.GetAddressOf() );
         if ( SUCCEEDED(hr) )
         {
-            ScopedObject<IWICBitmap> converted;
-
-            hr = _EnsureWicBitmapPixelFormat( pWIC, original, filter, colorWithAlphaPixelFormat, &converted );
+            ComPtr<IWICBitmap> converted;
+            hr = _EnsureWicBitmapPixelFormat( pWIC, original, filter, colorWithAlphaPixelFormat, converted.GetAddressOf() );
             if ( SUCCEEDED(hr) )
             {
                 hr = colorWithAlphaScaler->Initialize( converted.Get(), static_cast<UINT>(newWidth), static_cast<UINT>(newHeight), interpolationMode );
@@ -269,12 +266,11 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBi
             
         if ( SUCCEEDED(hr) )
         {
-            ScopedObject<IWICBitmap> resized;
-
-            hr = pWIC->CreateBitmapFromSource( colorWithAlphaScaler.Get(), WICBitmapCacheOnDemand, &resized );
+            ComPtr<IWICBitmap> resized;
+            hr = pWIC->CreateBitmapFromSource( colorWithAlphaScaler.Get(), WICBitmapCacheOnDemand, resized.GetAddressOf() );
             if ( SUCCEEDED(hr) )
             {
-                hr = _EnsureWicBitmapPixelFormat( pWIC, resized.Get(), filter, colorWithAlphaPixelFormat, &resizedColorWithAlpha );
+                hr = _EnsureWicBitmapPixelFormat( pWIC, resized.Get(), filter, colorWithAlphaPixelFormat, resizedColorWithAlpha.GetAddressOf() );
             }
         }
     }
@@ -282,13 +278,12 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBi
     // Merge pixels (copying color channels from color only image to color+alpha image)
     if ( SUCCEEDED(hr) )
     {
-        ScopedObject<IWICBitmapLock> colorLock;
-        ScopedObject<IWICBitmapLock> colorWithAlphaLock;
-      
-        hr = resizedColor->Lock( nullptr, WICBitmapLockRead, &colorLock );
+        ComPtr<IWICBitmapLock> colorLock;
+        ComPtr<IWICBitmapLock> colorWithAlphaLock;
+        hr = resizedColor->Lock( nullptr, WICBitmapLockRead, colorLock.GetAddressOf() );
         if ( SUCCEEDED(hr) )
         {
-            hr = resizedColorWithAlpha->Lock( nullptr, WICBitmapLockWrite, &colorWithAlphaLock );
+            hr = resizedColorWithAlpha->Lock( nullptr, WICBitmapLockWrite, colorWithAlphaLock.GetAddressOf() );
         }
         
         if ( SUCCEEDED(hr) )
@@ -353,8 +348,8 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBi
 
     if ( SUCCEEDED(hr) )
     {
-        ScopedObject<IWICBitmap> wicBitmap;
-        hr = _EnsureWicBitmapPixelFormat( pWIC, resizedColorWithAlpha.Get(), filter, desiredPixelFormat, &wicBitmap );
+        ComPtr<IWICBitmap> wicBitmap;
+        hr = _EnsureWicBitmapPixelFormat( pWIC, resizedColorWithAlpha.Get(), filter, desiredPixelFormat, wicBitmap.GetAddressOf() );
         if ( SUCCEEDED(hr) )
         {
             hr = wicBitmap->CopyPixels( nullptr, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels );
@@ -443,10 +438,10 @@ static HRESULT _GenerateMipMapsUsingWIC( _In_ const Image& baseImage, _In_ DWORD
     size_t width = baseImage.width;
     size_t height = baseImage.height;
 
-    ScopedObject<IWICBitmap> source;
+    ComPtr<IWICBitmap> source;
     HRESULT hr = pWIC->CreateBitmapFromMemory( static_cast<UINT>( width ), static_cast<UINT>( height ), pfGUID,
                                                static_cast<UINT>( baseImage.rowPitch ), static_cast<UINT>( baseImage.slicePitch ),
-                                               baseImage.pixels, &source );
+                                               baseImage.pixels, source.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -468,12 +463,12 @@ static HRESULT _GenerateMipMapsUsingWIC( _In_ const Image& baseImage, _In_ DWORD
         pDest += img0->rowPitch;
     }
 
-    ScopedObject<IWICComponentInfo> componentInfo;
-    hr = pWIC->CreateComponentInfo( pfGUID, &componentInfo );
+    ComPtr<IWICComponentInfo> componentInfo;
+    hr = pWIC->CreateComponentInfo( pfGUID, componentInfo.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICPixelFormatInfo2> pixelFormatInfo;
+    ComPtr<IWICPixelFormatInfo2> pixelFormatInfo;
     hr = componentInfo.As( &pixelFormatInfo );
     if ( FAILED(hr) )
         return hr;
@@ -506,8 +501,8 @@ static HRESULT _GenerateMipMapsUsingWIC( _In_ const Image& baseImage, _In_ DWORD
         }
         else
         {
-            ScopedObject<IWICBitmapScaler> scaler;
-            hr = pWIC->CreateBitmapScaler( &scaler );
+            ComPtr<IWICBitmapScaler> scaler;
+            hr = pWIC->CreateBitmapScaler( scaler.GetAddressOf() );
             if ( FAILED(hr) )
                 return hr;
 
@@ -530,8 +525,8 @@ static HRESULT _GenerateMipMapsUsingWIC( _In_ const Image& baseImage, _In_ DWORD
             {
                 // The WIC bitmap scaler is free to return a different pixel format than the source image, so here we
                 // convert it back
-                ScopedObject<IWICFormatConverter> FC;
-                hr = pWIC->CreateFormatConverter( &FC );
+                ComPtr<IWICFormatConverter> FC;
+                hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
                 if ( FAILED(hr) )
                     return hr;
 

@@ -19,6 +19,8 @@
 #pragma comment(lib,"dxguid.lib")
 #endif
 
+using Microsoft::WRL::ComPtr;
+
 namespace
 {
     #include "Shaders\Compiled\BC7Encode_EncodeBlockCS.inc"
@@ -359,7 +361,7 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
     // We need to avoid the hardware doing additional colorspace conversion
     DXGI_FORMAT inputFormat = ( m_srcformat == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB ) ? DXGI_FORMAT_R8G8B8A8_UNORM : m_srcformat;
 
-    ScopedObject<ID3D11Texture2D> sourceTex;
+    ComPtr<ID3D11Texture2D> sourceTex;
     {
         D3D11_TEXTURE2D_DESC desc;
         memset( &desc, 0, sizeof(desc) );
@@ -384,7 +386,7 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
         }
     }
 
-    ScopedObject<ID3D11ShaderResourceView> sourceSRV;
+    ComPtr<ID3D11ShaderResourceView> sourceSRV;
     {
         D3D11_SHADER_RESOURCE_VIEW_DESC desc;
         memset( &desc, 0, sizeof(desc) );
@@ -392,7 +394,7 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
         desc.Format = inputFormat;
         desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 
-        HRESULT hr = pDevice->CreateShaderResourceView( sourceTex.Get(), &desc, sourceSRV.ReleaseAndGetAddressOf() );
+        HRESULT hr = pDevice->CreateShaderResourceView( sourceTex.Get(), &desc, sourceSRV.GetAddressOf() );
         if ( FAILED(hr) )
         {
             return hr;

@@ -15,6 +15,8 @@
 
 #include "directxtexp.h"
 
+using Microsoft::WRL::ComPtr;
+
 namespace DirectX
 {
 
@@ -33,15 +35,15 @@ static HRESULT _PerformFlipRotateUsingWIC( _In_ const Image& srcImage, _In_ DWOR
     if ( !pWIC )
         return E_NOINTERFACE;
 
-    ScopedObject<IWICBitmap> source;
+    ComPtr<IWICBitmap> source;
     HRESULT hr = pWIC->CreateBitmapFromMemory( static_cast<UINT>( srcImage.width ), static_cast<UINT>( srcImage.height ), pfGUID,
                                                static_cast<UINT>( srcImage.rowPitch ), static_cast<UINT>( srcImage.slicePitch ),
-                                               srcImage.pixels, &source );
+                                               srcImage.pixels, source.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapFlipRotator> FR;
-    hr = pWIC->CreateBitmapFlipRotator( &FR );
+    ComPtr<IWICBitmapFlipRotator> FR;
+    hr = pWIC->CreateBitmapFlipRotator( FR.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 

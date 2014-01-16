@@ -34,6 +34,7 @@
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #include <wincodec.h>
+#include <wrl.h>
 #pragma warning(pop)
 
 #include <memory>
@@ -44,79 +45,7 @@
 #pragma comment(lib,"dxguid.lib")
 #endif
 
-//---------------------------------------------------------------------------------
-#if defined(_MSC_VER) && (_MSC_VER >= 1610)
-
-#include <wrl.h>
-
-template<class T> class ScopedObject : public Microsoft::WRL::ComPtr<T> {};
-
-#else
-
-template<class T> class ScopedObject
-{
-public:
-    ScopedObject() : _pointer(nullptr) {}
-    ScopedObject( T *p ) : _pointer(p) { if (_pointer) { _pointer->AddRef(); } }
-    ScopedObject( const ScopedObject& other ) : _pointer(other._pointer) { if (_pointer) { _pointer->AddRef(); } }
-
-    ~ScopedObject()
-    {
-        if ( _pointer )
-        {
-            _pointer->Release();
-            _pointer = nullptr;
-        }
-    }
-
-    operator bool() const { return (_pointer != nullptr); }
-
-    T& operator= (_In_opt_ T* other)
-    {
-        if ( _pointer != other )
-        {
-            if ( _pointer) { _pointer->Release(); }
-            _pointer = other;
-            if ( other ) { other->AddRef() };
-        }
-        return *this;
-    }
-
-    ScopedObject& operator= (const ScopedObject& other)
-    {
-        if ( _pointer != other._pointer )
-        {
-            if ( _pointer) { _pointer->Release(); }
-            _pointer = other._pointer;
-            if ( other._pointer ) { other._pointer->AddRef(); }
-        }
-        return *this;
-    }
-
-    T& operator*() { return *_pointer; }
-
-    T* operator->() const { return _pointer; }
-
-    T** operator&() { return &_pointer; }
-
-    void Reset() { if ( _pointer ) { _pointer->Release(); _pointer = nullptr; } }
-
-    T* Get() const { return _pointer; }
-    T** GetAddressOf() { return &_pointer; }
-
-    T** ReleaseAndGetAddressOf() { if ( _pointer ) { _pointer->Release(); _pointer = nullptr; } return &_pointer; }
-
-    template<typename U>
-    HRESULT As(_Inout_ U* p) { return _pointer->QueryInterface( _uuidof(U), reinterpret_cast<void**>( p ) ); }
-
-    template<typename U>
-    HRESULT As(_Out_ ScopedObject<U>* p ) { return _pointer->QueryInterface( _uuidof(U), reinterpret_cast<void**>( p->ReleaseAndGetAddressOf() ) ); }
-
-private:
-    T* _pointer;
-};
-
-#endif
+using Microsoft::WRL::ComPtr;
 
 //--------------------------------------------------------------------------------------
 
@@ -321,8 +250,8 @@ static size_t _WICBitsPerPixel( REFGUID targetGuid )
     if ( !pWIC )
         return 0;
  
-    ScopedObject<IWICComponentInfo> cinfo;
-    if ( FAILED( pWIC->CreateComponentInfo( targetGuid, &cinfo ) ) )
+    ComPtr<IWICComponentInfo> cinfo;
+    if ( FAILED( pWIC->CreateComponentInfo( targetGuid, cinfo.GetAddressOf() ) ) )
         return 0;
 
     WICComponentType type;
@@ -332,7 +261,7 @@ static size_t _WICBitsPerPixel( REFGUID targetGuid )
     if ( type != WICPixelFormat )
         return 0;
 
-    ScopedObject<IWICPixelFormatInfo> pfinfo;
+    ComPtr<IWICPixelFormatInfo> pfinfo;
     if ( FAILED( cinfo.As( &pfinfo ) ) )
         return 0;
 
@@ -527,8 +456,8 @@ static HRESULT CreateTextureFromWIC( _In_ ID3D11Device* d3dDevice,
     }
     else
     {
-        ScopedObject<IWICMetadataQueryReader> metareader;
-        if ( SUCCEEDED( frame->GetMetadataQueryReader( &metareader ) ) )
+        ComPtr<IWICMetadataQueryReader> metareader;
+        if ( SUCCEEDED( frame->GetMetadataQueryReader( metareader.GetAddressOf() ) ) )
         {
             GUID containerFormat;
             if ( SUCCEEDED( metareader->GetContainerFormat( &containerFormat ) ) )
@@ -597,8 +526,8 @@ static HRESULT CreateTextureFromWIC( _In_ ID3D11Device* d3dDevice,
         if ( !pWIC )
             return E_NOINTERFACE;
 
-        ScopedObject<IWICBitmapScaler> scaler;
-        hr = pWIC->CreateBitmapScaler( &scaler );
+        ComPtr<IWICBitmapScaler> scaler;
+        hr = pWIC->CreateBitmapScaler( scaler.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
@@ -620,8 +549,8 @@ static HRESULT CreateTextureFromWIC( _In_ ID3D11Device* d3dDevice,
         }
         else
         {
-            ScopedObject<IWICFormatConverter> FC;
-            hr = pWIC->CreateFormatConverter( &FC );
+            ComPtr<IWICFormatConverter> FC;
+            hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
             if ( FAILED(hr) )
                 return hr;
 
@@ -641,8 +570,8 @@ static HRESULT CreateTextureFromWIC( _In_ ID3D11Device* d3dDevice,
         if ( !pWIC )
             return E_NOINTERFACE;
 
-        ScopedObject<IWICFormatConverter> FC;
-        hr = pWIC->CreateFormatConverter( &FC );
+        ComPtr<IWICFormatConverter> FC;
+        hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
@@ -791,8 +720,8 @@ HRESULT DirectX::CreateWICTextureFromMemoryEx( ID3D11Device* d3dDevice,
         return E_NOINTERFACE;
 
     // Create input stream for memory
-    ScopedObject<IWICStream> stream;
-    HRESULT hr = pWIC->CreateStream( &stream );
+    ComPtr<IWICStream> stream;
+    HRESULT hr = pWIC->CreateStream( stream.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -801,13 +730,13 @@ HRESULT DirectX::CreateWICTextureFromMemoryEx( ID3D11Device* d3dDevice,
         return hr;
 
     // Initialize WIC
-    ScopedObject<IWICBitmapDecoder> decoder;
-    hr = pWIC->CreateDecoderFromStream( stream.Get(), 0, WICDecodeMetadataCacheOnDemand, &decoder );
+    ComPtr<IWICBitmapDecoder> decoder;
+    hr = pWIC->CreateDecoderFromStream( stream.Get(), 0, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapFrameDecode> frame;
-    hr = decoder->GetFrame( 0, &frame );
+    ComPtr<IWICBitmapFrameDecode> frame;
+    hr = decoder->GetFrame( 0, frame.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -874,13 +803,13 @@ HRESULT DirectX::CreateWICTextureFromFileEx( ID3D11Device* d3dDevice,
         return E_NOINTERFACE;
 
     // Initialize WIC
-    ScopedObject<IWICBitmapDecoder> decoder;
-    HRESULT hr = pWIC->CreateDecoderFromFilename( fileName, 0, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder );
+    ComPtr<IWICBitmapDecoder> decoder;
+    HRESULT hr = pWIC->CreateDecoderFromFilename( fileName, 0, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapFrameDecode> frame;
-    hr = decoder->GetFrame( 0, &frame );
+    ComPtr<IWICBitmapFrameDecode> frame;
+    hr = decoder->GetFrame( 0, frame.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 

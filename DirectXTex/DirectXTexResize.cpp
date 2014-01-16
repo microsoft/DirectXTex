@@ -17,6 +17,8 @@
 
 #include "filters.h"
 
+using Microsoft::WRL::ComPtr;
+
 namespace DirectX
 {
 
@@ -40,12 +42,12 @@ static HRESULT _PerformResizeUsingWIC( _In_ const Image& srcImage, _In_ DWORD fi
     if ( !pWIC )
         return E_NOINTERFACE;
 
-    ScopedObject<IWICComponentInfo> componentInfo;
-    HRESULT hr = pWIC->CreateComponentInfo( pfGUID, &componentInfo );
+    ComPtr<IWICComponentInfo> componentInfo;
+    HRESULT hr = pWIC->CreateComponentInfo( pfGUID, componentInfo.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICPixelFormatInfo2> pixelFormatInfo;
+    ComPtr<IWICPixelFormatInfo2> pixelFormatInfo;
     hr = componentInfo.As( &pixelFormatInfo );
     if ( FAILED(hr) )
         return hr;
@@ -55,10 +57,10 @@ static HRESULT _PerformResizeUsingWIC( _In_ const Image& srcImage, _In_ DWORD fi
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmap> source;
+    ComPtr<IWICBitmap> source;
     hr = pWIC->CreateBitmapFromMemory( static_cast<UINT>( srcImage.width ), static_cast<UINT>( srcImage.height ), pfGUID,
                                        static_cast<UINT>( srcImage.rowPitch ), static_cast<UINT>( srcImage.slicePitch ),
-                                       srcImage.pixels, &source );
+                                       srcImage.pixels, source.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -70,8 +72,8 @@ static HRESULT _PerformResizeUsingWIC( _In_ const Image& srcImage, _In_ DWORD fi
     }
     else
     {
-        ScopedObject<IWICBitmapScaler> scaler;
-        hr = pWIC->CreateBitmapScaler( &scaler );
+        ComPtr<IWICBitmapScaler> scaler;
+        hr = pWIC->CreateBitmapScaler( scaler.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
@@ -94,8 +96,8 @@ static HRESULT _PerformResizeUsingWIC( _In_ const Image& srcImage, _In_ DWORD fi
         {
             // The WIC bitmap scaler is free to return a different pixel format than the source image, so here we
             // convert it back
-            ScopedObject<IWICFormatConverter> FC;
-            hr = pWIC->CreateFormatConverter( &FC );
+            ComPtr<IWICFormatConverter> FC;
+            hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
             if ( FAILED(hr) )
                 return hr;
 

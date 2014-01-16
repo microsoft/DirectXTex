@@ -16,6 +16,7 @@
 #include "directxtexp.h"
 
 using namespace DirectX::PackedVector;
+using Microsoft::WRL::ComPtr;
 
 #if DIRECTX_MATH_VERSION < 306
 namespace
@@ -3158,8 +3159,8 @@ static HRESULT _ConvertUsingWIC( _In_ const Image& srcImage, _In_ const WICPixel
     if ( !pWIC )
         return E_NOINTERFACE;
 
-    ScopedObject<IWICFormatConverter> FC;
-    HRESULT hr = pWIC->CreateFormatConverter( &FC );
+    ComPtr<IWICFormatConverter> FC;
+    HRESULT hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -3174,10 +3175,10 @@ static HRESULT _ConvertUsingWIC( _In_ const Image& srcImage, _In_ const WICPixel
         return E_UNEXPECTED;
     }
 
-    ScopedObject<IWICBitmap> source;
+    ComPtr<IWICBitmap> source;
     hr = pWIC->CreateBitmapFromMemory( static_cast<UINT>( srcImage.width ), static_cast<UINT>( srcImage.height ), pfGUID,
                                        static_cast<UINT>( srcImage.rowPitch ), static_cast<UINT>( srcImage.slicePitch ),
-                                       srcImage.pixels, &source );
+                                       srcImage.pixels, source.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 

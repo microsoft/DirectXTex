@@ -19,6 +19,8 @@
 #include <d3d10.h>
 #endif
 
+using Microsoft::WRL::ComPtr;
+
 namespace DirectX
 {
 
@@ -562,10 +564,10 @@ HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImage
 
     *ppSRV = nullptr;
 
-    ScopedObject<ID3D11Resource> resource;
+    ComPtr<ID3D11Resource> resource;
     HRESULT hr = CreateTextureEx( pDevice, srcImages, nimages, metadata,
                                   usage, bindFlags, cpuAccessFlags, miscFlags, forceSRGB,
-                                  &resource );
+                                  resource.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -661,7 +663,7 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
     {
     case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
         {
-            ScopedObject<ID3D11Texture1D> pTexture;
+            ComPtr<ID3D11Texture1D> pTexture;
             hr = pSource->QueryInterface( __uuidof(ID3D11Texture1D), reinterpret_cast<void**>( pTexture.GetAddressOf() ) );
             if ( FAILED(hr) )
                 break;
@@ -676,8 +678,8 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
             desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
             desc.Usage = D3D11_USAGE_STAGING;
 
-            ScopedObject<ID3D11Texture1D> pStaging;
-            hr = pDevice->CreateTexture1D( &desc, 0, &pStaging );
+            ComPtr<ID3D11Texture1D> pStaging;
+            hr = pDevice->CreateTexture1D( &desc, 0, pStaging.GetAddressOf() );
             if ( FAILED(hr) )
                 break;
 
@@ -705,7 +707,7 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
 
     case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
         {
-            ScopedObject<ID3D11Texture2D> pTexture;
+            ComPtr<ID3D11Texture2D> pTexture;
             hr = pSource->QueryInterface( __uuidof(ID3D11Texture2D), reinterpret_cast<void**>( pTexture.GetAddressOf() ) );
             if ( FAILED(hr) )
                 break;
@@ -715,14 +717,14 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
             D3D11_TEXTURE2D_DESC desc;
             pTexture->GetDesc( &desc );
 
-            ScopedObject<ID3D11Texture2D> pStaging;
+            ComPtr<ID3D11Texture2D> pStaging;
             if ( desc.SampleDesc.Count > 1 )
             {
                 desc.SampleDesc.Count = 1;
                 desc.SampleDesc.Quality = 0;
 
-                ScopedObject<ID3D11Texture2D> pTemp;
-                hr = pDevice->CreateTexture2D( &desc, 0, &pTemp );
+                ComPtr<ID3D11Texture2D> pTemp;
+                hr = pDevice->CreateTexture2D( &desc, 0, pTemp.GetAddressOf() );
                 if ( FAILED(hr) )
                     break;
 
@@ -761,7 +763,7 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
                 desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
                 desc.Usage = D3D11_USAGE_STAGING;
 
-                hr = pDevice->CreateTexture2D( &desc, 0, &pStaging );
+                hr = pDevice->CreateTexture2D( &desc, 0, pStaging.GetAddressOf() );
                 if ( FAILED(hr) )
                     break;
 
@@ -806,7 +808,7 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
 
     case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
         {
-            ScopedObject<ID3D11Texture3D> pTexture;
+            ComPtr<ID3D11Texture3D> pTexture;
             hr = pSource->QueryInterface( __uuidof(ID3D11Texture3D), reinterpret_cast<void**>( pTexture.GetAddressOf() ) );
             if ( FAILED(hr) )
                 break;
@@ -821,8 +823,8 @@ HRESULT CaptureTexture( ID3D11Device* pDevice, ID3D11DeviceContext* pContext, ID
             desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
             desc.Usage = D3D11_USAGE_STAGING;
 
-            ScopedObject<ID3D11Texture3D> pStaging;
-            hr = pDevice->CreateTexture3D( &desc, 0, &pStaging );
+            ComPtr<ID3D11Texture3D> pStaging;
+            hr = pDevice->CreateTexture3D( &desc, 0, pStaging.GetAddressOf() );
             if ( FAILED(hr) )
                 break;
 

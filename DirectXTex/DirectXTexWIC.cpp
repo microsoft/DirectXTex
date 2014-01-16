@@ -15,6 +15,8 @@
 
 #include "directxtexp.h"
 
+using Microsoft::WRL::ComPtr;
+
 //-------------------------------------------------------------------------------------
 // IStream support for WIC Memory routines
 //-------------------------------------------------------------------------------------
@@ -43,7 +45,7 @@
         Microsoft::WRL::ComPtr<ABI::Windows::Storage::Streams::IRandomAccessStream> abiStream;
         HRESULT hr = Windows::Foundation::ActivateInstance(
             Microsoft::WRL::Wrappers::HStringReference( RuntimeClass_Windows_Storage_Streams_InMemoryRandomAccessStream ).Get(),
-            &abiStream);
+            abiStream.GetAddressOf() );
 
         if (SUCCEEDED(hr))
         {
@@ -279,8 +281,8 @@ static HRESULT _DecodeMetadata( _In_ DWORD flags,
         if ( FAILED(hr) )
             return hr;
 
-        ScopedObject<IWICMetadataQueryReader> metareader;
-        hr = frame->GetMetadataQueryReader( &metareader );
+        ComPtr<IWICMetadataQueryReader> metareader;
+        hr = frame->GetMetadataQueryReader( metareader.GetAddressOf() );
         if ( SUCCEEDED(hr) )
         {
             // Check for sRGB colorspace metadata
@@ -347,8 +349,8 @@ static HRESULT _DecodeSingleFrame( _In_ DWORD flags, _In_ const TexMetadata& met
     }
     else
     {
-        ScopedObject<IWICFormatConverter> FC;
-        hr = pWIC->CreateFormatConverter( &FC );
+        ComPtr<IWICFormatConverter> FC;
+        hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
@@ -392,8 +394,8 @@ static HRESULT _DecodeMultiframe( _In_ DWORD flags, _In_ const TexMetadata& meta
         if ( !img )
             return E_POINTER;
 
-        ScopedObject<IWICBitmapFrameDecode> frame;
-        hr = decoder->GetFrame( static_cast<UINT>( index ), &frame );
+        ComPtr<IWICBitmapFrameDecode> frame;
+        hr = decoder->GetFrame( static_cast<UINT>( index ), frame.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
@@ -419,8 +421,8 @@ static HRESULT _DecodeMultiframe( _In_ DWORD flags, _In_ const TexMetadata& meta
             else
             {
                 // This frame needs resizing, but not format converted
-                ScopedObject<IWICBitmapScaler> scaler;
-                hr = pWIC->CreateBitmapScaler( &scaler );
+                ComPtr<IWICBitmapScaler> scaler;
+                hr = pWIC->CreateBitmapScaler( scaler.GetAddressOf() );
                 if ( FAILED(hr) )
                     return hr;
 
@@ -436,8 +438,8 @@ static HRESULT _DecodeMultiframe( _In_ DWORD flags, _In_ const TexMetadata& meta
         else
         {
             // This frame required format conversion
-            ScopedObject<IWICFormatConverter> FC;
-            hr = pWIC->CreateFormatConverter( &FC );
+            ComPtr<IWICFormatConverter> FC;
+            hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
             if ( FAILED(hr) )
                 return hr;
 
@@ -455,8 +457,8 @@ static HRESULT _DecodeMultiframe( _In_ DWORD flags, _In_ const TexMetadata& meta
             else
             {
                 // This frame needs resizing and format converted
-                ScopedObject<IWICBitmapScaler> scaler;
-                hr = pWIC->CreateBitmapScaler( &scaler );
+                ComPtr<IWICBitmapScaler> scaler;
+                hr = pWIC->CreateBitmapScaler( scaler.GetAddressOf() );
                 if ( FAILED(hr) )
                     return hr;
 
@@ -483,8 +485,8 @@ static HRESULT _EncodeMetadata( _In_ IWICBitmapFrameEncode* frame, _In_ const GU
     if ( !frame )
         return E_POINTER;
 
-    ScopedObject<IWICMetadataQueryWriter> metawriter;
-    HRESULT hr = frame->GetMetadataQueryWriter( &metawriter );
+    ComPtr<IWICMetadataQueryWriter> metawriter;
+    HRESULT hr = frame->GetMetadataQueryWriter( metawriter.GetAddressOf() );
     if ( SUCCEEDED( hr ) )
     {
         PROPVARIANT value;
@@ -587,15 +589,15 @@ static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ REF
         if ( !pWIC )
             return E_NOINTERFACE;
 
-        ScopedObject<IWICBitmap> source;
+        ComPtr<IWICBitmap> source;
         hr = pWIC->CreateBitmapFromMemory( static_cast<UINT>( image.width ), static_cast<UINT>( image.height ), pfGuid,
                                            static_cast<UINT>( image.rowPitch ), static_cast<UINT>( image.slicePitch ),
-                                           image.pixels, &source );
+                                           image.pixels, source.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
-        ScopedObject<IWICFormatConverter> FC;
-        hr = pWIC->CreateFormatConverter( &FC );
+        ComPtr<IWICFormatConverter> FC;
+        hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
@@ -636,8 +638,8 @@ static HRESULT _EncodeSingleFrame( _In_ const Image& image, _In_ DWORD flags,
     if ( !pWIC )
         return E_NOINTERFACE;
 
-    ScopedObject<IWICBitmapEncoder> encoder;
-    HRESULT hr = pWIC->CreateEncoder( containerFormat, 0, &encoder );
+    ComPtr<IWICBitmapEncoder> encoder;
+    HRESULT hr = pWIC->CreateEncoder( containerFormat, 0, encoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -645,9 +647,9 @@ static HRESULT _EncodeSingleFrame( _In_ const Image& image, _In_ DWORD flags,
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapFrameEncode> frame;
-    ScopedObject<IPropertyBag2> props;
-    hr = encoder->CreateNewFrame( &frame, &props );
+    ComPtr<IWICBitmapFrameEncode> frame;
+    ComPtr<IPropertyBag2> props;
+    hr = encoder->CreateNewFrame( frame.GetAddressOf(), props.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -698,13 +700,13 @@ static HRESULT _EncodeMultiframe( _In_reads_(nimages) const Image* images, _In_ 
     if ( !pWIC )
         return E_NOINTERFACE;
 
-    ScopedObject<IWICBitmapEncoder> encoder;
-    HRESULT hr = pWIC->CreateEncoder( containerFormat, 0, &encoder );
+    ComPtr<IWICBitmapEncoder> encoder;
+    HRESULT hr = pWIC->CreateEncoder( containerFormat, 0, encoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapEncoderInfo> einfo;
-    hr = encoder->GetEncoderInfo( &einfo );
+    ComPtr<IWICBitmapEncoderInfo> einfo;
+    hr = encoder->GetEncoderInfo( einfo.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -722,9 +724,9 @@ static HRESULT _EncodeMultiframe( _In_reads_(nimages) const Image* images, _In_ 
 
     for( size_t index=0; index < nimages; ++index )
     {
-        ScopedObject<IWICBitmapFrameEncode> frame;
-        ScopedObject<IPropertyBag2> props;
-        hr = encoder->CreateNewFrame( &frame, &props );
+        ComPtr<IWICBitmapFrameEncode> frame;
+        ComPtr<IPropertyBag2> props;
+        hr = encoder->CreateNewFrame( frame.GetAddressOf(), props.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
@@ -769,8 +771,8 @@ HRESULT GetMetadataFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, Tex
         return E_NOINTERFACE;
 
     // Create input stream for memory
-    ScopedObject<IWICStream> stream;
-    HRESULT hr = pWIC->CreateStream( &stream );
+    ComPtr<IWICStream> stream;
+    HRESULT hr = pWIC->CreateStream( stream.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -780,13 +782,13 @@ HRESULT GetMetadataFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, Tex
         return hr;
 
     // Initialize WIC
-    ScopedObject<IWICBitmapDecoder> decoder;
-    hr = pWIC->CreateDecoderFromStream( stream.Get(), 0, WICDecodeMetadataCacheOnDemand, &decoder );
+    ComPtr<IWICBitmapDecoder> decoder;
+    hr = pWIC->CreateDecoderFromStream( stream.Get(), 0, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapFrameDecode> frame;
-    hr = decoder->GetFrame( 0, &frame );
+    ComPtr<IWICBitmapFrameDecode> frame;
+    hr = decoder->GetFrame( 0, frame.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -813,13 +815,13 @@ HRESULT GetMetadataFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata& metada
         return E_NOINTERFACE;
     
     // Initialize WIC
-    ScopedObject<IWICBitmapDecoder> decoder;
-    HRESULT hr = pWIC->CreateDecoderFromFilename( szFile, 0, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder );
+    ComPtr<IWICBitmapDecoder> decoder;
+    HRESULT hr = pWIC->CreateDecoderFromFilename( szFile, 0, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapFrameDecode> frame;
-    hr = decoder->GetFrame( 0, &frame );
+    ComPtr<IWICBitmapFrameDecode> frame;
+    hr = decoder->GetFrame( 0, frame.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -853,8 +855,8 @@ HRESULT LoadFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadat
     image.Release();
 
     // Create input stream for memory
-    ScopedObject<IWICStream> stream;
-    HRESULT hr = pWIC->CreateStream( &stream );
+    ComPtr<IWICStream> stream;
+    HRESULT hr = pWIC->CreateStream( stream.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -863,13 +865,13 @@ HRESULT LoadFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadat
         return hr;
 
     // Initialize WIC
-    ScopedObject<IWICBitmapDecoder> decoder;
-    hr = pWIC->CreateDecoderFromStream( stream.Get(), 0, WICDecodeMetadataCacheOnDemand, &decoder );
+    ComPtr<IWICBitmapDecoder> decoder;
+    hr = pWIC->CreateDecoderFromStream( stream.Get(), 0, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapFrameDecode> frame;
-    hr = decoder->GetFrame( 0, &frame );
+    ComPtr<IWICBitmapFrameDecode> frame;
+    hr = decoder->GetFrame( 0, frame.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -918,13 +920,13 @@ HRESULT LoadFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, Scr
     image.Release();
 
     // Initialize WIC
-    ScopedObject<IWICBitmapDecoder> decoder;
-    HRESULT hr = pWIC->CreateDecoderFromFilename( szFile, 0, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder );
+    ComPtr<IWICBitmapDecoder> decoder;
+    HRESULT hr = pWIC->CreateDecoderFromFilename( szFile, 0, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapFrameDecode> frame;
-    hr = decoder->GetFrame( 0, &frame );
+    ComPtr<IWICBitmapFrameDecode> frame;
+    hr = decoder->GetFrame( 0, frame.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -969,8 +971,8 @@ HRESULT SaveToWICMemory( const Image& image, DWORD flags, REFGUID containerForma
 
     blob.Release();
 
-    ScopedObject<IStream> stream;
-    HRESULT hr = CreateMemoryStream( &stream );
+    ComPtr<IStream> stream;
+    HRESULT hr = CreateMemoryStream( stream.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -1016,8 +1018,8 @@ HRESULT SaveToWICMemory( const Image* images, size_t nimages, DWORD flags, REFGU
 
     blob.Release();
 
-    ScopedObject<IStream> stream;
-    HRESULT hr = CreateMemoryStream( &stream );
+    ComPtr<IStream> stream;
+    HRESULT hr = CreateMemoryStream( stream.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -1076,8 +1078,8 @@ HRESULT SaveToWICFile( const Image& image, DWORD flags, REFGUID containerFormat,
     if ( !pWIC )
         return E_NOINTERFACE;
 
-    ScopedObject<IWICStream> stream;
-    HRESULT hr = pWIC->CreateStream( &stream );
+    ComPtr<IWICStream> stream;
+    HRESULT hr = pWIC->CreateStream( stream.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -1103,8 +1105,8 @@ HRESULT SaveToWICFile( const Image* images, size_t nimages, DWORD flags, REFGUID
     if ( !pWIC )
         return E_NOINTERFACE;
 
-    ScopedObject<IWICStream> stream;
-    HRESULT hr = pWIC->CreateStream( &stream );
+    ComPtr<IWICStream> stream;
+    HRESULT hr = pWIC->CreateStream( stream.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 

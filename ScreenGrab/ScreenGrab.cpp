@@ -32,12 +32,15 @@
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #include <wincodec.h>
+#include <wrl.h>
 #pragma warning(pop)
 #endif
 
 #include <memory>
 
 #include "ScreenGrab.h"
+
+using Microsoft::WRL::ComPtr;
 
 //--------------------------------------------------------------------------------------
 // Macros
@@ -180,80 +183,6 @@ static const DDS_PIXELFORMAT DDSPF_A8 =
 // This indicates the DDS_HEADER_DXT10 extension is present (the format is in dxgiFormat)
 static const DDS_PIXELFORMAT DDSPF_DX10 =
     { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','1','0'), 0, 0, 0, 0, 0 };
-
-//---------------------------------------------------------------------------------
-#if defined(_MSC_VER) && (_MSC_VER >= 1610)
-
-#include <wrl.h>
-
-template<class T> class ScopedObject : public Microsoft::WRL::ComPtr<T> {};
-
-#else
-
-template<class T> class ScopedObject
-{
-public:
-    ScopedObject() : _pointer(nullptr) {}
-    ScopedObject( T *p ) : _pointer(p) { if (_pointer) { _pointer->AddRef(); } }
-    ScopedObject( const ScopedObject& other ) : _pointer(other._pointer) { if (_pointer) { _pointer->AddRef(); } }
-
-    ~ScopedObject()
-    {
-        if ( _pointer )
-        {
-            _pointer->Release();
-            _pointer = nullptr;
-        }
-    }
-
-    operator bool() const { return (_pointer != nullptr); }
-
-    T& operator= (_In_opt_ T* other)
-    {
-        if ( _pointer != other )
-        {
-            if ( _pointer) { _pointer->Release(); }
-            _pointer = other;
-            if ( other ) { other->AddRef() };
-        }
-        return *this;
-    }
-
-    ScopedObject& operator= (const ScopedObject& other)
-    {
-        if ( _pointer != other._pointer )
-        {
-            if ( _pointer) { _pointer->Release(); }
-            _pointer = other._pointer;
-            if ( other._pointer ) { other._pointer->AddRef(); }
-        }
-        return *this;
-    }
-
-    T& operator*() { return *_pointer; }
-
-    T* operator->() const { return _pointer; }
-
-    T** operator&() { return &_pointer; }
-
-    void Reset() { if ( _pointer ) { _pointer->Release(); _pointer = nullptr; } }
-
-    T* Get() const { return _pointer; }
-    T** GetAddressOf() { return &_pointer; }
-
-    T** ReleaseAndGetAddressOf() { if ( _pointer ) { _pointer->Release(); _pointer = nullptr; } return &_pointer; }
-
-    template<typename U>
-    HRESULT As(_Inout_ U* p) { return _pointer->QueryInterface( _uuidof(U), reinterpret_cast<void**>( p ) ); }
-
-    template<typename U>
-    HRESULT As(_Out_ ScopedObject<U>* p ) { return _pointer->QueryInterface( _uuidof(U), reinterpret_cast<void**>( p->ReleaseAndGetAddressOf() ) ); }
-
-private:
-    T* _pointer;
-};
-
-#endif
 
 //---------------------------------------------------------------------------------
 struct handle_closer { void operator()(HANDLE h) { if (h) CloseHandle(h); } };
@@ -561,7 +490,7 @@ static DXGI_FORMAT EnsureNotTypeless( DXGI_FORMAT fmt )
 static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
                                _In_ ID3D11Resource* pSource,
                                _Inout_ D3D11_TEXTURE2D_DESC& desc,
-                               _Inout_ ScopedObject<ID3D11Texture2D>& pStaging )
+                               _Inout_ ComPtr<ID3D11Texture2D>& pStaging )
 {
     if ( !pContext || !pSource )
         return E_INVALIDARG;
@@ -572,7 +501,7 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
     if ( resType != D3D11_RESOURCE_DIMENSION_TEXTURE2D )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-    ScopedObject<ID3D11Texture2D> pTexture;
+    ComPtr<ID3D11Texture2D> pTexture;
     HRESULT hr = pSource->QueryInterface( __uuidof(ID3D11Texture2D), reinterpret_cast<void**>( pTexture.GetAddressOf() ) );
     if ( FAILED(hr) )
         return hr;
@@ -581,8 +510,8 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
 
     pTexture->GetDesc( &desc );
 
-    ScopedObject<ID3D11Device> d3dDevice;
-    pContext->GetDevice( &d3dDevice );
+    ComPtr<ID3D11Device> d3dDevice;
+    pContext->GetDevice( d3dDevice.GetAddressOf() );
 
     if ( desc.SampleDesc.Count > 1 )
     {
@@ -590,8 +519,8 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
         desc.SampleDesc.Count = 1;
         desc.SampleDesc.Quality = 0;
 
-        ScopedObject<ID3D11Texture2D> pTemp;
-        hr = d3dDevice->CreateTexture2D( &desc, 0, &pTemp );
+        ComPtr<ID3D11Texture2D> pTemp;
+        hr = d3dDevice->CreateTexture2D( &desc, 0, pTemp.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
@@ -621,7 +550,7 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
         desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
         desc.Usage = D3D11_USAGE_STAGING;
 
-        hr = d3dDevice->CreateTexture2D( &desc, 0, &pStaging );
+        hr = d3dDevice->CreateTexture2D( &desc, 0, pStaging.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
@@ -642,7 +571,7 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
         desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
         desc.Usage = D3D11_USAGE_STAGING;
 
-        hr = d3dDevice->CreateTexture2D( &desc, 0, &pStaging );
+        hr = d3dDevice->CreateTexture2D( &desc, 0, pStaging.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
 
@@ -727,7 +656,7 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
         return E_INVALIDARG;
 
     D3D11_TEXTURE2D_DESC desc = { 0 };
-    ScopedObject<ID3D11Texture2D> pStaging;
+    ComPtr<ID3D11Texture2D> pStaging;
     HRESULT hr = CaptureTexture( pContext, pSource, desc, pStaging );
     if ( FAILED(hr) )
         return hr;
@@ -878,7 +807,7 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
         return E_INVALIDARG;
 
     D3D11_TEXTURE2D_DESC desc = { 0 };
-    ScopedObject<ID3D11Texture2D> pStaging;
+    ComPtr<ID3D11Texture2D> pStaging;
     HRESULT hr = CaptureTexture( pContext, pSource, desc, pStaging );
     if ( FAILED(hr) )
         return hr;
@@ -936,8 +865,8 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     if ( !pWIC )
         return E_NOINTERFACE;
 
-    ScopedObject<IWICStream> stream;
-    hr = pWIC->CreateStream( &stream );
+    ComPtr<IWICStream> stream;
+    hr = pWIC->CreateStream( stream.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -945,8 +874,8 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapEncoder> encoder;
-    hr = pWIC->CreateEncoder( guidContainerFormat, 0, &encoder );
+    ComPtr<IWICBitmapEncoder> encoder;
+    hr = pWIC->CreateEncoder( guidContainerFormat, 0, encoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -954,9 +883,9 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     if ( FAILED(hr) )
         return hr;
 
-    ScopedObject<IWICBitmapFrameEncode> frame;
-    ScopedObject<IPropertyBag2> props;
-    hr = encoder->CreateNewFrame( &frame, &props );
+    ComPtr<IWICBitmapFrameEncode> frame;
+    ComPtr<IPropertyBag2> props;
+    hr = encoder->CreateNewFrame( frame.GetAddressOf(), props.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -1043,8 +972,8 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     }
 
     // Encode WIC metadata
-    ScopedObject<IWICMetadataQueryWriter> metawriter;
-    if ( SUCCEEDED( frame->GetMetadataQueryWriter( &metawriter ) ) )
+    ComPtr<IWICMetadataQueryWriter> metawriter;
+    if ( SUCCEEDED( frame->GetMetadataQueryWriter( metawriter.GetAddressOf() ) ) )
     {
         PROPVARIANT value;
         PropVariantInit( &value );
@@ -1088,18 +1017,18 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     if ( memcmp( &targetGuid, &pfGuid, sizeof(WICPixelFormatGUID) ) != 0 )
     {
         // Conversion required to write
-        ScopedObject<IWICBitmap> source;
+        ComPtr<IWICBitmap> source;
         hr = pWIC->CreateBitmapFromMemory( desc.Width, desc.Height, pfGuid,
                                            mapped.RowPitch, mapped.RowPitch * desc.Height,
-                                           reinterpret_cast<BYTE*>( mapped.pData ), &source );
+                                           reinterpret_cast<BYTE*>( mapped.pData ), source.GetAddressOf() );
         if ( FAILED(hr) )
         {
             pContext->Unmap( pStaging.Get(), 0 );
             return hr;
         }
 
-        ScopedObject<IWICFormatConverter> FC;
-        hr = pWIC->CreateFormatConverter( &FC );
+        ComPtr<IWICFormatConverter> FC;
+        hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
         if ( FAILED(hr) )
         {
             pContext->Unmap( pStaging.Get(), 0 );
