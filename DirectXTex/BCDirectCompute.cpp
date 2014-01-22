@@ -461,7 +461,7 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
             //--- BC7 -----------------------------------------------------------------
             ID3D11ShaderResourceView* pSRVs[] = { sourceSRV.Get(), nullptr };
             RunComputeShader( pContext, m_BC7_tryMode456CS.Get(), pSRVs, 2, m_constBuffer.Get(),
-                              m_err1UAV.Get(), std::max<UINT>(uThreadGroupCount / 4, 1) );
+                              m_err1UAV.Get(), std::max<UINT>( (uThreadGroupCount + 3) / 4, 1) );
 
             for ( UINT i = 0; i < 3; ++i )
             {
@@ -523,14 +523,14 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
 
             pSRVs[1] = m_err2SRV.Get();
             RunComputeShader( pContext, m_BC7_encodeBlockCS.Get(), pSRVs, 2, m_constBuffer.Get(),
-                              m_outputUAV.Get(), std::max<UINT>(uThreadGroupCount / 4, 1) );
+                              m_outputUAV.Get(), std::max<UINT>( (uThreadGroupCount + 3) / 4, 1) );
         }
         else
         {
             //--- BC6H ----------------------------------------------------------------
             ID3D11ShaderResourceView* pSRVs[] = { sourceSRV.Get(), nullptr };
             RunComputeShader( pContext, m_BC6H_tryModeG10CS.Get(), pSRVs, 2, m_constBuffer.Get(),
-                              m_err1UAV.Get(), std::max<UINT>(uThreadGroupCount / 4, 1) );
+                              m_err1UAV.Get(), std::max<UINT>( (uThreadGroupCount + 3) / 4, 1) );
 
             for ( UINT i = 0; i < 10; ++i )
             {
@@ -556,12 +556,12 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
 
                 pSRVs[1] = (i & 1) ? m_err2SRV.Get() : m_err1SRV.Get();
                 RunComputeShader( pContext, m_BC6H_tryModeLE10CS.Get(), pSRVs, 2, m_constBuffer.Get(),
-                                  (i & 1) ? m_err1UAV.Get() : m_err2UAV.Get(), std::max<UINT>(uThreadGroupCount / 2, 1) );
+                                  (i & 1) ? m_err1UAV.Get() : m_err2UAV.Get(), std::max<UINT>( (uThreadGroupCount + 1) / 2, 1) );
             }               
 
             pSRVs[1] = m_err1SRV.Get();
             RunComputeShader( pContext, m_BC6H_encodeBlockCS.Get(), pSRVs, 2, m_constBuffer.Get(),
-                              m_outputUAV.Get(), std::max<UINT>(uThreadGroupCount / 2, 1) );
+                              m_outputUAV.Get(), std::max<UINT>( (uThreadGroupCount + 1) / 2, 1) );
         }
 
         start_block_id += n;
