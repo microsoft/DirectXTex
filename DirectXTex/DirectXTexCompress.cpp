@@ -35,6 +35,14 @@ inline static DWORD _GetBCFlags( _In_ DWORD compress )
     return ( compress & (BC_FLAGS_DITHER_RGB|BC_FLAGS_DITHER_A|BC_FLAGS_UNIFORM) );
 }
 
+inline static DWORD _GetSRGBFlags( _In_ DWORD compress )
+{
+    static_assert( TEX_COMPRESS_SRGB_IN == TEX_FILTER_SRGB_IN, "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*" );
+    static_assert( TEX_COMPRESS_SRGB_OUT == TEX_FILTER_SRGB_OUT, "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*" );
+    static_assert( TEX_COMPRESS_SRGB == TEX_FILTER_SRGB, "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*" );
+    return ( compress & TEX_COMPRESS_SRGB );
+}
+
 inline static bool _DetermineEncoderSettings( _In_ DXGI_FORMAT format, _Out_ BC_ENCODE& pfEncode, _Out_ size_t& blocksize, _Out_ DWORD& cflags )
 {
     switch(format)
@@ -62,7 +70,7 @@ inline static bool _DetermineEncoderSettings( _In_ DXGI_FORMAT format, _Out_ BC_
 
 //-------------------------------------------------------------------------------------
 static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _In_ DWORD bcflags,
-                            _In_ float alphaRef )
+                            _In_ DWORD srgb, _In_ float alphaRef )
 {
     if ( !image.pixels || !result.pixels )
         return E_POINTER;
@@ -156,7 +164,7 @@ static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _
                 }
             }
 
-            _ConvertScanline( temp, 16, result.format, format, cflags );
+            _ConvertScanline( temp, 16, result.format, format, cflags | srgb );
             
             if ( pfEncode )
                 pfEncode( dptr, temp, bcflags );
@@ -178,7 +186,7 @@ static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _
 //-------------------------------------------------------------------------------------
 #ifdef _OPENMP
 static HRESULT _CompressBC_Parallel( _In_ const Image& image, _In_ const Image& result, _In_ DWORD bcflags,
-                                     _In_ float alphaRef )
+                                     _In_ DWORD srgb, _In_ float alphaRef )
 {
     if ( !image.pixels || !result.pixels )
         return E_POINTER;
@@ -281,7 +289,7 @@ static HRESULT _CompressBC_Parallel( _In_ const Image& image, _In_ const Image& 
             }
         }
 
-        _ConvertScanline( temp, 16, result.format, format, cflags );
+        _ConvertScanline( temp, 16, result.format, format, cflags | srgb );
             
         if ( pfEncode )
             pfEncode( pDest, temp, bcflags );
@@ -574,12 +582,12 @@ HRESULT Compress( const Image& srcImage, DXGI_FORMAT format, DWORD compress, flo
 #ifndef _OPENMP
         return E_NOTIMPL;
 #else
-        hr = _CompressBC_Parallel( srcImage, *img, _GetBCFlags( compress ), alphaRef );
+        hr = _CompressBC_Parallel( srcImage, *img, _GetBCFlags( compress ), _GetSRGBFlags( compress ), alphaRef );
 #endif // _OPENMP
     }
     else
     {
-        hr = _CompressBC( srcImage, *img, _GetBCFlags( compress ), alphaRef );
+        hr = _CompressBC( srcImage, *img, _GetBCFlags( compress ), _GetSRGBFlags( compress ), alphaRef );
     }
 
     if ( FAILED(hr) )
@@ -638,7 +646,7 @@ HRESULT Compress( const Image* srcImages, size_t nimages, const TexMetadata& met
 #else
             if ( compress & TEX_COMPRESS_PARALLEL )
             {
-                hr = _CompressBC_Parallel( src, dest[ index ], _GetBCFlags( compress ), alphaRef );
+                hr = _CompressBC_Parallel( src, dest[ index ], _GetBCFlags( compress ), _GetSRGBFlags( compress ), alphaRef );
                 if ( FAILED(hr) )
                 {
                     cImages.Release();
@@ -649,7 +657,7 @@ HRESULT Compress( const Image* srcImages, size_t nimages, const TexMetadata& met
         }
         else
         {
-            hr = _CompressBC( src, dest[ index ], _GetBCFlags( compress ), alphaRef );
+            hr = _CompressBC( src, dest[ index ], _GetBCFlags( compress ), _GetSRGBFlags( compress ), alphaRef );
             if ( FAILED(hr) )
             {
                 cImages.Release();

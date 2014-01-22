@@ -482,6 +482,12 @@ namespace DirectX
         TEX_COMPRESS_UNIFORM        = 0x40000,
             // Uniform color weighting for BC1-3 compression; by default uses perceptual weighting
 
+        TEX_COMPRESS_SRGB_IN        = 0x1000000,
+        TEX_COMPRESS_SRGB_OUT       = 0x2000000,
+        TEX_COMPRESS_SRGB           = ( TEX_COMPRESS_SRGB_IN | TEX_COMPRESS_SRGB_OUT ),
+            // if the input format type is IsSRGB(), then SRGB_IN is on by default
+            // if the output format type is IsSRGB(), then SRGB_OUT is on by default
+
         TEX_COMPRESS_PARALLEL       = 0x10000000,
             // Compress is free to use multithreading to improve performance (by default it does not use multithreading)
     };
@@ -492,9 +498,10 @@ namespace DirectX
                       _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaRef, _Out_ ScratchImage& cImages );
         // Note that alphaRef is only used by BC1. 0.5f is a typical value to use
 
-    HRESULT Compress( _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image );
+    HRESULT Compress( _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD compress,
+                      _Out_ ScratchImage& image );
     HRESULT Compress( _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                      _In_ DXGI_FORMAT format, _Out_ ScratchImage& cImages );
+                      _In_ DXGI_FORMAT format, _In_ DWORD compress, _Out_ ScratchImage& cImages );
         // DirectCompute-based compression
 
     HRESULT Decompress( _In_ const Image& cImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image );

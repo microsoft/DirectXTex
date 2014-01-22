@@ -1336,11 +1336,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             if ( bc6hbc7 && pDevice )
             {
-                hr = Compress( pDevice, img, nimg, info, tformat, *timage );
+                hr = Compress( pDevice, img, nimg, info, tformat, dwSRGB, *timage );
             }
             else
             {
-                hr = Compress( img, nimg, info, tformat, cflags, 0.5f, *timage );
+                hr = Compress( img, nimg, info, tformat, cflags | dwSRGB, 0.5f, *timage );
             }
             if ( FAILED(hr) )
             {
