@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-December 24, 2013
+January 24, 2014
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -71,15 +71,8 @@ DDSView\
     or volume maps, the "<" and ">" keyboard keys will show different images contained in the DDS.
     The "1" through "0" keys can also be used to jump to a specific image index.
 
-XNAMath\
-    This contains a copy of XNA Math version 2.05, which is an updated version of the library. This is
-    required if building content with USE_XNAMATH. This is only needed for the VS 2010 project that
-    does not use the Windows SDK 8.x instead.  For details see
-    <http://blogs.msdn.com/b/chuckw/archive/2012/06/22/xna-math-version-2-05-smoothing-the-transition-to-directxmath.aspx>
-
-All content and source code for this package except XNA Math are bound to the Microsoft Public License (Ms-PL)
-<http://www.microsoft.com/en-us/openness/licenses.aspx#MPL>. The XNA Math library is subject
-to the DirectX SDK (June 2010) End-User License Agreement.
+All content and source code for this package are bound to the Microsoft Public License (Ms-PL)
+<http://www.microsoft.com/en-us/openness/licenses.aspx#MPL>.
 
 http://go.microsoft.com/fwlink/?LinkId=248926
 
@@ -95,14 +88,9 @@ RELEASE NOTES
   version of the Windows BMP WIC codec does support 32bpp pixel formats with alpha when using the BITMAPV5HEADER file header. Note the updated
   WIC is available on Windows 7 SP1 with KB 2670838 installed.
 
-* For the DXGI 1.1 version of DirectXTex, 4:4:4:4 pixel format DDS files are always expanded to 8:8:8:8 upon load since DXGI 1.0
-  and DXGI 1.1 versions of Direct3D do not support these resource formats. The DXGI 1.2 versions of DirectXTex and DDSTextureLoader
-  make use of the DXGI_FORMAT_B4G4R4A4_UNORM format instead.
-
 * While DXGI 1.0 and DXGI 1.1 include 5:6:5 (DXGI_FORMAT_B5G6R5_UNORM) and 5:5:5:1 (DXGI_FORMAT_B5G5R5A1_UNORM)
   pixel format enumerations, the DirectX 10.x and 11.0 Runtimes do not support these formats for use with Direct3D. The DirectX 11.1 runtime,
-  DXGI 1.2, and the WDDM 1.2 driver model fully support 16bpp formats (5:6:5, 5:5:5:1, and 4:4:4:4). The DXGI 1.2 version of WICTextureLoader
-  will load 16bpp pixel images as 5:6:5 or 5:5:5:1 rather than expand them to 32bpp RGBA.
+  DXGI 1.2, and the WDDM 1.2 driver model fully support 16bpp formats (5:6:5, 5:5:5:1, and 4:4:4:4).
 
 * WICTextureLoader cannot load .TGA files unless the system has a 3rd party WIC codec installed. You must use the DirectXTex
   library for TGA file format support without relying on an add-on WIC codec.
@@ -113,6 +101,13 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+January 24, 2014
+    Added sRGB flags for Compress (TEX_COMPRESS_SRGB*)
+    Added 'compress' flag parameter to GPU versions of Compress [breaking change]
+    Minor fix for potential rounding problem in GPU Compress
+    Code cleanup (removed DXGI_1_2_FORMATS control define; ScopedObject typedef removed)
+    Dropped VS 2010 support without the Windows 8.1 SDK (removed USE_XNAMATH control define)
 
 December 24, 2013
     texconv updated with -fl and -pow2 command-line switches
