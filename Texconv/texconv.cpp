@@ -420,9 +420,7 @@ bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
 
     *pDevice  = nullptr;
 
-    typedef HRESULT (WINAPI * LPD3D11CREATEDEVICE)( IDXGIAdapter*, D3D_DRIVER_TYPE, HMODULE, UINT32, D3D_FEATURE_LEVEL*,
-                                                    UINT, UINT32, ID3D11Device**, D3D_FEATURE_LEVEL*, ID3D11DeviceContext** );
-    static LPD3D11CREATEDEVICE s_DynamicD3D11CreateDevice = nullptr;
+    static PFN_D3D11_CREATE_DEVICE s_DynamicD3D11CreateDevice = nullptr;
    
     if ( !s_DynamicD3D11CreateDevice )
     {            
@@ -430,7 +428,7 @@ bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
         if ( !hModD3D11 )
             return false;
 
-        s_DynamicD3D11CreateDevice = ( LPD3D11CREATEDEVICE )GetProcAddress( hModD3D11, "D3D11CreateDevice" );           
+        s_DynamicD3D11CreateDevice = reinterpret_cast<PFN_D3D11_CREATE_DEVICE>( GetProcAddress( hModD3D11, "D3D11CreateDevice" ) ); 
         if ( !s_DynamicD3D11CreateDevice )
             return false;
     }
