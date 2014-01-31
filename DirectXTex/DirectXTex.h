@@ -123,11 +123,14 @@ namespace DirectX
             // Returns size_t(-1) to indicate an out-of-range error
 
         bool IsCubemap() const { return (miscFlags & TEX_MISC_TEXTURECUBE) != 0; }
-            // Helpers for miscFlags
+            // Helper for miscFlags
 
         bool IsPMAlpha() const { return ((miscFlags2 & TEX_MISC2_ALPHA_MODE_MASK) == TEX_ALPHA_MODE_PREMULTIPLIED) != 0; }
         void SetAlphaMode( TEX_ALPHA_MODE mode ) { miscFlags2 = (miscFlags2 & ~TEX_MISC2_ALPHA_MODE_MASK) | static_cast<uint32_t>(mode); }
             // Helpers for miscFlags2
+
+        bool IsVolumemap() const { return (dimension == TEX_DIMENSION_TEXTURE3D); }
+            // Helper for dimension
     };
 
     enum DDS_FLAGS

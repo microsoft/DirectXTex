@@ -30,7 +30,7 @@ static HRESULT _Capture( _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource
     if ( !pContext || !pSource || !result.GetPixels() )
         return E_POINTER;
 
-    if ( metadata.dimension == TEX_DIMENSION_TEXTURE3D )
+    if ( metadata.IsVolumemap() )
     {
         //--- Volume texture ----------------------------------------------------------
         assert( metadata.arraySize == 1 );
@@ -378,7 +378,7 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
         return E_OUTOFMEMORY;
 
     // Fill out subresource array
-    if ( metadata.dimension == TEX_DIMENSION_TEXTURE3D )
+    if ( metadata.IsVolumemap() )
     {
         //--- Volume case -------------------------------------------------------------
         if ( !metadata.depth )

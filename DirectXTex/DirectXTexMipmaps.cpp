@@ -2644,7 +2644,7 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
     if ( !srcImages || !nimages || !IsValid(metadata.format) )
         return E_INVALIDARG;
 
-    if ( metadata.dimension == TEX_DIMENSION_TEXTURE3D
+    if ( metadata.IsVolumemap()
          || IsCompressed( metadata.format ) || IsVideo( metadata.format ) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
@@ -2953,7 +2953,7 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
     if ( filter & TEX_FILTER_FORCE_WIC )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-    if ( metadata.dimension != TEX_DIMENSION_TEXTURE3D
+    if ( !metadata.IsVolumemap()
          || IsCompressed( metadata.format ) || IsVideo( metadata.format ) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
