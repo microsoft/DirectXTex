@@ -2524,7 +2524,7 @@ static const XMVECTORF32 g_ErrorWeight7 = { 7.f/16.f, 7.f/16.f, 7.f/16.f, 7.f/16
                 { \
                     /* Applied ordered dither */ \
                     target = XMVectorAdd( v, ordered[ index & 3 ] ); \
-                    target = XMVectorRound( v ); \
+                    target = XMVectorRound( target ); \
                 } \
                 \
                 target = XMVectorMin( scalev, target ); \
@@ -2578,7 +2578,7 @@ static const XMVECTORF32 g_ErrorWeight7 = { 7.f/16.f, 7.f/16.f, 7.f/16.f, 7.f/16
                 { \
                     /* Applied ordered dither */ \
                     target = XMVectorAdd( v, ordered[ index & 3 ] ); \
-                    target = XMVectorRound( v ); \
+                    target = XMVectorRound( target ); \
                 } \
                 \
                 target = XMVectorMin( scalev, target ); \
@@ -2630,7 +2630,7 @@ static const XMVECTORF32 g_ErrorWeight7 = { 7.f/16.f, 7.f/16.f, 7.f/16.f, 7.f/16
                 { \
                     /* Applied ordered dither */ \
                     target = XMVectorAdd( v, ordered[ index & 3 ] ); \
-                    target = XMVectorRound( v ); \
+                    target = XMVectorRound( target ); \
                 } \
                 \
                 target = XMVectorMin( scalev, target ); \
@@ -2745,7 +2745,7 @@ bool _StoreScanlineDither( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 {
                     // Applied ordered dither
                     target = XMVectorAdd( v, ordered[ index & 3 ] );
-                    target = XMVectorRound( v );
+                    target = XMVectorRound( target );
                 }
 
                 target = XMVectorAdd( target, Bias );
@@ -2823,7 +2823,7 @@ bool _StoreScanlineDither( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 {
                     // Applied ordered dither
                     target = XMVectorAdd( v, ordered[ index & 3 ] );
-                    target = XMVectorRound( v );
+                    target = XMVectorRound( target );
                 }
 
                 target = XMVectorClamp( target, g_XMZero, Scale2 );
@@ -2910,7 +2910,7 @@ bool _StoreScanlineDither( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 {
                     // Applied ordered dither
                     target = XMVectorAdd( v, ordered[ index & 3 ] );
-                    target = XMVectorRound( v );
+                    target = XMVectorRound( target );
                 }
 
                 target = XMVectorClamp( target, g_XMZero, g_Scale565pc );
@@ -2958,7 +2958,7 @@ bool _StoreScanlineDither( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 {
                     // Applied ordered dither
                     target = XMVectorAdd( v, ordered[ index & 3 ] );
-                    target = XMVectorRound( v );
+                    target = XMVectorRound( target );
                 }
 
                 target = XMVectorClamp( target, g_XMZero, g_Scale5551pc );
@@ -3012,7 +3012,7 @@ bool _StoreScanlineDither( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 {
                     // Applied ordered dither
                     target = XMVectorAdd( v, ordered[ index & 3 ] );
-                    target = XMVectorRound( v );
+                    target = XMVectorRound( target );
                 }
 
                 target = XMVectorClamp( target, g_XMZero, g_Scale8pc );
