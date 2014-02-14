@@ -18,9 +18,9 @@
 using namespace DirectX::PackedVector;
 using Microsoft::WRL::ComPtr;
 
-#if DIRECTX_MATH_VERSION < 306
 namespace
 {
+#if DIRECTX_MATH_VERSION < 306
     inline float round_to_nearest( float x )
     {
         // Round to nearest (even)
@@ -40,8 +40,140 @@ namespace
 
         return i + 1.f;
     }
-};
 #endif
+
+    inline uint32_t FloatTo7e3(float Value)
+    {
+        uint32_t IValue = reinterpret_cast<uint32_t *>(&Value)[0];
+
+        if ( IValue & 0x80000000U )
+        {
+            // Positive only
+            return 0;
+        }
+        else if (IValue > 0x41FF73FFU)
+        {
+            // The number is too large to be represented as a 7e3. Saturate.
+            return 0x3FFU;
+        }
+        else
+        {
+            if (IValue < 0x3E800000U)
+            {
+                // The number is too small to be represented as a normalized 7e3.
+                // Convert it to a denormalized value.
+                uint32_t Shift = 125U - (IValue >> 23U);
+                IValue = (0x800000U | (IValue & 0x7FFFFFU)) >> Shift;
+            }
+            else
+            {
+                // Rebias the exponent to represent the value as a normalized 7e3.
+                IValue += 0xC2000000U;
+            }
+
+            return ((IValue + 0x7FFFU + ((IValue >> 16U) & 1U)) >> 16U)&0x3FFU; 
+        }
+    }
+
+    inline float FloatFrom7e3( uint32_t Value )
+    {
+        uint32_t Mantissa = (uint32_t)(Value & 0x7F);
+
+        uint32_t Exponent = (Value & 0x380);
+        if (Exponent != 0)  // The value is normalized
+        {
+            Exponent = (uint32_t)((Value >> 7) & 0x7);
+        }
+        else if (Mantissa != 0)     // The value is denormalized
+        {
+            // Normalize the value in the resulting float
+            Exponent = 1;
+
+            do
+            {
+                Exponent--;
+                Mantissa <<= 1;
+            } while ((Mantissa & 0x80) == 0);
+
+            Mantissa &= 0x7F;
+        }
+        else                        // The value is zero
+        {
+            Exponent = (uint32_t)-124;
+        }
+
+        uint32_t Result = ((Exponent + 124) << 23) | // Exponent
+                          (Mantissa << 16);          // Mantissa
+
+        return reinterpret_cast<float*>(&Result)[0];
+    }
+
+    inline uint32_t FloatTo6e4(float Value)
+    {
+        uint32_t IValue = reinterpret_cast<uint32_t *>(&Value)[0];
+
+        if ( IValue & 0x80000000U )
+        {
+            // Positive only
+            return 0;
+        }
+        else if (IValue > 0x43FEFFFFU)
+        {
+            // The number is too large to be represented as a 6e4. Saturate.
+            return 0x3FFU;
+        }
+        else
+        {
+            if (IValue < 0x3C800000U)
+            {
+                // The number is too small to be represented as a normalized 6e4.
+                // Convert it to a denormalized value.
+                uint32_t Shift = 121U - (IValue >> 23U);
+                IValue = (0x800000U | (IValue & 0x7FFFFFU)) >> Shift;
+            }
+            else
+            {
+                // Rebias the exponent to represent the value as a normalized 6e4.
+                IValue += 0xC4000000U;
+            }
+
+            return ((IValue + 0xFFFFU + ((IValue >> 17U) & 1U)) >> 17U)&0x3FFU; 
+        }
+    }
+
+    inline float FloatFrom6e4( uint32_t Value )
+    {
+        uint32_t Mantissa = (uint32_t)(Value & 0x3F);
+
+        uint32_t Exponent = (Value & 0x3C0);
+        if (Exponent != 0)  // The value is normalized
+        {
+            Exponent = (uint32_t)((Value >> 6) & 0xF);
+        }
+        else if (Mantissa != 0)     // The value is denormalized
+        {
+            // Normalize the value in the resulting float
+            Exponent = 1;
+
+            do
+            {
+                Exponent--;
+                Mantissa <<= 1;
+            } while ((Mantissa & 0x40) == 0);
+
+            Mantissa &= 0x3F;
+        }
+        else                        // The value is zero
+        {
+            Exponent = (uint32_t)-120;
+        }
+
+        uint32_t Result = ((Exponent + 120) << 23) | // Exponent
+                          (Mantissa << 17);          // Mantissa
+
+        return reinterpret_cast<float*>(&Result)[0];
+    }
+};
 
 namespace DirectX
 {
@@ -59,11 +191,11 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
 {
     assert( pDestination && outSize > 0 );
     assert( pSource && inSize > 0 );
-    assert( IsValid(format) && !IsVideo(format) );
+    assert( IsValid(format) && !IsPalettized(format) );
 
     if ( flags & TEXP_SCANLINE_SETALPHA )
     {
-        switch( format )
+        switch( static_cast<int>(format) )
         {
         //-----------------------------------------------------------------------------
         case DXGI_FORMAT_R32G32B32A32_TYPELESS:
@@ -113,6 +245,7 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
         case DXGI_FORMAT_R16G16B16A16_UINT:
         case DXGI_FORMAT_R16G16B16A16_SNORM:
         case DXGI_FORMAT_R16G16B16A16_SINT:
+        case DXGI_FORMAT_Y416:
             if ( inSize >= 8 && outSize >= 8 )
             {
                 uint16_t alpha;
@@ -154,6 +287,9 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
         case DXGI_FORMAT_R10G10B10A2_UNORM:
         case DXGI_FORMAT_R10G10B10A2_UINT:
         case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
+        case DXGI_FORMAT_Y410:
+        case 116 /* DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT */:
+        case 117 /* DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT */:
             if ( inSize >= 4 && outSize >= 4 )
             {
                 if ( pDestination == pSource )
@@ -188,6 +324,7 @@ void _CopyScanline(_When_(pDestination == pSource, _Inout_updates_bytes_(outSize
         case DXGI_FORMAT_B8G8R8A8_UNORM:
         case DXGI_FORMAT_B8G8R8A8_TYPELESS:
         case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        case DXGI_FORMAT_AYUV:
             if ( inSize >= 4 && outSize >= 4 )
             {
                 const uint32_t alpha = ( format == DXGI_FORMAT_R8G8B8A8_SNORM || format == DXGI_FORMAT_R8G8B8A8_SINT ) ? 0x7f000000 : 0xff000000;
@@ -292,7 +429,7 @@ void _SwizzleScanline( LPVOID pDestination, size_t outSize, LPCVOID pSource, siz
 {
     assert( pDestination && outSize > 0 );
     assert( pSource && inSize > 0 );
-    assert( IsValid(format) && !IsVideo(format) );
+    assert( IsValid(format) && !IsPlanar(format) && !IsPalettized(format) );
 
     switch( format )
     {
@@ -338,9 +475,10 @@ void _SwizzleScanline( LPVOID pDestination, size_t outSize, LPCVOID pSource, siz
                         *(dPtr++) = t1 | t2 | t3 | ta;
                     }
                 }
+                return;
             }
         }
-        return;
+        break;
 
     //---------------------------------------------------------------------------------
     case DXGI_FORMAT_R8G8B8A8_TYPELESS:
@@ -387,8 +525,53 @@ void _SwizzleScanline( LPVOID pDestination, size_t outSize, LPCVOID pSource, siz
                     *(dPtr++) = t1 | t2 | t3 | ta;
                 }
             }
+            return;
         }
-        return;
+        break;
+
+    //---------------------------------------------------------------------------------
+    case DXGI_FORMAT_YUY2:
+        if ( inSize >= 4 && outSize >= 4 )
+        {
+            if ( flags & TEXP_SCANLINE_LEGACY )
+            {
+                // Reorder YUV components (used to convert legacy UYVY -> YUY2)
+                if ( pDestination == pSource )
+                {
+                    uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                    for( size_t count = 0; count < ( outSize - 3 ); count += 4 )
+                    {
+                        uint32_t t = *dPtr;
+
+                        uint32_t t1 = (t & 0x000000ff) << 8;
+                        uint32_t t2 = (t & 0x0000ff00) >> 8;
+                        uint32_t t3 = (t & 0x00ff0000) << 8;
+                        uint32_t t4 = (t & 0xff000000) >> 8;
+
+                        *(dPtr++) = t1 | t2 | t3 | t4;
+                    }
+                }
+                else
+                {
+                    const uint32_t * __restrict sPtr = reinterpret_cast<const uint32_t*>(pSource);
+                    uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                    size_t size = std::min<size_t>( outSize, inSize );
+                    for( size_t count = 0; count < ( size - 3 ); count += 4 )
+                    {
+                        uint32_t t = *(sPtr++);
+
+                        uint32_t t1 = (t & 0x000000ff) << 8;
+                        uint32_t t2 = (t & 0x0000ff00) >> 8;
+                        uint32_t t3 = (t & 0x00ff0000) << 8;
+                        uint32_t t4 = (t & 0xff000000) >> 8;
+
+                        *(dPtr++) = t1 | t2 | t3 | t4;
+                    }
+                }
+                return;
+            }
+        }
+        break;
     }
 
     // Fall-through case is to just use memcpy (assuming this is not an in-place operation)
@@ -410,8 +593,8 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
 {
     assert( pDestination && outSize > 0 );
     assert( pSource && inSize > 0 );
-    assert( IsValid(outFormat) && !IsVideo(outFormat) );
-    assert( IsValid(inFormat) && !IsVideo(inFormat) );
+    assert( IsValid(outFormat) && !IsPlanar(outFormat) && !IsPalettized(outFormat) );
+    assert( IsValid(inFormat) && !IsPlanar(inFormat) && !IsPalettized(inFormat) );
 
     switch( inFormat )
     {
@@ -544,7 +727,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
 {
     assert( pDestination && count > 0 && (((uintptr_t)pDestination & 0xF) == 0) );
     assert( pSource && size > 0 );
-    assert( IsValid(format) && !IsVideo(format) && !IsTypeless(format, false) && !IsCompressed(format) );
+    assert( IsValid(format) && !IsTypeless(format, false) && !IsCompressed(format) && !IsPlanar(format) && !IsPalettized(format) );
 
     XMVECTOR* __restrict dPtr = pDestination;
     if ( !dPtr )
@@ -552,7 +735,7 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
 
     const XMVECTOR* ePtr = pDestination + count;
 
-    switch( format )
+    switch( static_cast<int>(format) )
     {
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
         {
@@ -1099,6 +1282,226 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         }
         return false;
 
+    case DXGI_FORMAT_AYUV:
+        if ( size >= sizeof(XMUBYTEN4) )
+        {
+            const XMUBYTEN4 * __restrict sPtr = reinterpret_cast<const XMUBYTEN4*>(pSource);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
+            {
+                int v = int(sPtr->x) - 128;
+                int u = int(sPtr->y) - 128;
+                int y = int(sPtr->z) - 16;
+                unsigned int a = sPtr->w;
+                ++sPtr;
+
+                // http://msdn.microsoft.com/en-us/library/windows/desktop/dd206750.aspx
+
+                // Y’  = Y - 16
+                // Cb’ = Cb - 128
+                // Cr’ = Cr - 128
+
+                // R = 1.1644Y’ + 1.5960Cr’
+                // G = 1.1644Y’ - 0.3917Cb’ - 0.8128Cr’
+                // B = 1.1644Y’ + 2.0172Cb’
+
+                int r = (298 * y +           409 * v + 128) >> 8;
+                int g = (298 * y - 100 * u - 208 * v + 128) >> 8;
+                int b = (298 * y + 516 * u           + 128) >> 8;
+
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( float( std::min<int>( std::max<int>( r, 0 ), 255 ) ) / 255.f,
+                                         float( std::min<int>( std::max<int>( g, 0 ), 255 ) ) / 255.f,
+                                         float( std::min<int>( std::max<int>( b, 0 ), 255 ) ) / 255.f,
+                                         float( a / 255.f ) );
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_Y410:
+        if ( size >= sizeof(XMUDECN4) )
+        {
+            const XMUDECN4 * __restrict sPtr = reinterpret_cast<const XMUDECN4*>(pSource);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUDECN4) + 1 ); icount += sizeof(XMUDECN4) )
+            {
+                int64_t u = int(sPtr->x) - 512;
+                int64_t y = int(sPtr->y) - 64;
+                int64_t v = int(sPtr->z) - 512;
+                unsigned int a = sPtr->w;
+                ++sPtr;
+
+                // http://msdn.microsoft.com/en-us/library/windows/desktop/bb970578.aspx
+
+                // Y’  = Y - 64
+                // Cb’ = Cb - 512
+                // Cr’ = Cr - 512
+
+                // R = 1.1678Y’ + 1.6007Cr’
+                // G = 1.1678Y’ - 0.3929Cb’ - 0.8152Cr’
+                // B = 1.1678Y’ + 2.0232Cb’
+
+                int r = static_cast<int>( (76533 * y +              104905 * v + 32768) >> 16 );
+                int g = static_cast<int>( (76533 * y -  25747 * u -  53425 * v + 32768) >> 16 );
+                int b = static_cast<int>( (76533 * y + 132590 * u              + 32768) >> 16 );
+
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( float( std::min<int>( std::max<int>( r, 0 ), 1023 ) ) / 1023.f,
+                                         float( std::min<int>( std::max<int>( g, 0 ), 1023 ) ) / 1023.f,
+                                         float( std::min<int>( std::max<int>( b, 0 ), 1023 ) ) / 1023.f,
+                                         float( a / 3.f ) );
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_Y416:
+        if ( size >= sizeof(XMUSHORTN4) )
+        {
+            const XMUSHORTN4 * __restrict sPtr = reinterpret_cast<const XMUSHORTN4*>(pSource);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUSHORTN4) + 1 ); icount += sizeof(XMUSHORTN4) )
+            {
+                int64_t u = int64_t(sPtr->x) - 32768;
+                int64_t y = int64_t(sPtr->y) - 4096;
+                int64_t v = int64_t(sPtr->z) - 32768;
+                unsigned int a = sPtr->w;
+                ++sPtr;
+
+                // http://msdn.microsoft.com/en-us/library/windows/desktop/bb970578.aspx
+
+                // Y’  = Y - 4096
+                // Cb’ = Cb - 32768
+                // Cr’ = Cr - 32768
+
+                // R = 1.1689Y’ + 1.6023Cr’
+                // G = 1.1689Y’ - 0.3933Cb’ - 0.8160Cr’
+                // B = 1.1689Y’+ 2.0251Cb’
+
+                int r = static_cast<int>( (76607 * y +              105006 * v + 32768) >> 16 );
+                int g = static_cast<int>( (76607 * y -  25772 * u -  53477 * v + 32768) >> 16 );
+                int b = static_cast<int>( (76607 * y + 132718 * u              + 32768) >> 16 );
+
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( float( std::min<int>( std::max<int>( r, 0 ), 65535 ) ) / 65535.f,
+                                         float( std::min<int>( std::max<int>( g, 0 ), 65535 ) ) / 65535.f,
+                                         float( std::min<int>( std::max<int>( b, 0 ), 65535 ) ) / 65535.f,
+                                         float( std::min<int>( std::max<int>( a, 0 ), 65535 ) ) / 65535.f );
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_YUY2:
+        if ( size >= sizeof(XMUBYTEN4) )
+        {
+            const XMUBYTEN4 * __restrict sPtr = reinterpret_cast<const XMUBYTEN4*>(pSource);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
+            {
+                int y0 = int(sPtr->x) - 16;
+                int u  = int(sPtr->y) - 128;
+                int y1 = int(sPtr->z) - 16;
+                int v  = int(sPtr->w) - 128;
+                ++sPtr;
+
+                // See AYUV
+                int r = (298 * y0 +           409 * v + 128) >> 8;
+                int g = (298 * y0 - 100 * u - 208 * v + 128) >> 8;
+                int b = (298 * y0 + 516 * u           + 128) >> 8;
+
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( float( std::min<int>( std::max<int>( r, 0 ), 255 ) ) / 255.f,
+                                         float( std::min<int>( std::max<int>( g, 0 ), 255 ) ) / 255.f,
+                                         float( std::min<int>( std::max<int>( b, 0 ), 255 ) ) / 255.f,
+                                         1.f );
+                
+                r = (298 * y1 +           409 * v + 128) >> 8;
+                g = (298 * y1 - 100 * u - 208 * v + 128) >> 8;
+                b = (298 * y1 + 516 * u           + 128) >> 8;
+
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( float( std::min<int>( std::max<int>( r, 0 ), 255 ) ) / 255.f,
+                                         float( std::min<int>( std::max<int>( g, 0 ), 255 ) ) / 255.f,
+                                         float( std::min<int>( std::max<int>( b, 0 ), 255 ) ) / 255.f,
+                                         1.f );
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_Y210:
+        // Same as Y216 with least significant 6 bits set to zero
+        if ( size >= sizeof(XMUSHORTN4) )
+        {
+            const XMUSHORTN4 * __restrict sPtr = reinterpret_cast<const XMUSHORTN4*>(pSource);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUSHORTN4) + 1 ); icount += sizeof(XMUSHORTN4) )
+            {
+                int64_t y0 = int64_t(sPtr->x >> 6) - 64;
+                int64_t u  = int64_t(sPtr->y >> 6) - 512;
+                int64_t y1 = int64_t(sPtr->z >> 6) - 64;
+                int64_t v  = int64_t(sPtr->w >> 6) - 512;
+                ++sPtr;
+
+                // See Y410
+                int r = static_cast<int>( (76533 * y0 +              104905 * v + 32768) >> 16 );
+                int g = static_cast<int>( (76533 * y0 -  25747 * u -  53425 * v + 32768) >> 16 );
+                int b = static_cast<int>( (76533 * y0 + 132590 * u              + 32768) >> 16 );
+
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( float( std::min<int>( std::max<int>( r, 0 ), 1023 ) ) / 1023.f,
+                                         float( std::min<int>( std::max<int>( g, 0 ), 1023 ) ) / 1023.f,
+                                         float( std::min<int>( std::max<int>( b, 0 ), 1023 ) ) / 1023.f,
+                                         1.f );
+
+                r = static_cast<int>( (76533 * y1 +              104905 * v + 32768) >> 16 );
+                g = static_cast<int>( (76533 * y1 -  25747 * u -  53425 * v + 32768) >> 16 );
+                b = static_cast<int>( (76533 * y1 + 132590 * u              + 32768) >> 16 );
+
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( float( std::min<int>( std::max<int>( r, 0 ), 1023 ) ) / 1023.f,
+                                         float( std::min<int>( std::max<int>( g, 0 ), 1023 ) ) / 1023.f,
+                                         float( std::min<int>( std::max<int>( b, 0 ), 1023 ) ) / 1023.f,
+                                         1.f );
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_Y216:
+        if ( size >= sizeof(XMUSHORTN4) )
+        {
+            const XMUSHORTN4 * __restrict sPtr = reinterpret_cast<const XMUSHORTN4*>(pSource);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUSHORTN4) + 1 ); icount += sizeof(XMUSHORTN4) )
+            {
+                int64_t y0 = int64_t(sPtr->x) - 4096;
+                int64_t u  = int64_t(sPtr->y) - 32768;
+                int64_t y1 = int64_t(sPtr->z) - 4096;
+                int64_t v  = int64_t(sPtr->w) - 32768;
+                ++sPtr;
+
+                // See Y416
+                int r = static_cast<int>( (76607 * y0 +              105006 * v + 32768) >> 16 );
+                int g = static_cast<int>( (76607 * y0 -  25772 * u -  53477 * v + 32768) >> 16 );
+                int b = static_cast<int>( (76607 * y0 + 132718 * u              + 32768) >> 16 );
+
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( float( std::min<int>( std::max<int>( r, 0 ), 65535 ) ) / 65535.f,
+                                         float( std::min<int>( std::max<int>( g, 0 ), 65535 ) ) / 65535.f,
+                                         float( std::min<int>( std::max<int>( b, 0 ), 65535 ) ) / 65535.f,
+                                         1.f );
+
+                r = static_cast<int>( (76607 * y1 +              105006 * v + 32768) >> 16 );
+                g = static_cast<int>( (76607 * y1 -  25772 * u -  53477 * v + 32768) >> 16 );
+                b = static_cast<int>( (76607 * y1 + 132718 * u              + 32768) >> 16 );
+
+                if ( dPtr >= ePtr ) break;
+                *(dPtr++) = XMVectorSet( float( std::min<int>( std::max<int>( r, 0 ), 65535 ) ) / 65535.f,
+                                         float( std::min<int>( std::max<int>( g, 0 ), 65535 ) ) / 65535.f,
+                                         float( std::min<int>( std::max<int>( b, 0 ), 65535 ) ) / 65535.f,
+                                         1.f );
+            }
+            return true;
+        }
+        return false;
+
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         if ( size >= sizeof(XMUNIBBLE4) )
         {
@@ -1115,7 +1518,55 @@ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
         }
         return false;
 
-    // we don't support the video formats ( see IsVideo function )
+    case 116 /* DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT */:
+        // Xbox One specific 7e3 format
+        if ( size >= sizeof(XMUDECN4) )
+        {
+            const XMUDECN4 * __restrict sPtr = reinterpret_cast<const XMUDECN4*>(pSource);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUDECN4) + 1 ); icount += sizeof(XMUDECN4) )
+            {
+                if ( dPtr >= ePtr ) break;
+
+                XMVECTORF32 vResult = {
+                    FloatFrom7e3(sPtr->x),
+                    FloatFrom7e3(sPtr->y),
+                    FloatFrom7e3(sPtr->z),
+                    (float)(sPtr->v >> 30) / 3.0f
+                };
+
+                ++sPtr;
+
+                *(dPtr++) = vResult.v;
+            }
+            return true;
+        }
+        return false;
+
+    case 117 /* DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT */:
+        // Xbox One specific 6e4 format
+        if ( size >= sizeof(XMUDECN4) )
+        {
+            const XMUDECN4 * __restrict sPtr = reinterpret_cast<const XMUDECN4*>(pSource);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUDECN4) + 1 ); icount += sizeof(XMUDECN4) )
+            {
+                if ( dPtr >= ePtr ) break;
+
+                XMVECTORF32 vResult = {
+                    FloatFrom6e4(sPtr->x),
+                    FloatFrom6e4(sPtr->y),
+                    FloatFrom6e4(sPtr->z),
+                    (float)(sPtr->v >> 30) / 3.0f
+                };
+
+                ++sPtr;
+
+                *(dPtr++) = vResult.v;
+            }
+            return true;
+        }
+        return false;
+
+    // We don't support the planar or palettized formats
 
     default:
         return false;
@@ -1149,7 +1600,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
 {
     assert( pDestination && size > 0 );
     assert( pSource && count > 0 && (((uintptr_t)pSource & 0xF) == 0) );
-    assert( IsValid(format) && !IsVideo(format) && !IsTypeless(format) && !IsCompressed(format) );
+    assert( IsValid(format) && !IsTypeless(format) && !IsCompressed(format) && !IsPlanar(format) && !IsPalettized(format) );
 
     const XMVECTOR* __restrict sPtr = pSource;
     if ( !sPtr )
@@ -1157,7 +1608,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
 
     const XMVECTOR* ePtr = pSource + count;
 
-    switch( format )
+    switch( static_cast<int>(format) )
     {
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
         STORE_SCANLINE( XMFLOAT4, XMStoreFloat4 )
@@ -1681,6 +2132,244 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         }
         return false;
 
+    case DXGI_FORMAT_AYUV:
+        if ( size >= sizeof(XMUBYTEN4) )
+        {
+            XMUBYTEN4 * __restrict dPtr = reinterpret_cast<XMUBYTEN4*>(pDestination);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
+            {
+                if ( sPtr >= ePtr ) break;
+                
+                XMUBYTEN4 rgba;
+                XMStoreUByteN4( &rgba, *sPtr++ );
+
+                // http://msdn.microsoft.com/en-us/library/windows/desktop/dd206750.aspx
+
+                // Y  =  0.2568R + 0.5041G + 0.1001B + 16
+                // Cb = -0.1482R - 0.2910G + 0.4392B + 128
+                // Cr =  0.4392R - 0.3678G - 0.0714B + 128
+
+                int y = ( (  66 * rgba.x + 129 * rgba.y +  25 * rgba.z + 128) >> 8) +  16;
+                int u = ( ( -38 * rgba.x -  74 * rgba.y + 112 * rgba.z + 128) >> 8) + 128;
+                int v = ( ( 112 * rgba.x -  94 * rgba.y -  18 * rgba.z + 128) >> 8) + 128;
+
+                dPtr->x = static_cast<uint8_t>( std::min<int>( std::max<int>( v, 0 ), 255 ) );
+                dPtr->y = static_cast<uint8_t>( std::min<int>( std::max<int>( u, 0 ), 255 ) );
+                dPtr->z = static_cast<uint8_t>( std::min<int>( std::max<int>( y, 0 ), 255 ) );
+                dPtr->w = rgba.w;
+                ++dPtr;
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_Y410:
+        if ( size >= sizeof(XMUDECN4) )
+        {
+            XMUDECN4 * __restrict dPtr = reinterpret_cast<XMUDECN4*>(pDestination);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUDECN4) + 1 ); icount += sizeof(XMUDECN4) )
+            {
+                if ( sPtr >= ePtr ) break;
+                
+                XMUDECN4 rgba;
+                XMStoreUDecN4( &rgba, *sPtr++ );
+
+                // http://msdn.microsoft.com/en-us/library/windows/desktop/bb970578.aspx
+
+                // Y  =  0.2560R + 0.5027G + 0.0998B + 64
+                // Cb = -0.1478R - 0.2902G + 0.4379B + 512
+                // Cr =  0.4379R - 0.3667G - 0.0712B + 512
+
+                int64_t r = rgba.x;
+                int64_t g = rgba.y;
+                int64_t b = rgba.z;
+
+                int y = static_cast<int>( (  16780 * r + 32942 * g +  6544 * b + 32768) >> 16) + 64;
+                int u = static_cast<int>( ( -9683  * r - 19017 * g + 28700 * b + 32768) >> 16) + 512;
+                int v = static_cast<int>( (  28700 * r - 24033 * g -  4667 * b + 32768) >> 16) + 512;
+
+                dPtr->x = static_cast<uint32_t>( std::min<int>( std::max<int>( u, 0 ), 1023 ) );
+                dPtr->y = static_cast<uint32_t>( std::min<int>( std::max<int>( y, 0 ), 1023 ) );
+                dPtr->z = static_cast<uint32_t>( std::min<int>( std::max<int>( v, 0 ), 1023 ) );
+                dPtr->w = rgba.w;
+                ++dPtr;
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_Y416:
+        if ( size >= sizeof(XMUSHORTN4) )
+        {
+            XMUSHORTN4 * __restrict dPtr = reinterpret_cast<XMUSHORTN4*>(pDestination);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUSHORTN4) + 1 ); icount += sizeof(XMUSHORTN4) )
+            {
+                if ( sPtr >= ePtr ) break;
+                
+                XMUSHORTN4 rgba;
+                XMStoreUShortN4( &rgba, *sPtr++ );
+
+                // http://msdn.microsoft.com/en-us/library/windows/desktop/bb970578.aspx
+
+                // Y  =  0.2558R + 0.5022G + 0.0998B + 4096
+                // Cb = -0.1476R - 0.2899G + 0.4375B + 32768
+                // Cr =  0.4375R - 0.3664G - 0.0711B + 32768
+
+                int64_t r = int64_t(rgba.x);
+                int64_t g = int64_t(rgba.y);
+                int64_t b = int64_t(rgba.z);
+
+                int y = static_cast<int>( (  16763 * r + 32910 * g +  6537 * b + 32768) >> 16) + 4096;
+                int u = static_cast<int>( ( -9674  * r - 18998 * g + 28672 * b + 32768) >> 16) + 32768;
+                int v = static_cast<int>( (  28672 * r - 24010 * g -  4662 * b + 32768) >> 16) + 32768;
+
+                dPtr->x = static_cast<uint16_t>( std::min<int>( std::max<int>( u, 0 ), 65535 ) );
+                dPtr->y = static_cast<uint16_t>( std::min<int>( std::max<int>( y, 0 ), 65535 ) );
+                dPtr->z = static_cast<uint16_t>( std::min<int>( std::max<int>( v, 0 ), 65535 ) );
+                dPtr->w = rgba.w;
+                ++dPtr;
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_YUY2:
+        if ( size >= sizeof(XMUBYTEN4) )
+        {
+            XMUBYTEN4 * __restrict dPtr = reinterpret_cast<XMUBYTEN4*>(pDestination);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
+            {
+                if ( sPtr >= ePtr ) break;
+                
+                XMUBYTEN4 rgb1;
+                XMStoreUByteN4( &rgb1, *sPtr++ );
+
+                // See AYUV
+                int y0 = ( (  66 * rgb1.x + 129 * rgb1.y +  25 * rgb1.z + 128) >> 8) +  16;
+                int u0 = ( ( -38 * rgb1.x -  74 * rgb1.y + 112 * rgb1.z + 128) >> 8) + 128;
+                int v0 = ( ( 112 * rgb1.x -  94 * rgb1.y -  18 * rgb1.z + 128) >> 8) + 128;
+
+                XMUBYTEN4 rgb2;
+                if(sPtr < ePtr)
+                {
+                    XMStoreUByteN4( &rgb2, *sPtr++ );
+                }
+                else
+                {
+                    rgb2.x = rgb2.y = rgb2.z = rgb2.w = 0;
+                }
+
+                int y1 = ( (  66 * rgb2.x + 129 * rgb2.y +  25 * rgb2.z + 128) >> 8) +  16;
+                int u1 = ( ( -38 * rgb2.x -  74 * rgb2.y + 112 * rgb2.z + 128) >> 8) + 128;
+                int v1 = ( ( 112 * rgb2.x -  94 * rgb2.y -  18 * rgb2.z + 128) >> 8) + 128;
+
+                dPtr->x = static_cast<uint8_t>( std::min<int>( std::max<int>( y0, 0 ), 255 ) );
+                dPtr->y = static_cast<uint8_t>( std::min<int>( std::max<int>( (u0 + u1) >> 1, 0 ), 255 ) );
+                dPtr->z = static_cast<uint8_t>( std::min<int>( std::max<int>( y1, 0 ), 255 ) );
+                dPtr->w = static_cast<uint8_t>( std::min<int>( std::max<int>( (v0 + v1) >> 1, 0 ), 255 ) );
+                ++dPtr;
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_Y210:
+        // Same as Y216 with least significant 6 bits set to zero
+        if ( size >= sizeof(XMUSHORTN4) )
+        {
+            XMUSHORTN4 * __restrict dPtr = reinterpret_cast<XMUSHORTN4*>(pDestination);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUSHORTN4) + 1 ); icount += sizeof(XMUSHORTN4) )
+            {
+                if ( sPtr >= ePtr ) break;
+
+                XMUDECN4 rgb1;
+                XMStoreUDecN4( &rgb1, *sPtr++ );
+
+                // See Y410
+                int64_t r = rgb1.x;
+                int64_t g = rgb1.y;
+                int64_t b = rgb1.z;
+
+                int y0 = static_cast<int>( (  16780 * r + 32942 * g +  6544 * b + 32768) >> 16) + 64;
+                int u0 = static_cast<int>( ( -9683  * r - 19017 * g + 28700 * b + 32768) >> 16) + 512;
+                int v0 = static_cast<int>( (  28700 * r - 24033 * g -  4667 * b + 32768) >> 16) + 512;
+
+                XMUDECN4 rgb2;
+                if(sPtr < ePtr)
+                {
+                    XMStoreUDecN4( &rgb2, *sPtr++ );
+                }
+                else
+                {
+                    rgb2.x = rgb2.y = rgb2.z = rgb2.w = 0;
+                }
+
+                r = rgb2.x;
+                g = rgb2.y;
+                b = rgb2.z;
+
+                int y1 = static_cast<int>( (  16780 * r + 32942 * g +  6544 * b + 32768) >> 16) + 64;
+                int u1 = static_cast<int>( ( -9683  * r - 19017 * g + 28700 * b + 32768) >> 16) + 512;
+                int v1 = static_cast<int>( (  28700 * r - 24033 * g -  4667 * b + 32768) >> 16) + 512;
+
+                dPtr->x = static_cast<uint16_t>( std::min<int>( std::max<int>( y0, 0 ), 1023 ) << 6 );
+                dPtr->y = static_cast<uint16_t>( std::min<int>( std::max<int>( (u0 + u1) >> 1, 0 ), 1023 ) << 6 );
+                dPtr->z = static_cast<uint16_t>( std::min<int>( std::max<int>( y1, 0 ), 1023 ) << 6 );
+                dPtr->w = static_cast<uint16_t>( std::min<int>( std::max<int>( (v0 + v1) >> 1, 0 ), 1023 ) << 6 );
+                ++dPtr;
+            }
+            return true;
+        }
+        return false;
+
+    case DXGI_FORMAT_Y216:
+        if ( size >= sizeof(XMUSHORTN4) )
+        {
+            XMUSHORTN4 * __restrict dPtr = reinterpret_cast<XMUSHORTN4*>(pDestination);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUSHORTN4) + 1 ); icount += sizeof(XMUSHORTN4) )
+            {
+                if ( sPtr >= ePtr ) break;
+
+                XMUSHORTN4 rgb1;
+                XMStoreUShortN4( &rgb1, *sPtr++ );
+
+                // See Y416
+                int64_t r = int64_t(rgb1.x);
+                int64_t g = int64_t(rgb1.y);
+                int64_t b = int64_t(rgb1.z);
+
+                int y0 = static_cast<int>( ( 16763 * r + 32910 * g +  6537 * b + 32768) >> 16) + 4096;
+                int u0 = static_cast<int>( (-9674  * r - 18998 * g + 28672 * b + 32768) >> 16) + 32768;
+                int v0 = static_cast<int>( ( 28672 * r - 24010 * g -  4662 * b + 32768) >> 16) + 32768;
+
+                XMUSHORTN4 rgb2;
+                if(sPtr < ePtr)
+                {
+                    XMStoreUShortN4( &rgb2, *sPtr++ );
+                }
+                else
+                {
+                    rgb2.x = rgb2.y = rgb2.z = rgb2.w = 0;
+                }
+
+                r = int64_t(rgb2.x);
+                g = int64_t(rgb2.y);
+                b = int64_t(rgb2.z);
+
+                int y1 = static_cast<int>( ( 16763 * r + 32910 * g +  6537 * b + 32768) >> 16) + 4096;
+                int u1 = static_cast<int>( (-9674  * r - 18998 * g + 28672 * b + 32768) >> 16) + 32768;
+                int v1 = static_cast<int>( ( 28672 * r - 24010 * g -  4662 * b + 32768) >> 16) + 32768;
+
+                dPtr->x = static_cast<uint16_t>( std::min<int>( std::max<int>( y0, 0 ), 65535 ) );
+                dPtr->y = static_cast<uint16_t>( std::min<int>( std::max<int>( (u0 + u1) >> 1, 0 ), 65535 ) );
+                dPtr->z = static_cast<uint16_t>( std::min<int>( std::max<int>( y1, 0 ), 65535 ) );
+                dPtr->w = static_cast<uint16_t>( std::min<int>( std::max<int>( (v0 + v1) >> 1, 0 ), 65535 ) );
+                ++dPtr;
+            }
+            return true;
+        }
+        return false;
+
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         if ( size >= sizeof(XMUNIBBLE4) )
         {
@@ -1697,7 +2386,63 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         }
         return false;
 
-    // We don't support the video formats ( see IsVideo function )
+    case 116 /* DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT */:
+        // Xbox One specific 7e3 format with alpha
+        if ( size >= sizeof(XMUDECN4) )
+        {
+            static const XMVECTORF32  Scale = { 1.0f, 1.0f, 1.0f, 3.0f };
+            static const XMVECTORF32  C     = { 31.875f, 31.875f, 31.875f, 3.f };
+
+            XMUDECN4 * __restrict dPtr = reinterpret_cast<XMUDECN4*>(pDestination);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUDECN4) + 1 ); icount += sizeof(XMUDECN4) )
+            {
+                if ( sPtr >= ePtr ) break;
+
+                XMVECTOR V = XMVectorMultiply( *sPtr++, Scale );
+                V = XMVectorClamp( V, g_XMZero, C );
+
+                XMFLOAT4A tmp;
+                XMStoreFloat4A( &tmp, V );
+
+                dPtr->x = FloatTo7e3( tmp.x );
+                dPtr->y = FloatTo7e3( tmp.y );
+                dPtr->z = FloatTo7e3( tmp.z );
+                dPtr->w = (uint32_t)tmp.w;
+                ++dPtr;
+            }
+            return true;
+        }
+        return false;
+
+    case 117 /* DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT */:
+        // Xbox One specific 6e4 format with alpha
+        if ( size >= sizeof(XMUDECN4) )
+        {
+            static const XMVECTORF32  Scale = { 1.0f, 1.0f, 1.0f, 3.0f };
+            static const XMVECTORF32  C     = { 508.f, 508.f, 508.f, 3.f };
+
+            XMUDECN4 * __restrict dPtr = reinterpret_cast<XMUDECN4*>(pDestination);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUDECN4) + 1 ); icount += sizeof(XMUDECN4) )
+            {
+                if ( sPtr >= ePtr ) break;
+
+                XMVECTOR V = XMVectorMultiply( *sPtr++, Scale );
+                V = XMVectorClamp( V, g_XMZero, C );
+
+                XMFLOAT4A tmp;
+                XMStoreFloat4A( &tmp, V );
+
+                dPtr->x = FloatTo6e4( tmp.x );
+                dPtr->y = FloatTo6e4( tmp.y );
+                dPtr->z = FloatTo6e4( tmp.z );
+                dPtr->w = (uint32_t)tmp.w;
+                ++dPtr;
+            }
+            return true;
+        }
+        return false;
+
+    // We don't support the planar or palettized formats
 
     default:
         return false;
@@ -1902,7 +2647,7 @@ bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
 {
     assert( pDestination && size > 0 );
     assert( pSource && count > 0 && (((uintptr_t)pSource & 0xF) == 0) );
-    assert( IsValid(format) && !IsVideo(format) && !IsTypeless(format) && !IsCompressed(format) );
+    assert( IsValid(format) && !IsTypeless(format) && !IsCompressed(format) && !IsPlanar(format) && !IsPalettized(format) );
 
     switch ( format )
     {
@@ -1990,7 +2735,7 @@ bool _LoadScanlineLinear( XMVECTOR* pDestination, size_t count,
 {
     assert( pDestination && count > 0 && (((uintptr_t)pDestination & 0xF) == 0) );
     assert( pSource && size > 0 );
-    assert( IsValid(format) && !IsVideo(format) && !IsTypeless(format,false) && !IsCompressed(format) );
+    assert( IsValid(format) && !IsTypeless(format,false) && !IsCompressed(format) && !IsPlanar(format) && !IsPalettized(format) );
 
     switch ( format )
     {
@@ -2134,7 +2879,17 @@ static const ConvertData g_ConvertTable[] = {
     { DXGI_FORMAT_BC6H_SF16,                    16, CONVF_FLOAT | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
     { DXGI_FORMAT_BC7_UNORM,                    8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
     { DXGI_FORMAT_BC7_UNORM_SRGB,               8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+    { DXGI_FORMAT_AYUV,                         8, CONVF_UNORM | CONVF_YUV | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+    { DXGI_FORMAT_Y410,                         10, CONVF_UNORM | CONVF_YUV | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+    { DXGI_FORMAT_Y416,                         16, CONVF_UNORM | CONVF_YUV | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+    { DXGI_FORMAT_YUY2,                         8, CONVF_UNORM | CONVF_YUV | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
+    { DXGI_FORMAT_Y210,                         10, CONVF_UNORM | CONVF_YUV | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
+    { DXGI_FORMAT_Y216,                         16, CONVF_UNORM | CONVF_YUV | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
     { DXGI_FORMAT_B4G4R4A4_UNORM,               4, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+    { DXGI_FORMAT(116)
+      /* DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT */, 10, CONVF_FLOAT | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+    { DXGI_FORMAT(117)
+      /* DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT */, 10, CONVF_FLOAT | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
 };
 
 #pragma prefast( suppress : 25004, "Signature must match bsearch_s" );
@@ -2171,8 +2926,8 @@ _Use_decl_annotations_
 void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, DXGI_FORMAT inFormat, DWORD flags )
 {
     assert( pBuffer && count > 0 && (((uintptr_t)pBuffer & 0xF) == 0) );
-    assert( IsValid(outFormat) && !IsVideo(outFormat) && !IsTypeless(outFormat) );
-    assert( IsValid(inFormat) && !IsVideo(inFormat) && !IsTypeless(inFormat) );
+    assert( IsValid(outFormat) && !IsTypeless(outFormat) && !IsPlanar(outFormat) && !IsPalettized(outFormat) );
+    assert( IsValid(inFormat) && !IsTypeless(inFormat) && !IsPlanar(inFormat) && !IsPalettized(inFormat) );
 
     if ( !pBuffer )
         return;
@@ -2651,7 +3406,7 @@ bool _StoreScanlineDither( LPVOID pDestination, size_t size, DXGI_FORMAT format,
 {
     assert( pDestination && size > 0 );
     assert( pSource && count > 0 && (((uintptr_t)pSource & 0xF) == 0) );
-    assert( IsValid(format) && !IsVideo(format) && !IsTypeless(format) && !IsCompressed(format) );
+    assert( IsValid(format) && !IsTypeless(format) && !IsCompressed(format) && !IsPlanar(format) && !IsPalettized(format) );
 
     XMVECTOR ordered[4];
     if ( pDiffusionErrors )
@@ -3279,6 +4034,156 @@ static HRESULT _Convert( _In_ const Image& srcImage, _In_ DWORD filter, _In_ con
 }
 
 
+//-------------------------------------------------------------------------------------
+static DXGI_FORMAT _PlanarToSingle( _In_ DXGI_FORMAT format )
+{
+    switch (format)
+    {
+    case DXGI_FORMAT_NV12:
+    case DXGI_FORMAT_NV11:
+        return DXGI_FORMAT_YUY2;
+
+    case DXGI_FORMAT_P010:
+        return DXGI_FORMAT_Y210;
+
+    case DXGI_FORMAT_P016:
+        return DXGI_FORMAT_Y216;
+
+    // We currently do not support conversion for Xbox One specific depth formats
+
+    // We can't do anything with DXGI_FORMAT_420_OPAQUE because it's an opaque blob of bits
+
+    default:
+        return DXGI_FORMAT_UNKNOWN;
+    }
+}
+
+
+//-------------------------------------------------------------------------------------
+// Convert the image from a planar to non-planar image
+//-------------------------------------------------------------------------------------
+#define CONVERT_420_TO_422( srcType, destType )\
+        {\
+            size_t rowPitch = srcImage.rowPitch;\
+            \
+            auto sourceE = reinterpret_cast<const srcType*>( pSrc + srcImage.slicePitch );\
+            auto pSrcUV = pSrc + ( srcImage.height * rowPitch );\
+            \
+            for( size_t y = 0; y < srcImage.height; y+= 2 )\
+            {\
+                auto sPtrY0 = reinterpret_cast<const srcType*>( pSrc );\
+                auto sPtrY2 = reinterpret_cast<const srcType*>( pSrc + rowPitch );\
+                auto sPtrUV = reinterpret_cast<const srcType*>( pSrcUV );\
+                \
+                destType * __restrict dPtr0 = reinterpret_cast<destType*>(pDest);\
+                destType * __restrict dPtr1 = reinterpret_cast<destType*>(pDest + destImage.rowPitch);\
+                \
+                for( size_t x = 0; x < srcImage.width; x+= 2 )\
+                {\
+                    if ( (sPtrUV+1) >= sourceE ) break;\
+                    \
+                    srcType u = *(sPtrUV++);\
+                    srcType v = *(sPtrUV++);\
+                    \
+                    dPtr0->x = *(sPtrY0++);\
+                    dPtr0->y = u;\
+                    dPtr0->z = *(sPtrY0++);\
+                    dPtr0->w = v;\
+                    ++dPtr0;\
+                    \
+                    dPtr1->x = *(sPtrY2++);\
+                    dPtr1->y = u;\
+                    dPtr1->z = *(sPtrY2++);\
+                    dPtr1->w = v;\
+                    ++dPtr1;\
+                }\
+                \
+                pSrc += rowPitch * 2;\
+                pSrcUV += rowPitch;\
+                \
+                pDest += destImage.rowPitch * 2;\
+            }\
+        }
+
+static HRESULT _ConvertToSinglePlane( _In_ const Image& srcImage, _In_ const Image& destImage )
+{
+    assert( srcImage.width == destImage.width );
+    assert( srcImage.height == destImage.height );
+
+    const uint8_t *pSrc = srcImage.pixels;
+    uint8_t *pDest = destImage.pixels;
+    if ( !pSrc || !pDest )
+        return E_POINTER;
+
+    switch ( srcImage.format )
+    {
+    case DXGI_FORMAT_NV12:
+        assert( destImage.format == DXGI_FORMAT_YUY2 );
+        CONVERT_420_TO_422( uint8_t, XMUBYTEN4 );
+        return S_OK;
+
+    case DXGI_FORMAT_P010:
+        assert( destImage.format == DXGI_FORMAT_Y210 );
+        CONVERT_420_TO_422( uint16_t, XMUSHORTN4 );
+        return S_OK;
+
+    case DXGI_FORMAT_P016:
+        assert( destImage.format == DXGI_FORMAT_Y216 );
+        CONVERT_420_TO_422( uint16_t, XMUSHORTN4 );
+        return S_OK;
+
+    case DXGI_FORMAT_NV11:
+        assert( destImage.format == DXGI_FORMAT_YUY2 );
+        // Convert 4:1:1 to 4:2:2
+        {
+            size_t rowPitch = srcImage.rowPitch;
+            
+            const uint8_t* sourceE = pSrc + srcImage.slicePitch;
+            const uint8_t* pSrcUV = pSrc + ( srcImage.height * rowPitch );
+            
+            for( size_t y = 0; y < srcImage.height; ++y )
+            {
+                const uint8_t* sPtrY = pSrc;
+                const uint8_t* sPtrUV = pSrcUV;
+                
+                XMUBYTEN4 * __restrict dPtr = reinterpret_cast<XMUBYTEN4*>(pDest);
+                
+                for( size_t x = 0; x < srcImage.width; x+= 4 )
+                {
+                    if ( (sPtrUV+1) >= sourceE ) break;
+                    
+                    uint8_t u = *(sPtrUV++);
+                    uint8_t v = *(sPtrUV++);
+                    
+                    dPtr->x = *(sPtrY++);
+                    dPtr->y = u;
+                    dPtr->z = *(sPtrY++);
+                    dPtr->w = v;
+                    ++dPtr;
+                    
+                    dPtr->x = *(sPtrY++);
+                    dPtr->y = u;
+                    dPtr->z = *(sPtrY++);
+                    dPtr->w = v;
+                    ++dPtr;
+                }
+                
+                pSrc += rowPitch;
+                pSrcUV += (rowPitch >> 1);
+                
+                pDest += destImage.rowPitch;
+            }
+        }
+        return S_OK;
+
+    default:
+        return E_UNEXPECTED;
+    }
+}
+
+#undef CONVERT_420_TO_422
+
+
 //=====================================================================================
 // Entry-points
 //=====================================================================================
@@ -3296,7 +4201,8 @@ HRESULT Convert( const Image& srcImage, DXGI_FORMAT format, DWORD filter, float 
         return E_POINTER;
 
     if ( IsCompressed(srcImage.format) || IsCompressed(format)
-         || IsVideo(srcImage.format) || IsVideo(format) 
+         || IsPlanar(srcImage.format) || IsPlanar(format)
+         || IsPalettized(srcImage.format) || IsPalettized(format)
          || IsTypeless(srcImage.format) || IsTypeless(format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
@@ -3347,7 +4253,8 @@ HRESULT Convert( const Image* srcImages, size_t nimages, const TexMetadata& meta
         return E_INVALIDARG;
 
     if ( IsCompressed(metadata.format) || IsCompressed(format)
-         || IsVideo(metadata.format) || IsVideo(format) 
+         || IsPlanar(metadata.format) || IsPlanar(format)
+         || IsPalettized(metadata.format) || IsPalettized(format)
          || IsTypeless(metadata.format) || IsTypeless(format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
@@ -3478,6 +4385,128 @@ HRESULT Convert( const Image* srcImages, size_t nimages, const TexMetadata& meta
 
     default:
         return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+
+//-------------------------------------------------------------------------------------
+// Convert image from planar to single plane (image)
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
+HRESULT ConvertToSinglePlane( const Image& srcImage, ScratchImage& image )
+{
+    if ( !IsPlanar(srcImage.format) )
+        return E_INVALIDARG;
+
+    if ( !srcImage.pixels )
+        return E_POINTER;
+
+    DXGI_FORMAT format = _PlanarToSingle( srcImage.format );
+    if ( format == DXGI_FORMAT_UNKNOWN )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+
+#ifdef _M_X64
+    if ( (srcImage.width > 0xFFFFFFFF) || (srcImage.height > 0xFFFFFFFF) )
+        return E_INVALIDARG;
+#endif
+
+    HRESULT hr = image.Initialize2D( format, srcImage.width, srcImage.height, 1, 1 );
+    if ( FAILED(hr) )
+        return hr;
+   
+    const Image *rimage = image.GetImage( 0, 0, 0 );
+    if ( !rimage )
+    {
+        image.Release();
+        return E_POINTER;
+    }
+
+    hr = _ConvertToSinglePlane( srcImage, *rimage );
+    if ( FAILED(hr) )
+    {
+        image.Release();
+        return hr;
+    }
+
+    return S_OK;
+}
+
+
+//-------------------------------------------------------------------------------------
+// Convert image from planar to single plane (complex)
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
+HRESULT ConvertToSinglePlane( const Image* srcImages, size_t nimages, const TexMetadata& metadata,
+                              ScratchImage& result )
+{
+    if ( !srcImages || !nimages )
+        return E_INVALIDARG;
+
+    if ( metadata.IsVolumemap() )
+    {
+        // Direct3D does not support any planar formats for Texture3D
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+    }
+
+    DXGI_FORMAT format = _PlanarToSingle( metadata.format );
+    if ( format == DXGI_FORMAT_UNKNOWN )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+
+#ifdef _M_X64
+    if ( (metadata.width > 0xFFFFFFFF) || (metadata.height > 0xFFFFFFFF) )
+        return E_INVALIDARG;
+#endif
+
+    TexMetadata mdata2 = metadata;
+    mdata2.format = format;
+    HRESULT hr = result.Initialize( mdata2 );
+    if ( FAILED(hr) )
+        return hr;
+
+    if ( nimages != result.GetImageCount() )
+    {
+        result.Release();
+        return E_FAIL;
+    }
+
+    const Image* dest = result.GetImages();
+    if ( !dest )
+    {
+        result.Release();
+        return E_POINTER;
+    }
+
+    for( size_t index=0; index < nimages; ++index )
+    {
+        const Image& src = srcImages[ index ];
+        if ( src.format != metadata.format )
+        {
+            result.Release();
+            return E_FAIL;
+        }
+
+#ifdef _M_X64
+        if ( (src.width > 0xFFFFFFFF) || (src.height > 0xFFFFFFFF) )
+            return E_FAIL;
+#endif
+
+        const Image& dst = dest[ index ];
+        assert( dst.format == format );
+
+        if ( src.width != dst.width || src.height != dst.height )
+        {
+            result.Release();
+            return E_FAIL;
+        }
+
+        hr = _ConvertToSinglePlane( src, dst );
+        if ( FAILED(hr) )
+        {
+            result.Release();
+            return hr;
+        }
     }
 
     return S_OK;

@@ -123,6 +123,9 @@ const LegacyDDS g_LegacyDDSMap[] =
                                       | CONV_FLAGS_4444,      { sizeof(DDS_PIXELFORMAT), DDS_RGB,       0, 16, 0x0f00,     0x00f0,     0x000f,     0x0000     } }, // D3DFMT_X4R4G4B4 (uses DXGI 1.2 format)
     { DXGI_FORMAT_B4G4R4A4_UNORM,     CONV_FLAGS_EXPAND
                                       | CONV_FLAGS_44,        { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0,  8, 0x0f,       0x00,       0x00,       0xf0       } }, // D3DFMT_A4L4 (uses DXGI 1.2 format)
+
+    { DXGI_FORMAT_YUY2,               CONV_FLAGS_NONE,        DDSPF_YUY2 }, // D3DFMT_YUY2 (uses DXGI 1.2 format)
+    { DXGI_FORMAT_YUY2,               CONV_FLAGS_SWIZZLE,     { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,    MAKEFOURCC('U','Y','V','Y'), 0, 0, 0, 0, 0            } }, // D3DFMT_UYVY (uses DXGI 1.2 format)
 };
 
 // Note that many common DDS reader/writers (including D3DX) swap the
@@ -134,8 +137,6 @@ const LegacyDDS g_LegacyDDSMap[] =
 // We do not support the following legacy Direct3D 9 formats:
 //      BumpDuDv D3DFMT_V8U8, D3DFMT_Q8W8V8U8, D3DFMT_V16U16, D3DFMT_A2W10V10U10
 //      BumpLuminance D3DFMT_L6V5U5, D3DFMT_X8L8V8U8
-//      FourCC "UYVY" D3DFMT_UYVY
-//      FourCC "YUY2" D3DFMT_YUY2
 //      FourCC 117 D3DFMT_CxV8U8
 //      ZBuffer D3DFMT_D16_LOCKABLE
 //      FourCC 82 D3DFMT_D32F_LOCKABLE
@@ -248,9 +249,9 @@ static HRESULT _DecodeDDSHeader( _In_reads_bytes_(size) LPCVOID pSource, size_t 
         }
 
         metadata.format = d3d10ext->dxgiFormat;
-        if ( !IsValid( metadata.format ) )
+        if ( !IsValid( metadata.format ) || IsPalettized( metadata.format ) )
         {
-            return HRESULT_FROM_WIN32( ERROR_INVALID_DATA );
+            return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
         }
 
         static_assert( TEX_MISC_TEXTURECUBE == DDS_RESOURCE_MISC_TEXTURECUBE, "DDS header mismatch");
@@ -440,7 +441,11 @@ _Use_decl_annotations_
 HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags, 
                           LPVOID pDestination, size_t maxsize, size_t& required )
 {
-    assert( IsValid( metadata.format ) && !IsVideo( metadata.format ) );
+    if ( !IsValid( metadata.format ) )
+        return E_INVALIDARG;
+
+    if ( IsPalettized( metadata.format ) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     if ( metadata.arraySize > 1 )
     {
@@ -480,7 +485,8 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
         case DXGI_FORMAT_B5G5R5A1_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A1R5G5B5, sizeof(DDS_PIXELFORMAT) ); break;
         case DXGI_FORMAT_B8G8R8A8_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT) ); break; // DXGI 1.1
         case DXGI_FORMAT_B8G8R8X8_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT) ); break; // DXGI 1.1
-        case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT) ); break;
+        case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT) ); break; // DXGI 1.2
+        case DXGI_FORMAT_YUY2:                  memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_YUY2, sizeof(DDS_PIXELFORMAT) ); break; // DXGI 1.2
 
         // Legacy D3DX formats using D3DFMT enum value as FourCC
         case DXGI_FORMAT_R32G32B32A32_FLOAT:
@@ -723,7 +729,7 @@ static bool _LegacyExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestinati
 {
     assert( pDestination && outSize > 0 );
     assert( pSource && inSize > 0 );
-    assert( IsValid(outFormat) && !IsVideo(outFormat) );
+    assert( IsValid(outFormat) && !IsPlanar(outFormat) && !IsPalettized(outFormat) );
 
     switch( inFormat )
     {
@@ -1101,6 +1107,20 @@ static HRESULT _CopyImage( _In_reads_bytes_(size) const void* pPixels, _In_ size
                         size_t csize = std::min<size_t>( images[ index ].slicePitch, timages[ index ].slicePitch );
                         memcpy_s( pDest, images[ index ].slicePitch, pSrc, csize );
                     }
+                    else if ( IsPlanar( metadata.format ) )
+                    {
+                        size_t count = ComputeScanlines( metadata.format, images[ index ].height );
+                        if ( !count )
+                            return E_UNEXPECTED;
+
+                        size_t csize = std::min<size_t>( dpitch, spitch );
+                        for( size_t h = 0; h < count; ++h )
+                        {
+                            memcpy_s( pDest, dpitch, pSrc, csize );
+                            pSrc += spitch;
+                            pDest += dpitch;
+                        }
+                    }
                     else
                     {
                         for( size_t h = 0; h < images[ index ].height; ++h )
@@ -1175,6 +1195,11 @@ static HRESULT _CopyImage( _In_reads_bytes_(size) const void* pPixels, _In_ size
                         size_t csize = std::min<size_t>( images[ index ].slicePitch, timages[ index ].slicePitch );
                         memcpy_s( pDest, images[ index ].slicePitch, pSrc, csize );
                     }
+                    else if ( IsPlanar( metadata.format ) )
+                    {
+                        // Direct3D does not support any planar formats for Texture3D
+                        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+                    }
                     else
                     {
                         for( size_t h = 0; h < images[ index ].height; ++h )
@@ -1236,6 +1261,9 @@ static HRESULT _CopyImageInPlace( DWORD convFlags, _In_ const ScratchImage& imag
         return E_FAIL;
 
     const TexMetadata& metadata = image.GetMetadata();
+
+    if ( IsPlanar( metadata.format ) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     DWORD tflags = (convFlags & CONV_FLAGS_NOALPHA) ? TEXP_SCANLINE_SETALPHA : 0;
     if ( convFlags & CONV_FLAGS_SWIZZLE )

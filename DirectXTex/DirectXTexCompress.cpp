@@ -147,6 +147,7 @@ static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _
                     {
                         for( size_t s = pw; s < 4; ++s )
                         {
+#pragma prefast(suppress: 26000, "PREFAST false positive")
                             temp[ (t << 2) | s ] = temp[ (t << 2) | uSrc[s] ]; 
                         }
                     }
@@ -158,6 +159,7 @@ static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _
                     {
                         for( size_t s = 0; s < 4; ++s )
                         {
+#pragma prefast(suppress: 26000, "PREFAST false positive")
                             temp[ (t << 2) | s ] = temp[ (uSrc[t] << 2) | s ]; 
                         }
                     }
@@ -561,8 +563,12 @@ bool _IsAlphaAllOpaqueBC( _In_ const Image& cImage )
 _Use_decl_annotations_
 HRESULT Compress( const Image& srcImage, DXGI_FORMAT format, DWORD compress, float alphaRef, ScratchImage& image )
 {
-    if ( IsCompressed(srcImage.format) || !IsCompressed(format) || IsTypeless(format) )
+    if ( IsCompressed(srcImage.format) || !IsCompressed(format) )
         return E_INVALIDARG;
+
+    if ( IsTypeless(format)
+         || IsTypeless(srcImage.format) || IsPlanar(srcImage.format) || IsPalettized(srcImage.format) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     // Create compressed image
     HRESULT hr = image.Initialize2D( format, srcImage.width, srcImage.height, 1, 1 );
@@ -603,8 +609,12 @@ HRESULT Compress( const Image* srcImages, size_t nimages, const TexMetadata& met
     if ( !srcImages || !nimages )
         return E_INVALIDARG;
 
-    if ( !IsCompressed(format) || IsTypeless(format) )
+    if ( IsCompressed(metadata.format) || !IsCompressed(format) )
         return E_INVALIDARG;
+
+    if ( IsTypeless(format)
+         || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     cImages.Release();
 
@@ -676,7 +686,7 @@ HRESULT Compress( const Image* srcImages, size_t nimages, const TexMetadata& met
 _Use_decl_annotations_
 HRESULT Decompress( const Image& cImage, DXGI_FORMAT format, ScratchImage& image )
 {
-    if ( IsCompressed(format) || IsTypeless(format) )
+    if ( !IsCompressed(cImage.format) || IsCompressed(format) )
         return E_INVALIDARG;
 
     if ( format == DXGI_FORMAT_UNKNOWN )
@@ -689,8 +699,14 @@ HRESULT Decompress( const Image& cImage, DXGI_FORMAT format, ScratchImage& image
             return E_INVALIDARG;
         }
     }
-    else if ( !IsCompressed(cImage.format) || !IsValid(format) )
-        return E_INVALIDARG;
+    else
+    {
+        if ( !IsValid(format) )
+            return E_INVALIDARG;
+
+        if ( IsTypeless(format) || IsPlanar(format) || IsPalettized(format) )
+            return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+    }
 
     // Create decompressed image
     HRESULT hr = image.Initialize2D( format, cImage.width, cImage.height, 1, 1 );
@@ -719,7 +735,7 @@ HRESULT Decompress( const Image* cImages, size_t nimages, const TexMetadata& met
     if ( !cImages || !nimages )
         return E_INVALIDARG;
 
-    if ( IsCompressed(format) || IsTypeless(format) )
+    if ( !IsCompressed(metadata.format) || IsCompressed(format) )
         return E_INVALIDARG;
 
     if ( format == DXGI_FORMAT_UNKNOWN )
@@ -732,8 +748,14 @@ HRESULT Decompress( const Image* cImages, size_t nimages, const TexMetadata& met
             return E_FAIL;
         }
     }
-    else if ( !IsValid(format) )
-        return E_INVALIDARG;
+    else
+    {
+        if ( !IsValid(format) )
+            return E_INVALIDARG;
+
+        if ( IsTypeless(format) || IsPlanar(format) || IsPalettized(format) )
+            HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+    }
 
     images.Release();
 

@@ -141,6 +141,7 @@ namespace DirectX
         CONVF_XR        = 0x200,
         CONVF_PACKED    = 0x400,
         CONVF_BC        = 0x800,
+        CONVF_YUV       = 0x1000,
         CONVF_R         = 0x10000,
         CONVF_G         = 0x20000,
         CONVF_B         = 0x40000,

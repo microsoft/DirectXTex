@@ -37,7 +37,7 @@
 
 #include <ocidl.h>
 
-#define DIRECTX_TEX_VERSION 120
+#define DIRECTX_TEX_VERSION 130
 
 namespace DirectX
 {
@@ -48,6 +48,9 @@ namespace DirectX
     bool IsCompressed( _In_ DXGI_FORMAT fmt );
     bool IsPacked( _In_ DXGI_FORMAT fmt );
     bool IsVideo( _In_ DXGI_FORMAT fmt );
+    bool IsPlanar( _In_ DXGI_FORMAT fmt );
+    bool IsPalettized( _In_ DXGI_FORMAT fmt );
+    bool IsDepthStencil(_In_ DXGI_FORMAT fmt );
     bool IsSRGB( _In_ DXGI_FORMAT fmt );
     bool IsTypeless( _In_ DXGI_FORMAT fmt, _In_ bool partialTypeless = true );
 
@@ -437,6 +440,11 @@ namespace DirectX
                      _In_ DXGI_FORMAT format, _In_ DWORD filter, _In_ float threshold, _Out_ ScratchImage& result );
         // Convert the image to a new format
     
+    HRESULT ConvertToSinglePlane( _In_ const Image& srcImage, _Out_ ScratchImage& image );
+    HRESULT ConvertToSinglePlane( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                  _Out_ ScratchImage& image );
+        // Converts the image from a planar format to an equivalent non-planar format
+
     HRESULT GenerateMipMaps( _In_ const Image& baseImage, _In_ DWORD filter, _In_ size_t levels,
                              _Inout_ ScratchImage& mipChain, _In_ bool allow1D = false );
     HRESULT GenerateMipMaps( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,

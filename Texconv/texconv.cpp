@@ -180,6 +180,18 @@ SValue g_pFormats[] =
     DEFFMT(BC7_UNORM_SRGB),
 
     // DXGI 1.2 formats
+    DEFFMT(AYUV),
+    DEFFMT(Y410),
+    DEFFMT(Y416),
+    DEFFMT(NV12),
+    DEFFMT(P010),
+    DEFFMT(P016),
+    DEFFMT(420_OPAQUE),
+    DEFFMT(YUY2),
+    DEFFMT(Y210),
+    DEFFMT(Y216),
+    DEFFMT(NV11),
+    // No support for legacy paletted video formats (AI44, IA44, P8, A8P8)
     DEFFMT(B4G4R4A4_UNORM),
 
     { nullptr, DXGI_FORMAT_UNKNOWN }
@@ -897,7 +909,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         PrintInfo( info );
 
         size_t tMips = ( !mipLevels && info.mipLevels > 1 ) ? info.mipLevels : mipLevels;
-        DXGI_FORMAT tformat = ( format == DXGI_FORMAT_UNKNOWN ) ? info.format : format;
 
         bool sizewarn = false;
 
@@ -932,6 +943,49 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         // Convert texture
         wprintf( L" as");
         fflush(stdout);
+
+        // --- Planar ------------------------------------------------------------------
+        if ( IsPlanar( info.format ) )
+        {
+            const Image* img = image->GetImage(0,0,0);
+            assert( img );
+            size_t nimg = image->GetImageCount();
+
+            ScratchImage *timage = new ScratchImage;
+            if ( !timage )
+            {
+                wprintf( L" ERROR: Memory allocation failed\n" );
+                delete image;
+                goto LError;
+            }
+
+            hr = ConvertToSinglePlane( img, nimg, info, *timage );
+            if ( FAILED(hr) )
+            {
+                wprintf( L" FAILED [converttosingeplane] (%x)\n", hr);
+                delete timage;
+                delete image;
+                continue;
+            }
+
+            const TexMetadata& tinfo = timage->GetMetadata();
+
+            info.format = tinfo.format;
+
+            assert( info.width == tinfo.width );
+            assert( info.height == tinfo.height );
+            assert( info.depth == tinfo.depth );
+            assert( info.arraySize == tinfo.arraySize );
+            assert( info.mipLevels == tinfo.mipLevels );
+            assert( info.miscFlags == tinfo.miscFlags );
+            assert( info.miscFlags2 == tinfo.miscFlags2 );
+            assert( info.dimension == tinfo.dimension );
+
+            delete image;
+            image = timage;
+        }
+
+        DXGI_FORMAT tformat = ( format == DXGI_FORMAT_UNKNOWN ) ? info.format : format;
 
         // --- Decompress --------------------------------------------------------------
         if ( IsCompressed( info.format ) )

@@ -114,7 +114,8 @@ HRESULT PremultiplyAlpha( const Image& srcImage, DWORD flags, ScratchImage& imag
         return E_POINTER;
 
     if ( IsCompressed(srcImage.format)
-         || IsVideo(srcImage.format)
+         || IsPlanar(srcImage.format)
+         || IsPalettized(srcImage.format)
          || IsTypeless(srcImage.format)
          || !HasAlpha(srcImage.format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
@@ -156,7 +157,8 @@ HRESULT PremultiplyAlpha( const Image* srcImages, size_t nimages, const TexMetad
         return E_INVALIDARG;
 
     if ( IsCompressed(metadata.format)
-         || IsVideo(metadata.format)
+         || IsPlanar(metadata.format)
+         || IsPalettized(metadata.format)
          || IsTypeless(metadata.format)
          || !HasAlpha(metadata.format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );

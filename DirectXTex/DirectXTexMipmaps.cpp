@@ -2489,7 +2489,7 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
     if ( !_CalculateMipLevels(baseImage.width, baseImage.height, levels) )
         return E_INVALIDARG;
 
-    if ( IsCompressed( baseImage.format ) || IsVideo( baseImage.format ) )
+    if ( IsCompressed(baseImage.format) || IsTypeless(baseImage.format) || IsPlanar(baseImage.format) || IsPalettized(baseImage.format) )
     {
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
     }
@@ -2515,9 +2515,9 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
                     if ( _DXGIToWIC( baseImage.format, pfGUID, true ) )
                     {
                         // Case 1: Base image format is supported by Windows Imaging Component
-                        HRESULT hr = (baseImage.height > 1 || !allow1D)
-                                     ? mipChain.Initialize2D( baseImage.format, baseImage.width, baseImage.height, 1, levels )
-                                     : mipChain.Initialize1D( baseImage.format, baseImage.width, 1, levels ); 
+                        hr = (baseImage.height > 1 || !allow1D)
+                             ? mipChain.Initialize2D( baseImage.format, baseImage.width, baseImage.height, 1, levels )
+                             : mipChain.Initialize1D( baseImage.format, baseImage.width, 1, levels ); 
                         if ( FAILED(hr) )
                             return hr;
 
@@ -2528,7 +2528,7 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
                         // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
                         assert( baseImage.format != DXGI_FORMAT_R32G32B32A32_FLOAT );
                         ScratchImage temp;
-                        HRESULT hr = _ConvertToR32G32B32A32( baseImage, temp );
+                        hr = _ConvertToR32G32B32A32( baseImage, temp );
                         if ( FAILED(hr) )
                             return hr;
 
@@ -2645,7 +2645,7 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
         return E_INVALIDARG;
 
     if ( metadata.IsVolumemap()
-         || IsCompressed( metadata.format ) || IsVideo( metadata.format ) )
+         || IsCompressed(metadata.format) || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     if ( !_CalculateMipLevels(metadata.width, metadata.height, levels) )
@@ -2697,7 +2697,7 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
                     // Case 1: Base image format is supported by Windows Imaging Component
                     TexMetadata mdata2 = metadata;
                     mdata2.mipLevels = levels;
-                    HRESULT hr = mipChain.Initialize( mdata2 ); 
+                    hr = mipChain.Initialize( mdata2 ); 
                     if ( FAILED(hr) )
                         return hr;
 
@@ -2722,7 +2722,7 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
                     mdata2.mipLevels = levels;
                     mdata2.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
                     ScratchImage tMipChain;
-                    HRESULT hr = tMipChain.Initialize( mdata2 ); 
+                    hr = tMipChain.Initialize( mdata2 ); 
                     if ( FAILED(hr) )
                         return hr;
 
@@ -2869,11 +2869,8 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
         }
     }
 
-    if ( IsCompressed( format ) )
-    {
-        // We don't support generating mipmaps from compressed images, as those should be generated before compression
+    if ( IsCompressed(format) || IsTypeless(format) || IsPlanar(format) || IsPalettized(format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-    }
 
     static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
 
@@ -2954,7 +2951,7 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     if ( !metadata.IsVolumemap()
-         || IsCompressed( metadata.format ) || IsVideo( metadata.format ) )
+         || IsCompressed(metadata.format) || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     if ( !_CalculateMipLevels3D(metadata.width, metadata.height, metadata.depth, levels) )

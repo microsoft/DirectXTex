@@ -738,8 +738,6 @@ static HRESULT _CopyPixels( _In_reads_bytes_(size) LPCVOID pSource, size_t size,
 //-------------------------------------------------------------------------------------
 static HRESULT _EncodeTGAHeader( _In_ const Image& image, _Out_ TGA_HEADER& header, _Inout_ DWORD& convFlags )
 {
-    assert( IsValid( image.format ) && !IsVideo( image.format ) );
-
     memset( &header, 0, sizeof(TGA_HEADER) );
 
     if ( (image.width > 0xFFFF)

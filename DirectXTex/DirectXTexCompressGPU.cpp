@@ -200,8 +200,12 @@ inline static HRESULT _GPUCompress( _In_ GPUCompressBC* gpubc, _In_ const Image&
 _Use_decl_annotations_
 HRESULT Compress( ID3D11Device* pDevice, const Image& srcImage, DXGI_FORMAT format, DWORD compress, ScratchImage& image )
 {
-    if ( !pDevice || IsCompressed(srcImage.format) || !IsCompressed(format) || IsTypeless(format) )
+    if ( !pDevice || IsCompressed(srcImage.format) || !IsCompressed(format) )
         return E_INVALIDARG;
+
+    if ( IsTypeless(format)
+         || IsTypeless(srcImage.format) || IsPlanar(srcImage.format) || IsPalettized(srcImage.format) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     // Setup GPU compressor
     std::unique_ptr<GPUCompressBC> gpubc( new (std::nothrow) GPUCompressBC );
@@ -242,8 +246,12 @@ HRESULT Compress( ID3D11Device* pDevice, const Image* srcImages, size_t nimages,
     if ( !pDevice || !srcImages || !nimages )
         return E_INVALIDARG;
 
-    if ( !IsCompressed(format) || IsTypeless(format) )
+    if ( IsCompressed(metadata.format) || !IsCompressed(format) )
         return E_INVALIDARG;
+
+    if ( IsTypeless(format)
+         || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     cImages.Release();
 

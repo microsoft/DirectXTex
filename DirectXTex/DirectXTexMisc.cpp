@@ -176,7 +176,9 @@ HRESULT CopyRectangle( const Image& srcImage, const Rect& srcRect, const Image& 
     if ( !srcImage.pixels || !dstImage.pixels )
         return E_POINTER;
 
-    if ( IsCompressed( srcImage.format ) || IsCompressed( dstImage.format ) )
+    if ( IsCompressed( srcImage.format ) || IsCompressed( dstImage.format )
+         || IsPlanar( srcImage.format ) || IsPlanar( dstImage.format )
+         || IsPalettized( srcImage.format ) || IsPalettized( dstImage.format ) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     // Validate rectangle/offset
@@ -283,6 +285,10 @@ HRESULT ComputeMSE( const Image& image1, const Image& image2, float& mse, float*
 
     if ( image1.width != image2.width || image1.height != image2.height )
         return E_INVALIDARG;
+
+    if ( IsPlanar( image1.format ) || IsPlanar( image2.format )
+         || IsPalettized( image1.format ) || IsPalettized( image2.format ) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     if ( IsCompressed(image1.format) )
     {

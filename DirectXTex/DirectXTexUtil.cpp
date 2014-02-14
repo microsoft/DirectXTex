@@ -276,7 +276,7 @@ REFGUID GetWICCodec( WICCodecs codec )
 _Use_decl_annotations_
 size_t BitsPerPixel( DXGI_FORMAT fmt )
 {
-    switch( fmt )
+    switch( static_cast<int>(fmt) )
     {
     case DXGI_FORMAT_R32G32B32A32_TYPELESS:
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
@@ -304,6 +304,9 @@ size_t BitsPerPixel( DXGI_FORMAT fmt )
     case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
     case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
     case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+    case DXGI_FORMAT_Y416:
+    case DXGI_FORMAT_Y210:
+    case DXGI_FORMAT_Y216:
         return 64;
 
     case DXGI_FORMAT_R10G10B10A2_TYPELESS:
@@ -341,7 +344,19 @@ size_t BitsPerPixel( DXGI_FORMAT fmt )
     case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
     case DXGI_FORMAT_B8G8R8X8_TYPELESS:
     case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+    case DXGI_FORMAT_AYUV:
+    case DXGI_FORMAT_Y410:
+    case DXGI_FORMAT_YUY2:
+    case 116 /* DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT */:
+    case 117 /* DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT */:
         return 32;
+
+    case DXGI_FORMAT_P010:
+    case DXGI_FORMAT_P016:
+    case 118 /* DXGI_FORMAT_D16_UNORM_S8_UINT */:
+    case 119 /* DXGI_FORMAT_R16_UNORM_X8_TYPELESS */:
+    case 120 /* DXGI_FORMAT_X16_TYPELESS_G8_UINT */:
+        return 24;
 
     case DXGI_FORMAT_R8G8_TYPELESS:
     case DXGI_FORMAT_R8G8_UNORM:
@@ -357,7 +372,14 @@ size_t BitsPerPixel( DXGI_FORMAT fmt )
     case DXGI_FORMAT_R16_SINT:
     case DXGI_FORMAT_B5G6R5_UNORM:
     case DXGI_FORMAT_B5G5R5A1_UNORM:
+    case DXGI_FORMAT_A8P8:
+    case DXGI_FORMAT_B4G4R4A4_UNORM:
         return 16;
+
+    case DXGI_FORMAT_NV12:
+    case DXGI_FORMAT_420_OPAQUE:
+    case DXGI_FORMAT_NV11:
+        return 12;
 
     case DXGI_FORMAT_R8_TYPELESS:
     case DXGI_FORMAT_R8_UNORM:
@@ -365,6 +387,9 @@ size_t BitsPerPixel( DXGI_FORMAT fmt )
     case DXGI_FORMAT_R8_SNORM:
     case DXGI_FORMAT_R8_SINT:
     case DXGI_FORMAT_A8_UNORM:
+    case DXGI_FORMAT_AI44:
+    case DXGI_FORMAT_IA44:
+    case DXGI_FORMAT_P8:
         return 8;
 
     case DXGI_FORMAT_R1_UNORM:
@@ -395,11 +420,6 @@ size_t BitsPerPixel( DXGI_FORMAT fmt )
     case DXGI_FORMAT_BC7_UNORM_SRGB:
         return 8;
 
-    case DXGI_FORMAT_B4G4R4A4_UNORM:
-        return 16;
-
-    // We don't support the video formats ( see IsVideo function )
-
     default:
         return 0;
     }
@@ -413,7 +433,7 @@ size_t BitsPerPixel( DXGI_FORMAT fmt )
 _Use_decl_annotations_
 size_t BitsPerColor( DXGI_FORMAT fmt )
 {
-    switch( fmt )
+    switch( static_cast<int>(fmt) )
     {
     case DXGI_FORMAT_R32G32B32A32_TYPELESS:
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
@@ -466,6 +486,9 @@ size_t BitsPerColor( DXGI_FORMAT fmt )
     case DXGI_FORMAT_BC6H_TYPELESS:
     case DXGI_FORMAT_BC6H_UF16:
     case DXGI_FORMAT_BC6H_SF16:
+    case DXGI_FORMAT_Y416:
+    case DXGI_FORMAT_P016:
+    case DXGI_FORMAT_Y216:
         return 16;
 
     case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
@@ -478,6 +501,9 @@ size_t BitsPerColor( DXGI_FORMAT fmt )
     case DXGI_FORMAT_R10G10B10A2_UNORM:
     case DXGI_FORMAT_R10G10B10A2_UINT:
     case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
+    case DXGI_FORMAT_Y410:
+    case DXGI_FORMAT_P010:
+    case DXGI_FORMAT_Y210:
         return 10;
 
     case DXGI_FORMAT_R8G8B8A8_TYPELESS:
@@ -511,6 +537,11 @@ size_t BitsPerColor( DXGI_FORMAT fmt )
     case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
     case DXGI_FORMAT_B8G8R8X8_TYPELESS:
     case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+    case DXGI_FORMAT_AYUV:
+    case DXGI_FORMAT_NV12:
+    case DXGI_FORMAT_420_OPAQUE:
+    case DXGI_FORMAT_YUY2:
+    case DXGI_FORMAT_NV11:
         return 8;
 
     case DXGI_FORMAT_BC7_TYPELESS:
@@ -536,10 +567,25 @@ size_t BitsPerColor( DXGI_FORMAT fmt )
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         return 4;
 
-    // We don't support the video formats ( see IsVideo function )
-
     case DXGI_FORMAT_R1_UNORM:
         return 1;
+
+    case 116 /* DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT */:
+    case 117 /* DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT */:
+        // These are Xbox One platform specific types
+        return 10;
+
+    case 118 /* DXGI_FORMAT_D16_UNORM_S8_UINT */:
+    case 119 /* DXGI_FORMAT_R16_UNORM_X8_TYPELESS */:
+    case 120 /* DXGI_FORMAT_X16_TYPELESS_G8_UINT */:
+        // These are Xbox One platform specific types
+        return 16;
+
+    case DXGI_FORMAT_AI44:
+    case DXGI_FORMAT_IA44:
+    case DXGI_FORMAT_P8:
+    case DXGI_FORMAT_A8P8:
+        // Palettized formats return 0 for this function
 
     default:
         return 0;
@@ -555,7 +601,7 @@ _Use_decl_annotations_
 void ComputePitch( DXGI_FORMAT fmt, size_t width, size_t height,
                    size_t& rowPitch, size_t& slicePitch, DWORD flags )
 {
-    assert( IsValid(fmt) && !IsVideo(fmt) );
+    assert( IsValid(fmt) );
 
     if ( IsCompressed(fmt) )
     {
@@ -573,9 +619,27 @@ void ComputePitch( DXGI_FORMAT fmt, size_t width, size_t height,
     }
     else if ( IsPacked(fmt) )
     {
-        rowPitch = ( ( width + 1 ) >> 1) * 4;
+        size_t bpe = ( fmt == DXGI_FORMAT_Y210 || fmt == DXGI_FORMAT_Y216 ) ? 8 : 4;
+        rowPitch = ( ( width + 1 ) >> 1 ) * bpe;
 
         slicePitch = rowPitch * height;
+    }
+    else if ( fmt == DXGI_FORMAT_NV11 )
+    {
+        rowPitch = ( ( width + 3 ) >> 2 ) * 4;
+
+        // Direct3D makes this simplifying assumption, although it is larger than the 4:1:1 data
+        slicePitch = rowPitch * height * 2;
+    }
+    else if ( IsPlanar(fmt) )
+    {
+        size_t bpe = ( fmt == DXGI_FORMAT_P010 || fmt == DXGI_FORMAT_P016
+                       || fmt == DXGI_FORMAT(118 /* DXGI_FORMAT_D16_UNORM_S8_UINT */)
+                       || fmt == DXGI_FORMAT(119 /* DXGI_FORMAT_R16_UNORM_X8_TYPELESS */)
+                       || fmt == DXGI_FORMAT(120 /* DXGI_FORMAT_X16_TYPELESS_G8_UINT */) ) ? 4 : 2;
+        rowPitch = ( ( width + 1 ) >> 1 ) * bpe;
+
+        slicePitch = rowPitch * ( height + ( ( height + 1 ) >> 1 ) );
     }
     else
     {

@@ -256,8 +256,11 @@ ScratchImage& ScratchImage::operator= (ScratchImage&& moveFrom)
 _Use_decl_annotations_
 HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
 {
-    if ( !IsValid(mdata.format) || IsVideo(mdata.format) )
+    if ( !IsValid(mdata.format) )
         return E_INVALIDARG;
+
+    if ( IsPalettized(mdata.format) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     size_t mipLevels = mdata.mipLevels;
 
@@ -266,6 +269,9 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
     case TEX_DIMENSION_TEXTURE1D:
         if ( !mdata.width || mdata.height != 1 || mdata.depth != 1 || !mdata.arraySize )
             return E_INVALIDARG;
+
+        if ( IsVideo(mdata.format) )
+            return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
         if ( !_CalculateMipLevels(mdata.width,1,mipLevels) )
             return E_INVALIDARG;
@@ -279,6 +285,9 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
         {
             if ( (mdata.arraySize % 6) != 0 )
                 return E_INVALIDARG;
+
+            if ( IsVideo(mdata.format) )
+                return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
         }
 
         if ( !_CalculateMipLevels(mdata.width,mdata.height,mipLevels) )
@@ -288,6 +297,9 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
     case TEX_DIMENSION_TEXTURE3D:
         if ( !mdata.width || !mdata.height || !mdata.depth || mdata.arraySize != 1 )
             return E_INVALIDARG;
+        
+        if ( IsVideo(mdata.format) || IsPlanar(mdata.format) || IsDepthStencil(mdata.format) )
+            return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
         if ( !_CalculateMipLevels3D(mdata.width,mdata.height,mdata.depth,mipLevels) )
             return E_INVALIDARG;
@@ -338,8 +350,11 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
 _Use_decl_annotations_
 HRESULT ScratchImage::Initialize1D( DXGI_FORMAT fmt, size_t length, size_t arraySize, size_t mipLevels )
 {
-    if ( !IsValid(fmt) || IsVideo(fmt) || !length || !arraySize )
+    if ( !length || !arraySize )
         return E_INVALIDARG;
+
+    if ( IsVideo(fmt) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     // 1D is a special case of the 2D case
     HRESULT hr = Initialize2D( fmt, length, 1, arraySize, mipLevels );
@@ -354,8 +369,11 @@ HRESULT ScratchImage::Initialize1D( DXGI_FORMAT fmt, size_t length, size_t array
 _Use_decl_annotations_
 HRESULT ScratchImage::Initialize2D( DXGI_FORMAT fmt, size_t width, size_t height, size_t arraySize, size_t mipLevels )
 {
-    if ( !IsValid(fmt) || IsVideo(fmt) || !width || !height || !arraySize )
+    if ( !IsValid(fmt) || !width || !height || !arraySize )
         return E_INVALIDARG;
+
+    if ( IsPalettized(fmt) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     if ( !_CalculateMipLevels(width,height,mipLevels) )
         return E_INVALIDARG;
@@ -401,8 +419,11 @@ HRESULT ScratchImage::Initialize2D( DXGI_FORMAT fmt, size_t width, size_t height
 _Use_decl_annotations_
 HRESULT ScratchImage::Initialize3D( DXGI_FORMAT fmt, size_t width, size_t height, size_t depth, size_t mipLevels )
 {
-    if ( !IsValid(fmt) || IsVideo(fmt) || !width || !height || !depth )
+    if ( !IsValid(fmt) || !width || !height || !depth )
         return E_INVALIDARG;
+
+    if ( IsVideo(fmt) || IsPlanar(fmt) || IsDepthStencil(fmt) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     if ( !_CalculateMipLevels3D(width,height,depth,mipLevels) )
         return E_INVALIDARG;
@@ -451,8 +472,11 @@ HRESULT ScratchImage::Initialize3D( DXGI_FORMAT fmt, size_t width, size_t height
 _Use_decl_annotations_
 HRESULT ScratchImage::InitializeCube( DXGI_FORMAT fmt, size_t width, size_t height, size_t nCubes, size_t mipLevels )
 {
-    if ( !IsValid(fmt) || IsVideo(fmt)  || !width || !height || !nCubes )
+    if ( !width || !height || !nCubes )
         return E_INVALIDARG;
+
+    if ( IsVideo(fmt) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
     
     // A DirectX11 cubemap is just a 2D texture array that is a multiple of 6 for each cube
     HRESULT hr = Initialize2D( fmt, width, height, nCubes * 6, mipLevels );
@@ -474,6 +498,10 @@ HRESULT ScratchImage::InitializeFromImage( const Image& srcImage, bool allow1D )
     if ( FAILED(hr) )
         return hr;
 
+    size_t rowCount = ComputeScanlines( srcImage.format, srcImage.height );
+    if ( !rowCount )
+        return E_UNEXPECTED;
+
     const uint8_t* sptr = reinterpret_cast<const uint8_t*>( srcImage.pixels );
     if ( !sptr )
         return E_POINTER;
@@ -482,11 +510,16 @@ HRESULT ScratchImage::InitializeFromImage( const Image& srcImage, bool allow1D )
     if ( !dptr )
         return E_POINTER;
 
-    for( size_t y = 0; y < srcImage.height; ++y )
+    size_t spitch = srcImage.rowPitch;
+    size_t dpitch = _image[0].rowPitch;
+
+    size_t size = std::min<size_t>( dpitch, spitch );
+
+    for( size_t y = 0; y < rowCount; ++y )
     {
-        _CopyScanline( dptr, _image[0].rowPitch, sptr, srcImage.rowPitch, srcImage.format, TEXP_SCANLINE_NONE );
-        sptr += srcImage.rowPitch;
-        dptr += _image[0].rowPitch;
+        memcpy_s( dptr, dpitch, sptr, size );
+        sptr += spitch;
+        dptr += dpitch;
     }
 
     return S_OK;
@@ -521,6 +554,10 @@ HRESULT ScratchImage::InitializeArrayFromImages( const Image* images, size_t nIm
     if ( FAILED(hr) )
         return hr;
 
+    size_t rowCount = ComputeScanlines( format, height );
+    if ( !rowCount )
+        return E_UNEXPECTED;
+
     for( size_t index=0; index < nImages; ++index )
     {
         auto sptr = reinterpret_cast<const uint8_t*>( images[index].pixels );
@@ -532,11 +569,16 @@ HRESULT ScratchImage::InitializeArrayFromImages( const Image* images, size_t nIm
         if ( !dptr )
             return E_POINTER;
 
-        for( size_t y = 0; y < height; ++y )
+        size_t spitch = images[index].rowPitch;
+        size_t dpitch = _image[index].rowPitch;
+
+        size_t size = std::min<size_t>( dpitch, spitch );
+
+        for( size_t y = 0; y < rowCount; ++y )
         {
-            _CopyScanline( dptr, _image[index].rowPitch, sptr, images[index].rowPitch, format, TEXP_SCANLINE_NONE );
-            sptr += images[index].rowPitch;
-            dptr += _image[index].rowPitch;
+            memcpy_s( dptr, dpitch, sptr, size );
+            sptr += spitch;
+            dptr += dpitch;
         }
     }
 
@@ -552,6 +594,9 @@ HRESULT ScratchImage::InitializeCubeFromImages( const Image* images, size_t nIma
     // A DirectX11 cubemap is just a 2D texture array that is a multiple of 6 for each cube
     if ( ( nImages % 6 ) != 0 )
         return E_INVALIDARG;
+
+    if ( IsVideo(images[0].format) || IsPalettized(images[0].format) )
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     HRESULT hr = InitializeArrayFromImages( images, nImages, false );
     if ( FAILED(hr) )
@@ -588,6 +633,10 @@ HRESULT ScratchImage::Initialize3DFromImages( const Image* images, size_t depth 
     if ( FAILED(hr) )
         return hr;
 
+    size_t rowCount = ComputeScanlines( format, height );
+    if ( !rowCount )
+        return E_UNEXPECTED;
+
     for( size_t slice=0; slice < depth; ++slice )
     {
         auto sptr = reinterpret_cast<const uint8_t*>( images[slice].pixels );
@@ -599,11 +648,16 @@ HRESULT ScratchImage::Initialize3DFromImages( const Image* images, size_t depth 
         if ( !dptr )
             return E_POINTER;
 
-        for( size_t y = 0; y < height; ++y )
+        size_t spitch = images[slice].rowPitch;
+        size_t dpitch = _image[slice].rowPitch;
+
+        size_t size = std::min<size_t>( dpitch, spitch );
+
+        for( size_t y = 0; y < rowCount; ++y )
         {
-            _CopyScanline( dptr, _image[slice].rowPitch, sptr, images[slice].rowPitch, format, TEXP_SCANLINE_NONE );
-            sptr += images[slice].rowPitch;
-            dptr += _image[slice].rowPitch;
+            memcpy_s( dptr, dpitch, sptr, size );
+            sptr += spitch;
+            dptr += dpitch;
         }
     }
 
@@ -636,12 +690,13 @@ bool ScratchImage::OverrideFormat( DXGI_FORMAT f )
     if ( !_image )
         return false;
 
-    if ( !IsValid( f ) || IsVideo( f ) )
+    if ( !IsValid( f ) || IsPlanar( f ) || IsPalettized( f ) )
         return false;
 
     if ( ( BitsPerPixel( f ) != BitsPerPixel( _metadata.format ) )
          || ( IsCompressed( f ) != IsCompressed( _metadata.format ) )
-         || ( IsPacked( f ) != IsPacked( _metadata.format ) ) )
+         || ( IsPacked( f ) != IsPacked( _metadata.format ) )
+         || ( IsVideo( f ) != IsVideo( _metadata.format ) ) )
     {
          // Can't change the effective pitch of the format this way
          return false;

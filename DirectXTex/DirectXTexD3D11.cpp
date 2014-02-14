@@ -55,6 +55,11 @@ static HRESULT _Capture( _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource
             }
 
             size_t lines = ComputeScanlines( metadata.format, height );
+            if ( !lines )
+            {
+                pContext->Unmap( pSource, dindex );
+                return E_UNEXPECTED;
+            }
 
             for( size_t slice = 0; slice < depth; ++slice )
             {
@@ -124,6 +129,11 @@ static HRESULT _Capture( _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource
                 }
 
                 size_t lines = ComputeScanlines( metadata.format, height );
+                if ( !lines )
+                {
+                    pContext->Unmap( pSource, dindex );
+                    return E_UNEXPECTED;
+                }
 
                 auto sptr = reinterpret_cast<const uint8_t*>( mapped.pData );
                 uint8_t* dptr = img->pixels;
@@ -166,9 +176,6 @@ bool IsSupportedTexture( ID3D11Device* pDevice, const TexMetadata& metadata )
     DXGI_FORMAT fmt = metadata.format;
 
     if ( !IsValid( fmt ) )
-        return false;
-
-    if ( IsVideo(fmt) )
         return false;
 
     switch( fmt )
