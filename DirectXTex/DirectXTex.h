@@ -510,10 +510,10 @@ namespace DirectX
         // Note that alphaRef is only used by BC1. 0.5f is a typical value to use
 
     HRESULT Compress( _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD compress,
-                      _Out_ ScratchImage& image );
+                      _In_ float alphaWeight, _Out_ ScratchImage& image );
     HRESULT Compress( _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                      _In_ DXGI_FORMAT format, _In_ DWORD compress, _Out_ ScratchImage& cImages );
-        // DirectCompute-based compression
+                      _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages );
+        // DirectCompute-based compression (alphaWeight is only used by BC7. 1.0 is the typical value to use)
 
     HRESULT Decompress( _In_ const Image& cImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image );
     HRESULT Decompress( _In_reads_(nimages) const Image* cImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,

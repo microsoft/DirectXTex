@@ -309,7 +309,7 @@ static const uint8_t g_aFixUp[3][64][3] =
 // BC6H Compression
 const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
 {
-    {   // 0x00 - 10 5 5 5
+    {   // Mode 1 (0x00) - 10 5 5 5
         { M, 0}, { M, 1}, {GY, 4}, {BY, 4}, {BZ, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -321,7 +321,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         { D, 3}, { D, 4}, 
     },
 
-    {   // 0x01 - 7 6 6 6
+    {   // Mode 2 (0x01) - 7 6 6 6
         { M, 0}, { M, 1}, {GY, 5}, {GZ, 4}, {GZ, 5}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {BZ, 0}, {BZ, 1}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {BY, 5}, {BZ, 2}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -333,7 +333,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         { D, 3}, { D, 4}, 
     },
 
-    {   // 0x02 - 11 5 4 4
+    {   // Mode 3 (0x02) - 11 5 4 4
         { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -345,7 +345,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         { D, 3}, { D, 4}, 
     },
 
-    {   // 0x06 - 11 4 5 4
+    {   // Mode 4 (0x06) - 11 4 5 4
         { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -357,7 +357,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         { D, 3}, { D, 4}, 
     },
 
-    {   // 0x0a - 11 4 4 5
+    {   // Mode 5 (0x0a) - 11 4 4 5
         { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -369,7 +369,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         { D, 3}, { D, 4}, 
     },
 
-    {   // 0x0e - 9 5 5 5
+    {   // Mode 6 (0x0e) - 9 5 5 5
         { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -381,7 +381,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         { D, 3}, { D, 4}, 
     },
 
-    {   // 0x12 - 8 6 5 5
+    {   // Mode 7 (0x12) - 8 6 5 5
         { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {GZ, 4}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {GW, 7}, {BZ, 2}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -393,7 +393,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         { D, 3}, { D, 4}, 
     },
 
-    {   // 0x16 - 8 5 6 5
+    {   // Mode 8 (0x16) - 8 5 6 5
         { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {BZ, 0}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {GW, 7}, {GY, 5}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -405,7 +405,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         { D, 3}, { D, 4}, 
     },
 
-    {   // 0x1a - 8 5 5 6
+    {   // Mode 9 (0x1a) - 8 5 5 6
         { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {BZ, 1}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {GW, 7}, {BY, 5}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -417,7 +417,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         { D, 3}, { D, 4}, 
     },
 
-    {   // 0x1e - 6 6 6 6
+    {   // Mode 10 (0x1e) - 6 6 6 6
         { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {GZ, 4}, {BZ, 0}, {BZ, 1}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GY, 5}, {BY, 5}, {BZ, 2}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -429,7 +429,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         { D, 3}, { D, 4}, 
     },
 
-    {   // 0x03 - 10 10
+    {   // Mode 11 (0x03) - 10 10
         { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -441,7 +441,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {NA, 0}, {NA, 0}, 
     },
 
-    {   // 0x07 - 11 9
+    {   // Mode 12 (0x07) - 11 9
         { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -453,7 +453,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {NA, 0}, {NA, 0}, 
     },
 
-    {   // 0x0b - 12 8
+    {   // Mode 13 (0x0b) - 12 8
         { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -465,7 +465,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {NA, 0}, {NA, 0}, 
     },
 
-    {   // 0x0f - 16 4
+    {   // Mode 14 (0x0f) - 16 4
         { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
         {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
@@ -481,56 +481,56 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
 // Mode, Partitions, Transformed, IndexPrec, RGBAPrec
 const D3DX_BC6H::ModeInfo D3DX_BC6H::ms_aInfo[] =
 {
-    {0x00, 1, true,  3, LDRColorA(10,10,10,0), LDRColorA( 5, 5, 5,0), LDRColorA(5,5,5,0), LDRColorA(5,5,5,0)}, // Mode 0
-    {0x01, 1, true,  3, LDRColorA( 7, 7, 7,0), LDRColorA( 6, 6, 6,0), LDRColorA(6,6,6,0), LDRColorA(6,6,6,0)}, // Mode 1
-    {0x02, 1, true,  3, LDRColorA(11,11,11,0), LDRColorA( 5, 4, 4,0), LDRColorA(5,4,4,0), LDRColorA(5,4,4,0)}, // Mode 2
-    {0x06, 1, true,  3, LDRColorA(11,11,11,0), LDRColorA( 4, 5, 4,0), LDRColorA(4,5,4,0), LDRColorA(4,5,4,0)}, // Mode 3
-    {0x0a, 1, true,  3, LDRColorA(11,11,11,0), LDRColorA( 4, 4, 5,0), LDRColorA(4,4,5,0), LDRColorA(4,4,5,0)}, // Mode 4
-    {0x0e, 1, true,  3, LDRColorA( 9, 9, 9,0), LDRColorA( 5, 5, 5,0), LDRColorA(5,5,5,0), LDRColorA(5,5,5,0)}, // Mode 5
-    {0x12, 1, true,  3, LDRColorA( 8, 8, 8,0), LDRColorA( 6, 5, 5,0), LDRColorA(6,5,5,0), LDRColorA(6,5,5,0)}, // Mode 6
-    {0x16, 1, true,  3, LDRColorA( 8, 8, 8,0), LDRColorA( 5, 6, 5,0), LDRColorA(5,6,5,0), LDRColorA(5,6,5,0)}, // Mode 7
-    {0x1a, 1, true,  3, LDRColorA( 8, 8, 8,0), LDRColorA( 5, 5, 6,0), LDRColorA(5,5,6,0), LDRColorA(5,5,6,0)}, // Mode 8
-    {0x1e, 1, false, 3, LDRColorA( 6, 6, 6,0), LDRColorA( 6, 6, 6,0), LDRColorA(6,6,6,0), LDRColorA(6,6,6,0)}, // Mode 9
-    {0x03, 0, false, 4, LDRColorA(10,10,10,0), LDRColorA(10,10,10,0), LDRColorA(0,0,0,0), LDRColorA(0,0,0,0)}, // Mode 10
-    {0x07, 0, true,  4, LDRColorA(11,11,11,0), LDRColorA( 9, 9, 9,0), LDRColorA(0,0,0,0), LDRColorA(0,0,0,0)}, // Mode 11
-    {0x0b, 0, true,  4, LDRColorA(12,12,12,0), LDRColorA( 8, 8, 8,0), LDRColorA(0,0,0,0), LDRColorA(0,0,0,0)}, // Mode 12
-    {0x0f, 0, true,  4, LDRColorA(16,16,16,0), LDRColorA( 4, 4, 4,0), LDRColorA(0,0,0,0), LDRColorA(0,0,0,0)}, // Mode 13
+    {0x00, 1, true,  3, LDRColorA(10,10,10,0), LDRColorA( 5, 5, 5,0), LDRColorA(5,5,5,0), LDRColorA(5,5,5,0)}, // Mode 1
+    {0x01, 1, true,  3, LDRColorA( 7, 7, 7,0), LDRColorA( 6, 6, 6,0), LDRColorA(6,6,6,0), LDRColorA(6,6,6,0)}, // Mode 2
+    {0x02, 1, true,  3, LDRColorA(11,11,11,0), LDRColorA( 5, 4, 4,0), LDRColorA(5,4,4,0), LDRColorA(5,4,4,0)}, // Mode 3
+    {0x06, 1, true,  3, LDRColorA(11,11,11,0), LDRColorA( 4, 5, 4,0), LDRColorA(4,5,4,0), LDRColorA(4,5,4,0)}, // Mode 4
+    {0x0a, 1, true,  3, LDRColorA(11,11,11,0), LDRColorA( 4, 4, 5,0), LDRColorA(4,4,5,0), LDRColorA(4,4,5,0)}, // Mode 5
+    {0x0e, 1, true,  3, LDRColorA( 9, 9, 9,0), LDRColorA( 5, 5, 5,0), LDRColorA(5,5,5,0), LDRColorA(5,5,5,0)}, // Mode 6
+    {0x12, 1, true,  3, LDRColorA( 8, 8, 8,0), LDRColorA( 6, 5, 5,0), LDRColorA(6,5,5,0), LDRColorA(6,5,5,0)}, // Mode 7
+    {0x16, 1, true,  3, LDRColorA( 8, 8, 8,0), LDRColorA( 5, 6, 5,0), LDRColorA(5,6,5,0), LDRColorA(5,6,5,0)}, // Mode 8
+    {0x1a, 1, true,  3, LDRColorA( 8, 8, 8,0), LDRColorA( 5, 5, 6,0), LDRColorA(5,5,6,0), LDRColorA(5,5,6,0)}, // Mode 9
+    {0x1e, 1, false, 3, LDRColorA( 6, 6, 6,0), LDRColorA( 6, 6, 6,0), LDRColorA(6,6,6,0), LDRColorA(6,6,6,0)}, // Mode 10
+    {0x03, 0, false, 4, LDRColorA(10,10,10,0), LDRColorA(10,10,10,0), LDRColorA(0,0,0,0), LDRColorA(0,0,0,0)}, // Mode 11
+    {0x07, 0, true,  4, LDRColorA(11,11,11,0), LDRColorA( 9, 9, 9,0), LDRColorA(0,0,0,0), LDRColorA(0,0,0,0)}, // Mode 12
+    {0x0b, 0, true,  4, LDRColorA(12,12,12,0), LDRColorA( 8, 8, 8,0), LDRColorA(0,0,0,0), LDRColorA(0,0,0,0)}, // Mode 13
+    {0x0f, 0, true,  4, LDRColorA(16,16,16,0), LDRColorA( 4, 4, 4,0), LDRColorA(0,0,0,0), LDRColorA(0,0,0,0)}, // Mode 14
 };
 
 const int D3DX_BC6H::ms_aModeToInfo[] =
 {
-     0, // 0x00
-     1, // 0x01
-     2, // 0x02
-    10, // 0x03
-    -1, // 0x04
-    -1, // 0x05
-     3, // 0x06
-    11, // 0x07
-    -1, // 0x08
-    -1, // 0x09
-     4, // 0x0a
-    12, // 0x0b
-    -1, // 0x0c
-    -1, // 0x0d
-     5, // 0x0e
-    13, // 0x0f
-    -1, // 0x10
-    -1, // 0x11
-     6, // 0x12
-    -1, // 0x13
-    -1, // 0x14
-    -1, // 0x15
-     7, // 0x16
-    -1, // 0x17
-    -1, // 0x18
-    -1, // 0x19
-     8, // 0x1a
-    -1, // 0x1b
-    -1, // 0x1c
-    -1, // 0x1d
-     9, // 0x1e
-    -1, // 0x1f
+     0, // Mode 1   - 0x00
+     1, // Mode 2   - 0x01
+     2, // Mode 3   - 0x02
+    10, // Mode 11  - 0x03
+    -1, // Invalid  - 0x04
+    -1, // Invalid  - 0x05
+     3, // Mode 4   - 0x06
+    11, // Mode 12  - 0x07
+    -1, // Invalid  - 0x08
+    -1, // Invalid  - 0x09
+     4, // Mode 5   - 0x0a
+    12, // Mode 13  - 0x0b
+    -1, // Invalid  - 0x0c
+    -1, // Invalid  - 0x0d
+     5, // Mode 6   - 0x0e
+    13, // Mode 14  - 0x0f
+    -1, // Invalid  - 0x10
+    -1, // Invalid  - 0x11
+     6, // Mode 7   - 0x12
+    -1, // Reserved - 0x13
+    -1, // Invalid  - 0x14
+    -1, // Invalid  - 0x15
+     7, // Mode 8   - 0x16
+    -1, // Reserved - 0x17
+    -1, // Invalid  - 0x18
+    -1, // Invalid  - 0x19
+     8, // Mode 9   - 0x1a
+    -1, // Reserved - 0x1b
+    -1, // Invalid  - 0x1c
+    -1, // Invalid  - 0x1d
+     9, // Mode 10  - 0x1e
+    -1, // Resreved - 0x1f
 };
 
 // BC7 compression: uPartitions, uPartitionBits, uPBits, uRotationBits, uIndexModeBits, uIndexPrec, uIndexPrec2, RGBAPrec, RGBAPrecWithP

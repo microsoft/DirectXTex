@@ -191,6 +191,8 @@ HRESULT GPUCompressBC::Prepare( size_t width, size_t height, DXGI_FORMAT format,
     m_width = width;
     m_height = height;
 
+    m_alphaWeight = alphaWeight;
+
     size_t xblocks = std::max<size_t>( 1, (width + 3) >> 2 );
     size_t yblocks = std::max<size_t>( 1, (height + 3) >> 2 );
     size_t num_blocks = xblocks * yblocks;

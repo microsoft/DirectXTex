@@ -46,6 +46,7 @@ enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
     OPT_NOGPU,
     OPT_FEATURE_LEVEL,
     OPT_FIT_POWEROF2,
+    OPT_ALPHA_WEIGHT,
     OPT_MAX
 };
 
@@ -99,6 +100,7 @@ SValue g_pOptions[] =
     { L"nogpu",         OPT_NOGPU     },
     { L"fl",            OPT_FEATURE_LEVEL },
     { L"pow2",          OPT_FIT_POWEROF2 },
+    { L"aw",            OPT_ALPHA_WEIGHT },
     { nullptr,          0             }
 };
 
@@ -393,6 +395,8 @@ void PrintUsage()
     wprintf( L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
     wprintf( L"   -pmalpha            convert final texture to use premultiplied alpha\n");
     wprintf( L"   -pow2               resize to fit a power-of-2, respecting aspect ratio\n" );
+    wprintf( L"   -aw                 BC7 GPU compressor weighting for alpha error metric\n"
+             L"                       (defaults to 1.0)\n" );
     wprintf( L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n");
     wprintf( L"\n                       (DDS input only)\n");
     wprintf( L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
@@ -570,6 +574,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     DWORD dwFilterOpts = 0;
     DWORD FileType = CODEC_DDS;
     DWORD maxSize = 16384;
+    float alphaWeight = 1.f;
 
     WCHAR szPrefix   [MAX_PATH];
     WCHAR szSuffix   [MAX_PATH];
@@ -756,6 +761,22 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     wprintf( L"Invalid value specified with -fl (%s)\n", pValue);
                     wprintf( L"\n");
                     PrintUsage();
+                    return 1;
+                }
+                break;
+
+            case OPT_ALPHA_WEIGHT:
+                if (swscanf_s(pValue, L"%f", &alphaWeight) != 1)
+                {
+                    wprintf( L"Invalid value specified with -aw (%s)\n", pValue);
+                    printf("\n");
+                    PrintUsage();
+                    return 1;
+                }
+                else if ( alphaWeight < 0.f )
+                {
+                    wprintf( L"-aw (%s) parameter must be positive\n", pValue);
+                    printf("\n");
                     return 1;
                 }
                 break;
@@ -1388,7 +1409,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             if ( bc6hbc7 && pDevice )
             {
-                hr = Compress( pDevice, img, nimg, info, tformat, dwSRGB, *timage );
+                hr = Compress( pDevice, img, nimg, info, tformat, dwSRGB, alphaWeight, *timage );
             }
             else
             {

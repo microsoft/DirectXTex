@@ -198,7 +198,7 @@ inline static HRESULT _GPUCompress( _In_ GPUCompressBC* gpubc, _In_ const Image&
 // Compression
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT Compress( ID3D11Device* pDevice, const Image& srcImage, DXGI_FORMAT format, DWORD compress, ScratchImage& image )
+HRESULT Compress( ID3D11Device* pDevice, const Image& srcImage, DXGI_FORMAT format, DWORD compress, float alphaWeight, ScratchImage& image )
 {
     if ( !pDevice || IsCompressed(srcImage.format) || !IsCompressed(format) )
         return E_INVALIDARG;
@@ -216,7 +216,7 @@ HRESULT Compress( ID3D11Device* pDevice, const Image& srcImage, DXGI_FORMAT form
     if ( FAILED(hr) )
         return hr;
 
-    hr = gpubc->Prepare( srcImage.width, srcImage.height, format );
+    hr = gpubc->Prepare( srcImage.width, srcImage.height, format, alphaWeight );
     if ( FAILED(hr) )
         return hr;
 
@@ -241,7 +241,7 @@ HRESULT Compress( ID3D11Device* pDevice, const Image& srcImage, DXGI_FORMAT form
 
 _Use_decl_annotations_
 HRESULT Compress( ID3D11Device* pDevice, const Image* srcImages, size_t nimages, const TexMetadata& metadata,
-                  DXGI_FORMAT format, DWORD compress, ScratchImage& cImages )
+                  DXGI_FORMAT format, DWORD compress, float alphaWeight, ScratchImage& cImages )
 {
     if ( !pDevice || !srcImages || !nimages )
         return E_INVALIDARG;
@@ -295,7 +295,7 @@ HRESULT Compress( ID3D11Device* pDevice, const Image* srcImages, size_t nimages,
 
             for( size_t level=0; level < metadata.mipLevels; ++level )
             {
-                hr = gpubc->Prepare( w, h, format );
+                hr = gpubc->Prepare( w, h, format, alphaWeight );
                 if ( FAILED(hr) )
                 {
                     cImages.Release();
@@ -346,7 +346,7 @@ HRESULT Compress( ID3D11Device* pDevice, const Image* srcImages, size_t nimages,
 
             for( size_t level=0; level < metadata.mipLevels; ++level )
             {
-                hr = gpubc->Prepare( w, h, format );
+                hr = gpubc->Prepare( w, h, format, alphaWeight );
                 if ( FAILED(hr) )
                 {
                     cImages.Release();
