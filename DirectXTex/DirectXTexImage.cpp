@@ -254,7 +254,7 @@ ScratchImage& ScratchImage::operator= (ScratchImage&& moveFrom)
 // Methods
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
+HRESULT ScratchImage::Initialize( const TexMetadata& mdata, DWORD flags )
 {
     if ( !IsValid(mdata.format) )
         return E_INVALIDARG;
@@ -322,7 +322,7 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
     _metadata.dimension = mdata.dimension;
 
     size_t pixelSize, nimages;
-    _DetermineImageArray( _metadata, CP_FLAGS_NONE, nimages, pixelSize );
+    _DetermineImageArray( _metadata, flags, nimages, pixelSize );
 
     _image = new (std::nothrow) Image[ nimages ];
     if ( !_image )
@@ -338,7 +338,7 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
         return E_OUTOFMEMORY;
     }
     _size = pixelSize;
-    if ( !_SetupImageArray( _memory, pixelSize, _metadata, CP_FLAGS_NONE, _image, nimages ) )
+    if ( !_SetupImageArray( _memory, pixelSize, _metadata, flags, _image, nimages ) )
     {
         Release();
         return E_FAIL;
@@ -348,7 +348,7 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata )
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::Initialize1D( DXGI_FORMAT fmt, size_t length, size_t arraySize, size_t mipLevels )
+HRESULT ScratchImage::Initialize1D( DXGI_FORMAT fmt, size_t length, size_t arraySize, size_t mipLevels, DWORD flags )
 {
     if ( !length || !arraySize )
         return E_INVALIDARG;
@@ -357,7 +357,7 @@ HRESULT ScratchImage::Initialize1D( DXGI_FORMAT fmt, size_t length, size_t array
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     // 1D is a special case of the 2D case
-    HRESULT hr = Initialize2D( fmt, length, 1, arraySize, mipLevels );
+    HRESULT hr = Initialize2D( fmt, length, 1, arraySize, mipLevels, flags );
     if ( FAILED(hr) )
         return hr;
 
@@ -367,7 +367,7 @@ HRESULT ScratchImage::Initialize1D( DXGI_FORMAT fmt, size_t length, size_t array
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::Initialize2D( DXGI_FORMAT fmt, size_t width, size_t height, size_t arraySize, size_t mipLevels )
+HRESULT ScratchImage::Initialize2D( DXGI_FORMAT fmt, size_t width, size_t height, size_t arraySize, size_t mipLevels, DWORD flags )
 {
     if ( !IsValid(fmt) || !width || !height || !arraySize )
         return E_INVALIDARG;
@@ -391,7 +391,7 @@ HRESULT ScratchImage::Initialize2D( DXGI_FORMAT fmt, size_t width, size_t height
     _metadata.dimension = TEX_DIMENSION_TEXTURE2D;
 
     size_t pixelSize, nimages;
-    _DetermineImageArray( _metadata, CP_FLAGS_NONE, nimages, pixelSize );
+    _DetermineImageArray( _metadata, flags, nimages, pixelSize );
 
     _image = new (std::nothrow) Image[ nimages ];
     if ( !_image )
@@ -407,7 +407,7 @@ HRESULT ScratchImage::Initialize2D( DXGI_FORMAT fmt, size_t width, size_t height
         return E_OUTOFMEMORY;
     }
     _size = pixelSize;
-    if ( !_SetupImageArray( _memory, pixelSize, _metadata, CP_FLAGS_NONE, _image, nimages ) )
+    if ( !_SetupImageArray( _memory, pixelSize, _metadata, flags, _image, nimages ) )
     {
         Release();
         return E_FAIL;
@@ -417,7 +417,7 @@ HRESULT ScratchImage::Initialize2D( DXGI_FORMAT fmt, size_t width, size_t height
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::Initialize3D( DXGI_FORMAT fmt, size_t width, size_t height, size_t depth, size_t mipLevels )
+HRESULT ScratchImage::Initialize3D( DXGI_FORMAT fmt, size_t width, size_t height, size_t depth, size_t mipLevels, DWORD flags )
 {
     if ( !IsValid(fmt) || !width || !height || !depth )
         return E_INVALIDARG;
@@ -441,7 +441,7 @@ HRESULT ScratchImage::Initialize3D( DXGI_FORMAT fmt, size_t width, size_t height
     _metadata.dimension = TEX_DIMENSION_TEXTURE3D;
 
     size_t pixelSize, nimages;
-    _DetermineImageArray( _metadata, CP_FLAGS_NONE, nimages, pixelSize );
+    _DetermineImageArray( _metadata, flags, nimages, pixelSize );
 
     _image = new (std::nothrow) Image[ nimages ];
     if ( !_image )
@@ -460,7 +460,7 @@ HRESULT ScratchImage::Initialize3D( DXGI_FORMAT fmt, size_t width, size_t height
     }
     _size = pixelSize;
 
-    if ( !_SetupImageArray( _memory, pixelSize, _metadata, CP_FLAGS_NONE, _image, nimages ) )
+    if ( !_SetupImageArray( _memory, pixelSize, _metadata, flags, _image, nimages ) )
     {
         Release();
         return E_FAIL;
@@ -470,7 +470,7 @@ HRESULT ScratchImage::Initialize3D( DXGI_FORMAT fmt, size_t width, size_t height
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::InitializeCube( DXGI_FORMAT fmt, size_t width, size_t height, size_t nCubes, size_t mipLevels )
+HRESULT ScratchImage::InitializeCube( DXGI_FORMAT fmt, size_t width, size_t height, size_t nCubes, size_t mipLevels, DWORD flags )
 {
     if ( !width || !height || !nCubes )
         return E_INVALIDARG;
@@ -479,7 +479,7 @@ HRESULT ScratchImage::InitializeCube( DXGI_FORMAT fmt, size_t width, size_t heig
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
     
     // A DirectX11 cubemap is just a 2D texture array that is a multiple of 6 for each cube
-    HRESULT hr = Initialize2D( fmt, width, height, nCubes * 6, mipLevels );
+    HRESULT hr = Initialize2D( fmt, width, height, nCubes * 6, mipLevels, flags );
     if ( FAILED(hr) )
         return hr;
 
@@ -489,11 +489,11 @@ HRESULT ScratchImage::InitializeCube( DXGI_FORMAT fmt, size_t width, size_t heig
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::InitializeFromImage( const Image& srcImage, bool allow1D )
+HRESULT ScratchImage::InitializeFromImage( const Image& srcImage, bool allow1D, DWORD flags )
 {
     HRESULT hr = ( srcImage.height > 1 || !allow1D )
-                 ? Initialize2D( srcImage.format, srcImage.width, srcImage.height, 1, 1 )
-                 : Initialize1D( srcImage.format, srcImage.width, 1, 1 );
+                 ? Initialize2D( srcImage.format, srcImage.width, srcImage.height, 1, 1, flags )
+                 : Initialize1D( srcImage.format, srcImage.width, 1, 1, flags );
 
     if ( FAILED(hr) )
         return hr;
@@ -526,7 +526,7 @@ HRESULT ScratchImage::InitializeFromImage( const Image& srcImage, bool allow1D )
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::InitializeArrayFromImages( const Image* images, size_t nImages, bool allow1D )
+HRESULT ScratchImage::InitializeArrayFromImages( const Image* images, size_t nImages, bool allow1D, DWORD flags )
 {
     if ( !images || !nImages )
         return E_INVALIDARG;
@@ -548,8 +548,8 @@ HRESULT ScratchImage::InitializeArrayFromImages( const Image* images, size_t nIm
     }
 
     HRESULT hr = ( height > 1 || !allow1D )
-                 ? Initialize2D( format, width, height, nImages, 1 )
-                 : Initialize1D( format, width, nImages, 1 );
+                 ? Initialize2D( format, width, height, nImages, 1, flags )
+                 : Initialize1D( format, width, nImages, 1, flags );
 
     if ( FAILED(hr) )
         return hr;
@@ -586,7 +586,7 @@ HRESULT ScratchImage::InitializeArrayFromImages( const Image* images, size_t nIm
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::InitializeCubeFromImages( const Image* images, size_t nImages )
+HRESULT ScratchImage::InitializeCubeFromImages( const Image* images, size_t nImages, DWORD flags )
 {
     if ( !images || !nImages )
         return E_INVALIDARG;
@@ -598,7 +598,7 @@ HRESULT ScratchImage::InitializeCubeFromImages( const Image* images, size_t nIma
     if ( IsVideo(images[0].format) || IsPalettized(images[0].format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-    HRESULT hr = InitializeArrayFromImages( images, nImages, false );
+    HRESULT hr = InitializeArrayFromImages( images, nImages, false, flags );
     if ( FAILED(hr) )
         return hr;
 
@@ -608,7 +608,7 @@ HRESULT ScratchImage::InitializeCubeFromImages( const Image* images, size_t nIma
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::Initialize3DFromImages( const Image* images, size_t depth )
+HRESULT ScratchImage::Initialize3DFromImages( const Image* images, size_t depth, DWORD flags )
 {
     if ( !images || !depth )
         return E_INVALIDARG;
@@ -629,7 +629,7 @@ HRESULT ScratchImage::Initialize3DFromImages( const Image* images, size_t depth 
         }
     }
 
-    HRESULT hr = Initialize3D( format, width, height, depth, 1 );
+    HRESULT hr = Initialize3D( format, width, height, depth, 1, flags );
     if ( FAILED(hr) )
         return hr;
 

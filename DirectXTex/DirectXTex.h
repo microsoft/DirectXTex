@@ -64,6 +64,7 @@ namespace DirectX
     {
         CP_FLAGS_NONE               = 0x0,      // Normal operation
         CP_FLAGS_LEGACY_DWORD       = 0x1,      // Assume pitch is DWORD aligned instead of BYTE aligned
+        CP_FLAGS_PARAGRAPH          = 0x2,      // Assume pitch is 16-byte aligned instead of BYTE aligned
         CP_FLAGS_24BPP              = 0x10000,  // Override with a legacy 24 bits-per-pixel format size
         CP_FLAGS_16BPP              = 0x20000,  // Override with a legacy 16 bits-per-pixel format size
         CP_FLAGS_8BPP               = 0x40000,  // Override with a legacy 8 bits-per-pixel format size
@@ -238,17 +239,17 @@ namespace DirectX
 
         ScratchImage& operator= (ScratchImage&& moveFrom);
 
-        HRESULT Initialize( _In_ const TexMetadata& mdata );
+        HRESULT Initialize( _In_ const TexMetadata& mdata, _In_ DWORD flags = CP_FLAGS_NONE );
 
-        HRESULT Initialize1D( _In_ DXGI_FORMAT fmt, _In_ size_t length, _In_ size_t arraySize, _In_ size_t mipLevels );
-        HRESULT Initialize2D( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t arraySize, _In_ size_t mipLevels );
-        HRESULT Initialize3D( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t depth, _In_ size_t mipLevels );
-        HRESULT InitializeCube( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t nCubes, _In_ size_t mipLevels );
+        HRESULT Initialize1D( _In_ DXGI_FORMAT fmt, _In_ size_t length, _In_ size_t arraySize, _In_ size_t mipLevels, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT Initialize2D( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t arraySize, _In_ size_t mipLevels, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT Initialize3D( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t depth, _In_ size_t mipLevels, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT InitializeCube( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t nCubes, _In_ size_t mipLevels, _In_ DWORD flags = CP_FLAGS_NONE );
 
-        HRESULT InitializeFromImage( _In_ const Image& srcImage, _In_ bool allow1D = false );
-        HRESULT InitializeArrayFromImages( _In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ bool allow1D = false ); 
-        HRESULT InitializeCubeFromImages( _In_reads_(nImages) const Image* images, _In_ size_t nImages );
-        HRESULT Initialize3DFromImages( _In_reads_(depth) const Image* images, _In_ size_t depth );
+        HRESULT InitializeFromImage( _In_ const Image& srcImage, _In_ bool allow1D = false, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT InitializeArrayFromImages( _In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ bool allow1D = false, _In_ DWORD flags = CP_FLAGS_NONE ); 
+        HRESULT InitializeCubeFromImages( _In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT Initialize3DFromImages( _In_reads_(depth) const Image* images, _In_ size_t depth, _In_ DWORD flags = CP_FLAGS_NONE );
 
         void Release();
 

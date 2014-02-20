@@ -1619,11 +1619,28 @@ HRESULT SaveToDDSMemory( const Image* images, size_t nimages, const TexMetadata&
     if ( FAILED(hr) )
         return hr;
 
+    bool fastpath = true;
+
     for( size_t i = 0; i < nimages; ++i )
     {
-        required += images[ i ].slicePitch;
         if ( !images[ i ].pixels )
             return E_POINTER;
+
+        if ( images[ i ].format != metadata.format )
+            return E_FAIL;
+
+        size_t ddsRowPitch, ddsSlicePitch;
+        ComputePitch( metadata.format, images[ i ].width, images[ i ].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_NONE );
+
+        assert( images[ i ].rowPitch > 0 );
+        assert( images[ i ].slicePitch > 0 );
+
+        if ( ( images[ i ].rowPitch != ddsRowPitch ) || ( images[ i ].slicePitch != ddsSlicePitch ) )
+        {
+            fastpath = false;
+        }
+
+        required += ddsSlicePitch;
     }
 
     assert( required > 0 );
@@ -1669,14 +1686,47 @@ HRESULT SaveToDDSMemory( const Image* images, size_t nimages, const TexMetadata&
                         return E_FAIL;
                     }
 
-                    size_t pixsize = images[ index ].slicePitch;
-                    if ( memcpy_s( pDestination, remaining, images[ index ].pixels, pixsize ) )
+                    if ( fastpath )
                     {
-                        blob.Release();
-                        return E_FAIL;
+                        size_t pixsize = images[ index ].slicePitch;
+                        if ( memcpy_s( pDestination, remaining, images[ index ].pixels, pixsize ) )
+                        {
+                            blob.Release();
+                            return E_FAIL;
+                        }
+
+                        pDestination += pixsize;
+                        remaining -= pixsize;
                     }
-                    pDestination += pixsize;
-                    remaining -= pixsize;
+                    else
+                    {
+                        size_t ddsRowPitch, ddsSlicePitch;
+                        ComputePitch( metadata.format, images[ index ].width, images[ index ].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_NONE );
+
+                        size_t rowPitch = images[ index ].rowPitch;
+
+                        const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(images[ index ].pixels);
+                        uint8_t * __restrict dPtr = reinterpret_cast<uint8_t*>(pDestination);
+
+                        size_t lines = ComputeScanlines( metadata.format, images[ index ].height );
+                        size_t csize = std::min<size_t>( rowPitch, ddsRowPitch );
+                        size_t tremaining = remaining;
+                        for( size_t j = 0; j < lines; ++j )
+                        {
+                            if ( memcpy_s( dPtr, tremaining, sPtr, csize ) )
+                            {
+                                blob.Release();
+                                return E_FAIL;
+                            }
+
+                            sPtr += rowPitch;
+                            dPtr += ddsRowPitch;
+                            tremaining -= ddsRowPitch;
+                        }
+
+                        pDestination += ddsSlicePitch;
+                        remaining -= ddsSlicePitch;
+                    }
 
                     ++index;
                 }
@@ -1705,14 +1755,47 @@ HRESULT SaveToDDSMemory( const Image* images, size_t nimages, const TexMetadata&
                         return E_FAIL;
                     }
 
-                    size_t pixsize = images[ index ].slicePitch;
-                    if ( memcpy_s( pDestination, remaining, images[ index ].pixels, pixsize ) )
+                    if ( fastpath )
                     {
-                        blob.Release();
-                        return E_FAIL;
+                        size_t pixsize = images[ index ].slicePitch;
+                        if ( memcpy_s( pDestination, remaining, images[ index ].pixels, pixsize ) )
+                        {
+                            blob.Release();
+                            return E_FAIL;
+                        }
+
+                        pDestination += pixsize;
+                        remaining -= pixsize;
                     }
-                    pDestination += pixsize;
-                    remaining -= pixsize;
+                    else
+                    {
+                        size_t ddsRowPitch, ddsSlicePitch;
+                        ComputePitch( metadata.format, images[ index ].width, images[ index ].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_NONE );
+
+                        size_t rowPitch = images[ index ].rowPitch;
+
+                        const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(images[ index ].pixels);
+                        uint8_t * __restrict dPtr = reinterpret_cast<uint8_t*>(pDestination);
+
+                        size_t lines = ComputeScanlines( metadata.format, images[ index ].height );
+                        size_t csize = std::min<size_t>( rowPitch, ddsRowPitch );
+                        size_t tremaining = remaining;
+                        for( size_t j = 0; j < lines; ++j )
+                        {
+                            if ( memcpy_s( dPtr, tremaining, sPtr, csize ) )
+                            {
+                                blob.Release();
+                                return E_FAIL;
+                            }
+
+                            sPtr += rowPitch;
+                            dPtr += ddsRowPitch;
+                            tremaining -= ddsRowPitch;
+                        }
+
+                        pDestination += ddsSlicePitch;
+                        remaining -= ddsSlicePitch;
+                    }
 
                     ++index;
                 }
@@ -1788,16 +1871,50 @@ HRESULT SaveToDDSFile( const Image* images, size_t nimages, const TexMetadata& m
                     if ( !images[ index ].pixels )
                         return E_POINTER;
 
-                    size_t pixsize = images[ index ].slicePitch;
+                    assert( images[ index ].rowPitch > 0 );
+                    assert( images[ index ].slicePitch > 0 );
 
-                    if ( !WriteFile( hFile.get(), images[ index ].pixels, static_cast<DWORD>( pixsize ), &bytesWritten, 0 ) )
+                    size_t ddsRowPitch, ddsSlicePitch;
+                    ComputePitch( metadata.format, images[ index ].width, images[ index ].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_NONE );
+
+                    if ( images[ index ].slicePitch == ddsSlicePitch )
                     {
-                        return HRESULT_FROM_WIN32( GetLastError() );
+                        if ( !WriteFile( hFile.get(), images[ index ].pixels, static_cast<DWORD>( ddsSlicePitch ), &bytesWritten, 0 ) )
+                        {
+                            return HRESULT_FROM_WIN32( GetLastError() );
+                        }
+
+                        if ( bytesWritten != ddsSlicePitch )
+                        {
+                            return E_FAIL;
+                        }
                     }
-
-                    if ( bytesWritten != pixsize )
+                    else
                     {
-                        return E_FAIL;
+                        size_t rowPitch = images[ index ].rowPitch;
+                        if ( rowPitch < ddsRowPitch )
+                        {
+                            // DDS uses 1-byte alignment, so if this is happening then the input pitch isn't actually a full line of data
+                            return E_FAIL;
+                        }
+
+                        const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(images[ index ].pixels);
+
+                        size_t lines = ComputeScanlines( metadata.format, images[ index ].height );
+                        for( size_t j = 0; j < lines; ++j )
+                        {
+                            if ( !WriteFile( hFile.get(), sPtr, static_cast<DWORD>( ddsRowPitch ), &bytesWritten, 0 ) )
+                            {
+                                return HRESULT_FROM_WIN32( GetLastError() );
+                            }
+
+                            if ( bytesWritten != ddsRowPitch )
+                            {
+                                return E_FAIL;
+                            }
+
+                            sPtr += rowPitch;
+                        }
                     }
                 }
             }
@@ -1822,16 +1939,50 @@ HRESULT SaveToDDSFile( const Image* images, size_t nimages, const TexMetadata& m
                     if ( !images[ index ].pixels )
                         return E_POINTER;
 
-                    size_t pixsize = images[ index ].slicePitch;
+                    assert( images[ index ].rowPitch > 0 );
+                    assert( images[ index ].slicePitch > 0 );
 
-                    if ( !WriteFile( hFile.get(), images[ index ].pixels, static_cast<DWORD>( pixsize ), &bytesWritten, 0 ) )
+                    size_t ddsRowPitch, ddsSlicePitch;
+                    ComputePitch( metadata.format, images[ index ].width, images[ index ].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_NONE );
+
+                    if ( images[ index ].slicePitch == ddsSlicePitch )
                     {
-                        return HRESULT_FROM_WIN32( GetLastError() );
+                        if ( !WriteFile( hFile.get(), images[ index ].pixels, static_cast<DWORD>( ddsSlicePitch ), &bytesWritten, 0 ) )
+                        {
+                            return HRESULT_FROM_WIN32( GetLastError() );
+                        }
+
+                        if ( bytesWritten != ddsSlicePitch )
+                        {
+                            return E_FAIL;
+                        }
                     }
-
-                    if ( bytesWritten != pixsize )
+                    else
                     {
-                        return E_FAIL;
+                        size_t rowPitch = images[ index ].rowPitch;
+                        if ( rowPitch < ddsRowPitch )
+                        {
+                            // DDS uses 1-byte alignment, so if this is happening then the input pitch isn't actually a full line of data
+                            return E_FAIL;
+                        }
+
+                        const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(images[ index ].pixels);
+
+                        size_t lines = ComputeScanlines( metadata.format, images[ index ].height );
+                        for( size_t j = 0; j < lines; ++j )
+                        {
+                            if ( !WriteFile( hFile.get(), sPtr, static_cast<DWORD>( ddsRowPitch ), &bytesWritten, 0 ) )
+                            {
+                                return HRESULT_FROM_WIN32( GetLastError() );
+                            }
+
+                            if ( bytesWritten != ddsRowPitch )
+                            {
+                                return E_FAIL;
+                            }
+
+                            sPtr += rowPitch;
+                        }
                     }
                 }
 

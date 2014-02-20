@@ -661,6 +661,11 @@ void ComputePitch( DXGI_FORMAT fmt, size_t width, size_t height,
             rowPitch = ( ( width * bpp + 31 ) / 32 ) * sizeof(uint32_t);
             slicePitch = rowPitch * height;
         }
+        else if ( flags & CP_FLAGS_PARAGRAPH )
+        {
+            rowPitch = ( ( width * bpp + 127 ) / 128 ) * 16;
+            slicePitch = rowPitch * height;
+        }
         else
         {
             rowPitch = ( width * bpp + 7 ) / 8;
