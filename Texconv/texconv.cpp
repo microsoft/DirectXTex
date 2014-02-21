@@ -769,14 +769,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (swscanf_s(pValue, L"%f", &alphaWeight) != 1)
                 {
                     wprintf( L"Invalid value specified with -aw (%s)\n", pValue);
-                    printf("\n");
+                    wprintf( L"\n");
                     PrintUsage();
                     return 1;
                 }
                 else if ( alphaWeight < 0.f )
                 {
                     wprintf( L"-aw (%s) parameter must be positive\n", pValue);
-                    printf("\n");
+                    wprintf( L"\n");
                     return 1;
                 }
                 break;
