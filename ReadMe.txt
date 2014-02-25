@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-January 24, 2014
+February 24, 2014
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -101,6 +101,14 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+February 24, 2014
+    Direct3D 11 video and Xbox One extended format support
+    New APIs: IsPlanar, IsPalettized, IsDepthStencil, ConvertToSinglePlane
+    Added 'alphaWeight' parameter to GPU Compress [breaking change]
+    texconv '-aw' switch to control the alpha weighting for the BC7 GPU compressor
+    Fixed bug with ordered dithering in non-WIC conversion codepaths
+    Fixed SaveToDDS* functions when using arbitrary row pitch values
 
 January 24, 2014
     Added sRGB flags for Compress (TEX_COMPRESS_SRGB*)
