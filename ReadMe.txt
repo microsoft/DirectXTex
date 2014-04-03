@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-February 24, 2014
+April 3, 2014
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -18,6 +18,9 @@ make use of the Windows 8.1 SDK and Windows 7 Service Pack 1 or later.
 
 Details on using the Windows 8.1 SDK with VS 2010 are described on the Visual C++ Team Blog:
 <http://blogs.msdn.com/b/vcblog/archive/2012/11/23/using-the-windows-8-sdk-with-visual-studio-2010-configuring-multiple-projects.aspx>
+
+NOTE: DirectXTex is not supported on Windows phone 8.0 because WIC is not available on
+that platform. It is available on Windows phone starting in version 8.1.
 
 DDSTextureLoader\
     This contains a streamlined version of the DirectX SDK sample DDSWithoutD3DX11 texture
@@ -101,6 +104,9 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+April 3, 2014
+    Windows phone 8.1 platform support
 
 February 24, 2014
     Direct3D 11 video and Xbox One extended format support
