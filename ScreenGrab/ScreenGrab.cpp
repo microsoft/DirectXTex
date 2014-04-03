@@ -25,10 +25,10 @@
 
 // For 2D array textures and cubemaps, it captures only the first image in the array
 
-#include <dxgiformat.h>
 #include <assert.h>
 
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP) || (_WIN32_WINNT > _WIN32_WINNT_WIN8)
+
 // VS 2010's stdint.h conflicts with intsafe.h
 #pragma warning(push)
 #pragma warning(disable : 4005)
@@ -669,7 +669,7 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
 
 
 //--------------------------------------------------------------------------------------
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP) || (_WIN32_WINNT > _WIN32_WINNT_WIN8)
 
 static bool g_WIC2 = false;
 
@@ -885,7 +885,7 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
 }
 
 //--------------------------------------------------------------------------------------
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP) || (_WIN32_WINNT > _WIN32_WINNT_WIN8)
 
 HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
                                        _In_ ID3D11Resource* pSource,
@@ -1162,4 +1162,4 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     return S_OK;
 }
 
-#endif // !WINAPI_FAMILY || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
+#endif // !WINAPI_FAMILY || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP) || (_WIN32_WINNT > _WIN32_WINNT_WIN8)

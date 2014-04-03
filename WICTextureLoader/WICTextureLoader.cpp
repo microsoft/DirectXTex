@@ -28,7 +28,6 @@
 // We could load multi-frame images (TIFF/GIF) into a texture array.
 // For now, we just load the first frame (note: DirectXTex supports multi-frame images)
 
-#include <dxgiformat.h>
 #include <assert.h>
 
 // VS 2010's stdint.h conflicts with intsafe.h
@@ -42,7 +41,7 @@
 
 #include "WICTextureLoader.h"
 
-#if defined(_DEBUG) || defined(PROFILE)
+#if !defined(NO_D3D11_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
 #pragma comment(lib,"dxguid.lib")
 #endif
 
@@ -53,7 +52,7 @@ using Microsoft::WRL::ComPtr;
 template<UINT TNameLength>
 inline void SetDebugObjectName(_In_ ID3D11DeviceChild* resource, _In_ const char (&name)[TNameLength])
 {
-#if defined(_DEBUG) || defined(PROFILE)
+#if !defined(NO_D3D11_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
     resource->SetPrivateData(WKPDID_D3DDebugObjectName, TNameLength - 1, name);
 #else
     UNREFERENCED_PARAMETER(resource);
@@ -878,7 +877,7 @@ HRESULT DirectX::CreateWICTextureFromFileEx( ID3D11Device* d3dDevice,
                                usage, bindFlags, cpuAccessFlags, miscFlags, forceSRGB,
                                texture, textureView );
 
-#if defined(_DEBUG) || defined(PROFILE)
+#if !defined(NO_D3D11_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
     if ( SUCCEEDED(hr) )
     {
         if (texture != 0 || textureView != 0)

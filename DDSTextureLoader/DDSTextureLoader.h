@@ -22,7 +22,13 @@
 #pragma once
 #endif
 
-#include <d3d11.h>
+#if defined(_XBOX_ONE) && defined(_TITLE) && MONOLITHIC
+#include <d3d11_x.h>
+#define DCOMMON_H_INCLUDED
+#define NO_D3D11_DEBUG_NAME
+#else
+#include <d3d11_1.h>
+#endif
 
 #pragma warning(push)
 #pragma warning(disable : 4005)

@@ -23,7 +23,13 @@
 #pragma once
 #endif
 
-#include <d3d11.h>
+#if defined(_XBOX_ONE) && defined(_TITLE) && MONOLITHIC
+#include <d3d11_x.h>
+#define DCOMMON_H_INCLUDED
+#define NO_D3D11_DEBUG_NAME
+#else
+#include <d3d11_1.h>
+#endif
 
 #include <ocidl.h>
 
@@ -40,7 +46,7 @@ namespace DirectX
                                   _In_ ID3D11Resource* pSource,
                                   _In_z_ LPCWSTR fileName );
 
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP)
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP) || (_WIN32_WINNT > _WIN32_WINNT_WIN8)
 
     HRESULT SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
                                   _In_ ID3D11Resource* pSource,
