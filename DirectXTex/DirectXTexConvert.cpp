@@ -1869,7 +1869,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 if ( sPtr >= ePtr ) break;
                 float v = XMVectorGetX( *sPtr++ );
                 v = std::max<float>( std::min<float>( v, 1.f ), -1.f );
-                *(dPtr++) = static_cast<uint16_t>( v * 32767.f );
+                *(dPtr++) = static_cast<int16_t>( v * 32767.f );
             }
             return true;
         }
@@ -1899,7 +1899,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 if ( sPtr >= ePtr ) break;
                 float v = XMVectorGetX( *sPtr++ );
                 v = std::max<float>( std::min<float>( v, 1.f ), 0.f );
-                *(dPtr++) = static_cast<uint8_t>( v * 255.f);
+                *(dPtr++) = static_cast<uint8_t>( v * 255.f );
             }
             return true;
         }
