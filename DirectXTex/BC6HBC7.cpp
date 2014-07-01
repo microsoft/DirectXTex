@@ -1431,7 +1431,7 @@ void D3DX_BC6H::GeneratePaletteQuantized(const EncodeParams* pEP, const INTEndPn
         assert(false);
         for(size_t i = 0; i < uNumIndices; ++i)
         {
-            #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
+            #pragma prefast(suppress:22102 22103, "writing blocks in two halves confuses tool")
             aPalette[i] = INTColor(0,0,0);
         }
         return;
@@ -1827,7 +1827,7 @@ void D3DX_BC6H::GeneratePaletteUnquantized(const EncodeParams* pEP, size_t uRegi
         assert(false);
         for(size_t i = 0; i < uNumIndices; ++i)
         {
-            #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
+            #pragma prefast(suppress:22102 22103, "writing blocks in two halves confuses tool")
             aPalette[i] = INTColor(0,0,0);
         }
         return;

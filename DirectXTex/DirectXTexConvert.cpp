@@ -721,8 +721,8 @@ bool _ExpandScanline( LPVOID pDestination, size_t outSize, DXGI_FORMAT outFormat
         }\
         return false;
 
-_Use_decl_annotations_
-bool _LoadScanline( XMVECTOR* pDestination, size_t count,
+#pragma warning(suppress: 6101)
+_Use_decl_annotations_ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
                     LPCVOID pSource, size_t size, DXGI_FORMAT format )
 {
     assert( pDestination && count > 0 && (((uintptr_t)pDestination & 0xF) == 0) );
