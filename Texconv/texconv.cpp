@@ -379,7 +379,6 @@ void PrintUsage()
     wprintf( L"\n");
     wprintf( L"   -w <n>              width\n");
     wprintf( L"   -h <n>              height\n");
-    wprintf( L"   -d <n>              depth\n");
     wprintf( L"   -m <n>              miplevels\n");
     wprintf( L"   -f <format>         format\n");
     wprintf( L"   -if <filter>        image filtering\n");
