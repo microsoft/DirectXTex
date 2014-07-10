@@ -654,20 +654,39 @@ void ComputePitch( DXGI_FORMAT fmt, size_t width, size_t height,
         else
             bpp = BitsPerPixel( fmt );
 
-        if ( flags & CP_FLAGS_LEGACY_DWORD )
+        if ( flags & ( CP_FLAGS_LEGACY_DWORD | CP_FLAGS_PARAGRAPH | CP_FLAGS_YMM | CP_FLAGS_ZMM | CP_FLAGS_PAGE4K ) )
         {
-            // Special computation for some incorrectly created DDS files based on
-            // legacy DirectDraw assumptions about pitch alignment
-            rowPitch = ( ( width * bpp + 31 ) / 32 ) * sizeof(uint32_t);
-            slicePitch = rowPitch * height;
-        }
-        else if ( flags & CP_FLAGS_PARAGRAPH )
-        {
-            rowPitch = ( ( width * bpp + 127 ) / 128 ) * 16;
-            slicePitch = rowPitch * height;
+            if ( flags & CP_FLAGS_PAGE4K )
+            {
+                rowPitch = ( ( width * bpp + 32767 ) / 32768 ) * 4096;
+                slicePitch = rowPitch * height;
+            }
+            else if ( flags & CP_FLAGS_ZMM )
+            {
+                rowPitch = ( ( width * bpp + 511 ) / 512 ) * 64;
+                slicePitch = rowPitch * height;
+            }
+            else if ( flags & CP_FLAGS_YMM )
+            {
+                rowPitch = ( ( width * bpp + 255 ) / 256) * 32;
+                slicePitch = rowPitch * height;
+            }
+            else if ( flags & CP_FLAGS_PARAGRAPH )
+            {
+                rowPitch = ( ( width * bpp + 127 ) / 128 ) * 16;
+                slicePitch = rowPitch * height;
+            }
+            else // DWORD alignment
+            {
+                // Special computation for some incorrectly created DDS files based on
+                // legacy DirectDraw assumptions about pitch alignment
+                rowPitch = ( ( width * bpp + 31 ) / 32 ) * sizeof(uint32_t);
+                slicePitch = rowPitch * height;
+            }
         }
         else
         {
+            // Default byte alignment
             rowPitch = ( width * bpp + 7 ) / 8;
             slicePitch = rowPitch * height;
         }

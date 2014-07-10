@@ -110,7 +110,7 @@ static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _
         uint8_t* dptr = pDest;
         size_t ph = std::min<size_t>( 4, image.height - h );
         size_t w = 0;
-        for( size_t count = 0; count < rowPitch; count += sbpp*4, w += 4 )
+        for( size_t count = 0; count < result.rowPitch; count += blocksize, w += 4 )
         {
             size_t pw = std::min<size_t>( 4, image.width - w );
             assert( pw > 0 && ph > 0 );
