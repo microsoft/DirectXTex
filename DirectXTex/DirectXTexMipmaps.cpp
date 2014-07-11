@@ -2489,6 +2489,9 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
     if ( !_CalculateMipLevels(baseImage.width, baseImage.height, levels) )
         return E_INVALIDARG;
 
+    if ( levels <= 1 )
+        return E_INVALIDARG;
+
     if ( IsCompressed(baseImage.format) || IsTypeless(baseImage.format) || IsPlanar(baseImage.format) || IsPalettized(baseImage.format) )
     {
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
@@ -2649,6 +2652,9 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     if ( !_CalculateMipLevels(metadata.width, metadata.height, levels) )
+        return E_INVALIDARG;
+
+    if ( levels <= 1 )
         return E_INVALIDARG;
 
     std::vector<const Image> baseImages;
@@ -2857,6 +2863,9 @@ HRESULT GenerateMipMaps3D( const Image* baseImages, size_t depth, DWORD filter, 
     if ( !_CalculateMipLevels3D(width, height, depth, levels) )
         return E_INVALIDARG;
 
+    if ( levels <= 1 )
+        return E_INVALIDARG;
+
     for( size_t slice=0; slice < depth; ++slice )
     {
         if ( !baseImages[slice].pixels )
@@ -2955,6 +2964,9 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     if ( !_CalculateMipLevels3D(metadata.width, metadata.height, metadata.depth, levels) )
+        return E_INVALIDARG;
+
+    if ( levels <= 1 )
         return E_INVALIDARG;
 
     std::vector<const Image> baseImages;
