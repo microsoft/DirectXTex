@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include <memory>
+
 #include <dxgiformat.h>
 
 #include "directxtex.h"
@@ -153,7 +155,6 @@ SValue g_pFormats[] =
     DEFFMT(R8_SNORM), 
     DEFFMT(R8_SINT), 
     DEFFMT(A8_UNORM), 
-    //DEFFMT(R1_UNORM)
     DEFFMT(R9G9B9E5_SHAREDEXP), 
     DEFFMT(R8G8_B8G8_UNORM), 
     DEFFMT(G8R8_G8B8_UNORM), 
@@ -185,16 +186,55 @@ SValue g_pFormats[] =
     DEFFMT(AYUV),
     DEFFMT(Y410),
     DEFFMT(Y416),
+    DEFFMT(YUY2),
+    DEFFMT(Y210),
+    DEFFMT(Y216),
+    // No support for legacy paletted video formats (AI44, IA44, P8, A8P8)
+    DEFFMT(B4G4R4A4_UNORM),
+
+    { nullptr, DXGI_FORMAT_UNKNOWN }
+};
+
+SValue g_pReadOnlyFormats[] = 
+{
+    DEFFMT(R32G32B32A32_TYPELESS), 
+    DEFFMT(R32G32B32_TYPELESS),
+    DEFFMT(R16G16B16A16_TYPELESS),
+    DEFFMT(R32G32_TYPELESS),
+    DEFFMT(R32G8X24_TYPELESS),
+    DEFFMT(D32_FLOAT_S8X24_UINT),
+    DEFFMT(R32_FLOAT_X8X24_TYPELESS),
+    DEFFMT(X32_TYPELESS_G8X24_UINT),
+    DEFFMT(R10G10B10A2_TYPELESS),
+    DEFFMT(R8G8B8A8_TYPELESS),
+    DEFFMT(R16G16_TYPELESS),
+    DEFFMT(R32_TYPELESS),
+    DEFFMT(D32_FLOAT),
+    DEFFMT(R24G8_TYPELESS),
+    DEFFMT(D24_UNORM_S8_UINT),
+    DEFFMT(R24_UNORM_X8_TYPELESS),
+    DEFFMT(X24_TYPELESS_G8_UINT),
+    DEFFMT(R8G8_TYPELESS),
+    DEFFMT(R16_TYPELESS),
+    DEFFMT(R8_TYPELESS),
+    DEFFMT(BC1_TYPELESS),
+    DEFFMT(BC2_TYPELESS),
+    DEFFMT(BC3_TYPELESS),
+    DEFFMT(BC4_TYPELESS),
+    DEFFMT(BC5_TYPELESS),
+
+    // DXGI 1.1 formats
+    DEFFMT(B8G8R8A8_TYPELESS),
+    DEFFMT(B8G8R8X8_TYPELESS),
+    DEFFMT(BC6H_TYPELESS),
+    DEFFMT(BC7_TYPELESS),
+
+    // DXGI 1.2 formats
     DEFFMT(NV12),
     DEFFMT(P010),
     DEFFMT(P016),
     DEFFMT(420_OPAQUE),
-    DEFFMT(YUY2),
-    DEFFMT(Y210),
-    DEFFMT(Y216),
     DEFFMT(NV11),
-    // No support for legacy paletted video formats (AI44, IA44, P8, A8P8)
-    DEFFMT(B4G4R4A4_UNORM),
 
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
@@ -298,9 +338,20 @@ void PrintFormat(DXGI_FORMAT Format)
         if((DXGI_FORMAT) pFormat->dwValue == Format)
         {
             wprintf( pFormat->pName );
-            break;
+            return;
         }
     }
+
+    for(SValue *pFormat = g_pReadOnlyFormats; pFormat->pName; pFormat++)
+    {
+        if((DXGI_FORMAT) pFormat->dwValue == Format)
+        {
+            wprintf( pFormat->pName );
+            return;
+        }
+    }
+
+    wprintf( L"*UNKNOWN*" );
 }
 
 void PrintInfo( const TexMetadata& info )
@@ -852,7 +903,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         _wsplitpath_s( pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT );
 
         TexMetadata info;
-        ScratchImage *image = new ScratchImage;
+        std::unique_ptr<ScratchImage> image( new (std::nothrow) ScratchImage );
 
         if ( !image )
         {
@@ -872,7 +923,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED (%x)\n", hr);
-                delete image;
                 continue;
             }
 
@@ -890,7 +940,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if ( IsTypeless( info.format ) )
                 {
                     wprintf( L" FAILED due to Typeless format %d\n", info.format );
-                    delete image;
                     continue;
                 }
 
@@ -903,7 +952,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED (%x)\n", hr);
-                delete image;
                 continue;
             }
         }
@@ -921,7 +969,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED (%x)\n", hr);
-                delete image;
                 continue;
             }
         }
@@ -967,15 +1014,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         // --- Planar ------------------------------------------------------------------
         if ( IsPlanar( info.format ) )
         {
-            const Image* img = image->GetImage(0,0,0);
+            auto img = image->GetImage(0,0,0);
             assert( img );
             size_t nimg = image->GetImageCount();
 
-            ScratchImage *timage = new ScratchImage;
+            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                delete image;
                 goto LError;
             }
 
@@ -983,12 +1029,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [converttosingeplane] (%x)\n", hr);
-                delete timage;
-                delete image;
                 continue;
             }
 
-            const TexMetadata& tinfo = timage->GetMetadata();
+            auto& tinfo = timage->GetMetadata();
 
             info.format = tinfo.format;
 
@@ -1001,24 +1045,23 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.dimension == tinfo.dimension );
 
-            delete image;
-            image = timage;
+            image.swap( timage );
         }
 
         DXGI_FORMAT tformat = ( format == DXGI_FORMAT_UNKNOWN ) ? info.format : format;
 
         // --- Decompress --------------------------------------------------------------
+        std::unique_ptr<ScratchImage> cimage;
         if ( IsCompressed( info.format ) )
         {
-            const Image* img = image->GetImage(0,0,0);
+            auto img = image->GetImage(0,0,0);
             assert( img );
             size_t nimg = image->GetImageCount();
 
-            ScratchImage *timage = new ScratchImage;
+            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                delete image;
                 goto LError;
             }
 
@@ -1026,12 +1069,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [decompress] (%x)\n", hr);
-                delete timage;
-                delete image;
                 continue;
             }
 
-            const TexMetadata& tinfo = timage->GetMetadata();
+            auto& tinfo = timage->GetMetadata();
 
             info.format = tinfo.format;
 
@@ -1044,18 +1085,25 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.dimension == tinfo.dimension );
 
-            delete image;
-            image = timage;
+            if ( FileType == CODEC_DDS )
+            {
+                // Keep the original compressed image in case we can reuse it
+                cimage.reset( image.release() );
+                image.reset( timage.release() );
+            }
+            else
+            {
+                image.swap( timage );
+            }
         }
 
         // --- Flip/Rotate -------------------------------------------------------------
         if ( dwOptions & ( (1 << OPT_HFLIP) | (1 << OPT_VFLIP) ) )
         {
-            ScratchImage *timage = new ScratchImage;
+            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                delete image;
                 goto LError;
             }
 
@@ -1073,12 +1121,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [fliprotate] (%x)\n", hr);
-                delete timage;
-                delete image;
                 goto LError;
             }
 
-            const TexMetadata& tinfo = timage->GetMetadata();
+            auto& tinfo = timage->GetMetadata();
 
             assert( tinfo.width == twidth && tinfo.height == theight );
 
@@ -1093,18 +1139,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.format == tinfo.format );
             assert( info.dimension == tinfo.dimension );
 
-            delete image;
-            image = timage;
+            image.swap( timage );
+            cimage.reset();
         }
 
         // --- Resize ------------------------------------------------------------------
         if ( info.width != twidth || info.height != theight )
         {
-            ScratchImage *timage = new ScratchImage;
+            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                delete image;
                 goto LError;
             }
 
@@ -1112,12 +1157,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [resize] (%x)\n", hr);
-                delete timage;
-                delete image;
                 goto LError;
             }
 
-            const TexMetadata& tinfo = timage->GetMetadata();
+            auto& tinfo = timage->GetMetadata();
 
             assert( tinfo.width == twidth && tinfo.height == theight && tinfo.mipLevels == 1 );
             info.width = tinfo.width;
@@ -1131,18 +1174,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.format == tinfo.format );
             assert( info.dimension == tinfo.dimension );
 
-            delete image;
-            image = timage;
+            image.swap( timage );
+            cimage.reset();
         }
 
         // --- Convert -----------------------------------------------------------------
         if ( info.format != tformat && !IsCompressed( tformat ) )
         {
-            ScratchImage *timage = new ScratchImage;
+            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                delete image;
                 goto LError;
             }
 
@@ -1150,12 +1192,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [convert] (%x)\n", hr);
-                delete timage;
-                delete image;
                 goto LError;
             }
 
-            const TexMetadata& tinfo = timage->GetMetadata();
+            auto& tinfo = timage->GetMetadata();
 
             assert( tinfo.format == tformat );
             info.format = tinfo.format;
@@ -1169,8 +1209,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.dimension == tinfo.dimension );
 
-            delete image;
-            image = timage;
+            image.swap( timage );
+            cimage.reset();
         }
 
         // --- Generate mips -----------------------------------------------------------
@@ -1185,7 +1225,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 else
                 {
                     wprintf( L" ERROR: Cannot generate mips for non-power-of-2 volume textures\n" );
-                    delete image;
                     goto LError;
                 }
             }
@@ -1198,11 +1237,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         if ( (!tMips || info.mipLevels != tMips) && ( info.mipLevels != 1 ) )
         {
             // Mips generation only works on a single base image, so strip off existing mip levels
-            ScratchImage *timage = new ScratchImage;
+            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                delete image;
                 goto LError;
             }
 
@@ -1212,8 +1250,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [copy to single level] (%x)\n", hr);
-                delete timage;
-                delete image;
                 goto LError;
             }
 
@@ -1226,8 +1262,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     if ( FAILED(hr) )
                     {
                         wprintf( L" FAILED [copy to single level] (%x)\n", hr);
-                        delete timage;
-                        delete image;
                         goto LError;
                     }
                 }
@@ -1241,27 +1275,61 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     if ( FAILED(hr) )
                     {
                         wprintf( L" FAILED [copy to single level] (%x)\n", hr);
-                        delete timage;
-                        delete image;
                         goto LError;
                     }
                 }
             }
 
-            delete image;
-            image = timage;
+            image.swap( timage );
+            info.mipLevels = image->GetMetadata().mipLevels;
 
-            const TexMetadata& tinfo = timage->GetMetadata();
-            info.mipLevels = tinfo.mipLevels;
+            if ( cimage && ( tMips == 1 ) )
+            {
+                // Special case for trimming mips off compressed images and keeping the original compressed highest level mip
+                mdata = cimage->GetMetadata();
+                mdata.mipLevels = 1;
+                hr = timage->Initialize( mdata );
+                if ( FAILED(hr) )
+                {
+                    wprintf( L" FAILED [copy compressed to single level] (%x)\n", hr);
+                    goto LError;
+                }
+
+                if ( mdata.dimension == TEX_DIMENSION_TEXTURE3D )
+                {
+                    for( size_t d = 0; d < mdata.depth; ++d )
+                    {
+                        auto simg = cimage->GetImage( 0, 0, d );
+                        auto dimg = timage->GetImage( 0, 0, d );
+
+                        memcpy_s( dimg->pixels, dimg->slicePitch, simg->pixels, simg->slicePitch );
+                    }
+                }
+                else
+                {
+                    for( size_t i = 0; i < mdata.arraySize; ++i )
+                    {
+                        auto simg = cimage->GetImage( 0, i, 0 );
+                        auto dimg = timage->GetImage( 0, i, 0 );
+
+                        memcpy_s( dimg->pixels, dimg->slicePitch, simg->pixels, simg->slicePitch );
+                    }
+                }
+
+                cimage.swap( timage );
+            }
+            else
+            {
+                cimage.reset();
+            }
         }
 
-        if ( !tMips || info.mipLevels != tMips )
+        if ( ( !tMips || info.mipLevels != tMips ) && ( info.width > 1 || info.height > 1 || info.depth > 1 ) )
         {
-            ScratchImage *timage = new ScratchImage;
+            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                delete image;
                 goto LError;
             }
 
@@ -1276,12 +1344,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [mipmaps] (%x)\n", hr);
-                delete timage;
-                delete image;
                 goto LError;
             }
 
-            const TexMetadata& tinfo = timage->GetMetadata();
+            auto& tinfo = timage->GetMetadata();
             info.mipLevels = tinfo.mipLevels;
 
             assert( info.width == tinfo.width );
@@ -1293,8 +1359,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.dimension == tinfo.dimension );
 
-            delete image;
-            image = timage;
+
+            image.swap( timage );
+            cimage.reset();
         }
 
         // --- Premultiplied alpha (if requested) --------------------------------------
@@ -1308,15 +1375,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             else
             {
-                const Image* img = image->GetImage(0,0,0);
+                auto img = image->GetImage(0,0,0);
                 assert( img );
                 size_t nimg = image->GetImageCount();
 
-                ScratchImage *timage = new ScratchImage;
+                std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
                 if ( !timage )
                 {
                     wprintf( L" ERROR: Memory allocation failed\n" );
-                    delete image;
                     goto LError;
                 }
 
@@ -1324,12 +1390,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if ( FAILED(hr) )
                 {
                     wprintf( L" FAILED [premultiply alpha] (%x)\n", hr);
-                    delete timage;
-                    delete image;
                     continue;
                 }
 
-                const TexMetadata& tinfo = timage->GetMetadata();
+                auto& tinfo = timage->GetMetadata();
                 info.miscFlags2 = tinfo.miscFlags2;
  
                 assert( info.width == tinfo.width );
@@ -1341,101 +1405,128 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 assert( info.miscFlags2 == tinfo.miscFlags2 );
                 assert( info.dimension == tinfo.dimension );
 
-                delete image;
-                image = timage;
+                image.swap( timage );
+                cimage.reset();
             }
         }
 
         // --- Compress ----------------------------------------------------------------
         if ( IsCompressed( tformat ) && (FileType == CODEC_DDS) )
         {
-            const Image* img = image->GetImage(0,0,0);
-            assert( img );
-            size_t nimg = image->GetImageCount();
-
-            ScratchImage *timage = new ScratchImage;
-            if ( !timage )
+            if ( cimage && ( cimage->GetMetadata().format == tformat ) )
             {
-                wprintf( L" ERROR: Memory allocation failed\n" );
-                delete image;
-                goto LError;
-            }
+                // We never changed the image and it was already compressed in our desired format, use original data
+                image.reset( cimage.release() );
 
-            bool bc6hbc7=false;
-            switch( tformat )
-            {
-            case DXGI_FORMAT_BC6H_TYPELESS:
-            case DXGI_FORMAT_BC6H_UF16:
-            case DXGI_FORMAT_BC6H_SF16:
-            case DXGI_FORMAT_BC7_TYPELESS:
-            case DXGI_FORMAT_BC7_UNORM:
-            case DXGI_FORMAT_BC7_UNORM_SRGB:
-                bc6hbc7=true;
+                auto& tinfo = image->GetMetadata();
 
-                {
-                    static bool s_tryonce = false;
-
-                    if ( !s_tryonce )
-                    {
-                        s_tryonce = true;
-
-                        if ( !(dwOptions & (1 << OPT_NOGPU) ) )
-                        {
-                            if ( !CreateDevice( &pDevice ) )
-                                wprintf( L"\nWARNING: DirectCompute is not available, using BC6H / BC7 CPU codec\n" );
-                        }
-                        else
-                        {
-                            wprintf( L"\nWARNING: using BC6H / BC7 CPU codec\n" );
-                        }
-                    }
+                if ( (tinfo.width % 4) != 0 || (tinfo.height % 4) != 0 )
+                { 
+                    non4bc = true;
                 }
-                break;
-            }
 
-            DWORD cflags = TEX_COMPRESS_DEFAULT;
-#ifdef _OPENMP
-            if ( bc6hbc7 && !(dwOptions & (1 << OPT_FORCE_SINGLEPROC) ) )
-            {
-                cflags |= TEX_COMPRESS_PARALLEL;
-            }
-#endif
-
-            if ( (img->width % 4) != 0 || (img->height % 4) != 0 )
-            { 
-                non4bc = true;
-            }
-
-            if ( bc6hbc7 && pDevice )
-            {
-                hr = Compress( pDevice, img, nimg, info, tformat, dwSRGB, alphaWeight, *timage );
+                info.format = tinfo.format;
+                assert( info.width == tinfo.width );
+                assert( info.height == tinfo.height );
+                assert( info.depth == tinfo.depth );
+                assert( info.arraySize == tinfo.arraySize );
+                assert( info.mipLevels == tinfo.mipLevels );
+                assert( info.miscFlags == tinfo.miscFlags );
+                assert( info.miscFlags2 == tinfo.miscFlags2 );
+                assert( info.dimension == tinfo.dimension );
             }
             else
             {
-                hr = Compress( img, nimg, info, tformat, cflags | dwSRGB, 0.5f, *timage );
+                cimage.reset();
+
+                auto img = image->GetImage(0,0,0);
+                assert( img );
+                size_t nimg = image->GetImageCount();
+
+                std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
+                if ( !timage )
+                {
+                    wprintf( L" ERROR: Memory allocation failed\n" );
+                    goto LError;
+                }
+
+                bool bc6hbc7=false;
+                switch( tformat )
+                {
+                case DXGI_FORMAT_BC6H_TYPELESS:
+                case DXGI_FORMAT_BC6H_UF16:
+                case DXGI_FORMAT_BC6H_SF16:
+                case DXGI_FORMAT_BC7_TYPELESS:
+                case DXGI_FORMAT_BC7_UNORM:
+                case DXGI_FORMAT_BC7_UNORM_SRGB:
+                    bc6hbc7=true;
+
+                    {
+                        static bool s_tryonce = false;
+
+                        if ( !s_tryonce )
+                        {
+                            s_tryonce = true;
+
+                            if ( !(dwOptions & (1 << OPT_NOGPU) ) )
+                            {
+                                if ( !CreateDevice( &pDevice ) )
+                                    wprintf( L"\nWARNING: DirectCompute is not available, using BC6H / BC7 CPU codec\n" );
+                            }
+                            else
+                            {
+                                wprintf( L"\nWARNING: using BC6H / BC7 CPU codec\n" );
+                            }
+                        }
+                    }
+                    break;
+                }
+
+                DWORD cflags = TEX_COMPRESS_DEFAULT;
+#ifdef _OPENMP
+                if ( bc6hbc7 && !(dwOptions & (1 << OPT_FORCE_SINGLEPROC) ) )
+                {
+                    cflags |= TEX_COMPRESS_PARALLEL;
+                }
+#endif
+
+                if ( (img->width % 4) != 0 || (img->height % 4) != 0 )
+                { 
+                    non4bc = true;
+                }
+
+                if ( bc6hbc7 && pDevice )
+                {
+                    hr = Compress( pDevice, img, nimg, info, tformat, dwSRGB, alphaWeight, *timage );
+                }
+                else
+                {
+                    hr = Compress( img, nimg, info, tformat, cflags | dwSRGB, 0.5f, *timage );
+                }
+                if ( FAILED(hr) )
+                {
+                    wprintf( L" FAILED [compress] (%x)\n", hr);
+                    continue;
+                }
+
+                auto& tinfo = timage->GetMetadata();
+
+                info.format = tinfo.format;
+                assert( info.width == tinfo.width );
+                assert( info.height == tinfo.height );
+                assert( info.depth == tinfo.depth );
+                assert( info.arraySize == tinfo.arraySize );
+                assert( info.mipLevels == tinfo.mipLevels );
+                assert( info.miscFlags == tinfo.miscFlags );
+                assert( info.miscFlags2 == tinfo.miscFlags2 );
+                assert( info.dimension == tinfo.dimension );
+
+                image.swap( timage );
             }
-            if ( FAILED(hr) )
-            {
-                wprintf( L" FAILED [compress] (%x)\n", hr);
-                delete timage;
-                delete image;
-                continue;
-            }
-
-            const TexMetadata& tinfo = timage->GetMetadata();
-
-            info.format = tinfo.format;
-            assert( info.width == tinfo.width );
-            assert( info.height == tinfo.height );
-            assert( info.depth == tinfo.depth );
-            assert( info.arraySize == tinfo.arraySize );
-            assert( info.mipLevels == tinfo.mipLevels );
-            assert( info.miscFlags == tinfo.miscFlags );
-            assert( info.miscFlags2 == tinfo.miscFlags2 );
-            assert( info.dimension == tinfo.dimension );
-
-            delete image;
-            image = timage;
+        }
+        else
+        {
+            cimage.reset();
         }
 
         // --- Set alpha mode ----------------------------------------------------------
@@ -1466,7 +1557,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
         // --- Save result -------------------------------------------------------------
         {
-            const Image* img = image->GetImage(0,0,0);
+            auto img = image->GetImage(0,0,0);
             assert( img );
             size_t nimg = image->GetImageCount();
 
@@ -1516,13 +1607,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if(FAILED(hr))
             {
                 wprintf( L" FAILED (%x)\n", hr);
-                delete image;
                 continue;
             }
             wprintf( L"\n");
         }
-
-        delete image;
     }
 
     if ( nonpow2warn )
@@ -1530,7 +1618,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     if ( non4bc )
         wprintf( L"\n WARNING: Direct3D requires BC image to be multiple of 4 in width & height\n" );
-
 
     nReturn = 0;
 
