@@ -23,13 +23,7 @@
 #pragma once
 #endif
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
-#include <d3d11_x.h>
-#define DCOMMON_H_INCLUDED
-#define NO_D3D11_DEBUG_NAME
-#else
 #include <d3d11_1.h>
-#endif
 
 #include <ocidl.h>
 

@@ -340,19 +340,6 @@ static size_t BitsPerPixel( _In_ DXGI_FORMAT fmt )
     case DXGI_FORMAT_BC7_UNORM_SRGB:
         return 8;
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
-
-    case DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT:
-    case DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT:
-        return 32;
-
-    case DXGI_FORMAT_D16_UNORM_S8_UINT:
-    case DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
-    case DXGI_FORMAT_X16_TYPELESS_G8_UINT:
-        return 24;
-
-#endif // _XBOX_ONE && _TITLE
-
     default:
         return 0;
     }

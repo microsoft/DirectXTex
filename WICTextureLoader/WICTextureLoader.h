@@ -33,13 +33,7 @@
 #error WIC is not supported on Windows Phone 8.0
 #endif
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
-#include <d3d11_x.h>
-#define DCOMMON_H_INCLUDED
-#define NO_D3D11_DEBUG_NAME
-#else
 #include <d3d11_1.h>
-#endif
 
 #pragma warning(push)
 #pragma warning(disable : 4005)

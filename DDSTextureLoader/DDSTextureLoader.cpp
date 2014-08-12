@@ -410,19 +410,6 @@ static size_t BitsPerPixel( _In_ DXGI_FORMAT fmt )
     case DXGI_FORMAT_BC7_UNORM_SRGB:
         return 8;
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
-
-    case DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT:
-    case DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT:
-        return 32;
-
-    case DXGI_FORMAT_D16_UNORM_S8_UINT:
-    case DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
-    case DXGI_FORMAT_X16_TYPELESS_G8_UINT:
-        return 24;
-
-#endif // _XBOX_ONE && _TITLE
-
     default:
         return 0;
     }
@@ -502,17 +489,6 @@ static void GetSurfaceInfo( _In_ size_t width,
         planar = true;
         bpe = 4;
         break;
-
-#if defined(_XBOX_ONE) && defined(_TITLE)
-
-    case DXGI_FORMAT_D16_UNORM_S8_UINT:
-    case DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
-    case DXGI_FORMAT_X16_TYPELESS_G8_UINT:
-        planar = true;
-        bpe = 4;
-        break;
-
-#endif
     }
 
     if (bc)
@@ -1170,12 +1146,12 @@ static HRESULT CreateTextureFromDDS( _In_ ID3D11Device* d3dDevice,
 {
     HRESULT hr = S_OK;
 
-    size_t width = header->width;
-    size_t height = header->height;
-    size_t depth = header->depth;
+    UINT width = header->width;
+    UINT height = header->height;
+    UINT depth = header->depth;
 
     uint32_t resDim = D3D11_RESOURCE_DIMENSION_UNKNOWN;
-    size_t arraySize = 1;
+    UINT arraySize = 1;
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
     bool isCubeMap = false;
 
@@ -1295,42 +1271,45 @@ static HRESULT CreateTextureFromDDS( _In_ ID3D11Device* d3dDevice,
 
     switch ( resDim )
     {
-        case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
-            if ((arraySize > D3D11_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION) ||
-                (width > D3D11_REQ_TEXTURE1D_U_DIMENSION) )
-            {
-                return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-            }
-            break;
+    case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
+        if ((arraySize > D3D11_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION) ||
+            (width > D3D11_REQ_TEXTURE1D_U_DIMENSION) )
+        {
+            return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+        }
+        break;
 
-        case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
-            if ( isCubeMap )
-            {
-                // This is the right bound because we set arraySize to (NumCubes*6) above
-                if ((arraySize > D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) ||
-                    (width > D3D11_REQ_TEXTURECUBE_DIMENSION) ||
-                    (height > D3D11_REQ_TEXTURECUBE_DIMENSION))
-                {
-                    return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-                }
-            }
-            else if ((arraySize > D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) ||
-                     (width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) ||
-                     (height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION))
+    case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
+        if ( isCubeMap )
+        {
+            // This is the right bound because we set arraySize to (NumCubes*6) above
+            if ((arraySize > D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) ||
+                (width > D3D11_REQ_TEXTURECUBE_DIMENSION) ||
+                (height > D3D11_REQ_TEXTURECUBE_DIMENSION))
             {
                 return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
             }
-            break;
+        }
+        else if ((arraySize > D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) ||
+                    (width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) ||
+                    (height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION))
+        {
+            return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+        }
+        break;
 
-        case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
-            if ((arraySize > 1) ||
-                (width > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION) ||
-                (height > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION) ||
-                (depth > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION) )
-            {
-                return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-            }
-            break;
+    case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
+        if ((arraySize > 1) ||
+            (width > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION) ||
+            (height > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION) ||
+            (depth > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION) )
+        {
+            return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+        }
+        break;
+
+    default:
+        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
     }
 
     bool autogen = false;
@@ -1374,28 +1353,29 @@ static HRESULT CreateTextureFromDDS( _In_ ID3D11Device* d3dDevice,
                 return HRESULT_FROM_WIN32( ERROR_HANDLE_EOF );
             }
 
+            D3D11_SHADER_RESOURCE_VIEW_DESC desc;
+            (*textureView)->GetDesc( &desc );
+
+            UINT mipLevels = 1;
+
+            switch( desc.ViewDimension )
+            {
+            case D3D_SRV_DIMENSION_TEXTURE1D:       mipLevels = desc.Texture1D.MipLevels; break;
+            case D3D_SRV_DIMENSION_TEXTURE1DARRAY:  mipLevels = desc.Texture1DArray.MipLevels; break;
+            case D3D_SRV_DIMENSION_TEXTURE2D:       mipLevels = desc.Texture2D.MipLevels; break;
+            case D3D_SRV_DIMENSION_TEXTURE2DARRAY:  mipLevels = desc.Texture2DArray.MipLevels; break;
+            case D3D_SRV_DIMENSION_TEXTURECUBE:     mipLevels = desc.TextureCube.MipLevels; break;
+            case D3D_SRV_DIMENSION_TEXTURECUBEARRAY:mipLevels = desc.TextureCubeArray.MipLevels; break;
+            case D3D_SRV_DIMENSION_TEXTURE3D:       mipLevels = desc.Texture3D.MipLevels; break;
+            default:
+                (*textureView)->Release();
+                *textureView = nullptr;
+                tex->Release();
+                return E_UNEXPECTED;
+            }
+
             if ( arraySize > 1 )
             {
-                D3D11_SHADER_RESOURCE_VIEW_DESC desc;
-                (*textureView)->GetDesc( &desc );
-
-                UINT mipLevels = 1;
-
-                switch( desc.ViewDimension )
-                {
-                case D3D_SRV_DIMENSION_TEXTURE1D:       mipLevels = desc.Texture1D.MipLevels; break;
-                case D3D_SRV_DIMENSION_TEXTURE1DARRAY:  mipLevels = desc.Texture1DArray.MipLevels; break;
-                case D3D_SRV_DIMENSION_TEXTURE2D:       mipLevels = desc.Texture2D.MipLevels; break;
-                case D3D_SRV_DIMENSION_TEXTURE2DARRAY:  mipLevels = desc.Texture2DArray.MipLevels; break;
-                case D3D_SRV_DIMENSION_TEXTURECUBE:     mipLevels = desc.TextureCube.MipLevels; break;
-                case D3D_SRV_DIMENSION_TEXTURECUBEARRAY:mipLevels = desc.TextureCubeArray.MipLevels; break;
-                default:
-                    (*textureView)->Release();
-                    *textureView = nullptr;
-                    tex->Release();
-                    return E_UNEXPECTED;
-                }
-
                 const uint8_t* pSrcBits = bitData;
                 const uint8_t* pEndBits = bitData + bitSize;
                 for( UINT item = 0; item < arraySize; ++item )
