@@ -13,9 +13,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#if defined(_MSC_VER) && (_MSC_VER > 1000)
 #pragma once
-#endif
 
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP) && (_WIN32_WINNT <= _WIN32_WINNT_WIN8)
 #error WIC is not supported on Windows Phone 8.0
@@ -39,28 +37,37 @@
 
 #include <ocidl.h>
 
-#define DIRECTX_TEX_VERSION 130
+// VS 2010 doesn't support explicit calling convention for std::function
+#ifndef DIRECTX_STD_CALLCONV
+#if defined(_MSC_VER) && (_MSC_VER < 1700)
+#define DIRECTX_STD_CALLCONV
+#else
+#define DIRECTX_STD_CALLCONV __cdecl
+#endif
+#endif
+
+#define DIRECTX_TEX_VERSION 131
 
 namespace DirectX
 {
 
     //---------------------------------------------------------------------------------
     // DXGI Format Utilities
-    bool IsValid( _In_ DXGI_FORMAT fmt );
-    bool IsCompressed( _In_ DXGI_FORMAT fmt );
-    bool IsPacked( _In_ DXGI_FORMAT fmt );
-    bool IsVideo( _In_ DXGI_FORMAT fmt );
-    bool IsPlanar( _In_ DXGI_FORMAT fmt );
-    bool IsPalettized( _In_ DXGI_FORMAT fmt );
-    bool IsDepthStencil(_In_ DXGI_FORMAT fmt );
-    bool IsSRGB( _In_ DXGI_FORMAT fmt );
-    bool IsTypeless( _In_ DXGI_FORMAT fmt, _In_ bool partialTypeless = true );
+    bool __cdecl IsValid( _In_ DXGI_FORMAT fmt );
+    bool __cdecl IsCompressed( _In_ DXGI_FORMAT fmt );
+    bool __cdecl IsPacked( _In_ DXGI_FORMAT fmt );
+    bool __cdecl IsVideo( _In_ DXGI_FORMAT fmt );
+    bool __cdecl IsPlanar( _In_ DXGI_FORMAT fmt );
+    bool __cdecl IsPalettized( _In_ DXGI_FORMAT fmt );
+    bool __cdecl IsDepthStencil(_In_ DXGI_FORMAT fmt );
+    bool __cdecl IsSRGB( _In_ DXGI_FORMAT fmt );
+    bool __cdecl IsTypeless( _In_ DXGI_FORMAT fmt, _In_ bool partialTypeless = true );
 
-    bool HasAlpha( _In_ DXGI_FORMAT fmt );
+    bool __cdecl HasAlpha( _In_ DXGI_FORMAT fmt );
 
-    size_t BitsPerPixel( _In_ DXGI_FORMAT fmt );
+    size_t __cdecl BitsPerPixel( _In_ DXGI_FORMAT fmt );
 
-    size_t BitsPerColor( _In_ DXGI_FORMAT fmt );
+    size_t __cdecl BitsPerColor( _In_ DXGI_FORMAT fmt );
 
     enum CP_FLAGS
     {
@@ -75,15 +82,15 @@ namespace DirectX
         CP_FLAGS_8BPP               = 0x40000,  // Override with a legacy 8 bits-per-pixel format size
     };
 
-    void ComputePitch( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height,
-                       _Out_ size_t& rowPitch, _Out_ size_t& slicePitch, _In_ DWORD flags = CP_FLAGS_NONE );
+    void __cdecl ComputePitch( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height,
+                               _Out_ size_t& rowPitch, _Out_ size_t& slicePitch, _In_ DWORD flags = CP_FLAGS_NONE );
 
-    size_t ComputeScanlines( _In_ DXGI_FORMAT fmt, _In_ size_t height );
+    size_t __cdecl ComputeScanlines( _In_ DXGI_FORMAT fmt, _In_ size_t height );
 
-    DXGI_FORMAT MakeSRGB( _In_ DXGI_FORMAT fmt );
-    DXGI_FORMAT MakeTypeless( _In_ DXGI_FORMAT fmt );
-    DXGI_FORMAT MakeTypelessUNORM( _In_ DXGI_FORMAT fmt );
-    DXGI_FORMAT MakeTypelessFLOAT( _In_ DXGI_FORMAT fmt );
+    DXGI_FORMAT __cdecl MakeSRGB( _In_ DXGI_FORMAT fmt );
+    DXGI_FORMAT __cdecl MakeTypeless( _In_ DXGI_FORMAT fmt );
+    DXGI_FORMAT __cdecl MakeTypelessUNORM( _In_ DXGI_FORMAT fmt );
+    DXGI_FORMAT __cdecl MakeTypelessFLOAT( _In_ DXGI_FORMAT fmt );
 
     //---------------------------------------------------------------------------------
     // Texture metadata
@@ -128,17 +135,17 @@ namespace DirectX
         DXGI_FORMAT     format;
         TEX_DIMENSION   dimension;
 
-        size_t ComputeIndex( _In_ size_t mip, _In_ size_t item, _In_ size_t slice ) const;
+        size_t __cdecl ComputeIndex( _In_ size_t mip, _In_ size_t item, _In_ size_t slice ) const;
             // Returns size_t(-1) to indicate an out-of-range error
 
-        bool IsCubemap() const { return (miscFlags & TEX_MISC_TEXTURECUBE) != 0; }
+        bool __cdecl IsCubemap() const { return (miscFlags & TEX_MISC_TEXTURECUBE) != 0; }
             // Helper for miscFlags
 
-        bool IsPMAlpha() const { return ((miscFlags2 & TEX_MISC2_ALPHA_MODE_MASK) == TEX_ALPHA_MODE_PREMULTIPLIED) != 0; }
-        void SetAlphaMode( TEX_ALPHA_MODE mode ) { miscFlags2 = (miscFlags2 & ~TEX_MISC2_ALPHA_MODE_MASK) | static_cast<uint32_t>(mode); }
+        bool __cdecl IsPMAlpha() const { return ((miscFlags2 & TEX_MISC2_ALPHA_MODE_MASK) == TEX_ALPHA_MODE_PREMULTIPLIED) != 0; }
+        void __cdecl SetAlphaMode( TEX_ALPHA_MODE mode ) { miscFlags2 = (miscFlags2 & ~TEX_MISC2_ALPHA_MODE_MASK) | static_cast<uint32_t>(mode); }
             // Helpers for miscFlags2
 
-        bool IsVolumemap() const { return (dimension == TEX_DIMENSION_TEXTURE3D); }
+        bool __cdecl IsVolumemap() const { return (dimension == TEX_DIMENSION_TEXTURE3D); }
             // Helper for dimension
     };
 
@@ -206,20 +213,20 @@ namespace DirectX
             // Filtering mode to use for any required image resizing (only needed when loading arrays of differently sized images; defaults to Fant)
     };
 
-    HRESULT GetMetadataFromDDSMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
-                                      _Out_ TexMetadata& metadata );
-    HRESULT GetMetadataFromDDSFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
-                                    _Out_ TexMetadata& metadata );
+    HRESULT __cdecl GetMetadataFromDDSMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
+                                              _Out_ TexMetadata& metadata );
+    HRESULT __cdecl GetMetadataFromDDSFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
+                                            _Out_ TexMetadata& metadata );
 
-    HRESULT GetMetadataFromTGAMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size,
-                                      _Out_ TexMetadata& metadata );
-    HRESULT GetMetadataFromTGAFile( _In_z_ LPCWSTR szFile,
-                                    _Out_ TexMetadata& metadata );
+    HRESULT __cdecl GetMetadataFromTGAMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size,
+                                              _Out_ TexMetadata& metadata );
+    HRESULT __cdecl GetMetadataFromTGAFile( _In_z_ LPCWSTR szFile,
+                                            _Out_ TexMetadata& metadata );
 
-    HRESULT GetMetadataFromWICMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
-                                      _Out_ TexMetadata& metadata );
-    HRESULT GetMetadataFromWICFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
-                                    _Out_ TexMetadata& metadata );
+    HRESULT __cdecl GetMetadataFromWICMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
+                                              _Out_ TexMetadata& metadata );
+    HRESULT __cdecl GetMetadataFromWICFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
+                                            _Out_ TexMetadata& metadata );
 
     //---------------------------------------------------------------------------------
     // Bitmap image container
@@ -242,34 +249,34 @@ namespace DirectX
             : _nimages(0), _size(0), _image(nullptr), _memory(nullptr) { *this = std::move(moveFrom); }
         ~ScratchImage() { Release(); }
 
-        ScratchImage& operator= (ScratchImage&& moveFrom);
+        ScratchImage& __cdecl operator= (ScratchImage&& moveFrom);
 
-        HRESULT Initialize( _In_ const TexMetadata& mdata, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT __cdecl Initialize( _In_ const TexMetadata& mdata, _In_ DWORD flags = CP_FLAGS_NONE );
 
-        HRESULT Initialize1D( _In_ DXGI_FORMAT fmt, _In_ size_t length, _In_ size_t arraySize, _In_ size_t mipLevels, _In_ DWORD flags = CP_FLAGS_NONE );
-        HRESULT Initialize2D( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t arraySize, _In_ size_t mipLevels, _In_ DWORD flags = CP_FLAGS_NONE );
-        HRESULT Initialize3D( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t depth, _In_ size_t mipLevels, _In_ DWORD flags = CP_FLAGS_NONE );
-        HRESULT InitializeCube( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t nCubes, _In_ size_t mipLevels, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT __cdecl Initialize1D( _In_ DXGI_FORMAT fmt, _In_ size_t length, _In_ size_t arraySize, _In_ size_t mipLevels, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT __cdecl Initialize2D( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t arraySize, _In_ size_t mipLevels, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT __cdecl Initialize3D( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t depth, _In_ size_t mipLevels, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT __cdecl InitializeCube( _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t nCubes, _In_ size_t mipLevels, _In_ DWORD flags = CP_FLAGS_NONE );
 
-        HRESULT InitializeFromImage( _In_ const Image& srcImage, _In_ bool allow1D = false, _In_ DWORD flags = CP_FLAGS_NONE );
-        HRESULT InitializeArrayFromImages( _In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ bool allow1D = false, _In_ DWORD flags = CP_FLAGS_NONE ); 
-        HRESULT InitializeCubeFromImages( _In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ DWORD flags = CP_FLAGS_NONE );
-        HRESULT Initialize3DFromImages( _In_reads_(depth) const Image* images, _In_ size_t depth, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT __cdecl InitializeFromImage( _In_ const Image& srcImage, _In_ bool allow1D = false, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT __cdecl InitializeArrayFromImages( _In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ bool allow1D = false, _In_ DWORD flags = CP_FLAGS_NONE ); 
+        HRESULT __cdecl InitializeCubeFromImages( _In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ DWORD flags = CP_FLAGS_NONE );
+        HRESULT __cdecl Initialize3DFromImages( _In_reads_(depth) const Image* images, _In_ size_t depth, _In_ DWORD flags = CP_FLAGS_NONE );
 
-        void Release();
+        void __cdecl Release();
 
-        bool OverrideFormat( _In_ DXGI_FORMAT f );
+        bool __cdecl OverrideFormat( _In_ DXGI_FORMAT f );
 
-        const TexMetadata& GetMetadata() const { return _metadata; }
-        const Image* GetImage(_In_ size_t mip, _In_ size_t item, _In_ size_t slice) const;
+        const TexMetadata& __cdecl GetMetadata() const { return _metadata; }
+        const Image* __cdecl GetImage(_In_ size_t mip, _In_ size_t item, _In_ size_t slice) const;
 
-        const Image* GetImages() const { return _image; }
-        size_t GetImageCount() const { return _nimages; }
+        const Image* __cdecl GetImages() const { return _image; }
+        size_t __cdecl GetImageCount() const { return _nimages; }
 
-        uint8_t* GetPixels() const { return _memory; }
-        size_t GetPixelsSize() const { return _size; }
+        uint8_t* __cdecl GetPixels() const { return _memory; }
+        size_t __cdecl GetPixelsSize() const { return _size; }
 
-        bool IsAlphaAllOpaque() const;
+        bool __cdecl IsAlphaAllOpaque() const;
 
     private:
         size_t      _nimages;
@@ -292,14 +299,14 @@ namespace DirectX
         Blob(Blob&& moveFrom) : _buffer(nullptr), _size(0) { *this = std::move(moveFrom); }
         ~Blob() { Release(); }
 
-        Blob& operator= (Blob&& moveFrom);
+        Blob& __cdecl operator= (Blob&& moveFrom);
 
-        HRESULT Initialize( _In_ size_t size );
+        HRESULT __cdecl Initialize( _In_ size_t size );
 
-        void Release();
+        void __cdecl Release();
 
-        void *GetBufferPointer() const { return _buffer; }
-        size_t GetBufferSize() const { return _size; }
+        void *__cdecl GetBufferPointer() const { return _buffer; }
+        size_t __cdecl GetBufferSize() const { return _size; }
 
     private:
         void*   _buffer;
@@ -314,43 +321,47 @@ namespace DirectX
     // Image I/O
 
     // DDS operations
-    HRESULT LoadFromDDSMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
-                               _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
-    HRESULT LoadFromDDSFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
-                             _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
+    HRESULT __cdecl LoadFromDDSMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
+                                       _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
+    HRESULT __cdecl LoadFromDDSFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
+                                     _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
 
-    HRESULT SaveToDDSMemory( _In_ const Image& image, _In_ DWORD flags,
-                             _Out_ Blob& blob );
-    HRESULT SaveToDDSMemory( _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags,
-                             _Out_ Blob& blob );
+    HRESULT __cdecl SaveToDDSMemory( _In_ const Image& image, _In_ DWORD flags,
+                                     _Out_ Blob& blob );
+    HRESULT __cdecl SaveToDDSMemory( _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags,
+                                     _Out_ Blob& blob );
 
-    HRESULT SaveToDDSFile( _In_ const Image& image, _In_ DWORD flags, _In_z_ LPCWSTR szFile );
-    HRESULT SaveToDDSFile( _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags, _In_z_ LPCWSTR szFile );
+    HRESULT __cdecl SaveToDDSFile( _In_ const Image& image, _In_ DWORD flags, _In_z_ LPCWSTR szFile );
+    HRESULT __cdecl SaveToDDSFile( _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags, _In_z_ LPCWSTR szFile );
 
     // TGA operations
-    HRESULT LoadFromTGAMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size,
-                               _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
-    HRESULT LoadFromTGAFile( _In_z_ LPCWSTR szFile,
-                             _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
+    HRESULT __cdecl LoadFromTGAMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size,
+                                       _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
+    HRESULT __cdecl LoadFromTGAFile( _In_z_ LPCWSTR szFile,
+                                     _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
 
-    HRESULT SaveToTGAMemory( _In_ const Image& image, _Out_ Blob& blob );
-    HRESULT SaveToTGAFile( _In_ const Image& image, _In_z_ LPCWSTR szFile );
+    HRESULT __cdecl SaveToTGAMemory( _In_ const Image& image, _Out_ Blob& blob );
+    HRESULT __cdecl SaveToTGAFile( _In_ const Image& image, _In_z_ LPCWSTR szFile );
 
     // WIC operations
-    HRESULT LoadFromWICMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
-                               _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
-    HRESULT LoadFromWICFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
-                             _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
+    HRESULT __cdecl LoadFromWICMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
+                                       _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
+    HRESULT __cdecl LoadFromWICFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
+                                    _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
 
-    HRESULT SaveToWICMemory( _In_ const Image& image, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
-                             _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr, _In_opt_ std::function<void(IPropertyBag2*)> setCustomProps = nullptr );
-    HRESULT SaveToWICMemory( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
-                             _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr, _In_opt_ std::function<void(IPropertyBag2*)> setCustomProps = nullptr );
+    HRESULT __cdecl SaveToWICMemory( _In_ const Image& image, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
+                                     _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr,
+                                     _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IPropertyBag2*)> setCustomProps = nullptr );
+    HRESULT __cdecl SaveToWICMemory( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
+                                     _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr,
+                                     _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IPropertyBag2*)> setCustomProps = nullptr );
 
-    HRESULT SaveToWICFile( _In_ const Image& image, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
-                           _In_z_ LPCWSTR szFile, _In_opt_ const GUID* targetFormat = nullptr, _In_opt_ std::function<void(IPropertyBag2*)> setCustomProps = nullptr );
-    HRESULT SaveToWICFile( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
-                           _In_z_ LPCWSTR szFile, _In_opt_ const GUID* targetFormat = nullptr, _In_opt_ std::function<void(IPropertyBag2*)> setCustomProps = nullptr );
+    HRESULT __cdecl SaveToWICFile( _In_ const Image& image, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
+                                   _In_z_ LPCWSTR szFile, _In_opt_ const GUID* targetFormat = nullptr,
+                                   _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IPropertyBag2*)> setCustomProps = nullptr );
+    HRESULT __cdecl SaveToWICFile( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
+                                   _In_z_ LPCWSTR szFile, _In_opt_ const GUID* targetFormat = nullptr,
+                                   _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IPropertyBag2*)> setCustomProps = nullptr );
 
     enum WICCodecs
     {
@@ -363,7 +374,7 @@ namespace DirectX
         WIC_CODEC_ICO,              // Windows Icon (.ico)
     };
 
-    REFGUID GetWICCodec( _In_ WICCodecs codec );
+    REFGUID __cdecl GetWICCodec( _In_ WICCodecs codec );
 
     //---------------------------------------------------------------------------------
     // Texture conversion, resizing, mipmap generation, and block compression
@@ -378,9 +389,9 @@ namespace DirectX
         TEX_FR_FLIP_VERTICAL    = 0x10,
     };
 
-    HRESULT FlipRotate( _In_ const Image& srcImage, _In_ DWORD flags, _Out_ ScratchImage& image );
-    HRESULT FlipRotate( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                        _In_ DWORD flags, _Out_ ScratchImage& result );
+    HRESULT __cdecl FlipRotate( _In_ const Image& srcImage, _In_ DWORD flags, _Out_ ScratchImage& image );
+    HRESULT __cdecl FlipRotate( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                _In_ DWORD flags, _Out_ ScratchImage& result );
         // Flip and/or rotate image
 
     enum TEX_FILTER_FLAGS
@@ -433,35 +444,35 @@ namespace DirectX
             // Forces use of the WIC path even when logic would have picked a non-WIC path when both are an option
     };
 
-    HRESULT Resize( _In_ const Image& srcImage, _In_ size_t width, _In_ size_t height, _In_ DWORD filter,
-                    _Out_ ScratchImage& image );
-    HRESULT Resize( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                    _In_ size_t width, _In_ size_t height, _In_ DWORD filter, _Out_ ScratchImage& result );
+    HRESULT __cdecl Resize( _In_ const Image& srcImage, _In_ size_t width, _In_ size_t height, _In_ DWORD filter,
+                            _Out_ ScratchImage& image );
+    HRESULT __cdecl Resize( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                            _In_ size_t width, _In_ size_t height, _In_ DWORD filter, _Out_ ScratchImage& result );
         // Resize the image to width x height. Defaults to Fant filtering.
         // Note for a complex resize, the result will always have mipLevels == 1
 
-    HRESULT Convert( _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD filter, _In_ float threshold,
-                     _Out_ ScratchImage& image );
-    HRESULT Convert( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                     _In_ DXGI_FORMAT format, _In_ DWORD filter, _In_ float threshold, _Out_ ScratchImage& result );
+    HRESULT __cdecl Convert( _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD filter, _In_ float threshold,
+                            _Out_ ScratchImage& image );
+    HRESULT __cdecl Convert( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                             _In_ DXGI_FORMAT format, _In_ DWORD filter, _In_ float threshold, _Out_ ScratchImage& result );
         // Convert the image to a new format
     
-    HRESULT ConvertToSinglePlane( _In_ const Image& srcImage, _Out_ ScratchImage& image );
-    HRESULT ConvertToSinglePlane( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                                  _Out_ ScratchImage& image );
+    HRESULT __cdecl ConvertToSinglePlane( _In_ const Image& srcImage, _Out_ ScratchImage& image );
+    HRESULT __cdecl ConvertToSinglePlane( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                          _Out_ ScratchImage& image );
         // Converts the image from a planar format to an equivalent non-planar format
 
-    HRESULT GenerateMipMaps( _In_ const Image& baseImage, _In_ DWORD filter, _In_ size_t levels,
-                             _Inout_ ScratchImage& mipChain, _In_ bool allow1D = false );
-    HRESULT GenerateMipMaps( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                             _In_ DWORD filter, _In_ size_t levels, _Inout_ ScratchImage& mipChain );
+    HRESULT __cdecl GenerateMipMaps( _In_ const Image& baseImage, _In_ DWORD filter, _In_ size_t levels,
+                                     _Inout_ ScratchImage& mipChain, _In_ bool allow1D = false );
+    HRESULT __cdecl GenerateMipMaps( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                     _In_ DWORD filter, _In_ size_t levels, _Inout_ ScratchImage& mipChain );
         // levels of '0' indicates a full mipchain, otherwise is generates that number of total levels (including the source base image)
         // Defaults to Fant filtering which is equivalent to a box filter
 
-    HRESULT GenerateMipMaps3D( _In_reads_(depth) const Image* baseImages, _In_ size_t depth, _In_ DWORD filter, _In_ size_t levels,
-                               _Out_ ScratchImage& mipChain );
-    HRESULT GenerateMipMaps3D( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                               _In_ DWORD filter, _In_ size_t levels, _Out_ ScratchImage& mipChain );
+    HRESULT __cdecl GenerateMipMaps3D( _In_reads_(depth) const Image* baseImages, _In_ size_t depth, _In_ DWORD filter, _In_ size_t levels,
+                                       _Out_ ScratchImage& mipChain );
+    HRESULT __cdecl GenerateMipMaps3D( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                       _In_ DWORD filter, _In_ size_t levels, _Out_ ScratchImage& mipChain );
         // levels of '0' indicates a full mipchain, otherwise is generates that number of total levels (including the source base image)
         // Defaults to Fant filtering which is equivalent to a box filter
 
@@ -479,8 +490,8 @@ namespace DirectX
             // if the output format type is IsSRGB(), then SRGB_OUT is on by default
     };
 
-    HRESULT PremultiplyAlpha( _In_ const Image& srcImage, _In_ DWORD flags, _Out_ ScratchImage& image );
-    HRESULT PremultiplyAlpha( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags, _Out_ ScratchImage& result );
+    HRESULT __cdecl PremultiplyAlpha( _In_ const Image& srcImage, _In_ DWORD flags, _Out_ ScratchImage& image );
+    HRESULT __cdecl PremultiplyAlpha( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags, _Out_ ScratchImage& result );
         // Converts to a premultiplied alpha version of the texture
 
     enum TEX_COMPRESS_FLAGS
@@ -509,21 +520,21 @@ namespace DirectX
             // Compress is free to use multithreading to improve performance (by default it does not use multithreading)
     };
 
-    HRESULT Compress( _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaRef,
-                      _Out_ ScratchImage& cImage );
-    HRESULT Compress( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                      _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaRef, _Out_ ScratchImage& cImages );
+    HRESULT __cdecl Compress( _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaRef,
+                              _Out_ ScratchImage& cImage );
+    HRESULT __cdecl Compress( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                              _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaRef, _Out_ ScratchImage& cImages );
         // Note that alphaRef is only used by BC1. 0.5f is a typical value to use
 
-    HRESULT Compress( _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD compress,
-                      _In_ float alphaWeight, _Out_ ScratchImage& image );
-    HRESULT Compress( _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                      _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages );
+    HRESULT __cdecl Compress( _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD compress,
+                              _In_ float alphaWeight, _Out_ ScratchImage& image );
+    HRESULT __cdecl Compress( _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                              _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages );
         // DirectCompute-based compression (alphaWeight is only used by BC7. 1.0 is the typical value to use)
 
-    HRESULT Decompress( _In_ const Image& cImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image );
-    HRESULT Decompress( _In_reads_(nimages) const Image* cImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                        _In_ DXGI_FORMAT format, _Out_ ScratchImage& images );
+    HRESULT __cdecl Decompress( _In_ const Image& cImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image );
+    HRESULT __cdecl Decompress( _In_reads_(nimages) const Image* cImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                _In_ DXGI_FORMAT format, _Out_ ScratchImage& images );
 
     //---------------------------------------------------------------------------------
     // Normal map operations
@@ -552,10 +563,10 @@ namespace DirectX
             // Computes a crude occlusion term stored in the alpha channel
     };
 
-    HRESULT ComputeNormalMap( _In_ const Image& srcImage, _In_ DWORD flags, _In_ float amplitude,
-                              _In_ DXGI_FORMAT format, _Out_ ScratchImage& normalMap );
-    HRESULT ComputeNormalMap( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                              _In_ DWORD flags, _In_ float amplitude, _In_ DXGI_FORMAT format, _Out_ ScratchImage& normalMaps );
+    HRESULT __cdecl ComputeNormalMap( _In_ const Image& srcImage, _In_ DWORD flags, _In_ float amplitude,
+                                      _In_ DXGI_FORMAT format, _Out_ ScratchImage& normalMap );
+    HRESULT __cdecl ComputeNormalMap( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                      _In_ DWORD flags, _In_ float amplitude, _In_ DXGI_FORMAT format, _Out_ ScratchImage& normalMaps );
 
     //---------------------------------------------------------------------------------
     // Misc image operations
@@ -570,8 +581,8 @@ namespace DirectX
         Rect( size_t _x, size_t _y, size_t _w, size_t _h ) : x(_x), y(_y), w(_w), h(_h) {}
     };
 
-    HRESULT CopyRectangle( _In_ const Image& srcImage, _In_ const Rect& srcRect, _In_ const Image& dstImage,
-                           _In_ DWORD filter, _In_ size_t xOffset, _In_ size_t yOffset );
+    HRESULT __cdecl CopyRectangle( _In_ const Image& srcImage, _In_ const Rect& srcRect, _In_ const Image& dstImage,
+                                   _In_ DWORD filter, _In_ size_t xOffset, _In_ size_t yOffset );
 
     enum CMSE_FLAGS
     {
@@ -592,27 +603,27 @@ namespace DirectX
             // Indicates that image should be scaled and biased before comparison (i.e. UNORM -> SNORM)
     };
 
-    HRESULT ComputeMSE( _In_ const Image& image1, _In_ const Image& image2, _Out_ float& mse, _Out_writes_opt_(4) float* mseV, _In_ DWORD flags = 0 );
+    HRESULT __cdecl ComputeMSE( _In_ const Image& image1, _In_ const Image& image2, _Out_ float& mse, _Out_writes_opt_(4) float* mseV, _In_ DWORD flags = 0 );
 
     //---------------------------------------------------------------------------------
     // Direct3D 11 functions
-    bool IsSupportedTexture( _In_ ID3D11Device* pDevice, _In_ const TexMetadata& metadata );
+    bool __cdecl IsSupportedTexture( _In_ ID3D11Device* pDevice, _In_ const TexMetadata& metadata );
 
-    HRESULT CreateTexture( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                           _Outptr_ ID3D11Resource** ppResource );
+    HRESULT __cdecl CreateTexture( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                   _Outptr_ ID3D11Resource** ppResource );
 
-    HRESULT CreateShaderResourceView( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                                      _Outptr_ ID3D11ShaderResourceView** ppSRV );
+    HRESULT __cdecl CreateShaderResourceView( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                              _Outptr_ ID3D11ShaderResourceView** ppSRV );
 
-    HRESULT CreateTextureEx( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                             _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ bool forceSRGB,
-                             _Outptr_ ID3D11Resource** ppResource );
+    HRESULT __cdecl CreateTextureEx( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                     _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ bool forceSRGB,
+                                     _Outptr_ ID3D11Resource** ppResource );
 
-    HRESULT CreateShaderResourceViewEx( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                                        _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ bool forceSRGB,
-                                        _Outptr_ ID3D11ShaderResourceView** ppSRV );
+    HRESULT __cdecl CreateShaderResourceViewEx( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                                _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ bool forceSRGB,
+                                                _Outptr_ ID3D11ShaderResourceView** ppSRV );
 
-    HRESULT CaptureTexture( _In_ ID3D11Device* pDevice, _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource* pSource, _Out_ ScratchImage& result );
+    HRESULT __cdecl CaptureTexture( _In_ ID3D11Device* pDevice, _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource* pSource, _Out_ ScratchImage& result );
 
 #include "DirectXTex.inl"
 

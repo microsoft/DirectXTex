@@ -13,22 +13,20 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#if defined(_MSC_VER) && (_MSC_VER > 1000)
 #pragma once
-#endif
 
 //=====================================================================================
 // DXGI Format Utilities
 //=====================================================================================
 
 _Use_decl_annotations_
-inline bool IsValid( DXGI_FORMAT fmt )
+inline bool __cdecl IsValid( DXGI_FORMAT fmt )
 {
     return ( static_cast<size_t>(fmt) >= 1 && static_cast<size_t>(fmt) <= 120 );
 }
 
 _Use_decl_annotations_
-inline bool IsCompressed( DXGI_FORMAT fmt )
+inline bool __cdecl IsCompressed(DXGI_FORMAT fmt)
 {
     switch ( fmt )
     {
@@ -61,7 +59,7 @@ inline bool IsCompressed( DXGI_FORMAT fmt )
 }
 
 _Use_decl_annotations_
-inline bool IsPacked( DXGI_FORMAT fmt )
+inline bool __cdecl IsPacked(DXGI_FORMAT fmt)
 {
     switch( fmt )
     {
@@ -78,7 +76,7 @@ inline bool IsPacked( DXGI_FORMAT fmt )
 }
 
 _Use_decl_annotations_
-inline bool IsPlanar( DXGI_FORMAT fmt )
+inline bool __cdecl IsPlanar(DXGI_FORMAT fmt)
 {
     switch ( static_cast<int>(fmt) )
     {
@@ -101,7 +99,7 @@ inline bool IsPlanar( DXGI_FORMAT fmt )
 }
 
 _Use_decl_annotations_
-inline bool IsPalettized( DXGI_FORMAT fmt )
+inline bool __cdecl IsPalettized(DXGI_FORMAT fmt)
 {
     switch( fmt )
     {
@@ -117,7 +115,7 @@ inline bool IsPalettized( DXGI_FORMAT fmt )
 }
 
 _Use_decl_annotations_
-inline bool IsVideo( DXGI_FORMAT fmt )
+inline bool __cdecl IsVideo(DXGI_FORMAT fmt)
 {
     switch ( fmt )
     {
@@ -147,7 +145,7 @@ inline bool IsVideo( DXGI_FORMAT fmt )
 }
 
 _Use_decl_annotations_
-inline bool IsDepthStencil( DXGI_FORMAT fmt )
+inline bool __cdecl IsDepthStencil(DXGI_FORMAT fmt)
 {
     switch( static_cast<int>(fmt) )
     {
@@ -170,7 +168,7 @@ inline bool IsDepthStencil( DXGI_FORMAT fmt )
 }
 
 _Use_decl_annotations_
-inline bool IsSRGB( DXGI_FORMAT fmt )
+inline bool __cdecl IsSRGB(DXGI_FORMAT fmt)
 {
     switch( fmt )
     {
@@ -189,7 +187,7 @@ inline bool IsSRGB( DXGI_FORMAT fmt )
 }
 
 _Use_decl_annotations_
-inline bool IsTypeless( DXGI_FORMAT fmt, bool partialTypeless )
+inline bool __cdecl IsTypeless(DXGI_FORMAT fmt, bool partialTypeless)
 {
     switch( static_cast<int>(fmt) )
     {
@@ -234,7 +232,7 @@ inline bool IsTypeless( DXGI_FORMAT fmt, bool partialTypeless )
 }
 
 _Use_decl_annotations_
-inline bool HasAlpha( DXGI_FORMAT fmt )
+inline bool __cdecl HasAlpha(DXGI_FORMAT fmt)
 {
     switch( static_cast<int>(fmt) )
     {
@@ -295,7 +293,7 @@ inline bool HasAlpha( DXGI_FORMAT fmt )
 }
 
 _Use_decl_annotations_
-inline size_t ComputeScanlines( DXGI_FORMAT fmt, size_t height )
+inline size_t __cdecl ComputeScanlines(DXGI_FORMAT fmt, size_t height)
 {
     if ( IsCompressed(fmt) )
     {
@@ -320,7 +318,7 @@ inline size_t ComputeScanlines( DXGI_FORMAT fmt, size_t height )
 // Image I/O
 //=====================================================================================
 _Use_decl_annotations_
-inline HRESULT SaveToDDSMemory( const Image& image, DWORD flags, Blob& blob )
+inline HRESULT __cdecl SaveToDDSMemory(const Image& image, DWORD flags, Blob& blob)
 {
     TexMetadata mdata;
     memset( &mdata, 0, sizeof(mdata) );
@@ -336,7 +334,7 @@ inline HRESULT SaveToDDSMemory( const Image& image, DWORD flags, Blob& blob )
 }
 
 _Use_decl_annotations_
-inline HRESULT SaveToDDSFile( const Image& image, DWORD flags, LPCWSTR szFile )
+inline HRESULT __cdecl SaveToDDSFile(const Image& image, DWORD flags, LPCWSTR szFile)
 {
     TexMetadata mdata;
     memset( &mdata, 0, sizeof(mdata) );

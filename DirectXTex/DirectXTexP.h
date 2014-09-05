@@ -13,9 +13,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#if defined(_MSC_VER) && (_MSC_VER > 1000)
 #pragma once
-#endif
 
 #define NOMINMAX
 #include <windows.h>
@@ -52,16 +50,16 @@ namespace DirectX
 {
     //---------------------------------------------------------------------------------
     // WIC helper functions
-    DXGI_FORMAT _WICToDXGI( _In_ const GUID& guid );
-    bool _DXGIToWIC( _In_ DXGI_FORMAT format, _Out_ GUID& guid, _In_ bool ignoreRGBvsBGR = false );
+    DXGI_FORMAT __cdecl _WICToDXGI( _In_ const GUID& guid );
+    bool __cdecl _DXGIToWIC( _In_ DXGI_FORMAT format, _Out_ GUID& guid, _In_ bool ignoreRGBvsBGR = false );
 
-    DWORD _CheckWICColorSpace( _In_ const GUID& sourceGUID, _In_ const GUID& targetGUID );
+    DWORD __cdecl _CheckWICColorSpace( _In_ const GUID& sourceGUID, _In_ const GUID& targetGUID );
 
-    IWICImagingFactory* _GetWIC();
+    IWICImagingFactory* __cdecl _GetWIC();
 
-    bool _IsWIC2();
+    bool __cdecl _IsWIC2();
 
-    inline WICBitmapDitherType _GetWICDither( _In_ DWORD flags )
+    inline WICBitmapDitherType __cdecl _GetWICDither( _In_ DWORD flags )
     {
         static_assert( TEX_FILTER_DITHER == 0x10000, "TEX_FILTER_DITHER* flag values don't match mask" );
 
@@ -81,7 +79,7 @@ namespace DirectX
         }
     }
 
-    inline WICBitmapInterpolationMode _GetWICInterp( _In_ DWORD flags )
+    inline WICBitmapInterpolationMode __cdecl _GetWICInterp( _In_ DWORD flags )
     {
         static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
 
@@ -109,13 +107,13 @@ namespace DirectX
 
     //---------------------------------------------------------------------------------
     // Image helper functions
-    void _DetermineImageArray( _In_ const TexMetadata& metadata, _In_ DWORD cpFlags,
-                               _Out_ size_t& nImages, _Out_ size_t& pixelSize );
+    void __cdecl _DetermineImageArray( _In_ const TexMetadata& metadata, _In_ DWORD cpFlags,
+                                       _Out_ size_t& nImages, _Out_ size_t& pixelSize );
 
     _Success_(return != false)
-    bool _SetupImageArray( _In_reads_bytes_(pixelSize) uint8_t *pMemory, _In_ size_t pixelSize,
-                           _In_ const TexMetadata& metadata, _In_ DWORD cpFlags,
-                           _Out_writes_(nImages) Image* images, _In_ size_t nImages );
+    bool __cdecl _SetupImageArray( _In_reads_bytes_(pixelSize) uint8_t *pMemory, _In_ size_t pixelSize,
+                                   _In_ const TexMetadata& metadata, _In_ DWORD cpFlags,
+                                   _Out_writes_(nImages) Image* images, _In_ size_t nImages );
 
     //---------------------------------------------------------------------------------
     // Conversion helper functions
@@ -150,60 +148,60 @@ namespace DirectX
         CONVF_RGBA_MASK = 0xF0000,
     };
 
-    DWORD _GetConvertFlags( _In_ DXGI_FORMAT format );
+    DWORD __cdecl _GetConvertFlags( _In_ DXGI_FORMAT format );
 
-    void _CopyScanline( _When_(pDestination == pSource, _Inout_updates_bytes_(outSize))
-                        _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
-                        LPVOID pDestination, _In_ size_t outSize, 
-                        _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
-                        _In_ DXGI_FORMAT format, _In_ DWORD flags );
+    void __cdecl _CopyScanline( _When_(pDestination == pSource, _Inout_updates_bytes_(outSize))
+                                _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
+                                LPVOID pDestination, _In_ size_t outSize, 
+                                _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
+                                _In_ DXGI_FORMAT format, _In_ DWORD flags );
 
-    void _SwizzleScanline( _When_(pDestination == pSource, _In_)
-                           _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
-                           LPVOID pDestination, _In_ size_t outSize, 
-                           _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
-                           _In_ DXGI_FORMAT format, _In_ DWORD flags );
+    void __cdecl _SwizzleScanline( _When_(pDestination == pSource, _In_)
+                                   _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
+                                   LPVOID pDestination, _In_ size_t outSize, 
+                                   _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
+                                   _In_ DXGI_FORMAT format, _In_ DWORD flags );
+ 
+    _Success_(return != false)
+    bool __cdecl _ExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestination, _In_ size_t outSize,
+                                  _In_ DXGI_FORMAT outFormat, 
+                                  _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
+                                  _In_ DXGI_FORMAT inFormat, _In_ DWORD flags );
 
     _Success_(return != false)
-    bool _ExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestination, _In_ size_t outSize,
-                          _In_ DXGI_FORMAT outFormat, 
-                          _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
-                          _In_ DXGI_FORMAT inFormat, _In_ DWORD flags );
+    bool __cdecl _LoadScanline( _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,
+                                _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DXGI_FORMAT format );
 
     _Success_(return != false)
-    bool _LoadScanline( _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,
-                        _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DXGI_FORMAT format );
+    bool __cdecl _LoadScanlineLinear( _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,
+                                      _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DXGI_FORMAT format, _In_ DWORD flags  );
 
     _Success_(return != false)
-    bool _LoadScanlineLinear( _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,
-                             _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DXGI_FORMAT format, _In_ DWORD flags  );
+    bool __cdecl _StoreScanline( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
+                                 _In_reads_(count) const XMVECTOR* pSource, _In_ size_t count, _In_ float threshold = 0 );
 
     _Success_(return != false)
-    bool _StoreScanline( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
-                         _In_reads_(count) const XMVECTOR* pSource, _In_ size_t count, _In_ float threshold = 0 );
+    bool __cdecl _StoreScanlineLinear( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
+                                       _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ DWORD flags );
 
     _Success_(return != false)
-    bool _StoreScanlineLinear( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
-                               _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ DWORD flags );
+    bool __cdecl _StoreScanlineDither( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
+                                       _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ float threshold, size_t y, size_t z,
+                                       _Inout_updates_all_opt_(count+2) XMVECTOR* pDiffusionErrors );
 
-    _Success_(return != false)
-    bool _StoreScanlineDither( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
-                               _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ float threshold, size_t y, size_t z,
-                               _Inout_updates_all_opt_(count+2) XMVECTOR* pDiffusionErrors );
+    HRESULT __cdecl _ConvertToR32G32B32A32( _In_ const Image& srcImage, _Inout_ ScratchImage& image );
 
-    HRESULT _ConvertToR32G32B32A32( _In_ const Image& srcImage, _Inout_ ScratchImage& image );
+    HRESULT __cdecl _ConvertFromR32G32B32A32( _In_ const Image& srcImage, _In_ const Image& destImage );
+    HRESULT __cdecl _ConvertFromR32G32B32A32( _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _Inout_ ScratchImage& image );
+    HRESULT __cdecl _ConvertFromR32G32B32A32( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                              _In_ DXGI_FORMAT format, _Out_ ScratchImage& result );
 
-    HRESULT _ConvertFromR32G32B32A32( _In_ const Image& srcImage, _In_ const Image& destImage );
-    HRESULT _ConvertFromR32G32B32A32( _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _Inout_ ScratchImage& image );
-    HRESULT _ConvertFromR32G32B32A32( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                                      _In_ DXGI_FORMAT format, _Out_ ScratchImage& result );
-
-    void _ConvertScanline( _Inout_updates_all_(count) XMVECTOR* pBuffer, _In_ size_t count,
-                           _In_ DXGI_FORMAT outFormat, _In_ DXGI_FORMAT inFormat, _In_ DWORD flags );
+    void __cdecl _ConvertScanline( _Inout_updates_all_(count) XMVECTOR* pBuffer, _In_ size_t count,
+                                   _In_ DXGI_FORMAT outFormat, _In_ DXGI_FORMAT inFormat, _In_ DWORD flags );
 
     //---------------------------------------------------------------------------------
     // DDS helper functions
-    HRESULT _EncodeDDSHeader( _In_ const TexMetadata& metadata, DWORD flags,
-                              _Out_writes_bytes_to_opt_(maxsize, required) LPVOID pDestination, _In_ size_t maxsize, _Out_ size_t& required );
+    HRESULT __cdecl _EncodeDDSHeader( _In_ const TexMetadata& metadata, DWORD flags,
+                                      _Out_writes_bytes_to_opt_(maxsize, required) LPVOID pDestination, _In_ size_t maxsize, _Out_ size_t& required );
 
 }; // namespace
