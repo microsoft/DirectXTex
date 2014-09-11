@@ -693,15 +693,6 @@ bool ScratchImage::OverrideFormat( DXGI_FORMAT f )
     if ( !IsValid( f ) || IsPlanar( f ) || IsPalettized( f ) )
         return false;
 
-    if ( ( BitsPerPixel( f ) != BitsPerPixel( _metadata.format ) )
-         || ( IsCompressed( f ) != IsCompressed( _metadata.format ) )
-         || ( IsPacked( f ) != IsPacked( _metadata.format ) )
-         || ( IsVideo( f ) != IsVideo( _metadata.format ) ) )
-    {
-         // Can't change the effective pitch of the format this way
-         return false;
-    }
-
     for( size_t index = 0; index < _nimages; ++index )
     {
         _image[ index ].format = f;
