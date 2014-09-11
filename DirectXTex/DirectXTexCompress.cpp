@@ -110,7 +110,7 @@ static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _
         uint8_t* dptr = pDest;
         size_t ph = std::min<size_t>( 4, image.height - h );
         size_t w = 0;
-        for( size_t count = 0; count < result.rowPitch; count += blocksize, w += 4 )
+        for( size_t count = 0; (count < result.rowPitch) && (w < image.width); count += blocksize, w += 4 )
         {
             size_t pw = std::min<size_t>( 4, image.width - w );
             assert( pw > 0 && ph > 0 );
@@ -426,7 +426,7 @@ static HRESULT _DecompressBC( _In_ const Image& cImage, _In_ const Image& result
         uint8_t* dptr = pDest;
         size_t ph = std::min<size_t>( 4, cImage.height - h );
         size_t w = 0;
-        for( size_t count = 0; count < cImage.rowPitch; count += sbpp, w += 4 )
+        for( size_t count = 0; (count < cImage.rowPitch) && (w < cImage.width); count += sbpp, w += 4 )
         {
             pfDecode( temp, sptr );
             _ConvertScanline( temp, 16, format, cformat, 0 );
@@ -512,7 +512,7 @@ bool _IsAlphaAllOpaqueBC( _In_ const Image& cImage )
         const uint8_t *ptr = pPixels;
         size_t ph = std::min<size_t>( 4, cImage.height - h );
         size_t w = 0;
-        for( size_t count = 0; count < cImage.rowPitch; count += sbpp, w += 4 )
+        for( size_t count = 0; (count < cImage.rowPitch) && (w < cImage.width); count += sbpp, w += 4 )
         {
             pfDecode( temp, ptr );
 
