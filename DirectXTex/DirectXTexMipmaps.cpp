@@ -138,6 +138,17 @@ static HRESULT _EnsureWicBitmapPixelFormat( _In_ IWICImagingFactory* pWIC, _In_ 
         {
             ComPtr<IWICFormatConverter> converter;
             hr = pWIC->CreateFormatConverter( converter.GetAddressOf() );
+
+            if ( SUCCEEDED(hr) )
+            {
+                BOOL canConvert = FALSE;
+                hr = converter->CanConvert( actualPixelFormat, desiredPixelFormat, &canConvert );
+                if ( FAILED(hr) || !canConvert )
+                {
+                    return E_UNEXPECTED;
+                }
+            }
+
             if ( SUCCEEDED(hr) )
             {
                 hr = converter->Initialize( src, desiredPixelFormat, _GetWICDither(filter), 0, 0, WICBitmapPaletteTypeCustom );
@@ -381,6 +392,15 @@ static bool _UseWICFiltering( _In_ DXGI_FORMAT format, _In_ DWORD filter )
         return false;
     }
 
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    if ( format == DXGI_FORMAT_R16G16B16A16_FLOAT
+         || format == DXGI_FORMAT_R16_FLOAT )
+    {
+        // Use non-WIC code paths as these conversions are not supported by Xbox One XDK
+        return false;
+    }
+#endif
+
     static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
 
     switch ( filter & TEX_FILTER_MASK )
@@ -529,6 +549,13 @@ static HRESULT _GenerateMipMapsUsingWIC( _In_ const Image& baseImage, _In_ DWORD
                 hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
                 if ( FAILED(hr) )
                     return hr;
+
+                BOOL canConvert = FALSE;
+                hr = FC->CanConvert( pfScaler, pfGUID, &canConvert );
+                if ( FAILED(hr) || !canConvert )
+                {
+                    return E_UNEXPECTED;
+                }
 
                 hr = FC->Initialize( scaler.Get(), pfGUID, _GetWICDither( filter ), 0, 0, WICBitmapPaletteTypeCustom );
                 if ( FAILED(hr) )

@@ -355,6 +355,18 @@ static HRESULT _DecodeSingleFrame( _In_ DWORD flags, _In_ const TexMetadata& met
         if ( FAILED(hr) )
             return hr;
 
+        WICPixelFormatGUID pixelFormat;
+        hr = frame->GetPixelFormat( &pixelFormat );
+        if ( FAILED(hr) )
+            return hr;
+
+        BOOL canConvert = FALSE;
+        hr = FC->CanConvert( pixelFormat, convertGUID, &canConvert );
+        if ( FAILED(hr) || !canConvert )
+        {
+            return E_UNEXPECTED;
+        }
+
         hr = FC->Initialize( frame, convertGUID, _GetWICDither( flags ), 0, 0, WICBitmapPaletteTypeCustom );
         if ( FAILED(hr) )
             return hr;
@@ -443,6 +455,13 @@ static HRESULT _DecodeMultiframe( _In_ DWORD flags, _In_ const TexMetadata& meta
             hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
             if ( FAILED(hr) )
                 return hr;
+
+            BOOL canConvert = FALSE;
+            hr = FC->CanConvert( sourceGUID, pfGuid, &canConvert );
+            if ( FAILED(hr) || !canConvert )
+            {
+                return E_UNEXPECTED;
+            }
 
             hr = FC->Initialize( frame.Get(), pfGuid, _GetWICDither( flags ), 0, 0, WICBitmapPaletteTypeCustom );
             if ( FAILED(hr) )
@@ -601,6 +620,13 @@ static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ REF
         hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
         if ( FAILED(hr) )
             return hr;
+
+        BOOL canConvert = FALSE;
+        hr = FC->CanConvert( pfGuid, targetGuid, &canConvert );
+        if ( FAILED(hr) || !canConvert )
+        {
+            return E_UNEXPECTED;
+        }
 
         hr = FC->Initialize( source.Get(), targetGuid, _GetWICDither( flags ), 0, 0, WICBitmapPaletteTypeCustom );
         if ( FAILED(hr) )

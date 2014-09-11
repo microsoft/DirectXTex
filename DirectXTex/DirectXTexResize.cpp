@@ -101,6 +101,13 @@ static HRESULT _PerformResizeUsingWIC( _In_ const Image& srcImage, _In_ DWORD fi
             if ( FAILED(hr) )
                 return hr;
 
+            BOOL canConvert = FALSE;
+            hr = FC->CanConvert( pfScaler, pfGUID, &canConvert );
+            if ( FAILED(hr) || !canConvert )
+            {
+                return E_UNEXPECTED;
+            }
+
             hr = FC->Initialize( scaler.Get(), pfGUID, _GetWICDither( filter ), 0, 0, WICBitmapPaletteTypeCustom );
             if ( FAILED(hr) )
                 return hr;
@@ -176,6 +183,15 @@ static bool _UseWICFiltering( _In_ DXGI_FORMAT format, _In_ DWORD filter )
         // Use non-WIC code paths for sRGB correct filtering
         return false;
     }
+
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    if ( format == DXGI_FORMAT_R16G16B16A16_FLOAT
+         || format == DXGI_FORMAT_R16_FLOAT )
+    {
+        // Use non-WIC code paths as these conversions are not supported by Xbox One XDK
+        return false;
+    }
+#endif
 
     static_assert( TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK" );
 

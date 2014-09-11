@@ -3833,6 +3833,17 @@ static inline bool _UseWICConversion( _In_ DWORD filter, _In_ DXGI_FORMAT sforma
         return false;
     }
 
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    if ( sformat == DXGI_FORMAT_R16G16B16A16_FLOAT
+         || sformat == DXGI_FORMAT_R16_FLOAT
+         || tformat == DXGI_FORMAT_R16G16B16A16_FLOAT
+         || tformat == DXGI_FORMAT_R16_FLOAT )
+    {
+        // Use non-WIC code paths as these conversions are not supported by Xbox One XDK
+        return false;
+    }
+#endif
+
     // Check for special cases
     switch ( sformat )
     {
