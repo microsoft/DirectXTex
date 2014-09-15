@@ -300,10 +300,27 @@ static HRESULT _DecodeMetadata( _In_ DWORD flags,
                     sRGB = true;
                 }
             }
+#if defined(_XBOX_ONE) && defined(_TITLE)
+            else if ( memcmp( &containerFormat, &GUID_ContainerFormatJpeg, sizeof(GUID) ) == 0 )
+            {
+                if ( SUCCEEDED( metareader->GetMetadataByName( L"/app1/ifd/exif/{ushort=40961}", &value ) ) && value.vt == VT_UI2 && value.uiVal == 1 )
+                {
+                    sRGB = true;
+                }
+            }
+            else if ( memcmp( &containerFormat, &GUID_ContainerFormatTiff, sizeof(GUID) ) == 0 )
+            {
+                if ( SUCCEEDED( metareader->GetMetadataByName( L"/ifd/exif/{ushort=40961}", &value ) ) && value.vt == VT_UI2 && value.uiVal == 1 )
+                {
+                    sRGB = true;
+                }
+            }
+#else
             else if ( SUCCEEDED( metareader->GetMetadataByName( L"System.Image.ColorSpace", &value ) ) && value.vt == VT_UI2 && value.uiVal == 1 )
             {
                 sRGB = true;
             }
+#endif
 
             PropVariantClear( &value );
 
@@ -530,6 +547,34 @@ static HRESULT _EncodeMetadata( _In_ IWICBitmapFrameEncode* frame, _In_ const GU
                 (void)metawriter->SetMetadataByName( L"/sRGB/RenderingIntent", &value );
             }
         }
+#if defined(_XBOX_ONE) && defined(_TITLE)
+        else if ( memcmp( &containerFormat, &GUID_ContainerFormatJpeg, sizeof(GUID) ) == 0 )
+        {
+            // Set Software name
+            (void)metawriter->SetMetadataByName( L"/app1/ifd/{ushort=305}", &value );
+
+            if ( sRGB )
+            {
+                // Set EXIF Colorspace of sRGB
+                value.vt = VT_UI2;
+                value.uiVal = 1;
+                (void)metawriter->SetMetadataByName( L"/app1/ifd/exif/{ushort=40961}", &value );
+            }
+        }
+        else if ( memcmp( &containerFormat, &GUID_ContainerFormatTiff, sizeof(GUID) ) == 0 )
+        {
+            // Set Software name
+            (void)metawriter->SetMetadataByName( L"/ifd/{ushort=305}", &value );
+
+            if ( sRGB )
+            {
+                // Set EXIF Colorspace of sRGB
+                value.vt = VT_UI2;
+                value.uiVal = 1;
+                (void)metawriter->SetMetadataByName( L"/ifd/exif/{ushort=40961}", &value );
+            }
+        }
+#else
         else
         {
             // Set Software name
@@ -537,12 +582,13 @@ static HRESULT _EncodeMetadata( _In_ IWICBitmapFrameEncode* frame, _In_ const GU
 
             if ( sRGB )
             {
-                // Set JPEG EXIF Colorspace of sRGB
+                // Set EXIF Colorspace of sRGB
                 value.vt = VT_UI2;
                 value.uiVal = 1;
                 (void)metawriter->SetMetadataByName( L"System.Image.ColorSpace", &value );
             }
         }
+#endif
     }
     else if ( hr == WINCODEC_ERR_UNSUPPORTEDOPERATION )
     {
