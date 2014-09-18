@@ -2053,7 +2053,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
     case DXGI_FORMAT_G8R8_G8B8_UNORM:
         if ( size >= sizeof(XMUBYTEN4) )
         {
-            static XMVECTORI32 select1101 = {XM_SELECT_1, XM_SELECT_1, XM_SELECT_0, XM_SELECT_1};
+            static XMVECTORU32 select1101 = {XM_SELECT_1, XM_SELECT_1, XM_SELECT_0, XM_SELECT_1};
 
             XMUBYTEN4 * __restrict dPtr = reinterpret_cast<XMUBYTEN4*>(pDestination);
             for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )

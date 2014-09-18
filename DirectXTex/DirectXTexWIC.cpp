@@ -678,7 +678,7 @@ static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ REF
         if ( FAILED(hr) )
             return hr;
 
-        WICRect rect = { 0, 0, static_cast<UINT>( image.width ), static_cast<UINT>( image.height ) };
+        WICRect rect = { 0, 0, static_cast<INT>( image.width ), static_cast<INT>( image.height ) };
         hr = frame->WriteSource( FC.Get(), &rect );
         if ( FAILED(hr) )
             return hr;
