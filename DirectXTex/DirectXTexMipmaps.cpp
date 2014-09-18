@@ -2684,7 +2684,7 @@ HRESULT GenerateMipMaps( const Image* srcImages, size_t nimages, const TexMetada
     if ( levels <= 1 )
         return E_INVALIDARG;
 
-    std::vector<const Image> baseImages;
+    std::vector<Image> baseImages;
     baseImages.reserve( metadata.arraySize );
     for( size_t item=0; item < metadata.arraySize; ++item )
     {
@@ -2996,7 +2996,7 @@ HRESULT GenerateMipMaps3D( const Image* srcImages, size_t nimages, const TexMeta
     if ( levels <= 1 )
         return E_INVALIDARG;
 
-    std::vector<const Image> baseImages;
+    std::vector<Image> baseImages;
     baseImages.reserve( metadata.depth );
     for( size_t slice=0; slice < metadata.depth; ++slice )
     {
