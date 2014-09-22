@@ -182,7 +182,7 @@ namespace DirectX
 
     _Success_(return != false)
     bool __cdecl _StoreScanlineLinear( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
-                                       _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ DWORD flags );
+                                       _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ DWORD flags, _In_ float threshold = 0 );
 
     _Success_(return != false)
     bool __cdecl _StoreScanlineDither( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,

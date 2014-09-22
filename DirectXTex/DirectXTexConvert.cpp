@@ -178,6 +178,8 @@ namespace
 namespace DirectX
 {
 static const XMVECTORF32 g_Grayscale = { 0.2125f, 0.7154f, 0.0721f, 0.0f };
+static const XMVECTORF32 g_HalfMin = { -65504.f, -65504.f, -65504.f, -65504.f };
+static const XMVECTORF32 g_HalfMax = { 65504.f, 65504.f, 65504.f, 65504.f };
 
 //-------------------------------------------------------------------------------------
 // Copies an image row with optional clearing of alpha value to 1.0
@@ -1221,7 +1223,7 @@ _Use_decl_annotations_ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
     case DXGI_FORMAT_B5G6R5_UNORM:
         if ( size >= sizeof(XMU565) )
         {
-            static XMVECTORF32 s_Scale = { 1.f/31.f, 1.f/63.f, 1.f/31.f, 1.f };
+            static const XMVECTORF32 s_Scale = { 1.f/31.f, 1.f/63.f, 1.f/31.f, 1.f };
             const XMU565 * __restrict sPtr = reinterpret_cast<const XMU565*>(pSource);
             for( size_t icount = 0; icount < ( size - sizeof(XMU565) + 1 ); icount += sizeof(XMU565) )
             {
@@ -1238,7 +1240,7 @@ _Use_decl_annotations_ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
     case DXGI_FORMAT_B5G5R5A1_UNORM:
         if ( size >= sizeof(XMU555) )
         {
-            static XMVECTORF32 s_Scale = { 1.f/31.f, 1.f/31.f, 1.f/31.f, 1.f };
+            static const XMVECTORF32 s_Scale = { 1.f/31.f, 1.f/31.f, 1.f/31.f, 1.f };
             const XMU555 * __restrict sPtr = reinterpret_cast<const XMU555*>(pSource);
             for( size_t icount = 0; icount < ( size - sizeof(XMU555) + 1 ); icount += sizeof(XMU555) )
             {
@@ -1505,7 +1507,7 @@ _Use_decl_annotations_ bool _LoadScanline( XMVECTOR* pDestination, size_t count,
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         if ( size >= sizeof(XMUNIBBLE4) )
         {
-            static XMVECTORF32 s_Scale = { 1.f/15.f, 1.f/15.f, 1.f/15.f, 1.f/15.f };
+            static const XMVECTORF32 s_Scale = { 1.f/15.f, 1.f/15.f, 1.f/15.f, 1.f/15.f };
             const XMUNIBBLE4 * __restrict sPtr = reinterpret_cast<const XMUNIBBLE4*>(pSource);
             for( size_t icount = 0; icount < ( size - sizeof(XMUNIBBLE4) + 1 ); icount += sizeof(XMUNIBBLE4) )
             {
@@ -1629,7 +1631,19 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         STORE_SCANLINE( XMINT3, XMStoreSInt3 )
 
     case DXGI_FORMAT_R16G16B16A16_FLOAT:
-        STORE_SCANLINE( XMHALF4, XMStoreHalf4 )
+        if ( size >= sizeof(XMHALF4) )
+        {
+            XMHALF4* __restrict dPtr = reinterpret_cast<XMHALF4*>(pDestination);
+            for( size_t icount = 0; icount < ( size - sizeof(XMHALF4) + 1 ); icount += sizeof(XMHALF4) )
+            {
+                if ( sPtr >= ePtr ) break;
+                XMVECTOR v = *sPtr++;
+                v = XMVectorClamp( v, g_HalfMin, g_HalfMax );
+                XMStoreHalf4( dPtr++, v );
+            }
+            return true;
+        }
+        return false;
 
     case DXGI_FORMAT_R16G16B16A16_UNORM:
         STORE_SCANLINE( XMUSHORTN4, XMStoreUShortN4 ) 
@@ -1729,7 +1743,19 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         STORE_SCANLINE( XMBYTE4, XMStoreByte4 )
 
     case DXGI_FORMAT_R16G16_FLOAT:
-        STORE_SCANLINE( XMHALF2, XMStoreHalf2 )
+        if ( size >= sizeof(XMHALF2) )
+        {
+            XMHALF2* __restrict dPtr = reinterpret_cast<XMHALF2*>(pDestination);
+            for( size_t icount = 0; icount < ( size - sizeof(XMHALF2) + 1 ); icount += sizeof(XMHALF2) )
+            {
+                if ( sPtr >= ePtr ) break;
+                XMVECTOR v = *sPtr++;
+                v = XMVectorClamp( v, g_HalfMin, g_HalfMax );
+                XMStoreHalf2( dPtr++, v );
+            }
+            return true;
+        }
+        return false;
 
     case DXGI_FORMAT_R16G16_UNORM:
         STORE_SCANLINE( XMUSHORTN2, XMStoreUShortN2 )
@@ -1823,6 +1849,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
             {
                 if ( sPtr >= ePtr ) break;
                 float v = XMVectorGetX( *sPtr++ );
+                v = std::max<float>( std::min<float>( v, 65504.f ), -65504.f );
                 *(dPtr++) = XMConvertFloatToHalf(v);
             }
             return true;
@@ -2071,7 +2098,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
     case DXGI_FORMAT_B5G6R5_UNORM:
         if ( size >= sizeof(XMU565) )
         {
-            static XMVECTORF32 s_Scale = { 31.f, 63.f, 31.f, 1.f };
+            static const XMVECTORF32 s_Scale = { 31.f, 63.f, 31.f, 1.f };
             XMU565 * __restrict dPtr = reinterpret_cast<XMU565*>(pDestination);
             for( size_t icount = 0; icount < ( size - sizeof(XMU565) + 1 ); icount += sizeof(XMU565) )
             {
@@ -2087,7 +2114,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
     case DXGI_FORMAT_B5G5R5A1_UNORM:
         if ( size >= sizeof(XMU555) )
         {
-            static XMVECTORF32 s_Scale = { 31.f, 31.f, 31.f, 1.f };
+            static const XMVECTORF32 s_Scale = { 31.f, 31.f, 31.f, 1.f };
             XMU555 * __restrict dPtr = reinterpret_cast<XMU555*>(pDestination);
             for( size_t icount = 0; icount < ( size - sizeof(XMU555) + 1 ); icount += sizeof(XMU555) )
             {
@@ -2373,7 +2400,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         if ( size >= sizeof(XMUNIBBLE4) )
         {
-            static XMVECTORF32 s_Scale = { 15.f, 15.f, 15.f, 15.f };
+            static const XMVECTORF32 s_Scale = { 15.f, 15.f, 15.f, 15.f };
             XMUNIBBLE4 * __restrict dPtr = reinterpret_cast<XMUNIBBLE4*>(pDestination);
             for( size_t icount = 0; icount < ( size - sizeof(XMUNIBBLE4) + 1 ); icount += sizeof(XMUNIBBLE4) )
             {
@@ -2643,7 +2670,7 @@ static inline XMVECTOR XMColorRGBToSRGB( FXMVECTOR rgb )
 
 _Use_decl_annotations_
 bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
-                           XMVECTOR* pSource, size_t count, DWORD flags )
+                           XMVECTOR* pSource, size_t count, DWORD flags, float threshold )
 {
     assert( pDestination && size > 0 );
     assert( pSource && count > 0 && (((uintptr_t)pSource & 0xF) == 0) );
@@ -2700,7 +2727,7 @@ bool _StoreScanlineLinear( LPVOID pDestination, size_t size, DXGI_FORMAT format,
         }
     }
 
-    return _StoreScanline( pDestination, size, format, pSource, count );
+    return _StoreScanline( pDestination, size, format, pSource, count, threshold );
 }
 
 
@@ -3016,9 +3043,276 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
 
     // Handle conversion special cases
     DWORD diffFlags = in->flags ^ out->flags;
-    if ( diffFlags != 0)
+    if ( diffFlags != 0 )
     {
-        if ( out->flags & CONVF_UNORM )
+        static const XMVECTORF32 s_two = { 2.0f, 2.0f, 2.0f, 2.0f };
+
+        if ( diffFlags & CONVF_DEPTH )
+        {
+            if ( in->flags & CONVF_DEPTH )
+            {
+                // CONVF_DEPTH -> !CONVF_DEPTH
+                if ( in->flags & CONVF_STENCIL )
+                {
+                    // Stencil -> Alpha
+                    static const XMVECTORF32 S = { 1.f, 1.f, 1.f, 255.f };
+
+                    if( out->flags & CONVF_UNORM )
+                    {
+                        // UINT -> UNORM
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorSplatY( v );
+                            v1 = XMVectorClamp( v1, g_XMZero, S );
+                            v1 = XMVectorDivide( v1, S );
+                            v = XMVectorSelect( v1, v, g_XMSelect1110 );
+                            *ptr++ = v;
+                        }
+                    }
+                    else if ( out->flags & CONVF_SNORM )
+                    {
+                        // UINT -> SNORM
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorSplatY( v );
+                            v1 = XMVectorClamp( v1, g_XMZero, S );
+                            v1 = XMVectorDivide( v1, S );
+                            v1 = XMVectorMultiplyAdd( v1, s_two, g_XMNegativeOne );
+                            v = XMVectorSelect( v1, v, g_XMSelect1110 );
+                            *ptr++ = v;
+                        }
+                    }
+                    else
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorSplatY( v );
+                            v = XMVectorSelect( v1, v, g_XMSelect1110 );
+                            *ptr++ = v;
+                        }
+                    }
+                }
+
+                // Depth -> RGB
+                if ( ( out->flags & CONVF_UNORM ) && ( in->flags & CONVF_FLOAT ) )
+                {
+                    // Depth FLOAT -> UNORM
+                    XMVECTOR* ptr = pBuffer;
+                    for( size_t i=0; i < count; ++i )
+                    {
+                        XMVECTOR v = *ptr;
+                        XMVECTOR v1 = XMVectorSaturate( v );
+                        v1 = XMVectorSplatX( v1 );
+                        v = XMVectorSelect( v, v1, g_XMSelect1110 );
+                        *ptr++ = v;
+                    }
+                }
+                else if ( out->flags & CONVF_SNORM )
+                {
+                    if ( in->flags & CONVF_UNORM )
+                    {
+                        // Depth UNORM -> SNORM
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorMultiplyAdd( v, s_two, g_XMNegativeOne );
+                            v1 = XMVectorSplatX( v1 );
+                            v = XMVectorSelect( v, v1, g_XMSelect1110 );
+                            *ptr++ = v;
+                        }
+                    }
+                    else
+                    {
+                        // Depth FLOAT -> SNORM
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorClamp( v, g_XMNegativeOne, g_XMOne );
+                            v1 = XMVectorSplatX( v1 );
+                            v = XMVectorSelect( v, v1, g_XMSelect1110 );
+                            *ptr++ = v;
+                        }
+                    }
+                }
+                else
+                {
+                    XMVECTOR* ptr = pBuffer;
+                    for( size_t i=0; i < count; ++i )
+                    {
+                        XMVECTOR v = *ptr;
+                        XMVECTOR v1 = XMVectorSplatX( v );
+                        v = XMVectorSelect( v, v1, g_XMSelect1110 );
+                        *ptr++ = v;
+                    }
+                }
+            }
+            else
+            {
+                // !CONVF_DEPTH -> CONVF_DEPTH
+
+                // RGB -> Depth (red channel)
+                switch( flags & ( TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE ) )
+                {
+                case TEX_FILTER_RGB_COPY_GREEN:
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorSplatY( v );
+                            v = XMVectorSelect( v, v1, g_XMSelect1000 );
+                            *ptr++ = v;
+                        }
+                    }
+                    break;
+
+                case TEX_FILTER_RGB_COPY_BLUE:
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorSplatZ( v );
+                            v = XMVectorSelect( v, v1, g_XMSelect1000 );
+                            *ptr++ = v;
+                        }
+                    }
+                    break;
+
+                default:
+                    if ( (in->flags & CONVF_UNORM) && ( (in->flags & CONVF_RGB_MASK) == (CONVF_R|CONVF_G|CONVF_B) ) )
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVector3Dot( v, g_Grayscale );
+                            v = XMVectorSelect( v, v1, g_XMSelect1000 );
+                            *ptr++ = v;
+                        }
+                        break;
+                    }
+
+                    // fall-through
+
+                case TEX_FILTER_RGB_COPY_RED:
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorSplatX( v );
+                            v = XMVectorSelect( v, v1, g_XMSelect1000 );
+                            *ptr++ = v;
+                        }
+                    }
+                    break;
+                }
+
+                // Finialize type conversion for depth (red channel)
+                if ( out->flags & CONVF_UNORM )
+                {
+                    if ( in->flags & CONVF_SNORM )
+                    {
+                        // SNORM -> UNORM
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorMultiplyAdd( v, g_XMOneHalf, g_XMOneHalf );
+                            v = XMVectorSelect( v, v1, g_XMSelect1000 );
+                            *ptr++ = v;
+                        }
+                    }
+                    else if ( in->flags & CONVF_FLOAT )
+                    {
+                        // FLOAT -> UNORM
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorSaturate( v );
+                            v = XMVectorSelect( v, v1, g_XMSelect1000 );
+                            *ptr++ = v;
+                        }
+                    }
+                }
+
+                if ( out->flags & CONVF_STENCIL )
+                {
+                    // Alpha -> Stencil (green channel)
+                    static const XMVECTORU32 select0100 = { XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_0 };
+                    static const XMVECTORF32 S = { 255.f, 255.f, 255.f, 255.f };
+
+                    if ( in->flags & CONVF_UNORM )
+                    {
+                        // UNORM -> UINT
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorMultiply( v, S );
+                            v1 = XMVectorSplatW( v1 );
+                            v = XMVectorSelect( v, v1, select0100 );
+                            *ptr++ = v;
+                        }
+                    }
+                    else if ( in->flags & CONVF_SNORM )
+                    {
+                        // SNORM -> UINT
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorMultiplyAdd( v, g_XMOneHalf, g_XMOneHalf );
+                            v1 = XMVectorMultiply( v1, S );
+                            v1 = XMVectorSplatW( v1 );
+                            v = XMVectorSelect( v, v1, select0100 );
+                            *ptr++ = v;
+                        }
+                    }
+                    else
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for( size_t i=0; i < count; ++i )
+                        {
+                            XMVECTOR v = *ptr;
+                            XMVECTOR v1 = XMVectorSplatW( v );
+                            v = XMVectorSelect( v, v1, select0100 );
+                            *ptr++ = v;
+                        }
+                    }
+                }
+            }
+        }
+        else if ( out->flags & CONVF_DEPTH )
+        {
+            // CONVF_DEPTH -> CONVF_DEPTH
+            if ( diffFlags & CONVF_FLOAT )
+            {
+                if ( in->flags & CONVF_FLOAT )
+                {
+                    // FLOAT -> UNORM depth, preserve stencil
+                    XMVECTOR* ptr = pBuffer;
+                    for( size_t i=0; i < count; ++i )
+                    {
+                        XMVECTOR v = *ptr;
+                        XMVECTOR v1 = XMVectorSaturate( v );
+                        v = XMVectorSelect( v, v1, g_XMSelect1000 );
+                        *ptr++ = v;
+                    }
+                }
+            }
+        }
+        else if ( out->flags & CONVF_UNORM )
         {
             if ( in->flags & CONVF_SNORM )
             {
@@ -3046,12 +3340,11 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
             if ( in->flags & CONVF_UNORM )
             {
                 // UNORM -> SNORM
-                static XMVECTORF32 two = { 2.0f, 2.0f, 2.0f, 2.0f };
                 XMVECTOR* ptr = pBuffer;
                 for( size_t i=0; i < count; ++i )
                 {
                     XMVECTOR v = *ptr;
-                    *ptr++ = XMVectorMultiplyAdd( v, two, g_XMNegativeOne );
+                    *ptr++ = XMVectorMultiplyAdd( v, s_two, g_XMNegativeOne );
                 }
             }
             else if ( in->flags & CONVF_FLOAT )
@@ -3073,11 +3366,54 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
         if ( ((out->flags & CONVF_RGBA_MASK) == CONVF_A) && !(in->flags & CONVF_A) )
         {
             // !CONVF_A -> A format
-            XMVECTOR* ptr = pBuffer;
-            for( size_t i=0; i < count; ++i )
+            switch( flags & ( TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE ) )
             {
-                XMVECTOR v = *ptr;
-                *ptr++ = XMVectorSplatX( v );
+            case TEX_FILTER_RGB_COPY_GREEN:
+                {
+                    XMVECTOR* ptr = pBuffer;
+                    for( size_t i=0; i < count; ++i )
+                    {
+                        XMVECTOR v = *ptr;
+                        *ptr++ = XMVectorSplatY( v );
+                    }
+                }
+                break;
+
+            case TEX_FILTER_RGB_COPY_BLUE:
+                {
+                    XMVECTOR* ptr = pBuffer;
+                    for( size_t i=0; i < count; ++i )
+                    {
+                        XMVECTOR v = *ptr;
+                        *ptr++ = XMVectorSplatZ( v );
+                    }
+                }
+                break;
+
+            default:
+                if ( (in->flags & CONVF_UNORM) && ( (in->flags & CONVF_RGB_MASK) == (CONVF_R|CONVF_G|CONVF_B) ) )
+                {
+                    XMVECTOR* ptr = pBuffer;
+                    for( size_t i=0; i < count; ++i )
+                    {
+                        XMVECTOR v = *ptr;
+                        *ptr++ = XMVector3Dot( v, g_Grayscale );
+                    }
+                    break;
+                }
+
+                // fall-through
+
+            case TEX_FILTER_RGB_COPY_RED:
+                {
+                    XMVECTOR* ptr = pBuffer;
+                    for( size_t i=0; i < count; ++i )
+                    {
+                        XMVECTOR v = *ptr;
+                        *ptr++ = XMVectorSplatX( v );
+                    }
+                }
+                break;
             }
         }
         else if ( ((in->flags & CONVF_RGBA_MASK) == CONVF_A) && !(out->flags & CONVF_A) )
@@ -3122,10 +3458,6 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
                 // RGB format -> R format
                 switch( flags & ( TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE ) )
                 {
-                case TEX_FILTER_RGB_COPY_RED:
-                    // Leave data unchanged and the store will handle this...
-                    break;
-
                 case TEX_FILTER_RGB_COPY_GREEN:
                     {
                         XMVECTOR* ptr = pBuffer;
@@ -3151,6 +3483,7 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
                     break;
 
                 default:
+                    if ( in->flags & CONVF_UNORM )
                     {
                         XMVECTOR* ptr = pBuffer;
                         for( size_t i=0; i < count; ++i )
@@ -3159,7 +3492,13 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
                             XMVECTOR v1 = XMVector3Dot( v, g_Grayscale );
                             *ptr++ = XMVectorSelect( v, v1, g_XMSelect1110 );
                         }
+                        break;
                     }
+
+                    // fall-through
+
+                case TEX_FILTER_RGB_COPY_RED:
+                    // Leave data unchanged and the store will handle this...
                     break;
                 }
             }
