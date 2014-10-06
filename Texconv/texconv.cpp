@@ -11,12 +11,15 @@
 #include <assert.h>
 
 #include <memory>
+#include <list>
+#include <wrl.h>
 
 #include <dxgiformat.h>
 
 #include "directxtex.h"
 
 using namespace DirectX;
+using Microsoft::WRL::ComPtr;
 
 enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
 {
@@ -58,8 +61,6 @@ struct SConversion
 {
     WCHAR szSrc [MAX_PATH];
     WCHAR szDest[MAX_PATH];
-
-    SConversion *pNext;
 };
 
 struct SValue
@@ -537,12 +538,12 @@ bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
 
     if ( SUCCEEDED(hr) )
     {
-        IDXGIDevice* dxgiDevice = nullptr;
-        hr = (*pDevice)->QueryInterface( __uuidof( IDXGIDevice ), reinterpret_cast< void** >( &dxgiDevice ) );
+        ComPtr<IDXGIDevice> dxgiDevice;
+        hr = (*pDevice)->QueryInterface( __uuidof( IDXGIDevice ), reinterpret_cast< void** >( dxgiDevice.GetAddressOf() ) );
         if ( SUCCEEDED(hr) )
         {
-            IDXGIAdapter* pAdapter = nullptr;
-            hr = dxgiDevice->GetAdapter( &pAdapter );
+            ComPtr<IDXGIAdapter> pAdapter;
+            hr = dxgiDevice->GetAdapter( pAdapter.GetAddressOf() );
             if ( SUCCEEDED(hr) )
             {
                 DXGI_ADAPTER_DESC desc;
@@ -551,10 +552,7 @@ bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
                 {
                     wprintf( L"\n[Using DirectCompute on \"%s\"]\n", desc.Description );
                 }
-                pAdapter->Release();
             }
-
-            dxgiDevice->Release();
         }
 
         return true;
@@ -612,9 +610,6 @@ void FitPowerOf2( size_t origx, size_t origy, size_t& targetx, size_t& targety, 
 int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 {
     // Parameters and defaults
-    HRESULT hr;
-    INT nReturn;
-
     size_t width = 0;
     size_t height = 0; 
     size_t mipLevels = 0;
@@ -635,7 +630,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     szOutputDir[0] = 0;
 
     // Initialize COM (needed for WIC)
-    if( FAILED( hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED) ) )
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    if( FAILED(hr) )
     {
         wprintf( L"Failed to initialize COM (%08X)\n", hr);
         return 1;
@@ -643,8 +639,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     // Process command line
     DWORD dwOptions = 0;
-    SConversion *pConversion = nullptr;
-    SConversion **ppConversion = &pConversion;
+    std::list<SConversion> conversion;
 
     for(int iArg = 1; iArg < argc; iArg++)
     {
@@ -834,21 +829,16 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else
         {         
-            SConversion *pConv = new SConversion;
-            if ( !pConv )
-                return 1;
+            SConversion conv;
+            wcscpy_s(conv.szSrc, MAX_PATH, pArg);
 
-            wcscpy_s(pConv->szSrc, MAX_PATH, pArg);
+            conv.szDest[0] = 0;
 
-            pConv->szDest[0] = 0;
-            pConv->pNext = nullptr;
-
-            *ppConversion = pConv;
-            ppConversion = &pConv->pNext;
+            conversion.push_back(conv);
         }
     }
 
-    if(!pConversion)
+    if(conversion.empty())
     {
         PrintUsage();
         return 0;
@@ -886,15 +876,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     // Convert images
     bool nonpow2warn = false;
     bool non4bc = false;
-    SConversion *pConv;
-    ID3D11Device* pDevice = nullptr;
+    ComPtr<ID3D11Device> pDevice;
 
-    for(pConv = pConversion; pConv; pConv = pConv->pNext)
+    for( auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv )
     {
-        // Load source image
-        if(pConv != pConversion)
+        if ( pConv != conversion.begin() )
             wprintf( L"\n");
 
+        // Load source image
         wprintf( L"reading %s", pConv->szSrc );
         fflush(stdout);
 
@@ -908,7 +897,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         if ( !image )
         {
             wprintf( L" ERROR: Memory allocation failed\n" );
-            goto LError;
+            return 1;
         }
 
         if ( _wcsicmp( ext, L".dds" ) == 0 )
@@ -1022,7 +1011,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                goto LError;
+                return 1;
             }
 
             hr = ConvertToSinglePlane( img, nimg, info, *timage );
@@ -1062,7 +1051,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                goto LError;
+                return 1;
             }
 
             hr = Decompress( img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage );
@@ -1104,7 +1093,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                goto LError;
+                return 1;
             }
 
             DWORD dwFlags = 0;
@@ -1121,7 +1110,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [fliprotate] (%x)\n", hr);
-                goto LError;
+                return 1;
             }
 
             auto& tinfo = timage->GetMetadata();
@@ -1150,14 +1139,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                goto LError;
+                return 1;
             }
 
             hr = Resize( image->GetImages(), image->GetImageCount(), image->GetMetadata(), twidth, theight, dwFilter | dwFilterOpts, *timage );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [resize] (%x)\n", hr);
-                goto LError;
+                return 1;
             }
 
             auto& tinfo = timage->GetMetadata();
@@ -1185,14 +1174,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                goto LError;
+                return 1;
             }
 
             hr = Convert( image->GetImages(), image->GetImageCount(), image->GetMetadata(), tformat, dwFilter | dwFilterOpts | dwSRGB, 0.5f, *timage );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [convert] (%x)\n", hr);
-                goto LError;
+                return 1;
             }
 
             auto& tinfo = timage->GetMetadata();
@@ -1225,7 +1214,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 else
                 {
                     wprintf( L" ERROR: Cannot generate mips for non-power-of-2 volume textures\n" );
-                    goto LError;
+                    return 1;
                 }
             }
             else if ( !tMips || info.mipLevels != 1 )
@@ -1241,7 +1230,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                goto LError;
+                return 1;
             }
 
             TexMetadata mdata = info;
@@ -1250,7 +1239,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [copy to single level] (%x)\n", hr);
-                goto LError;
+                return 1;
             }
 
             if ( info.dimension == TEX_DIMENSION_TEXTURE3D )
@@ -1262,7 +1251,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     if ( FAILED(hr) )
                     {
                         wprintf( L" FAILED [copy to single level] (%x)\n", hr);
-                        goto LError;
+                        return 1;
                     }
                 }
             }
@@ -1275,7 +1264,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     if ( FAILED(hr) )
                     {
                         wprintf( L" FAILED [copy to single level] (%x)\n", hr);
-                        goto LError;
+                        return 1;
                     }
                 }
             }
@@ -1292,7 +1281,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if ( FAILED(hr) )
                 {
                     wprintf( L" FAILED [copy compressed to single level] (%x)\n", hr);
-                    goto LError;
+                    return 1;
                 }
 
                 if ( mdata.dimension == TEX_DIMENSION_TEXTURE3D )
@@ -1330,7 +1319,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                goto LError;
+                return 1;
             }
 
             if ( info.dimension == TEX_DIMENSION_TEXTURE3D )
@@ -1344,7 +1333,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [mipmaps] (%x)\n", hr);
-                goto LError;
+                return 1;
             }
 
             auto& tinfo = timage->GetMetadata();
@@ -1383,7 +1372,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if ( !timage )
                 {
                     wprintf( L" ERROR: Memory allocation failed\n" );
-                    goto LError;
+                    return 1;
                 }
 
                 hr = PremultiplyAlpha( img, nimg, info, dwSRGB, *timage );
@@ -1447,7 +1436,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if ( !timage )
                 {
                     wprintf( L" ERROR: Memory allocation failed\n" );
-                    goto LError;
+                    return 1;
                 }
 
                 bool bc6hbc7=false;
@@ -1470,7 +1459,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                             if ( !(dwOptions & (1 << OPT_NOGPU) ) )
                             {
-                                if ( !CreateDevice( &pDevice ) )
+                                if ( !CreateDevice( pDevice.GetAddressOf() ) )
                                     wprintf( L"\nWARNING: DirectCompute is not available, using BC6H / BC7 CPU codec\n" );
                             }
                             else
@@ -1497,7 +1486,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 if ( bc6hbc7 && pDevice )
                 {
-                    hr = Compress( pDevice, img, nimg, info, tformat, dwSRGB, alphaWeight, *timage );
+                    hr = Compress( pDevice.Get(), img, nimg, info, tformat, dwSRGB, alphaWeight, *timage );
                 }
                 else
                 {
@@ -1619,26 +1608,5 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     if ( non4bc )
         wprintf( L"\n WARNING: Direct3D requires BC image to be multiple of 4 in width & height\n" );
 
-    nReturn = 0;
-
-    goto LDone;
-
-LError:
-    nReturn = 1;
-
-LDone:
-
-    while(pConversion)
-    {
-        pConv = pConversion;
-        pConversion = pConversion->pNext;
-        delete pConv;
-    }
-
-    if ( pDevice )
-    {
-        pDevice->Release();
-    }
-
-    return nReturn;
+    return 0;
 }

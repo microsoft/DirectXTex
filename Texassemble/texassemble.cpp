@@ -10,11 +10,13 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include <memory>
+#include <list>
+#include <vector>
+
 #include <dxgiformat.h>
 
 #include "directxtex.h"
-
-#include <vector>
 
 using namespace DirectX;
 
@@ -40,8 +42,6 @@ static_assert( OPT_MAX <= 32, "dwOptions is a DWORD bitfield" );
 struct SConversion
 {
     WCHAR szSrc [MAX_PATH];
-
-    SConversion *pNext;
 };
 
 struct SValue
@@ -312,9 +312,6 @@ void PrintUsage()
 int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 {
     // Parameters and defaults
-    HRESULT hr;
-    INT nReturn;
-
     size_t width = 0;
     size_t height = 0; 
 
@@ -325,7 +322,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     WCHAR szOutputFile[MAX_PATH] = { 0 };
 
     // Initialize COM (needed for WIC)
-    if( FAILED( hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED) ) )
+    HRESULT hr = hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    if( FAILED(hr) )
     {
         wprintf( L"Failed to initialize COM (%08X)\n", hr);
         return 1;
@@ -333,10 +331,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     // Process command line
     DWORD dwOptions = 0;
-    SConversion *pConversion = nullptr;
-    SConversion **ppConversion = &pConversion;
-
-    size_t images = 0;
+    std::list<SConversion> conversion;
 
     for(int iArg = 1; iArg < argc; iArg++)
     {
@@ -425,26 +420,24 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else
         {         
-            SConversion *pConv = new SConversion;
-            if ( !pConv )
-                return 1;
+            SConversion conv;
+            wcscpy_s(conv.szSrc, MAX_PATH, pArg);
 
-            wcscpy_s(pConv->szSrc, MAX_PATH, pArg);
-
-            pConv->pNext = nullptr;
-
-            *ppConversion = pConv;
-            ppConversion = &pConv->pNext;
-
-            ++images;
+            conversion.push_back(conv);
         }
     }
 
-    if( !pConversion || images < 2 )
+    if(conversion.empty())
     {
-        wprintf( L"ERROR: Need at least 2 images to assemble\n\n");
         PrintUsage();
         return 0;
+    }
+
+    size_t images = conversion.size();
+    if( images < 2 )
+    {
+        wprintf( L"ERROR: Need at least 2 images to assemble\n\n");
+        return 1;
     }
 
     switch( dwOptions & ( (1 << OPT_CUBE) | (1 << OPT_VOLUME) | (1 << OPT_ARRAY) | (1 << OPT_CUBEARRAY) ) )
@@ -478,16 +471,16 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         PrintLogo();
 
     // Convert images
-    std::vector<ScratchImage*> loadedImages; 
+    std::vector<std::unique_ptr<ScratchImage>> loadedImages; 
 
-    for( SConversion *pConv = pConversion; pConv; pConv = pConv->pNext )
+    for( auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv )
     {
         WCHAR ext[_MAX_EXT];
         WCHAR fname[_MAX_FNAME];
         _wsplitpath_s( pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT );
 
         // Load source image
-        if( pConv != pConversion )
+        if( pConv != conversion.begin() )
             wprintf( L"\n");
         else if ( !*szOutputFile )
         {
@@ -504,17 +497,16 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         fflush(stdout);
 
         TexMetadata info;
-        ScratchImage *image = new ScratchImage;
-
+        std::unique_ptr<ScratchImage> image( new (std::nothrow) ScratchImage );
         if ( !image )
         {
             wprintf( L" ERROR: Memory allocation failed\n" );
-            goto LError;
+            return 1;
         }
 
         if ( _wcsicmp( ext, L".dds" ) == 0 )
         {
-            hr = LoadFromDDSFile( pConv->szSrc, DDS_FLAGS_NONE, &info, *image );
+            hr = LoadFromDDSFile( pConv->szSrc, DDS_FLAGS_NONE, &info, *image.get() );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED (%x)\n", hr);
@@ -532,7 +524,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else if ( _wcsicmp( ext, L".tga" ) == 0 )
         {
-            hr = LoadFromTGAFile( pConv->szSrc, &info, *image );
+            hr = LoadFromTGAFile( pConv->szSrc, &info, *image.get() );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED (%x)\n", hr);
@@ -549,7 +541,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             static_assert( WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match"  );
             static_assert( WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match"  );
 
-            hr = LoadFromWICFile( pConv->szSrc, dwFilter, &info, *image );
+            hr = LoadFromWICFile( pConv->szSrc, dwFilter, &info, *image.get() );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED (%x)\n", hr);
@@ -569,20 +561,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( img );
             size_t nimg = image->GetImageCount();
 
-            ScratchImage *timage = new ScratchImage;
+            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                delete image;
-                goto LError;
+                return 1;
             }
 
-            hr = Decompress( img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage );
+            hr = Decompress( img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage.get() );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [decompress] (%x)\n", hr);
-                delete timage;
-                delete image;
                 continue;
             }
 
@@ -599,8 +588,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.dimension == tinfo.dimension );
 
-            delete image;
-            image = timage;
+            image.swap( timage );
         }
 
         // --- Resize ------------------------------------------------------------------
@@ -614,21 +602,18 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         if ( info.width != width || info.height != height )
         {
-            ScratchImage *timage = new ScratchImage;
+            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                delete image;
-                goto LError;
+                return 1;
             }
 
-            hr = Resize( image->GetImages(), image->GetImageCount(), image->GetMetadata(), width, height, dwFilter | dwFilterOpts, *timage );
+            hr = Resize( image->GetImages(), image->GetImageCount(), image->GetMetadata(), width, height, dwFilter | dwFilterOpts, *timage.get() );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [resize] (%x)\n", hr);
-                delete timage;
-                delete image;
-                goto LError;
+                return 1;
             }
 
             const TexMetadata& tinfo = timage->GetMetadata();
@@ -645,8 +630,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.format == tinfo.format );
             assert( info.dimension == tinfo.dimension );
 
-            delete image;
-            image = timage;
+            image.swap( timage );
         }
 
         // --- Convert -----------------------------------------------------------------
@@ -656,21 +640,18 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else if ( info.format != format && !IsCompressed( format ) )
         {
-            ScratchImage *timage = new ScratchImage;
+            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
             if ( !timage )
             {
                 wprintf( L" ERROR: Memory allocation failed\n" );
-                delete image;
-                goto LError;
+                return 1;
             }
 
-            hr = Convert( image->GetImages(), image->GetImageCount(), image->GetMetadata(), format, dwFilter | dwFilterOpts, 0.5f, *timage );
+            hr = Convert( image->GetImages(), image->GetImageCount(), image->GetMetadata(), format, dwFilter | dwFilterOpts, 0.5f, *timage.get() );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED [convert] (%x)\n", hr);
-                delete timage;
-                delete image;
-                goto LError;
+                return 1;
             }
 
             const TexMetadata& tinfo = timage->GetMetadata();
@@ -687,11 +668,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.dimension == tinfo.dimension );
 
-            delete image;
-            image = timage;
+            image.swap( timage );
         }
 
-        loadedImages.push_back( image );
+        loadedImages.push_back( std::move( image ) );
     }
 
     // --- Create result ---------------------------------------------------------------
@@ -701,7 +681,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
         for( auto it = loadedImages.cbegin(); it != loadedImages.cend(); ++it )
         {
-            const Image* img = (*it)->GetImage(0,0,0);
+            const Image* img = it->get()->GetImage(0,0,0);
             assert( img != 0 );
             imageArray.push_back( *img );
         }
@@ -726,9 +706,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         if ( FAILED(hr ) )
         {
             wprintf( L"FAILED building result image (%x)\n", hr);
-            goto LError;
+            return 1;
         }
-
 
         // Write texture
         wprintf( L"\nWriting %s ", szOutputFile);
@@ -747,21 +726,5 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         wprintf( L"\n");
     }
 
-    nReturn = 0;
-
-    goto LDone;
-
-LError:
-    nReturn = 1;
-
-LDone:
-
-    while(pConversion)
-    {
-        auto pConv = pConversion;
-        pConversion = pConversion->pNext;
-        delete pConv;
-    }
-
-    return nReturn;
+    return 0;
 }
