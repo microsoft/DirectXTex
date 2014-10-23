@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: TexConv.cpp
 //
-// DirectX 11 Texture Converer
+// DirectX 11 Texture Converter
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //--------------------------------------------------------------------------------------
