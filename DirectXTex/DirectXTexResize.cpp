@@ -649,7 +649,7 @@ static HRESULT _ResizeTriangleFilter( _In_ const Image& srcImage, _In_ DWORD fil
         {
             size_t v = yFrom->to[ j ].u;
             assert( v < destImage.height );
-            ++rowActive.get()[ v ].remaining;
+            ++rowActive[ v ].remaining;
         }
 
         yFrom = reinterpret_cast<FilterFrom*>( reinterpret_cast<uint8_t*>( yFrom ) + yFrom->sizeInBytes );
@@ -669,7 +669,7 @@ static HRESULT _ResizeTriangleFilter( _In_ const Image& srcImage, _In_ DWORD fil
         {
             size_t v = yFrom->to[ j ].u;
             assert( v < destImage.height );
-            TriangleRow* rowAcc = &rowActive.get()[ v ];
+            TriangleRow* rowAcc = &rowActive[ v ];
 
             if ( !rowAcc->scanline )
             {
@@ -734,7 +734,7 @@ static HRESULT _ResizeTriangleFilter( _In_ const Image& srcImage, _In_ DWORD fil
         {
             size_t v = yFrom->to[ j ].u;
             assert( v < destImage.height );
-            TriangleRow* rowAcc = &rowActive.get()[ v ];
+            TriangleRow* rowAcc = &rowActive[ v ];
 
             assert( rowAcc->remaining > 0 );
             --rowAcc->remaining;
