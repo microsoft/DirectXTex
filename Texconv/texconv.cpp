@@ -406,7 +406,7 @@ void PrintList(size_t cch, SValue *pValue)
             cch = 6;
         }
 
-        wprintf( L"%s ", pValue->pName );
+        wprintf( L"%ls ", pValue->pName );
         cch += cchName + 2;
         pValue++;
     }
@@ -550,7 +550,7 @@ bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
                 hr = pAdapter->GetDesc( &desc );
                 if ( SUCCEEDED(hr) )
                 {
-                    wprintf( L"\n[Using DirectCompute on \"%s\"]\n", desc.Description );
+                    wprintf( L"\n[Using DirectCompute on \"%ls\"]\n", desc.Description );
                 }
             }
         }
@@ -691,7 +691,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_WIDTH:
                 if (swscanf_s(pValue, L"%Iu", &width) != 1)
                 {
-                    wprintf( L"Invalid value specified with -w (%s)\n", pValue);
+                    wprintf( L"Invalid value specified with -w (%ls)\n", pValue);
                     wprintf( L"\n");
                     PrintUsage();
                     return 1;
@@ -701,7 +701,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_HEIGHT:
                 if (swscanf_s(pValue, L"%Iu", &height) != 1)
                 {
-                    wprintf( L"Invalid value specified with -h (%s)\n", pValue);
+                    wprintf( L"Invalid value specified with -h (%ls)\n", pValue);
                     printf("\n");
                     PrintUsage();
                     return 1;
@@ -711,7 +711,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_MIPLEVELS:
                 if (swscanf_s(pValue, L"%Iu", &mipLevels) != 1)
                 {
-                    wprintf( L"Invalid value specified with -m (%s)\n", pValue);
+                    wprintf( L"Invalid value specified with -m (%ls)\n", pValue);
                     wprintf( L"\n");
                     PrintUsage();
                     return 1;
@@ -722,7 +722,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 format = (DXGI_FORMAT) LookupByName(pValue, g_pFormats);
                 if ( !format )
                 {
-                    wprintf( L"Invalid value specified with -f (%s)\n", pValue);
+                    wprintf( L"Invalid value specified with -f (%ls)\n", pValue);
                     wprintf( L"\n");
                     PrintUsage();
                     return 1;
@@ -733,7 +733,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 dwFilter = LookupByName(pValue, g_pFilters);
                 if ( !dwFilter )
                 {
-                    wprintf( L"Invalid value specified with -if (%s)\n", pValue);
+                    wprintf( L"Invalid value specified with -if (%ls)\n", pValue);
                     wprintf( L"\n");
                     PrintUsage();
                     return 1;
@@ -772,7 +772,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 FileType = LookupByName(pValue, g_pSaveFileTypes);
                 if ( !FileType )
                 {
-                    wprintf( L"Invalid value specified with -ft (%s)\n", pValue);
+                    wprintf( L"Invalid value specified with -ft (%ls)\n", pValue);
                     wprintf( L"\n");
                     PrintUsage();
                     return 1;
@@ -803,7 +803,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 maxSize = LookupByName( pValue, g_pFeatureLevels );
                 if ( !maxSize )
                 {
-                    wprintf( L"Invalid value specified with -fl (%s)\n", pValue);
+                    wprintf( L"Invalid value specified with -fl (%ls)\n", pValue);
                     wprintf( L"\n");
                     PrintUsage();
                     return 1;
@@ -813,14 +813,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_ALPHA_WEIGHT:
                 if (swscanf_s(pValue, L"%f", &alphaWeight) != 1)
                 {
-                    wprintf( L"Invalid value specified with -aw (%s)\n", pValue);
+                    wprintf( L"Invalid value specified with -aw (%ls)\n", pValue);
                     wprintf( L"\n");
                     PrintUsage();
                     return 1;
                 }
                 else if ( alphaWeight < 0.f )
                 {
-                    wprintf( L"-aw (%s) parameter must be positive\n", pValue);
+                    wprintf( L"-aw (%ls) parameter must be positive\n", pValue);
                     wprintf( L"\n");
                     return 1;
                 }
@@ -884,7 +884,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             wprintf( L"\n");
 
         // Load source image
-        wprintf( L"reading %s", pConv->szSrc );
+        wprintf( L"reading %ls", pConv->szSrc );
         fflush(stdout);
 
         WCHAR ext[_MAX_EXT];
@@ -1573,7 +1573,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             wcscat_s(pConv->szDest, MAX_PATH, szSuffix);
 
             // Write texture
-            wprintf( L"writing %s", pConv->szDest);
+            wprintf( L"writing %ls", pConv->szDest);
             fflush(stdout);
 
             switch( FileType )

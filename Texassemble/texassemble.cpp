@@ -258,7 +258,7 @@ void PrintList(size_t cch, SValue *pValue)
             cch = 6;
         }
 
-        wprintf( L"%s ", pValue->pName );
+        wprintf( L"%ls ", pValue->pName );
         cch += cchName + 2;
         pValue++;
     }
@@ -378,7 +378,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_WIDTH:
                 if (swscanf_s(pValue, L"%Iu", &width) != 1)
                 {
-                    wprintf( L"Invalid value specified with -w (%s)\n", pValue);
+                    wprintf( L"Invalid value specified with -w (%ls)\n", pValue);
                     return 1;
                 }
                 break;
@@ -386,7 +386,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_HEIGHT:
                 if (swscanf_s(pValue, L"%Iu", &height) != 1)
                 {
-                    wprintf( L"Invalid value specified with -h (%s)\n", pValue);
+                    wprintf( L"Invalid value specified with -h (%ls)\n", pValue);
                     return 1;
                 }
                 break;
@@ -395,7 +395,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 format = (DXGI_FORMAT) LookupByName(pValue, g_pFormats);
                 if ( !format )
                 {
-                    wprintf( L"Invalid value specified with -f (%s)\n", pValue);
+                    wprintf( L"Invalid value specified with -f (%ls)\n", pValue);
                     return 1;
                 }
                 break;
@@ -404,7 +404,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 dwFilter = LookupByName(pValue, g_pFilters);
                 if ( !dwFilter )
                 {
-                    wprintf( L"Invalid value specified with -if (%s)\n", pValue);
+                    wprintf( L"Invalid value specified with -if (%ls)\n", pValue);
                     return 1;
                 }
                 break;
@@ -493,7 +493,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             _wmakepath_s( szOutputFile, nullptr, nullptr, fname, L".dds" );
         }
 
-        wprintf( L"reading %s", pConv->szSrc );
+        wprintf( L"reading %ls", pConv->szSrc );
         fflush(stdout);
 
         TexMetadata info;
@@ -710,7 +710,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // Write texture
-        wprintf( L"\nWriting %s ", szOutputFile);
+        wprintf( L"\nWriting %ls ", szOutputFile);
         PrintInfo( result.GetMetadata() );
         wprintf( L"\n" );
         fflush(stdout);
