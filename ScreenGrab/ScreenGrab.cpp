@@ -25,6 +25,7 @@
 
 // For 2D array textures and cubemaps, it captures only the first image in the array
 
+#include <dxgiformat.h>
 #include <assert.h>
 
 #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP) || (_WIN32_WINNT > _WIN32_WINNT_WIN8)
@@ -33,9 +34,11 @@
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #include <wincodec.h>
-#include <wrl.h>
+#include <intsafe.h>
 #pragma warning(pop)
 #endif
+
+#include <wrl\client.h>
 
 #include <memory>
 
@@ -455,17 +458,6 @@ static void GetSurfaceInfo( _In_ size_t width,
         planar = true;
         bpe = 4;
         break;
-
-#if defined(_XBOX_ONE) && defined(_TITLE)
-
-    case DXGI_FORMAT_D16_UNORM_S8_UINT:
-    case DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
-    case DXGI_FORMAT_X16_TYPELESS_G8_UINT:
-        planar = true;
-        bpe = 4;
-        break;
-
-#endif
     }
 
     if (bc)

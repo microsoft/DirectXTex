@@ -12,7 +12,8 @@
 
 #include <memory>
 #include <list>
-#include <wrl.h>
+
+#include <wrl\client.h>
 
 #include <dxgiformat.h>
 
@@ -495,7 +496,7 @@ bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
         if ( !hModD3D11 )
             return false;
 
-        s_DynamicD3D11CreateDevice = reinterpret_cast<PFN_D3D11_CREATE_DEVICE>( GetProcAddress( hModD3D11, "D3D11CreateDevice" ) ); 
+        s_DynamicD3D11CreateDevice = reinterpret_cast<PFN_D3D11_CREATE_DEVICE>( reinterpret_cast<void*>( GetProcAddress( hModD3D11, "D3D11CreateDevice" ) ) ); 
         if ( !s_DynamicD3D11CreateDevice )
             return false;
     }
