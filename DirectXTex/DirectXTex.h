@@ -46,6 +46,17 @@
 #endif
 #endif
 
+// VS 2010/2012 do not support =default =delete
+#ifndef DIRECTX_CTOR_DEFAULT
+#if defined(_MSC_VER) && (_MSC_VER < 1800)
+#define DIRECTX_CTOR_DEFAULT {}
+#define DIRECTX_CTOR_DELETE ;
+#else
+#define DIRECTX_CTOR_DEFAULT =default;
+#define DIRECTX_CTOR_DELETE =delete;
+#endif
+#endif
+
 #define DIRECTX_TEX_VERSION 131
 
 namespace DirectX
@@ -577,7 +588,7 @@ namespace DirectX
         size_t w;
         size_t h;
 
-        Rect() {}
+        Rect() DIRECTX_CTOR_DEFAULT
         Rect( size_t _x, size_t _y, size_t _w, size_t _h ) : x(_x), y(_y), w(_w), h(_h) {}
     };
 
