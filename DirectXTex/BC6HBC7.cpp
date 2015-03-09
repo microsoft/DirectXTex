@@ -911,7 +911,6 @@ static float OptimizeRGBA(_In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* cons
         // Calculate new steps
         HDRColorA pSteps[BC7_MAX_INDICES];
 
-        LDRColorA aSteps[BC7_MAX_INDICES];
         LDRColorA lX, lY;
         lX = (X * 255.0f).ToLDRColorA();
         lY = (Y * 255.0f).ToLDRColorA();
@@ -2486,7 +2485,6 @@ void D3DX_BC7::AssignIndices(const EncodeParams* pEP, size_t uShape, size_t uInd
     LDRColorA aPalette[BC7_MAX_REGIONS][BC7_MAX_INDICES];
 
     // build list of possibles
-    LDREndPntPair adjusted_endPts;
     for(size_t p = 0; p <= uPartitions; p++)
     {
         GeneratePaletteQuantized(pEP, uIndexMode, endPts[p], aPalette[p]);
