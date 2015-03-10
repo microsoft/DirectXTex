@@ -597,7 +597,7 @@ private:
                      _In_ const INTEndPntPair &aOrgEndPts, _Out_ INTEndPntPair &aOptEndPts) const;
     void OptimizeEndPoints(_In_ const EncodeParams* pEP, _In_reads_(BC6H_MAX_REGIONS) const float aOrgErr[],
                            _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aOrgEndPts[],
-                           _Inout_updates_all_(BC6H_MAX_REGIONS) INTEndPntPair aOptEndPts[]) const;
+                           _Out_writes_all_(BC6H_MAX_REGIONS) INTEndPntPair aOptEndPts[]) const;
     static void SwapIndices(_In_ const EncodeParams* pEP, _Inout_updates_all_(BC6H_MAX_REGIONS) INTEndPntPair aEndPts[],
                             _In_reads_(NUM_PIXELS_PER_BLOCK) size_t aIndices[]);
     void AssignIndices(_In_ const EncodeParams* pEP, _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aEndPts[],
