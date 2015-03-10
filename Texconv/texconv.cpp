@@ -53,6 +53,8 @@ enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
     OPT_FEATURE_LEVEL,
     OPT_FIT_POWEROF2,
     OPT_ALPHA_WEIGHT,
+    OPT_NORMAL_MAP,
+    OPT_NORMAL_MAP_AMPLITUDE,
     OPT_MAX
 };
 
@@ -105,6 +107,8 @@ SValue g_pOptions[] =
     { L"fl",            OPT_FEATURE_LEVEL },
     { L"pow2",          OPT_FIT_POWEROF2 },
     { L"aw",            OPT_ALPHA_WEIGHT },
+    { L"nmap",          OPT_NORMAL_MAP },
+    { L"nmapamp",       OPT_NORMAL_MAP_AMPLITUDE },
     { nullptr,          0             }
 };
 
@@ -447,8 +451,12 @@ void PrintUsage()
     wprintf( L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
     wprintf( L"   -pmalpha            convert final texture to use premultiplied alpha\n");
     wprintf( L"   -pow2               resize to fit a power-of-2, respecting aspect ratio\n" );
-    wprintf( L"   -aw                 BC7 GPU compressor weighting for alpha error metric\n"
+    wprintf( L"   -aw <weight>        BC7 GPU compressor weighting for alpha error metric\n"
              L"                       (defaults to 1.0)\n" );
+    wprintf (L"   -nmap <options>     converts height-map to normal-map\n"
+             L"                       options must be one or more of\n"
+             L"                          r, g, b, a, l, m, u, v, i, o\n" );
+    wprintf (L"   -nmapamp <weight>   normal map amplitude (defaults to 1.0)\n" );
     wprintf( L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n");
     wprintf( L"\n                       (DDS input only)\n");
     wprintf( L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
@@ -621,7 +629,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     DWORD FileType = CODEC_DDS;
     DWORD maxSize = 16384;
     float alphaWeight = 1.f;
-
+    DWORD dwNormalMap = 0;
+    float nmapAmplitude = 1.f;
+    
     WCHAR szPrefix   [MAX_PATH];
     WCHAR szSuffix   [MAX_PATH];
     WCHAR szOutputDir[MAX_PATH];
@@ -798,6 +808,86 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
                 dwFilterOpts |= TEX_FILTER_MIRROR;
+                break;
+
+            case OPT_NORMAL_MAP:
+                {
+                    dwNormalMap = 0;
+
+                    if ( wcschr( pValue, L'l' ) )
+                    {
+                        dwNormalMap |= CNMAP_CHANNEL_LUMINANCE;
+                    }
+                    else if ( wcschr( pValue, L'r' ) )
+                    {
+                        dwNormalMap |= CNMAP_CHANNEL_RED;
+                    }
+                    else if ( wcschr( pValue, L'g' ) )
+                    {
+                        dwNormalMap |= CNMAP_CHANNEL_GREEN;
+                    }
+                    else if ( wcschr( pValue, L'b' ) )
+                    {
+                        dwNormalMap |= CNMAP_CHANNEL_BLUE;
+                    }
+                    else if ( wcschr( pValue, L'a' ) )
+                    {
+                        dwNormalMap |= CNMAP_CHANNEL_ALPHA;
+                    }
+                    else
+                    {
+                        wprintf( L"Invalid value specified for -nmap (%ls), missing l, r, g, b, or a\n\n", pValue );
+                        PrintUsage();
+                        return 1;                        
+                    }
+
+                    if ( wcschr( pValue, L'm' ) )
+                    {
+                        dwNormalMap |= CNMAP_MIRROR;
+                    }
+                    else
+                    {
+                        if ( wcschr( pValue, L'u' ) )
+                        {
+                            dwNormalMap |= CNMAP_MIRROR_U;
+                        }
+                        if ( wcschr( pValue, L'v' ) )
+                        {
+                            dwNormalMap |= CNMAP_MIRROR_V;
+                        }
+                    }
+
+                    if ( wcschr( pValue, L'i' ) )
+                    {
+                        dwNormalMap |= CNMAP_INVERT_SIGN;
+                    }
+
+                    if ( wcschr( pValue, L'o' ) )
+                    {
+                        dwNormalMap |= CNMAP_COMPUTE_OCCLUSION;
+                    }   
+                }
+                break;
+
+            case OPT_NORMAL_MAP_AMPLITUDE:
+                if ( !dwNormalMap )
+                {
+                    wprintf( L"-nmapamp requires -nmap\n\n" );
+                    PrintUsage();
+                    return 1;
+                }
+                else if (swscanf_s(pValue, L"%f", &nmapAmplitude) != 1)
+                {
+                    wprintf( L"Invalid value specified with -nmapamp (%ls)\n\n", pValue);
+                    PrintUsage();
+                    return 1;
+                }
+                else if ( nmapAmplitude < 0.f )
+                {
+                    wprintf( L"Normal map amplitude must be positive (%ls)\n\n", pValue);
+                    PrintUsage();
+                    return 1;
+                }
                 break;
 
             case OPT_FEATURE_LEVEL:
@@ -1169,7 +1259,46 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Convert -----------------------------------------------------------------
-        if ( info.format != tformat && !IsCompressed( tformat ) )
+        if ( dwOptions & (1 << OPT_NORMAL_MAP) )
+        {
+            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
+            if ( !timage )
+            {
+                wprintf( L" ERROR: Memory allocation failed\n" );
+                return 1;
+            }
+
+            DXGI_FORMAT nmfmt = tformat;
+            if ( IsCompressed( tformat ) )
+            {
+                nmfmt = (dwNormalMap & CNMAP_COMPUTE_OCCLUSION) ? DXGI_FORMAT_R32G32B32A32_FLOAT : DXGI_FORMAT_R32G32B32_FLOAT;
+            }
+
+            hr = ComputeNormalMap( image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwNormalMap, nmapAmplitude, nmfmt, *timage );
+            if ( FAILED(hr) )
+            {
+                wprintf( L" FAILED [normalmap] (%x)\n", hr);
+                return 1;
+            }            
+
+            auto& tinfo = timage->GetMetadata();
+
+            assert( tinfo.format == nmfmt );
+            info.format = tinfo.format;
+
+            assert( info.width == tinfo.width );
+            assert( info.height == tinfo.height );
+            assert( info.depth == tinfo.depth );
+            assert( info.arraySize == tinfo.arraySize );
+            assert( info.mipLevels == tinfo.mipLevels );
+            assert( info.miscFlags == tinfo.miscFlags );
+            assert( info.miscFlags2 == tinfo.miscFlags2 );
+            assert( info.dimension == tinfo.dimension );
+
+            image.swap( timage );
+            cimage.reset();
+        }
+        else if ( info.format != tformat && !IsCompressed( tformat ) )
         {
             std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
             if ( !timage )
