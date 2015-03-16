@@ -2567,6 +2567,12 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
                             return E_POINTER;
 
                         ScratchImage tMipChain;
+                        hr = (baseImage.height > 1 || !allow1D)
+                             ? tMipChain.Initialize2D( DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, baseImage.height, 1, levels )
+                             : tMipChain.Initialize1D( DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, 1, levels ); 
+                        if ( FAILED(hr) )
+                            return hr;
+
                         hr = _GenerateMipMapsUsingWIC( *timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, 0 );
                         if ( FAILED(hr) )
                             return hr;

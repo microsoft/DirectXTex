@@ -270,9 +270,6 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata, DWORD flags )
         if ( !mdata.width || mdata.height != 1 || mdata.depth != 1 || !mdata.arraySize )
             return E_INVALIDARG;
 
-        if ( IsVideo(mdata.format) )
-            return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-
         if ( !_CalculateMipLevels(mdata.width,1,mipLevels) )
             return E_INVALIDARG;
         break;
@@ -285,9 +282,6 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata, DWORD flags )
         {
             if ( (mdata.arraySize % 6) != 0 )
                 return E_INVALIDARG;
-
-            if ( IsVideo(mdata.format) )
-                return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
         }
 
         if ( !_CalculateMipLevels(mdata.width,mdata.height,mipLevels) )
@@ -298,9 +292,6 @@ HRESULT ScratchImage::Initialize( const TexMetadata& mdata, DWORD flags )
         if ( !mdata.width || !mdata.height || !mdata.depth || mdata.arraySize != 1 )
             return E_INVALIDARG;
         
-        if ( IsVideo(mdata.format) || IsPlanar(mdata.format) || IsDepthStencil(mdata.format) )
-            return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-
         if ( !_CalculateMipLevels3D(mdata.width,mdata.height,mdata.depth,mipLevels) )
             return E_INVALIDARG;
         break;
@@ -352,9 +343,6 @@ HRESULT ScratchImage::Initialize1D( DXGI_FORMAT fmt, size_t length, size_t array
 {
     if ( !length || !arraySize )
         return E_INVALIDARG;
-
-    if ( IsVideo(fmt) )
-        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     // 1D is a special case of the 2D case
     HRESULT hr = Initialize2D( fmt, length, 1, arraySize, mipLevels, flags );
@@ -422,7 +410,7 @@ HRESULT ScratchImage::Initialize3D( DXGI_FORMAT fmt, size_t width, size_t height
     if ( !IsValid(fmt) || !width || !height || !depth )
         return E_INVALIDARG;
 
-    if ( IsVideo(fmt) || IsPlanar(fmt) || IsDepthStencil(fmt) )
+    if ( IsPalettized(fmt) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     if ( !_CalculateMipLevels3D(width,height,depth,mipLevels) )
@@ -475,9 +463,6 @@ HRESULT ScratchImage::InitializeCube( DXGI_FORMAT fmt, size_t width, size_t heig
     if ( !width || !height || !nCubes )
         return E_INVALIDARG;
 
-    if ( IsVideo(fmt) )
-        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-    
     // A DirectX11 cubemap is just a 2D texture array that is a multiple of 6 for each cube
     HRESULT hr = Initialize2D( fmt, width, height, nCubes * 6, mipLevels, flags );
     if ( FAILED(hr) )
@@ -594,9 +579,6 @@ HRESULT ScratchImage::InitializeCubeFromImages( const Image* images, size_t nIma
     // A DirectX11 cubemap is just a 2D texture array that is a multiple of 6 for each cube
     if ( ( nImages % 6 ) != 0 )
         return E_INVALIDARG;
-
-    if ( IsVideo(images[0].format) || IsPalettized(images[0].format) )
-        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     HRESULT hr = InitializeArrayFromImages( images, nImages, false, flags );
     if ( FAILED(hr) )
