@@ -74,8 +74,8 @@ DDSView\
     or volume maps, the "<" and ">" keyboard keys will show different images contained in the DDS.
     The "1" through "0" keys can also be used to jump to a specific image index.
 
-All content and source code for this package are bound to the Microsoft Public License (Ms-PL)
-<http://www.microsoft.com/en-us/openness/licenses.aspx#MPL>.
+All content and source code for this package are subject to the terms of the MIT License.
+<http://opensource.org/licenses/MIT>.
 
 http://go.microsoft.com/fwlink/?LinkId=248926
 
