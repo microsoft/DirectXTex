@@ -370,6 +370,9 @@ void PrintInfo( const TexMetadata& info )
     if ( info.mipLevels > 1 )
         wprintf( L",%Iu", info.mipLevels);
 
+    if ( info.arraySize > 1 )
+        wprintf( L",%Iu", info.arraySize);
+
     wprintf( L" ");
     PrintFormat( info.format );
 
@@ -1045,7 +1048,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             static_assert( WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match"  );
             static_assert( WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match"  );
 
-            hr = LoadFromWICFile( pConv->szSrc, dwFilter, &info, *image );
+            DWORD wicFlags = dwFilter;
+            if (FileType == CODEC_DDS)
+                wicFlags |= WIC_FLAGS_ALL_FRAMES;
+ 
+            hr = LoadFromWICFile( pConv->szSrc, wicFlags, &info, *image );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED (%x)\n", hr);

@@ -439,71 +439,82 @@ static HRESULT _DecodeMultiframe( _In_ DWORD flags, _In_ const TexMetadata& meta
         if ( FAILED(hr) )
             return hr;
 
-        if ( memcmp( &pfGuid, &sourceGUID, sizeof(WICPixelFormatGUID) ) == 0 )
+        if ( w == metadata.width && h == metadata.height )
         {
-            if ( w == metadata.width && h == metadata.height )
+            // This frame does not need resized
+            if ( memcmp( &pfGuid, &sourceGUID, sizeof(WICPixelFormatGUID) ) == 0 )
             {
-                // This frame does not need resized or format converted, just copy...
                 hr = frame->CopyPixels( 0, static_cast<UINT>( img->rowPitch ), static_cast<UINT>( img->slicePitch ), img->pixels );  
                 if ( FAILED(hr) )
                     return hr;
             }
             else
             {
-                // This frame needs resizing, but not format converted
-                ComPtr<IWICBitmapScaler> scaler;
-                hr = pWIC->CreateBitmapScaler( scaler.GetAddressOf() );
+                ComPtr<IWICFormatConverter> FC;
+                hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
                 if ( FAILED(hr) )
                     return hr;
 
-                hr = scaler->Initialize( frame.Get(), static_cast<UINT>( metadata.width ), static_cast<UINT>( metadata.height ), _GetWICInterp( flags ) );
+                BOOL canConvert = FALSE;
+                hr = FC->CanConvert( pfGuid, sourceGUID, &canConvert );
+                if ( FAILED(hr) || !canConvert )
+                {
+                    return E_UNEXPECTED;
+                }
+
+                hr = FC->Initialize( frame.Get(), sourceGUID, _GetWICDither( flags ), 0, 0, WICBitmapPaletteTypeCustom );
                 if ( FAILED(hr) )
                     return hr;
-
-                hr = scaler->CopyPixels( 0, static_cast<UINT>( img->rowPitch ), static_cast<UINT>( img->slicePitch ), img->pixels );
+            
+                hr = FC->CopyPixels( 0, static_cast<UINT>( img->rowPitch ), static_cast<UINT>( img->slicePitch ), img->pixels );  
                 if ( FAILED(hr) )
                     return hr;
             }
         }
         else
         {
-            // This frame required format conversion
-            ComPtr<IWICFormatConverter> FC;
-            hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
+            // This frame needs resizing
+            ComPtr<IWICBitmapScaler> scaler;
+            hr = pWIC->CreateBitmapScaler( scaler.GetAddressOf() );
             if ( FAILED(hr) )
                 return hr;
 
-            BOOL canConvert = FALSE;
-            hr = FC->CanConvert( sourceGUID, pfGuid, &canConvert );
-            if ( FAILED(hr) || !canConvert )
-            {
-                return E_UNEXPECTED;
-            }
-
-            hr = FC->Initialize( frame.Get(), pfGuid, _GetWICDither( flags ), 0, 0, WICBitmapPaletteTypeCustom );
+            hr = scaler->Initialize( frame.Get(), static_cast<UINT>( metadata.width ), static_cast<UINT>( metadata.height ), _GetWICInterp( flags ) );
             if ( FAILED(hr) )
                 return hr;
-            
-            if ( w == metadata.width && h == metadata.height )
+
+            WICPixelFormatGUID pfScaler;
+            hr = scaler->GetPixelFormat( &pfScaler );
+            if ( FAILED(hr) )
+                return hr;
+
+            if ( memcmp( &pfScaler, &sourceGUID, sizeof(WICPixelFormatGUID) ) == 0 )
             {
-                // This frame is the same size, no need to scale
-                hr = FC->CopyPixels( 0, static_cast<UINT>( img->rowPitch ), static_cast<UINT>( img->slicePitch ), img->pixels );  
+                hr = scaler->CopyPixels( 0, static_cast<UINT>( img->rowPitch ), static_cast<UINT>( img->slicePitch ), img->pixels );
                 if ( FAILED(hr) )
                     return hr;
             }
             else
             {
-                // This frame needs resizing and format converted
-                ComPtr<IWICBitmapScaler> scaler;
-                hr = pWIC->CreateBitmapScaler( scaler.GetAddressOf() );
+                // The WIC bitmap scaler is free to return a different pixel format than the source image, so here we
+                // convert it to our desired format
+                ComPtr<IWICFormatConverter> FC;
+                hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
                 if ( FAILED(hr) )
                     return hr;
 
-                hr = scaler->Initialize( FC.Get(), static_cast<UINT>( metadata.width ), static_cast<UINT>( metadata.height ), _GetWICInterp( flags ) );
+                BOOL canConvert = FALSE;
+                hr = FC->CanConvert( pfScaler, sourceGUID, &canConvert );
+                if ( FAILED(hr) || !canConvert )
+                {
+                    return E_UNEXPECTED;
+                }
+
+                hr = FC->Initialize( scaler.Get(), sourceGUID, _GetWICDither( flags ), 0, 0, WICBitmapPaletteTypeCustom );
                 if ( FAILED(hr) )
                     return hr;
 
-                hr = scaler->CopyPixels( 0, static_cast<UINT>( img->rowPitch ), static_cast<UINT>( img->slicePitch ), img->pixels );
+                hr = FC->CopyPixels( 0, static_cast<UINT>( img->rowPitch ), static_cast<UINT>( img->slicePitch ), img->pixels );  
                 if ( FAILED(hr) )
                     return hr;
             }
