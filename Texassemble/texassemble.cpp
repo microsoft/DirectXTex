@@ -436,33 +436,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
-    size_t images = conversion.size();
-    if( images < 2 )
-    {
-        wprintf( L"ERROR: Need at least 2 images to assemble\n\n");
-        return 1;
-    }
-
     switch( dwOptions & ( (1 << OPT_CUBE) | (1 << OPT_VOLUME) | (1 << OPT_ARRAY) | (1 << OPT_CUBEARRAY) ) )
     {
     case (1 << OPT_VOLUME):
     case (1 << OPT_ARRAY):
-        break;
-
     case (1 << OPT_CUBE):
-        if ( images != 6 )
-        {
-            wprintf( L"ERROR: -cube requires six images to form the faces of the cubemap\n");
-            return 1;
-        }
-        break;
-
     case (1 << OPT_CUBEARRAY):
-        if ( ( images < 6) || ( images % 6 ) != 0 )
-        {
-            wprintf( L"-cubearray requires a multiple of 6 images to form the faces of the cubemaps\n");
-            return 1;
-        }
         break;
 
     default:
@@ -474,6 +453,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         PrintLogo();
 
     // Convert images
+    size_t images = 0;
+
     std::vector<std::unique_ptr<ScratchImage>> loadedImages; 
 
     for( auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv )
@@ -516,12 +497,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            if ( info.arraySize > 1
-                 || info.depth > 1
+            if ( info.depth > 1
                  || info.mipLevels > 1
                  || info.IsCubemap() )
             {
-                wprintf( L"ERROR: Can't assemble complex surfaces\n" );
+                wprintf( L" ERROR: Can't assemble complex surfaces\n" );
                 return 1;
             }
         }
@@ -674,7 +654,33 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             image.swap( timage );
         }
 
+        images += info.arraySize;
         loadedImages.push_back( std::move( image ) );
+    }
+
+    if( images < 2 )
+    {
+        wprintf( L" ERROR: Need at least 2 images to assemble\n\n");
+        return 1;
+    }
+
+    switch( dwOptions & ( (1 << OPT_CUBE) | (1 << OPT_VOLUME) | (1 << OPT_ARRAY) | (1 << OPT_CUBEARRAY) ) )
+    {
+    case (1 << OPT_CUBE):
+        if ( images != 6 )
+        {
+            wprintf( L" ERROR: -cube requires six images to form the faces of the cubemap\n");
+            return 1;
+        }
+        break;
+
+    case (1 << OPT_CUBEARRAY):
+        if ( ( images < 6) || ( images % 6 ) != 0 )
+        {
+            wprintf( L"-cubearray requires a multiple of 6 images to form the faces of the cubemaps\n");
+            return 1;
+        }
+        break;
     }
 
     // --- Create result ---------------------------------------------------------------
@@ -684,9 +690,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
         for( auto it = loadedImages.cbegin(); it != loadedImages.cend(); ++it )
         {
-            const Image* img = it->get()->GetImage(0,0,0);
-            assert( img != 0 );
-            imageArray.push_back( *img );
+            const ScratchImage* simage = it->get();
+            assert( simage != 0 );
+            for( size_t j = 0; j < simage->GetMetadata().arraySize; ++j )
+            {
+                const Image* img = simage->GetImage(0,j,0);
+                assert( img != 0 );
+                imageArray.push_back( *img );
+            }
         }
 
         ScratchImage result;
