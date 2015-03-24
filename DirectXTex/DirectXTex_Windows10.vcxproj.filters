@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="BC.cpp" />
+    <ClCompile Include="BC4BC5.cpp" />
+    <ClCompile Include="BC6HBC7.cpp" />
+    <ClCompile Include="BCDirectCompute.cpp" />
+    <ClCompile Include="DirectXTexCompress.cpp" />
+    <ClCompile Include="DirectXTexCompressGPU.cpp" />
+    <ClCompile Include="DirectXTexConvert.cpp" />
+    <ClCompile Include="DirectXTexD3D11.cpp" />
+    <ClCompile Include="DirectXTexDDS.cpp" />
+    <ClCompile Include="DirectXTexFlipRotate.cpp" />
+    <ClCompile Include="DirectXTexImage.cpp" />
+    <ClCompile Include="DirectXTexMipmaps.cpp" />
+    <ClCompile Include="DirectXTexMisc.cpp" />
+    <ClCompile Include="DirectXTexNormalMaps.cpp" />
+    <ClCompile Include="DirectXTexPMAlpha.cpp" />
+    <ClCompile Include="DirectXTexResize.cpp" />
+    <ClCompile Include="DirectXTexTGA.cpp" />
+    <ClCompile Include="DirectXTexUtil.cpp" />
+    <ClCompile Include="DirectXTexWIC.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="BC.h" />
+    <ClInclude Include="BCDirectCompute.h" />
+    <ClInclude Include="DDS.h" />
+    <ClInclude Include="DirectXTex.h" />
+    <ClInclude Include="DirectXTexP.h" />
+    <ClInclude Include="Filters.h" />
+    <ClInclude Include="scoped.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DirectXTex.inl" />
+  </ItemGroup>
+</Project>
