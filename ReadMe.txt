@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-November 24, 2014
+March 27, 2015
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -104,6 +104,14 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+March 27, 2015
+    Added projects for Windows apps Technical Preview
+    Fixed bug with WIC-based mipmap generation for non-WIC supported formats
+    Fixed bug with WIC multiframe loader when resizing required
+    texconv: Added -nmap/-nmapamp for generating normal maps from height maps
+    texconv/texassemble: Updated to load multiframe WIC files (tiff, gif)
+    Minor code cleanup
 
 November 24, 2014
     Updates for Visual Studio 2015 Technical Preview
