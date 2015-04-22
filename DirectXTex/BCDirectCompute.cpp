@@ -178,7 +178,7 @@ HRESULT GPUCompressBC::Initialize( ID3D11Device* pDevice )
 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT GPUCompressBC::Prepare( size_t width, size_t height, DXGI_FORMAT format, float alphaWeight )
+HRESULT GPUCompressBC::Prepare( size_t width, size_t height, DXGI_FORMAT format, float alphaWeight, bool skip3subsets )
 {
     if ( !width || !height || alphaWeight < 0.f )
         return E_INVALIDARG;
@@ -192,6 +192,8 @@ HRESULT GPUCompressBC::Prepare( size_t width, size_t height, DXGI_FORMAT format,
     m_height = height;
 
     m_alphaWeight = alphaWeight;
+
+    m_skip3Subsets = skip3subsets;
 
     size_t xblocks = std::max<size_t>( 1, (width + 3) >> 2 );
     size_t yblocks = std::max<size_t>( 1, (height + 3) >> 2 );
@@ -468,6 +470,10 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
             for ( UINT i = 0; i < 3; ++i )
             {
                 static const UINT modes[] = { 1, 3, 7 };
+
+                // Mode 1: err1 -> err2
+                // Mode 3: err2 -> err1
+                // Mode 7: err1 -> err2
                 {
                     D3D11_MAPPED_SUBRESOURCE mapped;
                     HRESULT hr = pContext->Map( m_constBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped );
@@ -494,33 +500,39 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
                                   (i & 1) ? m_err1UAV.Get() : m_err2UAV.Get(), uThreadGroupCount );
             }               
 
-            for ( UINT i = 0; i < 2; ++i )
+            if ( !m_skip3Subsets )
             {
-                static const UINT modes[] = { 0, 2 };
+                // 3 subset modes tend to be used rarely and add significant compression time
+                for ( UINT i = 0; i < 2; ++i )
                 {
-                    D3D11_MAPPED_SUBRESOURCE mapped;
-                    HRESULT hr = pContext->Map( m_constBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped );
-                    if ( FAILED(hr) )
+                    static const UINT modes[] = { 0, 2 };
+                    // Mode 0: err2 -> err1
+                    // Mode 2: err1 -> err2
                     {
-                        ResetContext( pContext );
-                        return hr;
+                        D3D11_MAPPED_SUBRESOURCE mapped;
+                        HRESULT hr = pContext->Map( m_constBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped );
+                        if ( FAILED(hr) )
+                        {
+                            ResetContext( pContext );
+                            return hr;
+                        }
+
+                        ConstantsBC6HBC7 param;
+                        param.tex_width = static_cast<UINT>( srcImage.width );
+                        param.num_block_x = static_cast<UINT>( xblocks );
+                        param.format = m_bcformat;
+                        param.mode_id = modes[i];
+                        param.start_block_id = start_block_id;
+                        param.num_total_blocks = num_total_blocks;
+                        param.alpha_weight = m_alphaWeight;
+                        memcpy( mapped.pData, &param, sizeof( param ) );
+                        pContext->Unmap( m_constBuffer.Get(), 0 );
                     }
 
-                    ConstantsBC6HBC7 param;
-                    param.tex_width = static_cast<UINT>( srcImage.width );
-                    param.num_block_x = static_cast<UINT>( xblocks );
-                    param.format = m_bcformat;
-                    param.mode_id = modes[i];
-                    param.start_block_id = start_block_id;
-                    param.num_total_blocks = num_total_blocks;
-                    param.alpha_weight = m_alphaWeight;
-                    memcpy( mapped.pData, &param, sizeof( param ) );
-                    pContext->Unmap( m_constBuffer.Get(), 0 );
+                    pSRVs[1] = (i & 1) ? m_err1SRV.Get() : m_err2SRV.Get();
+                    RunComputeShader( pContext, m_BC7_tryMode02CS.Get(), pSRVs, 2, m_constBuffer.Get(),
+                                      (i & 1) ? m_err2UAV.Get() : m_err1UAV.Get(), uThreadGroupCount );
                 }
-
-                pSRVs[1] = (i & 1) ? m_err1SRV.Get() : m_err2SRV.Get();
-                RunComputeShader( pContext, m_BC7_tryMode02CS.Get(), pSRVs, 2, m_constBuffer.Get(),
-                                  (i & 1) ? m_err2UAV.Get() : m_err1UAV.Get(), uThreadGroupCount );
             }
 
             pSRVs[1] = m_err2SRV.Get();

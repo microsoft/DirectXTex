@@ -216,7 +216,7 @@ HRESULT Compress( ID3D11Device* pDevice, const Image& srcImage, DXGI_FORMAT form
     if ( FAILED(hr) )
         return hr;
 
-    hr = gpubc->Prepare( srcImage.width, srcImage.height, format, alphaWeight );
+    hr = gpubc->Prepare( srcImage.width, srcImage.height, format, alphaWeight, !(compress & TEX_COMPRESS_BC7_USE_3SUBSETS) );
     if ( FAILED(hr) )
         return hr;
 
@@ -295,7 +295,7 @@ HRESULT Compress( ID3D11Device* pDevice, const Image* srcImages, size_t nimages,
 
             for( size_t level=0; level < metadata.mipLevels; ++level )
             {
-                hr = gpubc->Prepare( w, h, format, alphaWeight );
+                hr = gpubc->Prepare( w, h, format, alphaWeight, !(compress & TEX_COMPRESS_BC7_USE_3SUBSETS) );
                 if ( FAILED(hr) )
                 {
                     cImages.Release();
@@ -346,7 +346,7 @@ HRESULT Compress( ID3D11Device* pDevice, const Image* srcImages, size_t nimages,
 
             for( size_t level=0; level < metadata.mipLevels; ++level )
             {
-                hr = gpubc->Prepare( w, h, format, alphaWeight );
+                hr = gpubc->Prepare( w, h, format, alphaWeight, !(compress & TEX_COMPRESS_BC7_USE_3SUBSETS) );
                 if ( FAILED(hr) )
                 {
                     cImages.Release();

@@ -2143,7 +2143,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
 }
 
 _Use_decl_annotations_
-void D3DX_BC7::Encode(const HDRColorA* const pIn)
+void D3DX_BC7::Encode(bool skip3subsets, const HDRColorA* const pIn)
 {
     assert( pIn );
 
@@ -2161,6 +2161,12 @@ void D3DX_BC7::Encode(const HDRColorA* const pIn)
 
     for(EP.uMode = 0; EP.uMode < 8 && fMSEBest > 0; ++EP.uMode)
     {
+        if ( skip3subsets && (EP.uMode == 0 || EP.uMode == 2) )
+        {
+            // 3 subset modes tend to be used rarely and add significant compression time
+            continue;
+        }
+
         const size_t uShapes = size_t(1) << ms_aInfo[EP.uMode].uPartitionBits;
         assert( uShapes <= BC7_MAX_SHAPES );
         _Analysis_assume_( uShapes <= BC7_MAX_SHAPES );
@@ -2860,10 +2866,9 @@ void D3DXDecodeBC7(XMVECTOR *pColor, const uint8_t *pBC)
 _Use_decl_annotations_
 void D3DXEncodeBC7(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
 {
-    UNREFERENCED_PARAMETER(flags);
     assert( pBC && pColor );
     static_assert( sizeof(D3DX_BC7) == 16, "D3DX_BC7 should be 16 bytes" );
-    reinterpret_cast< D3DX_BC7* >( pBC )->Encode(reinterpret_cast<const HDRColorA*>(pColor));
+    reinterpret_cast< D3DX_BC7* >( pBC )->Encode( !(flags& BC_FLAGS_USE_3SUBSETS), reinterpret_cast<const HDRColorA*>(pColor));
 }
 
 } // namespace

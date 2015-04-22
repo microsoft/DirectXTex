@@ -32,7 +32,8 @@ inline static DWORD _GetBCFlags( _In_ DWORD compress )
     static_assert( TEX_COMPRESS_A_DITHER == BC_FLAGS_DITHER_A, "TEX_COMPRESS_* flags should match BC_FLAGS_*"  );
     static_assert( TEX_COMPRESS_DITHER == (BC_FLAGS_DITHER_RGB | BC_FLAGS_DITHER_A), "TEX_COMPRESS_* flags should match BC_FLAGS_*"  );
     static_assert( TEX_COMPRESS_UNIFORM == BC_FLAGS_UNIFORM, "TEX_COMPRESS_* flags should match BC_FLAGS_*"  );
-    return ( compress & (BC_FLAGS_DITHER_RGB|BC_FLAGS_DITHER_A|BC_FLAGS_UNIFORM) );
+    static_assert( TEX_COMPRESS_BC7_USE_3SUBSETS == BC_FLAGS_USE_3SUBSETS, "TEX_COMPRESS_* flags should match BC_FLAGS_*"  );
+    return ( compress & (BC_FLAGS_DITHER_RGB|BC_FLAGS_DITHER_A|BC_FLAGS_UNIFORM|BC_FLAGS_USE_3SUBSETS) );
 }
 
 inline static DWORD _GetSRGBFlags( _In_ DWORD compress )

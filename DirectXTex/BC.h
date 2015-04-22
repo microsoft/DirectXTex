@@ -59,6 +59,7 @@ enum BC_FLAGS
     BC_FLAGS_DITHER_RGB = 0x10000,  // Enables dithering for RGB colors for BC1-3
     BC_FLAGS_DITHER_A   = 0x20000,  // Enables dithering for Alpha channel for BC1-3
     BC_FLAGS_UNIFORM    = 0x40000,  // By default, uses perceptual weighting for BC1-3; this flag makes it a uniform weighting
+    BC_FLAGS_USE_3SUBSETS = 0x80000,// By default, BC7 skips mode 0 & 2; this flag adds those modes back
 };
 
 //-------------------------------------------------------------------------------------
@@ -623,7 +624,7 @@ class D3DX_BC7 : private CBits< 16 >
 {
 public:
     void Decode(_Out_writes_(NUM_PIXELS_PER_BLOCK) HDRColorA* pOut) const;
-    void Encode(_In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pIn);
+    void Encode(bool skip3subsets, _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pIn);
 
 private:
     struct ModeInfo

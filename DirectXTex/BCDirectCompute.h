@@ -23,7 +23,7 @@ public:
 
     HRESULT Initialize( _In_ ID3D11Device* pDevice );
 
-    HRESULT Prepare( _In_ size_t width, _In_ size_t height, _In_ DXGI_FORMAT format, _In_ float alphaWeight = 1.f );
+    HRESULT Prepare( _In_ size_t width, _In_ size_t height, _In_ DXGI_FORMAT format, _In_ float alphaWeight = 1.f, _In_ bool skip3subsets = true );
 
     HRESULT Compress( _In_ const Image& srcImage, _In_ const Image& destImage );
 
@@ -33,6 +33,7 @@ private:
     DXGI_FORMAT                                         m_bcformat;
     DXGI_FORMAT                                         m_srcformat;
     float                                               m_alphaWeight;
+    bool                                                m_skip3Subsets;
     size_t                                              m_width;
     size_t                                              m_height;
 
