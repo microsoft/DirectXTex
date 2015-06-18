@@ -1573,7 +1573,7 @@ HRESULT LoadFromDDSFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, Scr
     }
     else
     {
-        if ( remaining > image.GetPixelsSize() )
+        if ( remaining < image.GetPixelsSize() )
         {
             image.Release();
             return E_FAIL;
