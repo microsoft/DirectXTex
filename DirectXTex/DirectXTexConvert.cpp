@@ -180,6 +180,7 @@ namespace DirectX
 static const XMVECTORF32 g_Grayscale = { 0.2125f, 0.7154f, 0.0721f, 0.0f };
 static const XMVECTORF32 g_HalfMin = { -65504.f, -65504.f, -65504.f, -65504.f };
 static const XMVECTORF32 g_HalfMax = { 65504.f, 65504.f, 65504.f, 65504.f };
+static const XMVECTORF32 g_8BitBias = { 0.5f/255.f, 0.5f/255.f, 0.5f/255.f, 0.5f/255.f };
 
 //-------------------------------------------------------------------------------------
 // Copies an image row with optional clearing of alpha value to 1.0
@@ -1731,7 +1732,18 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
 
     case DXGI_FORMAT_R8G8B8A8_UNORM:
     case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-        STORE_SCANLINE( XMUBYTEN4, XMStoreUByteN4 )
+        if ( size >= sizeof(XMUBYTEN4) )
+        {
+            XMUBYTEN4 * __restrict dPtr = reinterpret_cast<XMUBYTEN4*>(pDestination);
+            for( size_t icount = 0; icount < ( size - sizeof(XMUBYTEN4) + 1 ); icount += sizeof(XMUBYTEN4) )
+            {
+                if ( sPtr >= ePtr ) break;
+                XMVECTOR v = XMVectorAdd( *sPtr++, g_8BitBias );
+                XMStoreUByteN4( dPtr++, v );
+            }
+            return true;
+        }
+        return false;
 
     case DXGI_FORMAT_R8G8B8A8_UINT:
         STORE_SCANLINE( XMUBYTE4, XMStoreUByte4 )
@@ -2071,6 +2083,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 XMVECTOR v0 = *sPtr++;
                 XMVECTOR v1 = (sPtr < ePtr) ? XMVectorSplatY( *sPtr++ ) : XMVectorZero();
                 XMVECTOR v = XMVectorSelect( v1, v0, g_XMSelect1110 );
+                v = XMVectorAdd( v, g_8BitBias );
                 XMStoreUByteN4( dPtr++, v );
             }
             return true;
@@ -2089,6 +2102,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
                 XMVECTOR v0 = XMVectorSwizzle<1, 0, 3, 2>( *sPtr++ );
                 XMVECTOR v1 = (sPtr < ePtr) ? XMVectorSplatY( *sPtr++ ) : XMVectorZero();
                 XMVECTOR v = XMVectorSelect( v1, v0, select1101 );
+                v = XMVectorAdd( v, g_8BitBias );
                 XMStoreUByteN4( dPtr++, v );
             }
             return true;
@@ -2138,6 +2152,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
             {
                 if ( sPtr >= ePtr ) break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>( *sPtr++ );
+                v = XMVectorAdd( v, g_8BitBias );
                 XMStoreUByteN4( dPtr++, v );
             }
             return true;
@@ -2153,6 +2168,7 @@ bool _StoreScanline( LPVOID pDestination, size_t size, DXGI_FORMAT format,
             {
                 if ( sPtr >= ePtr ) break;
                 XMVECTOR v = XMVectorPermute<2, 1, 0, 7>( *sPtr++, g_XMIdentityR3 );
+                v = XMVectorAdd( v, g_8BitBias );
                 XMStoreUByteN4( dPtr++, v );
             }
             return true;
