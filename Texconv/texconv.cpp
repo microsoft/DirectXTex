@@ -435,6 +435,9 @@ void PrintLogo()
 {
     wprintf( L"Microsoft (R) DirectX 11 Texture Converter (DirectXTex version)\n");
     wprintf( L"Copyright (C) Microsoft Corp. All rights reserved.\n");
+#ifdef _DEBUG
+    wprintf( L"*** Debug build ***\n");
+#endif
     wprintf( L"\n");
 }
 
@@ -1649,7 +1652,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 DWORD cflags = dwCompress;
 #ifdef _OPENMP
-                if ( bc6hbc7 && !(dwOptions & (DWORD64(1) << OPT_FORCE_SINGLEPROC) ) )
+                if ( !(dwOptions & (DWORD64(1) << OPT_FORCE_SINGLEPROC) ) )
                 {
                     cflags |= TEX_COMPRESS_PARALLEL;
                 }
