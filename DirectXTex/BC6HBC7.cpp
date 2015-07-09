@@ -721,7 +721,7 @@ static float OptimizeRGB(_In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const
     for(size_t iIteration = 0; iIteration < 8; iIteration++)
     {
         // Calculate new steps
-        HDRColorA pSteps[4];
+        HDRColorA pSteps[4] = {};
 
         for(size_t iStep = 0; iStep < cSteps; iStep++)
         {
