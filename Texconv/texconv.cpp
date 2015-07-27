@@ -650,7 +650,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float alphaWeight = 1.f;
     DWORD dwNormalMap = 0;
     float nmapAmplitude = 1.f;
-    
+
     WCHAR szPrefix   [MAX_PATH];
     WCHAR szSuffix   [MAX_PATH];
     WCHAR szOutputDir[MAX_PATH];
@@ -951,7 +951,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
         }
         else
-        {         
+        {
             SConversion conv;
             wcscpy_s(conv.szSrc, MAX_PATH, pArg);
 
@@ -1093,7 +1093,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             DWORD wicFlags = dwFilter;
             if (FileType == CODEC_DDS)
                 wicFlags |= WIC_FLAGS_ALL_FRAMES;
- 
+
             hr = LoadFromWICFile( pConv->szSrc, wicFlags, &info, *image );
             if ( FAILED(hr) )
             {
@@ -1526,7 +1526,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert( info.miscFlags == tinfo.miscFlags );
             assert( info.miscFlags2 == tinfo.miscFlags2 );
             assert( info.dimension == tinfo.dimension );
-
 
             image.swap( timage );
             cimage.reset();
