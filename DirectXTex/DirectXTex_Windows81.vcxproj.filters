@@ -1,39 +1,102 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns:atg="http://atg.xbox.com" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-<ItemGroup>
-<Filter Include="Resource Files">
-<UniqueIdentifier>{8e114980-c1a3-4ada-ad7c-83caadf5daeb}</UniqueIdentifier>
-<Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
-</Filter>
-</ItemGroup>
-<ItemGroup />
-<ItemGroup>
-      <CLInclude Include="BC.h" />
-      <ClCompile Include="BC.cpp" />
-      <ClCompile Include="BC4BC5.cpp" />
-      <ClCompile Include="BC6HBC7.cpp" />
-      <CLInclude Include="DDS.h" />
-      <ClInclude Include="filters.h" />
-      <CLInclude Include="scoped.h" />
-      <CLInclude Include="DirectXTex.h" /> 
-      <CLInclude Include="DirectXTexp.h" /> 
-      <CLInclude Include="DirectXTex.inl" />
-      <ClCompile Include="DirectXTexCompress.cpp" />
-      <ClCompile Include="DirectXTexConvert.cpp" />
-      <ClCompile Include="DirectXTexD3D11.cpp" />
-      <ClCompile Include="DirectXTexDDS.cpp" />
-      <ClCompile Include="DirectXTexFlipRotate.cpp" />
-      <ClCompile Include="DirectXTexImage.cpp" />
-      <ClCompile Include="DirectXTexMipMaps.cpp" />
-      <ClCompile Include="DirectXTexMisc.cpp" />
-      <ClCompile Include="DirectXTexNormalMaps.cpp" />
-      <ClCompile Include="DirectXTexPMAlpha.cpp" />
-      <ClCompile Include="DirectXTexResize.cpp" />
-      <ClCompile Include="DirectXTexTGA.cpp" />
-      <ClCompile Include="DirectXTexUtil.cpp" />
-      <ClCompile Include="DirectXTexWIC.cpp" />
-      <ClInclude Include="BCDirectCompute.h" />
-      <ClCompile Include="BCDirectCompute.cpp" />
-      <ClCompile Include="DirectXTexCompressGPU.cpp" />
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{8e114980-c1a3-4ada-ad7c-83caadf5daeb}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{c99f7f80-93a7-4692-8567-779ebabe625b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{586313f2-be7d-4c9c-aa53-09f565530df1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CLInclude Include="DirectXTex.h">
+      <Filter>Header Files</Filter>
+    </CLInclude>
+    <CLInclude Include="DirectXTex.inl">
+      <Filter>Header Files</Filter>
+    </CLInclude>
+    <CLInclude Include="BC.h">
+      <Filter>Source Files</Filter>
+    </CLInclude>
+    <ClInclude Include="BCDirectCompute.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <CLInclude Include="DDS.h">
+      <Filter>Source Files</Filter>
+    </CLInclude>
+    <CLInclude Include="DirectXTexp.h">
+      <Filter>Source Files</Filter>
+    </CLInclude>
+    <CLInclude Include="filters.h">
+      <Filter>Source Files</Filter>
+    </CLInclude>
+    <CLInclude Include="scoped.h">
+      <Filter>Source Files</Filter>
+    </CLInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="BC4BC5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="BC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BC6HBC7.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BCDirectCompute.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexCompress.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexCompressGPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexConvert.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexD3D11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexDDS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexFlipRotate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexMipMaps.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexMisc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexNormalMaps.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexPMAlpha.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexResize.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexTGA.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexUtil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexWIC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

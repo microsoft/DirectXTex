@@ -60,30 +60,30 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CLInclude Include="BC.h">
-      <Filter>Header Files</Filter>
-    </CLInclude>
-    <ClInclude Include="BCDirectCompute.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <CLInclude Include="DirectXTex.h">
-      <Filter>Header Files</Filter>
-    </CLInclude>
-    <CLInclude Include="DDS.h">
       <Filter>Header Files</Filter>
     </CLInclude>
     <CLInclude Include="DirectXTex.inl">
       <Filter>Header Files</Filter>
     </CLInclude>
     <CLInclude Include="scoped.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
+    </CLInclude>
+    <CLInclude Include="DirectXTexp.h">
+      <Filter>Source Files</Filter>
     </CLInclude>
     <ClInclude Include="filters.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
     </ClInclude>
-    <CLInclude Include="DirectXTexp.h">
-      <Filter>Header Files</Filter>
+    <CLInclude Include="DDS.h">
+      <Filter>Source Files</Filter>
     </CLInclude>
+    <CLInclude Include="BC.h">
+      <Filter>Source Files</Filter>
+    </CLInclude>
+    <ClInclude Include="BCDirectCompute.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">

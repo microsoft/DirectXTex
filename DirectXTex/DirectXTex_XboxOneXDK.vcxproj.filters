@@ -15,26 +15,26 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BC.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BCDirectCompute.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DDS.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DirectXTex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="scoped.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="DirectXTexP.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Filters.h">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="scoped.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="DDS.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BC.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BCDirectCompute.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
