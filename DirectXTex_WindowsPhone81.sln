@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30324.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex_WindowsPhone81", "DirectXTex_WindowsPhone81.vcxproj", "{5709AA1F-D4E3-4138-BDD6-55C8DAF3D983}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex", "DirectXTex\DirectXTex_WindowsPhone81.vcxproj", "{5709AA1F-D4E3-4138-BDD6-55C8DAF3D983}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
