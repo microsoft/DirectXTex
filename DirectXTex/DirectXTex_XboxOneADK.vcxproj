@@ -52,7 +52,7 @@
     <ClCompile Include="DirectXTexWIC.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <RootNamespace>DirectXTex_XboxOneADK</RootNamespace>
+    <RootNamespace>DirectXTex</RootNamespace>
     <ProjectGuid>{8f6cd012-9ad4-4ee1-9cbe-7b112e5ceb39}</ProjectGuid>
     <DefaultLanguage>en-US</DefaultLanguage>
     <Keyword>Win32Proj</Keyword>

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Release|Durango">
       <Configuration>Release</Configuration>
@@ -53,18 +53,19 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <RootNamespace>DirectXTex</RootNamespace>
-    <ProjectGuid>{8424aed1-3dbf-44fa-9cf9-7fbdf1c18596}</ProjectGuid>
+    <ProjectGuid>{879b5023-53b7-4108-aeae-f019c2e9410d}</ProjectGuid>
     <DefaultLanguage>en-US</DefaultLanguage>
     <Keyword>Win32Proj</Keyword>
     <ApplicationEnvironment>title</ApplicationEnvironment>
-    <PlatformToolset>v110</PlatformToolset>
-    <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
+    <!-- - - - -->
+    <PlatformToolset>v140</PlatformToolset>
+    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <TargetRuntime>Native</TargetRuntime>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Durango'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <EmbedManifest>false</EmbedManifest>
@@ -72,7 +73,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <EmbedManifest>false</EmbedManifest>
@@ -80,7 +81,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <EmbedManifest>false</EmbedManifest>
@@ -105,8 +106,8 @@
     <LibraryWPath>$(Console_SdkLibPath);$(Console_SdkWindowsMetadataPath)</LibraryWPath>
     <IncludePath>$(Console_SdkIncludeRoot)</IncludePath>
     <ExecutablePath>$(Console_SdkRoot)bin;$(VCInstallDir)bin\x86_amd64;$(VCInstallDir)bin;$(WindowsSDK_ExecutablePath_x86);$(VSInstallDir)Common7\Tools\bin;$(VSInstallDir)Common7\tools;$(VSInstallDir)Common7\ide;$(ProgramFiles)\HTML Help Workshop;$(MSBuildToolsPath32);$(FxCopDir);$(PATH);</ExecutablePath>
-    <OutDir>Bin\XboxOneXDK\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>Bin\XboxOneXDK\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>Bin\XboxOneXDK_2015\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Bin\XboxOneXDK_2015\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">
@@ -115,8 +116,8 @@
     <LibraryWPath>$(Console_SdkLibPath);$(Console_SdkWindowsMetadataPath)</LibraryWPath>
     <IncludePath>$(Console_SdkIncludeRoot)</IncludePath>
     <ExecutablePath>$(Console_SdkRoot)bin;$(VCInstallDir)bin\x86_amd64;$(VCInstallDir)bin;$(WindowsSDK_ExecutablePath_x86);$(VSInstallDir)Common7\Tools\bin;$(VSInstallDir)Common7\tools;$(VSInstallDir)Common7\ide;$(ProgramFiles)\HTML Help Workshop;$(MSBuildToolsPath32);$(FxCopDir);$(PATH);</ExecutablePath>
-    <OutDir>Bin\XboxOneXDK\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>Bin\XboxOneXDK\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>Bin\XboxOneXDK_2015\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Bin\XboxOneXDK_2015\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">
@@ -125,13 +126,13 @@
     <LibraryWPath>$(Console_SdkLibPath);$(Console_SdkWindowsMetadataPath)</LibraryWPath>
     <IncludePath>$(Console_SdkIncludeRoot)</IncludePath>
     <ExecutablePath>$(Console_SdkRoot)bin;$(VCInstallDir)bin\x86_amd64;$(VCInstallDir)bin;$(WindowsSDK_ExecutablePath_x86);$(VSInstallDir)Common7\Tools\bin;$(VSInstallDir)Common7\tools;$(VSInstallDir)Common7\ide;$(ProgramFiles)\HTML Help Workshop;$(MSBuildToolsPath32);$(FxCopDir);$(PATH);</ExecutablePath>
-    <OutDir>Bin\XboxOneXDK\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>Bin\XboxOneXDK\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>Bin\XboxOneXDK_2015\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Bin\XboxOneXDK_2015\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">
     <Link>
-      <AdditionalDependencies>d3d11_x.lib;combase.lib;kernelx.lib;uuid.lib;</AdditionalDependencies>
+      <AdditionalDependencies>d3d11_x.lib;combase.lib;kernelx.lib;toolhelpx.lib;uuid.lib;</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -155,7 +156,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">
     <Link>
-      <AdditionalDependencies>pixEvt.lib;d3d11_x.lib;combase.lib;kernelx.lib;uuid.lib;</AdditionalDependencies>
+      <AdditionalDependencies>pixEvt.lib;d3d11_x.lib;combase.lib;kernelx.lib;toolhelpx.lib;uuid.lib;</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -179,7 +180,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">
     <Link>
-      <AdditionalDependencies>d3d11_x.lib;combase.lib;kernelx.lib;uuid.lib;</AdditionalDependencies>
+      <AdditionalDependencies>d3d11_x.lib;combase.lib;kernelx.lib;toolhelpx.lib;uuid.lib;</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
