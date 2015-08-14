@@ -57,7 +57,7 @@
 #endif
 #endif
 
-#define DIRECTX_TEX_VERSION 132
+#define DIRECTX_TEX_VERSION 133
 
 namespace DirectX
 {
