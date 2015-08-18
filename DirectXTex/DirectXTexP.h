@@ -55,8 +55,6 @@
 
 #include "scoped.h"
 
-struct IWICImagingFactory;
-
 #define TEX_FILTER_MASK 0xF00000
 
 #define XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT DXGI_FORMAT(116)
@@ -84,10 +82,6 @@ namespace DirectX
     bool __cdecl _DXGIToWIC( _In_ DXGI_FORMAT format, _Out_ GUID& guid, _In_ bool ignoreRGBvsBGR = false );
 
     DWORD __cdecl _CheckWICColorSpace( _In_ const GUID& sourceGUID, _In_ const GUID& targetGUID );
-
-    IWICImagingFactory* __cdecl _GetWIC();
-
-    bool __cdecl _IsWIC2();
 
     inline WICBitmapDitherType __cdecl _GetWICDither( _In_ DWORD flags )
     {

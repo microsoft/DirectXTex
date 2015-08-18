@@ -26,7 +26,7 @@ namespace DirectX
 // WIC related helper functions
 //-------------------------------------------------------------------------------------
 
-extern HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBitmap* original,
+extern HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ bool iswic2, _In_ IWICBitmap* original,
                                              _In_ size_t newWidth, _In_ size_t newHeight, _In_ DWORD filter, _Inout_ const Image* img );
 
 //--- Do image resize using WIC ---
@@ -38,7 +38,8 @@ static HRESULT _PerformResizeUsingWIC( _In_ const Image& srcImage, _In_ DWORD fi
 
     assert( srcImage.format == destImage.format );
 
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
 
@@ -66,7 +67,7 @@ static HRESULT _PerformResizeUsingWIC( _In_ const Image& srcImage, _In_ DWORD fi
 
     if ( (filter & TEX_FILTER_SEPARATE_ALPHA) && supportsTransparency )
     {
-        hr = _ResizeSeparateColorAndAlpha( pWIC, source.Get(), destImage.width, destImage.height, filter, &destImage );
+        hr = _ResizeSeparateColorAndAlpha( pWIC, iswic2, source.Get(), destImage.width, destImage.height, filter, &destImage );
         if ( FAILED(hr) )
             return hr;
     }

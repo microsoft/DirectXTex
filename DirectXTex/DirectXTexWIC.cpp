@@ -141,7 +141,7 @@ namespace DirectX
 //-------------------------------------------------------------------------------------
 // Returns the DXGI format and optionally the WIC pixel GUID to convert to
 //-------------------------------------------------------------------------------------
-static DXGI_FORMAT _DetermineFormat( _In_ const WICPixelFormatGUID& pixelFormat, _In_ DWORD flags,
+static DXGI_FORMAT _DetermineFormat( _In_ const WICPixelFormatGUID& pixelFormat, _In_ DWORD flags, _In_ bool iswic2,
                                      _Out_opt_ WICPixelFormatGUID* pConvert )
 {
     if ( pConvert )
@@ -154,7 +154,7 @@ static DXGI_FORMAT _DetermineFormat( _In_ const WICPixelFormatGUID& pixelFormat,
         if ( memcmp( &GUID_WICPixelFormat96bppRGBFixedPoint, &pixelFormat, sizeof(WICPixelFormatGUID) ) == 0 )
         {
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
-            if ( _IsWIC2() )
+            if ( iswic2 )
             {
                 if ( pConvert )
                     memcpy( pConvert, &GUID_WICPixelFormat96bppRGBFloat, sizeof(WICPixelFormatGUID) );
@@ -234,7 +234,7 @@ static DXGI_FORMAT _DetermineFormat( _In_ const WICPixelFormatGUID& pixelFormat,
 //-------------------------------------------------------------------------------------
 // Determines metadata for image
 //-------------------------------------------------------------------------------------
-static HRESULT _DecodeMetadata( _In_ DWORD flags,
+static HRESULT _DecodeMetadata( _In_ DWORD flags, _In_ bool iswic2,
                                 _In_ IWICBitmapDecoder *decoder, _In_ IWICBitmapFrameDecode *frame,
                                 _Out_ TexMetadata& metadata, _Out_opt_ WICPixelFormatGUID* pConvert )
 {
@@ -271,7 +271,7 @@ static HRESULT _DecodeMetadata( _In_ DWORD flags,
     if ( FAILED(hr) )
         return hr;
 
-    metadata.format = _DetermineFormat( pixelFormat, flags, pConvert );
+    metadata.format = _DetermineFormat( pixelFormat, flags, iswic2, pConvert );
     if ( metadata.format == DXGI_FORMAT_UNKNOWN )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
@@ -355,7 +355,8 @@ static HRESULT _DecodeSingleFrame( _In_ DWORD flags, _In_ const TexMetadata& met
     if ( !img )
         return E_POINTER;
 
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
 
@@ -410,7 +411,8 @@ static HRESULT _DecodeMultiframe( _In_ DWORD flags, _In_ const TexMetadata& meta
     if ( FAILED(hr) )
         return hr;
 
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
 
@@ -662,7 +664,8 @@ static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ REF
     if ( memcmp( &targetGuid, &pfGuid, sizeof(WICPixelFormatGUID) ) != 0 )
     {
         // Conversion required to write
-        IWICImagingFactory* pWIC = _GetWIC();
+        bool iswic2 = false;
+        IWICImagingFactory* pWIC = GetWICFactory(iswic2);
         if ( !pWIC )
             return E_NOINTERFACE;
 
@@ -718,7 +721,8 @@ static HRESULT _EncodeSingleFrame( _In_ const Image& image, _In_ DWORD flags,
         return E_INVALIDARG;
 
     // Initialize WIC
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
 
@@ -737,7 +741,7 @@ static HRESULT _EncodeSingleFrame( _In_ const Image& image, _In_ DWORD flags,
     if ( FAILED(hr) )
         return hr;
 
-    if ( memcmp( &containerFormat, &GUID_ContainerFormatBmp, sizeof(WICPixelFormatGUID) ) == 0 && _IsWIC2() )
+    if ( memcmp( &containerFormat, &GUID_ContainerFormatBmp, sizeof(WICPixelFormatGUID) ) == 0 && iswic2 )
     {
         // Opt-in to the WIC2 support for writing 32-bit Windows BMP files with an alpha channel
         PROPBAG2 option = { 0 };
@@ -780,7 +784,8 @@ static HRESULT _EncodeMultiframe( _In_reads_(nimages) const Image* images, _In_ 
         return E_POINTER;
 
     // Initialize WIC
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
 
@@ -850,7 +855,8 @@ HRESULT GetMetadataFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, Tex
         return HRESULT_FROM_WIN32( ERROR_FILE_TOO_LARGE );
 #endif
 
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
 
@@ -877,7 +883,7 @@ HRESULT GetMetadataFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, Tex
         return hr;
 
     // Get metadata
-    hr = _DecodeMetadata( flags, decoder.Get(), frame.Get(), metadata, 0 );
+    hr = _DecodeMetadata( flags, iswic2, decoder.Get(), frame.Get(), metadata, 0 );
     if ( FAILED(hr) )
         return hr;
 
@@ -894,7 +900,8 @@ HRESULT GetMetadataFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata& metada
     if ( !szFile )
         return E_INVALIDARG;
 
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
     
@@ -910,7 +917,7 @@ HRESULT GetMetadataFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata& metada
         return hr;
 
     // Get metadata
-    hr = _DecodeMetadata( flags, decoder.Get(), frame.Get(), metadata, 0 );
+    hr = _DecodeMetadata( flags, iswic2, decoder.Get(), frame.Get(), metadata, 0 );
     if ( FAILED(hr) )
         return hr;
 
@@ -932,7 +939,8 @@ HRESULT LoadFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadat
         return HRESULT_FROM_WIN32( ERROR_FILE_TOO_LARGE );
 #endif
 
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
 
@@ -962,7 +970,7 @@ HRESULT LoadFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadat
     // Get metadata
     TexMetadata mdata;
     WICPixelFormatGUID convertGUID = {0};
-    hr = _DecodeMetadata( flags, decoder.Get(), frame.Get(), mdata, &convertGUID );
+    hr = _DecodeMetadata( flags, iswic2, decoder.Get(), frame.Get(), mdata, &convertGUID );
     if ( FAILED(hr) )
         return hr;
 
@@ -997,7 +1005,8 @@ HRESULT LoadFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, Scr
     if ( !szFile )
         return E_INVALIDARG;
 
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
     
@@ -1017,7 +1026,7 @@ HRESULT LoadFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, Scr
     // Get metadata
     TexMetadata mdata;
     WICPixelFormatGUID convertGUID = {0};
-    hr = _DecodeMetadata( flags, decoder.Get(), frame.Get(), mdata, &convertGUID );
+    hr = _DecodeMetadata( flags, iswic2, decoder.Get(), frame.Get(), mdata, &convertGUID );
     if ( FAILED(hr) )
         return hr;
 
@@ -1158,7 +1167,8 @@ HRESULT SaveToWICFile( const Image& image, DWORD flags, REFGUID containerFormat,
     if ( !image.pixels )
         return E_POINTER;
 
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
 
@@ -1185,7 +1195,8 @@ HRESULT SaveToWICFile( const Image* images, size_t nimages, DWORD flags, REFGUID
     if ( !szFile || !images || nimages == 0 )
         return E_INVALIDARG;
 
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
 

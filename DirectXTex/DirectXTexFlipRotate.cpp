@@ -31,7 +31,8 @@ static HRESULT _PerformFlipRotateUsingWIC( _In_ const Image& srcImage, _In_ DWOR
 
     assert( srcImage.format == destImage.format );
 
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
 

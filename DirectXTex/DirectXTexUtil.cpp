@@ -15,6 +15,8 @@
 
 #include "directxtexp.h"
 
+using Microsoft::WRL::ComPtr;
+
 #if defined(_XBOX_ONE) && defined(_TITLE)
 static_assert(XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT == DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT, "Xbox One XDK mismatch detected");
 static_assert(XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT == DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT, "Xbox One XDK mismatch detected");
@@ -70,6 +72,8 @@ static WICTranslate g_WICFormats[] =
 };
 
 static bool g_WIC2 = false;
+static IWICImagingFactory* g_Factory = nullptr;
+
 
 namespace DirectX
 {
@@ -186,67 +190,6 @@ DWORD _CheckWICColorSpace( _In_ const GUID& sourceGUID, _In_ const GUID& targetG
     return srgb;
 }
 
-bool _IsWIC2()
-{
-    return g_WIC2;
-}
-
-IWICImagingFactory* _GetWIC()
-{
-    static IWICImagingFactory* s_Factory = nullptr;
-
-    if ( s_Factory )
-        return s_Factory;
-
-#if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
-    HRESULT hr = CoCreateInstance(
-        CLSID_WICImagingFactory2,
-        nullptr,
-        CLSCTX_INPROC_SERVER,
-        __uuidof(IWICImagingFactory2),
-        (LPVOID*)&s_Factory
-        );
-
-    if ( SUCCEEDED(hr) )
-    {
-        // WIC2 is available on Windows 8 and Windows 7 SP1 with KB 2670838 installed
-        g_WIC2 = true;
-    }
-    else
-    {
-        hr = CoCreateInstance(
-            CLSID_WICImagingFactory1,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            __uuidof(IWICImagingFactory),
-            (LPVOID*)&s_Factory
-            );
-
-        if ( FAILED(hr) )
-        {
-            s_Factory = nullptr;
-            return nullptr;
-        }
-    }
-#else
-    HRESULT hr = CoCreateInstance(
-        CLSID_WICImagingFactory,
-        nullptr,
-        CLSCTX_INPROC_SERVER,
-        __uuidof(IWICImagingFactory),
-        (LPVOID*)&s_Factory
-        );
-
-    if ( FAILED(hr) )
-    {
-        s_Factory = nullptr;
-        return nullptr;
-    }
-#endif
-
-    return s_Factory;
-}
-
 
 //-------------------------------------------------------------------------------------
 // Public helper function to get common WIC codec GUIDs
@@ -281,6 +224,102 @@ REFGUID GetWICCodec( WICCodecs codec )
         return GUID_NULL;
     }
 }
+
+
+//-------------------------------------------------------------------------------------
+// Singleton function for WIC factory
+//-------------------------------------------------------------------------------------
+IWICImagingFactory* GetWICFactory(bool& iswic2)
+{
+    if (g_Factory)
+    {
+        iswic2 = g_WIC2;
+        return g_Factory;
+    }
+
+#if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+    HRESULT hr = CoCreateInstance(
+        CLSID_WICImagingFactory2,
+        nullptr,
+        CLSCTX_INPROC_SERVER,
+        __uuidof(IWICImagingFactory2),
+        (LPVOID*)&g_Factory
+        );
+
+    if (SUCCEEDED(hr))
+    {
+        // WIC2 is available on Windows 8 and Windows 7 SP1 with KB 2670838 installed
+        g_WIC2 = true;
+    }
+    else
+    {
+        g_WIC2 = false;
+
+        hr = CoCreateInstance(
+            CLSID_WICImagingFactory1,
+            nullptr,
+            CLSCTX_INPROC_SERVER,
+            __uuidof(IWICImagingFactory),
+            (LPVOID*)&g_Factory
+            );
+
+        if (FAILED(hr))
+        {
+            g_Factory = nullptr;
+            return nullptr;
+        }
+    }
+#else
+    HRESULT hr = CoCreateInstance(
+        CLSID_WICImagingFactory,
+        nullptr,
+        CLSCTX_INPROC_SERVER,
+        __uuidof(IWICImagingFactory),
+        (LPVOID*)&s_Factory
+        );
+
+    g_WIC2 = false;
+
+    if (FAILED(hr))
+    {
+        g_Factory = nullptr;
+        return nullptr;
+    }
+#endif
+
+    iswic2 = g_WIC2;
+    return g_Factory;
+}
+
+
+//-------------------------------------------------------------------------------------
+// Optional initializer for WIC factory
+//-------------------------------------------------------------------------------------
+void SetWICFactory(_In_opt_ IWICImagingFactory* pWIC)
+{
+    if (pWIC == g_Factory)
+        return;
+
+    bool iswic2 = false;
+    if (pWIC)
+    {
+#if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+        ComPtr<IWICImagingFactory2> wic2;
+        HRESULT hr = pWIC->QueryInterface(_uuidof(IWICImagingFactory2), reinterpret_cast<void**>(wic2.GetAddressOf()));
+        if (SUCCEEDED(hr))
+        {
+            iswic2 = true;
+        }
+#endif
+        pWIC->AddRef();
+    }
+
+    g_WIC2 = iswic2;
+    std::swap(pWIC, g_Factory);
+    if ( pWIC )
+        pWIC->Release();
+}
+
 
 
 //=====================================================================================

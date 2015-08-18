@@ -166,7 +166,7 @@ static HRESULT _EnsureWicBitmapPixelFormat( _In_ IWICImagingFactory* pWIC, _In_ 
 
 
 //--- Resizing color and alpha channels separately using WIC ---
-HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBitmap* original,
+HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ bool iswic2, _In_ IWICBitmap* original,
                                       _In_ size_t newWidth, _In_ size_t newHeight, _In_ DWORD filter, _Inout_ const Image* img )
 {
     if ( !pWIC || !original || !img )
@@ -213,7 +213,7 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ IWICBi
             else
             {
 #if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
-                if ( _IsWIC2() )
+                if ( iswic2 )
                 {
                     colorBytesInPixel = colorBytesPerPixel = 12;
                     colorPixelFormat = GUID_WICPixelFormat96bppRGBFloat;
@@ -451,7 +451,8 @@ static HRESULT _GenerateMipMapsUsingWIC( _In_ const Image& baseImage, _In_ DWORD
     if ( !baseImage.pixels || !mipChain.GetPixels() )
         return E_POINTER;
 
-    IWICImagingFactory* pWIC = _GetWIC();
+    bool iswic2 = false;
+    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
     if ( !pWIC )
         return E_NOINTERFACE;
 
@@ -515,7 +516,7 @@ static HRESULT _GenerateMipMapsUsingWIC( _In_ const Image& baseImage, _In_ DWORD
 
         if ( (filter & TEX_FILTER_SEPARATE_ALPHA) && supportsTransparency )
         {
-            hr = _ResizeSeparateColorAndAlpha( pWIC, source.Get(), width, height, filter, img );
+            hr = _ResizeSeparateColorAndAlpha( pWIC, iswic2, source.Get(), width, height, filter, img );
             if ( FAILED(hr) )
                 return hr;
         }
