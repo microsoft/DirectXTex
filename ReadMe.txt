@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-July 29, 2015
+August 18, 2015
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -105,6 +105,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+August 18, 2015
+    Added GetWICFactory and SetWICFactory
+    Updates for new DXGI 1.3 types
+    Xbox One platform updates
 
 July 29, 2015
     Fixed rounding problem with 32-bit RGBA/BGRA format conversions
