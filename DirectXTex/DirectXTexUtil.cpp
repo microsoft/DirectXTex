@@ -275,7 +275,7 @@ IWICImagingFactory* GetWICFactory(bool& iswic2)
         nullptr,
         CLSCTX_INPROC_SERVER,
         __uuidof(IWICImagingFactory),
-        (LPVOID*)&s_Factory
+        (LPVOID*)&g_Factory
         );
 
     g_WIC2 = false;

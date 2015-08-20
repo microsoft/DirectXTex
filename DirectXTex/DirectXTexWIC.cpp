@@ -161,6 +161,8 @@ static DXGI_FORMAT _DetermineFormat( _In_ const WICPixelFormatGUID& pixelFormat,
                 format = DXGI_FORMAT_R32G32B32_FLOAT;
             }
             else
+#else
+            UNREFERENCED_PARAMETER(iswic2);
 #endif
             {
                 if ( pConvert )

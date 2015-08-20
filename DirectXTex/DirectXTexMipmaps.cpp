@@ -219,6 +219,8 @@ HRESULT _ResizeSeparateColorAndAlpha( _In_ IWICImagingFactory* pWIC, _In_ bool i
                     colorPixelFormat = GUID_WICPixelFormat96bppRGBFloat;
                 }
                 else
+#else
+                UNREFERENCED_PARAMETER(iswic2);
 #endif
                 {
                     colorBytesInPixel = 12;
