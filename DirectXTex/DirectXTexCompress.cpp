@@ -104,6 +104,7 @@ static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _
 
     XMVECTOR temp[16];
     const uint8_t *pSrc = image.pixels;
+    const uint8_t *pEnd = image.pixels + image.slicePitch;
     const size_t rowPitch = image.rowPitch;
     for( size_t h=0; h < image.height; h += 4 )
     {
@@ -116,22 +117,28 @@ static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _
             size_t pw = std::min<size_t>( 4, image.width - w );
             assert( pw > 0 && ph > 0 );
 
-            if ( !_LoadScanline( &temp[0], pw, sptr, rowPitch, format ) )
+            ptrdiff_t bytesLeft = pEnd - sptr;
+            assert( bytesLeft > 0 );
+            size_t bytesToRead = std::min<size_t>( rowPitch, bytesLeft );
+            if ( !_LoadScanline( &temp[0], pw, sptr, bytesToRead, format ) )
                 return E_FAIL;
 
             if ( ph > 1 )
             {
-                if ( !_LoadScanline( &temp[4], pw, sptr + rowPitch, rowPitch, format ) )
+                bytesToRead = std::min<size_t>( rowPitch, bytesLeft - rowPitch );
+                if ( !_LoadScanline( &temp[4], pw, sptr + rowPitch, bytesToRead, format ) )
                     return E_FAIL;
 
                 if ( ph > 2 )
                 {
-                    if ( !_LoadScanline( &temp[8], pw, sptr + rowPitch*2, rowPitch, format ) )
+                    bytesToRead = std::min<size_t>( rowPitch, bytesLeft - rowPitch * 2 );
+                    if ( !_LoadScanline( &temp[8], pw, sptr + rowPitch*2, bytesToRead, format ) )
                         return E_FAIL;
 
                     if ( ph > 3 )
                     {
-                        if ( !_LoadScanline( &temp[12], pw, sptr + rowPitch*3, rowPitch, format ) )
+                        bytesToRead = std::min<size_t>( rowPitch, bytesLeft - rowPitch * 3 );
+                        if ( !_LoadScanline( &temp[12], pw, sptr + rowPitch*3, bytesToRead, format ) )
                             return E_FAIL;
                     }
                 }
@@ -211,6 +218,8 @@ static HRESULT _CompressBC_Parallel( _In_ const Image& image, _In_ const Image& 
     // Round to bytes
     sbpp = ( sbpp + 7 ) / 8;
 
+    const uint8_t *pEnd = image.pixels + image.slicePitch;
+
     // Determine BC format encoder
     BC_ENCODE pfEncode;
     size_t blocksize;
@@ -226,15 +235,17 @@ static HRESULT _CompressBC_Parallel( _In_ const Image& image, _In_ const Image& 
 #pragma omp parallel for
     for( int nb=0; nb < static_cast<int>( nBlocks ); ++nb )
     {
-        const size_t nbWidth = std::max<size_t>(1, (image.width + 3) / 4 );
+        int nbWidth = std::max<int>(1, int( (image.width + 3) / 4 ) );
 
-        const size_t y = nb / nbWidth;
-        const size_t x = nb - (y*nbWidth);
+        int y = nb / nbWidth;
+        int x = ( nb - (y*nbWidth) ) * 4;
+        y *= 4;
 
-        assert( x < image.width && y < image.height );
+        assert( (x >= 0) && (x < int(image.width)) );
+        assert( (y >= 0) && (y < int(image.height)) );
 
         size_t rowPitch = image.rowPitch;
-        const uint8_t *pSrc = image.pixels + (y*4*rowPitch) + (x*4*sbpp);
+        const uint8_t *pSrc = image.pixels + (y*rowPitch) + (x*sbpp);
 
         uint8_t *pDest = result.pixels + (nb*blocksize);
 
@@ -242,23 +253,30 @@ static HRESULT _CompressBC_Parallel( _In_ const Image& image, _In_ const Image& 
         size_t pw = std::min<size_t>( 4, image.width - x );
         assert( pw > 0 && ph > 0 );
 
+        ptrdiff_t bytesLeft = pEnd - pSrc;
+        assert( bytesLeft > 0 );
+        size_t bytesToRead = std::min<size_t>( rowPitch, bytesLeft );
+
         XMVECTOR temp[16];
-        if ( !_LoadScanline( &temp[0], pw, pSrc, rowPitch, format ) )
+        if ( !_LoadScanline( &temp[0], pw, pSrc, bytesToRead, format ) )
             fail = true;
 
         if ( ph > 1 )
         {
-            if ( !_LoadScanline( &temp[4], pw, pSrc + rowPitch, rowPitch, format ) )
+            bytesToRead = std::min<size_t>( rowPitch, bytesLeft - rowPitch );
+            if ( !_LoadScanline( &temp[4], pw, pSrc + rowPitch, bytesToRead, format ) )
                 fail = true;
 
             if ( ph > 2 )
             {
-                if ( !_LoadScanline( &temp[8], pw, pSrc + rowPitch*2, rowPitch, format ) )
+                bytesToRead = std::min<size_t>( rowPitch, bytesLeft - rowPitch * 2 );
+                if ( !_LoadScanline( &temp[8], pw, pSrc + rowPitch*2, bytesToRead, format ) )
                     fail = true;
 
                 if ( ph > 3 )
                 {
-                    if ( !_LoadScanline( &temp[12], pw, pSrc + rowPitch*3, rowPitch, format ) )
+                    bytesToRead = std::min<size_t>( rowPitch, bytesLeft - rowPitch * 3 );
+                    if ( !_LoadScanline( &temp[12], pw, pSrc + rowPitch*3, bytesToRead, format ) )
                         fail = true;
                 }
             }
