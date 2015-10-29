@@ -126,6 +126,10 @@ const LegacyDDS g_LegacyDDSMap[] =
 
     { DXGI_FORMAT_YUY2,               CONV_FLAGS_NONE,        DDSPF_YUY2 }, // D3DFMT_YUY2 (uses DXGI 1.2 format)
     { DXGI_FORMAT_YUY2,               CONV_FLAGS_SWIZZLE,     { sizeof(DDS_PIXELFORMAT), DDS_FOURCC,    MAKEFOURCC('U','Y','V','Y'), 0, 0, 0, 0, 0            } }, // D3DFMT_UYVY (uses DXGI 1.2 format)
+
+    { DXGI_FORMAT_R8G8_SNORM,         CONV_FLAGS_NONE,        DDSPF_V8U8 },     // D3DFMT_V8U8
+    { DXGI_FORMAT_R8G8B8A8_SNORM,     CONV_FLAGS_NONE,        DDSPF_Q8W8V8U8 }, // D3DFMT_Q8W8V8U8
+    { DXGI_FORMAT_R16G16_SNORM,       CONV_FLAGS_NONE,        DDSPF_V16U16 },   // D3DFMT_V16U16
 };
 
 // Note that many common DDS reader/writers (including D3DX) swap the
@@ -135,7 +139,7 @@ const LegacyDDS g_LegacyDDSMap[] =
 // header extension and specify the DXGI_FORMAT_R10G10B10A2_UNORM format directly
 
 // We do not support the following legacy Direct3D 9 formats:
-//      BumpDuDv D3DFMT_V8U8, D3DFMT_Q8W8V8U8, D3DFMT_V16U16, D3DFMT_A2W10V10U10
+//      BumpDuDv D3DFMT_A2W10V10U10
 //      BumpLuminance D3DFMT_L6V5U5, D3DFMT_X8L8V8U8
 //      FourCC 117 D3DFMT_CxV8U8
 //      ZBuffer D3DFMT_D16_LOCKABLE
@@ -483,6 +487,9 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
         case DXGI_FORMAT_BC5_SNORM:             memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_BC5_SNORM, sizeof(DDS_PIXELFORMAT) ); break;
         case DXGI_FORMAT_B5G6R5_UNORM:          memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_R5G6B5, sizeof(DDS_PIXELFORMAT) ); break;
         case DXGI_FORMAT_B5G5R5A1_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A1R5G5B5, sizeof(DDS_PIXELFORMAT) ); break;
+        case DXGI_FORMAT_R8G8_SNORM:            memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_V8U8, sizeof(DDS_PIXELFORMAT) ); break;
+        case DXGI_FORMAT_R8G8B8A8_SNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_Q8W8V8U8, sizeof(DDS_PIXELFORMAT) ); break;
+        case DXGI_FORMAT_R16G16_SNORM:          memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_V16U16, sizeof(DDS_PIXELFORMAT) ); break;
         case DXGI_FORMAT_B8G8R8A8_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT) ); break; // DXGI 1.1
         case DXGI_FORMAT_B8G8R8X8_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT) ); break; // DXGI 1.1
         case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy_s( &ddpf, sizeof(ddpf), &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT) ); break; // DXGI 1.2
