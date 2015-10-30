@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-August 18, 2015
+October 30, 2015
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -105,6 +105,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+October 30, 2015
+    DDS support for legacy bumpmap formats (V8U8, Q8W8V8U8, V16U16)
+    Fix for buffer overread in BC CPU compressor
+    Minor code cleanup
 
 August 18, 2015
     Added GetWICFactory and SetWICFactory
