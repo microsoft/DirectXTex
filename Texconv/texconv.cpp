@@ -303,6 +303,8 @@ SValue g_pFeatureLevels[] =     // valid feature levels for -fl for maximimum si
     { L"10.1",          8192 },
     { L"11.0",          16384 },
     { L"11.1",          16384 },
+    { L"12.0",          16384 },
+    { L"12.1",          16384 },
     { nullptr,          0 },
 };
 
