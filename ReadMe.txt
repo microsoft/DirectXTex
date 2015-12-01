@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-October 30, 2015
+November 30, 2015
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -105,6 +105,10 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+November 30, 2015
+    texconv command-line tool -fl switch now supports 12.0 and 12.1 feature levels
+    Updated for VS 2015 Update 1 and Windows 10 SDK (10586)
 
 October 30, 2015
     DDS support for legacy bumpmap formats (V8U8, Q8W8V8U8, V16U16)
