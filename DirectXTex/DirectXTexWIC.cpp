@@ -1185,7 +1185,11 @@ HRESULT SaveToWICFile( const Image& image, DWORD flags, REFGUID containerFormat,
 
     hr = _EncodeSingleFrame( image, flags, containerFormat, stream.Get(), targetFormat, setCustomProps );
     if ( FAILED(hr) )
+    {
+        stream.Reset();
+        DeleteFileW( szFile );
         return hr;
+    }
 
     return S_OK;
 }
@@ -1217,7 +1221,11 @@ HRESULT SaveToWICFile( const Image* images, size_t nimages, DWORD flags, REFGUID
         hr = _EncodeSingleFrame( images[0], flags, containerFormat, stream.Get(), targetFormat, setCustomProps );
 
     if ( FAILED(hr) )
+    {
+        stream.Reset();
+        DeleteFileW( szFile );
         return hr;
+    }
 
     return S_OK;
 }

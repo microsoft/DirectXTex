@@ -17,6 +17,32 @@
 
 #include "dds.h"
 
+namespace
+{
+    class auto_delete_file
+    {
+    public:
+        auto_delete_file(HANDLE hFile) : m_handle(hFile) {}
+        ~auto_delete_file()
+        {
+            if (m_handle)
+            {
+                FILE_DISPOSITION_INFO info = {0};
+                info.DeleteFileW = TRUE;
+                (void)SetFileInformationByHandle(m_handle, FileDispositionInfo, &info, sizeof(info));
+            }
+        }
+
+        void clear() { m_handle = 0; }
+
+    private:
+        HANDLE m_handle;
+
+        auto_delete_file(const auto_delete_file&) DIRECTX_CTOR_DELETE;
+        auto_delete_file& operator=(const auto_delete_file&) DIRECTX_CTOR_DELETE;
+    };
+}
+
 namespace DirectX
 {
 
@@ -1841,14 +1867,16 @@ HRESULT SaveToDDSFile( const Image* images, size_t nimages, const TexMetadata& m
 
     // Create file and write header
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
-    ScopedHandle hFile( safe_handle( CreateFile2( szFile, GENERIC_WRITE, 0, CREATE_ALWAYS, 0 ) ) );
+    ScopedHandle hFile( safe_handle( CreateFile2( szFile, GENERIC_WRITE | DELETE, 0, CREATE_ALWAYS, 0 ) ) );
 #else
-    ScopedHandle hFile( safe_handle( CreateFileW( szFile, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0 ) ) );
+    ScopedHandle hFile( safe_handle( CreateFileW( szFile, GENERIC_WRITE | DELETE, 0, 0, CREATE_ALWAYS, 0, 0 ) ) );
 #endif
     if ( !hFile )
     {
         return HRESULT_FROM_WIN32( GetLastError() );
     }
+
+    auto_delete_file delonfail(hFile.get());
 
     DWORD bytesWritten;
     if ( !WriteFile( hFile.get(), header, static_cast<DWORD>( required ), &bytesWritten, 0 ) )
@@ -2002,6 +2030,8 @@ HRESULT SaveToDDSFile( const Image* images, size_t nimages, const TexMetadata& m
     default:
         return E_FAIL;
     }
+
+    delonfail.clear();
 
     return S_OK;
 }
