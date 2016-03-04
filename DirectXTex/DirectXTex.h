@@ -60,6 +60,7 @@
 #define DIRECTX_TEX_VERSION 134
 
 struct IWICImagingFactory;
+struct IWICMetadataQueryReader;
 
 
 namespace DirectX
@@ -238,9 +239,12 @@ namespace DirectX
                                             _Out_ TexMetadata& metadata );
 
     HRESULT __cdecl GetMetadataFromWICMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
-                                              _Out_ TexMetadata& metadata );
+                                              _Out_ TexMetadata& metadata,
+                                              _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IWICMetadataQueryReader*)> getMQR = nullptr);
+
     HRESULT __cdecl GetMetadataFromWICFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
-                                            _Out_ TexMetadata& metadata );
+                                            _Out_ TexMetadata& metadata,
+                                            _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IWICMetadataQueryReader*)> getMQR = nullptr);
 
     //---------------------------------------------------------------------------------
     // Bitmap image container
@@ -359,9 +363,11 @@ namespace DirectX
 
     // WIC operations
     HRESULT __cdecl LoadFromWICMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
-                                       _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
+                                       _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
+                                       _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IWICMetadataQueryReader*)> getMQR = nullptr);
     HRESULT __cdecl LoadFromWICFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
-                                    _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
+                                    _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
+                                    _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IWICMetadataQueryReader*)> getMQR = nullptr);
 
     HRESULT __cdecl SaveToWICMemory( _In_ const Image& image, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
                                      _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr,

@@ -238,7 +238,8 @@ static DXGI_FORMAT _DetermineFormat( _In_ const WICPixelFormatGUID& pixelFormat,
 //-------------------------------------------------------------------------------------
 static HRESULT _DecodeMetadata( _In_ DWORD flags, _In_ bool iswic2,
                                 _In_ IWICBitmapDecoder *decoder, _In_ IWICBitmapFrameDecode *frame,
-                                _Out_ TexMetadata& metadata, _Out_opt_ WICPixelFormatGUID* pConvert )
+                                _Out_ TexMetadata& metadata, _Out_opt_ WICPixelFormatGUID* pConvert,
+                                _In_opt_ std::function<void(IWICMetadataQueryReader*)> getMQR )
 {
     if ( !decoder || !frame )
         return E_POINTER;
@@ -333,6 +334,15 @@ static HRESULT _DecodeMetadata( _In_ DWORD flags, _In_ bool iswic2,
         {
             // Some formats just don't support metadata (BMP, ICO, etc.), so ignore this failure
             hr = S_OK;
+        }
+    }
+
+    if (getMQR)
+    {
+        ComPtr<IWICMetadataQueryReader> metareader;
+        if (SUCCEEDED(frame->GetMetadataQueryReader(metareader.GetAddressOf())))
+        {
+            getMQR(metareader.Get());
         }
     }
 
@@ -847,7 +857,7 @@ static HRESULT _EncodeMultiframe( _In_reads_(nimages) const Image* images, _In_ 
 // Obtain metadata from WIC-supported file in memory
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT GetMetadataFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadata& metadata )
+HRESULT GetMetadataFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadata& metadata, std::function<void(IWICMetadataQueryReader*)> getMQR )
 {
     if ( !pSource || size == 0 )
         return E_INVALIDARG;
@@ -885,7 +895,7 @@ HRESULT GetMetadataFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, Tex
         return hr;
 
     // Get metadata
-    hr = _DecodeMetadata( flags, iswic2, decoder.Get(), frame.Get(), metadata, 0 );
+    hr = _DecodeMetadata( flags, iswic2, decoder.Get(), frame.Get(), metadata, nullptr, getMQR );
     if ( FAILED(hr) )
         return hr;
 
@@ -897,7 +907,7 @@ HRESULT GetMetadataFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, Tex
 // Obtain metadata from WIC-supported file on disk
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT GetMetadataFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata& metadata )
+HRESULT GetMetadataFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata& metadata, std::function<void(IWICMetadataQueryReader*)> getMQR )
 {
     if ( !szFile )
         return E_INVALIDARG;
@@ -919,7 +929,7 @@ HRESULT GetMetadataFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata& metada
         return hr;
 
     // Get metadata
-    hr = _DecodeMetadata( flags, iswic2, decoder.Get(), frame.Get(), metadata, 0 );
+    hr = _DecodeMetadata( flags, iswic2, decoder.Get(), frame.Get(), metadata, nullptr, getMQR );
     if ( FAILED(hr) )
         return hr;
 
@@ -931,7 +941,7 @@ HRESULT GetMetadataFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata& metada
 // Load a WIC-supported file in memory
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT LoadFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadata* metadata, ScratchImage& image )
+HRESULT LoadFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadata* metadata, ScratchImage& image, std::function<void(IWICMetadataQueryReader*)> getMQR )
 {
     if ( !pSource || size == 0 )
         return E_INVALIDARG;
@@ -972,7 +982,7 @@ HRESULT LoadFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadat
     // Get metadata
     TexMetadata mdata;
     WICPixelFormatGUID convertGUID = {0};
-    hr = _DecodeMetadata( flags, iswic2, decoder.Get(), frame.Get(), mdata, &convertGUID );
+    hr = _DecodeMetadata( flags, iswic2, decoder.Get(), frame.Get(), mdata, &convertGUID, getMQR );
     if ( FAILED(hr) )
         return hr;
 
@@ -1002,7 +1012,7 @@ HRESULT LoadFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadat
 // Load a WIC-supported file from disk
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT LoadFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, ScratchImage& image )
+HRESULT LoadFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, ScratchImage& image, std::function<void(IWICMetadataQueryReader*)> getMQR )
 {
     if ( !szFile )
         return E_INVALIDARG;
@@ -1028,7 +1038,7 @@ HRESULT LoadFromWICFile( LPCWSTR szFile, DWORD flags, TexMetadata* metadata, Scr
     // Get metadata
     TexMetadata mdata;
     WICPixelFormatGUID convertGUID = {0};
-    hr = _DecodeMetadata( flags, iswic2, decoder.Get(), frame.Get(), mdata, &convertGUID );
+    hr = _DecodeMetadata( flags, iswic2, decoder.Get(), frame.Get(), mdata, &convertGUID, getMQR );
     if ( FAILED(hr) )
         return hr;
 
