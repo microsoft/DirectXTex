@@ -58,7 +58,7 @@ using Microsoft::WRL::ComPtr;
 
 #else
 
-    #pragma prefast(suppress:28196, "a simple wrapper around an existing annotated function" );
+    #pragma prefast(suppress:6387 28196, "a simple wrapper around an existing annotated function" );
     static inline HRESULT CreateMemoryStream( _Outptr_ IStream** stream )
     {
         return CreateStreamOnHGlobal( 0, TRUE, stream );

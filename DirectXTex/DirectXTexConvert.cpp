@@ -3010,7 +3010,7 @@ DWORD _GetConvertFlags( DXGI_FORMAT format )
 
     ConvertData key = { format, 0 };
     const ConvertData* in = (const ConvertData*) bsearch_s( &key, g_ConvertTable, _countof(g_ConvertTable), sizeof(ConvertData),
-                                                            _ConvertCompare, 0 );
+                                                            _ConvertCompare, nullptr );
     return (in) ? in->flags : 0;
 }
 
@@ -3038,10 +3038,10 @@ void _ConvertScanline( XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, D
     // Determine conversion details about source and dest formats
     ConvertData key = { inFormat, 0 };
     const ConvertData* in = (const ConvertData*) bsearch_s( &key, g_ConvertTable, _countof(g_ConvertTable), sizeof(ConvertData),
-                                                            _ConvertCompare, 0 );
+                                                            _ConvertCompare, nullptr );
     key.format = outFormat;
     const ConvertData* out = (const ConvertData*) bsearch_s( &key, g_ConvertTable, _countof(g_ConvertTable), sizeof(ConvertData),
-                                                            _ConvertCompare, 0 );
+                                                            _ConvertCompare, nullptr );
     if ( !in || !out )
     {
         assert(false);
