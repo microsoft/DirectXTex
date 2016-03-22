@@ -19,11 +19,7 @@
 #error WIC is not supported on Windows Phone 8.0
 #endif
 
-// VS 2010's stdint.h conflicts with intsafe.h
-#pragma warning(push)
-#pragma warning(disable : 4005)
 #include <stdint.h>
-#pragma warning(pop)
 
 #include <algorithm>
 #include <functional>
@@ -36,26 +32,6 @@
 #endif
 
 #include <ocidl.h>
-
-// VS 2010 doesn't support explicit calling convention for std::function
-#ifndef DIRECTX_STD_CALLCONV
-#if defined(_MSC_VER) && (_MSC_VER < 1700)
-#define DIRECTX_STD_CALLCONV
-#else
-#define DIRECTX_STD_CALLCONV __cdecl
-#endif
-#endif
-
-// VS 2010/2012 do not support =default =delete
-#ifndef DIRECTX_CTOR_DEFAULT
-#if defined(_MSC_VER) && (_MSC_VER < 1800)
-#define DIRECTX_CTOR_DEFAULT {}
-#define DIRECTX_CTOR_DELETE ;
-#else
-#define DIRECTX_CTOR_DEFAULT =default;
-#define DIRECTX_CTOR_DELETE =delete;
-#endif
-#endif
 
 #define DIRECTX_TEX_VERSION 134
 
@@ -240,11 +216,11 @@ namespace DirectX
 
     HRESULT __cdecl GetMetadataFromWICMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
                                               _Out_ TexMetadata& metadata,
-                                              _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IWICMetadataQueryReader*)> getMQR = nullptr);
+                                              _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 
     HRESULT __cdecl GetMetadataFromWICFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
                                             _Out_ TexMetadata& metadata,
-                                            _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IWICMetadataQueryReader*)> getMQR = nullptr);
+                                            _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 
     //---------------------------------------------------------------------------------
     // Bitmap image container
@@ -364,24 +340,24 @@ namespace DirectX
     // WIC operations
     HRESULT __cdecl LoadFromWICMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
                                        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
-                                       _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IWICMetadataQueryReader*)> getMQR = nullptr);
+                                       _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
     HRESULT __cdecl LoadFromWICFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
                                     _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
-                                    _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IWICMetadataQueryReader*)> getMQR = nullptr);
+                                    _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 
     HRESULT __cdecl SaveToWICMemory( _In_ const Image& image, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
                                      _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr,
-                                     _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IPropertyBag2*)> setCustomProps = nullptr );
+                                     _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr );
     HRESULT __cdecl SaveToWICMemory( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
                                      _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr,
-                                     _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IPropertyBag2*)> setCustomProps = nullptr );
+                                     _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr );
 
     HRESULT __cdecl SaveToWICFile( _In_ const Image& image, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
                                    _In_z_ LPCWSTR szFile, _In_opt_ const GUID* targetFormat = nullptr,
-                                   _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IPropertyBag2*)> setCustomProps = nullptr );
+                                   _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr );
     HRESULT __cdecl SaveToWICFile( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
                                    _In_z_ LPCWSTR szFile, _In_opt_ const GUID* targetFormat = nullptr,
-                                   _In_opt_ std::function<void DIRECTX_STD_CALLCONV(IPropertyBag2*)> setCustomProps = nullptr );
+                                   _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr );
 
     //---------------------------------------------------------------------------------
     // Texture conversion, resizing, mipmap generation, and block compression
@@ -588,7 +564,7 @@ namespace DirectX
         size_t w;
         size_t h;
 
-        Rect() DIRECTX_CTOR_DEFAULT
+        Rect() = default;
         Rect( size_t _x, size_t _y, size_t _w, size_t _h ) : x(_x), y(_y), w(_w), h(_h) {}
     };
 

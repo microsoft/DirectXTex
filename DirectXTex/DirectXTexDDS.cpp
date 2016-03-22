@@ -23,6 +23,10 @@ namespace
     {
     public:
         auto_delete_file(HANDLE hFile) : m_handle(hFile) {}
+
+        auto_delete_file(const auto_delete_file&) = delete;
+        auto_delete_file& operator=(const auto_delete_file&) = delete;
+
         ~auto_delete_file()
         {
             if (m_handle)
@@ -37,9 +41,6 @@ namespace
 
     private:
         HANDLE m_handle;
-
-        auto_delete_file(const auto_delete_file&) DIRECTX_CTOR_DELETE;
-        auto_delete_file& operator=(const auto_delete_file&) DIRECTX_CTOR_DELETE;
     };
 }
 

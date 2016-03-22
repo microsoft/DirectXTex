@@ -72,7 +72,7 @@ class LDRColorA
 public:
     uint8_t r, g, b, a;
 
-    LDRColorA() DIRECTX_CTOR_DEFAULT
+    LDRColorA() = default;
     LDRColorA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a) : r(_r), g(_g), b(_b), a(_a) {}
 
     const uint8_t& operator [] (_In_range_(0,3) size_t uElement) const
@@ -144,7 +144,7 @@ public:
     float r, g, b, a;
 
 public:
-    HDRColorA() DIRECTX_CTOR_DEFAULT
+    HDRColorA() = default;
     HDRColorA(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a) {}
     HDRColorA(const HDRColorA& c) : r(c.r), g(c.g), b(c.b), a(c.a) {}
     HDRColorA(const LDRColorA& c)
@@ -308,7 +308,7 @@ public:
     int pad;
 
 public:
-    INTColor() DIRECTX_CTOR_DEFAULT
+    INTColor() = default;
     INTColor(int nr, int ng, int nb) {r = nr; g = ng; b = nb;}
     INTColor(const INTColor& c) {r = c.r; g = c.g; b = c.b;}
 
