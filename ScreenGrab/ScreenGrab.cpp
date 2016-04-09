@@ -28,31 +28,12 @@
 #include <dxgiformat.h>
 #include <assert.h>
 
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP) || (_WIN32_WINNT > _WIN32_WINNT_WIN8)
-
-// VS 2010's stdint.h conflicts with intsafe.h
-#pragma warning(push)
-#pragma warning(disable : 4005)
 #include <wincodec.h>
-#include <intsafe.h>
-#pragma warning(pop)
-#endif
 
 #include <wrl\client.h>
 
 #include <algorithm>
 #include <memory>
-
-// VS 2010/2012 do not support =default =delete
-#ifndef DIRECTX_CTOR_DEFAULT
-#if defined(_MSC_VER) && (_MSC_VER < 1800)
-#define DIRECTX_CTOR_DEFAULT {}
-#define DIRECTX_CTOR_DELETE ;
-#else
-#define DIRECTX_CTOR_DEFAULT =default;
-#define DIRECTX_CTOR_DELETE =delete;
-#endif
-#endif
 
 #include "ScreenGrab.h"
 
@@ -241,11 +222,9 @@ namespace
     private:
         HANDLE m_handle;
 
-        auto_delete_file(const auto_delete_file&) DIRECTX_CTOR_DELETE;
-        auto_delete_file& operator=(const auto_delete_file&) DIRECTX_CTOR_DELETE;
+        auto_delete_file(const auto_delete_file&) = delete;
+        auto_delete_file& operator=(const auto_delete_file&) = delete;
     };
-
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP) || (_WIN32_WINNT > _WIN32_WINNT_WIN8)
 
     class auto_delete_file_wic
     {
@@ -266,11 +245,9 @@ namespace
         LPCWSTR m_filename;
         ComPtr<IWICStream>& m_handle;
 
-        auto_delete_file_wic(const auto_delete_file_wic&) DIRECTX_CTOR_DELETE;
-        auto_delete_file_wic& operator=(const auto_delete_file_wic&) DIRECTX_CTOR_DELETE;
+        auto_delete_file_wic(const auto_delete_file_wic&) = delete;
+        auto_delete_file_wic& operator=(const auto_delete_file_wic&) = delete;
     };
-
-#endif
 }
 
 //--------------------------------------------------------------------------------------
@@ -720,8 +697,6 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
 
 
 //--------------------------------------------------------------------------------------
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP) || (_WIN32_WINNT > _WIN32_WINNT_WIN8)
-
 static bool g_WIC2 = false;
 
 static IWICImagingFactory* _GetWIC()
@@ -731,7 +706,7 @@ static IWICImagingFactory* _GetWIC()
     if ( s_Factory )
         return s_Factory;
 
-#if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
     HRESULT hr = CoCreateInstance(
         CLSID_WICImagingFactory2,
         nullptr,
@@ -779,7 +754,6 @@ static IWICImagingFactory* _GetWIC()
 
     return s_Factory;
 }
-#endif
 
 
 //--------------------------------------------------------------------------------------
@@ -943,8 +917,6 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
 }
 
 //--------------------------------------------------------------------------------------
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP) || (_WIN32_WINNT > _WIN32_WINNT_WIN8)
-
 HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
                                        _In_ ID3D11Resource* pSource,
                                        _In_ REFGUID guidContainerFormat, 
@@ -1230,5 +1202,3 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
 
     return S_OK;
 }
-
-#endif // !WINAPI_FAMILY || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP) || (_WIN32_WINNT > _WIN32_WINNT_WIN8)

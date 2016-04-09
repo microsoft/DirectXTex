@@ -25,30 +25,11 @@
 // http://go.microsoft.com/fwlink/?LinkId=248929
 //--------------------------------------------------------------------------------------
 
-#ifdef _MSC_VER
 #pragma once
-#endif
-
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP) && (_WIN32_WINNT <= _WIN32_WINNT_WIN8)
-#error WIC is not supported on Windows Phone 8.0
-#endif
 
 #include <d3d11_1.h>
-
-#pragma warning(push)
-#pragma warning(disable : 4005)
 #include <stdint.h>
-#pragma warning(pop)
 
-#if defined(_MSC_VER) && (_MSC_VER<1610) && !defined(_In_reads_)
-#define _In_reads_(exp)
-#define _Out_writes_(exp)
-#define _In_reads_bytes_(exp)
-#endif
-
-#ifndef _Use_decl_annotations_
-#define _Use_decl_annotations_
-#endif
 
 namespace DirectX
 {

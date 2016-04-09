@@ -19,20 +19,14 @@
 // http://go.microsoft.com/fwlink/?LinkId=248929
 //--------------------------------------------------------------------------------------
 
-#ifdef _MSC_VER
 #pragma once
-#endif
 
 #include <d3d11_1.h>
-
 #include <ocidl.h>
-
-#pragma warning(push)
-#pragma warning(disable : 4005)
 #include <stdint.h>
-#pragma warning(pop)
 
 #include <functional>
+
 
 namespace DirectX
 {
