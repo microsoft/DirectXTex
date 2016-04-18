@@ -37,6 +37,10 @@
 
 #include "ScreenGrab.h"
 
+#ifndef IID_GRAPHICS_PPV_ARGS
+#define IID_GRAPHICS_PPV_ARGS(x) IID_PPV_ARGS(x)
+#endif
+
 using Microsoft::WRL::ComPtr;
 
 //--------------------------------------------------------------------------------------
@@ -614,7 +618,7 @@ static HRESULT CaptureTexture( _In_ ID3D11DeviceContext* pContext,
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     ComPtr<ID3D11Texture2D> pTexture;
-    HRESULT hr = pSource->QueryInterface( __uuidof(ID3D11Texture2D), reinterpret_cast<void**>( pTexture.GetAddressOf() ) );
+    HRESULT hr = pSource->QueryInterface( IID_GRAPHICS_PPV_ARGS( pTexture.GetAddressOf() ) );
     if ( FAILED(hr) )
         return hr;
 
@@ -726,8 +730,7 @@ static IWICImagingFactory* _GetWIC()
             CLSID_WICImagingFactory1,
             nullptr,
             CLSCTX_INPROC_SERVER,
-            __uuidof(IWICImagingFactory),
-            (LPVOID*)&s_Factory
+            IID_PPV_ARGS(&s_Factory)
             );
 
         if ( FAILED(hr) )
@@ -741,8 +744,7 @@ static IWICImagingFactory* _GetWIC()
         CLSID_WICImagingFactory,
         nullptr,
         CLSCTX_INPROC_SERVER,
-        __uuidof(IWICImagingFactory),
-        (LPVOID*)&s_Factory
+        IID_PPV_ARGS(&s_Factory)
         );
 
     if ( FAILED(hr) )

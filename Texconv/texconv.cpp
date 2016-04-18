@@ -568,7 +568,7 @@ bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
     if ( SUCCEEDED(hr) )
     {
         ComPtr<IDXGIDevice> dxgiDevice;
-        hr = (*pDevice)->QueryInterface( __uuidof( IDXGIDevice ), reinterpret_cast< void** >( dxgiDevice.GetAddressOf() ) );
+        hr = (*pDevice)->QueryInterface( IID_PPV_ARGS( dxgiDevice.GetAddressOf() ) );
         if ( SUCCEEDED(hr) )
         {
             ComPtr<IDXGIAdapter> pAdapter;

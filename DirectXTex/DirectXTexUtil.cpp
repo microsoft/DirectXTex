@@ -259,8 +259,7 @@ IWICImagingFactory* GetWICFactory(bool& iswic2)
             CLSID_WICImagingFactory1,
             nullptr,
             CLSCTX_INPROC_SERVER,
-            __uuidof(IWICImagingFactory),
-            (LPVOID*)&g_Factory
+            IID_PPV_ARGS(&g_Factory)
             );
 
         if (FAILED(hr))
@@ -274,8 +273,7 @@ IWICImagingFactory* GetWICFactory(bool& iswic2)
         CLSID_WICImagingFactory,
         nullptr,
         CLSCTX_INPROC_SERVER,
-        __uuidof(IWICImagingFactory),
-        (LPVOID*)&g_Factory
+        IID_PPV_ARGS(&g_Factory)
         );
 
     g_WIC2 = false;
@@ -305,7 +303,7 @@ void SetWICFactory(_In_opt_ IWICImagingFactory* pWIC)
     {
 #if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         ComPtr<IWICImagingFactory2> wic2;
-        HRESULT hr = pWIC->QueryInterface(_uuidof(IWICImagingFactory2), reinterpret_cast<void**>(wic2.GetAddressOf()));
+        HRESULT hr = pWIC->QueryInterface(IID_PPV_ARGS(wic2.GetAddressOf()));
         if (SUCCEEDED(hr))
         {
             iswic2 = true;
