@@ -15,13 +15,17 @@
 
 #pragma once
 
-#if !defined(WIN32_LEAN_AND_MEAN)
+#pragma warning(push)
+#pragma warning(disable : 4005)
 #define WIN32_LEAN_AND_MEAN
-#endif
-
-#if !defined(NOMINMAX)
 #define NOMINMAX
-#endif
+#define NODRAWTEXT
+#define NOGDI
+#define NOBITMAP
+#define NOMCX
+#define NOSERVICE
+#define NOHELP
+#pragma warning(pop)
 
 #ifndef _WIN32_WINNT_WIN10
 #define _WIN32_WINNT_WIN10 0x0A00
