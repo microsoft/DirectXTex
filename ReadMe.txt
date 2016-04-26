@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-February 23, 2016
+April 26, 2016
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -13,11 +13,8 @@ use of the Windows Image Component (WIC) APIs. It also includes a simple .TGA re
 writer since this image file format is commonly used for texture content processing pipelines,
 but is not currently supported by a built-in WIC codec.
 
-The source is written for Visual Studio 2012, 2013, or 2015. It is recommended that
-you make use of the Windows 8.1 SDK and Windows 7 Service Pack 1 or later.
-
-NOTE: DirectXTex is not supported on Windows phone 8.0 because WIC is not available on
-that platform. It is available on Windows phone starting in version 8.1.
+The source is written for Visual Studio 2013 or 2015. It is recommended that you
+make use of VS 2013 Update 5, VS 2015 Update 2, and Windows 7 Service Pack 1 or later.
 
 DDSTextureLoader\
     This contains a streamlined version of the DirectX SDK sample DDSWithoutD3DX11 texture
@@ -105,6 +102,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+April 26, 2016
+    Optional callback from WIC reader functions to query additional metadata
+    Retired obsolete adapter code
+    Minor code cleanup
 
 February 23, 2016
     Fix to clean up partial or zero-length image files on failed write
