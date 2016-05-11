@@ -69,8 +69,8 @@ static_assert( OPT_MAX <= 64, "dwOptions is a DWORD64 bitfield" );
 
 struct SConversion
 {
-    WCHAR szSrc [MAX_PATH];
-    WCHAR szDest[MAX_PATH];
+    wchar_t szSrc [MAX_PATH];
+    wchar_t szDest[MAX_PATH];
 };
 
 struct SValue
@@ -324,7 +324,7 @@ inline static bool ispow2(size_t x)
 
 #pragma prefast(disable : 26018, "Only used with static internal arrays")
 
-DWORD LookupByName(const WCHAR *pName, const SValue *pArray)
+DWORD LookupByName(const wchar_t *pName, const SValue *pArray)
 {
     while(pArray->pName)
     {
@@ -337,7 +337,7 @@ DWORD LookupByName(const WCHAR *pName, const SValue *pArray)
     return 0;
 }
 
-const WCHAR* LookupByValue(DWORD pValue, const SValue *pArray)
+const wchar_t* LookupByValue(DWORD pValue, const SValue *pArray)
 {
     while(pArray->pName)
     {
@@ -656,9 +656,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     DWORD dwNormalMap = 0;
     float nmapAmplitude = 1.f;
 
-    WCHAR szPrefix   [MAX_PATH];
-    WCHAR szSuffix   [MAX_PATH];
-    WCHAR szOutputDir[MAX_PATH];
+    wchar_t szPrefix   [MAX_PATH];
+    wchar_t szSuffix   [MAX_PATH];
+    wchar_t szOutputDir[MAX_PATH];
 
     szPrefix[0]    = 0;
     szSuffix[0]    = 0;
@@ -984,7 +984,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     wcscpy_s(szPrefix, MAX_PATH, szOutputDir);
 
-    const WCHAR* fileTypeName = LookupByValue(FileType, g_pSaveFileTypes);
+    const wchar_t* fileTypeName = LookupByValue(FileType, g_pSaveFileTypes);
 
     if (fileTypeName)
     {
@@ -1028,8 +1028,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         wprintf( L"reading %ls", pConv->szSrc );
         fflush(stdout);
 
-        WCHAR ext[_MAX_EXT];
-        WCHAR fname[_MAX_FNAME];
+        wchar_t ext[_MAX_EXT];
+        wchar_t fname[_MAX_FNAME];
         _wsplitpath_s( pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT );
 
         TexMetadata info;
@@ -1737,7 +1737,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             wprintf( L"\n");
 
             // Figure out dest filename
-            WCHAR *pchSlash, *pchDot;
+            wchar_t *pchSlash, *pchDot;
 
             wcscpy_s(pConv->szDest, MAX_PATH, szPrefix);
 

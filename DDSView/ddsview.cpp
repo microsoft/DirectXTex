@@ -110,7 +110,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     HRESULT hr = GetMetadataFromDDSFile( lpCmdLine, DDS_FLAGS_NONE, mdata );
     if ( FAILED(hr) )
     {
-        WCHAR buff[2048] = { 0 };
+        wchar_t buff[2048] = { 0 };
         swprintf_s( buff, L"Failed to open texture file\n\nFilename = %ls\nHRESULT %08X", lpCmdLine, hr );
         MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
         return 0;
@@ -131,7 +131,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     {
         if ( mdata.arraySize > 1 )
         {
-            WCHAR buff[2048] = { 0 };
+            wchar_t buff[2048] = { 0 };
             swprintf_s( buff, L"Arrays of volume textures are not supported\n\nFilename = %ls\nArray size %Iu", lpCmdLine, mdata.arraySize );
             MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
             return 0;
@@ -154,7 +154,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     case DXGI_FORMAT_BC7_UNORM_SRGB:
         if ( g_featureLevel < D3D_FEATURE_LEVEL_11_0 )
         {
-            WCHAR buff[2048] = { 0 };
+            wchar_t buff[2048] = { 0 };
             swprintf_s( buff, L"BC6H/BC7 requires DirectX 11 hardware\n\nFilename = %ls\nDXGI Format %d\nFeature Level %d", lpCmdLine, mdata.format, g_featureLevel );
             MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
             return 0;
@@ -167,7 +167,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
             hr = g_pd3dDevice->CheckFormatSupport ( mdata.format, &flags );
             if ( FAILED(hr) || !(flags & (D3D11_FORMAT_SUPPORT_TEXTURE1D|D3D11_FORMAT_SUPPORT_TEXTURE2D|D3D11_FORMAT_SUPPORT_TEXTURE3D)) )
             {
-                WCHAR buff[2048] = { 0 };
+                wchar_t buff[2048] = { 0 };
                 swprintf_s( buff, L"Format not supported by DirectX hardware\n\nFilename = %ls\nDXGI Format %d\nFeature Level %d\nHRESULT = %08X", lpCmdLine, mdata.format, g_featureLevel, hr );
                 MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
                 return 0;
@@ -180,7 +180,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     hr = LoadFromDDSFile( lpCmdLine, DDS_FLAGS_NONE, &mdata, image );
     if ( FAILED(hr) )
     {
-        WCHAR buff[2048] = { 0 };
+        wchar_t buff[2048] = { 0 };
         swprintf_s( buff, L"Failed to load texture file\n\nFilename = %ls\nHRESULT %08X", lpCmdLine, hr );
         MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
         return 0;
@@ -192,7 +192,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     hr = CreateShaderResourceView( g_pd3dDevice, image.GetImages(), image.GetImageCount(), mdata, &g_pSRV );
     if ( FAILED(hr) )
     {
-        WCHAR buff[2048] = { 0 };
+        wchar_t buff[2048] = { 0 };
         swprintf_s( buff, L"Failed creating texture from file\n\nFilename = %ls\nHRESULT = %08X", lpCmdLine, hr );
         MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
         return 0;

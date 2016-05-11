@@ -44,7 +44,7 @@ static_assert( OPT_MAX <= 32, "dwOptions is a DWORD bitfield" );
 
 struct SConversion
 {
-    WCHAR szSrc [MAX_PATH];
+    wchar_t szSrc [MAX_PATH];
 };
 
 struct SValue
@@ -172,7 +172,7 @@ SValue g_pFilters[] =
 
 #pragma prefast(disable : 26018, "Only used with static internal arrays")
 
-DWORD LookupByName(const WCHAR *pName, const SValue *pArray)
+DWORD LookupByName(const wchar_t *pName, const SValue *pArray)
 {
     while(pArray->pName)
     {
@@ -185,7 +185,7 @@ DWORD LookupByName(const WCHAR *pName, const SValue *pArray)
     return 0;
 }
 
-const WCHAR* LookupByValue(DWORD pValue, const SValue *pArray)
+const wchar_t* LookupByValue(DWORD pValue, const SValue *pArray)
 {
     while(pArray->pName)
     {
@@ -325,7 +325,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     DWORD dwFilter = TEX_FILTER_DEFAULT;
     DWORD dwFilterOpts = 0;
 
-    WCHAR szOutputFile[MAX_PATH] = { 0 };
+    wchar_t szOutputFile[MAX_PATH] = { 0 };
 
     // Initialize COM (needed for WIC)
     HRESULT hr = hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
@@ -462,8 +462,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     for( auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv )
     {
-        WCHAR ext[_MAX_EXT];
-        WCHAR fname[_MAX_FNAME];
+        wchar_t ext[_MAX_EXT];
+        wchar_t fname[_MAX_FNAME];
         _wsplitpath_s( pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT );
 
         // Load source image
