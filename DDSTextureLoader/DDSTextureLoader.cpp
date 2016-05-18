@@ -969,8 +969,7 @@ static HRESULT CreateD3DResources( _In_ ID3D11Device* d3dDevice,
                 {
                     if (textureView != 0)
                     {
-                        D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-                        memset( &SRVDesc, 0, sizeof( SRVDesc ) );
+                        D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
                         SRVDesc.Format = format;
 
                         if (arraySize > 1)
@@ -1040,8 +1039,7 @@ static HRESULT CreateD3DResources( _In_ ID3D11Device* d3dDevice,
                 {
                     if (textureView != 0)
                     {
-                        D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-                        memset( &SRVDesc, 0, sizeof( SRVDesc ) );
+                        D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
                         SRVDesc.Format = format;
 
                         if ( isCubeMap )
@@ -1118,8 +1116,7 @@ static HRESULT CreateD3DResources( _In_ ID3D11Device* d3dDevice,
                 {
                     if (textureView != 0)
                     {
-                        D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-                        memset( &SRVDesc, 0, sizeof( SRVDesc ) );
+                        D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
                         SRVDesc.Format = format;
 
                         SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;

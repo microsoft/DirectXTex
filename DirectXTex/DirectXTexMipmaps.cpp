@@ -2594,8 +2594,7 @@ HRESULT GenerateMipMaps( const Image& baseImage, DWORD filter, size_t levels, Sc
     else
     {
         //--- Use custom filters to generate mipmaps ----------------------------------
-        TexMetadata mdata;
-        memset( &mdata, 0, sizeof(mdata) );
+        TexMetadata mdata = {};
         mdata.width = baseImage.width;
         if ( baseImage.height > 1 || !allow1D )
         {

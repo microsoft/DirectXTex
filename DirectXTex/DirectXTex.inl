@@ -100,8 +100,7 @@ inline bool __cdecl IsSRGB(DXGI_FORMAT fmt)
 _Use_decl_annotations_
 inline HRESULT __cdecl SaveToDDSMemory(const Image& image, DWORD flags, Blob& blob)
 {
-    TexMetadata mdata;
-    memset( &mdata, 0, sizeof(mdata) );
+    TexMetadata mdata = {};
     mdata.width = image.width;
     mdata.height = image.height;
     mdata.depth = 1;
@@ -116,8 +115,7 @@ inline HRESULT __cdecl SaveToDDSMemory(const Image& image, DWORD flags, Blob& bl
 _Use_decl_annotations_
 inline HRESULT __cdecl SaveToDDSFile(const Image& image, DWORD flags, LPCWSTR szFile)
 {
-    TexMetadata mdata;
-    memset( &mdata, 0, sizeof(mdata) );
+    TexMetadata mdata = {};
     mdata.width = image.width;
     mdata.height = image.height;
     mdata.depth = 1;

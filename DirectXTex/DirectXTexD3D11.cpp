@@ -611,8 +611,7 @@ HRESULT CreateShaderResourceViewEx( ID3D11Device* pDevice, const Image* srcImage
 
     assert( resource );
 
-    D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-    memset( &SRVDesc, 0, sizeof(SRVDesc) );
+    D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
     if ( forceSRGB )
         SRVDesc.Format = MakeSRGB( metadata.format );
     else

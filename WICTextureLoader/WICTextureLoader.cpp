@@ -640,8 +640,7 @@ static HRESULT CreateTextureFromWIC( _In_ ID3D11Device* d3dDevice,
     {
         if (textureView != 0)
         {
-            D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-            memset( &SRVDesc, 0, sizeof( SRVDesc ) );
+            D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
             SRVDesc.Format = desc.Format;
 
             SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;

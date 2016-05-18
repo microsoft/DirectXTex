@@ -232,8 +232,7 @@ HRESULT GPUCompressBC::Prepare( size_t width, size_t height, DXGI_FORMAT format,
     // Create structured buffers
     size_t bufferSize = num_blocks * sizeof( BufferBC6HBC7 );
     {
-        D3D11_BUFFER_DESC desc;
-        memset( &desc, 0, sizeof(desc) );
+        D3D11_BUFFER_DESC desc = {};
         desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
@@ -261,8 +260,7 @@ HRESULT GPUCompressBC::Prepare( size_t width, size_t height, DXGI_FORMAT format,
 
     // Create staging output buffer
     {
-        D3D11_BUFFER_DESC desc;
-        memset( &desc, 0, sizeof(desc) );
+        D3D11_BUFFER_DESC desc = {};
         desc.Usage = D3D11_USAGE_STAGING;
         desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
         desc.ByteWidth = static_cast<UINT>( bufferSize );
@@ -276,8 +274,7 @@ HRESULT GPUCompressBC::Prepare( size_t width, size_t height, DXGI_FORMAT format,
 
     // Create constant buffer
     {
-        D3D11_BUFFER_DESC desc;
-        memset( &desc, 0, sizeof(desc) );
+        D3D11_BUFFER_DESC desc = {};
         desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
         desc.Usage = D3D11_USAGE_DYNAMIC;
         desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -292,8 +289,7 @@ HRESULT GPUCompressBC::Prepare( size_t width, size_t height, DXGI_FORMAT format,
 
     // Create shader resource views
     {
-        D3D11_SHADER_RESOURCE_VIEW_DESC desc;
-        memset( &desc, 0, sizeof(desc) );
+        D3D11_SHADER_RESOURCE_VIEW_DESC desc = {};
         desc.Buffer.NumElements = static_cast<UINT>( num_blocks );
         desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 
@@ -312,8 +308,7 @@ HRESULT GPUCompressBC::Prepare( size_t width, size_t height, DXGI_FORMAT format,
 
     // Create unordered access views
     {
-        D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
-        memset( &desc, 0, sizeof(desc) );
+        D3D11_UNORDERED_ACCESS_VIEW_DESC desc = {};
         desc.Buffer.NumElements = static_cast<UINT>( num_blocks );
         desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 
@@ -367,8 +362,7 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
 
     ComPtr<ID3D11Texture2D> sourceTex;
     {
-        D3D11_TEXTURE2D_DESC desc;
-        memset( &desc, 0, sizeof(desc) );
+        D3D11_TEXTURE2D_DESC desc = {};
         desc.Width = static_cast<UINT>( srcImage.width );
         desc.Height = static_cast<UINT>( srcImage.height ); 
         desc.MipLevels = 1;
@@ -392,8 +386,7 @@ HRESULT GPUCompressBC::Compress( const Image& srcImage, const Image& destImage )
 
     ComPtr<ID3D11ShaderResourceView> sourceSRV;
     {
-        D3D11_SHADER_RESOURCE_VIEW_DESC desc;
-        memset( &desc, 0, sizeof(desc) );
+        D3D11_SHADER_RESOURCE_VIEW_DESC desc = {};
         desc.Texture2D.MipLevels = 1;
         desc.Format = inputFormat;
         desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
