@@ -6,11 +6,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //--------------------------------------------------------------------------------------
 
-#include <assert.h>
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
+
+#include <assert.h>
 #include <stdio.h>
 #include <dxgiformat.h>
 #include <d3d11.h>
+
+#include <algorithm>
 
 #include <directxmath.h>
 
@@ -244,15 +249,15 @@ HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow, const TexMetadata& mdata 
 
     int cxborder = GetSystemMetrics( SM_CXBORDER );
     int cxedge = GetSystemMetrics( SM_CXEDGE );
-    int screenX = GetSystemMetrics( SM_CXSCREEN ) - max( cxborder, cxedge );
+    int screenX = GetSystemMetrics( SM_CXSCREEN ) - std::max( cxborder, cxedge );
     if( rc.right < (LONG)mdata.width )
-        rc.right = (LONG)mdata.height;
+        rc.right = (LONG)mdata.width;
     if ( rc.right > screenX )
         rc.right = screenX;
 
     int cyborder = GetSystemMetrics( SM_CYBORDER );
     int cyedge = GetSystemMetrics( SM_CYEDGE );
-    int screenY = GetSystemMetrics( SM_CYSCREEN ) - max( cyborder, cyedge );
+    int screenY = GetSystemMetrics( SM_CYSCREEN ) - std::max( cyborder, cyedge );
     if ( rc.bottom < (LONG)mdata.height )
         rc.bottom = (LONG)mdata.height;
     if ( rc.bottom > screenY )
