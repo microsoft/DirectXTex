@@ -20,6 +20,8 @@
 
 #include <dxgiformat.h>
 
+#include <wincodec.h>
+
 #include "directxtex.h"
 
 using namespace DirectX;
@@ -62,6 +64,8 @@ enum OPTIONS    // Note: dwOptions below assumes 64 or less options.
     OPT_COMPRESS_UNIFORM,
     OPT_COMPRESS_MAX,
     OPT_COMPRESS_DITHER,
+    OPT_WIC_QUALITY,
+    OPT_WIC_LOSSLESS,
     OPT_MAX
 };
 
@@ -120,6 +124,8 @@ SValue g_pOptions[] =
     { L"bcuniform",     OPT_COMPRESS_UNIFORM },
     { L"bcmax",         OPT_COMPRESS_MAX },
     { L"bcdither",      OPT_COMPRESS_DITHER },
+    { L"wicq",          OPT_WIC_QUALITY },
+    { L"wiclossless",   OPT_WIC_LOSSLESS },
     { nullptr,          0             }
 };
 
@@ -281,6 +287,8 @@ SValue g_pFilters[] =
 
 #define CODEC_DDS 0xFFFF0001 
 #define CODEC_TGA 0xFFFF0002
+#define CODEC_HDP 0xFFFF0003
+#define CODEC_JXR 0xFFFF0004
 
 SValue g_pSaveFileTypes[] =     // valid formats to write to
 {
@@ -293,7 +301,8 @@ SValue g_pSaveFileTypes[] =     // valid formats to write to
     { L"TIF",           WIC_CODEC_TIFF },
     { L"TIFF",          WIC_CODEC_TIFF },
     { L"WDP",           WIC_CODEC_WMP  },
-    { L"HDP",           WIC_CODEC_WMP  },
+    { L"HDP",           CODEC_HDP      },
+    { L"JXR",           CODEC_JXR      },
     { nullptr,          CODEC_DDS      }
 };
 
@@ -490,6 +499,8 @@ void PrintUsage()
     wprintf( L"   -bcuniform          Use uniform rather than perceptual weighting for BC1-3\n");
     wprintf( L"   -bcdither           Use dithering for BC1-3\n");
     wprintf( L"   -bcmax              Use exchaustive compression (BC7 only)\n");
+    wprintf( L"   -wicq <quality>     When writing images with WIC use quality (0.0 to 1.0)\n");
+    wprintf( L"   -wiclossless        When writing images with WIC use lossless mode\n");
     wprintf( L"   -aw <weight>        BC7 GPU compressor weighting for alpha error metric\n"
              L"                       (defaults to 1.0)\n" );
 
@@ -655,6 +666,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float alphaWeight = 1.f;
     DWORD dwNormalMap = 0;
     float nmapAmplitude = 1.f;
+    float wicQuality = -1.f;
+    bool wicLossless = false;
 
     wchar_t szPrefix   [MAX_PATH];
     wchar_t szSuffix   [MAX_PATH];
@@ -700,18 +713,26 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             dwOptions |= (DWORD64(1) << dwOption);
 
-            if( (OPT_NOLOGO != dwOption) && (OPT_TIMING != dwOption) && (OPT_TYPELESS_UNORM != dwOption) && (OPT_TYPELESS_FLOAT != dwOption)
-                && (OPT_SEPALPHA != dwOption) && (OPT_PREMUL_ALPHA != dwOption) && (OPT_EXPAND_LUMINANCE != dwOption)
-                && (OPT_TA_WRAP != dwOption) && (OPT_TA_MIRROR != dwOption)
-                && (OPT_FORCE_SINGLEPROC != dwOption) && (OPT_NOGPU != dwOption) && (OPT_FIT_POWEROF2 != dwOption)
-                && (OPT_SRGB != dwOption) && (OPT_SRGBI != dwOption) && (OPT_SRGBO != dwOption)
-                && (OPT_HFLIP != dwOption) && (OPT_VFLIP != dwOption)
-                && (OPT_COMPRESS_UNIFORM != dwOption) && (OPT_COMPRESS_MAX != dwOption) && (OPT_COMPRESS_DITHER != dwOption)
-                && (OPT_DDS_DWORD_ALIGN != dwOption) && (OPT_USE_DX10 != dwOption) )
+            // Handle options with additional value parameter
+            switch (dwOption)
             {
-                if(!*pValue)
+            case OPT_WIDTH:
+            case OPT_HEIGHT:
+            case OPT_MIPLEVELS:
+            case OPT_FORMAT:
+            case OPT_FILTER:
+            case OPT_PREFIX:
+            case OPT_SUFFIX:
+            case OPT_OUTPUTDIR:
+            case OPT_FILETYPE:
+            case OPT_FEATURE_LEVEL:
+            case OPT_ALPHA_WEIGHT:
+            case OPT_NORMAL_MAP:
+            case OPT_NORMAL_MAP_AMPLITUDE:
+            case OPT_WIC_QUALITY:
+                if (!*pValue)
                 {
-                    if((iArg + 1 >= argc))
+                    if ((iArg + 1 >= argc))
                     {
                         PrintUsage();
                         return 1;
@@ -720,6 +741,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     iArg++;
                     pValue = argv[iArg];
                 }
+                break;
             }
 
             switch(dwOption)
@@ -952,6 +974,22 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case OPT_COMPRESS_DITHER:
                 dwCompress |= TEX_COMPRESS_DITHER;
+                break;
+
+            case OPT_WIC_QUALITY:
+                if (swscanf_s(pValue, L"%f", &wicQuality) != 1
+                    || (wicQuality < 0.f)
+                    || (wicQuality > 1.f))
+                {
+                    wprintf(L"Invalid value specified with -wicq (%ls)\n", pValue);
+                    printf("\n");
+                    PrintUsage();
+                    return 1;
+                }
+                break;
+
+            case OPT_WIC_LOSSLESS:
+                wicLossless = true;
                 break;
             }
         }
@@ -1772,7 +1810,69 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             default:
-                hr = SaveToWICFile( img, nimg, WIC_FLAGS_ALL_FRAMES, GetWICCodec( static_cast<WICCodecs>(FileType) ), pConv->szDest );
+                {
+                    WICCodecs codec = (FileType == CODEC_HDP || FileType == CODEC_JXR) ? WIC_CODEC_WMP : static_cast<WICCodecs>(FileType);
+                    hr = SaveToWICFile( img, nimg, WIC_FLAGS_ALL_FRAMES, GetWICCodec(codec), pConv->szDest, nullptr,
+                        [&](IPropertyBag2* props)
+                    {
+                        switch (FileType)
+                        {
+                        case WIC_CODEC_JPEG:
+                            if (wicLossless || wicQuality >= 0.f)
+                            {
+                                PROPBAG2 options = {};
+                                VARIANT varValues = {};
+                                options.pstrName = L"ImageQuality";
+                                varValues.vt = VT_R4;
+                                varValues.fltVal = (wicLossless) ? 1.f : wicQuality;
+                                (void)props->Write(1, &options, &varValues);
+                            }
+                            break;
+
+                        case WIC_CODEC_TIFF:
+                            {
+                                PROPBAG2 options = {};
+                                VARIANT varValues = {};
+                                if (wicLossless)
+                                {
+                                    options.pstrName = L"TiffCompressionMethod";
+                                    varValues.vt = VT_UI1;
+                                    varValues.bVal = WICTiffCompressionNone;
+                                }
+                                else if (wicQuality >= 0.f)
+                                {
+                                    options.pstrName = L"CompressionQuality";
+                                    varValues.vt = VT_R4;
+                                    varValues.fltVal = wicQuality;
+                                }
+                                (void)props->Write(1, &options, &varValues);
+                            }
+                            break;
+
+                        case WIC_CODEC_WMP:
+                        case CODEC_HDP:
+                        case CODEC_JXR:
+                            {
+                                PROPBAG2 options = {};
+                                VARIANT varValues = {};
+                                if (wicLossless)
+                                {
+                                    options.pstrName = L"Lossless";
+                                    varValues.vt = VT_BOOL;
+                                    varValues.bVal = TRUE;
+                                }
+                                else if (wicQuality >= 0.f)
+                                {
+                                    options.pstrName = L"ImageQuality";
+                                    varValues.vt = VT_R4;
+                                    varValues.fltVal = wicQuality;
+                                }
+                                (void)props->Write(1, &options, &varValues);
+                            }
+                            break;
+                        }
+                    });
+                }
                 break;
             }
 
