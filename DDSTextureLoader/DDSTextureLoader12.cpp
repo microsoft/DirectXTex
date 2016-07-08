@@ -18,11 +18,11 @@
 // http://go.microsoft.com/fwlink/?LinkID=615561
 //--------------------------------------------------------------------------------------
 
+#include "DDSTextureLoader12.h"
+
 #include <assert.h>
 #include <algorithm>
 #include <memory>
-
-#include "DDSTextureLoader12.h"
 
 #include <d3dx12.h>
 
