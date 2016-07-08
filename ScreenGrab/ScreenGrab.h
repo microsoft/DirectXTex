@@ -22,9 +22,9 @@
 #pragma once
 
 #include <d3d11_1.h>
+
 #include <ocidl.h>
 #include <stdint.h>
-
 #include <functional>
 
 
@@ -34,14 +34,10 @@ namespace DirectX
                                   _In_ ID3D11Resource* pSource,
                                   _In_z_ LPCWSTR fileName );
 
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP) || (_WIN32_WINNT > _WIN32_WINNT_WIN8)
-
     HRESULT SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
                                   _In_ ID3D11Resource* pSource,
                                   _In_ REFGUID guidContainerFormat, 
                                   _In_z_ LPCWSTR fileName,
                                   _In_opt_ const GUID* targetFormat = nullptr,
                                   _In_opt_ std::function<void(IPropertyBag2*)> setCustomProps = nullptr );
-
-#endif
 }
