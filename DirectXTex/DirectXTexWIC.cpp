@@ -77,7 +77,7 @@ struct WICConvert
     GUID        target;
 };
 
-static WICConvert g_WICConvert[] = 
+static const WICConvert g_WICConvert[] = 
 {
     // Directly support the formats listed in XnaTexUtil::g_WICFormats, so no conversion required
     // Note target GUID in this conversion table must be one of those directly supported formats.

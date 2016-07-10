@@ -44,7 +44,7 @@ struct WICTranslate
     bool        srgb;
 };
 
-static WICTranslate g_WICFormats[] = 
+static const WICTranslate g_WICFormats[] = 
 {
     { GUID_WICPixelFormat128bppRGBAFloat,       DXGI_FORMAT_R32G32B32A32_FLOAT,         false },
 
