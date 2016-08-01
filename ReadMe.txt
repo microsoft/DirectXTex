@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-June 27, 2016
+August 1, 2016
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -15,28 +15,6 @@ but is not currently supported by a built-in WIC codec.
 
 The source is written for Visual Studio 2013 or 2015. It is recommended that you
 make use of VS 2013 Update 5 or VS 2015 Update 3 and Windows 7 Service Pack 1 or later.
-
-DDSTextureLoader\
-    This contains a streamlined version of the DirectX SDK sample DDSWithoutD3DX11 texture
-    loading code for a simple light-weight runtime DDS loader. This version only supports
-    Direct3D 11 and performs no runtime pixel data conversions (i.e. 24bpp legacy DDS files
-    always fail). This is ideal for runtime usage, and supports the full complement of
-    Direct3D 11 texture resources (1D, 2D, volume maps, cubemaps, mipmap levels,
-    texture arrays, BC formats, etc.).
-
-WICTextureLoader\
-    This contains a Direct3D 11 2D texture loader that uses WIC to load a bitmap
-    (BMP, JPEG, PNG, HD Photo, or other WIC supported file container), resize if needed
-    based on the current feature level (or by explicit parameter), format convert to a
-    DXGI_FORMAT if required, and then create a 2D texture. Furthermore, if a Direct3D 11
-    device context is provided and the current device supports it for the given pixel format,
-    it will auto-generate mipmaps. Note this does not support 1D textures, volume textures,
-    cubemaps, or texture arrays. DDSTextureLoader is recommended for fully "precooked" textures
-    for maximum performance and image quality, but this loader can be useful for creating
-    simple 2D texture from standard image files at runtime.
-
-    Note: This function is not thread-safe if given a non-NULL device context for the auto-gen
-    mip-map support.
 
 DirectXTex\
     This contains the DirectXTex library. This includes a full-featured DDS reader and writer
@@ -67,6 +45,31 @@ DDSView\
     This DirectXTex sample is a simple Direct3D 11-based viewer for DDS files. For array textures
     or volume maps, the "<" and ">" keyboard keys will show different images contained in the DDS.
     The "1" through "0" keys can also be used to jump to a specific image index.
+
+DDSTextureLoader\
+    This contains a streamlined version of the DirectX SDK sample DDSWithoutD3DX11 texture
+    loading code for a simple light-weight runtime DDS loader. This version only supports
+    Direct3D 11 or Direct3D 12 and performs no runtime pixel data conversions (i.e. 24bpp
+    legacy DDS files always fail). This is ideal for runtime usage, and supports the full
+    complement of Direct3D texture resources (1D, 2D, volume maps, cubemaps, mipmap levels,
+    texture arrays, BC formats, etc.).
+
+ScreenGrab\
+    This contains screen grab modules for Direct3D 11 and Direct3D 12 primarily intended
+    for creating screenshots. The images are written as a DDS or as an image file format
+    using WIC.
+
+WICTextureLoader\
+    This contains a Direct3D 11 and Direct3D 12 2D texture loader that uses WIC to load a
+    bitmap (BMP, JPEG, PNG, HD Photo, or other WIC supported file container), resize if needed
+    based on the current feature level (or by explicit parameter), format convert to a
+    DXGI_FORMAT if required, and then create a 2D texture. Note this does not support 1D textures,
+    volume textures, cubemaps, or texture arrays. DDSTextureLoader is recommended for fully
+    "precooked" textures for maximum performance and image quality, but this loader can be useful
+    for creating simple 2D texture from standard image files at runtime.
+
+NOTE: DDSTextureLoader, ScreenGrab, and WICTextureLoader are 'stand-alone' versions of the same
+      modules provided in the DirectX Tool Kit.
 
 All content and source code for this package are subject to the terms of the MIT License.
 <http://opensource.org/licenses/MIT>.
@@ -107,6 +110,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+August 1, 2016
+    Workaround for bug in XMStoreFloat3SE (impacts conversions to DXGI_FORMAT_R9G9B9E5_SHAREDEXP)
+    DDSTextureLoader12, WICTextureLoader12, and ScreenGrab12 for Direct3D 12 support
+    Minor code cleanup
 
 June 27, 2016
     texconv command-line tool -wicq and -wiclossless switches
