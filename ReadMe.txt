@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-August 2, 2016
+August 4, 2016
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -110,6 +110,10 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+August 4, 2016
+    CompileShader script updated to build external pdbs
+    Regenerated shaders using Windows 10 Anniversary Update SDK (14393)
 
 August 2, 2016
     Updated for VS 2015 Update 3 and Windows 10 SDK (14393)
