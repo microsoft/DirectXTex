@@ -37,6 +37,7 @@ enum OPTIONS    // Note: dwOptions below assumes 32 or less options.
     OPT_USE_DX10,
     OPT_NOLOGO,
     OPT_SEPALPHA,
+	OPT_FILELIST,
     OPT_MAX
 };
 
@@ -71,6 +72,7 @@ SValue g_pOptions[] =
     { L"dx10",          OPT_USE_DX10  },
     { L"nologo",        OPT_NOLOGO    },
     { L"sepalpha",      OPT_SEPALPHA  },
+	{ L"flist",			OPT_FILELIST  },
     { nullptr,          0             }
 };
 
@@ -299,6 +301,7 @@ void PrintUsage()
     wprintf( L"   -sepalpha           resize alpha channel separately from color channels\n");
     wprintf( L"   -dx10               Force use of 'DX10' extended header\n");
     wprintf( L"   -nologo             suppress copyright message\n");
+	wprintf( L"   -flist <filename>   use text file with a list of input files (one per line)\n");
 
     wprintf( L"\n");
     wprintf( L"   <format>: ");
@@ -422,13 +425,32 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_OUTPUTFILE:
                 wcscpy_s(szOutputFile, MAX_PATH, pValue);
                 break;
+
+			case OPT_FILELIST:
+				FILE *pListfile = NULL;
+				errno_t err = _wfopen_s(&pListfile, pValue, L"r");
+				if (err != 0)
+				{
+					wprintf(L"Error opening file: %s\n\n", pValue);
+				}				
+				for (;;)
+				{
+					SConversion conv;
+					if (fgetws(conv.szSrc, MAX_PATH, pListfile) == NULL)
+						break;
+					size_t len = wcslen(conv.szSrc);
+					if (conv.szSrc[len - 1] == '\n')
+						conv.szSrc[len - 1] = 0;
+					conversion.push_back(conv);
+				}
+				fclose(pListfile);
+				break;
             }
         }
         else
         {         
             SConversion conv;
             wcscpy_s(conv.szSrc, MAX_PATH, pArg);
-
             conversion.push_back(conv);
         }
     }
