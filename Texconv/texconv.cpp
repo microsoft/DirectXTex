@@ -618,7 +618,9 @@ bool CreateDevice( int adapter, _Outptr_ ID3D11Device** pDevice )
     }
 
     D3D_FEATURE_LEVEL fl;
-    HRESULT hr = s_DynamicD3D11CreateDevice( pAdapter.Get(), D3D_DRIVER_TYPE_UNKNOWN, nullptr, createDeviceFlags, featureLevels, _countof(featureLevels),
+    HRESULT hr = s_DynamicD3D11CreateDevice( pAdapter.Get(),
+                                             (pAdapter) ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE,
+                                             nullptr, createDeviceFlags, featureLevels, _countof(featureLevels),
                                              D3D11_SDK_VERSION, pDevice, &fl, nullptr );
     if ( SUCCEEDED(hr) )
     {
