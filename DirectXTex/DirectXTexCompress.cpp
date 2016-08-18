@@ -102,7 +102,7 @@ static HRESULT _CompressBC( _In_ const Image& image, _In_ const Image& result, _
     if ( !_DetermineEncoderSettings( result.format, pfEncode, blocksize, cflags ) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-    XMVECTOR temp[16];
+    __declspec(align(16)) XMVECTOR temp[16];
     const uint8_t *pSrc = image.pixels;
     const uint8_t *pEnd = image.pixels + image.slicePitch;
     const size_t rowPitch = image.rowPitch;
@@ -257,7 +257,7 @@ static HRESULT _CompressBC_Parallel( _In_ const Image& image, _In_ const Image& 
         assert( bytesLeft > 0 );
         size_t bytesToRead = std::min<size_t>( rowPitch, bytesLeft );
 
-        XMVECTOR temp[16];
+        __declspec(align(16)) XMVECTOR temp[16];
         if ( !_LoadScanline( &temp[0], pw, pSrc, bytesToRead, format ) )
             fail = true;
 
@@ -436,7 +436,7 @@ static HRESULT _DecompressBC( _In_ const Image& cImage, _In_ const Image& result
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
     }
 
-    XMVECTOR temp[16];
+    __declspec(align(16)) XMVECTOR temp[16];
     const uint8_t *pSrc = cImage.pixels;
     const size_t rowPitch = result.rowPitch;
     for( size_t h=0; h < cImage.height; h += 4 )
@@ -524,7 +524,7 @@ bool _IsAlphaAllOpaqueBC( _In_ const Image& cImage )
     // Scan blocks for non-opaque alpha
     static const XMVECTORF32 threshold = { 0.99f, 0.99f, 0.99f, 0.99f };
 
-    XMVECTOR temp[16];
+    __declspec(align(16)) XMVECTOR temp[16];
     const uint8_t *pPixels = cImage.pixels;
     for( size_t h = 0; h < cImage.height; h += 4 )
     {
