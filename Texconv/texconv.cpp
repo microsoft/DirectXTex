@@ -18,6 +18,8 @@
 
 #include <wrl\client.h>
 
+#include <d3d11.h>
+#include <dxgi.h>
 #include <dxgiformat.h>
 
 #include <wincodec.h>
@@ -55,6 +57,7 @@ enum OPTIONS    // Note: dwOptions below assumes 64 or less options.
     OPT_TA_WRAP,
     OPT_TA_MIRROR,
     OPT_FORCE_SINGLEPROC,
+    OPT_GPU,
     OPT_NOGPU,
     OPT_FEATURE_LEVEL,
     OPT_FIT_POWEROF2,
@@ -112,9 +115,10 @@ SValue g_pOptions[] =
     { L"tf",            OPT_TYPELESS_FLOAT },
     { L"pmalpha",       OPT_PREMUL_ALPHA },
     { L"xlum",          OPT_EXPAND_LUMINANCE },
-    { L"wrap",          OPT_TA_WRAP },
+    { L"wrap",          OPT_TA_WRAP   },
     { L"mirror",        OPT_TA_MIRROR },
     { L"singleproc",    OPT_FORCE_SINGLEPROC },
+    { L"gpu",           OPT_GPU       },
     { L"nogpu",         OPT_NOGPU     },
     { L"fl",            OPT_FEATURE_LEVEL },
     { L"pow2",          OPT_FIT_POWEROF2 },
@@ -456,6 +460,33 @@ void PrintLogo()
 }
 
 
+_Success_(return != false)
+bool GetDXGIFactory(_Outptr_ IDXGIFactory1** pFactory)
+{
+    if (!pFactory)
+        return false;
+
+    *pFactory = nullptr;
+
+    typedef HRESULT(WINAPI* pfn_CreateDXGIFactory1)(REFIID riid, _Out_ void **ppFactory);
+
+    static pfn_CreateDXGIFactory1 s_CreateDXGIFactory1 = nullptr;
+
+    if (!s_CreateDXGIFactory1)
+    {
+        HMODULE hModDXGI = LoadLibrary(L"dxgi.dll");
+        if (!hModDXGI)
+            return false;
+
+        s_CreateDXGIFactory1 = reinterpret_cast<pfn_CreateDXGIFactory1>(reinterpret_cast<void*>(GetProcAddress(hModDXGI, "CreateDXGIFactory1")));
+        if (!s_CreateDXGIFactory1)
+            return false;
+    }
+
+    return SUCCEEDED(s_CreateDXGIFactory1(IID_PPV_ARGS(pFactory)));
+}
+
+
 void PrintUsage()
 {
     PrintLogo();
@@ -495,6 +526,7 @@ void PrintUsage()
 #ifdef _OPENMP
     wprintf( L"   -singleproc         Do not use multi-threaded compression\n");
 #endif
+    wprintf( L"   -gpu <adapter>      Select GPU for DirectCompute-based codecs (0 is default)\n");
     wprintf( L"   -nogpu              Do not use DirectCompute-based codecs\n");
     wprintf( L"   -bcuniform          Use uniform rather than perceptual weighting for BC1-3\n");
     wprintf( L"   -bcdither           Use dithering for BC1-3\n");
@@ -520,10 +552,26 @@ void PrintUsage()
     wprintf( L"   <feature-level>: ");
     PrintList(13, g_pFeatureLevels);
 
+    ComPtr<IDXGIFactory1> dxgiFactory;
+    if ( GetDXGIFactory( dxgiFactory.GetAddressOf() ) )
+    {
+        wprintf( L"\n" );
+        wprintf( L"   <adapter>:\n" );
+
+        ComPtr<IDXGIAdapter> adapter;
+        for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != dxgiFactory->EnumAdapters(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
+        {
+            DXGI_ADAPTER_DESC desc;
+            adapter->GetDesc(&desc);
+
+            wprintf( L"      %u: VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
+        }
+    }
 }
 
+
 _Success_(return != false)
-bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
+bool CreateDevice( int adapter, _Outptr_ ID3D11Device** pDevice )
 {
     if ( !pDevice )
         return false;
@@ -555,8 +603,22 @@ bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
     createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
+    ComPtr<IDXGIAdapter> pAdapter;
+    if ( adapter >= 0 )
+    {
+        ComPtr<IDXGIFactory1> dxgiFactory;
+        if ( GetDXGIFactory( dxgiFactory.GetAddressOf() ) )
+        {
+            if ( FAILED(dxgiFactory->EnumAdapters( adapter, pAdapter.GetAddressOf() )) )
+            {
+                wprintf(L"\nERROR: Invalid GPU adapter index (%d)!\n", adapter);
+                return false;
+            }
+        }
+    }
+
     D3D_FEATURE_LEVEL fl;
-    HRESULT hr = s_DynamicD3D11CreateDevice( nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevels, _countof(featureLevels), 
+    HRESULT hr = s_DynamicD3D11CreateDevice( pAdapter.Get(), D3D_DRIVER_TYPE_UNKNOWN, nullptr, createDeviceFlags, featureLevels, _countof(featureLevels),
                                              D3D11_SDK_VERSION, pDevice, &fl, nullptr );
     if ( SUCCEEDED(hr) )
     {
@@ -585,8 +647,7 @@ bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
         hr = (*pDevice)->QueryInterface( IID_PPV_ARGS( dxgiDevice.GetAddressOf() ) );
         if ( SUCCEEDED(hr) )
         {
-            ComPtr<IDXGIAdapter> pAdapter;
-            hr = dxgiDevice->GetAdapter( pAdapter.GetAddressOf() );
+            hr = dxgiDevice->GetAdapter( pAdapter.ReleaseAndGetAddressOf() );
             if ( SUCCEEDED(hr) )
             {
                 DXGI_ADAPTER_DESC desc;
@@ -603,6 +664,7 @@ bool CreateDevice( _Outptr_ ID3D11Device** pDevice )
     else
         return false;
 }
+
 
 void FitPowerOf2( size_t origx, size_t origy, size_t& targetx, size_t& targety, size_t maxsize )
 {
@@ -663,6 +725,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     DWORD dwFilterOpts = 0;
     DWORD FileType = CODEC_DDS;
     DWORD maxSize = 16384;
+    int adapter = -1;
     float alphaWeight = 1.f;
     DWORD dwNormalMap = 0;
     float nmapAmplitude = 1.f;
@@ -725,6 +788,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_SUFFIX:
             case OPT_OUTPUTDIR:
             case OPT_FILETYPE:
+            case OPT_GPU:
             case OPT_FEATURE_LEVEL:
             case OPT_ALPHA_WEIGHT:
             case OPT_NORMAL_MAP:
@@ -932,6 +996,21 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 else if ( nmapAmplitude < 0.f )
                 {
                     wprintf( L"Normal map amplitude must be positive (%ls)\n\n", pValue);
+                    PrintUsage();
+                    return 1;
+                }
+                break;
+
+            case OPT_GPU:
+                if (swscanf_s(pValue, L"%d", &adapter) != 1)
+                {
+                    wprintf(L"Invalid value specified with -gpu (%ls)\n\n", pValue);
+                    PrintUsage();
+                    return 1;
+                }
+                else if (adapter < 0)
+                {
+                    wprintf(L"Adapter index (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
@@ -1680,7 +1759,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                             if ( !(dwOptions & (DWORD64(1) << OPT_NOGPU) ) )
                             {
-                                if ( !CreateDevice( pDevice.GetAddressOf() ) )
+                                if ( !CreateDevice( adapter, pDevice.GetAddressOf() ) )
                                     wprintf( L"\nWARNING: DirectCompute is not available, using BC6H / BC7 CPU codec\n" );
                             }
                             else
