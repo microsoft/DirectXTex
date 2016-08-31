@@ -6,7 +6,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //--------------------------------------------------------------------------------------
 
-//#define REF_DEVICE
+#define REF_DEVICE
 
 #define UINTLENGTH            32
 #define NCHANNELS             3
