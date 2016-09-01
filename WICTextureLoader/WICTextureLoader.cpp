@@ -168,15 +168,15 @@ namespace
     //--------------------------------------------------------------------------------------
     IWICImagingFactory* _GetWIC()
     {
-        static IWICImagingFactory* s_Factory = nullptr;
+        static ComPtr<IWICImagingFactory> s_Factory;
 
         if ( s_Factory )
-            return s_Factory;
+            return s_Factory.Get();
 
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
         InitOnceExecuteOnce(&s_initOnce,
-            [](PINIT_ONCE, PVOID, PVOID *) -> BOOL
+            [](PINIT_ONCE, PVOID, PVOID *factory) -> BOOL
             {
             #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
                 HRESULT hr = CoCreateInstance(
@@ -184,13 +184,14 @@ namespace
                     nullptr,
                     CLSCTX_INPROC_SERVER,
                     __uuidof(IWICImagingFactory2),
-                    (LPVOID*)&s_Factory
+                    factory
                     );
 
                 if ( SUCCEEDED(hr) )
                 {
                     // WIC2 is available on Windows 10, Windows 8.x, and Windows 7 SP1 with KB 2670838 installed
                     g_WIC2 = true;
+                    return TRUE;
                 }
                 else
                 {
@@ -198,33 +199,22 @@ namespace
                         CLSID_WICImagingFactory1,
                         nullptr,
                         CLSCTX_INPROC_SERVER,
-                        IID_PPV_ARGS(&s_Factory)
+                        __uuidof(IWICImagingFactory),
+                        factory
                         );
-
-                    if ( FAILED(hr) )
-                    {
-                        s_Factory = nullptr;
-                        return FALSE;
-                    }
+                    return SUCCEEDED(hr) ? TRUE : FALSE;
                 }
             #else
-                HRESULT hr = CoCreateInstance(
+                return SUCCEEDED( CoCreateInstance(
                     CLSID_WICImagingFactory,
                     nullptr,
                     CLSCTX_INPROC_SERVER,
-                    IID_PPV_ARGS(&s_Factory)
-                    );
-
-                if ( FAILED(hr) )
-                {
-                    s_Factory = nullptr;
-                    return FALSE;
-                }
+                    __uuidof(IWICImagingFactory),
+                    factory) ) ? TRUE : FALSE;
             #endif
-                return TRUE;
-            }, nullptr, nullptr);
+            }, nullptr, reinterpret_cast<LPVOID*>(s_Factory.GetAddressOf()));
 
-        return s_Factory;
+        return s_Factory.Get();
     }
 
     //---------------------------------------------------------------------------------

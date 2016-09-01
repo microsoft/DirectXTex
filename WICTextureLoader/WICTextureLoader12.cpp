@@ -149,30 +149,25 @@ namespace
 
     IWICImagingFactory2* _GetWIC()
     {
-        static IWICImagingFactory2* s_Factory = nullptr;
+        static ComPtr<IWICImagingFactory2> s_Factory;
 
-        if (s_Factory)
-            return s_Factory;
+        if ( s_Factory )
+            return s_Factory.Get();
 
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
-        InitOnceExecuteOnce(&s_initOnce,
-            [](PINIT_ONCE, PVOID, PVOID *) -> BOOL
+        (void)InitOnceExecuteOnce(&s_initOnce,
+            [](PINIT_ONCE, PVOID, PVOID *factory) -> BOOL
             {
-                HRESULT hr = CoCreateInstance(
+                return SUCCEEDED( CoCreateInstance(
                     CLSID_WICImagingFactory2,
                     nullptr,
                     CLSCTX_INPROC_SERVER,
-                    IID_PPV_ARGS(&s_Factory));
-                if (FAILED(hr))
-                {
-                    s_Factory = nullptr;
-                    return FALSE;
-                }
-                return TRUE;
-            }, nullptr, nullptr);
+                    __uuidof(IWICImagingFactory2),
+                    factory) ) ? TRUE : FALSE;
+            }, nullptr, reinterpret_cast<LPVOID*>(s_Factory.GetAddressOf()));
 
-        return s_Factory;
+        return s_Factory.Get();
     }
 
     //---------------------------------------------------------------------------------
