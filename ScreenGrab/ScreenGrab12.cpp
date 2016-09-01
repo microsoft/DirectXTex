@@ -786,16 +786,24 @@ namespace
         if (s_Factory)
             return s_Factory;
 
-        HRESULT hr = CoCreateInstance(
-            CLSID_WICImagingFactory2,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            IID_PPV_ARGS(&s_Factory));
-        if (FAILED(hr))
-        {
-            s_Factory = nullptr;
-            return nullptr;
-        }
+        static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
+
+        InitOnceExecuteOnce(&s_initOnce,
+            [](PINIT_ONCE, PVOID, PVOID *) -> BOOL
+            {
+                HRESULT hr = CoCreateInstance(
+                    CLSID_WICImagingFactory2,
+                    nullptr,
+                    CLSCTX_INPROC_SERVER,
+                    IID_PPV_ARGS(&s_Factory));
+                if (FAILED(hr))
+                {
+                    s_Factory = nullptr;
+                    return FALSE;
+                }
+                return TRUE;
+            }, nullptr, nullptr);
+
         return s_Factory;
     }
 } // anonymous namespace

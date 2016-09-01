@@ -575,10 +575,8 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
     {
         header->dwFlags |= DDS_HEADER_FLAGS_MIPMAP;
 
-#ifdef _M_X64
-        if ( metadata.mipLevels > 0xFFFFFFFF )
+        if ( metadata.mipLevels > UINT32_MAX )
             return E_INVALIDARG;
-#endif
 
         header->dwMipMapCount = static_cast<uint32_t>( metadata.mipLevels );
 
@@ -589,21 +587,17 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
     switch( metadata.dimension )
     {
     case TEX_DIMENSION_TEXTURE1D:
-#ifdef _M_X64
-        if ( metadata.width > 0xFFFFFFFF )
+        if ( metadata.width > UINT32_MAX )
             return E_INVALIDARG;
-#endif
 
         header->dwWidth = static_cast<uint32_t>( metadata.width ); 
         header->dwHeight = header->dwDepth = 1;
         break;
 
     case TEX_DIMENSION_TEXTURE2D:
-#ifdef _M_X64
-        if ( metadata.height > 0xFFFFFFFF
-             || metadata.width > 0xFFFFFFFF)
+        if ( metadata.height > UINT32_MAX
+             || metadata.width > UINT32_MAX )
             return E_INVALIDARG;
-#endif
 
         header->dwHeight = static_cast<uint32_t>( metadata.height ); 
         header->dwWidth = static_cast<uint32_t>( metadata.width );
@@ -617,12 +611,10 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
         break;
 
     case TEX_DIMENSION_TEXTURE3D:
-#ifdef _M_X64
-        if ( metadata.height > 0xFFFFFFFF
-             || metadata.width > 0xFFFFFFFF
-             || metadata.depth > 0xFFFFFFFF )
+        if ( metadata.height > UINT32_MAX
+             || metadata.width > UINT32_MAX
+             || metadata.depth > UINT32_MAX )
             return E_INVALIDARG;
-#endif
 
         header->dwFlags |= DDS_HEADER_FLAGS_VOLUME;
         header->dwCaps2 |= DDS_FLAGS_VOLUME;
@@ -638,11 +630,9 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
     size_t rowPitch, slicePitch;
     ComputePitch( metadata.format, metadata.width, metadata.height, rowPitch, slicePitch, CP_FLAGS_NONE );
 
-#ifdef _M_X64
-    if ( slicePitch > 0xFFFFFFFF
-         || rowPitch > 0xFFFFFFFF )
+    if ( slicePitch > UINT32_MAX
+         || rowPitch > UINT32_MAX )
         return E_FAIL;
-#endif
 
     if ( IsCompressed( metadata.format ) )
     {
@@ -666,10 +656,8 @@ HRESULT _EncodeDDSHeader( const TexMetadata& metadata, DWORD flags,
         ext->dxgiFormat = metadata.format;
         ext->resourceDimension = metadata.dimension;
 
-#ifdef _M_X64
-        if ( metadata.arraySize > 0xFFFFFFFF )
+        if ( metadata.arraySize > UINT32_MAX )
             return E_INVALIDARG;
-#endif
 
         static_assert( TEX_MISC_TEXTURECUBE == DDS_RESOURCE_MISC_TEXTURECUBE, "DDS header mismatch");
         

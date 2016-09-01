@@ -120,10 +120,8 @@ HRESULT PremultiplyAlpha( const Image& srcImage, DWORD flags, ScratchImage& imag
          || !HasAlpha(srcImage.format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-#ifdef _M_X64
-    if ( (srcImage.width > 0xFFFFFFFF) || (srcImage.height > 0xFFFFFFFF) )
+    if ( (srcImage.width > UINT32_MAX) || (srcImage.height > UINT32_MAX) )
         return E_INVALIDARG;
-#endif
 
     HRESULT hr = image.Initialize2D( srcImage.format, srcImage.width, srcImage.height, 1, 1 );
     if ( FAILED(hr) )
@@ -163,10 +161,8 @@ HRESULT PremultiplyAlpha( const Image* srcImages, size_t nimages, const TexMetad
          || !HasAlpha(metadata.format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-#ifdef _M_X64
-    if ( (metadata.width > 0xFFFFFFFF) || (metadata.height > 0xFFFFFFFF) )
+    if ( (metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX) )
         return E_INVALIDARG;
-#endif
 
     if ( metadata.IsPMAlpha() )
     {
@@ -202,10 +198,9 @@ HRESULT PremultiplyAlpha( const Image* srcImages, size_t nimages, const TexMetad
             return E_FAIL;
         }
 
-#ifdef _M_X64
-        if ( (src.width > 0xFFFFFFFF) || (src.height > 0xFFFFFFFF) )
+        if ( (src.width > UINT32_MAX) || (src.height > UINT32_MAX) )
             return E_FAIL;
-#endif
+
         const Image& dst = dest[ index ];
         assert( dst.format == metadata.format );
 

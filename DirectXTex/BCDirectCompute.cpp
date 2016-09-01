@@ -183,10 +183,8 @@ HRESULT GPUCompressBC::Prepare( size_t width, size_t height, DXGI_FORMAT format,
     if ( !width || !height || alphaWeight < 0.f )
         return E_INVALIDARG;
 
-#ifdef _M_X64
-    if ( (width > 0xFFFFFFFF) || (height > 0xFFFFFFFF) )
+    if ( (width > UINT32_MAX) || (height > UINT32_MAX) )
         return E_INVALIDARG;
-#endif
 
     m_width = width;
     m_height = height;

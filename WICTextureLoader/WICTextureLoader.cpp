@@ -68,7 +68,7 @@ namespace
         DXGI_FORMAT         format;
     };
 
-    const WICTranslate g_WICFormats[] = 
+    const WICTranslate g_WICFormats[] =
     {
         { GUID_WICPixelFormat128bppRGBAFloat,       DXGI_FORMAT_R32G32B32A32_FLOAT },
 
@@ -103,7 +103,7 @@ namespace
         GUID        target;
     };
 
-    const WICConvert g_WICConvert[] = 
+    const WICConvert g_WICConvert[] =
     {
         // Note target GUID in this conversion table must be one of those directly supported formats (above).
 
@@ -154,11 +154,11 @@ namespace
         { GUID_WICPixelFormat40bppCMYKAlpha,        GUID_WICPixelFormat64bppRGBA }, // DXGI_FORMAT_R16G16B16A16_UNORM
         { GUID_WICPixelFormat80bppCMYKAlpha,        GUID_WICPixelFormat64bppRGBA }, // DXGI_FORMAT_R16G16B16A16_UNORM
 
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+    #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         { GUID_WICPixelFormat32bppRGB,              GUID_WICPixelFormat32bppRGBA }, // DXGI_FORMAT_R8G8B8A8_UNORM
         { GUID_WICPixelFormat64bppRGB,              GUID_WICPixelFormat64bppRGBA }, // DXGI_FORMAT_R16G16B16A16_UNORM
         { GUID_WICPixelFormat64bppPRGBAHalf,        GUID_WICPixelFormat64bppRGBAHalf }, // DXGI_FORMAT_R16G16B16A16_FLOAT 
-#endif
+    #endif
 
         // We don't support n-channel formats
     };
@@ -173,49 +173,56 @@ namespace
         if ( s_Factory )
             return s_Factory;
 
-#if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
-        HRESULT hr = CoCreateInstance(
-            CLSID_WICImagingFactory2,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            __uuidof(IWICImagingFactory2),
-            (LPVOID*)&s_Factory
-            );
+        static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
-        if ( SUCCEEDED(hr) )
-        {
-            // WIC2 is available on Windows 8 and Windows 7 SP1 with KB 2670838 installed
-            g_WIC2 = true;
-        }
-        else
-        {
-            hr = CoCreateInstance(
-                CLSID_WICImagingFactory1,
-                nullptr,
-                CLSCTX_INPROC_SERVER,
-                IID_PPV_ARGS(&s_Factory)
-                );
-
-            if ( FAILED(hr) )
+        InitOnceExecuteOnce(&s_initOnce,
+            [](PINIT_ONCE, PVOID, PVOID *) -> BOOL
             {
-                s_Factory = nullptr;
-                return nullptr;
-            }
-        }
-#else
-        HRESULT hr = CoCreateInstance(
-            CLSID_WICImagingFactory,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            IID_PPV_ARGS(&s_Factory)
-            );
+            #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+                HRESULT hr = CoCreateInstance(
+                    CLSID_WICImagingFactory2,
+                    nullptr,
+                    CLSCTX_INPROC_SERVER,
+                    __uuidof(IWICImagingFactory2),
+                    (LPVOID*)&s_Factory
+                    );
 
-        if ( FAILED(hr) )
-        {
-            s_Factory = nullptr;
-            return nullptr;
-        }
-#endif
+                if ( SUCCEEDED(hr) )
+                {
+                    // WIC2 is available on Windows 10, Windows 8.x, and Windows 7 SP1 with KB 2670838 installed
+                    g_WIC2 = true;
+                }
+                else
+                {
+                    hr = CoCreateInstance(
+                        CLSID_WICImagingFactory1,
+                        nullptr,
+                        CLSCTX_INPROC_SERVER,
+                        IID_PPV_ARGS(&s_Factory)
+                        );
+
+                    if ( FAILED(hr) )
+                    {
+                        s_Factory = nullptr;
+                        return FALSE;
+                    }
+                }
+            #else
+                HRESULT hr = CoCreateInstance(
+                    CLSID_WICImagingFactory,
+                    nullptr,
+                    CLSCTX_INPROC_SERVER,
+                    IID_PPV_ARGS(&s_Factory)
+                    );
+
+                if ( FAILED(hr) )
+                {
+                    s_Factory = nullptr;
+                    return FALSE;
+                }
+            #endif
+                return TRUE;
+            }, nullptr, nullptr);
 
         return s_Factory;
     }
@@ -229,13 +236,13 @@ namespace
                 return g_WICFormats[i].format;
         }
 
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+    #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         if ( g_WIC2 )
         {
             if ( memcmp( &GUID_WICPixelFormat96bppRGBFloat, &guid, sizeof(GUID) ) == 0 )
                 return DXGI_FORMAT_R32G32B32_FLOAT;
         }
-#endif
+    #endif
 
         return DXGI_FORMAT_UNKNOWN;
     }
@@ -391,14 +398,14 @@ namespace
         {
             if ( memcmp( &GUID_WICPixelFormat96bppRGBFixedPoint, &pixelFormat, sizeof(WICPixelFormatGUID) ) == 0 )
             {
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+    #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
                 if ( g_WIC2 )
                 {
                     memcpy( &convertGUID, &GUID_WICPixelFormat96bppRGBFloat, sizeof(WICPixelFormatGUID) );
                     format = DXGI_FORMAT_R32G32B32_FLOAT;
                 }
                 else
-#endif
+    #endif
                 {
                     memcpy( &convertGUID, &GUID_WICPixelFormat128bppRGBAFloat, sizeof(WICPixelFormatGUID) );
                     format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -428,7 +435,7 @@ namespace
             bpp = _WICBitsPerPixel( pixelFormat );
         }
 
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+    #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         if ( (format == DXGI_FORMAT_R32G32B32_FLOAT) && d3dContext != 0 && textureView != 0 )
         {
             // Special case test for optional device support for autogen mipchains for R32G32B32_FLOAT 
@@ -442,7 +449,7 @@ namespace
                 bpp = 128;
             }
         }
-#endif
+    #endif
 
         if ( !bpp )
             return E_FAIL;
@@ -753,10 +760,8 @@ HRESULT DirectX::CreateWICTextureFromMemoryEx( ID3D11Device* d3dDevice,
     if ( !wicDataSize )
         return E_FAIL;
 
-#ifdef _M_AMD64
-    if ( wicDataSize > 0xFFFFFFFF )
+    if ( wicDataSize > UINT32_MAX )
         return HRESULT_FROM_WIN32( ERROR_FILE_TOO_LARGE );
-#endif
 
     IWICImagingFactory* pWIC = _GetWIC();
     if ( !pWIC )

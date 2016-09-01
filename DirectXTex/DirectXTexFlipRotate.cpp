@@ -138,10 +138,8 @@ HRESULT FlipRotate( const Image& srcImage, DWORD flags, ScratchImage& image )
     if ( !flags )
         return E_INVALIDARG;
 
-#ifdef _M_X64
-    if ( (srcImage.width > 0xFFFFFFFF) || (srcImage.height > 0xFFFFFFFF) )
+    if ( (srcImage.width > UINT32_MAX) || (srcImage.height > UINT32_MAX) )
         return E_INVALIDARG;
-#endif
 
     if ( IsCompressed( srcImage.format ) )
     {
@@ -283,10 +281,8 @@ HRESULT FlipRotate( const Image* srcImages, size_t nimages, const TexMetadata& m
             return E_FAIL;
         }
 
-#ifdef _M_X64
-        if ( (src.width > 0xFFFFFFFF) || (src.height > 0xFFFFFFFF) )
+        if ( (src.width > UINT32_MAX) || (src.height > UINT32_MAX) )
             return E_FAIL;
-#endif
 
         const Image& dst = dest[ index ];
         assert( dst.format == metadata.format );

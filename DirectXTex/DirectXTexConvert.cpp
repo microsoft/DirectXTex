@@ -4531,10 +4531,8 @@ HRESULT Convert( const Image& srcImage, DXGI_FORMAT format, DWORD filter, float 
          || IsTypeless(srcImage.format) || IsTypeless(format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-#ifdef _M_X64
-    if ( (srcImage.width > 0xFFFFFFFF) || (srcImage.height > 0xFFFFFFFF) )
+    if ( (srcImage.width > UINT32_MAX) || (srcImage.height > UINT32_MAX) )
         return E_INVALIDARG;
-#endif
 
     HRESULT hr = image.Initialize2D( format, srcImage.width, srcImage.height, 1, 1 );
     if ( FAILED(hr) )
@@ -4583,10 +4581,8 @@ HRESULT Convert( const Image* srcImages, size_t nimages, const TexMetadata& meta
          || IsTypeless(metadata.format) || IsTypeless(format) )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-#ifdef _M_X64
-    if ( (metadata.width > 0xFFFFFFFF) || (metadata.height > 0xFFFFFFFF) )
+    if ( (metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX) )
         return E_INVALIDARG;
-#endif
 
     TexMetadata mdata2 = metadata;
     mdata2.format = format;
@@ -4623,10 +4619,8 @@ HRESULT Convert( const Image* srcImages, size_t nimages, const TexMetadata& meta
                 return E_FAIL;
             }
 
-#ifdef _M_X64
-            if ( (src.width > 0xFFFFFFFF) || (src.height > 0xFFFFFFFF) )
+            if ( (src.width > UINT32_MAX) || (src.height > UINT32_MAX) )
                 return E_FAIL;
-#endif
 
             const Image& dst = dest[ index ];
             assert( dst.format == format );
@@ -4672,10 +4666,8 @@ HRESULT Convert( const Image* srcImages, size_t nimages, const TexMetadata& meta
                         return E_FAIL;
                     }
 
-#ifdef _M_X64
-                    if ( (src.width > 0xFFFFFFFF) || (src.height > 0xFFFFFFFF) )
+                    if ( (src.width > UINT32_MAX) || (src.height > UINT32_MAX) )
                         return E_FAIL;
-#endif
 
                     const Image& dst = dest[ index ];
                     assert( dst.format == format );
@@ -4732,10 +4724,8 @@ HRESULT ConvertToSinglePlane( const Image& srcImage, ScratchImage& image )
     if ( format == DXGI_FORMAT_UNKNOWN )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-#ifdef _M_X64
-    if ( (srcImage.width > 0xFFFFFFFF) || (srcImage.height > 0xFFFFFFFF) )
+    if ( (srcImage.width > UINT32_MAX) || (srcImage.height > UINT32_MAX) )
         return E_INVALIDARG;
-#endif
 
     HRESULT hr = image.Initialize2D( format, srcImage.width, srcImage.height, 1, 1 );
     if ( FAILED(hr) )
@@ -4779,10 +4769,8 @@ HRESULT ConvertToSinglePlane( const Image* srcImages, size_t nimages, const TexM
     if ( format == DXGI_FORMAT_UNKNOWN )
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
-#ifdef _M_X64
-    if ( (metadata.width > 0xFFFFFFFF) || (metadata.height > 0xFFFFFFFF) )
+    if ( (metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX) )
         return E_INVALIDARG;
-#endif
 
     TexMetadata mdata2 = metadata;
     mdata2.format = format;
@@ -4812,10 +4800,8 @@ HRESULT ConvertToSinglePlane( const Image* srcImages, size_t nimages, const TexM
             return E_FAIL;
         }
 
-#ifdef _M_X64
-        if ( (src.width > 0xFFFFFFFF) || (src.height > 0xFFFFFFFF) )
+        if ( (src.width > UINT32_MAX) || (src.height > UINT32_MAX) )
             return E_FAIL;
-#endif
 
         const Image& dst = dest[ index ];
         assert( dst.format == format );

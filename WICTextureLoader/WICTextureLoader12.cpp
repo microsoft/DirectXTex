@@ -154,16 +154,24 @@ namespace
         if (s_Factory)
             return s_Factory;
 
-        HRESULT hr = CoCreateInstance(
-            CLSID_WICImagingFactory2,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            IID_PPV_ARGS(&s_Factory));
-        if (FAILED(hr))
-        {
-            s_Factory = nullptr;
-            return nullptr;
-        }
+        static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
+
+        InitOnceExecuteOnce(&s_initOnce,
+            [](PINIT_ONCE, PVOID, PVOID *) -> BOOL
+            {
+                HRESULT hr = CoCreateInstance(
+                    CLSID_WICImagingFactory2,
+                    nullptr,
+                    CLSCTX_INPROC_SERVER,
+                    IID_PPV_ARGS(&s_Factory));
+                if (FAILED(hr))
+                {
+                    s_Factory = nullptr;
+                    return FALSE;
+                }
+                return TRUE;
+            }, nullptr, nullptr);
+
         return s_Factory;
     }
 
@@ -581,10 +589,8 @@ HRESULT DirectX::LoadWICTextureFromMemoryEx(
     if ( !wicDataSize )
         return E_FAIL;
 
-#ifdef _M_AMD64
-    if ( wicDataSize > 0xFFFFFFFF )
+    if ( wicDataSize > UINT32_MAX )
         return HRESULT_FROM_WIN32( ERROR_FILE_TOO_LARGE );
-#endif
 
     auto pWIC = _GetWIC();
     if ( !pWIC )

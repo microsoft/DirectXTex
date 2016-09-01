@@ -645,10 +645,8 @@ static HRESULT _EncodeImage( _In_ const Image& image, _In_ DWORD flags, _In_ REF
     if ( FAILED(hr) )
         return hr;
 
-#ifdef _M_X64
-    if ( (image.width > 0xFFFFFFFF) || (image.height > 0xFFFFFFFF) )
+    if ( (image.width > UINT32_MAX) || (image.height > UINT32_MAX) )
         return E_INVALIDARG;
-#endif
 
     hr = frame->SetSize( static_cast<UINT>( image.width ), static_cast<UINT>( image.height ) );
     if ( FAILED(hr) )
@@ -862,10 +860,8 @@ HRESULT GetMetadataFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, Tex
     if ( !pSource || size == 0 )
         return E_INVALIDARG;
 
-#ifdef _M_X64
-    if ( size > 0xFFFFFFFF )
+    if ( size > UINT32_MAX )
         return HRESULT_FROM_WIN32( ERROR_FILE_TOO_LARGE );
-#endif
 
     bool iswic2 = false;
     IWICImagingFactory* pWIC = GetWICFactory(iswic2);
@@ -946,10 +942,8 @@ HRESULT LoadFromWICMemory( LPCVOID pSource, size_t size, DWORD flags, TexMetadat
     if ( !pSource || size == 0 )
         return E_INVALIDARG;
 
-#ifdef _M_X64
-    if ( size > 0xFFFFFFFF )
+    if ( size > UINT32_MAX )
         return HRESULT_FROM_WIN32( ERROR_FILE_TOO_LARGE );
-#endif
 
     bool iswic2 = false;
     IWICImagingFactory* pWIC = GetWICFactory(iswic2);

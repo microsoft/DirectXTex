@@ -405,11 +405,9 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
     if ( !metadata.mipLevels || !metadata.arraySize )
         return E_INVALIDARG;
 
-#ifdef _M_X64
-    if ( (metadata.width > 0xFFFFFFFF) || (metadata.height > 0xFFFFFFFF)
-         || (metadata.mipLevels > 0xFFFFFFFF) || (metadata.arraySize > 0xFFFFFFFF) )
+    if ( (metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX)
+         || (metadata.mipLevels > UINT32_MAX) || (metadata.arraySize > UINT32_MAX) )
         return E_INVALIDARG;
-#endif
 
     std::unique_ptr<D3D11_SUBRESOURCE_DATA[]> initData( new (std::nothrow) D3D11_SUBRESOURCE_DATA[ metadata.mipLevels * metadata.arraySize ] );
     if ( !initData )
@@ -422,10 +420,8 @@ HRESULT CreateTextureEx( ID3D11Device* pDevice, const Image* srcImages, size_t n
         if ( !metadata.depth )
             return E_INVALIDARG;
 
-#ifdef _M_X64
-        if ( metadata.depth > 0xFFFFFFFF )
+        if ( metadata.depth > UINT32_MAX )
             return E_INVALIDARG;
-#endif
 
         if ( metadata.arraySize > 1 )
             // Direct3D 11 doesn't support arrays of 3D textures

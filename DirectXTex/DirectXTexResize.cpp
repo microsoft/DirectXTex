@@ -833,13 +833,11 @@ HRESULT Resize( const Image& srcImage, size_t width, size_t height, DWORD filter
     if ( width == 0 || height == 0 )
         return E_INVALIDARG;
 
-#ifdef _M_X64
-    if ( (srcImage.width > 0xFFFFFFFF) || (srcImage.height > 0xFFFFFFFF) )
+    if ( (srcImage.width > UINT32_MAX) || (srcImage.height > UINT32_MAX) )
         return E_INVALIDARG;
 
-    if ( (width > 0xFFFFFFFF) || (height > 0xFFFFFFFF) )
+    if ( (width > UINT32_MAX) || (height > UINT32_MAX) )
         return E_INVALIDARG;
-#endif
 
     if ( !srcImage.pixels )
         return E_POINTER;
@@ -897,10 +895,8 @@ HRESULT Resize( const Image* srcImages, size_t nimages, const TexMetadata& metad
     if ( !srcImages || !nimages || width == 0 || height == 0 )
         return E_INVALIDARG;
 
-#ifdef _M_X64
-    if ( (width > 0xFFFFFFFF) || (height > 0xFFFFFFFF) )
+    if ( (width > UINT32_MAX) || (height > UINT32_MAX) )
         return E_INVALIDARG;
-#endif
 
     TexMetadata mdata2 = metadata;
     mdata2.width = width;
@@ -944,13 +940,11 @@ HRESULT Resize( const Image* srcImages, size_t nimages, const TexMetadata& metad
                 return E_FAIL;
             }
 
-#ifdef _M_X64
-            if ( (srcimg->width > 0xFFFFFFFF) || (srcimg->height > 0xFFFFFFFF) )
+            if ( (srcimg->width > UINT32_MAX) || (srcimg->height > UINT32_MAX) )
             {
                 result.Release();
                 return E_FAIL;
             }
-#endif
 
             if ( usewic )
             {
@@ -1005,13 +999,11 @@ HRESULT Resize( const Image* srcImages, size_t nimages, const TexMetadata& metad
                 return E_FAIL;
             }
 
-#ifdef _M_X64
-            if ( (srcimg->width > 0xFFFFFFFF) || (srcimg->height > 0xFFFFFFFF) )
+            if ( (srcimg->width > UINT32_MAX) || (srcimg->height > UINT32_MAX) )
             {
                 result.Release();
                 return E_FAIL;
             }
-#endif
 
             if ( usewic )
             {

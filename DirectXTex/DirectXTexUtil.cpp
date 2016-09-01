@@ -237,53 +237,59 @@ IWICImagingFactory* GetWICFactory(bool& iswic2)
         return g_Factory;
     }
 
+    static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce(&s_initOnce,
+        [](PINIT_ONCE, PVOID, PVOID *) -> BOOL
+        {
 #if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
-    HRESULT hr = CoCreateInstance(
-        CLSID_WICImagingFactory2,
-        nullptr,
-        CLSCTX_INPROC_SERVER,
-        __uuidof(IWICImagingFactory2),
-        (LPVOID*)&g_Factory
-        );
-
-    if (SUCCEEDED(hr))
-    {
-        // WIC2 is available on Windows 8 and Windows 7 SP1 with KB 2670838 installed
-        g_WIC2 = true;
-    }
-    else
-    {
-        g_WIC2 = false;
-
-        hr = CoCreateInstance(
-            CLSID_WICImagingFactory1,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            IID_PPV_ARGS(&g_Factory)
+            HRESULT hr = CoCreateInstance(
+                CLSID_WICImagingFactory2,
+                nullptr,
+                CLSCTX_INPROC_SERVER,
+                __uuidof(IWICImagingFactory2),
+                (LPVOID*)&g_Factory
             );
 
-        if (FAILED(hr))
-        {
-            g_Factory = nullptr;
-            return nullptr;
-        }
-    }
+            if (SUCCEEDED(hr))
+            {
+                // WIC2 is available on Windows 8 and Windows 7 SP1 with KB 2670838 installed
+                g_WIC2 = true;
+            }
+            else
+            {
+                g_WIC2 = false;
+
+                hr = CoCreateInstance(
+                    CLSID_WICImagingFactory1,
+                    nullptr,
+                    CLSCTX_INPROC_SERVER,
+                    IID_PPV_ARGS(&g_Factory)
+                );
+
+                if (FAILED(hr))
+                {
+                    g_Factory = nullptr;
+                    return FALSE;
+                }
+            }
 #else
-    HRESULT hr = CoCreateInstance(
-        CLSID_WICImagingFactory,
-        nullptr,
-        CLSCTX_INPROC_SERVER,
-        IID_PPV_ARGS(&g_Factory)
-        );
+            HRESULT hr = CoCreateInstance(
+                CLSID_WICImagingFactory,
+                nullptr,
+                CLSCTX_INPROC_SERVER,
+                IID_PPV_ARGS(&g_Factory)
+            );
 
-    g_WIC2 = false;
+            g_WIC2 = false;
 
-    if (FAILED(hr))
-    {
-        g_Factory = nullptr;
-        return nullptr;
-    }
+            if (FAILED(hr))
+            {
+                g_Factory = nullptr;
+                return FALSE;
+            }
 #endif
+            return TRUE;
+        }, nullptr, nullptr);
 
     iswic2 = g_WIC2;
     return g_Factory;
