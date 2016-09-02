@@ -149,13 +149,9 @@ namespace
 
     IWICImagingFactory2* _GetWIC()
     {
-        static ComPtr<IWICImagingFactory2> s_Factory;
-
-        if ( s_Factory )
-            return s_Factory.Get();
-
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
+        IWICImagingFactory2* factory = nullptr;
         (void)InitOnceExecuteOnce(&s_initOnce,
             [](PINIT_ONCE, PVOID, PVOID *factory) -> BOOL
             {
@@ -165,9 +161,9 @@ namespace
                     CLSCTX_INPROC_SERVER,
                     __uuidof(IWICImagingFactory2),
                     factory) ) ? TRUE : FALSE;
-            }, nullptr, reinterpret_cast<LPVOID*>(s_Factory.GetAddressOf()));
+            }, nullptr, reinterpret_cast<LPVOID*>(&factory));
 
-        return s_Factory.Get();
+        return factory;
     }
 
     //---------------------------------------------------------------------------------
