@@ -1069,7 +1069,10 @@ static HRESULT _CopyImage( _In_reads_bytes_(size) const void* pPixels, _In_ size
         return E_FAIL;
     }
 
-    assert( pixelSize <= size );
+    if (pixelSize > size)
+    {
+        return E_FAIL;
+    }
 
     std::unique_ptr<Image[]> timages( new (std::nothrow) Image[nimages] );
     if ( !timages )
