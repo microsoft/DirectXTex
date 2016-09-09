@@ -175,40 +175,40 @@ namespace DirectX
 
     void __cdecl _CopyScanline( _When_(pDestination == pSource, _Inout_updates_bytes_(outSize))
                                 _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
-                                LPVOID pDestination, _In_ size_t outSize, 
-                                _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
+                                    void* pDestination, _In_ size_t outSize,
+                                _In_reads_bytes_(inSize) const void* pSource, _In_ size_t inSize,
                                 _In_ DXGI_FORMAT format, _In_ DWORD flags );
 
     void __cdecl _SwizzleScanline( _When_(pDestination == pSource, _In_)
                                    _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
-                                   LPVOID pDestination, _In_ size_t outSize, 
-                                   _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
+                                        void* pDestination, _In_ size_t outSize,
+                                   _In_reads_bytes_(inSize) const void* pSource, _In_ size_t inSize,
                                    _In_ DXGI_FORMAT format, _In_ DWORD flags );
  
     _Success_(return != false)
-    bool __cdecl _ExpandScanline( _Out_writes_bytes_(outSize) LPVOID pDestination, _In_ size_t outSize,
+    bool __cdecl _ExpandScanline( _Out_writes_bytes_(outSize) void* pDestination, _In_ size_t outSize,
                                   _In_ DXGI_FORMAT outFormat, 
-                                  _In_reads_bytes_(inSize) LPCVOID pSource, _In_ size_t inSize,
+                                  _In_reads_bytes_(inSize) const void* pSource, _In_ size_t inSize,
                                   _In_ DXGI_FORMAT inFormat, _In_ DWORD flags );
 
     _Success_(return != false)
     bool __cdecl _LoadScanline( _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,
-                                _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DXGI_FORMAT format );
+                                _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DXGI_FORMAT format );
 
     _Success_(return != false)
     bool __cdecl _LoadScanlineLinear( _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,
-                                      _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DXGI_FORMAT format, _In_ DWORD flags  );
+                                      _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DXGI_FORMAT format, _In_ DWORD flags  );
 
     _Success_(return != false)
-    bool __cdecl _StoreScanline( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
+    bool __cdecl _StoreScanline( void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
                                  _In_reads_(count) const XMVECTOR* pSource, _In_ size_t count, _In_ float threshold = 0 );
 
     _Success_(return != false)
-    bool __cdecl _StoreScanlineLinear( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
+    bool __cdecl _StoreScanlineLinear( void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
                                        _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ DWORD flags, _In_ float threshold = 0 );
 
     _Success_(return != false)
-    bool __cdecl _StoreScanlineDither( LPVOID pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
+    bool __cdecl _StoreScanlineDither( void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
                                        _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ float threshold, size_t y, size_t z,
                                        _Inout_updates_all_opt_(count+2) XMVECTOR* pDiffusionErrors );
 
@@ -225,6 +225,6 @@ namespace DirectX
     //---------------------------------------------------------------------------------
     // DDS helper functions
     HRESULT __cdecl _EncodeDDSHeader( _In_ const TexMetadata& metadata, DWORD flags,
-                                      _Out_writes_bytes_to_opt_(maxsize, required) LPVOID pDestination, _In_ size_t maxsize, _Out_ size_t& required );
+                                      _Out_writes_bytes_to_opt_(maxsize, required) void* pDestination, _In_ size_t maxsize, _Out_ size_t& required );
 
 }; // namespace

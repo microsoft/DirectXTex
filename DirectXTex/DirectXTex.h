@@ -33,7 +33,7 @@
 
 #include <ocidl.h>
 
-#define DIRECTX_TEX_VERSION 134
+#define DIRECTX_TEX_VERSION 140
 
 struct IWICImagingFactory;
 struct IWICMetadataQueryReader;
@@ -204,21 +204,21 @@ namespace DirectX
             // Filtering mode to use for any required image resizing (only needed when loading arrays of differently sized images; defaults to Fant)
     };
 
-    HRESULT __cdecl GetMetadataFromDDSMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
+    HRESULT __cdecl GetMetadataFromDDSMemory( _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DWORD flags,
                                               _Out_ TexMetadata& metadata );
-    HRESULT __cdecl GetMetadataFromDDSFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
+    HRESULT __cdecl GetMetadataFromDDSFile( _In_z_ const wchar_t* szFile, _In_ DWORD flags,
                                             _Out_ TexMetadata& metadata );
 
-    HRESULT __cdecl GetMetadataFromTGAMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size,
+    HRESULT __cdecl GetMetadataFromTGAMemory( _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
                                               _Out_ TexMetadata& metadata );
-    HRESULT __cdecl GetMetadataFromTGAFile( _In_z_ LPCWSTR szFile,
+    HRESULT __cdecl GetMetadataFromTGAFile( _In_z_ const wchar_t* szFile,
                                             _Out_ TexMetadata& metadata );
 
-    HRESULT __cdecl GetMetadataFromWICMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
+    HRESULT __cdecl GetMetadataFromWICMemory( _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DWORD flags,
                                               _Out_ TexMetadata& metadata,
                                               _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 
-    HRESULT __cdecl GetMetadataFromWICFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
+    HRESULT __cdecl GetMetadataFromWICFile( _In_z_ const wchar_t* szFile, _In_ DWORD flags,
                                             _Out_ TexMetadata& metadata,
                                             _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 
@@ -238,12 +238,15 @@ namespace DirectX
     {
     public:
         ScratchImage()
-            : _nimages(0), _size(0), _image(nullptr), _memory(nullptr) {}
+            : m_nimages(0), m_size(0), m_image(nullptr), m_memory(nullptr) {}
         ScratchImage(ScratchImage&& moveFrom)
-            : _nimages(0), _size(0), _image(nullptr), _memory(nullptr) { *this = std::move(moveFrom); }
+            : m_nimages(0), m_size(0), m_image(nullptr), m_memory(nullptr) { *this = std::move(moveFrom); }
         ~ScratchImage() { Release(); }
 
         ScratchImage& __cdecl operator= (ScratchImage&& moveFrom);
+
+        ScratchImage(const ScratchImage&) = delete;
+        ScratchImage& operator=(const ScratchImage&) = delete;
 
         HRESULT __cdecl Initialize( _In_ const TexMetadata& mdata, _In_ DWORD flags = CP_FLAGS_NONE );
 
@@ -261,27 +264,23 @@ namespace DirectX
 
         bool __cdecl OverrideFormat( _In_ DXGI_FORMAT f );
 
-        const TexMetadata& __cdecl GetMetadata() const { return _metadata; }
+        const TexMetadata& __cdecl GetMetadata() const { return m_metadata; }
         const Image* __cdecl GetImage(_In_ size_t mip, _In_ size_t item, _In_ size_t slice) const;
 
-        const Image* __cdecl GetImages() const { return _image; }
-        size_t __cdecl GetImageCount() const { return _nimages; }
+        const Image* __cdecl GetImages() const { return m_image; }
+        size_t __cdecl GetImageCount() const { return m_nimages; }
 
-        uint8_t* __cdecl GetPixels() const { return _memory; }
-        size_t __cdecl GetPixelsSize() const { return _size; }
+        uint8_t* __cdecl GetPixels() const { return m_memory; }
+        size_t __cdecl GetPixelsSize() const { return m_size; }
 
         bool __cdecl IsAlphaAllOpaque() const;
 
     private:
-        size_t      _nimages;
-        size_t      _size;
-        TexMetadata _metadata;
-        Image*      _image;
-        uint8_t*    _memory;
-
-        // Hide copy constructor and assignment operator
-        ScratchImage( const ScratchImage& );
-        ScratchImage& operator=( const ScratchImage& );
+        size_t      m_nimages;
+        size_t      m_size;
+        TexMetadata m_metadata;
+        Image*      m_image;
+        uint8_t*    m_memory;
     };
 
     //---------------------------------------------------------------------------------
@@ -289,35 +288,34 @@ namespace DirectX
     class Blob
     {
     public:
-        Blob() : _buffer(nullptr), _size(0) {}
-        Blob(Blob&& moveFrom) : _buffer(nullptr), _size(0) { *this = std::move(moveFrom); }
+        Blob() : m_buffer(nullptr), m_size(0) {}
+        Blob(Blob&& moveFrom) : m_buffer(nullptr), m_size(0) { *this = std::move(moveFrom); }
         ~Blob() { Release(); }
 
         Blob& __cdecl operator= (Blob&& moveFrom);
+
+        Blob(const Blob&) = delete;
+        Blob& operator=(const Blob&) = delete;
 
         HRESULT __cdecl Initialize( _In_ size_t size );
 
         void __cdecl Release();
 
-        void *__cdecl GetBufferPointer() const { return _buffer; }
-        size_t __cdecl GetBufferSize() const { return _size; }
+        void *__cdecl GetBufferPointer() const { return m_buffer; }
+        size_t __cdecl GetBufferSize() const { return m_size; }
 
     private:
-        void*   _buffer;
-        size_t  _size;
-
-        // Hide copy constructor and assignment operator
-        Blob( const Blob& );
-        Blob& operator=( const Blob& );
+        void*   m_buffer;
+        size_t  m_size;
     };
 
     //---------------------------------------------------------------------------------
     // Image I/O
 
     // DDS operations
-    HRESULT __cdecl LoadFromDDSMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
+    HRESULT __cdecl LoadFromDDSMemory( _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DWORD flags,
                                        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
-    HRESULT __cdecl LoadFromDDSFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
+    HRESULT __cdecl LoadFromDDSFile( _In_z_ const wchar_t* szFile, _In_ DWORD flags,
                                      _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
 
     HRESULT __cdecl SaveToDDSMemory( _In_ const Image& image, _In_ DWORD flags,
@@ -325,23 +323,23 @@ namespace DirectX
     HRESULT __cdecl SaveToDDSMemory( _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags,
                                      _Out_ Blob& blob );
 
-    HRESULT __cdecl SaveToDDSFile( _In_ const Image& image, _In_ DWORD flags, _In_z_ LPCWSTR szFile );
-    HRESULT __cdecl SaveToDDSFile( _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags, _In_z_ LPCWSTR szFile );
+    HRESULT __cdecl SaveToDDSFile( _In_ const Image& image, _In_ DWORD flags, _In_z_ const wchar_t* szFile );
+    HRESULT __cdecl SaveToDDSFile( _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags, _In_z_ const wchar_t* szFile );
 
     // TGA operations
-    HRESULT __cdecl LoadFromTGAMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size,
+    HRESULT __cdecl LoadFromTGAMemory( _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
                                        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
-    HRESULT __cdecl LoadFromTGAFile( _In_z_ LPCWSTR szFile,
+    HRESULT __cdecl LoadFromTGAFile( _In_z_ const wchar_t* szFile,
                                      _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
 
     HRESULT __cdecl SaveToTGAMemory( _In_ const Image& image, _Out_ Blob& blob );
-    HRESULT __cdecl SaveToTGAFile( _In_ const Image& image, _In_z_ LPCWSTR szFile );
+    HRESULT __cdecl SaveToTGAFile( _In_ const Image& image, _In_z_ const wchar_t* szFile );
 
     // WIC operations
-    HRESULT __cdecl LoadFromWICMemory( _In_reads_bytes_(size) LPCVOID pSource, _In_ size_t size, _In_ DWORD flags,
+    HRESULT __cdecl LoadFromWICMemory( _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DWORD flags,
                                        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
                                        _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
-    HRESULT __cdecl LoadFromWICFile( _In_z_ LPCWSTR szFile, _In_ DWORD flags,
+    HRESULT __cdecl LoadFromWICFile( _In_z_ const wchar_t* szFile, _In_ DWORD flags,
                                     _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
                                     _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 
@@ -353,10 +351,10 @@ namespace DirectX
                                      _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr );
 
     HRESULT __cdecl SaveToWICFile( _In_ const Image& image, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
-                                   _In_z_ LPCWSTR szFile, _In_opt_ const GUID* targetFormat = nullptr,
+                                   _In_z_ const wchar_t* szFile, _In_opt_ const GUID* targetFormat = nullptr,
                                    _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr );
     HRESULT __cdecl SaveToWICFile( _In_count_(nimages) const Image* images, _In_ size_t nimages, _In_ DWORD flags, _In_ REFGUID guidContainerFormat,
-                                   _In_z_ LPCWSTR szFile, _In_opt_ const GUID* targetFormat = nullptr,
+                                   _In_z_ const wchar_t* szFile, _In_opt_ const GUID* targetFormat = nullptr,
                                    _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr );
 
     //---------------------------------------------------------------------------------

@@ -63,36 +63,36 @@ struct LinearFilter
     float   weight1;
 };
 
-inline void _CreateLinearFilter( _In_ size_t source, _In_ size_t dest, _In_ bool wrap, _Out_writes_(dest) LinearFilter* lf )
+inline void _CreateLinearFilter(_In_ size_t source, _In_ size_t dest, _In_ bool wrap, _Out_writes_(dest) LinearFilter* lf)
 {
-    assert( source > 0 );
-    assert( dest > 0 );
-    assert( lf != 0 );
+    assert(source > 0);
+    assert(dest > 0);
+    assert(lf != 0);
 
     float scale = float(source) / float(dest);
 
     // Mirror is the same case as clamp for linear
 
-    for( size_t u = 0; u < dest; ++u )
+    for (size_t u = 0; u < dest; ++u)
     {
-        float srcB = ( float(u) + 0.5f ) * scale + 0.5f;
+        float srcB = (float(u) + 0.5f) * scale + 0.5f;
 
         ptrdiff_t isrcB = ptrdiff_t(srcB);
         ptrdiff_t isrcA = isrcB - 1;
-        
-        if ( isrcA < 0 )
+
+        if (isrcA < 0)
         {
-            isrcA = ( wrap ) ? ( source - 1) : 0;
+            isrcA = (wrap) ? (source - 1) : 0;
         }
 
-        if ( size_t(isrcB) >= source )
+        if (size_t(isrcB) >= source)
         {
-            isrcB = ( wrap ) ? 0 : ( source - 1);
+            isrcB = (wrap) ? 0 : (source - 1);
         }
 
         float weight = 1.0f + float(isrcB) - srcB;
 
-        auto& entry = lf[ u ];
+        auto& entry = lf[u];
         entry.u0 = size_t(isrcA);
         entry.weight0 = weight;
 
@@ -120,34 +120,34 @@ XMGLOBALCONST XMVECTORF32 g_cubicThird = { 1.f/3.f, 1.f/3.f, 1.f/3.f, 1.f/3.f };
 XMGLOBALCONST XMVECTORF32 g_cubicSixth = { 1.f/6.f, 1.f/6.f, 1.f/6.f, 1.f/6.f }; 
 XMGLOBALCONST XMVECTORF32 g_cubicHalf = { 1.f/2.f, 1.f/2.f, 1.f/2.f, 1.f/2.f };
 
-inline ptrdiff_t bounduvw( ptrdiff_t u, ptrdiff_t maxu, bool wrap, bool mirror )
+inline ptrdiff_t bounduvw(ptrdiff_t u, ptrdiff_t maxu, bool wrap, bool mirror)
 {
-    if ( wrap )
+    if (wrap)
     {
-        if ( u < 0 )
+        if (u < 0)
         {
             u = maxu + u + 1;
         }
-        else if ( u > maxu )
+        else if (u > maxu)
         {
             u = u - maxu - 1;
         }
     }
-    else if ( mirror )
+    else if (mirror)
     {
-        if ( u < 0 )
+        if (u < 0)
         {
-            u = ( -u ) - 1;
+            u = (-u) - 1;
         }
-        else if ( u > maxu )
+        else if (u > maxu)
         {
             u = maxu - (u - maxu - 1);
         }
     }
 
     // Handles clamp, but also a safety factor for degenerate images for wrap/mirror
-    u = std::min<ptrdiff_t>( u, maxu );
-    u = std::max<ptrdiff_t>( u, 0 );
+    u = std::min<ptrdiff_t>(u, maxu);
+    u = std::max<ptrdiff_t>(u, 0);
 
     return u;
 }
@@ -161,24 +161,24 @@ struct CubicFilter
     float   x;
 };
 
-inline void _CreateCubicFilter( _In_ size_t source, _In_ size_t dest, _In_ bool wrap, _In_ bool mirror, _Out_writes_(dest) CubicFilter* cf )
+inline void _CreateCubicFilter(_In_ size_t source, _In_ size_t dest, _In_ bool wrap, _In_ bool mirror, _Out_writes_(dest) CubicFilter* cf)
 {
-    assert( source > 0 );
-    assert( dest > 0 );
-    assert( cf != 0 );
+    assert(source > 0);
+    assert(dest > 0);
+    assert(cf != 0);
 
     float scale = float(source) / float(dest);
 
-    for( size_t u = 0; u < dest; ++u )
+    for (size_t u = 0; u < dest; ++u)
     {
-        float srcB = ( float(u) + 0.5f ) * scale - 0.5f;
+        float srcB = (float(u) + 0.5f) * scale - 0.5f;
 
-        ptrdiff_t isrcB = bounduvw( ptrdiff_t(srcB), source - 1, wrap, mirror );
-        ptrdiff_t isrcA = bounduvw( isrcB - 1, source - 1, wrap, mirror );
-        ptrdiff_t isrcC = bounduvw( isrcB + 1, source - 1, wrap, mirror );
-        ptrdiff_t isrcD = bounduvw( isrcB + 2, source - 1, wrap, mirror );
+        ptrdiff_t isrcB = bounduvw(ptrdiff_t(srcB), source - 1, wrap, mirror);
+        ptrdiff_t isrcA = bounduvw(isrcB - 1, source - 1, wrap, mirror);
+        ptrdiff_t isrcC = bounduvw(isrcB + 1, source - 1, wrap, mirror);
+        ptrdiff_t isrcD = bounduvw(isrcB + 2, source - 1, wrap, mirror);
 
-        auto& entry = cf[ u ];
+        auto& entry = cf[u];
         entry.u0 = size_t(isrcA);
         entry.u1 = size_t(isrcB);
         entry.u2 = size_t(isrcC);
@@ -246,10 +246,10 @@ namespace TriangleFilter
 
     static const float TF_EPSILON = 0.00001f;
 
-    inline HRESULT _Create( _In_ size_t source, _In_ size_t dest, _In_ bool wrap, _Inout_ std::unique_ptr<Filter>& tf )
+    inline HRESULT _Create(_In_ size_t source, _In_ size_t dest, _In_ bool wrap, _Inout_ std::unique_ptr<Filter>& tf)
     {
-        assert( source > 0 );
-        assert( dest > 0 );
+        assert(source > 0);
+        assert(dest > 0);
 
         float scale = float(dest) / float(source);
         float scaleInv = 0.5f / scale;
@@ -258,109 +258,109 @@ namespace TriangleFilter
         size_t totalSize = TF_FILTER_SIZE + TF_FROM_SIZE + TF_TO_SIZE;
         float repeat = (wrap) ? 1.f : 0.f;
 
-        for( size_t u = 0; u < source; ++u )
+        for (size_t u = 0; u < source; ++u)
         {
             float src = float(u) - 0.5f;
             float destMin = src * scale;
             float destMax = destMin + scale;
 
-            totalSize += TF_FROM_SIZE + TF_TO_SIZE + size_t( destMax - destMin + repeat + 1.f ) * TF_TO_SIZE * 2;
+            totalSize += TF_FROM_SIZE + TF_TO_SIZE + size_t(destMax - destMin + repeat + 1.f) * TF_TO_SIZE * 2;
         }
 
         uint8_t* pFilter = nullptr;
 
-        if ( tf )
+        if (tf)
         {
             // See if existing filter memory block is large enough to reuse
-            if ( tf->totalSize >= totalSize )
+            if (tf->totalSize >= totalSize)
             {
-                pFilter = reinterpret_cast<uint8_t*>( tf.get() );
+                pFilter = reinterpret_cast<uint8_t*>(tf.get());
             }
             else
             {
                 // Need to reallocate filter memory block
-                tf.reset( nullptr );
+                tf.reset(nullptr);
             }
         }
 
-        if ( !tf )
+        if (!tf)
         {
             // Allocate filter memory block
-            pFilter = new (std::nothrow) uint8_t[ totalSize ];
-            if ( !pFilter )
+            pFilter = new (std::nothrow) uint8_t[totalSize];
+            if (!pFilter)
                 return E_OUTOFMEMORY;
 
-            tf.reset( reinterpret_cast<Filter*>( pFilter ) );
+            tf.reset(reinterpret_cast<Filter*>(pFilter));
             tf->totalSize = totalSize;
         }
 
-        assert( pFilter != 0 );
+        assert(pFilter != 0);
 
         // Filter setup
         size_t sizeInBytes = TF_FILTER_SIZE;
         size_t accumU = 0;
         float accumWeight = 0.f;
 
-        for( size_t u = 0; u < source; ++u )
+        for (size_t u = 0; u < source; ++u)
         {
             // Setup from entry
             size_t sizeFrom = sizeInBytes;
-            auto pFrom = reinterpret_cast<FilterFrom*>( pFilter + sizeInBytes );
+            auto pFrom = reinterpret_cast<FilterFrom*>(pFilter + sizeInBytes);
             sizeInBytes += TF_FROM_SIZE;
 
-            if ( sizeInBytes > totalSize )
+            if (sizeInBytes > totalSize)
                 return E_FAIL;
 
             size_t toCount = 0;
 
             // Perform two passes to capture the influences from both sides
-            for( size_t j = 0; j < 2; ++j )
+            for (size_t j = 0; j < 2; ++j)
             {
-                float src = float( u + j ) - 0.5f;
+                float src = float(u + j) - 0.5f;
 
                 float destMin = src * scale;
                 float destMax = destMin + scale;
 
-                if ( !wrap )
+                if (!wrap)
                 {
                     // Clamp
-                    if ( destMin < 0.f )
+                    if (destMin < 0.f)
                         destMin = 0.f;
-                    if ( destMax > float(dest) )
+                    if (destMax > float(dest))
                         destMax = float(dest);
                 }
 
-                for( auto k = static_cast<ptrdiff_t>( floorf( destMin ) ); float(k) < destMax; ++k )
+                for (auto k = static_cast<ptrdiff_t>(floorf(destMin)); float(k) < destMax; ++k)
                 {
                     float d0 = float(k);
                     float d1 = d0 + 1.f;
 
                     size_t u0;
-                    if ( k < 0 )
+                    if (k < 0)
                     {
                         // Handle wrap
-                        u0 = size_t( k + ptrdiff_t(dest) );
+                        u0 = size_t(k + ptrdiff_t(dest));
                     }
-                    else if ( k >= ptrdiff_t(dest) )
+                    else if (k >= ptrdiff_t(dest))
                     {
                         // Handle wrap
-                        u0 = size_t( k - ptrdiff_t(dest) );
+                        u0 = size_t(k - ptrdiff_t(dest));
                     }
                     else
                     {
-                        u0 = size_t( k );
+                        u0 = size_t(k);
                     }
 
                     // Save previous accumulated weight (if any)
-                    if ( u0 != accumU )
+                    if (u0 != accumU)
                     {
-                        if ( accumWeight > TF_EPSILON )
+                        if (accumWeight > TF_EPSILON)
                         {
-                            auto pTo = reinterpret_cast<FilterTo*>( pFilter + sizeInBytes );
+                            auto pTo = reinterpret_cast<FilterTo*>(pFilter + sizeInBytes);
                             sizeInBytes += TF_TO_SIZE;
                             ++toCount;
 
-                            if ( sizeInBytes > totalSize )
+                            if (sizeInBytes > totalSize)
                                 return E_FAIL;
 
                             pTo->u = accumU;
@@ -372,33 +372,33 @@ namespace TriangleFilter
                     }
 
                     // Clip destination
-                    if ( d0 < destMin )
+                    if (d0 < destMin)
                         d0 = destMin;
-                    if ( d1 > destMax )
+                    if (d1 > destMax)
                         d1 = destMax;
 
                     // Calculate average weight over destination pixel
 
                     float weight;
-                    if ( !wrap && src < 0.f )
+                    if (!wrap && src < 0.f)
                         weight = 1.f;
-                    else if ( !wrap && ( ( src + 1.f ) >= float(source) ) )
+                    else if (!wrap && ((src + 1.f) >= float(source)))
                         weight = 0.f;
                     else
                         weight = (d0 + d1) * scaleInv - src;
 
-                    accumWeight += (d1 - d0) * ( j ? (1.f - weight) : weight );
+                    accumWeight += (d1 - d0) * (j ? (1.f - weight) : weight);
                 }
             }
 
             // Store accumulated weight
-            if ( accumWeight > TF_EPSILON )
+            if (accumWeight > TF_EPSILON)
             {
-                auto pTo = reinterpret_cast<FilterTo*>( pFilter + sizeInBytes );
+                auto pTo = reinterpret_cast<FilterTo*>(pFilter + sizeInBytes);
                 sizeInBytes += TF_TO_SIZE;
                 ++toCount;
 
-                if ( sizeInBytes > totalSize )
+                if (sizeInBytes > totalSize)
                     return E_FAIL;
 
                 pTo->u = accumU;
@@ -417,6 +417,6 @@ namespace TriangleFilter
         return S_OK;
     }
 
-}; // namespace
+}; // namespace TriangleFilter
 
-}; // namespace
+}; // namespace DirectX

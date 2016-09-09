@@ -113,7 +113,7 @@ inline HRESULT __cdecl SaveToDDSMemory(const Image& image, DWORD flags, Blob& bl
 }
 
 _Use_decl_annotations_
-inline HRESULT __cdecl SaveToDDSFile(const Image& image, DWORD flags, LPCWSTR szFile)
+inline HRESULT __cdecl SaveToDDSFile(const Image& image, DWORD flags, const wchar_t* szFile)
 {
     TexMetadata mdata = {};
     mdata.width = image.width;

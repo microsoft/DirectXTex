@@ -229,7 +229,7 @@ namespace
     class auto_delete_file_wic
     {
     public:
-        auto_delete_file_wic(ComPtr<IWICStream>& hFile, LPCWSTR szFile) : m_handle(hFile), m_filename(szFile) {}
+        auto_delete_file_wic(ComPtr<IWICStream>& hFile, const wchar_t* szFile) : m_handle(hFile), m_filename(szFile) {}
         ~auto_delete_file_wic()
         {
             if (m_filename)
@@ -242,7 +242,7 @@ namespace
         void clear() { m_filename = 0; }
 
     private:
-        LPCWSTR m_filename;
+        const wchar_t* m_filename;
         ComPtr<IWICStream>& m_handle;
 
         auto_delete_file_wic(const auto_delete_file_wic&) = delete;
@@ -705,7 +705,7 @@ namespace
 
         IWICImagingFactory* factory = nullptr;
         InitOnceExecuteOnce(&s_initOnce,
-            [](PINIT_ONCE, PVOID, PVOID *factory) -> BOOL
+            [](PINIT_ONCE, PVOID, LPVOID *factory) -> BOOL
             {
             #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
                 HRESULT hr = CoCreateInstance(
@@ -751,7 +751,7 @@ namespace
 //--------------------------------------------------------------------------------------
 HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
                                        _In_ ID3D11Resource* pSource,
-                                       _In_z_ LPCWSTR fileName )
+                                       _In_z_ const wchar_t* fileName )
 {
     if ( !fileName )
         return E_INVALIDARG;
@@ -764,9 +764,9 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
 
     // Create file
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
-    ScopedHandle hFile( safe_handle( CreateFile2( fileName, GENERIC_WRITE | DELETE, 0, CREATE_ALWAYS, 0 ) ) );
+    ScopedHandle hFile( safe_handle( CreateFile2( fileName, GENERIC_WRITE | DELETE, 0, CREATE_ALWAYS, nullptr ) ) );
 #else
-    ScopedHandle hFile( safe_handle( CreateFileW( fileName, GENERIC_WRITE | DELETE, 0, 0, CREATE_ALWAYS, 0, 0 ) ) );
+    ScopedHandle hFile( safe_handle( CreateFileW( fileName, GENERIC_WRITE | DELETE, 0, nullptr, CREATE_ALWAYS, 0, nullptr ) ) );
 #endif
     if ( !hFile )
         return HRESULT_FROM_WIN32( GetLastError() );
@@ -912,7 +912,7 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
 HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
                                        _In_ ID3D11Resource* pSource,
                                        _In_ REFGUID guidContainerFormat, 
-                                       _In_z_ LPCWSTR fileName,
+                                       _In_z_ const wchar_t* fileName,
                                        _In_opt_ const GUID* targetFormat,
                                        _In_opt_ std::function<void(IPropertyBag2*)> setCustomProps )
 {
