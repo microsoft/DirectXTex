@@ -21,30 +21,6 @@ using namespace DirectX;
 
 namespace
 {
-    class auto_delete_file
-    {
-    public:
-        auto_delete_file(HANDLE hFile) : m_handle(hFile) {}
-
-        auto_delete_file(const auto_delete_file&) = delete;
-        auto_delete_file& operator=(const auto_delete_file&) = delete;
-
-        ~auto_delete_file()
-        {
-            if (m_handle)
-            {
-                FILE_DISPOSITION_INFO info = { 0 };
-                info.DeleteFile = TRUE;
-                (void)SetFileInformationByHandle(m_handle, FileDispositionInfo, &info, sizeof(info));
-            }
-        }
-
-        void clear() { m_handle = 0; }
-
-    private:
-        HANDLE m_handle;
-    };
-
     //-------------------------------------------------------------------------------------
     // Legacy format mapping table (used for DDS files without 'DX10' extended header)
     //-------------------------------------------------------------------------------------

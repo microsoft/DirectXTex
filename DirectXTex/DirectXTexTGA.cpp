@@ -1310,6 +1310,8 @@ HRESULT DirectX::SaveToTGAFile(const Image& image, const wchar_t* szFile)
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
+    auto_delete_file delonfail(hFile.get());
+
     // Determine size for TGA pixel data
     size_t rowPitch, slicePitch;
     if (convFlags & CONV_FLAGS_888)
@@ -1391,6 +1393,8 @@ HRESULT DirectX::SaveToTGAFile(const Image& image, const wchar_t* szFile)
                 return E_FAIL;
         }
     }
+
+    delonfail.clear();
 
     return S_OK;
 }
