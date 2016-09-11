@@ -881,11 +881,20 @@ void DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
     case DXGI_FORMAT_BC4_SNORM:
         assert(IsCompressed(fmt));
         {
-            size_t nbw = std::max<size_t>(1, (width + 3) / 4);
-            size_t nbh = std::max<size_t>(1, (height + 3) / 4);
-            rowPitch = nbw * 8;
-
-            slicePitch = rowPitch * nbh;
+            if (flags & CP_FLAGS_BAD_DXTN_TAILS)
+            {
+                size_t nbw = width >> 2;
+                size_t nbh = height >> 2;
+                rowPitch = std::max<size_t>(1, nbw * 8);
+                slicePitch = std::max<size_t>(1, rowPitch * nbh);
+            }
+            else
+            {
+                size_t nbw = std::max<size_t>(1, (width + 3) / 4);
+                size_t nbh = std::max<size_t>(1, (height + 3) / 4);
+                rowPitch = nbw * 8;
+                slicePitch = rowPitch * nbh;
+            }
         }
         break;
 
@@ -906,11 +915,20 @@ void DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
     case DXGI_FORMAT_BC7_UNORM_SRGB:
         assert(IsCompressed(fmt));
         {
-            size_t nbw = std::max<size_t>(1, (width + 3) / 4);
-            size_t nbh = std::max<size_t>(1, (height + 3) / 4);
-            rowPitch = nbw * 16;
-
-            slicePitch = rowPitch * nbh;
+            if (flags & CP_FLAGS_BAD_DXTN_TAILS)
+            {
+                size_t nbw = width >> 2;
+                size_t nbh = height >> 2;
+                rowPitch = std::max<size_t>(1, nbw * 16);
+                slicePitch = std::max<size_t>(1, rowPitch * nbh);
+            }
+            else
+            {
+                size_t nbw = std::max<size_t>(1, (width + 3) / 4);
+                size_t nbh = std::max<size_t>(1, (height + 3) / 4);
+                rowPitch = nbw * 16;
+                slicePitch = rowPitch * nbh;
+            }
         }
         break;
 

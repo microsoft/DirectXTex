@@ -1068,7 +1068,7 @@ namespace
 
         if (pixelSize > size)
         {
-            return E_FAIL;
+            return HRESULT_FROM_WIN32( ERROR_HANDLE_EOF );
         }
 
         std::unique_ptr<Image[]> timages(new (std::nothrow) Image[nimages]);
@@ -1077,7 +1077,7 @@ namespace
             return E_OUTOFMEMORY;
         }
 
-        if (!_SetupImageArray((uint8_t*)pPixels, size, metadata, cpFlags, timages.get(), nimages))
+        if (!_SetupImageArray((uint8_t*)pPixels, pixelSize, metadata, cpFlags, timages.get(), nimages))
         {
             return E_FAIL;
         }
@@ -1105,6 +1105,7 @@ namespace
             size_t index = 0;
             for (size_t item = 0; item < metadata.arraySize; ++item)
             {
+                size_t lastgood = 0;
                 for (size_t level = 0; level < metadata.mipLevels; ++level, ++index)
                 {
                     if (index >= nimages)
@@ -1128,6 +1129,19 @@ namespace
                     {
                         size_t csize = std::min<size_t>(images[index].slicePitch, timages[index].slicePitch);
                         memcpy_s(pDest, images[index].slicePitch, pSrc, csize);
+
+                        if (cpFlags & CP_FLAGS_BAD_DXTN_TAILS)
+                        {
+                            if (images[index].width < 4 || images[index].height < 4)
+                            {
+                                csize = std::min<size_t>(images[index].slicePitch, timages[lastgood].slicePitch);
+                                memcpy_s(pDest, images[index].slicePitch, timages[lastgood].pixels, csize);
+                            }
+                            else
+                            {
+                                lastgood = index;
+                            }
+                        }
                     }
                     else if (IsPlanar(metadata.format))
                     {
@@ -1191,6 +1205,7 @@ namespace
             size_t index = 0;
             size_t d = metadata.depth;
 
+            size_t lastgood = 0;
             for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
                 for (size_t slice = 0; slice < d; ++slice, ++index)
@@ -1216,6 +1231,19 @@ namespace
                     {
                         size_t csize = std::min<size_t>(images[index].slicePitch, timages[index].slicePitch);
                         memcpy_s(pDest, images[index].slicePitch, pSrc, csize);
+
+                        if (cpFlags & CP_FLAGS_BAD_DXTN_TAILS)
+                        {
+                            if (images[index].width < 4 || images[index].height < 4)
+                            {
+                                csize = std::min<size_t>(images[index].slicePitch, timages[lastgood + slice].slicePitch);
+                                memcpy_s(pDest, images[index].slicePitch, timages[lastgood + slice].pixels, csize);
+                            }
+                            else if (!slice)
+                            {
+                                lastgood = index;
+                            }
+                        }
                     }
                     else if (IsPlanar(metadata.format))
                     {
@@ -1438,10 +1466,25 @@ HRESULT DirectX::LoadFromDDSMemory(
     if (FAILED(hr))
         return hr;
 
+    DWORD cflags = CP_FLAGS_NONE;
+    if (flags & DDS_FLAGS_LEGACY_DWORD)
+    {
+        cflags |= CP_FLAGS_LEGACY_DWORD;
+    }
+    if (flags & DDS_FLAGS_BAD_DXTN_TAILS)
+    {
+        cflags |= CP_FLAGS_BAD_DXTN_TAILS;
+    }
+
     auto pPixels = reinterpret_cast<const void*>(reinterpret_cast<const uint8_t*>(pSource) + offset);
     assert(pPixels);
-    hr = CopyImage(pPixels, size - offset, mdata,
-        (flags & DDS_FLAGS_LEGACY_DWORD) ? CP_FLAGS_LEGACY_DWORD : CP_FLAGS_NONE, convFlags, pal8, image);
+    hr = CopyImage(pPixels,
+        size - offset,
+        mdata,
+        cflags,
+        convFlags,
+        pal8,
+        image);
     if (FAILED(hr))
     {
         image.Release();
@@ -1560,7 +1603,7 @@ HRESULT DirectX::LoadFromDDSFile(
     if (FAILED(hr))
         return hr;
 
-    if ((convFlags & CONV_FLAGS_EXPAND) || (flags & DDS_FLAGS_LEGACY_DWORD))
+    if ((convFlags & CONV_FLAGS_EXPAND) || (flags & (DDS_FLAGS_LEGACY_DWORD | DDS_FLAGS_BAD_DXTN_TAILS)))
     {
         std::unique_ptr<uint8_t[]> temp(new (std::nothrow) uint8_t[remaining]);
         if (!temp)
@@ -1581,9 +1624,23 @@ HRESULT DirectX::LoadFromDDSFile(
             return E_FAIL;
         }
 
-        hr = CopyImage(temp.get(), remaining, mdata,
-            (flags & DDS_FLAGS_LEGACY_DWORD) ? CP_FLAGS_LEGACY_DWORD : CP_FLAGS_NONE,
-            convFlags, pal8.get(), image);
+        DWORD cflags = CP_FLAGS_NONE;
+        if (flags & DDS_FLAGS_LEGACY_DWORD)
+        {
+            cflags |= CP_FLAGS_LEGACY_DWORD;
+        }
+        if (flags & DDS_FLAGS_BAD_DXTN_TAILS)
+        {
+            cflags |= CP_FLAGS_BAD_DXTN_TAILS;
+        }
+
+        hr = CopyImage(temp.get(),
+            remaining,
+            mdata,
+            cflags,
+            convFlags,
+            pal8.get(),
+            image);
         if (FAILED(hr))
         {
             image.Release();
@@ -1595,7 +1652,7 @@ HRESULT DirectX::LoadFromDDSFile(
         if (remaining < image.GetPixelsSize())
         {
             image.Release();
-            return E_FAIL;
+            return HRESULT_FROM_WIN32( ERROR_HANDLE_EOF );
         }
 
         if (!ReadFile(hFile.get(), image.GetPixels(), static_cast<DWORD>(image.GetPixelsSize()), &bytesRead, nullptr))

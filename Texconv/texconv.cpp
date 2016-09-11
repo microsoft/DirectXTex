@@ -55,6 +55,7 @@ enum OPTIONS    // Note: dwOptions below assumes 64 or less options.
     OPT_HFLIP,
     OPT_VFLIP,
     OPT_DDS_DWORD_ALIGN,
+    OPT_DDS_BAD_DXTN_TAILS,
     OPT_USE_DX10,
     OPT_NOLOGO,
     OPT_TIMING,
@@ -116,6 +117,7 @@ SValue g_pOptions[] =
     { L"hflip",         OPT_HFLIP     },
     { L"vflip",         OPT_VFLIP     },
     { L"dword",         OPT_DDS_DWORD_ALIGN },
+    { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
     { L"dx10",          OPT_USE_DX10  },
     { L"nologo",        OPT_NOLOGO    },
     { L"timing",        OPT_TIMING    },
@@ -529,6 +531,7 @@ void PrintUsage()
     wprintf( L"\n                       (DDS input only)\n");
     wprintf( L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
     wprintf( L"   -dword              Use DWORD instead of BYTE alignment\n");
+    wprintf( L"   -badtails           Fix for older DXTn with bad mipchain tails\n");
     wprintf( L"   -xlum               expand legacy L8, L16, and A8P8 formats\n");
     wprintf( L"\n                       (DDS output only)\n");
     wprintf( L"   -dx10               Force use of 'DX10' extended header\n");
@@ -1178,6 +1181,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 ddsFlags |= DDS_FLAGS_LEGACY_DWORD;
             if ( dwOptions & (DWORD64(1) << OPT_EXPAND_LUMINANCE) )
                 ddsFlags |= DDS_FLAGS_EXPAND_LUMINANCE;
+            if ( dwOptions & (DWORD64(1) << OPT_DDS_BAD_DXTN_TAILS) )
+                ddsFlags |= DDS_FLAGS_BAD_DXTN_TAILS;
 
             hr = LoadFromDDSFile( pConv->szSrc, ddsFlags, &info, *image );
             if ( FAILED(hr) )
