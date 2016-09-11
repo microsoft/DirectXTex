@@ -1,13 +1,22 @@
 //--------------------------------------------------------------------------------------
 // File: TexConv.cpp
 //
-// DirectX 11 Texture Converter
+// DirectX Texture Converter
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //--------------------------------------------------------------------------------------
 
+#pragma warning(push)
+#pragma warning(disable : 4005)
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
+#define NODRAWTEXT
+#define NOGDI
+#define NOBITMAP
+#define NOMCX
+#define NOSERVICE
+#define NOHELP
+#pragma warning(pop)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -293,6 +302,7 @@ SValue g_pFilters[] =
 #define CODEC_TGA 0xFFFF0002
 #define CODEC_HDP 0xFFFF0003
 #define CODEC_JXR 0xFFFF0004
+#define CODEC_HDR 0xFFFF0005
 
 SValue g_pSaveFileTypes[] =     // valid formats to write to
 {
@@ -302,6 +312,7 @@ SValue g_pSaveFileTypes[] =     // valid formats to write to
     { L"PNG",           WIC_CODEC_PNG  },
     { L"DDS",           CODEC_DDS      },
     { L"TGA",           CODEC_TGA      },
+    { L"HDR",           CODEC_HDR      },
     { L"TIF",           WIC_CODEC_TIFF },
     { L"TIFF",          WIC_CODEC_TIFF },
     { L"WDP",           WIC_CODEC_WMP  },
@@ -451,7 +462,7 @@ void PrintList(size_t cch, SValue *pValue)
 
 void PrintLogo()
 {
-    wprintf( L"Microsoft (R) DirectX 11 Texture Converter (DirectXTex version)\n");
+    wprintf( L"Microsoft (R) DirectX Texture Converter (DirectXTex version)\n");
     wprintf( L"Copyright (C) Microsoft Corp. All rights reserved.\n");
 #ifdef _DEBUG
     wprintf( L"*** Debug build ***\n");
@@ -1204,6 +1215,15 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 continue;
             }
         }
+        else if ( _wcsicmp( ext, L".hdr" ) == 0 )
+        {
+            hr = LoadFromHDRFile( pConv->szSrc, &info, *image );
+            if ( FAILED(hr) )
+            {
+                wprintf( L" FAILED (%x)\n", hr);
+                continue;
+            }
+        }
         else
         {
             // WIC shares the same filter values for mode and dither
@@ -1888,6 +1908,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case CODEC_TGA:
                 hr = SaveToTGAFile( img[0], pConv->szDest );
+                break;
+
+            case CODEC_HDR:
+                hr = SaveToHDRFile( img[0], pConv->szDest );
                 break;
 
             default:

@@ -615,6 +615,7 @@
     <ClCompile Include="DirectXTexD3D11.cpp" />
     <ClCompile Include="DirectXTexDDS.cpp" />
     <ClCompile Include="DirectXTexFlipRotate.cpp" />
+    <ClCompile Include="DirectXTexHDR.cpp" />
     <ClCompile Include="DirectXTexImage.cpp" />
     <ClCompile Include="DirectXTexMipMaps.cpp" />
     <ClCompile Include="DirectXTexMisc.cpp" />

@@ -1442,3 +1442,19 @@ HRESULT Blob::Initialize(size_t size)
 
     return S_OK;
 }
+
+HRESULT Blob::Trim(size_t size)
+{
+    if (!size)
+        return E_INVALIDARG;
+
+    if (!m_buffer)
+        return E_UNEXPECTED;
+
+    if (size > m_size)
+        return E_INVALIDARG;
+
+    m_size = size;
+
+    return S_OK;
+}

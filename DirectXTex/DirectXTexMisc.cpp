@@ -166,6 +166,41 @@ namespace
 
         return S_OK;
     }
+
+    //-------------------------------------------------------------------------------------
+    HRESULT Evaluate_(
+        const Image& image,
+        std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)> pixelFunc)
+    {
+        if (!pixelFunc)
+            return E_INVALIDARG;
+
+        if (!image.pixels)
+            return E_POINTER;
+
+        assert(!IsCompressed(image.format));
+
+        const size_t width = image.width;
+
+        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width), 16)));
+        if (!scanline)
+            return E_OUTOFMEMORY;
+
+        const uint8_t *pSrc = image.pixels;
+        const size_t rowPitch = image.rowPitch;
+
+        for (size_t h = 0; h < image.height; ++h)
+        {
+            if (!_LoadScanline(scanline.get(), width, pSrc, rowPitch, image.format))
+                return E_FAIL;
+
+            pixelFunc(scanline.get(), width, h);
+
+            pSrc += rowPitch;
+        }
+
+        return S_OK;
+    }
 };
 
 
@@ -366,4 +401,41 @@ HRESULT DirectX::ComputeMSE(
             return ComputeMSE_(image1, image2, mse, mseV, flags);
         }
     }
+}
+
+
+//-------------------------------------------------------------------------------------
+// Evaluates a user-supplied function for all the pixels in the image
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
+HRESULT DirectX::Evaluate(
+    const Image& image,
+    std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)> pixelFunc)
+{
+    if (image.width > UINT32_MAX
+        || image.height > UINT32_MAX)
+        return E_INVALIDARG;
+
+    if (IsPlanar(image.format) || IsPalettized(image.format))
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+
+    if (IsCompressed(image.format))
+    {
+        ScratchImage temp;
+        HRESULT hr = Decompress(image, DXGI_FORMAT_R32G32B32A32_FLOAT, temp);
+        if (FAILED(hr))
+            return hr;
+
+        const Image* img = temp.GetImage(0, 0, 0);
+        if (!img)
+            return E_POINTER;
+
+        return Evaluate_(*img, pixelFunc);
+    }
+    else
+    {
+        return Evaluate_(image, pixelFunc);
+    }
+
+    return E_NOTIMPL;
 }

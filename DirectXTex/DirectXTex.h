@@ -31,6 +31,8 @@
 #include <d3d11_1.h>
 #endif
 
+#include <directxmath.h>
+
 #include <ocidl.h>
 
 #define DIRECTX_TEX_VERSION 140
@@ -209,6 +211,11 @@ namespace DirectX
     HRESULT __cdecl GetMetadataFromDDSFile( _In_z_ const wchar_t* szFile, _In_ DWORD flags,
                                             _Out_ TexMetadata& metadata );
 
+    HRESULT __cdecl GetMetadataFromHDRMemory( _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+                                              _Out_ TexMetadata& metadata );
+    HRESULT __cdecl GetMetadataFromHDRFile( _In_z_ const wchar_t* szFile,
+                                            _Out_ TexMetadata& metadata );
+
     HRESULT __cdecl GetMetadataFromTGAMemory( _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
                                               _Out_ TexMetadata& metadata );
     HRESULT __cdecl GetMetadataFromTGAFile( _In_z_ const wchar_t* szFile,
@@ -304,6 +311,8 @@ namespace DirectX
         void *__cdecl GetBufferPointer() const { return m_buffer; }
         size_t __cdecl GetBufferSize() const { return m_size; }
 
+        HRESULT __cdecl Trim(size_t size);
+
     private:
         void*   m_buffer;
         size_t  m_size;
@@ -325,6 +334,15 @@ namespace DirectX
 
     HRESULT __cdecl SaveToDDSFile( _In_ const Image& image, _In_ DWORD flags, _In_z_ const wchar_t* szFile );
     HRESULT __cdecl SaveToDDSFile( _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags, _In_z_ const wchar_t* szFile );
+
+    // HDR operations
+    HRESULT __cdecl LoadFromHDRMemory( _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+                                       _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
+    HRESULT __cdecl LoadFromHDRFile( _In_z_ const wchar_t* szFile,
+                                     _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image );
+
+    HRESULT __cdecl SaveToHDRMemory( _In_ const Image& image, _Out_ Blob& blob );
+    HRESULT __cdecl SaveToHDRFile( _In_ const Image& image, _In_z_ const wchar_t* szFile );
 
     // TGA operations
     HRESULT __cdecl LoadFromTGAMemory( _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
@@ -589,6 +607,9 @@ namespace DirectX
     };
 
     HRESULT __cdecl ComputeMSE( _In_ const Image& image1, _In_ const Image& image2, _Out_ float& mse, _Out_writes_opt_(4) float* mseV, _In_ DWORD flags = 0 );
+
+    HRESULT __cdecl Evaluate( _In_ const Image& image,
+                              _In_ std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)> pixelFunc );
 
     //---------------------------------------------------------------------------------
     // WIC utility code

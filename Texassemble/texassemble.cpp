@@ -1,13 +1,22 @@
 //--------------------------------------------------------------------------------------
 // File: Texassemble.cpp
 //
-// DirectX 11 Texture assembler for cube maps, volume maps, and arrays
+// DirectX Texture assembler for cube maps, volume maps, and arrays
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //--------------------------------------------------------------------------------------
 
+#pragma warning(push)
+#pragma warning(disable : 4005)
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
+#define NODRAWTEXT
+#define NOGDI
+#define NOBITMAP
+#define NOMCX
+#define NOSERVICE
+#define NOHELP
+#pragma warning(pop)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -275,7 +284,7 @@ void PrintList(size_t cch, SValue *pValue)
 
 void PrintLogo()
 {
-    wprintf( L"Microsoft (R) DirectX 11 Texture Assembler (DirectXTex version)\n");
+    wprintf( L"Microsoft (R) DirectX Texture Assembler (DirectXTex version)\n");
     wprintf( L"Copyright (C) Microsoft Corp. All rights reserved.\n");
     wprintf( L"\n");
 }
@@ -511,6 +520,15 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         else if ( _wcsicmp( ext, L".tga" ) == 0 )
         {
             hr = LoadFromTGAFile( pConv->szSrc, &info, *image.get() );
+            if ( FAILED(hr) )
+            {
+                wprintf( L" FAILED (%x)\n", hr);
+                return 1;
+            }
+        }
+        else if ( _wcsicmp( ext, L".hdr" ) == 0 )
+        {
+            hr = LoadFromHDRFile( pConv->szSrc, &info, *image.get() );
             if ( FAILED(hr) )
             {
                 wprintf( L" FAILED (%x)\n", hr);
