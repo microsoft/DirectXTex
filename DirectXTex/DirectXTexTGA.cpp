@@ -1076,11 +1076,17 @@ HRESULT DirectX::LoadFromTGAFile(
             assert(image.GetImageCount() == 1);
             const Image* img = image.GetImage(0, 0, 0);
             if (!img)
+            {
+                image.Release();
                 return E_POINTER;
+            }
 
             uint8_t *pPixels = img->pixels;
             if (!pPixels)
+            {
+                image.Release();
                 return E_POINTER;
+            }
 
             size_t rowPitch = img->rowPitch;
 
@@ -1128,14 +1134,20 @@ HRESULT DirectX::LoadFromTGAFile(
             assert(image.GetImageCount() == 1);
             const Image* img = image.GetImage(0, 0, 0);
             if (!img)
+            {
+                image.Release();
                 return E_POINTER;
+            }
 
             // Scan for non-zero alpha channel
             bool nonzeroa = false;
 
             const uint8_t *pPixels = img->pixels;
             if (!pPixels)
+            {
+                image.Release();
                 return E_POINTER;
+            }
 
             size_t rowPitch = img->rowPitch;
 
@@ -1165,7 +1177,10 @@ HRESULT DirectX::LoadFromTGAFile(
             {
                 hr = SetAlphaChannelToOpaque(img);
                 if (FAILED(hr))
+                {
+                    image.Release();
                     return hr;
+                }
             }
         }
         break;

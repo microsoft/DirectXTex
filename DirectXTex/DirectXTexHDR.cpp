@@ -31,6 +31,7 @@
 // we support only that one as that's what other Radiance parsing code does as well.
 //
 
+//Uncomment to disable the use of adapative RLE encoding when writing an HDR. Used for testing only.
 //#define DISABLE_COMPRESS
 
 using namespace DirectX;
@@ -503,6 +504,11 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
     size_t pixelLen = remaining;
 
     const Image* img = image.GetImage(0, 0, 0);
+    if (!img)
+    {
+        image.Release();
+        return E_POINTER;
+    }
 
     auto destPtr = img->pixels;
 
@@ -530,6 +536,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
             // Adaptive Run Length Encoding (RLE)
             if (size_t((inColor[2] << 8) + inColor[3]) != mdata.width)
             {
+                image.Release();
                 return E_FAIL;
             }
 
@@ -540,6 +547,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
                 {
                     if (pixelLen < 2)
                     {
+                        image.Release();
                         return E_FAIL;
                     }
 
@@ -551,6 +559,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
                         runLen &= 127;
                         if (pixelCount + runLen > mdata.width)
                         {
+                            image.Release();
                             return E_FAIL;
                         }
 
@@ -566,6 +575,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
                     }
                     else if ((size < size_t(runLen + 1)) || ((pixelCount + runLen) > mdata.width))
                     {
+                        image.Release();
                         return E_FAIL;
                     }
                     else
@@ -602,6 +612,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
                     size_t spanLen = inColor[3] << bitShift;
                     if (spanLen + pixelCount > mdata.width)
                     {
+                        image.Release();
                         return E_FAIL;
                     }
 
@@ -633,6 +644,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
 
                 if (pixelLen < 4)
                 {
+                    image.Release();
                     return E_FAIL;
                 }
 
@@ -794,7 +806,10 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
 #else
     std::unique_ptr<uint8_t[]> temp(new (std::nothrow) uint8_t[rowPitch * 2]);
     if (!temp)
+    {
+        blob.Release();
         return E_OUTOFMEMORY;
+    }
 
     auto rgbe = temp.get();
     auto enc = temp.get() + rowPitch;
@@ -821,7 +836,10 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
 
     hr = blob.Trim(dPtr - reinterpret_cast<uint8_t*>(blob.GetBufferPointer()));
     if (FAILED(hr))
+    {
+        blob.Release();
         return hr;
+    }
 
     return S_OK;
 }

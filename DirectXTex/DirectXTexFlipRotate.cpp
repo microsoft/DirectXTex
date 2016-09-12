@@ -192,7 +192,10 @@ HRESULT DirectX::FlipRotate(
 
     const Image *rimage = image.GetImage(0, 0, 0);
     if (!rimage)
+    {
+        image.Release();
         return E_POINTER;
+    }
 
     WICPixelFormatGUID pfGUID;
     if (_DXGIToWIC(srcImage.format, pfGUID))
