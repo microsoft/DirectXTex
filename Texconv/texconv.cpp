@@ -38,7 +38,7 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
-enum OPTIONS    // Note: dwOptions below assumes 64 or less options.
+enum OPTIONS
 {
     OPT_WIDTH = 1,
     OPT_HEIGHT,
@@ -82,11 +82,11 @@ enum OPTIONS    // Note: dwOptions below assumes 64 or less options.
     OPT_MAX
 };
 
-static_assert( OPT_MAX <= 64, "dwOptions is a DWORD64 bitfield" );
+static_assert(OPT_MAX <= 64, "dwOptions is a DWORD64 bitfield");
 
 struct SConversion
 {
-    wchar_t szSrc [MAX_PATH];
+    wchar_t szSrc[MAX_PATH];
     wchar_t szDest[MAX_PATH];
 };
 
@@ -100,37 +100,37 @@ struct SValue
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-SValue g_pOptions[] = 
+SValue g_pOptions[] =
 {
-    { L"w",             OPT_WIDTH     },
-    { L"h",             OPT_HEIGHT    },
+    { L"w",             OPT_WIDTH },
+    { L"h",             OPT_HEIGHT },
     { L"m",             OPT_MIPLEVELS },
-    { L"f",             OPT_FORMAT    },
-    { L"if",            OPT_FILTER    },
-    { L"srgbi",         OPT_SRGBI     },
-    { L"srgbo",         OPT_SRGBO     },
-    { L"srgb",          OPT_SRGB      },
-    { L"px",            OPT_PREFIX    },
-    { L"sx",            OPT_SUFFIX    },
+    { L"f",             OPT_FORMAT },
+    { L"if",            OPT_FILTER },
+    { L"srgbi",         OPT_SRGBI },
+    { L"srgbo",         OPT_SRGBO },
+    { L"srgb",          OPT_SRGB },
+    { L"px",            OPT_PREFIX },
+    { L"sx",            OPT_SUFFIX },
     { L"o",             OPT_OUTPUTDIR },
-    { L"ft",            OPT_FILETYPE  },
-    { L"hflip",         OPT_HFLIP     },
-    { L"vflip",         OPT_VFLIP     },
+    { L"ft",            OPT_FILETYPE },
+    { L"hflip",         OPT_HFLIP },
+    { L"vflip",         OPT_VFLIP },
     { L"dword",         OPT_DDS_DWORD_ALIGN },
     { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
-    { L"dx10",          OPT_USE_DX10  },
-    { L"nologo",        OPT_NOLOGO    },
-    { L"timing",        OPT_TIMING    },
-    { L"sepalpha",      OPT_SEPALPHA  },
+    { L"dx10",          OPT_USE_DX10 },
+    { L"nologo",        OPT_NOLOGO },
+    { L"timing",        OPT_TIMING },
+    { L"sepalpha",      OPT_SEPALPHA },
     { L"tu",            OPT_TYPELESS_UNORM },
     { L"tf",            OPT_TYPELESS_FLOAT },
     { L"pmalpha",       OPT_PREMUL_ALPHA },
     { L"xlum",          OPT_EXPAND_LUMINANCE },
-    { L"wrap",          OPT_TA_WRAP   },
+    { L"wrap",          OPT_TA_WRAP },
     { L"mirror",        OPT_TA_MIRROR },
     { L"singleproc",    OPT_FORCE_SINGLEPROC },
-    { L"gpu",           OPT_GPU       },
-    { L"nogpu",         OPT_NOGPU     },
+    { L"gpu",           OPT_GPU },
+    { L"nogpu",         OPT_NOGPU },
     { L"fl",            OPT_FEATURE_LEVEL },
     { L"pow2",          OPT_FIT_POWEROF2 },
     { L"aw",            OPT_ALPHA_WEIGHT },
@@ -141,70 +141,70 @@ SValue g_pOptions[] =
     { L"bcdither",      OPT_COMPRESS_DITHER },
     { L"wicq",          OPT_WIC_QUALITY },
     { L"wiclossless",   OPT_WIC_LOSSLESS },
-    { nullptr,          0             }
+    { nullptr,          0 }
 };
 
 #define DEFFMT(fmt) { L#fmt, DXGI_FORMAT_ ## fmt }
 
-SValue g_pFormats[] = 
+SValue g_pFormats[] =
 {
     // List does not include _TYPELESS or depth/stencil formats
-    DEFFMT(R32G32B32A32_FLOAT), 
-    DEFFMT(R32G32B32A32_UINT), 
-    DEFFMT(R32G32B32A32_SINT), 
-    DEFFMT(R32G32B32_FLOAT), 
-    DEFFMT(R32G32B32_UINT), 
-    DEFFMT(R32G32B32_SINT), 
-    DEFFMT(R16G16B16A16_FLOAT), 
-    DEFFMT(R16G16B16A16_UNORM), 
-    DEFFMT(R16G16B16A16_UINT), 
-    DEFFMT(R16G16B16A16_SNORM), 
-    DEFFMT(R16G16B16A16_SINT), 
-    DEFFMT(R32G32_FLOAT), 
-    DEFFMT(R32G32_UINT), 
-    DEFFMT(R32G32_SINT), 
-    DEFFMT(R10G10B10A2_UNORM), 
-    DEFFMT(R10G10B10A2_UINT), 
-    DEFFMT(R11G11B10_FLOAT), 
-    DEFFMT(R8G8B8A8_UNORM), 
-    DEFFMT(R8G8B8A8_UNORM_SRGB), 
-    DEFFMT(R8G8B8A8_UINT), 
-    DEFFMT(R8G8B8A8_SNORM), 
-    DEFFMT(R8G8B8A8_SINT), 
-    DEFFMT(R16G16_FLOAT), 
-    DEFFMT(R16G16_UNORM), 
-    DEFFMT(R16G16_UINT), 
-    DEFFMT(R16G16_SNORM), 
-    DEFFMT(R16G16_SINT), 
-    DEFFMT(R32_FLOAT), 
-    DEFFMT(R32_UINT), 
-    DEFFMT(R32_SINT), 
-    DEFFMT(R8G8_UNORM), 
-    DEFFMT(R8G8_UINT), 
-    DEFFMT(R8G8_SNORM), 
-    DEFFMT(R8G8_SINT), 
-    DEFFMT(R16_FLOAT), 
-    DEFFMT(R16_UNORM), 
-    DEFFMT(R16_UINT), 
-    DEFFMT(R16_SNORM), 
-    DEFFMT(R16_SINT), 
-    DEFFMT(R8_UNORM), 
-    DEFFMT(R8_UINT), 
-    DEFFMT(R8_SNORM), 
-    DEFFMT(R8_SINT), 
-    DEFFMT(A8_UNORM), 
-    DEFFMT(R9G9B9E5_SHAREDEXP), 
-    DEFFMT(R8G8_B8G8_UNORM), 
-    DEFFMT(G8R8_G8B8_UNORM), 
-    DEFFMT(BC1_UNORM), 
-    DEFFMT(BC1_UNORM_SRGB), 
-    DEFFMT(BC2_UNORM), 
-    DEFFMT(BC2_UNORM_SRGB), 
-    DEFFMT(BC3_UNORM), 
-    DEFFMT(BC3_UNORM_SRGB), 
-    DEFFMT(BC4_UNORM), 
-    DEFFMT(BC4_SNORM), 
-    DEFFMT(BC5_UNORM), 
+    DEFFMT(R32G32B32A32_FLOAT),
+    DEFFMT(R32G32B32A32_UINT),
+    DEFFMT(R32G32B32A32_SINT),
+    DEFFMT(R32G32B32_FLOAT),
+    DEFFMT(R32G32B32_UINT),
+    DEFFMT(R32G32B32_SINT),
+    DEFFMT(R16G16B16A16_FLOAT),
+    DEFFMT(R16G16B16A16_UNORM),
+    DEFFMT(R16G16B16A16_UINT),
+    DEFFMT(R16G16B16A16_SNORM),
+    DEFFMT(R16G16B16A16_SINT),
+    DEFFMT(R32G32_FLOAT),
+    DEFFMT(R32G32_UINT),
+    DEFFMT(R32G32_SINT),
+    DEFFMT(R10G10B10A2_UNORM),
+    DEFFMT(R10G10B10A2_UINT),
+    DEFFMT(R11G11B10_FLOAT),
+    DEFFMT(R8G8B8A8_UNORM),
+    DEFFMT(R8G8B8A8_UNORM_SRGB),
+    DEFFMT(R8G8B8A8_UINT),
+    DEFFMT(R8G8B8A8_SNORM),
+    DEFFMT(R8G8B8A8_SINT),
+    DEFFMT(R16G16_FLOAT),
+    DEFFMT(R16G16_UNORM),
+    DEFFMT(R16G16_UINT),
+    DEFFMT(R16G16_SNORM),
+    DEFFMT(R16G16_SINT),
+    DEFFMT(R32_FLOAT),
+    DEFFMT(R32_UINT),
+    DEFFMT(R32_SINT),
+    DEFFMT(R8G8_UNORM),
+    DEFFMT(R8G8_UINT),
+    DEFFMT(R8G8_SNORM),
+    DEFFMT(R8G8_SINT),
+    DEFFMT(R16_FLOAT),
+    DEFFMT(R16_UNORM),
+    DEFFMT(R16_UINT),
+    DEFFMT(R16_SNORM),
+    DEFFMT(R16_SINT),
+    DEFFMT(R8_UNORM),
+    DEFFMT(R8_UINT),
+    DEFFMT(R8_SNORM),
+    DEFFMT(R8_SINT),
+    DEFFMT(A8_UNORM),
+    DEFFMT(R9G9B9E5_SHAREDEXP),
+    DEFFMT(R8G8_B8G8_UNORM),
+    DEFFMT(G8R8_G8B8_UNORM),
+    DEFFMT(BC1_UNORM),
+    DEFFMT(BC1_UNORM_SRGB),
+    DEFFMT(BC2_UNORM),
+    DEFFMT(BC2_UNORM_SRGB),
+    DEFFMT(BC3_UNORM),
+    DEFFMT(BC3_UNORM_SRGB),
+    DEFFMT(BC4_UNORM),
+    DEFFMT(BC4_SNORM),
+    DEFFMT(BC5_UNORM),
     DEFFMT(BC5_SNORM),
     DEFFMT(B5G6R5_UNORM),
     DEFFMT(B5G5R5A1_UNORM),
@@ -233,9 +233,9 @@ SValue g_pFormats[] =
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
 
-SValue g_pReadOnlyFormats[] = 
+SValue g_pReadOnlyFormats[] =
 {
-    DEFFMT(R32G32B32A32_TYPELESS), 
+    DEFFMT(R32G32B32A32_TYPELESS),
     DEFFMT(R32G32B32_TYPELESS),
     DEFFMT(R16G16B16A16_TYPELESS),
     DEFFMT(R32G32_TYPELESS),
@@ -277,7 +277,7 @@ SValue g_pReadOnlyFormats[] =
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
 
-SValue g_pFilters[] = 
+SValue g_pFilters[] =
 {
     { L"POINT",                     TEX_FILTER_POINT },
     { L"LINEAR",                    TEX_FILTER_LINEAR },
@@ -285,17 +285,17 @@ SValue g_pFilters[] =
     { L"FANT",                      TEX_FILTER_FANT },
     { L"BOX",                       TEX_FILTER_BOX },
     { L"TRIANGLE",                  TEX_FILTER_TRIANGLE },
-    { L"POINT_DITHER",              TEX_FILTER_POINT  | TEX_FILTER_DITHER },
+    { L"POINT_DITHER",              TEX_FILTER_POINT | TEX_FILTER_DITHER },
     { L"LINEAR_DITHER",             TEX_FILTER_LINEAR | TEX_FILTER_DITHER },
-    { L"CUBIC_DITHER",              TEX_FILTER_CUBIC  | TEX_FILTER_DITHER },
-    { L"FANT_DITHER",               TEX_FILTER_FANT   | TEX_FILTER_DITHER },
-    { L"BOX_DITHER",                TEX_FILTER_BOX    | TEX_FILTER_DITHER },
+    { L"CUBIC_DITHER",              TEX_FILTER_CUBIC | TEX_FILTER_DITHER },
+    { L"FANT_DITHER",               TEX_FILTER_FANT | TEX_FILTER_DITHER },
+    { L"BOX_DITHER",                TEX_FILTER_BOX | TEX_FILTER_DITHER },
     { L"TRIANGLE_DITHER",           TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER },
-    { L"POINT_DITHER_DIFFUSION",    TEX_FILTER_POINT  | TEX_FILTER_DITHER_DIFFUSION },
+    { L"POINT_DITHER_DIFFUSION",    TEX_FILTER_POINT | TEX_FILTER_DITHER_DIFFUSION },
     { L"LINEAR_DITHER_DIFFUSION",   TEX_FILTER_LINEAR | TEX_FILTER_DITHER_DIFFUSION },
-    { L"CUBIC_DITHER_DIFFUSION",    TEX_FILTER_CUBIC  | TEX_FILTER_DITHER_DIFFUSION },
-    { L"FANT_DITHER_DIFFUSION",     TEX_FILTER_FANT   | TEX_FILTER_DITHER_DIFFUSION },
-    { L"BOX_DITHER_DIFFUSION",      TEX_FILTER_BOX    | TEX_FILTER_DITHER_DIFFUSION },
+    { L"CUBIC_DITHER_DIFFUSION",    TEX_FILTER_CUBIC | TEX_FILTER_DITHER_DIFFUSION },
+    { L"FANT_DITHER_DIFFUSION",     TEX_FILTER_FANT | TEX_FILTER_DITHER_DIFFUSION },
+    { L"BOX_DITHER_DIFFUSION",      TEX_FILTER_BOX | TEX_FILTER_DITHER_DIFFUSION },
     { L"TRIANGLE_DITHER_DIFFUSION", TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER_DIFFUSION },
     { nullptr,                      TEX_FILTER_DEFAULT                              }
 };
@@ -308,33 +308,33 @@ SValue g_pFilters[] =
 
 SValue g_pSaveFileTypes[] =     // valid formats to write to
 {
-    { L"BMP",           WIC_CODEC_BMP  },
-    { L"JPG",           WIC_CODEC_JPEG },
-    { L"JPEG",          WIC_CODEC_JPEG },
-    { L"PNG",           WIC_CODEC_PNG  },
-    { L"DDS",           CODEC_DDS      },
-    { L"TGA",           CODEC_TGA      },
-    { L"HDR",           CODEC_HDR      },
-    { L"TIF",           WIC_CODEC_TIFF },
-    { L"TIFF",          WIC_CODEC_TIFF },
-    { L"WDP",           WIC_CODEC_WMP  },
-    { L"HDP",           CODEC_HDP      },
-    { L"JXR",           CODEC_JXR      },
-    { nullptr,          CODEC_DDS      }
+    { L"BMP",   WIC_CODEC_BMP  },
+    { L"JPG",   WIC_CODEC_JPEG },
+    { L"JPEG",  WIC_CODEC_JPEG },
+    { L"PNG",   WIC_CODEC_PNG  },
+    { L"DDS",   CODEC_DDS      },
+    { L"TGA",   CODEC_TGA      },
+    { L"HDR",   CODEC_HDR      },
+    { L"TIF",   WIC_CODEC_TIFF },
+    { L"TIFF",  WIC_CODEC_TIFF },
+    { L"WDP",   WIC_CODEC_WMP  },
+    { L"HDP",   CODEC_HDP      },
+    { L"JXR",   CODEC_JXR      },
+    { nullptr,  CODEC_DDS      }
 };
 
 SValue g_pFeatureLevels[] =     // valid feature levels for -fl for maximimum size
 {
-    { L"9.1",           2048 },
-    { L"9.2",           2048 },
-    { L"9.3",           4096 },
-    { L"10.0",          8192 },
-    { L"10.1",          8192 },
-    { L"11.0",          16384 },
-    { L"11.1",          16384 },
-    { L"12.0",          16384 },
-    { L"12.1",          16384 },
-    { nullptr,          0 },
+    { L"9.1",  2048 },
+    { L"9.2",  2048 },
+    { L"9.3",  4096 },
+    { L"10.0", 8192 },
+    { L"10.1", 8192 },
+    { L"11.0", 16384 },
+    { L"11.1", 16384 },
+    { L"12.0", 16384 },
+    { L"12.1", 16384 },
+    { nullptr, 0 },
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -343,380 +343,388 @@ SValue g_pFeatureLevels[] =     // valid feature levels for -fl for maximimum si
 
 #pragma warning( disable : 4616 6211 )
 
-inline static bool ispow2(size_t x)
+namespace
 {
-    return ((x != 0) && !(x & (x - 1)));
-}
+    inline static bool ispow2(size_t x)
+    {
+        return ((x != 0) && !(x & (x - 1)));
+    }
 
 #pragma prefast(disable : 26018, "Only used with static internal arrays")
 
-DWORD LookupByName(const wchar_t *pName, const SValue *pArray)
-{
-    while(pArray->pName)
+    DWORD LookupByName(const wchar_t *pName, const SValue *pArray)
     {
-        if(!_wcsicmp(pName, pArray->pName))
-            return pArray->dwValue;
-
-        pArray++;
-    }
-
-    return 0;
-}
-
-const wchar_t* LookupByValue(DWORD pValue, const SValue *pArray)
-{
-    while(pArray->pName)
-    {
-        if(pValue == pArray->dwValue)
-            return pArray->pName;
-
-        pArray++;
-    }
-
-    return L"";
-}
-
-void PrintFormat(DXGI_FORMAT Format)
-{
-    for(SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
-    {
-        if((DXGI_FORMAT) pFormat->dwValue == Format)
+        while (pArray->pName)
         {
-            wprintf( pFormat->pName );
-            return;
+            if (!_wcsicmp(pName, pArray->pName))
+                return pArray->dwValue;
+
+            pArray++;
+        }
+
+        return 0;
+    }
+
+
+    const wchar_t* LookupByValue(DWORD pValue, const SValue *pArray)
+    {
+        while (pArray->pName)
+        {
+            if (pValue == pArray->dwValue)
+                return pArray->pName;
+
+            pArray++;
+        }
+
+        return L"";
+    }
+
+
+    void PrintFormat(DXGI_FORMAT Format)
+    {
+        for (SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
+        {
+            if ((DXGI_FORMAT)pFormat->dwValue == Format)
+            {
+                wprintf(pFormat->pName);
+                return;
+            }
+        }
+
+        for (SValue *pFormat = g_pReadOnlyFormats; pFormat->pName; pFormat++)
+        {
+            if ((DXGI_FORMAT)pFormat->dwValue == Format)
+            {
+                wprintf(pFormat->pName);
+                return;
+            }
+        }
+
+        wprintf(L"*UNKNOWN*");
+    }
+
+
+    void PrintInfo(const TexMetadata& info)
+    {
+        wprintf(L" (%Iux%Iu", info.width, info.height);
+
+        if (TEX_DIMENSION_TEXTURE3D == info.dimension)
+            wprintf(L"x%Iu", info.depth);
+
+        if (info.mipLevels > 1)
+            wprintf(L",%Iu", info.mipLevels);
+
+        if (info.arraySize > 1)
+            wprintf(L",%Iu", info.arraySize);
+
+        wprintf(L" ");
+        PrintFormat(info.format);
+
+        switch (info.dimension)
+        {
+        case TEX_DIMENSION_TEXTURE1D:
+            wprintf((info.arraySize > 1) ? L" 1DArray" : L" 1D");
+            break;
+
+        case TEX_DIMENSION_TEXTURE2D:
+            if (info.IsCubemap())
+            {
+                wprintf((info.arraySize > 6) ? L" CubeArray" : L" Cube");
+            }
+            else
+            {
+                wprintf((info.arraySize > 1) ? L" 2DArray" : L" 2D");
+            }
+            break;
+
+        case TEX_DIMENSION_TEXTURE3D:
+            wprintf(L" 3D");
+            break;
+        }
+
+        wprintf(L")");
+    }
+
+
+    void PrintList(size_t cch, SValue *pValue)
+    {
+        while (pValue->pName)
+        {
+            size_t cchName = wcslen(pValue->pName);
+
+            if (cch + cchName + 2 >= 80)
+            {
+                wprintf(L"\n      ");
+                cch = 6;
+            }
+
+            wprintf(L"%ls ", pValue->pName);
+            cch += cchName + 2;
+            pValue++;
+        }
+
+        wprintf(L"\n");
+    }
+
+
+    void PrintLogo()
+    {
+        wprintf(L"Microsoft (R) DirectX Texture Converter (DirectXTex version)\n");
+        wprintf(L"Copyright (C) Microsoft Corp. All rights reserved.\n");
+#ifdef _DEBUG
+        wprintf(L"*** Debug build ***\n");
+#endif
+        wprintf(L"\n");
+    }
+
+
+    _Success_(return != false)
+        bool GetDXGIFactory(_Outptr_ IDXGIFactory1** pFactory)
+    {
+        if (!pFactory)
+            return false;
+
+        *pFactory = nullptr;
+
+        typedef HRESULT(WINAPI* pfn_CreateDXGIFactory1)(REFIID riid, _Out_ void **ppFactory);
+
+        static pfn_CreateDXGIFactory1 s_CreateDXGIFactory1 = nullptr;
+
+        if (!s_CreateDXGIFactory1)
+        {
+            HMODULE hModDXGI = LoadLibrary(L"dxgi.dll");
+            if (!hModDXGI)
+                return false;
+
+            s_CreateDXGIFactory1 = reinterpret_cast<pfn_CreateDXGIFactory1>(reinterpret_cast<void*>(GetProcAddress(hModDXGI, "CreateDXGIFactory1")));
+            if (!s_CreateDXGIFactory1)
+                return false;
+        }
+
+        return SUCCEEDED(s_CreateDXGIFactory1(IID_PPV_ARGS(pFactory)));
+    }
+
+
+    void PrintUsage()
+    {
+        PrintLogo();
+
+        wprintf(L"Usage: texconv <options> <files>\n");
+        wprintf(L"\n");
+        wprintf(L"   -w <n>              width\n");
+        wprintf(L"   -h <n>              height\n");
+        wprintf(L"   -m <n>              miplevels\n");
+        wprintf(L"   -f <format>         format\n");
+        wprintf(L"   -if <filter>        image filtering\n");
+        wprintf(L"   -srgb{i|o}          sRGB {input, output}\n");
+        wprintf(L"   -px <string>        name prefix\n");
+        wprintf(L"   -sx <string>        name suffix\n");
+        wprintf(L"   -o <directory>      output directory\n");
+        wprintf(L"   -ft <filetype>      output file type\n");
+        wprintf(L"   -hflip              horizonal flip of source image\n");
+        wprintf(L"   -vflip              vertical flip of source image\n");
+        wprintf(L"   -sepalpha           resize/generate mips alpha channel separately\n");
+        wprintf(L"                       from color channels\n");
+        wprintf(L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
+        wprintf(L"   -pmalpha            convert final texture to use premultiplied alpha\n");
+        wprintf(L"   -pow2               resize to fit a power-of-2, respecting aspect ratio\n");
+        wprintf(
+            L"   -nmap <options>     converts height-map to normal-map\n"
+            L"                       options must be one or more of\n"
+            L"                          r, g, b, a, l, m, u, v, i, o\n");
+        wprintf(L"   -nmapamp <weight>   normal map amplitude (defaults to 1.0)\n");
+        wprintf(L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n");
+        wprintf(L"\n                       (DDS input only)\n");
+        wprintf(L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
+        wprintf(L"   -dword              Use DWORD instead of BYTE alignment\n");
+        wprintf(L"   -badtails           Fix for older DXTn with bad mipchain tails\n");
+        wprintf(L"   -xlum               expand legacy L8, L16, and A8P8 formats\n");
+        wprintf(L"\n                       (DDS output only)\n");
+        wprintf(L"   -dx10               Force use of 'DX10' extended header\n");
+        wprintf(L"\n   -nologo             suppress copyright message\n");
+        wprintf(L"   -timing             Display elapsed processing time\n\n");
+#ifdef _OPENMP
+        wprintf(L"   -singleproc         Do not use multi-threaded compression\n");
+#endif
+        wprintf(L"   -gpu <adapter>      Select GPU for DirectCompute-based codecs (0 is default)\n");
+        wprintf(L"   -nogpu              Do not use DirectCompute-based codecs\n");
+        wprintf(L"   -bcuniform          Use uniform rather than perceptual weighting for BC1-3\n");
+        wprintf(L"   -bcdither           Use dithering for BC1-3\n");
+        wprintf(L"   -bcmax              Use exchaustive compression (BC7 only)\n");
+        wprintf(L"   -wicq <quality>     When writing images with WIC use quality (0.0 to 1.0)\n");
+        wprintf(L"   -wiclossless        When writing images with WIC use lossless mode\n");
+        wprintf(
+            L"   -aw <weight>        BC7 GPU compressor weighting for alpha error metric\n"
+            L"                       (defaults to 1.0)\n");
+
+        wprintf(L"\n");
+        wprintf(L"   <format>: ");
+        PrintList(13, g_pFormats);
+
+        wprintf(L"\n");
+        wprintf(L"   <filter>: ");
+        PrintList(13, g_pFilters);
+
+        wprintf(L"\n");
+        wprintf(L"   <filetype>: ");
+        PrintList(15, g_pSaveFileTypes);
+
+        wprintf(L"\n");
+        wprintf(L"   <feature-level>: ");
+        PrintList(13, g_pFeatureLevels);
+
+        ComPtr<IDXGIFactory1> dxgiFactory;
+        if (GetDXGIFactory(dxgiFactory.GetAddressOf()))
+        {
+            wprintf(L"\n");
+            wprintf(L"   <adapter>:\n");
+
+            ComPtr<IDXGIAdapter> adapter;
+            for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != dxgiFactory->EnumAdapters(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
+            {
+                DXGI_ADAPTER_DESC desc;
+                adapter->GetDesc(&desc);
+
+                wprintf(L"      %u: VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
+            }
         }
     }
 
-    for(SValue *pFormat = g_pReadOnlyFormats; pFormat->pName; pFormat++)
+
+    _Success_(return != false)
+        bool CreateDevice(int adapter, _Outptr_ ID3D11Device** pDevice)
     {
-        if((DXGI_FORMAT) pFormat->dwValue == Format)
+        if (!pDevice)
+            return false;
+
+        *pDevice = nullptr;
+
+        static PFN_D3D11_CREATE_DEVICE s_DynamicD3D11CreateDevice = nullptr;
+
+        if (!s_DynamicD3D11CreateDevice)
         {
-            wprintf( pFormat->pName );
-            return;
+            HMODULE hModD3D11 = LoadLibrary(L"d3d11.dll");
+            if (!hModD3D11)
+                return false;
+
+            s_DynamicD3D11CreateDevice = reinterpret_cast<PFN_D3D11_CREATE_DEVICE>(reinterpret_cast<void*>(GetProcAddress(hModD3D11, "D3D11CreateDevice")));
+            if (!s_DynamicD3D11CreateDevice)
+                return false;
         }
+
+        D3D_FEATURE_LEVEL featureLevels[] =
+        {
+            D3D_FEATURE_LEVEL_11_0,
+            D3D_FEATURE_LEVEL_10_1,
+            D3D_FEATURE_LEVEL_10_0,
+        };
+
+        UINT createDeviceFlags = 0;
+#ifdef _DEBUG
+        createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+        ComPtr<IDXGIAdapter> pAdapter;
+        if (adapter >= 0)
+        {
+            ComPtr<IDXGIFactory1> dxgiFactory;
+            if (GetDXGIFactory(dxgiFactory.GetAddressOf()))
+            {
+                if (FAILED(dxgiFactory->EnumAdapters(adapter, pAdapter.GetAddressOf())))
+                {
+                    wprintf(L"\nERROR: Invalid GPU adapter index (%d)!\n", adapter);
+                    return false;
+                }
+            }
+        }
+
+        D3D_FEATURE_LEVEL fl;
+        HRESULT hr = s_DynamicD3D11CreateDevice(pAdapter.Get(),
+            (pAdapter) ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE,
+            nullptr, createDeviceFlags, featureLevels, _countof(featureLevels),
+            D3D11_SDK_VERSION, pDevice, &fl, nullptr);
+        if (SUCCEEDED(hr))
+        {
+            if (fl < D3D_FEATURE_LEVEL_11_0)
+            {
+                D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS hwopts;
+                hr = (*pDevice)->CheckFeatureSupport(D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &hwopts, sizeof(hwopts));
+                if (FAILED(hr))
+                    memset(&hwopts, 0, sizeof(hwopts));
+
+                if (!hwopts.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x)
+                {
+                    if (*pDevice)
+                    {
+                        (*pDevice)->Release();
+                        *pDevice = nullptr;
+                    }
+                    hr = HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                }
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            ComPtr<IDXGIDevice> dxgiDevice;
+            hr = (*pDevice)->QueryInterface(IID_PPV_ARGS(dxgiDevice.GetAddressOf()));
+            if (SUCCEEDED(hr))
+            {
+                hr = dxgiDevice->GetAdapter(pAdapter.ReleaseAndGetAddressOf());
+                if (SUCCEEDED(hr))
+                {
+                    DXGI_ADAPTER_DESC desc;
+                    hr = pAdapter->GetDesc(&desc);
+                    if (SUCCEEDED(hr))
+                    {
+                        wprintf(L"\n[Using DirectCompute on \"%ls\"]\n", desc.Description);
+                    }
+                }
+            }
+
+            return true;
+        }
+        else
+            return false;
     }
 
-    wprintf( L"*UNKNOWN*" );
-}
 
-void PrintInfo( const TexMetadata& info )
-{
-    wprintf( L" (%Iux%Iu", info.width, info.height);
-
-    if ( TEX_DIMENSION_TEXTURE3D == info.dimension )
-        wprintf( L"x%Iu", info.depth);
-
-    if ( info.mipLevels > 1 )
-        wprintf( L",%Iu", info.mipLevels);
-
-    if ( info.arraySize > 1 )
-        wprintf( L",%Iu", info.arraySize);
-
-    wprintf( L" ");
-    PrintFormat( info.format );
-
-    switch ( info.dimension )
+    void FitPowerOf2(size_t origx, size_t origy, size_t& targetx, size_t& targety, size_t maxsize)
     {
-    case TEX_DIMENSION_TEXTURE1D:
-        wprintf( (info.arraySize > 1) ? L" 1DArray" : L" 1D" );
-        break;
+        float origAR = float(origx) / float(origy);
 
-    case TEX_DIMENSION_TEXTURE2D:
-        if ( info.IsCubemap() )
+        if (origx > origy)
         {
-            wprintf( (info.arraySize > 6) ? L" CubeArray" : L" Cube" );
+            size_t x;
+            for (x = maxsize; x > 1; x >>= 1) { if (x <= targetx) break; };
+            targetx = x;
+
+            float bestScore = FLT_MAX;
+            for (size_t y = maxsize; y > 0; y >>= 1)
+            {
+                float score = fabs((float(x) / float(y)) - origAR);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    targety = y;
+                }
+            }
         }
         else
         {
-            wprintf( (info.arraySize > 1) ? L" 2DArray" : L" 2D" );
-        }
-        break;
+            size_t y;
+            for (y = maxsize; y > 1; y >>= 1) { if (y <= targety) break; };
+            targety = y;
 
-    case TEX_DIMENSION_TEXTURE3D:
-        wprintf( L" 3D");
-        break;
-    }
-
-    wprintf( L")");
-}
-
-
-void PrintList(size_t cch, SValue *pValue)
-{
-    while(pValue->pName)
-    {
-        size_t cchName = wcslen(pValue->pName);
-        
-        if(cch + cchName + 2>= 80)
-        {
-            wprintf( L"\n      ");
-            cch = 6;
-        }
-
-        wprintf( L"%ls ", pValue->pName );
-        cch += cchName + 2;
-        pValue++;
-    }
-
-    wprintf( L"\n");
-}
-
-
-void PrintLogo()
-{
-    wprintf( L"Microsoft (R) DirectX Texture Converter (DirectXTex version)\n");
-    wprintf( L"Copyright (C) Microsoft Corp. All rights reserved.\n");
-#ifdef _DEBUG
-    wprintf( L"*** Debug build ***\n");
-#endif
-    wprintf( L"\n");
-}
-
-
-_Success_(return != false)
-bool GetDXGIFactory(_Outptr_ IDXGIFactory1** pFactory)
-{
-    if (!pFactory)
-        return false;
-
-    *pFactory = nullptr;
-
-    typedef HRESULT(WINAPI* pfn_CreateDXGIFactory1)(REFIID riid, _Out_ void **ppFactory);
-
-    static pfn_CreateDXGIFactory1 s_CreateDXGIFactory1 = nullptr;
-
-    if (!s_CreateDXGIFactory1)
-    {
-        HMODULE hModDXGI = LoadLibrary(L"dxgi.dll");
-        if (!hModDXGI)
-            return false;
-
-        s_CreateDXGIFactory1 = reinterpret_cast<pfn_CreateDXGIFactory1>(reinterpret_cast<void*>(GetProcAddress(hModDXGI, "CreateDXGIFactory1")));
-        if (!s_CreateDXGIFactory1)
-            return false;
-    }
-
-    return SUCCEEDED(s_CreateDXGIFactory1(IID_PPV_ARGS(pFactory)));
-}
-
-
-void PrintUsage()
-{
-    PrintLogo();
-
-    wprintf( L"Usage: texconv <options> <files>\n");
-    wprintf( L"\n");
-    wprintf( L"   -w <n>              width\n");
-    wprintf( L"   -h <n>              height\n");
-    wprintf( L"   -m <n>              miplevels\n");
-    wprintf( L"   -f <format>         format\n");
-    wprintf( L"   -if <filter>        image filtering\n");
-    wprintf( L"   -srgb{i|o}          sRGB {input, output}\n");
-    wprintf( L"   -px <string>        name prefix\n");
-    wprintf( L"   -sx <string>        name suffix\n");
-    wprintf( L"   -o <directory>      output directory\n");
-    wprintf( L"   -ft <filetype>      output file type\n");
-    wprintf( L"   -hflip              horizonal flip of source image\n");
-    wprintf( L"   -vflip              vertical flip of source image\n");
-    wprintf( L"   -sepalpha           resize/generate mips alpha channel separately\n");
-    wprintf( L"                       from color channels\n");
-    wprintf( L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
-    wprintf( L"   -pmalpha            convert final texture to use premultiplied alpha\n");
-    wprintf( L"   -pow2               resize to fit a power-of-2, respecting aspect ratio\n" );
-    wprintf (L"   -nmap <options>     converts height-map to normal-map\n"
-             L"                       options must be one or more of\n"
-             L"                          r, g, b, a, l, m, u, v, i, o\n" );
-    wprintf (L"   -nmapamp <weight>   normal map amplitude (defaults to 1.0)\n" );
-    wprintf( L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n");
-    wprintf( L"\n                       (DDS input only)\n");
-    wprintf( L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
-    wprintf( L"   -dword              Use DWORD instead of BYTE alignment\n");
-    wprintf( L"   -badtails           Fix for older DXTn with bad mipchain tails\n");
-    wprintf( L"   -xlum               expand legacy L8, L16, and A8P8 formats\n");
-    wprintf( L"\n                       (DDS output only)\n");
-    wprintf( L"   -dx10               Force use of 'DX10' extended header\n");
-    wprintf( L"\n   -nologo             suppress copyright message\n");
-    wprintf( L"   -timing             Display elapsed processing time\n\n");
-#ifdef _OPENMP
-    wprintf( L"   -singleproc         Do not use multi-threaded compression\n");
-#endif
-    wprintf( L"   -gpu <adapter>      Select GPU for DirectCompute-based codecs (0 is default)\n");
-    wprintf( L"   -nogpu              Do not use DirectCompute-based codecs\n");
-    wprintf( L"   -bcuniform          Use uniform rather than perceptual weighting for BC1-3\n");
-    wprintf( L"   -bcdither           Use dithering for BC1-3\n");
-    wprintf( L"   -bcmax              Use exchaustive compression (BC7 only)\n");
-    wprintf( L"   -wicq <quality>     When writing images with WIC use quality (0.0 to 1.0)\n");
-    wprintf( L"   -wiclossless        When writing images with WIC use lossless mode\n");
-    wprintf( L"   -aw <weight>        BC7 GPU compressor weighting for alpha error metric\n"
-             L"                       (defaults to 1.0)\n" );
-
-    wprintf( L"\n");
-    wprintf( L"   <format>: ");
-    PrintList(13, g_pFormats);
-
-    wprintf( L"\n");
-    wprintf( L"   <filter>: ");
-    PrintList(13, g_pFilters);
-
-    wprintf( L"\n");
-    wprintf( L"   <filetype>: ");
-    PrintList(15, g_pSaveFileTypes);
-
-    wprintf( L"\n");
-    wprintf( L"   <feature-level>: ");
-    PrintList(13, g_pFeatureLevels);
-
-    ComPtr<IDXGIFactory1> dxgiFactory;
-    if ( GetDXGIFactory( dxgiFactory.GetAddressOf() ) )
-    {
-        wprintf( L"\n" );
-        wprintf( L"   <adapter>:\n" );
-
-        ComPtr<IDXGIAdapter> adapter;
-        for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != dxgiFactory->EnumAdapters(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
-        {
-            DXGI_ADAPTER_DESC desc;
-            adapter->GetDesc(&desc);
-
-            wprintf( L"      %u: VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
-        }
-    }
-}
-
-
-_Success_(return != false)
-bool CreateDevice( int adapter, _Outptr_ ID3D11Device** pDevice )
-{
-    if ( !pDevice )
-        return false;
-
-    *pDevice  = nullptr;
-
-    static PFN_D3D11_CREATE_DEVICE s_DynamicD3D11CreateDevice = nullptr;
-   
-    if ( !s_DynamicD3D11CreateDevice )
-    {            
-        HMODULE hModD3D11 = LoadLibrary( L"d3d11.dll" );
-        if ( !hModD3D11 )
-            return false;
-
-        s_DynamicD3D11CreateDevice = reinterpret_cast<PFN_D3D11_CREATE_DEVICE>( reinterpret_cast<void*>( GetProcAddress( hModD3D11, "D3D11CreateDevice" ) ) ); 
-        if ( !s_DynamicD3D11CreateDevice )
-            return false;
-    }
-
-    D3D_FEATURE_LEVEL featureLevels[] =
-    {
-        D3D_FEATURE_LEVEL_11_0,
-        D3D_FEATURE_LEVEL_10_1,
-        D3D_FEATURE_LEVEL_10_0,
-    };
-
-    UINT createDeviceFlags = 0;
-#ifdef _DEBUG
-    createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-
-    ComPtr<IDXGIAdapter> pAdapter;
-    if ( adapter >= 0 )
-    {
-        ComPtr<IDXGIFactory1> dxgiFactory;
-        if ( GetDXGIFactory( dxgiFactory.GetAddressOf() ) )
-        {
-            if ( FAILED(dxgiFactory->EnumAdapters( adapter, pAdapter.GetAddressOf() )) )
+            float bestScore = FLT_MAX;
+            for (size_t x = maxsize; x > 0; x >>= 1)
             {
-                wprintf(L"\nERROR: Invalid GPU adapter index (%d)!\n", adapter);
-                return false;
-            }
-        }
-    }
-
-    D3D_FEATURE_LEVEL fl;
-    HRESULT hr = s_DynamicD3D11CreateDevice( pAdapter.Get(),
-                                             (pAdapter) ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE,
-                                             nullptr, createDeviceFlags, featureLevels, _countof(featureLevels),
-                                             D3D11_SDK_VERSION, pDevice, &fl, nullptr );
-    if ( SUCCEEDED(hr) )
-    {
-        if ( fl < D3D_FEATURE_LEVEL_11_0 )
-        {
-            D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS hwopts;
-            hr = (*pDevice)->CheckFeatureSupport( D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &hwopts, sizeof(hwopts) );
-            if ( FAILED(hr) )
-                memset( &hwopts, 0, sizeof(hwopts) );
-
-            if ( !hwopts.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x )
-            {
-                if ( *pDevice )
+                float score = fabs((float(x) / float(y)) - origAR);
+                if (score < bestScore)
                 {
-                    (*pDevice)->Release();
-                    *pDevice = nullptr;
+                    bestScore = score;
+                    targetx = x;
                 }
-                hr = HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-            }
-        }
-    }
-
-    if ( SUCCEEDED(hr) )
-    {
-        ComPtr<IDXGIDevice> dxgiDevice;
-        hr = (*pDevice)->QueryInterface( IID_PPV_ARGS( dxgiDevice.GetAddressOf() ) );
-        if ( SUCCEEDED(hr) )
-        {
-            hr = dxgiDevice->GetAdapter( pAdapter.ReleaseAndGetAddressOf() );
-            if ( SUCCEEDED(hr) )
-            {
-                DXGI_ADAPTER_DESC desc;
-                hr = pAdapter->GetDesc( &desc );
-                if ( SUCCEEDED(hr) )
-                {
-                    wprintf( L"\n[Using DirectCompute on \"%ls\"]\n", desc.Description );
-                }
-            }
-        }
-
-        return true;
-    }
-    else
-        return false;
-}
-
-
-void FitPowerOf2( size_t origx, size_t origy, size_t& targetx, size_t& targety, size_t maxsize )
-{
-    float origAR = float(origx) / float(origy);
-
-    if ( origx > origy )
-    {
-        size_t x;
-        for( x = maxsize; x > 1; x >>= 1 ) { if ( x <= targetx ) break; };
-        targetx = x;
-
-        float bestScore = FLT_MAX;
-        for( size_t y = maxsize; y > 0; y >>= 1 )
-        {
-            float score = fabs( (float(x) / float(y)) - origAR );
-            if ( score < bestScore )
-            {
-                bestScore = score;
-                targety = y;
-            }
-        }
-    }
-    else
-    {
-        size_t y;
-        for( y = maxsize; y > 1; y >>= 1 ) { if ( y <= targety ) break; };
-        targety = y;
-
-        float bestScore = FLT_MAX;
-        for( size_t x = maxsize; x > 0; x >>= 1 )
-        {
-            float score = fabs( (float(x) / float(y)) - origAR );
-            if ( score < bestScore )
-            {
-                bestScore = score;
-                targetx = x;
             }
         }
     }
@@ -732,7 +740,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 {
     // Parameters and defaults
     size_t width = 0;
-    size_t height = 0; 
+    size_t height = 0;
     size_t mipLevels = 0;
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
     DWORD dwFilter = TEX_FILTER_DEFAULT;
@@ -748,19 +756,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float wicQuality = -1.f;
     bool wicLossless = false;
 
-    wchar_t szPrefix   [MAX_PATH];
-    wchar_t szSuffix   [MAX_PATH];
+    wchar_t szPrefix[MAX_PATH];
+    wchar_t szSuffix[MAX_PATH];
     wchar_t szOutputDir[MAX_PATH];
 
-    szPrefix[0]    = 0;
-    szSuffix[0]    = 0;
+    szPrefix[0] = 0;
+    szSuffix[0] = 0;
     szOutputDir[0] = 0;
 
     // Initialize COM (needed for WIC)
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    if( FAILED(hr) )
+    if (FAILED(hr))
     {
-        wprintf( L"Failed to initialize COM (%08X)\n", hr);
+        wprintf(L"Failed to initialize COM (%08X)\n", hr);
         return 1;
     }
 
@@ -768,23 +776,23 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     DWORD64 dwOptions = 0;
     std::list<SConversion> conversion;
 
-    for(int iArg = 1; iArg < argc; iArg++)
+    for (int iArg = 1; iArg < argc; iArg++)
     {
         PWSTR pArg = argv[iArg];
 
-        if(('-' == pArg[0]) || ('/' == pArg[0]))
+        if (('-' == pArg[0]) || ('/' == pArg[0]))
         {
             pArg++;
             PWSTR pValue;
 
-            for(pValue = pArg; *pValue && (':' != *pValue); pValue++);
+            for (pValue = pArg; *pValue && (':' != *pValue); pValue++);
 
-            if(*pValue)
+            if (*pValue)
                 *pValue++ = 0;
 
             DWORD dwOption = LookupByName(pArg, g_pOptions);
 
-            if(!dwOption || (dwOptions & (DWORD64(1) << dwOption)))
+            if (!dwOption || (dwOptions & (DWORD64(1) << dwOption)))
             {
                 PrintUsage();
                 return 1;
@@ -824,13 +832,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
             }
 
-            switch(dwOption)
+            switch (dwOption)
             {
             case OPT_WIDTH:
                 if (swscanf_s(pValue, L"%Iu", &width) != 1)
                 {
-                    wprintf( L"Invalid value specified with -w (%ls)\n", pValue);
-                    wprintf( L"\n");
+                    wprintf(L"Invalid value specified with -w (%ls)\n", pValue);
+                    wprintf(L"\n");
                     PrintUsage();
                     return 1;
                 }
@@ -839,7 +847,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_HEIGHT:
                 if (swscanf_s(pValue, L"%Iu", &height) != 1)
                 {
-                    wprintf( L"Invalid value specified with -h (%ls)\n", pValue);
+                    wprintf(L"Invalid value specified with -h (%ls)\n", pValue);
                     printf("\n");
                     PrintUsage();
                     return 1;
@@ -849,19 +857,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_MIPLEVELS:
                 if (swscanf_s(pValue, L"%Iu", &mipLevels) != 1)
                 {
-                    wprintf( L"Invalid value specified with -m (%ls)\n", pValue);
-                    wprintf( L"\n");
+                    wprintf(L"Invalid value specified with -m (%ls)\n", pValue);
+                    wprintf(L"\n");
                     PrintUsage();
                     return 1;
                 }
                 break;
 
             case OPT_FORMAT:
-                format = (DXGI_FORMAT) LookupByName(pValue, g_pFormats);
-                if ( !format )
+                format = (DXGI_FORMAT)LookupByName(pValue, g_pFormats);
+                if (!format)
                 {
-                    wprintf( L"Invalid value specified with -f (%ls)\n", pValue);
-                    wprintf( L"\n");
+                    wprintf(L"Invalid value specified with -f (%ls)\n", pValue);
+                    wprintf(L"\n");
                     PrintUsage();
                     return 1;
                 }
@@ -869,10 +877,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case OPT_FILTER:
                 dwFilter = LookupByName(pValue, g_pFilters);
-                if ( !dwFilter )
+                if (!dwFilter)
                 {
-                    wprintf( L"Invalid value specified with -if (%ls)\n", pValue);
-                    wprintf( L"\n");
+                    wprintf(L"Invalid value specified with -if (%ls)\n", pValue);
+                    wprintf(L"\n");
                     PrintUsage();
                     return 1;
                 }
@@ -908,19 +916,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case OPT_FILETYPE:
                 FileType = LookupByName(pValue, g_pSaveFileTypes);
-                if ( !FileType )
+                if (!FileType)
                 {
-                    wprintf( L"Invalid value specified with -ft (%ls)\n", pValue);
-                    wprintf( L"\n");
+                    wprintf(L"Invalid value specified with -ft (%ls)\n", pValue);
+                    wprintf(L"\n");
                     PrintUsage();
                     return 1;
                 }
                 break;
 
             case OPT_TA_WRAP:
-                if ( dwFilterOpts & TEX_FILTER_MIRROR )
+                if (dwFilterOpts & TEX_FILTER_MIRROR)
                 {
-                    wprintf( L"Can't use -wrap and -mirror at same time\n\n");
+                    wprintf(L"Can't use -wrap and -mirror at same time\n\n");
                     PrintUsage();
                     return 1;
                 }
@@ -928,9 +936,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_TA_MIRROR:
-                if ( dwFilterOpts & TEX_FILTER_WRAP )
+                if (dwFilterOpts & TEX_FILTER_WRAP)
                 {
-                    wprintf( L"Can't use -wrap and -mirror at same time\n\n");
+                    wprintf(L"Can't use -wrap and -mirror at same time\n\n");
                     PrintUsage();
                     return 1;
                 }
@@ -938,80 +946,80 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_NORMAL_MAP:
+            {
+                dwNormalMap = 0;
+
+                if (wcschr(pValue, L'l'))
                 {
-                    dwNormalMap = 0;
-
-                    if ( wcschr( pValue, L'l' ) )
-                    {
-                        dwNormalMap |= CNMAP_CHANNEL_LUMINANCE;
-                    }
-                    else if ( wcschr( pValue, L'r' ) )
-                    {
-                        dwNormalMap |= CNMAP_CHANNEL_RED;
-                    }
-                    else if ( wcschr( pValue, L'g' ) )
-                    {
-                        dwNormalMap |= CNMAP_CHANNEL_GREEN;
-                    }
-                    else if ( wcschr( pValue, L'b' ) )
-                    {
-                        dwNormalMap |= CNMAP_CHANNEL_BLUE;
-                    }
-                    else if ( wcschr( pValue, L'a' ) )
-                    {
-                        dwNormalMap |= CNMAP_CHANNEL_ALPHA;
-                    }
-                    else
-                    {
-                        wprintf( L"Invalid value specified for -nmap (%ls), missing l, r, g, b, or a\n\n", pValue );
-                        PrintUsage();
-                        return 1;                        
-                    }
-
-                    if ( wcschr( pValue, L'm' ) )
-                    {
-                        dwNormalMap |= CNMAP_MIRROR;
-                    }
-                    else
-                    {
-                        if ( wcschr( pValue, L'u' ) )
-                        {
-                            dwNormalMap |= CNMAP_MIRROR_U;
-                        }
-                        if ( wcschr( pValue, L'v' ) )
-                        {
-                            dwNormalMap |= CNMAP_MIRROR_V;
-                        }
-                    }
-
-                    if ( wcschr( pValue, L'i' ) )
-                    {
-                        dwNormalMap |= CNMAP_INVERT_SIGN;
-                    }
-
-                    if ( wcschr( pValue, L'o' ) )
-                    {
-                        dwNormalMap |= CNMAP_COMPUTE_OCCLUSION;
-                    }   
+                    dwNormalMap |= CNMAP_CHANNEL_LUMINANCE;
                 }
-                break;
+                else if (wcschr(pValue, L'r'))
+                {
+                    dwNormalMap |= CNMAP_CHANNEL_RED;
+                }
+                else if (wcschr(pValue, L'g'))
+                {
+                    dwNormalMap |= CNMAP_CHANNEL_GREEN;
+                }
+                else if (wcschr(pValue, L'b'))
+                {
+                    dwNormalMap |= CNMAP_CHANNEL_BLUE;
+                }
+                else if (wcschr(pValue, L'a'))
+                {
+                    dwNormalMap |= CNMAP_CHANNEL_ALPHA;
+                }
+                else
+                {
+                    wprintf(L"Invalid value specified for -nmap (%ls), missing l, r, g, b, or a\n\n", pValue);
+                    PrintUsage();
+                    return 1;
+                }
+
+                if (wcschr(pValue, L'm'))
+                {
+                    dwNormalMap |= CNMAP_MIRROR;
+                }
+                else
+                {
+                    if (wcschr(pValue, L'u'))
+                    {
+                        dwNormalMap |= CNMAP_MIRROR_U;
+                    }
+                    if (wcschr(pValue, L'v'))
+                    {
+                        dwNormalMap |= CNMAP_MIRROR_V;
+                    }
+                }
+
+                if (wcschr(pValue, L'i'))
+                {
+                    dwNormalMap |= CNMAP_INVERT_SIGN;
+                }
+
+                if (wcschr(pValue, L'o'))
+                {
+                    dwNormalMap |= CNMAP_COMPUTE_OCCLUSION;
+                }
+            }
+            break;
 
             case OPT_NORMAL_MAP_AMPLITUDE:
-                if ( !dwNormalMap )
+                if (!dwNormalMap)
                 {
-                    wprintf( L"-nmapamp requires -nmap\n\n" );
+                    wprintf(L"-nmapamp requires -nmap\n\n");
                     PrintUsage();
                     return 1;
                 }
                 else if (swscanf_s(pValue, L"%f", &nmapAmplitude) != 1)
                 {
-                    wprintf( L"Invalid value specified with -nmapamp (%ls)\n\n", pValue);
+                    wprintf(L"Invalid value specified with -nmapamp (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
-                else if ( nmapAmplitude < 0.f )
+                else if (nmapAmplitude < 0.f)
                 {
-                    wprintf( L"Normal map amplitude must be positive (%ls)\n\n", pValue);
+                    wprintf(L"Normal map amplitude must be positive (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
@@ -1033,11 +1041,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_FEATURE_LEVEL:
-                maxSize = LookupByName( pValue, g_pFeatureLevels );
-                if ( !maxSize )
+                maxSize = LookupByName(pValue, g_pFeatureLevels);
+                if (!maxSize)
                 {
-                    wprintf( L"Invalid value specified with -fl (%ls)\n", pValue);
-                    wprintf( L"\n");
+                    wprintf(L"Invalid value specified with -fl (%ls)\n", pValue);
+                    wprintf(L"\n");
                     PrintUsage();
                     return 1;
                 }
@@ -1046,15 +1054,15 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_ALPHA_WEIGHT:
                 if (swscanf_s(pValue, L"%f", &alphaWeight) != 1)
                 {
-                    wprintf( L"Invalid value specified with -aw (%ls)\n", pValue);
-                    wprintf( L"\n");
+                    wprintf(L"Invalid value specified with -aw (%ls)\n", pValue);
+                    wprintf(L"\n");
                     PrintUsage();
                     return 1;
                 }
-                else if ( alphaWeight < 0.f )
+                else if (alphaWeight < 0.f)
                 {
-                    wprintf( L"-aw (%ls) parameter must be positive\n", pValue);
-                    wprintf( L"\n");
+                    wprintf(L"-aw (%ls) parameter must be positive\n", pValue);
+                    wprintf(L"\n");
                     return 1;
                 }
                 break;
@@ -1099,20 +1107,20 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
     }
 
-    if(conversion.empty())
+    if (conversion.empty())
     {
         PrintUsage();
         return 0;
     }
 
-    if(~dwOptions & (DWORD64(1) << OPT_NOLOGO))
+    if (~dwOptions & (DWORD64(1) << OPT_NOLOGO))
         PrintLogo();
 
     // Work out out filename prefix and suffix
-    if(szOutputDir[0] && (L'\\' != szOutputDir[wcslen(szOutputDir) - 1]))
-        wcscat_s( szOutputDir, MAX_PATH, L"\\" );
+    if (szOutputDir[0] && (L'\\' != szOutputDir[wcslen(szOutputDir) - 1]))
+        wcscat_s(szOutputDir, MAX_PATH, L"\\");
 
-    if(szPrefix[0])
+    if (szPrefix[0])
         wcscat_s(szOutputDir, MAX_PATH, szPrefix);
 
     wcscpy_s(szPrefix, MAX_PATH, szOutputDir);
@@ -1135,14 +1143,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     }
 
     LARGE_INTEGER qpcFreq;
-    if ( !QueryPerformanceFrequency( &qpcFreq ) )
+    if (!QueryPerformanceFrequency(&qpcFreq))
     {
         qpcFreq.QuadPart = 0;
     }
 
 
     LARGE_INTEGER qpcStart;
-    if ( !QueryPerformanceCounter( &qpcStart ) )
+    if (!QueryPerformanceCounter(&qpcStart))
     {
         qpcStart.QuadPart = 0;
     }
@@ -1152,161 +1160,161 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     bool non4bc = false;
     ComPtr<ID3D11Device> pDevice;
 
-    for( auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv )
+    for (auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv)
     {
-        if ( pConv != conversion.begin() )
-            wprintf( L"\n");
+        if (pConv != conversion.begin())
+            wprintf(L"\n");
 
         // Load source image
-        wprintf( L"reading %ls", pConv->szSrc );
+        wprintf(L"reading %ls", pConv->szSrc);
         fflush(stdout);
 
         wchar_t ext[_MAX_EXT];
         wchar_t fname[_MAX_FNAME];
-        _wsplitpath_s( pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT );
+        _wsplitpath_s(pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT);
 
         TexMetadata info;
-        std::unique_ptr<ScratchImage> image( new (std::nothrow) ScratchImage );
+        std::unique_ptr<ScratchImage> image(new (std::nothrow) ScratchImage);
 
-        if ( !image )
+        if (!image)
         {
-            wprintf( L" ERROR: Memory allocation failed\n" );
+            wprintf(L"\nERROR: Memory allocation failed\n");
             return 1;
         }
 
-        if ( _wcsicmp( ext, L".dds" ) == 0 )
+        if (_wcsicmp(ext, L".dds") == 0)
         {
             DWORD ddsFlags = DDS_FLAGS_NONE;
-            if ( dwOptions & (DWORD64(1) << OPT_DDS_DWORD_ALIGN) )
+            if (dwOptions & (DWORD64(1) << OPT_DDS_DWORD_ALIGN))
                 ddsFlags |= DDS_FLAGS_LEGACY_DWORD;
-            if ( dwOptions & (DWORD64(1) << OPT_EXPAND_LUMINANCE) )
+            if (dwOptions & (DWORD64(1) << OPT_EXPAND_LUMINANCE))
                 ddsFlags |= DDS_FLAGS_EXPAND_LUMINANCE;
-            if ( dwOptions & (DWORD64(1) << OPT_DDS_BAD_DXTN_TAILS) )
+            if (dwOptions & (DWORD64(1) << OPT_DDS_BAD_DXTN_TAILS))
                 ddsFlags |= DDS_FLAGS_BAD_DXTN_TAILS;
 
-            hr = LoadFromDDSFile( pConv->szSrc, ddsFlags, &info, *image );
-            if ( FAILED(hr) )
+            hr = LoadFromDDSFile(pConv->szSrc, ddsFlags, &info, *image);
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%x)\n", hr);
                 continue;
             }
 
-            if ( IsTypeless( info.format ) )
+            if (IsTypeless(info.format))
             {
-                if ( dwOptions & (DWORD64(1) << OPT_TYPELESS_UNORM) )
+                if (dwOptions & (DWORD64(1) << OPT_TYPELESS_UNORM))
                 {
-                    info.format = MakeTypelessUNORM( info.format );
+                    info.format = MakeTypelessUNORM(info.format);
                 }
-                else if ( dwOptions & (DWORD64(1) << OPT_TYPELESS_FLOAT) )
+                else if (dwOptions & (DWORD64(1) << OPT_TYPELESS_FLOAT))
                 {
-                    info.format = MakeTypelessFLOAT( info.format );
+                    info.format = MakeTypelessFLOAT(info.format);
                 }
 
-                if ( IsTypeless( info.format ) )
+                if (IsTypeless(info.format))
                 {
-                    wprintf( L" FAILED due to Typeless format %d\n", info.format );
+                    wprintf(L" FAILED due to Typeless format %d\n", info.format);
                     continue;
                 }
 
-                image->OverrideFormat( info.format );
+                image->OverrideFormat(info.format);
             }
         }
-        else if ( _wcsicmp( ext, L".tga" ) == 0 )
+        else if (_wcsicmp(ext, L".tga") == 0)
         {
-            hr = LoadFromTGAFile( pConv->szSrc, &info, *image );
-            if ( FAILED(hr) )
+            hr = LoadFromTGAFile(pConv->szSrc, &info, *image);
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%x)\n", hr);
                 continue;
             }
         }
-        else if ( _wcsicmp( ext, L".hdr" ) == 0 )
+        else if (_wcsicmp(ext, L".hdr") == 0)
         {
-            hr = LoadFromHDRFile( pConv->szSrc, &info, *image );
-            if ( FAILED(hr) )
+            hr = LoadFromHDRFile(pConv->szSrc, &info, *image);
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%x)\n", hr);
                 continue;
             }
         }
         else
         {
             // WIC shares the same filter values for mode and dither
-            static_assert( WIC_FLAGS_DITHER == TEX_FILTER_DITHER, "WIC_FLAGS_* & TEX_FILTER_* should match" );
-            static_assert( WIC_FLAGS_DITHER_DIFFUSION == TEX_FILTER_DITHER_DIFFUSION, "WIC_FLAGS_* & TEX_FILTER_* should match"  );
-            static_assert( WIC_FLAGS_FILTER_POINT == TEX_FILTER_POINT, "WIC_FLAGS_* & TEX_FILTER_* should match"  );
-            static_assert( WIC_FLAGS_FILTER_LINEAR == TEX_FILTER_LINEAR, "WIC_FLAGS_* & TEX_FILTER_* should match"  );
-            static_assert( WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match"  );
-            static_assert( WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match"  );
+            static_assert(WIC_FLAGS_DITHER == TEX_FILTER_DITHER, "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_DITHER_DIFFUSION == TEX_FILTER_DITHER_DIFFUSION, "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_FILTER_POINT == TEX_FILTER_POINT, "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_FILTER_LINEAR == TEX_FILTER_LINEAR, "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match");
 
             DWORD wicFlags = dwFilter;
             if (FileType == CODEC_DDS)
                 wicFlags |= WIC_FLAGS_ALL_FRAMES;
 
-            hr = LoadFromWICFile( pConv->szSrc, wicFlags, &info, *image );
-            if ( FAILED(hr) )
+            hr = LoadFromWICFile(pConv->szSrc, wicFlags, &info, *image);
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%x)\n", hr);
                 continue;
             }
         }
 
-        PrintInfo( info );
+        PrintInfo(info);
 
-        size_t tMips = ( !mipLevels && info.mipLevels > 1 ) ? info.mipLevels : mipLevels;
+        size_t tMips = (!mipLevels && info.mipLevels > 1) ? info.mipLevels : mipLevels;
 
         bool sizewarn = false;
 
-        size_t twidth = ( !width ) ? info.width : width;
-        if ( twidth > maxSize )
+        size_t twidth = (!width) ? info.width : width;
+        if (twidth > maxSize)
         {
-            if ( !width )
+            if (!width)
                 twidth = maxSize;
             else
                 sizewarn = true;
         }
 
-        size_t theight = ( !height ) ? info.height : height;
-        if ( theight > maxSize )
+        size_t theight = (!height) ? info.height : height;
+        if (theight > maxSize)
         {
-            if ( !height )
+            if (!height)
                 theight = maxSize;
             else
                 sizewarn = true;
         }
 
-        if ( sizewarn )
+        if (sizewarn)
         {
-            wprintf( L"\nWARNING: Target size exceeds maximum size for feature level (%u)\n", maxSize );
+            wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (%u)\n", maxSize);
         }
 
         if (dwOptions & (DWORD64(1) << OPT_FIT_POWEROF2))
         {
-            FitPowerOf2( info.width, info.height, twidth, theight, maxSize );
+            FitPowerOf2(info.width, info.height, twidth, theight, maxSize);
         }
 
         // Convert texture
-        wprintf( L" as");
+        wprintf(L" as");
         fflush(stdout);
 
         // --- Planar ------------------------------------------------------------------
-        if ( IsPlanar( info.format ) )
+        if (IsPlanar(info.format))
         {
-            auto img = image->GetImage(0,0,0);
-            assert( img );
+            auto img = image->GetImage(0, 0, 0);
+            assert(img);
             size_t nimg = image->GetImageCount();
 
-            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
-            if ( !timage )
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
             {
-                wprintf( L" ERROR: Memory allocation failed\n" );
+                wprintf(L"\nERROR: Memory allocation failed\n");
                 return 1;
             }
 
-            hr = ConvertToSinglePlane( img, nimg, info, *timage );
-            if ( FAILED(hr) )
+            hr = ConvertToSinglePlane(img, nimg, info, *timage);
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED [converttosingeplane] (%x)\n", hr);
+                wprintf(L" FAILED [converttosingeplane] (%x)\n", hr);
                 continue;
             }
 
@@ -1314,39 +1322,39 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             info.format = tinfo.format;
 
-            assert( info.width == tinfo.width );
-            assert( info.height == tinfo.height );
-            assert( info.depth == tinfo.depth );
-            assert( info.arraySize == tinfo.arraySize );
-            assert( info.mipLevels == tinfo.mipLevels );
-            assert( info.miscFlags == tinfo.miscFlags );
-            assert( info.miscFlags2 == tinfo.miscFlags2 );
-            assert( info.dimension == tinfo.dimension );
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.miscFlags2 == tinfo.miscFlags2);
+            assert(info.dimension == tinfo.dimension);
 
-            image.swap( timage );
+            image.swap(timage);
         }
 
-        DXGI_FORMAT tformat = ( format == DXGI_FORMAT_UNKNOWN ) ? info.format : format;
+        DXGI_FORMAT tformat = (format == DXGI_FORMAT_UNKNOWN) ? info.format : format;
 
         // --- Decompress --------------------------------------------------------------
         std::unique_ptr<ScratchImage> cimage;
-        if ( IsCompressed( info.format ) )
+        if (IsCompressed(info.format))
         {
-            auto img = image->GetImage(0,0,0);
-            assert( img );
+            auto img = image->GetImage(0, 0, 0);
+            assert(img);
             size_t nimg = image->GetImageCount();
 
-            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
-            if ( !timage )
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
             {
-                wprintf( L" ERROR: Memory allocation failed\n" );
+                wprintf(L"\nERROR: Memory allocation failed\n");
                 return 1;
             }
 
-            hr = Decompress( img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage );
-            if ( FAILED(hr) )
+            hr = Decompress(img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage);
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED [decompress] (%x)\n", hr);
+                wprintf(L" FAILED [decompress] (%x)\n", hr);
                 continue;
             }
 
@@ -1354,286 +1362,286 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             info.format = tinfo.format;
 
-            assert( info.width == tinfo.width );
-            assert( info.height == tinfo.height );
-            assert( info.depth == tinfo.depth );
-            assert( info.arraySize == tinfo.arraySize );
-            assert( info.mipLevels == tinfo.mipLevels );
-            assert( info.miscFlags == tinfo.miscFlags );
-            assert( info.miscFlags2 == tinfo.miscFlags2 );
-            assert( info.dimension == tinfo.dimension );
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.miscFlags2 == tinfo.miscFlags2);
+            assert(info.dimension == tinfo.dimension);
 
-            if ( FileType == CODEC_DDS )
+            if (FileType == CODEC_DDS)
             {
                 // Keep the original compressed image in case we can reuse it
-                cimage.reset( image.release() );
-                image.reset( timage.release() );
+                cimage.reset(image.release());
+                image.reset(timage.release());
             }
             else
             {
-                image.swap( timage );
+                image.swap(timage);
             }
         }
 
         // --- Flip/Rotate -------------------------------------------------------------
-        if ( dwOptions & ( (DWORD64(1) << OPT_HFLIP) | (DWORD64(1) << OPT_VFLIP) ) )
+        if (dwOptions & ((DWORD64(1) << OPT_HFLIP) | (DWORD64(1) << OPT_VFLIP)))
         {
-            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
-            if ( !timage )
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
             {
-                wprintf( L" ERROR: Memory allocation failed\n" );
+                wprintf(L"\nERROR: Memory allocation failed\n");
                 return 1;
             }
 
             DWORD dwFlags = 0;
 
-            if ( dwOptions & (DWORD64(1) << OPT_HFLIP) )
+            if (dwOptions & (DWORD64(1) << OPT_HFLIP))
                 dwFlags |= TEX_FR_FLIP_HORIZONTAL;
 
-            if ( dwOptions & (DWORD64(1) << OPT_VFLIP) )
+            if (dwOptions & (DWORD64(1) << OPT_VFLIP))
                 dwFlags |= TEX_FR_FLIP_VERTICAL;
 
-            assert( dwFlags != 0 );
+            assert(dwFlags != 0);
 
-            hr = FlipRotate( image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFlags, *timage );
-            if ( FAILED(hr) )
+            hr = FlipRotate(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFlags, *timage);
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED [fliprotate] (%x)\n", hr);
+                wprintf(L" FAILED [fliprotate] (%x)\n", hr);
                 return 1;
             }
 
             auto& tinfo = timage->GetMetadata();
 
-            assert( tinfo.width == twidth && tinfo.height == theight );
+            assert(tinfo.width == twidth && tinfo.height == theight);
 
             info.width = tinfo.width;
             info.height = tinfo.height;
 
-            assert( info.depth == tinfo.depth );
-            assert( info.arraySize == tinfo.arraySize );
-            assert( info.mipLevels == tinfo.mipLevels );
-            assert( info.miscFlags == tinfo.miscFlags );
-            assert( info.miscFlags2 == tinfo.miscFlags2 );
-            assert( info.format == tinfo.format );
-            assert( info.dimension == tinfo.dimension );
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.miscFlags2 == tinfo.miscFlags2);
+            assert(info.format == tinfo.format);
+            assert(info.dimension == tinfo.dimension);
 
-            image.swap( timage );
+            image.swap(timage);
             cimage.reset();
         }
 
         // --- Resize ------------------------------------------------------------------
-        if ( info.width != twidth || info.height != theight )
+        if (info.width != twidth || info.height != theight)
         {
-            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
-            if ( !timage )
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
             {
-                wprintf( L" ERROR: Memory allocation failed\n" );
+                wprintf(L"\nERROR: Memory allocation failed\n");
                 return 1;
             }
 
-            hr = Resize( image->GetImages(), image->GetImageCount(), image->GetMetadata(), twidth, theight, dwFilter | dwFilterOpts, *timage );
-            if ( FAILED(hr) )
+            hr = Resize(image->GetImages(), image->GetImageCount(), image->GetMetadata(), twidth, theight, dwFilter | dwFilterOpts, *timage);
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED [resize] (%x)\n", hr);
+                wprintf(L" FAILED [resize] (%x)\n", hr);
                 return 1;
             }
 
             auto& tinfo = timage->GetMetadata();
 
-            assert( tinfo.width == twidth && tinfo.height == theight && tinfo.mipLevels == 1 );
+            assert(tinfo.width == twidth && tinfo.height == theight && tinfo.mipLevels == 1);
             info.width = tinfo.width;
             info.height = tinfo.height;
             info.mipLevels = 1;
 
-            assert( info.depth == tinfo.depth );
-            assert( info.arraySize == tinfo.arraySize );
-            assert( info.miscFlags == tinfo.miscFlags );
-            assert( info.miscFlags2 == tinfo.miscFlags2 );
-            assert( info.format == tinfo.format );
-            assert( info.dimension == tinfo.dimension );
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.miscFlags2 == tinfo.miscFlags2);
+            assert(info.format == tinfo.format);
+            assert(info.dimension == tinfo.dimension);
 
-            image.swap( timage );
+            image.swap(timage);
             cimage.reset();
         }
 
         // --- Convert -----------------------------------------------------------------
-        if ( dwOptions & (DWORD64(1) << OPT_NORMAL_MAP) )
+        if (dwOptions & (DWORD64(1) << OPT_NORMAL_MAP))
         {
-            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
-            if ( !timage )
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
             {
-                wprintf( L" ERROR: Memory allocation failed\n" );
+                wprintf(L"\nERROR: Memory allocation failed\n");
                 return 1;
             }
 
             DXGI_FORMAT nmfmt = tformat;
-            if ( IsCompressed( tformat ) )
+            if (IsCompressed(tformat))
             {
                 nmfmt = (dwNormalMap & CNMAP_COMPUTE_OCCLUSION) ? DXGI_FORMAT_R32G32B32A32_FLOAT : DXGI_FORMAT_R32G32B32_FLOAT;
             }
 
-            hr = ComputeNormalMap( image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwNormalMap, nmapAmplitude, nmfmt, *timage );
-            if ( FAILED(hr) )
+            hr = ComputeNormalMap(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwNormalMap, nmapAmplitude, nmfmt, *timage);
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED [normalmap] (%x)\n", hr);
+                wprintf(L" FAILED [normalmap] (%x)\n", hr);
                 return 1;
-            }            
+            }
 
             auto& tinfo = timage->GetMetadata();
 
-            assert( tinfo.format == nmfmt );
+            assert(tinfo.format == nmfmt);
             info.format = tinfo.format;
 
-            assert( info.width == tinfo.width );
-            assert( info.height == tinfo.height );
-            assert( info.depth == tinfo.depth );
-            assert( info.arraySize == tinfo.arraySize );
-            assert( info.mipLevels == tinfo.mipLevels );
-            assert( info.miscFlags == tinfo.miscFlags );
-            assert( info.miscFlags2 == tinfo.miscFlags2 );
-            assert( info.dimension == tinfo.dimension );
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.miscFlags2 == tinfo.miscFlags2);
+            assert(info.dimension == tinfo.dimension);
 
-            image.swap( timage );
+            image.swap(timage);
             cimage.reset();
         }
-        else if ( info.format != tformat && !IsCompressed( tformat ) )
+        else if (info.format != tformat && !IsCompressed(tformat))
         {
-            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
-            if ( !timage )
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
             {
-                wprintf( L" ERROR: Memory allocation failed\n" );
+                wprintf(L"\nERROR: Memory allocation failed\n");
                 return 1;
             }
 
-            hr = Convert( image->GetImages(), image->GetImageCount(), image->GetMetadata(), tformat, dwFilter | dwFilterOpts | dwSRGB, 0.5f, *timage );
-            if ( FAILED(hr) )
+            hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), tformat, dwFilter | dwFilterOpts | dwSRGB, 0.5f, *timage);
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED [convert] (%x)\n", hr);
+                wprintf(L" FAILED [convert] (%x)\n", hr);
                 return 1;
             }
 
             auto& tinfo = timage->GetMetadata();
 
-            assert( tinfo.format == tformat );
+            assert(tinfo.format == tformat);
             info.format = tinfo.format;
 
-            assert( info.width == tinfo.width );
-            assert( info.height == tinfo.height );
-            assert( info.depth == tinfo.depth );
-            assert( info.arraySize == tinfo.arraySize );
-            assert( info.mipLevels == tinfo.mipLevels );
-            assert( info.miscFlags == tinfo.miscFlags );
-            assert( info.miscFlags2 == tinfo.miscFlags2 );
-            assert( info.dimension == tinfo.dimension );
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.miscFlags2 == tinfo.miscFlags2);
+            assert(info.dimension == tinfo.dimension);
 
-            image.swap( timage );
+            image.swap(timage);
             cimage.reset();
         }
 
         // --- Generate mips -----------------------------------------------------------
-        if ( !ispow2(info.width) || !ispow2(info.height) || !ispow2(info.depth) )
+        if (!ispow2(info.width) || !ispow2(info.height) || !ispow2(info.depth))
         {
-            if ( info.dimension == TEX_DIMENSION_TEXTURE3D )
+            if (info.dimension == TEX_DIMENSION_TEXTURE3D)
             {
-                if ( !tMips )
+                if (!tMips)
                 {
                     tMips = 1;
                 }
                 else
                 {
-                    wprintf( L" ERROR: Cannot generate mips for non-power-of-2 volume textures\n" );
+                    wprintf(L"\nERROR: Cannot generate mips for non-power-of-2 volume textures\n");
                     return 1;
                 }
             }
-            else if ( !tMips || info.mipLevels != 1 )
+            else if (!tMips || info.mipLevels != 1)
             {
                 nonpow2warn = true;
             }
         }
 
-        if ( (!tMips || info.mipLevels != tMips) && ( info.mipLevels != 1 ) )
+        if ((!tMips || info.mipLevels != tMips) && (info.mipLevels != 1))
         {
             // Mips generation only works on a single base image, so strip off existing mip levels
-            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
-            if ( !timage )
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
             {
-                wprintf( L" ERROR: Memory allocation failed\n" );
+                wprintf(L"\nERROR: Memory allocation failed\n");
                 return 1;
             }
 
             TexMetadata mdata = info;
             mdata.mipLevels = 1;
-            hr = timage->Initialize( mdata );
-            if ( FAILED(hr) )
+            hr = timage->Initialize(mdata);
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED [copy to single level] (%x)\n", hr);
+                wprintf(L" FAILED [copy to single level] (%x)\n", hr);
                 return 1;
             }
 
-            if ( info.dimension == TEX_DIMENSION_TEXTURE3D )
+            if (info.dimension == TEX_DIMENSION_TEXTURE3D)
             {
-                for( size_t d = 0; d < info.depth; ++d )
+                for (size_t d = 0; d < info.depth; ++d)
                 {
-                    hr = CopyRectangle( *image->GetImage( 0, 0, d ), Rect( 0, 0, info.width, info.height ),
-                                        *timage->GetImage( 0, 0, d ), TEX_FILTER_DEFAULT, 0, 0 );
-                    if ( FAILED(hr) )
+                    hr = CopyRectangle(*image->GetImage(0, 0, d), Rect(0, 0, info.width, info.height),
+                        *timage->GetImage(0, 0, d), TEX_FILTER_DEFAULT, 0, 0);
+                    if (FAILED(hr))
                     {
-                        wprintf( L" FAILED [copy to single level] (%x)\n", hr);
+                        wprintf(L" FAILED [copy to single level] (%x)\n", hr);
                         return 1;
                     }
                 }
             }
             else
             {
-                for( size_t i = 0; i < info.arraySize; ++i )
+                for (size_t i = 0; i < info.arraySize; ++i)
                 {
-                    hr = CopyRectangle( *image->GetImage( 0, i, 0 ), Rect( 0, 0, info.width, info.height ),
-                                        *timage->GetImage( 0, i, 0 ), TEX_FILTER_DEFAULT, 0, 0 );
-                    if ( FAILED(hr) )
+                    hr = CopyRectangle(*image->GetImage(0, i, 0), Rect(0, 0, info.width, info.height),
+                        *timage->GetImage(0, i, 0), TEX_FILTER_DEFAULT, 0, 0);
+                    if (FAILED(hr))
                     {
-                        wprintf( L" FAILED [copy to single level] (%x)\n", hr);
+                        wprintf(L" FAILED [copy to single level] (%x)\n", hr);
                         return 1;
                     }
                 }
             }
 
-            image.swap( timage );
+            image.swap(timage);
             info.mipLevels = image->GetMetadata().mipLevels;
 
-            if ( cimage && ( tMips == 1 ) )
+            if (cimage && (tMips == 1))
             {
                 // Special case for trimming mips off compressed images and keeping the original compressed highest level mip
                 mdata = cimage->GetMetadata();
                 mdata.mipLevels = 1;
-                hr = timage->Initialize( mdata );
-                if ( FAILED(hr) )
+                hr = timage->Initialize(mdata);
+                if (FAILED(hr))
                 {
-                    wprintf( L" FAILED [copy compressed to single level] (%x)\n", hr);
+                    wprintf(L" FAILED [copy compressed to single level] (%x)\n", hr);
                     return 1;
                 }
 
-                if ( mdata.dimension == TEX_DIMENSION_TEXTURE3D )
+                if (mdata.dimension == TEX_DIMENSION_TEXTURE3D)
                 {
-                    for( size_t d = 0; d < mdata.depth; ++d )
+                    for (size_t d = 0; d < mdata.depth; ++d)
                     {
-                        auto simg = cimage->GetImage( 0, 0, d );
-                        auto dimg = timage->GetImage( 0, 0, d );
+                        auto simg = cimage->GetImage(0, 0, d);
+                        auto dimg = timage->GetImage(0, 0, d);
 
-                        memcpy_s( dimg->pixels, dimg->slicePitch, simg->pixels, simg->slicePitch );
+                        memcpy_s(dimg->pixels, dimg->slicePitch, simg->pixels, simg->slicePitch);
                     }
                 }
                 else
                 {
-                    for( size_t i = 0; i < mdata.arraySize; ++i )
+                    for (size_t i = 0; i < mdata.arraySize; ++i)
                     {
-                        auto simg = cimage->GetImage( 0, i, 0 );
-                        auto dimg = timage->GetImage( 0, i, 0 );
+                        auto simg = cimage->GetImage(0, i, 0);
+                        auto dimg = timage->GetImage(0, i, 0);
 
-                        memcpy_s( dimg->pixels, dimg->slicePitch, simg->pixels, simg->slicePitch );
+                        memcpy_s(dimg->pixels, dimg->slicePitch, simg->pixels, simg->slicePitch);
                     }
                 }
 
-                cimage.swap( timage );
+                cimage.swap(timage);
             }
             else
             {
@@ -1641,133 +1649,133 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
         }
 
-        if ( ( !tMips || info.mipLevels != tMips ) && ( info.width > 1 || info.height > 1 || info.depth > 1 ) )
+        if ((!tMips || info.mipLevels != tMips) && (info.width > 1 || info.height > 1 || info.depth > 1))
         {
-            std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
-            if ( !timage )
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
             {
-                wprintf( L" ERROR: Memory allocation failed\n" );
+                wprintf(L"\nERROR: Memory allocation failed\n");
                 return 1;
             }
 
-            if ( info.dimension == TEX_DIMENSION_TEXTURE3D )
+            if (info.dimension == TEX_DIMENSION_TEXTURE3D)
             {
-                hr = GenerateMipMaps3D( image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFilter | dwFilterOpts, tMips, *timage );
+                hr = GenerateMipMaps3D(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFilter | dwFilterOpts, tMips, *timage);
             }
             else
             {
-                hr = GenerateMipMaps( image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFilter | dwFilterOpts, tMips, *timage );
+                hr = GenerateMipMaps(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFilter | dwFilterOpts, tMips, *timage);
             }
-            if ( FAILED(hr) )
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED [mipmaps] (%x)\n", hr);
+                wprintf(L" FAILED [mipmaps] (%x)\n", hr);
                 return 1;
             }
 
             auto& tinfo = timage->GetMetadata();
             info.mipLevels = tinfo.mipLevels;
 
-            assert( info.width == tinfo.width );
-            assert( info.height == tinfo.height );
-            assert( info.depth == tinfo.depth );
-            assert( info.arraySize == tinfo.arraySize );
-            assert( info.mipLevels == tinfo.mipLevels );
-            assert( info.miscFlags == tinfo.miscFlags );
-            assert( info.miscFlags2 == tinfo.miscFlags2 );
-            assert( info.dimension == tinfo.dimension );
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.miscFlags2 == tinfo.miscFlags2);
+            assert(info.dimension == tinfo.dimension);
 
-            image.swap( timage );
+            image.swap(timage);
             cimage.reset();
         }
 
         // --- Premultiplied alpha (if requested) --------------------------------------
-        if ( ( dwOptions & (DWORD64(1) << OPT_PREMUL_ALPHA) )
-             && HasAlpha( info.format )
-             && info.format != DXGI_FORMAT_A8_UNORM )
+        if ((dwOptions & (DWORD64(1) << OPT_PREMUL_ALPHA))
+            && HasAlpha(info.format)
+            && info.format != DXGI_FORMAT_A8_UNORM)
         {
-            if ( info.IsPMAlpha() )
+            if (info.IsPMAlpha())
             {
                 printf("WARNING: Image is already using premultiplied alpha\n");
             }
             else
             {
-                auto img = image->GetImage(0,0,0);
-                assert( img );
+                auto img = image->GetImage(0, 0, 0);
+                assert(img);
                 size_t nimg = image->GetImageCount();
 
-                std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
-                if ( !timage )
+                std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                if (!timage)
                 {
-                    wprintf( L" ERROR: Memory allocation failed\n" );
+                    wprintf(L"\nERROR: Memory allocation failed\n");
                     return 1;
                 }
 
-                hr = PremultiplyAlpha( img, nimg, info, dwSRGB, *timage );
-                if ( FAILED(hr) )
+                hr = PremultiplyAlpha(img, nimg, info, dwSRGB, *timage);
+                if (FAILED(hr))
                 {
-                    wprintf( L" FAILED [premultiply alpha] (%x)\n", hr);
+                    wprintf(L" FAILED [premultiply alpha] (%x)\n", hr);
                     continue;
                 }
 
                 auto& tinfo = timage->GetMetadata();
                 info.miscFlags2 = tinfo.miscFlags2;
- 
-                assert( info.width == tinfo.width );
-                assert( info.height == tinfo.height );
-                assert( info.depth == tinfo.depth );
-                assert( info.arraySize == tinfo.arraySize );
-                assert( info.mipLevels == tinfo.mipLevels );
-                assert( info.miscFlags == tinfo.miscFlags );
-                assert( info.miscFlags2 == tinfo.miscFlags2 );
-                assert( info.dimension == tinfo.dimension );
 
-                image.swap( timage );
+                assert(info.width == tinfo.width);
+                assert(info.height == tinfo.height);
+                assert(info.depth == tinfo.depth);
+                assert(info.arraySize == tinfo.arraySize);
+                assert(info.mipLevels == tinfo.mipLevels);
+                assert(info.miscFlags == tinfo.miscFlags);
+                assert(info.miscFlags2 == tinfo.miscFlags2);
+                assert(info.dimension == tinfo.dimension);
+
+                image.swap(timage);
                 cimage.reset();
             }
         }
 
         // --- Compress ----------------------------------------------------------------
-        if ( IsCompressed( tformat ) && (FileType == CODEC_DDS) )
+        if (IsCompressed(tformat) && (FileType == CODEC_DDS))
         {
-            if ( cimage && ( cimage->GetMetadata().format == tformat ) )
+            if (cimage && (cimage->GetMetadata().format == tformat))
             {
                 // We never changed the image and it was already compressed in our desired format, use original data
-                image.reset( cimage.release() );
+                image.reset(cimage.release());
 
                 auto& tinfo = image->GetMetadata();
 
-                if ( (tinfo.width % 4) != 0 || (tinfo.height % 4) != 0 )
-                { 
+                if ((tinfo.width % 4) != 0 || (tinfo.height % 4) != 0)
+                {
                     non4bc = true;
                 }
 
                 info.format = tinfo.format;
-                assert( info.width == tinfo.width );
-                assert( info.height == tinfo.height );
-                assert( info.depth == tinfo.depth );
-                assert( info.arraySize == tinfo.arraySize );
-                assert( info.mipLevels == tinfo.mipLevels );
-                assert( info.miscFlags == tinfo.miscFlags );
-                assert( info.miscFlags2 == tinfo.miscFlags2 );
-                assert( info.dimension == tinfo.dimension );
+                assert(info.width == tinfo.width);
+                assert(info.height == tinfo.height);
+                assert(info.depth == tinfo.depth);
+                assert(info.arraySize == tinfo.arraySize);
+                assert(info.mipLevels == tinfo.mipLevels);
+                assert(info.miscFlags == tinfo.miscFlags);
+                assert(info.miscFlags2 == tinfo.miscFlags2);
+                assert(info.dimension == tinfo.dimension);
             }
             else
             {
                 cimage.reset();
 
-                auto img = image->GetImage(0,0,0);
-                assert( img );
+                auto img = image->GetImage(0, 0, 0);
+                assert(img);
                 size_t nimg = image->GetImageCount();
 
-                std::unique_ptr<ScratchImage> timage( new (std::nothrow) ScratchImage );
-                if ( !timage )
+                std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                if (!timage)
                 {
-                    wprintf( L" ERROR: Memory allocation failed\n" );
+                    wprintf(L"\nERROR: Memory allocation failed\n");
                     return 1;
                 }
 
-                bool bc6hbc7=false;
-                switch( tformat )
+                bool bc6hbc7 = false;
+                switch (tformat)
                 {
                 case DXGI_FORMAT_BC6H_TYPELESS:
                 case DXGI_FORMAT_BC6H_UF16:
@@ -1775,23 +1783,23 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 case DXGI_FORMAT_BC7_TYPELESS:
                 case DXGI_FORMAT_BC7_UNORM:
                 case DXGI_FORMAT_BC7_UNORM_SRGB:
-                    bc6hbc7=true;
+                    bc6hbc7 = true;
 
                     {
                         static bool s_tryonce = false;
 
-                        if ( !s_tryonce )
+                        if (!s_tryonce)
                         {
                             s_tryonce = true;
 
-                            if ( !(dwOptions & (DWORD64(1) << OPT_NOGPU) ) )
+                            if (!(dwOptions & (DWORD64(1) << OPT_NOGPU)))
                             {
-                                if ( !CreateDevice( adapter, pDevice.GetAddressOf() ) )
-                                    wprintf( L"\nWARNING: DirectCompute is not available, using BC6H / BC7 CPU codec\n" );
+                                if (!CreateDevice(adapter, pDevice.GetAddressOf()))
+                                    wprintf(L"\nWARNING: DirectCompute is not available, using BC6H / BC7 CPU codec\n");
                             }
                             else
                             {
-                                wprintf( L"\nWARNING: using BC6H / BC7 CPU codec\n" );
+                                wprintf(L"\nWARNING: using BC6H / BC7 CPU codec\n");
                             }
                         }
                     }
@@ -1800,44 +1808,44 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 DWORD cflags = dwCompress;
 #ifdef _OPENMP
-                if ( !(dwOptions & (DWORD64(1) << OPT_FORCE_SINGLEPROC) ) )
+                if (!(dwOptions & (DWORD64(1) << OPT_FORCE_SINGLEPROC)))
                 {
                     cflags |= TEX_COMPRESS_PARALLEL;
                 }
 #endif
 
-                if ( (img->width % 4) != 0 || (img->height % 4) != 0 )
-                { 
+                if ((img->width % 4) != 0 || (img->height % 4) != 0)
+                {
                     non4bc = true;
                 }
 
-                if ( bc6hbc7 && pDevice )
+                if (bc6hbc7 && pDevice)
                 {
-                    hr = Compress( pDevice.Get(), img, nimg, info, tformat, dwCompress | dwSRGB, alphaWeight, *timage );
+                    hr = Compress(pDevice.Get(), img, nimg, info, tformat, dwCompress | dwSRGB, alphaWeight, *timage);
                 }
                 else
                 {
-                    hr = Compress( img, nimg, info, tformat, cflags | dwSRGB, 0.5f, *timage );
+                    hr = Compress(img, nimg, info, tformat, cflags | dwSRGB, 0.5f, *timage);
                 }
-                if ( FAILED(hr) )
+                if (FAILED(hr))
                 {
-                    wprintf( L" FAILED [compress] (%x)\n", hr);
+                    wprintf(L" FAILED [compress] (%x)\n", hr);
                     continue;
                 }
 
                 auto& tinfo = timage->GetMetadata();
 
                 info.format = tinfo.format;
-                assert( info.width == tinfo.width );
-                assert( info.height == tinfo.height );
-                assert( info.depth == tinfo.depth );
-                assert( info.arraySize == tinfo.arraySize );
-                assert( info.mipLevels == tinfo.mipLevels );
-                assert( info.miscFlags == tinfo.miscFlags );
-                assert( info.miscFlags2 == tinfo.miscFlags2 );
-                assert( info.dimension == tinfo.dimension );
+                assert(info.width == tinfo.width);
+                assert(info.height == tinfo.height);
+                assert(info.depth == tinfo.depth);
+                assert(info.arraySize == tinfo.arraySize);
+                assert(info.mipLevels == tinfo.mipLevels);
+                assert(info.miscFlags == tinfo.miscFlags);
+                assert(info.miscFlags2 == tinfo.miscFlags2);
+                assert(info.dimension == tinfo.dimension);
 
-                image.swap( timage );
+                image.swap(timage);
             }
         }
         else
@@ -1846,18 +1854,18 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Set alpha mode ----------------------------------------------------------
-        if ( HasAlpha( info.format )
-             && info.format != DXGI_FORMAT_A8_UNORM )
+        if (HasAlpha(info.format)
+            && info.format != DXGI_FORMAT_A8_UNORM)
         {
-            if ( image->IsAlphaAllOpaque() )
+            if (image->IsAlphaAllOpaque())
             {
                 info.SetAlphaMode(TEX_ALPHA_MODE_OPAQUE);
             }
-            else if ( info.IsPMAlpha() )
+            else if (info.IsPMAlpha())
             {
                 // Aleady set TEX_ALPHA_MODE_PREMULTIPLIED
             }
-            else if ( dwOptions & (DWORD64(1) << OPT_SEPALPHA) )
+            else if (dwOptions & (DWORD64(1) << OPT_SEPALPHA))
             {
                 info.SetAlphaMode(TEX_ALPHA_MODE_CUSTOM);
             }
@@ -1873,12 +1881,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
         // --- Save result -------------------------------------------------------------
         {
-            auto img = image->GetImage(0,0,0);
-            assert( img );
+            auto img = image->GetImage(0, 0, 0);
+            assert(img);
             size_t nimg = image->GetImageCount();
 
-            PrintInfo( info );
-            wprintf( L"\n");
+            PrintInfo(info);
+            wprintf(L"\n");
 
             // Figure out dest filename
             wchar_t *pchSlash, *pchDot;
@@ -1886,7 +1894,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             wcscpy_s(pConv->szDest, MAX_PATH, szPrefix);
 
             pchSlash = wcsrchr(pConv->szSrc, L'\\');
-            if(pchSlash != 0)
+            if (pchSlash != 0)
                 wcscat_s(pConv->szDest, MAX_PATH, pchSlash + 1);
             else
                 wcscat_s(pConv->szDest, MAX_PATH, pConv->szSrc);
@@ -1894,123 +1902,123 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             pchSlash = wcsrchr(pConv->szDest, '\\');
             pchDot = wcsrchr(pConv->szDest, '.');
 
-            if(pchDot > pchSlash)
+            if (pchDot > pchSlash)
                 *pchDot = 0;
 
             wcscat_s(pConv->szDest, MAX_PATH, szSuffix);
 
             // Write texture
-            wprintf( L"writing %ls", pConv->szDest);
+            wprintf(L"writing %ls", pConv->szDest);
             fflush(stdout);
 
-            switch( FileType )
+            switch (FileType)
             {
             case CODEC_DDS:
-                hr = SaveToDDSFile( img, nimg, info,
-                                    (dwOptions & (DWORD64(1) << OPT_USE_DX10) ) ? (DDS_FLAGS_FORCE_DX10_EXT|DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE, 
-                                    pConv->szDest );
+                hr = SaveToDDSFile(img, nimg, info,
+                    (dwOptions & (DWORD64(1) << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
+                    pConv->szDest);
                 break;
 
             case CODEC_TGA:
-                hr = SaveToTGAFile( img[0], pConv->szDest );
+                hr = SaveToTGAFile(img[0], pConv->szDest);
                 break;
 
             case CODEC_HDR:
-                hr = SaveToHDRFile( img[0], pConv->szDest );
+                hr = SaveToHDRFile(img[0], pConv->szDest);
                 break;
 
             default:
+            {
+                WICCodecs codec = (FileType == CODEC_HDP || FileType == CODEC_JXR) ? WIC_CODEC_WMP : static_cast<WICCodecs>(FileType);
+                hr = SaveToWICFile(img, nimg, WIC_FLAGS_ALL_FRAMES, GetWICCodec(codec), pConv->szDest, nullptr,
+                    [&](IPropertyBag2* props)
                 {
-                    WICCodecs codec = (FileType == CODEC_HDP || FileType == CODEC_JXR) ? WIC_CODEC_WMP : static_cast<WICCodecs>(FileType);
-                    hr = SaveToWICFile( img, nimg, WIC_FLAGS_ALL_FRAMES, GetWICCodec(codec), pConv->szDest, nullptr,
-                        [&](IPropertyBag2* props)
+                    switch (FileType)
                     {
-                        switch (FileType)
+                    case WIC_CODEC_JPEG:
+                        if (wicLossless || wicQuality >= 0.f)
                         {
-                        case WIC_CODEC_JPEG:
-                            if (wicLossless || wicQuality >= 0.f)
-                            {
-                                PROPBAG2 options = {};
-                                VARIANT varValues = {};
-                                options.pstrName = L"ImageQuality";
-                                varValues.vt = VT_R4;
-                                varValues.fltVal = (wicLossless) ? 1.f : wicQuality;
-                                (void)props->Write(1, &options, &varValues);
-                            }
-                            break;
-
-                        case WIC_CODEC_TIFF:
-                            {
-                                PROPBAG2 options = {};
-                                VARIANT varValues = {};
-                                if (wicLossless)
-                                {
-                                    options.pstrName = L"TiffCompressionMethod";
-                                    varValues.vt = VT_UI1;
-                                    varValues.bVal = WICTiffCompressionNone;
-                                }
-                                else if (wicQuality >= 0.f)
-                                {
-                                    options.pstrName = L"CompressionQuality";
-                                    varValues.vt = VT_R4;
-                                    varValues.fltVal = wicQuality;
-                                }
-                                (void)props->Write(1, &options, &varValues);
-                            }
-                            break;
-
-                        case WIC_CODEC_WMP:
-                        case CODEC_HDP:
-                        case CODEC_JXR:
-                            {
-                                PROPBAG2 options = {};
-                                VARIANT varValues = {};
-                                if (wicLossless)
-                                {
-                                    options.pstrName = L"Lossless";
-                                    varValues.vt = VT_BOOL;
-                                    varValues.bVal = TRUE;
-                                }
-                                else if (wicQuality >= 0.f)
-                                {
-                                    options.pstrName = L"ImageQuality";
-                                    varValues.vt = VT_R4;
-                                    varValues.fltVal = wicQuality;
-                                }
-                                (void)props->Write(1, &options, &varValues);
-                            }
-                            break;
+                            PROPBAG2 options = {};
+                            VARIANT varValues = {};
+                            options.pstrName = L"ImageQuality";
+                            varValues.vt = VT_R4;
+                            varValues.fltVal = (wicLossless) ? 1.f : wicQuality;
+                            (void)props->Write(1, &options, &varValues);
                         }
-                    });
-                }
-                break;
+                        break;
+
+                    case WIC_CODEC_TIFF:
+                    {
+                        PROPBAG2 options = {};
+                        VARIANT varValues = {};
+                        if (wicLossless)
+                        {
+                            options.pstrName = L"TiffCompressionMethod";
+                            varValues.vt = VT_UI1;
+                            varValues.bVal = WICTiffCompressionNone;
+                        }
+                        else if (wicQuality >= 0.f)
+                        {
+                            options.pstrName = L"CompressionQuality";
+                            varValues.vt = VT_R4;
+                            varValues.fltVal = wicQuality;
+                        }
+                        (void)props->Write(1, &options, &varValues);
+                    }
+                    break;
+
+                    case WIC_CODEC_WMP:
+                    case CODEC_HDP:
+                    case CODEC_JXR:
+                    {
+                        PROPBAG2 options = {};
+                        VARIANT varValues = {};
+                        if (wicLossless)
+                        {
+                            options.pstrName = L"Lossless";
+                            varValues.vt = VT_BOOL;
+                            varValues.bVal = TRUE;
+                        }
+                        else if (wicQuality >= 0.f)
+                        {
+                            options.pstrName = L"ImageQuality";
+                            varValues.vt = VT_R4;
+                            varValues.fltVal = wicQuality;
+                        }
+                        (void)props->Write(1, &options, &varValues);
+                    }
+                    break;
+                    }
+                });
+            }
+            break;
             }
 
-            if(FAILED(hr))
+            if (FAILED(hr))
             {
-                wprintf( L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%x)\n", hr);
                 continue;
             }
-            wprintf( L"\n");
+            wprintf(L"\n");
         }
     }
 
-    if ( nonpow2warn && maxSize <= 4096 )
+    if (nonpow2warn && maxSize <= 4096)
     {
         // Only emit this warning if ran with -fl set to a 9.x feature level
-        wprintf( L"\n WARNING: Not all feature levels support non-power-of-2 textures with mipmaps\n" );
+        wprintf(L"\n WARNING: Not all feature levels support non-power-of-2 textures with mipmaps\n");
     }
 
-    if ( non4bc )
-        wprintf( L"\n WARNING: Direct3D requires BC image to be multiple of 4 in width & height\n" );
+    if (non4bc)
+        wprintf(L"\n WARNING: Direct3D requires BC image to be multiple of 4 in width & height\n");
 
-    if(dwOptions & (DWORD64(1) << OPT_TIMING))
+    if (dwOptions & (DWORD64(1) << OPT_TIMING))
     {
         LARGE_INTEGER qpcEnd;
-        if ( QueryPerformanceCounter( &qpcEnd ) )
+        if (QueryPerformanceCounter(&qpcEnd))
         {
             LONGLONG delta = qpcEnd.QuadPart - qpcStart.QuadPart;
-            wprintf( L"\n Processing time: %f seconds\n", double(delta) / double(qpcFreq.QuadPart) );
+            wprintf(L"\n Processing time: %f seconds\n", double(delta) / double(qpcFreq.QuadPart));
         }
     }
 
