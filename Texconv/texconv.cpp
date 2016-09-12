@@ -1995,8 +1995,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
     }
 
-    if ( nonpow2warn )
+    if ( nonpow2warn && maxSize <= 4096 )
+    {
+        // Only emit this warning if ran with -fl set to a 9.x feature level
         wprintf( L"\n WARNING: Not all feature levels support non-power-of-2 textures with mipmaps\n" );
+    }
 
     if ( non4bc )
         wprintf( L"\n WARNING: Direct3D requires BC image to be multiple of 4 in width & height\n" );
