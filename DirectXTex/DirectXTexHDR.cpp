@@ -609,7 +609,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
                 if (inColor[0] == 1 && inColor[1] == 1 && inColor[2] == 1)
                 {
                     // "Standard" Run Length Encoding
-                    size_t spanLen = inColor[3] << bitShift;
+                    size_t spanLen = size_t(inColor[3]) << bitShift;
                     if (spanLen + pixelCount > mdata.width)
                     {
                         image.Release();
