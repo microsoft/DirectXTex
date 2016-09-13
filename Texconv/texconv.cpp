@@ -1416,14 +1416,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             auto& tinfo = timage->GetMetadata();
 
             info.format = tinfo.format;
-
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
             assert(info.depth == tinfo.depth);
             assert(info.arraySize == tinfo.arraySize);
             assert(info.mipLevels == tinfo.mipLevels);
             assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.miscFlags2 == tinfo.miscFlags2);
             assert(info.dimension == tinfo.dimension);
 
             image.swap(timage);
@@ -1463,7 +1461,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert(info.arraySize == tinfo.arraySize);
             assert(info.mipLevels == tinfo.mipLevels);
             assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.miscFlags2 == tinfo.miscFlags2);
             assert(info.dimension == tinfo.dimension);
 
             if (FileType == CODEC_DDS)
@@ -1516,7 +1513,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert(info.arraySize == tinfo.arraySize);
             assert(info.mipLevels == tinfo.mipLevels);
             assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.miscFlags2 == tinfo.miscFlags2);
             assert(info.format == tinfo.format);
             assert(info.dimension == tinfo.dimension);
 
@@ -1551,7 +1547,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert(info.depth == tinfo.depth);
             assert(info.arraySize == tinfo.arraySize);
             assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.miscFlags2 == tinfo.miscFlags2);
             assert(info.format == tinfo.format);
             assert(info.dimension == tinfo.dimension);
 
@@ -1593,7 +1588,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert(info.arraySize == tinfo.arraySize);
             assert(info.mipLevels == tinfo.mipLevels);
             assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.miscFlags2 == tinfo.miscFlags2);
             assert(info.dimension == tinfo.dimension);
 
             image.swap(timage);
@@ -1626,7 +1620,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert(info.arraySize == tinfo.arraySize);
             assert(info.mipLevels == tinfo.mipLevels);
             assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.miscFlags2 == tinfo.miscFlags2);
             assert(info.dimension == tinfo.dimension);
 
             image.swap(timage);
@@ -1776,7 +1769,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert(info.arraySize == tinfo.arraySize);
             assert(info.mipLevels == tinfo.mipLevels);
             assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.miscFlags2 == tinfo.miscFlags2);
             assert(info.dimension == tinfo.dimension);
 
             image.swap(timage);
@@ -1821,7 +1813,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 assert(info.arraySize == tinfo.arraySize);
                 assert(info.mipLevels == tinfo.mipLevels);
                 assert(info.miscFlags == tinfo.miscFlags);
-                assert(info.miscFlags2 == tinfo.miscFlags2);
                 assert(info.dimension == tinfo.dimension);
 
                 image.swap(timage);
@@ -1851,7 +1842,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 assert(info.arraySize == tinfo.arraySize);
                 assert(info.mipLevels == tinfo.mipLevels);
                 assert(info.miscFlags == tinfo.miscFlags);
-                assert(info.miscFlags2 == tinfo.miscFlags2);
                 assert(info.dimension == tinfo.dimension);
             }
             else
@@ -1937,7 +1927,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 assert(info.arraySize == tinfo.arraySize);
                 assert(info.mipLevels == tinfo.mipLevels);
                 assert(info.miscFlags == tinfo.miscFlags);
-                assert(info.miscFlags2 == tinfo.miscFlags2);
                 assert(info.dimension == tinfo.dimension);
 
                 image.swap(timage);
