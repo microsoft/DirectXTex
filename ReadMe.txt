@@ -3,28 +3,28 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-August 4, 2016
+September 14, 2016
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
 resizing, format conversion, mip-map generation, block compression for Direct3D runtime
 texture resources, and height-map to normal-map conversion. This library makes
-use of the Windows Image Component (WIC) APIs. It also includes a simple .TGA reader and
-writer since this image file format is commonly used for texture content processing pipelines,
-but is not currently supported by a built-in WIC codec.
+use of the Windows Image Component (WIC) APIs. It also includes simple .TGA and .HDR
+readers and writers since these image file formats are commonly used for texture content
+processing pipelines, but are not currently supported by a built-in WIC codec.
 
 The source is written for Visual Studio 2013 or 2015. It is recommended that you
 make use of VS 2013 Update 5 or VS 2015 Update 3 and Windows 7 Service Pack 1 or later.
 
 DirectXTex\
     This contains the DirectXTex library. This includes a full-featured DDS reader and writer
-    including legacy format conversions, a TGA reader and writer, a WIC-based bitmap reader and
-    writer (BMP, JPEG, PNG, TIFF, and HD Photo), and various texture processing functions. This
-    is intended primarily for tool usage.
+    including legacy format conversions, a TGA reader and writer, a HDR reader and writer,
+    a WIC-based bitmap reader and writer (BMP, JPEG, PNG, TIFF, and HD Photo), and various
+    texture processing functions. This is intended primarily for tool usage.
 
     Note that the majority of the header files here are intended for internal implementation
-    of the library only (BC.h, DDS.h, DirectXTexP.h, and scoped.h). Only DirectXTex.h is
-    meant as a 'public' header for the library.
+    of the library only (BC.h, BCDirectCompute.h, DDS.h, DirectXTexP.h, filters.h, and scoped.h).
+    Only DirectXTex.h is meant as a 'public' header for the library.
 
 Texconv\
     This DirectXTex sample is an implementation of the "texconv" command-line texture utility
@@ -32,10 +32,10 @@ Texconv\
 
     It supports the same arguments as the Texture Conversion Tool Extended (texconvex.exe) DirectX
     SDK utility. See <http://msdn.microsoft.com/en-us/library/ee422506.aspx>. The primary differences
-    are the -10 and -11 arguments are not applicable; the filter names (POINT, LINEAR, CUBIC,
-    FANT or BOX, TRIANGLE, *_DITHER, *_DITHER_DIFFUSION); and support for the .TGA file format.
-    This also includes support for JPEG XR/HD Photo bitmap formats (see
-    <http://blogs.msdn.com/b/chuckw/archive/2011/01/19/known-issue-texconvex.aspx>)
+    are the -10 and -11 arguments are not applicable and the filter names (POINT, LINEAR, CUBIC,
+    FANT or BOX, TRIANGLE, *_DITHER, *_DITHER_DIFFUSION). This also includes support for the JPEG XR
+    (HD Photo) bitmap format.
+    (see <http://blogs.msdn.com/b/chuckw/archive/2011/01/19/known-issue-texconvex.aspx>)
 
 Texassemble\
     This DirectXTex sample is a command-line utility for creating cubemaps, volume maps, or
@@ -93,23 +93,39 @@ RELEASE NOTES
   DDS files created using the DDS_FLAGS_FORCE_DX10_EXT_MISC2 flag or the texconv -dx10 switch using the
   March 2013 release should be refreshed.
 
-* Due to the underlying Windows BMP WIC codec, alpha channels are not supported for 16bpp or 32bpp BMP pixel format files. The Windows 8.x
-  version of the Windows BMP WIC codec does support 32bpp pixel formats with alpha when using the BITMAPV5HEADER file header. Note the updated
-  WIC is available on Windows 7 SP1 with KB 2670838 installed.
+* Due to the underlying Windows BMP WIC codec, alpha channels are not supported for 16bpp or 32bpp BMP pixel format
+  files. The Windows 8.x and Windows 10 version of the Windows BMP WIC codec does support 32bpp pixel formats with
+  alpha when using the BITMAPV5HEADER file header. Note the updated WIC is available on Windows 7 SP1 with KB 2670838
+  installed.
 
 * While DXGI 1.0 and DXGI 1.1 include 5:6:5 (DXGI_FORMAT_B5G6R5_UNORM) and 5:5:5:1 (DXGI_FORMAT_B5G5R5A1_UNORM)
-  pixel format enumerations, the DirectX 10.x and 11.0 Runtimes do not support these formats for use with Direct3D. The DirectX 11.1 runtime,
-  DXGI 1.2, and the WDDM 1.2 driver model fully support 16bpp formats (5:6:5, 5:5:5:1, and 4:4:4:4).
+  pixel format enumerations, the DirectX 10.x and 11.0 Runtimes do not support these formats for use with Direct3D.
+  The DirectX 11.1 runtime, DXGI 1.2, and the WDDM 1.2 driver model fully support 16bpp formats (5:6:5, 5:5:5:1, and
+   4:4:4:4).
 
-* WICTextureLoader cannot load .TGA files unless the system has a 3rd party WIC codec installed. You must use the DirectXTex
-  library for TGA file format support without relying on an add-on WIC codec.
+* WICTextureLoader cannot load .TGA or .HDR files unless the system has a 3rd party WIC codec installed. You
+  must use the DirectXTex library for TGA/HDR file format support without relying on an add-on WIC codec.
 
-* Loading of 96bpp floating-point TIFF files results in a corrupted image prior to Windows 8. This fix is available on Windows 7 SP1 with
-  KB 2670838 installed.
+* Loading of 96bpp floating-point TIFF files results in a corrupted image prior to Windows 8. This fix is available
+  on Windows 7 SP1 with KB 2670838 installed.
 
 
 ------------------------------------
 RELEASE HISTORY
+
+September 14, 2016
+    HDR (RGBE Radiance) file format reader and writer
+    Evaluate and Transform functions for computing user-defined functions on images
+    Fix BC6H GPU shaders on WARP device
+    Fix for alignment issues on ARM devices in software compression codec
+    Added TEX_THRESHOLD_DEFAULT (0.5f) constant default alpha threshold value for Convert & Compress
+    Minor CaptureTexture optimization
+    texconv/texassemble: Support for .hdr file format
+    texconv: added -gpu switch to specify adapter to use for GPU-based compression codecs
+    texconv: added -badtails switch to enable loading of legacy DXTn DDS files with incomplete mipchain tails
+    texconv: added -c switch for old-school colorkey/chromakey transparency to alpha conversion
+    texconv: added -alpha switch for reverse premultiply along with TEX_PMALPHA_REVERSE flag
+    texconv: added wildcard support for input filename and optional -r switch for recursive search
 
 August 4, 2016
     CompileShader script updated to build external pdbs
