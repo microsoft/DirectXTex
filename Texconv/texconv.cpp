@@ -1707,7 +1707,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), tformat, dwFilter | dwFilterOpts | dwSRGB, 0.5f, *timage);
+            hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), tformat,
+                dwFilter | dwFilterOpts | dwSRGB, TEX_THRESHOLD_DEFAULT, *timage);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED [convert] (%x)\n", hr);
@@ -2069,7 +2070,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else
                 {
-                    hr = Compress(img, nimg, info, tformat, cflags | dwSRGB, 0.5f, *timage);
+                    hr = Compress(img, nimg, info, tformat, cflags | dwSRGB, TEX_THRESHOLD_DEFAULT, *timage);
                 }
                 if (FAILED(hr))
                 {

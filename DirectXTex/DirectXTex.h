@@ -451,6 +451,9 @@ namespace DirectX
         // Resize the image to width x height. Defaults to Fant filtering.
         // Note for a complex resize, the result will always have mipLevels == 1
 
+    const float TEX_THRESHOLD_DEFAULT = 0.5f;
+        // Default value for alpha threshold used when converting to 1-bit alpha
+
     HRESULT __cdecl Convert( _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD filter, _In_ float threshold,
                             _Out_ ScratchImage& image );
     HRESULT __cdecl Convert( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
@@ -527,11 +530,11 @@ namespace DirectX
             // Compress is free to use multithreading to improve performance (by default it does not use multithreading)
     };
 
-    HRESULT __cdecl Compress( _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaRef,
+    HRESULT __cdecl Compress( _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float threshold,
                               _Out_ ScratchImage& cImage );
     HRESULT __cdecl Compress( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                              _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaRef, _Out_ ScratchImage& cImages );
-        // Note that alphaRef is only used by BC1. 0.5f is a typical value to use
+                              _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float threshold, _Out_ ScratchImage& cImages );
+        // Note that threshold is only used by BC1. TEX_THRESHOLD_DEFAULT is a typical value to use
 
     HRESULT __cdecl Compress( _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD compress,
                               _In_ float alphaWeight, _Out_ ScratchImage& image );

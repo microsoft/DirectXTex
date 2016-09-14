@@ -759,7 +759,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), format, dwFilter | dwFilterOpts, 0.5f, *timage.get());
+            hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), format,
+                dwFilter | dwFilterOpts, TEX_THRESHOLD_DEFAULT, *timage.get());
             if (FAILED(hr))
             {
                 wprintf(L" FAILED [convert] (%x)\n", hr);

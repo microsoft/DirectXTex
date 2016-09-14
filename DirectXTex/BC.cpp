@@ -377,7 +377,7 @@ namespace
         _Out_ D3DX_BC1 *pBC,
         _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA *pColor,
         bool bColorKey,
-        float alphaRef,
+        float threshold,
         DWORD flags)
     {
         assert(pBC && pColor);
@@ -392,7 +392,7 @@ namespace
 
             for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
             {
-                if (pColor[i].a < alphaRef)
+                if (pColor[i].a < threshold)
                     uColorKey++;
             }
 
@@ -604,7 +604,7 @@ namespace
 
         for (i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
-            if ((3 == uSteps) && (pColor[i].a < alphaRef))
+            if ((3 == uSteps) && (pColor[i].a < threshold))
             {
                 dw = (3 << 30) | (dw >> 2);
             }
@@ -735,7 +735,7 @@ void DirectX::D3DXDecodeBC1(XMVECTOR *pColor, const uint8_t *pBC)
 }
 
 _Use_decl_annotations_
-void DirectX::D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float alphaRef, DWORD flags)
+void DirectX::D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshold, DWORD flags)
 {
     assert(pBC && pColor);
 
@@ -792,7 +792,7 @@ void DirectX::D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float alphaRef
     }
 
     auto pBC1 = reinterpret_cast<D3DX_BC1 *>(pBC);
-    EncodeBC1(pBC1, Color, true, alphaRef, flags);
+    EncodeBC1(pBC1, Color, true, threshold, flags);
 }
 
 

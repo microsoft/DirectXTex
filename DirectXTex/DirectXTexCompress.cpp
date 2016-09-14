@@ -75,7 +75,7 @@ namespace
         const Image& result,
         DWORD bcflags,
         DWORD srgb,
-        float alphaRef)
+        float threshold)
     {
         if (!image.pixels || !result.pixels)
             return E_POINTER;
@@ -183,7 +183,7 @@ namespace
                 if (pfEncode)
                     pfEncode(dptr, temp, bcflags);
                 else
-                    D3DXEncodeBC1(dptr, temp, alphaRef, bcflags);
+                    D3DXEncodeBC1(dptr, temp, threshold, bcflags);
 
                 sptr += sbpp * 4;
                 dptr += blocksize;
@@ -204,7 +204,7 @@ namespace
         const Image& result,
         DWORD bcflags,
         DWORD srgb,
-        float alphaRef)
+        float threshold)
     {
         if (!image.pixels || !result.pixels)
             return E_POINTER;
@@ -323,7 +323,7 @@ namespace
             if (pfEncode)
                 pfEncode(pDest, temp, bcflags);
             else
-                D3DXEncodeBC1(pDest, temp, alphaRef, bcflags);
+                D3DXEncodeBC1(pDest, temp, threshold, bcflags);
         }
 
         return (fail) ? E_FAIL : S_OK;
@@ -594,7 +594,7 @@ HRESULT DirectX::Compress(
     const Image& srcImage,
     DXGI_FORMAT format,
     DWORD compress,
-    float alphaRef,
+    float threshold,
     ScratchImage& image)
 {
     if (IsCompressed(srcImage.format) || !IsCompressed(format))
@@ -622,12 +622,12 @@ HRESULT DirectX::Compress(
 #ifndef _OPENMP
         return E_NOTIMPL;
 #else
-        hr = CompressBC_Parallel(srcImage, *img, GetBCFlags(compress), GetSRGBFlags(compress), alphaRef);
+        hr = CompressBC_Parallel(srcImage, *img, GetBCFlags(compress), GetSRGBFlags(compress), threshold);
 #endif // _OPENMP
     }
     else
     {
-        hr = CompressBC(srcImage, *img, GetBCFlags(compress), GetSRGBFlags(compress), alphaRef);
+        hr = CompressBC(srcImage, *img, GetBCFlags(compress), GetSRGBFlags(compress), threshold);
     }
 
     if (FAILED(hr))
@@ -643,7 +643,7 @@ HRESULT DirectX::Compress(
     const TexMetadata& metadata,
     DXGI_FORMAT format,
     DWORD compress,
-    float alphaRef,
+    float threshold,
     ScratchImage& cImages)
 {
     if (!srcImages || !nimages)
@@ -696,7 +696,7 @@ HRESULT DirectX::Compress(
 #else
             if (compress & TEX_COMPRESS_PARALLEL)
             {
-                hr = CompressBC_Parallel(src, dest[index], GetBCFlags(compress), GetSRGBFlags(compress), alphaRef);
+                hr = CompressBC_Parallel(src, dest[index], GetBCFlags(compress), GetSRGBFlags(compress), threshold);
                 if (FAILED(hr))
                 {
                     cImages.Release();
@@ -707,7 +707,7 @@ HRESULT DirectX::Compress(
         }
         else
         {
-            hr = CompressBC(src, dest[index], GetBCFlags(compress), GetSRGBFlags(compress), alphaRef);
+            hr = CompressBC(src, dest[index], GetBCFlags(compress), GetSRGBFlags(compress), threshold);
             if (FAILED(hr))
             {
                 cImages.Release();
