@@ -4696,7 +4696,10 @@ HRESULT DirectX::Convert(
             }
 
             if ((src.width > UINT32_MAX) || (src.height > UINT32_MAX))
+            {
+                result.Release();
                 return E_FAIL;
+            }
 
             const Image& dst = dest[index];
             assert(dst.format == format);
@@ -4733,7 +4736,10 @@ HRESULT DirectX::Convert(
             for (size_t slice = 0; slice < d; ++slice, ++index)
             {
                 if (index >= nimages)
+                {
+                    result.Release();
                     return E_FAIL;
+                }
 
                 const Image& src = srcImages[index];
                 if (src.format != metadata.format)
@@ -4743,7 +4749,10 @@ HRESULT DirectX::Convert(
                 }
 
                 if ((src.width > UINT32_MAX) || (src.height > UINT32_MAX))
+                {
+                    result.Release();
                     return E_FAIL;
+                }
 
                 const Image& dst = dest[index];
                 assert(dst.format == format);
@@ -4777,6 +4786,7 @@ HRESULT DirectX::Convert(
     break;
 
     default:
+        result.Release();
         return E_FAIL;
     }
 

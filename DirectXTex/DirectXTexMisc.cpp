@@ -201,6 +201,58 @@ namespace
 
         return S_OK;
     }
+
+
+    //-------------------------------------------------------------------------------------
+    HRESULT Transform_(
+        const Image& srcImage,
+        std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
+        const Image& destImage)
+    {
+        if (!pixelFunc)
+            return E_INVALIDARG;
+
+        if (!srcImage.pixels || !destImage.pixels)
+            return E_POINTER;
+
+        if (srcImage.width != destImage.width || srcImage.height != destImage.height || srcImage.format != destImage.format)
+            return E_FAIL;
+
+        const size_t width = srcImage.width;
+
+        ScopedAlignedArrayXMVECTOR scanlines(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width*2), 16)));
+        if (!scanlines)
+            return E_OUTOFMEMORY;
+
+        XMVECTOR* sScanline = scanlines.get();
+        XMVECTOR* dScanline = scanlines.get() + width;
+
+        const uint8_t *pSrc = srcImage.pixels;
+        const size_t spitch = srcImage.rowPitch;
+
+        uint8_t *pDest = destImage.pixels;
+        const size_t dpitch = destImage.rowPitch;
+
+        for (size_t h = 0; h < srcImage.height; ++h)
+        {
+            if (!_LoadScanline(sScanline, width, pSrc, spitch, srcImage.format))
+                return E_FAIL;
+
+#ifdef _DEBUG
+            memset(dScanline, 0xCD, sizeof(XMVECTOR)*width);
+#endif
+
+            pixelFunc(dScanline, sScanline, width, h);
+
+            if (!_StoreScanline(pDest, destImage.rowPitch, destImage.format, dScanline, width))
+                return E_FAIL;
+
+            pSrc += spitch;
+            pDest += dpitch;
+        }
+
+        return S_OK;
+    }
 };
 
 
@@ -338,8 +390,12 @@ HRESULT DirectX::ComputeMSE(
     if (image1.width != image2.width || image1.height != image2.height)
         return E_INVALIDARG;
 
+    if (!IsValid(image1.format) || !IsValid(image2.format))
+        return E_INVALIDARG;
+
     if (IsPlanar(image1.format) || IsPlanar(image2.format)
-        || IsPalettized(image1.format) || IsPalettized(image2.format))
+        || IsPalettized(image1.format) || IsPalettized(image2.format)
+        || IsTypeless(image1.format) || IsTypeless(image2.format))
         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
 
     if (IsCompressed(image1.format))
@@ -416,7 +472,10 @@ HRESULT DirectX::Evaluate(
         || image.height > UINT32_MAX)
         return E_INVALIDARG;
 
-    if (IsPlanar(image.format) || IsPalettized(image.format))
+    if (!IsValid(image.format))
+        return E_INVALIDARG;
+
+    if (IsPlanar(image.format) || IsPalettized(image.format) || IsTypeless(image.format))
         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
 
     if (IsCompressed(image.format))
@@ -436,6 +495,172 @@ HRESULT DirectX::Evaluate(
     {
         return Evaluate_(image, pixelFunc);
     }
+}
 
-    return E_NOTIMPL;
+
+//-------------------------------------------------------------------------------------
+// Use a user-supplied function to compute a new image from an input image
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
+HRESULT DirectX::Transform(
+    const Image& image,
+    std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
+    ScratchImage& result)
+{
+    if (image.width > UINT32_MAX
+        || image.height > UINT32_MAX)
+        return E_INVALIDARG;
+
+    if (IsPlanar(image.format) || IsPalettized(image.format) || IsCompressed(image.format) || IsTypeless(image.format))
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+
+    HRESULT hr = result.Initialize2D(image.format, image.width, image.height, 1, 1);
+    if (FAILED(hr))
+        return hr;
+
+    const Image* dimg = result.GetImage(0, 0, 0);
+    if (!dimg)
+    {
+        result.Release();
+        return E_POINTER;
+    }
+
+    hr = Transform_(image, pixelFunc, *dimg);
+    if (FAILED(hr))
+    {
+        result.Release();
+        return hr;
+    }
+    
+    return S_OK;
+}
+
+_Use_decl_annotations_
+HRESULT DirectX::Transform(
+    const Image* srcImages,
+    size_t nimages, const TexMetadata& metadata,
+    std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
+    ScratchImage& result)
+{
+    if (!srcImages || !nimages)
+        return E_INVALIDARG;
+
+    if (IsPlanar(metadata.format) || IsPalettized(metadata.format) || IsCompressed(metadata.format) || IsTypeless(metadata.format))
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+
+    if (metadata.width > UINT32_MAX
+        || metadata.height > UINT32_MAX)
+        return E_INVALIDARG;
+
+    if (metadata.IsVolumemap() && metadata.depth > UINT32_MAX)
+        return E_INVALIDARG;
+
+    HRESULT hr = result.Initialize(metadata);
+    if (FAILED(hr))
+        return hr;
+
+    if (nimages != result.GetImageCount())
+    {
+        result.Release();
+        return E_FAIL;
+    }
+
+    const Image* dest = result.GetImages();
+    if (!dest)
+    {
+        result.Release();
+        return E_POINTER;
+    }
+
+    switch (metadata.dimension)
+    {
+    case TEX_DIMENSION_TEXTURE1D:
+    case TEX_DIMENSION_TEXTURE2D:
+        for (size_t index = 0; index < nimages; ++index)
+        {
+            const Image& src = srcImages[index];
+            if (src.format != metadata.format)
+            {
+                result.Release();
+                return E_FAIL;
+            }
+
+            if ((src.width > UINT32_MAX) || (src.height > UINT32_MAX))
+            {
+                result.Release();
+                return E_FAIL;
+            }
+
+            const Image& dst = dest[index];
+
+            if (src.width != dst.width || src.height != dst.height)
+            {
+                result.Release();
+                return E_FAIL;
+            }
+
+            hr = Transform_(src, pixelFunc, dst);
+            if (FAILED(hr))
+            {
+                result.Release();
+                return hr;
+            }
+        }
+        break;
+
+    case TEX_DIMENSION_TEXTURE3D:
+    {
+        size_t index = 0;
+        size_t d = metadata.depth;
+        for (size_t level = 0; level < metadata.mipLevels; ++level)
+        {
+            for (size_t slice = 0; slice < d; ++slice, ++index)
+            {
+                if (index >= nimages)
+                {
+                    result.Release();
+                    return E_FAIL;
+                }
+
+                const Image& src = srcImages[index];
+                if (src.format != metadata.format)
+                {
+                    result.Release();
+                    return E_FAIL;
+                }
+
+                if ((src.width > UINT32_MAX) || (src.height > UINT32_MAX))
+                {
+                    result.Release();
+                    return E_FAIL;
+                }
+
+                const Image& dst = dest[index];
+
+                if (src.width != dst.width || src.height != dst.height)
+                {
+                    result.Release();
+                    return E_FAIL;
+                }
+
+                hr = Transform_(src, pixelFunc, dst);
+                if (FAILED(hr))
+                {
+                    result.Release();
+                    return hr;
+                }
+            }
+
+            if (d > 1)
+                d >>= 1;
+        }
+    }
+    break;
+
+    default:
+        result.Release();
+        return E_FAIL;
+    }
+
+    return S_OK;
 }

@@ -35,7 +35,10 @@
 
 #include "directxtex.h"
 
+#include "DirectXPackedVector.h"
+
 using namespace DirectX;
+using namespace DirectX::PackedVector;
 using Microsoft::WRL::ComPtr;
 
 enum OPTIONS
@@ -80,6 +83,7 @@ enum OPTIONS
     OPT_COMPRESS_DITHER,
     OPT_WIC_QUALITY,
     OPT_WIC_LOSSLESS,
+    OPT_COLORKEY,
     OPT_MAX
 };
 
@@ -144,6 +148,7 @@ SValue g_pOptions[] =
     { L"bcdither",      OPT_COMPRESS_DITHER },
     { L"wicq",          OPT_WIC_QUALITY },
     { L"wiclossless",   OPT_WIC_LOSSLESS },
+    { L"c",             OPT_COLORKEY },
     { nullptr,          0 }
 };
 
@@ -641,6 +646,7 @@ namespace
         wprintf(
             L"   -aw <weight>        BC7 GPU compressor weighting for alpha error metric\n"
             L"                       (defaults to 1.0)\n");
+        wprintf(L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n");
 
         wprintf(L"\n");
         wprintf(L"   <format>: ");
@@ -840,6 +846,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float nmapAmplitude = 1.f;
     float wicQuality = -1.f;
     bool wicLossless = false;
+    bool useColorKey = false;
+    DWORD colorKey = 0;
 
     wchar_t szPrefix[MAX_PATH];
     wchar_t szSuffix[MAX_PATH];
@@ -903,6 +911,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_NORMAL_MAP:
             case OPT_NORMAL_MAP_AMPLITUDE:
             case OPT_WIC_QUALITY:
+            case OPT_COLORKEY:
                 if (!*pValue)
                 {
                     if ((iArg + 1 >= argc))
@@ -1179,6 +1188,18 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_WIC_LOSSLESS:
                 wicLossless = true;
                 break;
+
+            case OPT_COLORKEY:
+                if (swscanf_s(pValue, L"%x", &colorKey) != 1)
+                {
+                    printf("Invalid value specified with -c (%ls)\n", pValue);
+                    printf("\n");
+                    PrintUsage();
+                    return 1;
+                }
+                colorKey &= 0xFFFFFF;
+                useColorKey = true;
+                break;
             }
         }
         else if (wcspbrk(pArg, L"?*") != nullptr)
@@ -1409,13 +1430,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = ConvertToSinglePlane(img, nimg, info, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [converttosingeplane] (%x)\n", hr);
+                wprintf(L" FAILED [converttosingleplane] (%x)\n", hr);
                 continue;
             }
 
             auto& tinfo = timage->GetMetadata();
 
             info.format = tinfo.format;
+
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
             assert(info.depth == tinfo.depth);
@@ -1626,6 +1648,61 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             cimage.reset();
         }
 
+        // --- ColorKey/ChromaKey ------------------------------------------------------
+        if (useColorKey && HasAlpha(info.format))
+        {
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
+            XMVECTOR colorKeyValue = XMLoadColor(reinterpret_cast<const XMCOLOR*>(&colorKey));
+
+            hr = Transform(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+            {
+                static const XMVECTORF32 s_tolerance = { 0.2f, 0.2f, 0.2f, 0.f };
+
+                UNREFERENCED_PARAMETER(y);
+
+                for (size_t j = 0; j < width; ++j)
+                {
+                    XMVECTOR value = inPixels[j];
+
+                    if (XMVector3NearEqual(value, colorKeyValue, s_tolerance))
+                    {
+                        value = g_XMZero;
+                    }
+                    else
+                    {
+                        value = XMVectorSelect(g_XMOne, value, g_XMSelect1110);
+                    }
+
+                    outPixels[j] = value;
+                }
+            }, *timage);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [colorkey] (%x)\n", hr);
+                return 1;
+            }
+
+            auto& tinfo = timage->GetMetadata();
+
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.dimension == tinfo.dimension);
+
+            image.swap(timage);
+            cimage.reset();
+        }
+
         // --- Generate mips -----------------------------------------------------------
         if (!ispow2(info.width) || !ispow2(info.height) || !ispow2(info.depth))
         {
@@ -1767,7 +1844,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert(info.height == tinfo.height);
             assert(info.depth == tinfo.depth);
             assert(info.arraySize == tinfo.arraySize);
-            assert(info.mipLevels == tinfo.mipLevels);
             assert(info.miscFlags == tinfo.miscFlags);
             assert(info.dimension == tinfo.dimension);
 
