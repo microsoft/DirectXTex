@@ -742,19 +742,27 @@ HRESULT DirectX::CaptureTexture(
         D3D11_TEXTURE1D_DESC desc;
         pTexture->GetDesc(&desc);
 
-        desc.BindFlags = 0;
-        desc.MiscFlags = 0;
-        desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-        desc.Usage = D3D11_USAGE_STAGING;
-
         ComPtr<ID3D11Texture1D> pStaging;
-        hr = pDevice->CreateTexture1D(&desc, 0, pStaging.GetAddressOf());
-        if (FAILED(hr))
-            break;
+        if ((desc.Usage == D3D11_USAGE_STAGING) && (desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ))
+        {
+            // Handle case where the source is already a staging texture we can use directly
+            pStaging = pTexture;
+        }
+        else
+        {
+            desc.BindFlags = 0;
+            desc.MiscFlags = 0;
+            desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+            desc.Usage = D3D11_USAGE_STAGING;
 
-        assert(pStaging);
+            hr = pDevice->CreateTexture1D(&desc, 0, pStaging.GetAddressOf());
+            if (FAILED(hr))
+                break;
 
-        pContext->CopyResource(pStaging.Get(), pSource);
+            assert(pStaging);
+
+            pContext->CopyResource(pStaging.Get(), pSource);
+        }
 
         TexMetadata mdata;
         mdata.width = desc.Width;
@@ -840,6 +848,11 @@ HRESULT DirectX::CaptureTexture(
 
             pContext->CopyResource(pStaging.Get(), pTemp.Get());
         }
+        else if ((desc.Usage == D3D11_USAGE_STAGING) && (desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ))
+        {
+            // Handle case where the source is already a staging texture we can use directly
+            pStaging = pTexture;
+        }
         else
         {
             desc.BindFlags = 0;
@@ -887,19 +900,27 @@ HRESULT DirectX::CaptureTexture(
         D3D11_TEXTURE3D_DESC desc;
         pTexture->GetDesc(&desc);
 
-        desc.BindFlags = 0;
-        desc.MiscFlags = 0;
-        desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-        desc.Usage = D3D11_USAGE_STAGING;
-
         ComPtr<ID3D11Texture3D> pStaging;
-        hr = pDevice->CreateTexture3D(&desc, 0, pStaging.GetAddressOf());
-        if (FAILED(hr))
-            break;
+        if ((desc.Usage == D3D11_USAGE_STAGING) && (desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ))
+        {
+            // Handle case where the source is already a staging texture we can use directly
+            pStaging = pTexture;
+        }
+        else
+        {
+            desc.BindFlags = 0;
+            desc.MiscFlags = 0;
+            desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+            desc.Usage = D3D11_USAGE_STAGING;
 
-        assert(pStaging);
+            hr = pDevice->CreateTexture3D(&desc, 0, pStaging.GetAddressOf());
+            if (FAILED(hr))
+                break;
 
-        pContext->CopyResource(pStaging.Get(), pSource);
+            assert(pStaging);
+
+            pContext->CopyResource(pStaging.Get(), pSource);
+        }
 
         TexMetadata mdata;
         mdata.width = desc.Width;
