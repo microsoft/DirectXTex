@@ -67,6 +67,7 @@ enum OPTIONS
     OPT_TYPELESS_UNORM,
     OPT_TYPELESS_FLOAT,
     OPT_PREMUL_ALPHA,
+    OPT_DEMUL_ALPHA,
     OPT_EXPAND_LUMINANCE,
     OPT_TA_WRAP,
     OPT_TA_MIRROR,
@@ -132,6 +133,7 @@ SValue g_pOptions[] =
     { L"tu",            OPT_TYPELESS_UNORM },
     { L"tf",            OPT_TYPELESS_FLOAT },
     { L"pmalpha",       OPT_PREMUL_ALPHA },
+    { L"alpha",         OPT_DEMUL_ALPHA },
     { L"xlum",          OPT_EXPAND_LUMINANCE },
     { L"wrap",          OPT_TA_WRAP },
     { L"mirror",        OPT_TA_MIRROR },
@@ -531,6 +533,19 @@ namespace
             break;
         }
 
+        switch (info.GetAlphaMode())
+        {
+        case TEX_ALPHA_MODE_OPAQUE:
+            wprintf(L" \x0e0:Opaque");
+            break;
+        case TEX_ALPHA_MODE_PREMULTIPLIED:
+            wprintf(L" \x0e0:PM");
+            break;
+        case TEX_ALPHA_MODE_STRAIGHT:
+            wprintf(L" \x0e0:NonPM");
+            break;
+        }
+
         wprintf(L")");
     }
 
@@ -617,6 +632,7 @@ namespace
         wprintf(L"                       from color channels\n");
         wprintf(L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
         wprintf(L"   -pmalpha            convert final texture to use premultiplied alpha\n");
+        wprintf(L"   -alpha              convert premultiplied alpha to straight alpha\n");
         wprintf(L"   -pow2               resize to fit a power-of-2, respecting aspect ratio\n");
         wprintf(
             L"   -nmap <options>     converts height-map to normal-map\n"
@@ -1014,6 +1030,24 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     wprintf(L"Invalid value specified with -ft (%ls)\n", pValue);
                     wprintf(L"\n");
+                    PrintUsage();
+                    return 1;
+                }
+                break;
+
+            case OPT_PREMUL_ALPHA:
+                if (dwOptions & (DWORD64(1) << OPT_DEMUL_ALPHA))
+                {
+                    wprintf(L"Can't use -pmalpha and -alpha at same time\n\n");
+                    PrintUsage();
+                    return 1;
+                }
+                break;
+
+            case OPT_DEMUL_ALPHA:
+                if (dwOptions & (DWORD64(1) << OPT_PREMUL_ALPHA))
+                {
+                    wprintf(L"Can't use -pmalpha and -alpha at same time\n\n");
                     PrintUsage();
                     return 1;
                 }
@@ -1497,6 +1531,55 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
         }
 
+        // --- Undo Premultiplied Alpha (if requested) ---------------------------------
+        if ((dwOptions & (DWORD64(1) << OPT_DEMUL_ALPHA))
+            && HasAlpha(info.format)
+            && info.format != DXGI_FORMAT_A8_UNORM)
+        {
+            if (info.GetAlphaMode() == TEX_ALPHA_MODE_STRAIGHT)
+            {
+                printf("\nWARNING: Image is already using straight alpha\n");
+            }
+            else if (!info.IsPMAlpha())
+            {
+                printf("\nWARNING: Image is not using premultipled alpha\n");
+            }
+            else
+            {
+                auto img = image->GetImage(0, 0, 0);
+                assert(img);
+                size_t nimg = image->GetImageCount();
+
+                std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                if (!timage)
+                {
+                    wprintf(L"\nERROR: Memory allocation failed\n");
+                    return 1;
+                }
+
+                hr = PremultiplyAlpha(img, nimg, info, dwSRGB, *timage, true);
+                if (FAILED(hr))
+                {
+                    wprintf(L" FAILED [demultiply alpha] (%x)\n", hr);
+                    continue;
+                }
+
+                auto& tinfo = timage->GetMetadata();
+                info.miscFlags2 = tinfo.miscFlags2;
+
+                assert(info.width == tinfo.width);
+                assert(info.height == tinfo.height);
+                assert(info.depth == tinfo.depth);
+                assert(info.arraySize == tinfo.arraySize);
+                assert(info.mipLevels == tinfo.mipLevels);
+                assert(info.miscFlags == tinfo.miscFlags);
+                assert(info.dimension == tinfo.dimension);
+
+                image.swap(timage);
+                cimage.reset();
+            }
+        }
+
         // --- Flip/Rotate -------------------------------------------------------------
         if (dwOptions & ((DWORD64(1) << OPT_HFLIP) | (DWORD64(1) << OPT_VFLIP)))
         {
@@ -1858,7 +1941,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             if (info.IsPMAlpha())
             {
-                printf("WARNING: Image is already using premultiplied alpha\n");
+                printf("\nWARNING: Image is already using premultiplied alpha\n");
             }
             else
             {
@@ -2029,14 +2112,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 info.SetAlphaMode(TEX_ALPHA_MODE_CUSTOM);
             }
-            else
+            else if (info.GetAlphaMode() == TEX_ALPHA_MODE_UNKNOWN)
             {
                 info.SetAlphaMode(TEX_ALPHA_MODE_STRAIGHT);
             }
         }
         else
         {
-            info.miscFlags2 &= ~TEX_MISC2_ALPHA_MODE_MASK;
+            info.SetAlphaMode(TEX_ALPHA_MODE_UNKNOWN);
         }
 
         // --- Save result -------------------------------------------------------------
@@ -2166,11 +2249,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     if (nonpow2warn && maxSize <= 4096)
     {
         // Only emit this warning if ran with -fl set to a 9.x feature level
-        wprintf(L"\n WARNING: Not all feature levels support non-power-of-2 textures with mipmaps\n");
+        wprintf(L"\nWARNING: Not all feature levels support non-power-of-2 textures with mipmaps\n");
     }
 
     if (non4bc)
-        wprintf(L"\n WARNING: Direct3D requires BC image to be multiple of 4 in width & height\n");
+        wprintf(L"\nWARNING: Direct3D requires BC image to be multiple of 4 in width & height\n");
 
     if (dwOptions & (DWORD64(1) << OPT_TIMING))
     {

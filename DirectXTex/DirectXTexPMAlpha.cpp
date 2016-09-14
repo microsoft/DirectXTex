@@ -19,7 +19,8 @@ using namespace DirectX;
 
 namespace
 {
-
+    //---------------------------------------------------------------------------------
+    // NonPremultiplied alpha -> Premultiplied alpha
     HRESULT PremultiplyAlpha_(const Image& srcImage, const Image& destImage)
     {
         assert(srcImage.width == destImage.width);
@@ -100,6 +101,89 @@ namespace
 
         return S_OK;
     }
+
+    //---------------------------------------------------------------------------------
+    // Premultiplied alpha -> NonPremultiplied alpha (a.k.a. Straight alpha)
+    HRESULT DemultiplyAlpha(const Image& srcImage, const Image& destImage)
+    {
+        assert(srcImage.width == destImage.width);
+        assert(srcImage.height == destImage.height);
+
+        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
+        if (!scanline)
+            return E_OUTOFMEMORY;
+
+        const uint8_t *pSrc = srcImage.pixels;
+        uint8_t *pDest = destImage.pixels;
+        if (!pSrc || !pDest)
+            return E_POINTER;
+
+        for (size_t h = 0; h < srcImage.height; ++h)
+        {
+            if (!_LoadScanline(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format))
+                return E_FAIL;
+
+            XMVECTOR* ptr = scanline.get();
+            for (size_t w = 0; w < srcImage.width; ++w)
+            {
+                XMVECTOR v = *ptr;
+                XMVECTOR alpha = XMVectorSplatW(*ptr);
+                alpha = XMVectorDivide(v, alpha);
+                *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
+            }
+
+            if (!_StoreScanline(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width))
+                return E_FAIL;
+
+            pSrc += srcImage.rowPitch;
+            pDest += destImage.rowPitch;
+        }
+
+        return S_OK;
+    }
+
+    HRESULT DemultiplyAlphaLinear(const Image& srcImage, DWORD flags, const Image& destImage)
+    {
+        assert(srcImage.width == destImage.width);
+        assert(srcImage.height == destImage.height);
+
+        static_assert(TEX_PMALPHA_SRGB_IN == TEX_FILTER_SRGB_IN, "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(TEX_PMALPHA_SRGB_OUT == TEX_FILTER_SRGB_OUT, "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(TEX_PMALPHA_SRGB == TEX_FILTER_SRGB, "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
+        flags &= TEX_PMALPHA_SRGB;
+
+        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
+        if (!scanline)
+            return E_OUTOFMEMORY;
+
+        const uint8_t *pSrc = srcImage.pixels;
+        uint8_t *pDest = destImage.pixels;
+        if (!pSrc || !pDest)
+            return E_POINTER;
+
+        for (size_t h = 0; h < srcImage.height; ++h)
+        {
+            if (!_LoadScanlineLinear(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format, flags))
+                return E_FAIL;
+
+            XMVECTOR* ptr = scanline.get();
+            for (size_t w = 0; w < srcImage.width; ++w)
+            {
+                XMVECTOR v = *ptr;
+                XMVECTOR alpha = XMVectorSplatW(*ptr);
+                alpha = XMVectorDivide(v, alpha);
+                *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
+            }
+
+            if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width, flags))
+                return E_FAIL;
+
+            pSrc += srcImage.rowPitch;
+            pDest += destImage.rowPitch;
+        }
+
+        return S_OK;
+    }
 }
 
 
@@ -108,13 +192,14 @@ namespace
 //=====================================================================================
 
 //-------------------------------------------------------------------------------------
-// Converts to a premultiplied alpha version of the texture
+// Converts to/from a premultiplied alpha version of the texture
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT DirectX::PremultiplyAlpha(
     const Image& srcImage,
     DWORD flags,
-    ScratchImage& image)
+    ScratchImage& image,
+    bool reverse)
 {
     if (!srcImage.pixels)
         return E_POINTER;
@@ -140,7 +225,14 @@ HRESULT DirectX::PremultiplyAlpha(
         return E_POINTER;
     }
 
-    hr = (flags & TEX_PMALPHA_IGNORE_SRGB) ? PremultiplyAlpha_(srcImage, *rimage) : PremultiplyAlphaLinear(srcImage, flags, *rimage);
+    if (reverse)
+    {
+        hr = (flags & TEX_PMALPHA_IGNORE_SRGB) ? DemultiplyAlpha(srcImage, *rimage) : DemultiplyAlphaLinear(srcImage, flags, *rimage);
+    }
+    else
+    {
+        hr = (flags & TEX_PMALPHA_IGNORE_SRGB) ? PremultiplyAlpha_(srcImage, *rimage) : PremultiplyAlphaLinear(srcImage, flags, *rimage);
+    }
     if (FAILED(hr))
     {
         image.Release();
@@ -152,7 +244,7 @@ HRESULT DirectX::PremultiplyAlpha(
 
 
 //-------------------------------------------------------------------------------------
-// Converts to a premultiplied alpha version of the texture (complex)
+// Converts to/from a premultiplied alpha version of the texture (complex)
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT DirectX::PremultiplyAlpha(
@@ -160,7 +252,8 @@ HRESULT DirectX::PremultiplyAlpha(
     size_t nimages,
     const TexMetadata& metadata,
     DWORD flags,
-    ScratchImage& result)
+    ScratchImage& result,
+    bool reverse)
 {
     if (!srcImages || !nimages)
         return E_INVALIDARG;
@@ -175,14 +268,11 @@ HRESULT DirectX::PremultiplyAlpha(
     if ((metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX))
         return E_INVALIDARG;
 
-    if (metadata.IsPMAlpha())
-    {
-        // Already premultiplied
+    if (metadata.IsPMAlpha() != reverse)
         return E_FAIL;
-    }
 
     TexMetadata mdata2 = metadata;
-    mdata2.SetAlphaMode(TEX_ALPHA_MODE_PREMULTIPLIED);
+    mdata2.SetAlphaMode(reverse ? TEX_ALPHA_MODE_STRAIGHT : TEX_ALPHA_MODE_PREMULTIPLIED);
     HRESULT hr = result.Initialize(mdata2);
     if (FAILED(hr))
         return hr;
@@ -221,7 +311,14 @@ HRESULT DirectX::PremultiplyAlpha(
             return E_FAIL;
         }
 
-        hr = (flags & TEX_PMALPHA_IGNORE_SRGB) ? PremultiplyAlpha_(src, dst) : PremultiplyAlphaLinear(src, flags, dst);
+        if (reverse)
+        {
+            hr = (flags & TEX_PMALPHA_IGNORE_SRGB) ? DemultiplyAlpha(src, dst) : DemultiplyAlphaLinear(src, flags, dst);
+        }
+        else
+        {
+            hr = (flags & TEX_PMALPHA_IGNORE_SRGB) ? PremultiplyAlpha_(src, dst) : PremultiplyAlphaLinear(src, flags, dst);
+        }
         if (FAILED(hr))
         {
             result.Release();

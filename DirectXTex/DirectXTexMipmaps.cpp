@@ -2746,7 +2746,7 @@ HRESULT DirectX::GenerateMipMaps(
 
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
-    if (UseWICFiltering(metadata.format, filter))
+    if (!metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter))
     {
         //--- Use WIC filtering to generate mipmaps -----------------------------------
         switch (filter & TEX_FILTER_MASK)

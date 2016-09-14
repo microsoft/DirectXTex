@@ -923,7 +923,7 @@ HRESULT DirectX::Resize(
     if (FAILED(hr))
         return hr;
 
-    bool usewic = UseWICFiltering(metadata.format, filter);
+    bool usewic = !metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter);
 
     WICPixelFormatGUID pfGUID = { 0 };
     bool wicpf = (usewic) ? _DXGIToWIC(metadata.format, pfGUID, true) : false;

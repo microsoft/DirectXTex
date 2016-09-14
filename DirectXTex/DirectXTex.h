@@ -15,10 +15,6 @@
 
 #pragma once
 
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP) && (_WIN32_WINNT <= _WIN32_WINNT_WIN8)
-#error WIC is not supported on Windows Phone 8.0
-#endif
-
 #include <stdint.h>
 
 #include <algorithm>
@@ -137,6 +133,7 @@ namespace DirectX
 
         bool __cdecl IsPMAlpha() const { return ((miscFlags2 & TEX_MISC2_ALPHA_MODE_MASK) == TEX_ALPHA_MODE_PREMULTIPLIED) != 0; }
         void __cdecl SetAlphaMode( TEX_ALPHA_MODE mode ) { miscFlags2 = (miscFlags2 & ~TEX_MISC2_ALPHA_MODE_MASK) | static_cast<uint32_t>(mode); }
+        TEX_ALPHA_MODE __cdecl GetAlphaMode() const { return static_cast<TEX_ALPHA_MODE>(miscFlags2 & TEX_MISC2_ALPHA_MODE_MASK); }
             // Helpers for miscFlags2
 
         bool __cdecl IsVolumemap() const { return (dimension == TEX_DIMENSION_TEXTURE3D); }
@@ -493,9 +490,10 @@ namespace DirectX
             // if the output format type is IsSRGB(), then SRGB_OUT is on by default
     };
 
-    HRESULT __cdecl PremultiplyAlpha( _In_ const Image& srcImage, _In_ DWORD flags, _Out_ ScratchImage& image );
-    HRESULT __cdecl PremultiplyAlpha( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ DWORD flags, _Out_ ScratchImage& result );
-        // Converts to a premultiplied alpha version of the texture
+    HRESULT __cdecl PremultiplyAlpha( _In_ const Image& srcImage, _In_ DWORD flags, _Out_ ScratchImage& image, bool reverse = false );
+    HRESULT __cdecl PremultiplyAlpha( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                      _In_ DWORD flags, _Out_ ScratchImage& result, bool reverse = false);
+        // Converts to/from a premultiplied alpha version of the texture
 
     enum TEX_COMPRESS_FLAGS
     {

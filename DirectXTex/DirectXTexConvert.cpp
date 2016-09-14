@@ -4680,7 +4680,7 @@ HRESULT DirectX::Convert(
     }
 
     WICPixelFormatGUID pfGUID, targetGUID;
-    bool usewic = UseWICConversion(filter, metadata.format, format, pfGUID, targetGUID);
+    bool usewic = !metadata.IsPMAlpha() && UseWICConversion(filter, metadata.format, format, pfGUID, targetGUID);
 
     switch (metadata.dimension)
     {
