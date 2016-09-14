@@ -483,6 +483,9 @@ namespace DirectX
         TEX_PMALPHA_IGNORE_SRGB     = 0x1,
             // ignores sRGB colorspace conversions
 
+        TEX_PMALPHA_REVERSE         = 0x2,
+            // converts from premultiplied alpha back to straight alpha
+
         TEX_PMALPHA_SRGB_IN         = 0x1000000,
         TEX_PMALPHA_SRGB_OUT        = 0x2000000,
         TEX_PMALPHA_SRGB            = ( TEX_PMALPHA_SRGB_IN | TEX_PMALPHA_SRGB_OUT ),
@@ -490,9 +493,9 @@ namespace DirectX
             // if the output format type is IsSRGB(), then SRGB_OUT is on by default
     };
 
-    HRESULT __cdecl PremultiplyAlpha( _In_ const Image& srcImage, _In_ DWORD flags, _Out_ ScratchImage& image, bool reverse = false );
+    HRESULT __cdecl PremultiplyAlpha( _In_ const Image& srcImage, _In_ DWORD flags, _Out_ ScratchImage& image );
     HRESULT __cdecl PremultiplyAlpha( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                                      _In_ DWORD flags, _Out_ ScratchImage& result, bool reverse = false);
+                                      _In_ DWORD flags, _Out_ ScratchImage& result );
         // Converts to/from a premultiplied alpha version of the texture
 
     enum TEX_COMPRESS_FLAGS

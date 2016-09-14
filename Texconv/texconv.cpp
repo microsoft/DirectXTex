@@ -1557,7 +1557,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                hr = PremultiplyAlpha(img, nimg, info, dwSRGB, *timage, true);
+                hr = PremultiplyAlpha(img, nimg, info, TEX_PMALPHA_REVERSE | dwSRGB, *timage);
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [demultiply alpha] (%x)\n", hr);

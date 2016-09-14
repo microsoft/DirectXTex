@@ -198,8 +198,7 @@ _Use_decl_annotations_
 HRESULT DirectX::PremultiplyAlpha(
     const Image& srcImage,
     DWORD flags,
-    ScratchImage& image,
-    bool reverse)
+    ScratchImage& image)
 {
     if (!srcImage.pixels)
         return E_POINTER;
@@ -225,7 +224,7 @@ HRESULT DirectX::PremultiplyAlpha(
         return E_POINTER;
     }
 
-    if (reverse)
+    if (flags & TEX_PMALPHA_REVERSE)
     {
         hr = (flags & TEX_PMALPHA_IGNORE_SRGB) ? DemultiplyAlpha(srcImage, *rimage) : DemultiplyAlphaLinear(srcImage, flags, *rimage);
     }
@@ -252,8 +251,7 @@ HRESULT DirectX::PremultiplyAlpha(
     size_t nimages,
     const TexMetadata& metadata,
     DWORD flags,
-    ScratchImage& result,
-    bool reverse)
+    ScratchImage& result)
 {
     if (!srcImages || !nimages)
         return E_INVALIDARG;
@@ -268,11 +266,11 @@ HRESULT DirectX::PremultiplyAlpha(
     if ((metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX))
         return E_INVALIDARG;
 
-    if (metadata.IsPMAlpha() != reverse)
+    if (metadata.IsPMAlpha() != ((flags & TEX_PMALPHA_REVERSE) != 0))
         return E_FAIL;
 
     TexMetadata mdata2 = metadata;
-    mdata2.SetAlphaMode(reverse ? TEX_ALPHA_MODE_STRAIGHT : TEX_ALPHA_MODE_PREMULTIPLIED);
+    mdata2.SetAlphaMode((flags & TEX_PMALPHA_REVERSE) ? TEX_ALPHA_MODE_STRAIGHT : TEX_ALPHA_MODE_PREMULTIPLIED);
     HRESULT hr = result.Initialize(mdata2);
     if (FAILED(hr))
         return hr;
@@ -311,7 +309,7 @@ HRESULT DirectX::PremultiplyAlpha(
             return E_FAIL;
         }
 
-        if (reverse)
+        if (flags & TEX_PMALPHA_REVERSE)
         {
             hr = (flags & TEX_PMALPHA_IGNORE_SRGB) ? DemultiplyAlpha(src, dst) : DemultiplyAlphaLinear(src, flags, dst);
         }
