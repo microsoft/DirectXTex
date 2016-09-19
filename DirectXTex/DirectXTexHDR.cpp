@@ -34,6 +34,9 @@
 //Uncomment to disable the use of adapative RLE encoding when writing an HDR. Used for testing only.
 //#define DISABLE_COMPRESS
 
+//Uncomment to use "old colors" standard RLE encoding when writing an HDR. Used for testing only.
+//#define WRITE_OLD_COLORS
+
 using namespace DirectX;
 
 namespace
@@ -324,7 +327,7 @@ namespace
     // Encode using Adapative RLE
     //-------------------------------------------------------------------------------------
     _Success_(return > 0)
-    size_t EncodeRLE(_Out_writes_(width*4) uint8_t* enc, _In_reads_(width*4) uint8_t* rgbe, size_t rowPitch, size_t width)
+        size_t EncodeRLE(_Out_writes_(width * 4) uint8_t* enc, _In_reads_(width * 4) const uint8_t* rgbe, size_t rowPitch, size_t width)
     {
         if (width < 8 || width > 32767)
         {
@@ -332,6 +335,109 @@ namespace
             return 0;
         }
 
+#ifdef WRITE_OLD_COLORS
+        size_t encSize = 0;
+
+        const uint8_t* scanPtr = rgbe;
+        for (size_t pixelCount = 0; pixelCount < width;)
+        {
+            size_t spanLen = 1;
+            const uint32_t* spanPtr = reinterpret_cast<const uint32_t*>(scanPtr);
+            while (pixelCount + spanLen < width && spanLen < 32767)
+            {
+                if (spanPtr[spanLen] == *spanPtr)
+                {
+                    ++spanLen;
+                }
+                else
+                    break;
+            }
+
+            if (spanLen > 2)
+            {
+                if (scanPtr[0] == 1 && scanPtr[1] == 1 && scanPtr[2] == 1)
+                {
+                    return 0;
+                }
+
+                if (encSize + 8 > rowPitch)
+                    return 0;
+
+                uint8_t rleLen = static_cast<uint8_t>(std::min<size_t>(spanLen - 1, 255));
+
+                enc[0] = scanPtr[0];
+                enc[1] = scanPtr[1];
+                enc[2] = scanPtr[2];
+                enc[3] = scanPtr[3];
+                enc[4] = 1;
+                enc[5] = 1;
+                enc[6] = 1;
+                enc[7] = rleLen;
+                enc += 8;
+                encSize += 8;
+
+                size_t remaining = spanLen - 1 - rleLen;
+
+                if (remaining > 0)
+                {
+                    rleLen = static_cast<uint8_t>(remaining >> 8);
+
+                    if (rleLen > 0)
+                    {
+                        if (encSize + 4 > rowPitch)
+                            return 0;
+
+                        enc[0] = 1;
+                        enc[1] = 1;
+                        enc[2] = 1;
+                        enc[3] = rleLen;
+                        enc += 4;
+                        encSize += 4;
+
+                        remaining -= (rleLen << 8);
+                    }
+
+                    while (remaining > 0)
+                    {
+                        if (encSize + 4 > rowPitch)
+                            return 0;
+
+                        enc[0] = scanPtr[0];
+                        enc[1] = scanPtr[1];
+                        enc[2] = scanPtr[2];
+                        enc[3] = scanPtr[3];
+                        enc += 4;
+                        encSize += 4;
+
+                        --remaining;
+                    }
+                }
+
+                scanPtr += spanLen * 4;
+                pixelCount += spanLen;
+            }
+            else if (scanPtr[0] == 1 && scanPtr[1] == 1 && scanPtr[2] == 1)
+            {
+                return 0;
+            }
+            else
+            {
+                if (encSize + 4 > rowPitch)
+                    return 0;
+
+                enc[0] = scanPtr[0];
+                enc[1] = scanPtr[1];
+                enc[2] = scanPtr[2];
+                enc[3] = scanPtr[3];
+                enc += 4;
+                encSize += 4;
+                ++pixelCount;
+                scanPtr += 4;
+            }
+        }
+
+        return encSize;
+#else
         enc[0] = 2;
         enc[1] = 2;
         enc[2] = uint8_t(width >> 8);
@@ -343,7 +449,7 @@ namespace
 
         for (int channel = 0; channel < 4; ++channel)
         {
-            uint8_t* spanPtr = rgbe + channel;
+            const uint8_t* spanPtr = rgbe + channel;
             for (size_t pixelCount = 0; pixelCount < width;)
             {
                 uint8_t spanLen = 1;
@@ -397,6 +503,7 @@ namespace
         }
 
         return encSize;
+#endif
     }
 }
 
@@ -608,6 +715,12 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
             {
                 if (inColor[0] == 1 && inColor[1] == 1 && inColor[2] == 1)
                 {
+                    if (bitShift > 24)
+                    {
+                        image.Release();
+                        return E_FAIL;
+                    }
+
                     // "Standard" Run Length Encoding
                     size_t spanLen = size_t(inColor[3]) << bitShift;
                     if (spanLen + pixelCount > mdata.width)
