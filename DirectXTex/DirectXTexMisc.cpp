@@ -168,7 +168,7 @@ namespace
     }
 
     //-------------------------------------------------------------------------------------
-    HRESULT Evaluate_(
+    HRESULT EvaluateImage_(
         const Image& image,
         std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)> pixelFunc)
     {
@@ -204,7 +204,7 @@ namespace
 
 
     //-------------------------------------------------------------------------------------
-    HRESULT Transform_(
+    HRESULT TransformImage_(
         const Image& srcImage,
         std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
         const Image& destImage)
@@ -464,7 +464,7 @@ HRESULT DirectX::ComputeMSE(
 // Evaluates a user-supplied function for all the pixels in the image
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::Evaluate(
+HRESULT DirectX::EvaluateImage(
     const Image& image,
     std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)> pixelFunc)
 {
@@ -489,11 +489,11 @@ HRESULT DirectX::Evaluate(
         if (!img)
             return E_POINTER;
 
-        return Evaluate_(*img, pixelFunc);
+        return EvaluateImage_(*img, pixelFunc);
     }
     else
     {
-        return Evaluate_(image, pixelFunc);
+        return EvaluateImage_(image, pixelFunc);
     }
 }
 
@@ -502,7 +502,7 @@ HRESULT DirectX::Evaluate(
 // Use a user-supplied function to compute a new image from an input image
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::Transform(
+HRESULT DirectX::TransformImage(
     const Image& image,
     std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
     ScratchImage& result)
@@ -525,7 +525,7 @@ HRESULT DirectX::Transform(
         return E_POINTER;
     }
 
-    hr = Transform_(image, pixelFunc, *dimg);
+    hr = TransformImage_(image, pixelFunc, *dimg);
     if (FAILED(hr))
     {
         result.Release();
@@ -536,7 +536,7 @@ HRESULT DirectX::Transform(
 }
 
 _Use_decl_annotations_
-HRESULT DirectX::Transform(
+HRESULT DirectX::TransformImage(
     const Image* srcImages,
     size_t nimages, const TexMetadata& metadata,
     std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
@@ -599,7 +599,7 @@ HRESULT DirectX::Transform(
                 return E_FAIL;
             }
 
-            hr = Transform_(src, pixelFunc, dst);
+            hr = TransformImage_(src, pixelFunc, dst);
             if (FAILED(hr))
             {
                 result.Release();
@@ -643,7 +643,7 @@ HRESULT DirectX::Transform(
                     return E_FAIL;
                 }
 
-                hr = Transform_(src, pixelFunc, dst);
+                hr = TransformImage_(src, pixelFunc, dst);
                 if (FAILED(hr))
                 {
                     result.Release();

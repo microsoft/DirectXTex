@@ -1744,7 +1744,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             XMVECTOR colorKeyValue = XMLoadColor(reinterpret_cast<const XMCOLOR*>(&colorKey));
 
-            hr = Transform(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                 [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
             {
                 static const XMVECTORF32 s_tolerance = { 0.2f, 0.2f, 0.2f, 0.f };
