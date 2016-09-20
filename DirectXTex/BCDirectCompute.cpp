@@ -175,8 +175,7 @@ HRESULT GPUCompressBC::Initialize(ID3D11Device* pDevice)
 
 
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT GPUCompressBC::Prepare(size_t width, size_t height, DXGI_FORMAT format, float alphaWeight, bool skip3subsets)
+HRESULT GPUCompressBC::Prepare(size_t width, size_t height, DWORD flags, DXGI_FORMAT format, float alphaWeight)
 {
     if (!width || !height || alphaWeight < 0.f)
         return E_INVALIDARG;
@@ -189,7 +188,16 @@ HRESULT GPUCompressBC::Prepare(size_t width, size_t height, DXGI_FORMAT format, 
 
     m_alphaWeight = alphaWeight;
 
-    m_skip3Subsets = skip3subsets;
+    if (flags & TEX_COMPRESS_BC7_QUICK)
+    {
+        m_bc7_mode02 = false;
+        m_bc7_mode137 = false;
+    }
+    else
+    {
+        m_bc7_mode02 = (flags & TEX_COMPRESS_BC7_USE_3SUBSETS) != 0;
+        m_bc7_mode137 = true;
+    }
 
     size_t xblocks = std::max<size_t>(1, (width + 3) >> 2);
     size_t yblocks = std::max<size_t>(1, (height + 3) >> 2);
@@ -332,7 +340,6 @@ HRESULT GPUCompressBC::Prepare(size_t width, size_t height, DXGI_FORMAT format, 
 
 
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
 HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
 {
     if (!srcImage.pixels || !destImage.pixels)
@@ -456,40 +463,43 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
             RunComputeShader(pContext, m_BC7_tryMode456CS.Get(), pSRVs, 2, m_constBuffer.Get(),
                 m_err1UAV.Get(), std::max<UINT>((uThreadGroupCount + 3) / 4, 1));
 
-            for (UINT i = 0; i < 3; ++i)
+            if (m_bc7_mode137)
             {
-                static const UINT modes[] = { 1, 3, 7 };
-
-                // Mode 1: err1 -> err2
-                // Mode 3: err2 -> err1
-                // Mode 7: err1 -> err2
+                for (UINT i = 0; i < 3; ++i)
                 {
-                    D3D11_MAPPED_SUBRESOURCE mapped;
-                    HRESULT hr = pContext->Map(m_constBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-                    if (FAILED(hr))
+                    static const UINT modes[] = { 1, 3, 7 };
+
+                    // Mode 1: err1 -> err2
+                    // Mode 3: err2 -> err1
+                    // Mode 7: err1 -> err2
                     {
-                        ResetContext(pContext);
-                        return hr;
+                        D3D11_MAPPED_SUBRESOURCE mapped;
+                        HRESULT hr = pContext->Map(m_constBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+                        if (FAILED(hr))
+                        {
+                            ResetContext(pContext);
+                            return hr;
+                        }
+
+                        ConstantsBC6HBC7 param;
+                        param.tex_width = static_cast<UINT>(srcImage.width);
+                        param.num_block_x = static_cast<UINT>(xblocks);
+                        param.format = m_bcformat;
+                        param.mode_id = modes[i];
+                        param.start_block_id = start_block_id;
+                        param.num_total_blocks = num_total_blocks;
+                        param.alpha_weight = m_alphaWeight;
+                        memcpy(mapped.pData, &param, sizeof(param));
+                        pContext->Unmap(m_constBuffer.Get(), 0);
                     }
 
-                    ConstantsBC6HBC7 param;
-                    param.tex_width = static_cast<UINT>(srcImage.width);
-                    param.num_block_x = static_cast<UINT>(xblocks);
-                    param.format = m_bcformat;
-                    param.mode_id = modes[i];
-                    param.start_block_id = start_block_id;
-                    param.num_total_blocks = num_total_blocks;
-                    param.alpha_weight = m_alphaWeight;
-                    memcpy(mapped.pData, &param, sizeof(param));
-                    pContext->Unmap(m_constBuffer.Get(), 0);
+                    pSRVs[1] = (i & 1) ? m_err2SRV.Get() : m_err1SRV.Get();
+                    RunComputeShader(pContext, m_BC7_tryMode137CS.Get(), pSRVs, 2, m_constBuffer.Get(),
+                        (i & 1) ? m_err1UAV.Get() : m_err2UAV.Get(), uThreadGroupCount);
                 }
-
-                pSRVs[1] = (i & 1) ? m_err2SRV.Get() : m_err1SRV.Get();
-                RunComputeShader(pContext, m_BC7_tryMode137CS.Get(), pSRVs, 2, m_constBuffer.Get(),
-                    (i & 1) ? m_err1UAV.Get() : m_err2UAV.Get(), uThreadGroupCount);
             }
 
-            if (!m_skip3Subsets)
+            if (m_bc7_mode02)
             {
                 // 3 subset modes tend to be used rarely and add significant compression time
                 for (UINT i = 0; i < 2; ++i)
@@ -524,7 +534,7 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
                 }
             }
 
-            pSRVs[1] = m_err2SRV.Get();
+            pSRVs[1] = (m_bc7_mode02 || m_bc7_mode137) ? m_err2SRV.Get() : m_err1SRV.Get();
             RunComputeShader(pContext, m_BC7_encodeBlockCS.Get(), pSRVs, 2, m_constBuffer.Get(),
                 m_outputUAV.Get(), std::max<UINT>((uThreadGroupCount + 3) / 4, 1));
         }

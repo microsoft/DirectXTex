@@ -634,7 +634,7 @@ namespace
         _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pPoints,
         _Out_ HDRColorA* pX,
         _Out_ HDRColorA* pY,
-        size_t cSteps,
+        _In_range_(3, 4) size_t cSteps,
         size_t cPixels,
         _In_reads_(cPixels) const size_t* pIndex)
     {
@@ -830,7 +830,7 @@ namespace
         _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pPoints,
         _Out_ HDRColorA* pX,
         _Out_ HDRColorA* pY,
-        size_t cSteps,
+        _In_range_(3, 4) size_t cSteps,
         size_t cPixels,
         _In_reads_(cPixels) const size_t* pIndex)
     {
@@ -2176,7 +2176,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
 }
 
 _Use_decl_annotations_
-void D3DX_BC7::Encode(bool skip3subsets, const HDRColorA* const pIn)
+void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
 {
     assert(pIn);
 
@@ -2194,9 +2194,15 @@ void D3DX_BC7::Encode(bool skip3subsets, const HDRColorA* const pIn)
 
     for (EP.uMode = 0; EP.uMode < 8 && fMSEBest > 0; ++EP.uMode)
     {
-        if (skip3subsets && (EP.uMode == 0 || EP.uMode == 2))
+        if (!(flags & BC_FLAGS_USE_3SUBSETS) && (EP.uMode == 0 || EP.uMode == 2))
         {
             // 3 subset modes tend to be used rarely and add significant compression time
+            continue;
+        }
+
+        if ((flags & TEX_COMPRESS_BC7_QUICK) && (EP.uMode != 6))
+        {
+            // Use only mode 6
             continue;
         }
 
@@ -2902,5 +2908,5 @@ void DirectX::D3DXEncodeBC7(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
 {
     assert(pBC && pColor);
     static_assert(sizeof(D3DX_BC7) == 16, "D3DX_BC7 should be 16 bytes");
-    reinterpret_cast<D3DX_BC7*>(pBC)->Encode(!(flags& BC_FLAGS_USE_3SUBSETS), reinterpret_cast<const HDRColorA*>(pColor));
+    reinterpret_cast<D3DX_BC7*>(pBC)->Encode(flags, reinterpret_cast<const HDRColorA*>(pColor));
 }

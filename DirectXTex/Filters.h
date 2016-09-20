@@ -295,6 +295,7 @@ namespace TriangleFilter
         }
 
         assert(pFilter != 0);
+        _Analysis_assume_(pFilter != 0);
 
         // Filter setup
         size_t sizeInBytes = TF_FILTER_SIZE;

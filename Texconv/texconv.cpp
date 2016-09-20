@@ -81,6 +81,7 @@ enum OPTIONS
     OPT_NORMAL_MAP_AMPLITUDE,
     OPT_COMPRESS_UNIFORM,
     OPT_COMPRESS_MAX,
+    OPT_COMPRESS_QUICK,
     OPT_COMPRESS_DITHER,
     OPT_WIC_QUALITY,
     OPT_WIC_LOSSLESS,
@@ -147,6 +148,7 @@ SValue g_pOptions[] =
     { L"nmapamp",       OPT_NORMAL_MAP_AMPLITUDE },
     { L"bcuniform",     OPT_COMPRESS_UNIFORM },
     { L"bcmax",         OPT_COMPRESS_MAX },
+    { L"bcquick",       OPT_COMPRESS_QUICK },
     { L"bcdither",      OPT_COMPRESS_DITHER },
     { L"wicq",          OPT_WIC_QUALITY },
     { L"wiclossless",   OPT_WIC_LOSSLESS },
@@ -656,7 +658,8 @@ namespace
         wprintf(L"   -nogpu              Do not use DirectCompute-based codecs\n");
         wprintf(L"   -bcuniform          Use uniform rather than perceptual weighting for BC1-3\n");
         wprintf(L"   -bcdither           Use dithering for BC1-3\n");
-        wprintf(L"   -bcmax              Use exchaustive compression (BC7 only)\n");
+        wprintf(L"   -bcmax              Use exhaustive compression (BC7 only)\n");
+        wprintf(L"   -bcquick            USe quick compression (BC7 only)\n");
         wprintf(L"   -wicq <quality>     When writing images with WIC use quality (0.0 to 1.0)\n");
         wprintf(L"   -wiclossless        When writing images with WIC use lossless mode\n");
         wprintf(
@@ -690,9 +693,10 @@ namespace
             for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != dxgiFactory->EnumAdapters(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
             {
                 DXGI_ADAPTER_DESC desc;
-                adapter->GetDesc(&desc);
-
-                wprintf(L"      %u: VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
+                if (SUCCEEDED(adapter->GetDesc(&desc)))
+                {
+                    wprintf(L"      %u: VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
+                }
             }
         }
     }
@@ -1201,6 +1205,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case OPT_COMPRESS_MAX:
                 dwCompress |= TEX_COMPRESS_BC7_USE_3SUBSETS;
+                break;
+
+            case OPT_COMPRESS_QUICK:
+                dwCompress |= TEX_COMPRESS_BC7_QUICK;
                 break;
 
             case OPT_COMPRESS_DITHER:
