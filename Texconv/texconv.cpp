@@ -1204,10 +1204,22 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_COMPRESS_MAX:
+                if (dwCompress & TEX_COMPRESS_BC7_QUICK)
+                {
+                    wprintf(L"Can't use -bcmax and -bcquick at same time\n\n");
+                    PrintUsage();
+                    return 1;
+                }
                 dwCompress |= TEX_COMPRESS_BC7_USE_3SUBSETS;
                 break;
 
             case OPT_COMPRESS_QUICK:
+                if (dwCompress & TEX_COMPRESS_BC7_USE_3SUBSETS)
+                {
+                    wprintf(L"Can't use -bcmax and -bcquick at same time\n\n");
+                    PrintUsage();
+                    return 1;
+                }
                 dwCompress |= TEX_COMPRESS_BC7_QUICK;
                 break;
 
