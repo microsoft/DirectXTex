@@ -101,6 +101,9 @@
     <Filter Include="Source Files\Shaders\Compiled">
       <UniqueIdentifier>{4e237727-0b49-48ae-aae4-2b525ec1e124}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shaders\Symbols">
+      <UniqueIdentifier>{67066457-5e0a-49d3-893a-0ae08a4c0ed5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\CompileShaders.cmd">
@@ -132,6 +135,27 @@
     </None>
     <None Include="Shaders\BC7Encode.hlsl">
       <Filter>Source Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC6HEncode_EncodeBlockCS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC6HEncode_TryModeG10CS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC6HEncode_TryModeLE10CS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_EncodeBlockCS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_TryMode02CS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_TryMode137CS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_TryMode456CS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
     </None>
   </ItemGroup>
 </Project>

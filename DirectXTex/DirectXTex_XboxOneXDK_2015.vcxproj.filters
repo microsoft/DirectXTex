@@ -15,6 +15,9 @@
     <Filter Include="Source Files\Shaders\Compiled">
       <UniqueIdentifier>{c4ad5fdf-0988-4c92-9558-0cd1f3bdb13d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shaders\Symbols">
+      <UniqueIdentifier>{367c58a1-fc2c-45ca-b564-e7cf8daa85f1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirectXTex.h">
@@ -72,6 +75,27 @@
     </None>
     <None Include="Shaders\BC6HEncode.hlsl">
       <Filter>Source Files\Shaders</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC6HEncode_EncodeBlockCS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC6HEncode_TryModeG10CS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC6HEncode_TryModeLE10CS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_EncodeBlockCS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_TryMode02CS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_TryMode137CS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_TryMode456CS.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
