@@ -269,9 +269,8 @@ namespace
     HRESULT CreateTextureFromWIC(_In_ ID3D12Device* d3dDevice,
         _In_ IWICBitmapFrameDecode *frame,
         size_t maxsize,
-        D3D12_RESOURCE_FLAGS flags,
-        bool forceSRGB,
-        bool reserveFullMipChain,
+        D3D12_RESOURCE_FLAGS resFlags,
+        unsigned int loadFlags,
         _Outptr_ ID3D12Resource** texture,
         std::unique_ptr<uint8_t[]>& decodedData,
         D3D12_SUBRESOURCE_DATA& subresource)
@@ -351,11 +350,11 @@ namespace
             return E_FAIL;
 
         // Handle sRGB formats
-        if (forceSRGB)
+        if (loadFlags & WIC_LOADER_FORCE_SRGB)
         {
             format = MakeSRGB(format);
         }
-        else
+        else if (!(loadFlags & WIC_LOADER_IGNORE_SRGB))
         {
             ComPtr<IWICMetadataQueryReader> metareader;
             if (SUCCEEDED(frame->GetMetadataQueryReader(metareader.GetAddressOf())))
@@ -488,7 +487,7 @@ namespace
         }
 
         // Count the number of mips
-        uint32_t mipCount = (reserveFullMipChain) ? CountMips(twidth, theight) : 1;
+        uint32_t mipCount = (loadFlags & (WIC_LOADER_MIP_AUTOGEN | WIC_LOADER_MIP_RESERVE)) ? CountMips(twidth, theight) : 1;
 
         // Create texture
         D3D12_RESOURCE_DESC desc = {};
@@ -499,7 +498,7 @@ namespace
         desc.Format = format;
         desc.SampleDesc.Count = 1;
         desc.SampleDesc.Quality = 0;
-        desc.Flags = flags;
+        desc.Flags = resFlags;
         desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
         CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
@@ -547,8 +546,7 @@ HRESULT DirectX::LoadWICTextureFromMemory(
         wicDataSize,
         maxsize,
         D3D12_RESOURCE_FLAG_NONE,
-        false,
-        false,
+        WIC_LOADER_DEFAULT,
         texture,
         decodedData,
         subresource);
@@ -562,9 +560,8 @@ HRESULT DirectX::LoadWICTextureFromMemoryEx(
     const uint8_t* wicData,
     size_t wicDataSize,
     size_t maxsize,
-    D3D12_RESOURCE_FLAGS flags,
-    bool forceSRGB,
-    bool reserveFullMipChain,
+    D3D12_RESOURCE_FLAGS resFlags,
+    unsigned int loadFlags,
     ID3D12Resource** texture,
     std::unique_ptr<uint8_t[]>& decodedData,
     D3D12_SUBRESOURCE_DATA& subresource)
@@ -610,7 +607,7 @@ HRESULT DirectX::LoadWICTextureFromMemoryEx(
 
     hr = CreateTextureFromWIC( d3dDevice,
                                frame.Get(), maxsize,
-                               flags, forceSRGB, reserveFullMipChain,
+                               resFlags, loadFlags,
                                texture, decodedData, subresource);
     if ( FAILED(hr)) 
         return hr;
@@ -637,8 +634,7 @@ HRESULT DirectX::LoadWICTextureFromFile(
         fileName,
         maxsize,
         D3D12_RESOURCE_FLAG_NONE,
-        false,
-        false,
+        WIC_LOADER_DEFAULT,
         texture,
         wicData,
         subresource);
@@ -651,9 +647,8 @@ HRESULT DirectX::LoadWICTextureFromFileEx(
     ID3D12Device* d3dDevice,
     const wchar_t* fileName,
     size_t maxsize,
-    D3D12_RESOURCE_FLAGS flags,
-    bool forceSRGB,
-    bool reserveFullMipChain,
+    D3D12_RESOURCE_FLAGS resFlags,
+    unsigned int loadFlags,
     ID3D12Resource** texture,
     std::unique_ptr<uint8_t[]>& decodedData,
     D3D12_SUBRESOURCE_DATA& subresource)
@@ -682,7 +677,7 @@ HRESULT DirectX::LoadWICTextureFromFileEx(
         return hr;
 
     hr = CreateTextureFromWIC( d3dDevice, frame.Get(), maxsize,
-                               flags, forceSRGB, reserveFullMipChain,
+                               resFlags, loadFlags,
                                texture, decodedData, subresource );
 
 #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
