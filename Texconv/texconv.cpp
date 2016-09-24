@@ -55,6 +55,7 @@ enum OPTIONS
     OPT_PREFIX,
     OPT_SUFFIX,
     OPT_OUTPUTDIR,
+    OPT_OVERWRITE,
     OPT_FILETYPE,
     OPT_HFLIP,
     OPT_VFLIP,
@@ -123,6 +124,7 @@ SValue g_pOptions[] =
     { L"px",            OPT_PREFIX },
     { L"sx",            OPT_SUFFIX },
     { L"o",             OPT_OUTPUTDIR },
+    { L"y",             OPT_OVERWRITE },
     { L"ft",            OPT_FILETYPE },
     { L"hflip",         OPT_HFLIP },
     { L"vflip",         OPT_VFLIP },
@@ -617,8 +619,7 @@ namespace
     {
         PrintLogo();
 
-        wprintf(L"Usage: texconv <options> <files>\n");
-        wprintf(L"\n");
+        wprintf(L"Usage: texconv <options> <files>\n\n");
         wprintf(L"   -r                  wildcard filename search is recursive\n");
         wprintf(L"   -w <n>              width\n");
         wprintf(L"   -h <n>              height\n");
@@ -629,6 +630,7 @@ namespace
         wprintf(L"   -px <string>        name prefix\n");
         wprintf(L"   -sx <string>        name suffix\n");
         wprintf(L"   -o <directory>      output directory\n");
+        wprintf(L"   -y                  overwrite existing output file (if any)\n");
         wprintf(L"   -ft <filetype>      output file type\n");
         wprintf(L"   -hflip              horizonal flip of source image\n");
         wprintf(L"   -vflip              vertical flip of source image\n");
@@ -670,27 +672,22 @@ namespace
         wprintf(L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n");
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
 
-        wprintf(L"\n");
-        wprintf(L"   <format>: ");
+        wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
 
-        wprintf(L"\n");
-        wprintf(L"   <filter>: ");
+        wprintf(L"\n   <filter>: ");
         PrintList(13, g_pFilters);
 
-        wprintf(L"\n");
-        wprintf(L"   <filetype>: ");
+        wprintf(L"\n   <filetype>: ");
         PrintList(15, g_pSaveFileTypes);
 
-        wprintf(L"\n");
-        wprintf(L"   <feature-level>: ");
+        wprintf(L"\n   <feature-level>: ");
         PrintList(13, g_pFeatureLevels);
 
         ComPtr<IDXGIFactory1> dxgiFactory;
         if (GetDXGIFactory(dxgiFactory.GetAddressOf()))
         {
-            wprintf(L"\n");
-            wprintf(L"   <adapter>:\n");
+            wprintf(L"\n   <adapter>:\n");
 
             ComPtr<IDXGIAdapter> adapter;
             for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != dxgiFactory->EnumAdapters(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
@@ -2006,7 +2003,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     XMVECTOR value = inPixels[j];
 
-                    XMVECTOR scale = XMVectorDivide(XMVectorAdd(g_XMOne, XMVectorDivide(value, maxLum)), XMVectorAdd(g_XMOne, value));
+                    XMVECTOR scale = XMVectorDivide(
+                        XMVectorAdd(g_XMOne, XMVectorDivide(value, maxLum)),
+                        XMVectorAdd(g_XMOne, value));
                     XMVECTOR nvalue = XMVectorMultiply(value, scale);
 
                     value = XMVectorSelect(value, nvalue, g_XMSelect1110);
@@ -2254,6 +2253,15 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             // Write texture
             wprintf(L"writing %ls", pConv->szDest);
             fflush(stdout);
+
+            if (~dwOptions & (DWORD64(1) << OPT_OVERWRITE))
+            {
+                if (GetFileAttributesW(pConv->szDest) != INVALID_FILE_ATTRIBUTES)
+                {
+                    wprintf(L"\nERROR: Output file already exists, use -y to overwrite:\n");
+                    continue;
+                }
+            }
 
             switch (FileType)
             {
