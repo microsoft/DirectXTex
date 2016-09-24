@@ -497,6 +497,99 @@ HRESULT DirectX::EvaluateImage(
     }
 }
 
+_Use_decl_annotations_
+HRESULT DirectX::EvaluateImage(
+    const Image* images,
+    size_t nimages,
+    const TexMetadata& metadata,
+    std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)> pixelFunc)
+{
+    if (!images || !nimages)
+        return E_INVALIDARG;
+
+    if (!IsValid(metadata.format))
+        return E_INVALIDARG;
+
+    if (IsPlanar(metadata.format) || IsPalettized(metadata.format) || IsTypeless(metadata.format))
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+
+    if (metadata.width > UINT32_MAX
+        || metadata.height > UINT32_MAX)
+        return E_INVALIDARG;
+
+    if (metadata.IsVolumemap() && metadata.depth > UINT32_MAX)
+        return E_INVALIDARG;
+
+    ScratchImage temp;
+    DXGI_FORMAT format = metadata.format;
+    if (IsCompressed(format))
+    {
+        HRESULT hr = Decompress(images, nimages, metadata, DXGI_FORMAT_R32G32B32A32_FLOAT, temp);
+        if (FAILED(hr))
+            return hr;
+
+        if (nimages != temp.GetImageCount())
+            return E_UNEXPECTED;
+
+        images = temp.GetImages();
+        format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    }
+
+    switch (metadata.dimension)
+    {
+    case TEX_DIMENSION_TEXTURE1D:
+    case TEX_DIMENSION_TEXTURE2D:
+        for (size_t index = 0; index < nimages; ++index)
+        {
+            const Image& img = images[index];
+            if (img.format != format)
+                return E_FAIL;
+
+            if ((img.width > UINT32_MAX) || (img.height > UINT32_MAX))
+                return E_FAIL;
+
+            HRESULT hr = EvaluateImage_(img, pixelFunc);
+            if (FAILED(hr))
+                return hr;
+        }
+        break;
+
+    case TEX_DIMENSION_TEXTURE3D:
+    {
+        size_t index = 0;
+        size_t d = metadata.depth;
+        for (size_t level = 0; level < metadata.mipLevels; ++level)
+        {
+            for (size_t slice = 0; slice < d; ++slice, ++index)
+            {
+                if (index >= nimages)
+                    return E_FAIL;
+
+                const Image& img = images[index];
+                if (img.format != format)
+                    return E_FAIL;
+
+                if ((img.width > UINT32_MAX) || (img.height > UINT32_MAX))
+                    return E_FAIL;
+
+                HRESULT hr = EvaluateImage_(img, pixelFunc);
+                if (FAILED(hr))
+                    return hr;
+            }
+
+            if (d > 1)
+                d >>= 1;
+        }
+    }
+    break;
+
+    default:
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
 
 //-------------------------------------------------------------------------------------
 // Use a user-supplied function to compute a new image from an input image

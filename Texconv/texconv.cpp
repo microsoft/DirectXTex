@@ -86,6 +86,7 @@ enum OPTIONS
     OPT_WIC_QUALITY,
     OPT_WIC_LOSSLESS,
     OPT_COLORKEY,
+    OPT_TONEMAP,
     OPT_MAX
 };
 
@@ -153,6 +154,7 @@ SValue g_pOptions[] =
     { L"wicq",          OPT_WIC_QUALITY },
     { L"wiclossless",   OPT_WIC_LOSSLESS },
     { L"c",             OPT_COLORKEY },
+    { L"tonemap",       OPT_TONEMAP },
     { nullptr,          0 }
 };
 
@@ -659,13 +661,14 @@ namespace
         wprintf(L"   -bcuniform          Use uniform rather than perceptual weighting for BC1-3\n");
         wprintf(L"   -bcdither           Use dithering for BC1-3\n");
         wprintf(L"   -bcmax              Use exhaustive compression (BC7 only)\n");
-        wprintf(L"   -bcquick            USe quick compression (BC7 only)\n");
+        wprintf(L"   -bcquick            Use quick compression (BC7 only)\n");
         wprintf(L"   -wicq <quality>     When writing images with WIC use quality (0.0 to 1.0)\n");
         wprintf(L"   -wiclossless        When writing images with WIC use lossless mode\n");
         wprintf(
             L"   -aw <weight>        BC7 GPU compressor weighting for alpha error metric\n"
             L"                       (defaults to 1.0)\n");
         wprintf(L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n");
+        wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
 
         wprintf(L"\n");
         wprintf(L"   <format>: ");
@@ -1949,6 +1952,82 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert(info.height == tinfo.height);
             assert(info.depth == tinfo.depth);
             assert(info.arraySize == tinfo.arraySize);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.dimension == tinfo.dimension);
+
+            image.swap(timage);
+            cimage.reset();
+        }
+
+        // --- Tonemap (if requested) --------------------------------------------------
+        if (dwOptions & DWORD64(1) << OPT_TONEMAP)
+        {
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
+            // Compute max luminosity across all images
+            XMVECTOR maxLum = XMVectorZero();
+            hr = EvaluateImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                [&](const XMVECTOR* pixels, size_t width, size_t y)
+            {
+                UNREFERENCED_PARAMETER(y);
+
+                for (size_t j = 0; j < width; ++j)
+                {
+                    static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
+
+                    XMVECTOR v = *pixels++;
+
+                    v = XMVector3Dot(v, s_luminance);
+
+                    maxLum = XMVectorMax(v, maxLum);
+                }
+            });
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [tonemap maxlum] (%x)\n", hr);
+                return 1;
+            }
+
+            // Reinhard et al, "Photographic Tone Reproduction for Digital Images" 
+            // http://www.cs.utah.edu/~reinhard/cdrom/
+            maxLum = XMVectorMultiply(maxLum, maxLum);
+
+            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+            {
+                UNREFERENCED_PARAMETER(y);
+
+                for (size_t j = 0; j < width; ++j)
+                {
+                    XMVECTOR value = inPixels[j];
+
+                    XMVECTOR scale = XMVectorDivide(XMVectorAdd(g_XMOne, XMVectorDivide(value, maxLum)), XMVectorAdd(g_XMOne, value));
+                    XMVECTOR nvalue = XMVectorMultiply(value, scale);
+
+                    value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                    outPixels[j] = value;
+                }
+            }, *timage);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [tonemap apply] (%x)\n", hr);
+                return 1;
+            }
+
+            auto& tinfo = timage->GetMetadata();
+            tinfo;
+
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
             assert(info.miscFlags == tinfo.miscFlags);
             assert(info.dimension == tinfo.dimension);
 
