@@ -946,7 +946,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Undo Premultiplied Alpha (if requested) ---------------------------------
-        if ((dwOptions & (DWORD64(1) << OPT_DEMUL_ALPHA))
+        if ((dwOptions & (1 << OPT_DEMUL_ALPHA))
             && HasAlpha(info.format)
             && info.format != DXGI_FORMAT_A8_UNORM)
         {
@@ -1117,7 +1117,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_H_STRIP:
     case CMD_V_STRIP:
     {
-        size_t twidth, theight;
+        size_t twidth = 0;
+        size_t theight = 0;
 
         switch (dwCommand)
         {
@@ -1231,7 +1232,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         wprintf(L"\n");
         fflush(stdout);
 
-        if (~dwOptions & (DWORD64(1) << OPT_OVERWRITE))
+        if (~dwOptions & (1 << OPT_OVERWRITE))
         {
             if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
             {
@@ -1313,7 +1314,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         wprintf(L"\n");
         fflush(stdout);
 
-        if (~dwOptions & (DWORD64(1) << OPT_OVERWRITE))
+        if (~dwOptions & (1 << OPT_OVERWRITE))
         {
             if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
             {
