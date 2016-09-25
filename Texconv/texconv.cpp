@@ -110,7 +110,7 @@ struct SValue
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-SValue g_pOptions[] =
+const SValue g_pOptions [] =
 {
     { L"r",             OPT_RECURSIVE },
     { L"w",             OPT_WIDTH },
@@ -162,7 +162,7 @@ SValue g_pOptions[] =
 
 #define DEFFMT(fmt) { L#fmt, DXGI_FORMAT_ ## fmt }
 
-SValue g_pFormats[] =
+const SValue g_pFormats [] =
 {
     // List does not include _TYPELESS or depth/stencil formats
     DEFFMT(R32G32B32A32_FLOAT),
@@ -249,7 +249,7 @@ SValue g_pFormats[] =
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
 
-SValue g_pReadOnlyFormats[] =
+const SValue g_pReadOnlyFormats [] =
 {
     DEFFMT(R32G32B32A32_TYPELESS),
     DEFFMT(R32G32B32_TYPELESS),
@@ -293,7 +293,7 @@ SValue g_pReadOnlyFormats[] =
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
 
-SValue g_pFilters[] =
+const SValue g_pFilters [] =
 {
     { L"POINT",                     TEX_FILTER_POINT },
     { L"LINEAR",                    TEX_FILTER_LINEAR },
@@ -322,7 +322,7 @@ SValue g_pFilters[] =
 #define CODEC_JXR 0xFFFF0004
 #define CODEC_HDR 0xFFFF0005
 
-SValue g_pSaveFileTypes[] =     // valid formats to write to
+const SValue g_pSaveFileTypes [] =     // valid formats to write to
 {
     { L"BMP",   WIC_CODEC_BMP  },
     { L"JPG",   WIC_CODEC_JPEG },
@@ -339,7 +339,7 @@ SValue g_pSaveFileTypes[] =     // valid formats to write to
     { nullptr,  CODEC_DDS      }
 };
 
-SValue g_pFeatureLevels[] =     // valid feature levels for -fl for maximimum size
+const SValue g_pFeatureLevels [] =     // valid feature levels for -fl for maximimum size
 {
     { L"9.1",  2048 },
     { L"9.2",  2048 },
@@ -479,7 +479,7 @@ namespace
 
     void PrintFormat(DXGI_FORMAT Format)
     {
-        for (SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
+        for (const SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
         {
             if ((DXGI_FORMAT)pFormat->dwValue == Format)
             {
@@ -488,7 +488,7 @@ namespace
             }
         }
 
-        for (SValue *pFormat = g_pReadOnlyFormats; pFormat->pName; pFormat++)
+        for (const SValue *pFormat = g_pReadOnlyFormats; pFormat->pName; pFormat++)
         {
             if ((DXGI_FORMAT)pFormat->dwValue == Format)
             {
@@ -556,7 +556,7 @@ namespace
     }
 
 
-    void PrintList(size_t cch, SValue *pValue)
+    void PrintList(size_t cch, const SValue *pValue)
     {
         while (pValue->pName)
         {

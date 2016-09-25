@@ -83,7 +83,7 @@ struct SValue
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-SValue g_pCommands[] =
+const SValue g_pCommands[] =
 {
     { L"cube",      CMD_CUBE },
     { L"volume",    CMD_VOLUME },
@@ -96,7 +96,7 @@ SValue g_pCommands[] =
     { nullptr,      0 }
 };
 
-SValue g_pOptions[] =
+const SValue g_pOptions [] =
 {
     { L"r",         OPT_RECURSIVE },
     { L"w",         OPT_WIDTH },
@@ -119,7 +119,7 @@ SValue g_pOptions[] =
 
 #define DEFFMT(fmt) { L#fmt, DXGI_FORMAT_ ## fmt }
 
-SValue g_pFormats[] =
+const SValue g_pFormats [] =
 {
     // List does not include _TYPELESS or depth/stencil formats
     DEFFMT(R32G32B32A32_FLOAT),
@@ -193,7 +193,7 @@ SValue g_pFormats[] =
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
 
-SValue g_pFilters[] =
+const SValue g_pFilters [] =
 {
     { L"POINT",                     TEX_FILTER_POINT },
     { L"LINEAR",                    TEX_FILTER_LINEAR },
@@ -220,7 +220,7 @@ SValue g_pFilters[] =
 #define CODEC_TGA 0xFFFF0002
 #define CODEC_HDR 0xFFFF0005
 
-SValue g_pExtFileTypes[] =
+const SValue g_pExtFileTypes [] =
 {
     { L".BMP",  WIC_CODEC_BMP },
     { L".JPG",  WIC_CODEC_JPEG },
@@ -356,7 +356,7 @@ namespace
 
     void PrintFormat(DXGI_FORMAT Format)
     {
-        for (SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
+        for (const SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
         {
             if ((DXGI_FORMAT)pFormat->dwValue == Format)
             {
@@ -422,7 +422,7 @@ namespace
     }
 
 
-    void PrintList(size_t cch, SValue *pValue)
+    void PrintList(size_t cch, const SValue *pValue)
     {
         while (pValue->pName)
         {
@@ -516,9 +516,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     }
 
     // Process command line
-    DWORD dwOptions = 0;
-    std::list<SConversion> conversion;
-
     if (argc < 2)
     {
         PrintUsage();
@@ -542,6 +539,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         wprintf(L"Must use one of: cube, volume, array, cubearray,\n   h-cross, v-cross, h-strip, or v-strip\n\n");
         return 1;
     }
+
+    DWORD dwOptions = 0;
+    std::list<SConversion> conversion;
 
     for (int iArg = 2; iArg < argc; iArg++)
     {
