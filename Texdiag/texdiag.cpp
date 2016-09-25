@@ -437,7 +437,28 @@ namespace
             if (dwOptions & (1 << OPT_DDS_BAD_DXTN_TAILS))
                 ddsFlags |= DDS_FLAGS_BAD_DXTN_TAILS;
 
-            return LoadFromDDSFile(fileName, ddsFlags, &info, *image.get());
+            HRESULT hr = LoadFromDDSFile(fileName, ddsFlags, &info, *image.get());
+            if (FAILED(hr))
+                return hr;
+
+            if (IsTypeless(info.format))
+            {
+                if (dwOptions & (1 << OPT_TYPELESS_UNORM))
+                {
+                    info.format = MakeTypelessUNORM(info.format);
+                }
+                else if (dwOptions & (1 << OPT_TYPELESS_FLOAT))
+                {
+                    info.format = MakeTypelessFLOAT(info.format);
+                }
+
+                if (IsTypeless(info.format))
+                    return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+
+                image->OverrideFormat(info.format);
+            }
+
+            return S_OK;
         }
         else if (_wcsicmp(ext, L".tga") == 0)
         {
