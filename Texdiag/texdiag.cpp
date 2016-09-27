@@ -490,6 +490,7 @@ namespace
         XMFLOAT4 imageAvg;
         XMFLOAT4 imageVariance;
         XMFLOAT4 imageStdDev;
+        float luminance;
         size_t   specials_x;
         size_t   specials_y;
         size_t   specials_z;
@@ -497,11 +498,13 @@ namespace
 
         void Print()
         {
-            wprintf(L"\t Minimum - (%f %f %f %f)\n", imageMin.x, imageMin.y, imageMin.z, imageMin.w);
-            wprintf(L"\t Average - (%f %f %f %f)\n", imageAvg.x, imageAvg.y, imageAvg.z, imageAvg.w);
-            wprintf(L"\t Maximum - (%f %f %f %f)\n", imageMax.x, imageMax.y, imageMax.z, imageMax.w);
-            wprintf(L"\tVariance - (%f %f %f %f)\n", imageVariance.x, imageVariance.y, imageVariance.z, imageVariance.w);
-            wprintf(L"\t Std Dev - (%f %f %f %f)\n", imageStdDev.x, imageStdDev.y, imageStdDev.z, imageStdDev.w);
+            wprintf(L"\t  Minimum - (%f %f %f %f)\n", imageMin.x, imageMin.y, imageMin.z, imageMin.w);
+            wprintf(L"\t  Average - (%f %f %f %f)\n", imageAvg.x, imageAvg.y, imageAvg.z, imageAvg.w);
+            wprintf(L"\t  Maximum - (%f %f %f %f)\n", imageMax.x, imageMax.y, imageMax.z, imageMax.w);
+            wprintf(L"\t Variance - (%f %f %f %f)\n", imageVariance.x, imageVariance.y, imageVariance.z, imageVariance.w);
+            wprintf(L"\t  Std Dev - (%f %f %f %f)\n", imageStdDev.x, imageStdDev.y, imageStdDev.z, imageStdDev.w);
+
+            wprintf(L"\tLuminance - %f (maximum)\n", luminance);
 
             if ((specials_x > 0) || (specials_y > 0) || (specials_z > 0) || (specials_w > 0))
             {
@@ -518,16 +521,20 @@ namespace
         XMVECTOR minv = g_XMFltMax;
         XMVECTOR maxv = XMVectorNegate(g_XMFltMax);
         XMVECTOR acc = g_XMZero;
+        XMVECTOR luminance = g_XMZero;
 
         size_t totalPixels = 0;
 
         HRESULT hr = EvaluateImage(image, [&](const XMVECTOR * pixels, size_t width, size_t y)
         {
+            static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
+
             UNREFERENCED_PARAMETER(y);
 
             for (size_t x = 0; x < width; ++x)
             {
                 XMVECTOR v = *pixels++;
+                luminance = XMVectorMax(luminance, XMVector3Dot(v, s_luminance) );
                 minv = XMVectorMin(minv, v);
                 maxv = XMVectorMax(maxv, v);
                 acc = XMVectorAdd(v, acc);
@@ -562,6 +569,7 @@ namespace
         if (!totalPixels)
             return S_FALSE;
 
+        result.luminance = XMVectorGetX(luminance);
         XMStoreFloat4(&result.imageMin, minv);
         XMStoreFloat4(&result.imageMax, maxv);
 
