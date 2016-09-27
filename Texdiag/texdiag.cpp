@@ -37,6 +37,7 @@ enum COMMANDS
     CMD_INFO = 1,
     CMD_ANALYZE,
     CMD_COMPARE,
+    CMD_DIFF,
     CMD_DUMPBC,
     CMD_MAX
 };
@@ -44,9 +45,12 @@ enum COMMANDS
 enum OPTIONS
 {
     OPT_RECURSIVE = 1,
+    OPT_FORMAT,
     OPT_FILTER,
     OPT_DDS_DWORD_ALIGN,
     OPT_DDS_BAD_DXTN_TAILS,
+    OPT_OUTPUTFILE,
+    OPT_OVERWRITE,
     OPT_NOLOGO,
     OPT_TYPELESS_UNORM,
     OPT_TYPELESS_FLOAT,
@@ -78,6 +82,7 @@ const SValue g_pCommands[] =
     { L"info",      CMD_INFO },
     { L"analyze",   CMD_ANALYZE },
     { L"compare",   CMD_COMPARE },
+    { L"diff",      CMD_DIFF },
     { L"dumpbc",    CMD_DUMPBC },
     { nullptr,      0 }
 };
@@ -85,10 +90,13 @@ const SValue g_pCommands[] =
 const SValue g_pOptions[] =
 {
     { L"r",         OPT_RECURSIVE },
+    { L"f",         OPT_FORMAT },
     { L"if",        OPT_FILTER },
     { L"dword",     OPT_DDS_DWORD_ALIGN },
     { L"badtails",  OPT_DDS_BAD_DXTN_TAILS },
     { L"nologo",    OPT_NOLOGO },
+    { L"o",         OPT_OUTPUTFILE },
+    { L"y",         OPT_OVERWRITE },
     { L"tu",        OPT_TYPELESS_UNORM },
     { L"tf",        OPT_TYPELESS_FLOAT },
     { L"xlum",      OPT_EXPAND_LUMINANCE },
@@ -101,7 +109,7 @@ const SValue g_pOptions[] =
 
 const SValue g_pFormats[] =
 {
-    // List does not include _TYPELESS or depth/stencil formats
+    // List does not include _TYPELESS, depth/stencil, or BC formats
     DEFFMT(R32G32B32A32_FLOAT),
     DEFFMT(R32G32B32A32_UINT),
     DEFFMT(R32G32B32A32_SINT),
@@ -146,20 +154,9 @@ const SValue g_pFormats[] =
     DEFFMT(R8_SNORM),
     DEFFMT(R8_SINT),
     DEFFMT(A8_UNORM),
-    //DEFFMT(R1_UNORM)
     DEFFMT(R9G9B9E5_SHAREDEXP),
     DEFFMT(R8G8_B8G8_UNORM),
     DEFFMT(G8R8_G8B8_UNORM),
-    DEFFMT(BC1_UNORM),
-    DEFFMT(BC1_UNORM_SRGB),
-    DEFFMT(BC2_UNORM),
-    DEFFMT(BC2_UNORM_SRGB),
-    DEFFMT(BC3_UNORM),
-    DEFFMT(BC3_UNORM_SRGB),
-    DEFFMT(BC4_UNORM),
-    DEFFMT(BC4_SNORM),
-    DEFFMT(BC5_UNORM),
-    DEFFMT(BC5_SNORM),
     DEFFMT(B5G6R5_UNORM),
     DEFFMT(B5G5R5A1_UNORM),
 
@@ -169,10 +166,6 @@ const SValue g_pFormats[] =
     DEFFMT(R10G10B10_XR_BIAS_A2_UNORM),
     DEFFMT(B8G8R8A8_UNORM_SRGB),
     DEFFMT(B8G8R8X8_UNORM_SRGB),
-    DEFFMT(BC6H_UF16),
-    DEFFMT(BC6H_SF16),
-    DEFFMT(BC7_UNORM),
-    DEFFMT(BC7_UNORM_SRGB),
 
     // DXGI 1.2 formats
     DEFFMT(AYUV),
@@ -181,25 +174,83 @@ const SValue g_pFormats[] =
     DEFFMT(YUY2),
     DEFFMT(Y210),
     DEFFMT(Y216),
+    DEFFMT(B4G4R4A4_UNORM),
+
+    { nullptr, DXGI_FORMAT_UNKNOWN }
+};
+
+const SValue g_pReadOnlyFormats[] =
+{
+    DEFFMT(R32G32B32A32_TYPELESS),
+    DEFFMT(R32G32B32_TYPELESS),
+    DEFFMT(R16G16B16A16_TYPELESS),
+    DEFFMT(R32G32_TYPELESS),
+    DEFFMT(R32G8X24_TYPELESS),
+    DEFFMT(D32_FLOAT_S8X24_UINT),
+    DEFFMT(R32_FLOAT_X8X24_TYPELESS),
+    DEFFMT(X32_TYPELESS_G8X24_UINT),
+    DEFFMT(R10G10B10A2_TYPELESS),
+    DEFFMT(R8G8B8A8_TYPELESS),
+    DEFFMT(R16G16_TYPELESS),
+    DEFFMT(R32_TYPELESS),
+    DEFFMT(D32_FLOAT),
+    DEFFMT(R24G8_TYPELESS),
+    DEFFMT(D24_UNORM_S8_UINT),
+    DEFFMT(R24_UNORM_X8_TYPELESS),
+    DEFFMT(X24_TYPELESS_G8_UINT),
+    DEFFMT(R8G8_TYPELESS),
+    DEFFMT(R16_TYPELESS),
+    DEFFMT(R8_TYPELESS),
+    DEFFMT(BC1_TYPELESS),
+    DEFFMT(BC1_UNORM),
+    DEFFMT(BC1_UNORM_SRGB),
+    DEFFMT(BC2_TYPELESS),
+    DEFFMT(BC2_UNORM),
+    DEFFMT(BC2_UNORM_SRGB),
+    DEFFMT(BC3_TYPELESS),
+    DEFFMT(BC3_UNORM),
+    DEFFMT(BC3_UNORM_SRGB),
+    DEFFMT(BC4_TYPELESS),
+    DEFFMT(BC4_UNORM),
+    DEFFMT(BC4_SNORM),
+    DEFFMT(BC5_TYPELESS),
+    DEFFMT(BC5_UNORM),
+    DEFFMT(BC5_SNORM),
+
+    // DXGI 1.1 formats
+    DEFFMT(B8G8R8A8_TYPELESS),
+    DEFFMT(B8G8R8X8_TYPELESS),
+    DEFFMT(BC6H_TYPELESS),
+    DEFFMT(BC6H_UF16),
+    DEFFMT(BC6H_SF16),
+    DEFFMT(BC7_TYPELESS),
+    DEFFMT(BC7_UNORM),
+    DEFFMT(BC7_UNORM_SRGB),
+
+    // DXGI 1.2 formats
     DEFFMT(AI44),
     DEFFMT(IA44),
     DEFFMT(P8),
     DEFFMT(A8P8),
-    DEFFMT(B4G4R4A4_UNORM),
+    DEFFMT(NV12),
+    DEFFMT(P010),
+    DEFFMT(P016),
+    DEFFMT(420_OPAQUE),
+    DEFFMT(NV11),
 
     // DXGI 1.3 formats
-    { L"DXGI_FORMAT_P208", DXGI_FORMAT(130) },
-    { L"DXGI_FORMAT_V208", DXGI_FORMAT(131) },
-    { L"DXGI_FORMAT_V408", DXGI_FORMAT(132) },
+    { L"P208", DXGI_FORMAT(130) },
+    { L"V208", DXGI_FORMAT(131) },
+    { L"V408", DXGI_FORMAT(132) },
 
     // Xbox-specific formats
-    { L"DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT (Xbox)", DXGI_FORMAT(116) },
-    { L"DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT (Xbox)", DXGI_FORMAT(117) },
-    { L"DXGI_FORMAT_D16_UNORM_S8_UINT (Xbox)", DXGI_FORMAT(118) },
-    { L"DXGI_FORMAT_R16_UNORM_X8_TYPELESS (Xbox)", DXGI_FORMAT(119) },
-    { L"DXGI_FORMAT_X16_TYPELESS_G8_UINT (Xbox)", DXGI_FORMAT(120) },
-    { L"DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM (Xbox)", DXGI_FORMAT(189) },
-    { L"DXGI_FORMAT_R4G4_UNORM (Xbox)", DXGI_FORMAT(190) },
+    { L"R10G10B10_7E3_A2_FLOAT (Xbox)", DXGI_FORMAT(116) },
+    { L"R10G10B10_6E4_A2_FLOAT (Xbox)", DXGI_FORMAT(117) },
+    { L"D16_UNORM_S8_UINT (Xbox)", DXGI_FORMAT(118) },
+    { L"R16_UNORM_X8_TYPELESS (Xbox)", DXGI_FORMAT(119) },
+    { L"X16_TYPELESS_G8_UINT (Xbox)", DXGI_FORMAT(120) },
+    { L"R10G10B10_SNORM_A2_UNORM (Xbox)", DXGI_FORMAT(189) },
+    { L"R4G4_UNORM (Xbox)", DXGI_FORMAT(190) },
 
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
@@ -227,6 +278,26 @@ const SValue g_pFilters[] =
     { nullptr,                      TEX_FILTER_DEFAULT }
 };
 
+#define CODEC_DDS 0xFFFF0001 
+#define CODEC_TGA 0xFFFF0002
+#define CODEC_HDR 0xFFFF0005
+
+const SValue g_pExtFileTypes[] =
+{
+    { L".BMP",  WIC_CODEC_BMP },
+    { L".JPG",  WIC_CODEC_JPEG },
+    { L".JPEG", WIC_CODEC_JPEG },
+    { L".PNG",  WIC_CODEC_PNG },
+    { L".DDS",  CODEC_DDS },
+    { L".TGA",  CODEC_TGA },
+    { L".HDR",  CODEC_HDR },
+    { L".TIF",  WIC_CODEC_TIFF },
+    { L".TIFF", WIC_CODEC_TIFF },
+    { L".WDP",  WIC_CODEC_WMP },
+    { L".HDP",  WIC_CODEC_WMP },
+    { L".JXR",  WIC_CODEC_WMP },
+    { nullptr,  CODEC_DDS }
+};
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -355,6 +426,17 @@ namespace
                 break;
             }
         }
+
+        for (const SValue *pFormat = g_pReadOnlyFormats; pFormat->pName; pFormat++)
+        {
+            if ((DXGI_FORMAT)pFormat->dwValue == Format)
+            {
+                wprintf(pFormat->pName);
+                return;
+            }
+        }
+
+        wprintf(L"*UNKNOWN*");
     }
 
 
@@ -398,6 +480,7 @@ namespace
         wprintf(L"   info                Output image metadata\n");
         wprintf(L"   analyze             Analyze and summarize image information\n");
         wprintf(L"   compare             Compare two images with MSE error metric\n");
+        wprintf(L"   diff                Generate difference image from two images\n");
         wprintf(L"   dumpbc              Dump out compressed blocks (DDS BC only)\n\n");
         wprintf(L"   -r                  wildcard filename search is recursive\n");
         wprintf(L"   -if <filter>        image filtering\n");
@@ -406,10 +489,17 @@ namespace
         wprintf(L"   -dword              Use DWORD instead of BYTE alignment\n");
         wprintf(L"   -badtails           Fix for older DXTn with bad mipchain tails\n");
         wprintf(L"   -xlum               expand legacy L8, L16, and A8P8 formats\n");
+        wprintf(L"\n                       (diff only)\n");
+        wprintf(L"   -f <format>         format\n");
+        wprintf(L"   -o <filename>       output filename\n");
+        wprintf(L"   -y                  overwrite existing output file (if any)\n");
         wprintf(L"\n                       (dumpbc only)\n");
         wprintf(L"   -targetx <num>      dump pixels at location x (defaults to all)\n");
         wprintf(L"   -targety <num>      dump pixels at location y (defaults to all)\n");
         wprintf(L"\n   -nologo             suppress copyright message\n");
+
+        wprintf(L"\n   <format>: ");
+        PrintList(13, g_pFormats);
 
         wprintf(L"\n   <filter>: ");
         PrintList(13, g_pFilters);
@@ -479,6 +569,24 @@ namespace
             static_assert(WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match");
 
             return LoadFromWICFile(fileName, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image.get());
+        }
+    }
+
+    HRESULT SaveImage(const Image* image, const wchar_t *fileName, DWORD codec)
+    {
+        switch (codec)
+        {
+        case CODEC_DDS:
+            return SaveToDDSFile(*image, DDS_FLAGS_NONE, fileName);
+
+        case CODEC_TGA:
+            return SaveToTGAFile(*image, fileName);
+
+        case CODEC_HDR:
+            return SaveToHDRFile(*image, fileName);
+
+        default:
+            return SaveToWICFile(*image, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(codec)), fileName);
         }
     }
 
@@ -1036,6 +1144,80 @@ namespace
         }
 
         return S_OK;
+    }
+
+
+    //--------------------------------------------------------------------------------------
+    HRESULT Difference(const Image& image1, const Image& image2, DWORD dwFilter, DXGI_FORMAT format, ScratchImage& result)
+    {
+        if (!image1.pixels || !image2.pixels)
+            return E_POINTER;
+
+        if (image1.width != image2.width
+            || image1.height != image2.height)
+            return E_FAIL;
+
+        ScratchImage tempA;
+        const Image* imageA = &image1;
+        if (IsCompressed(image1.format))
+        {
+            HRESULT hr = Decompress(image1, DXGI_FORMAT_R32G32B32A32_FLOAT, tempA);
+            if (FAILED(hr))
+                return hr;
+
+            imageA = tempA.GetImage(0, 0, 0);
+        }
+
+        ScratchImage tempB;
+        const Image* imageB = &image2;
+        if (image2.format != DXGI_FORMAT_R32G32B32A32_FLOAT)
+        {
+            if (IsCompressed(image2.format))
+            {
+                HRESULT hr = Decompress(image2, DXGI_FORMAT_R32G32B32A32_FLOAT, tempB);
+                if (FAILED(hr))
+                    return hr;
+
+                imageB = tempB.GetImage(0,0,0);
+            }
+            else
+            {
+                HRESULT hr = Convert(image2, DXGI_FORMAT_R32G32B32A32_FLOAT, dwFilter, TEX_THRESHOLD_DEFAULT, tempB);
+                if (FAILED(hr))
+                    return hr;
+
+                imageB = tempB.GetImage(0, 0, 0);
+            }
+        }
+
+        if (!imageA || !imageB)
+            return E_POINTER;
+
+        ScratchImage diffImage;
+        HRESULT hr = TransformImage(*imageA, [&](XMVECTOR* outPixels, const XMVECTOR * inPixels, size_t width, size_t y)
+        {
+            auto *inPixelsB = reinterpret_cast<XMVECTOR*>(imageB->pixels + (y*imageB->rowPitch));
+
+            for (size_t x = 0; x < width; ++x)
+            {
+                XMVECTOR v1 = *inPixels++;
+                XMVECTOR v2 = *inPixelsB++;
+
+                v1 = XMVectorSubtract(v1, v2);
+                v1 = XMVectorAbs(v1);
+
+                v1 = XMVectorSelect( g_XMIdentityR3, v1, g_XMSelect1110);
+
+                *outPixels++ = v1;
+            }
+        }, (format == DXGI_FORMAT_R32G32B32A32_FLOAT) ? result : diffImage);
+        if (FAILED(hr))
+            return hr;
+
+        if (format == DXGI_FORMAT_R32G32B32A32_FLOAT)
+            return S_OK;
+
+        return Convert(diffImage.GetImages(), diffImage.GetImageCount(), diffImage.GetMetadata(), format, dwFilter, TEX_THRESHOLD_DEFAULT, result);
     }
 
 
@@ -2764,6 +2946,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     DWORD dwFilter = TEX_FILTER_DEFAULT;
     int pixelx = -1;
     int pixely = -1;
+    DXGI_FORMAT diffFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+    DWORD diffFileType = WIC_CODEC_BMP;
+    wchar_t szOutputFile[MAX_PATH] = { 0 };
 
     // Initialize COM (needed for WIC)
     HRESULT hr = hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
@@ -2786,11 +2971,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_INFO:
     case CMD_ANALYZE:
     case CMD_COMPARE:
+    case CMD_DIFF:
     case CMD_DUMPBC:
         break;
 
     default:
-        wprintf(L"Must use one of: info, analyze, compare, or dumpbc\n\n");
+        wprintf(L"Must use one of: info, analyze, compare, diff, or dumpbc\n\n");
         return 1;
     }
 
@@ -2825,6 +3011,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             switch (dwOption)
             {
             case OPT_FILTER:
+            case OPT_FORMAT:
+            case OPT_OUTPUTFILE:
             case OPT_TARGET_PIXELX:
             case OPT_TARGET_PIXELY:
                 if (!*pValue)
@@ -2843,6 +3031,23 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             switch (dwOption)
             {
+            case OPT_FORMAT:
+                if (dwCommand != CMD_DIFF)
+                {
+                    wprintf(L"-f only valid for use with diff command\n");
+                    return 1;
+                }
+                else
+                {
+                    diffFormat = (DXGI_FORMAT)LookupByName(pValue, g_pFormats);
+                    if (!diffFormat)
+                    {
+                        wprintf(L"Invalid value specified with -f (%ls)\n", pValue);
+                        return 1;
+                    }
+                }
+                break;
+
             case OPT_FILTER:
                 dwFilter = LookupByName(pValue, g_pFilters);
                 if (!dwFilter)
@@ -2852,8 +3057,30 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 break;
 
+            case OPT_OUTPUTFILE:
+                if (dwCommand != CMD_DIFF)
+                {
+                    wprintf(L"-o only valid for use with diff command\n");
+                    return 1;
+                }
+                else
+                {
+                    wcscpy_s(szOutputFile, MAX_PATH, pValue);
+
+                    wchar_t ext[_MAX_EXT];
+                    _wsplitpath_s(szOutputFile, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
+
+                    diffFileType = LookupByName(ext, g_pExtFileTypes);
+                }
+                break;
+
             case OPT_TARGET_PIXELX:
-                if (swscanf_s(pValue, L"%d", &pixelx) != 1)
+                if (dwCommand != CMD_DUMPBC)
+                {
+                    wprintf(L"-targetx only valid with dumpbc command\n");
+                    return 1;
+                }
+                else if (swscanf_s(pValue, L"%d", &pixelx) != 1)
                 {
                     wprintf(L"Invalid value for pixel x location (%ls)\n", pValue);
                     return 1;
@@ -2861,7 +3088,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_TARGET_PIXELY:
-                if (swscanf_s(pValue, L"%d", &pixely) != 1)
+                if (dwCommand != CMD_DUMPBC)
+                {
+                    wprintf(L"-targety only valid with dumpbc command\n");
+                    return 1;
+                }
+                else if (swscanf_s(pValue, L"%d", &pixely) != 1)
                 {
                     wprintf(L"Invalid value for pixel y location (%ls)\n", pValue);
                     return 1;
@@ -2900,10 +3132,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     switch (dwCommand)
     {
     case CMD_COMPARE:
-        // --- Compare -----------------------------------------------------------------
+    case CMD_DIFF:
+        // --- Compare/Diff ------------------------------------------------------------
         if (conversion.size() != 2)
         {
-            wprintf(L"ERROR: compare needs excatly two images\n");
+            wprintf(L"ERROR: compare/diff needs exactly two images\n");
             return 1;
         }
         else
@@ -2943,11 +3176,56 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (info1.height != info2.height
                 || info1.width != info2.width)
             {
-                wprintf(L"ERROR: Can only compare images of the same width & height\n");
+                wprintf(L"ERROR: Can only compare/diff images of the same width & height\n");
                 return 1;
             }
 
-            if ((info1.depth == 1
+            if (dwCommand == CMD_DIFF)
+            {
+                if (!*szOutputFile)
+                {
+                    wchar_t ext[_MAX_EXT];
+                    wchar_t fname[_MAX_FNAME];
+                    _wsplitpath_s(pImage1->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT);
+                    if (_wcsicmp(ext, L".bmp") == 0)
+                    {
+                        wprintf(L"ERROR: Need to specify output file via -o\n");
+                        return 1;
+                    }
+
+                    _wmakepath_s(szOutputFile, nullptr, nullptr, fname, L".bmp");
+                }
+
+                if (image1->GetImageCount() > 1 || image2->GetImageCount() > 1)
+                    wprintf(L"WARNING: ignoring all images but first one in each file\n");
+
+                ScratchImage diffImage;
+                hr = Difference(*image1->GetImage(0, 0, 0), *image2->GetImage(0, 0, 0), dwFilter, diffFormat, diffImage);
+                if (FAILED(hr))
+                {
+                    wprintf(L"Failed diffing images (%08X)\n", hr);
+                    return 1;
+                }
+
+                if (~dwOptions & (1 << OPT_OVERWRITE))
+                {
+                    if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+                    {
+                        wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
+                        return 1;
+                    }
+                }
+
+                hr = SaveImage(diffImage.GetImage(0, 0, 0), szOutputFile, diffFileType);
+                if (FAILED(hr))
+                {
+                    wprintf(L" FAILED (%x)\n", hr);
+                    return 1;
+                }
+
+                wprintf(L"Difference %ls\n", szOutputFile);
+            }
+            else if ((info1.depth == 1
                 && info1.arraySize == 1
                 && info1.mipLevels == 1)
                 || info1.depth != info2.depth
