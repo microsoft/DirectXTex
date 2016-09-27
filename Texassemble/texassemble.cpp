@@ -647,8 +647,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 wchar_t ext[_MAX_EXT];
                 _wsplitpath_s(szOutputFile, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
 
-                wprintf(L"Ext = %ls\n", ext);
-
                 CrossFileType = LookupByName(ext, g_pExtFileTypes);
 
                 switch (dwCommand)

@@ -110,7 +110,7 @@ struct SValue
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-const SValue g_pOptions [] =
+const SValue g_pOptions[] =
 {
     { L"r",             OPT_RECURSIVE },
     { L"w",             OPT_WIDTH },
@@ -162,7 +162,7 @@ const SValue g_pOptions [] =
 
 #define DEFFMT(fmt) { L#fmt, DXGI_FORMAT_ ## fmt }
 
-const SValue g_pFormats [] =
+const SValue g_pFormats[] =
 {
     // List does not include _TYPELESS or depth/stencil formats
     DEFFMT(R32G32B32A32_FLOAT),
@@ -249,7 +249,7 @@ const SValue g_pFormats [] =
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
 
-const SValue g_pReadOnlyFormats [] =
+const SValue g_pReadOnlyFormats[] =
 {
     DEFFMT(R32G32B32A32_TYPELESS),
     DEFFMT(R32G32B32_TYPELESS),
@@ -290,10 +290,15 @@ const SValue g_pReadOnlyFormats [] =
     DEFFMT(420_OPAQUE),
     DEFFMT(NV11),
 
+    // DXGI 1.3 formats
+    { L"P208", DXGI_FORMAT(130) },
+    { L"V208", DXGI_FORMAT(131) },
+    { L"V408", DXGI_FORMAT(132) },
+
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
 
-const SValue g_pFilters [] =
+const SValue g_pFilters[] =
 {
     { L"POINT",                     TEX_FILTER_POINT },
     { L"LINEAR",                    TEX_FILTER_LINEAR },
@@ -322,7 +327,7 @@ const SValue g_pFilters [] =
 #define CODEC_JXR 0xFFFF0004
 #define CODEC_HDR 0xFFFF0005
 
-const SValue g_pSaveFileTypes [] =     // valid formats to write to
+const SValue g_pSaveFileTypes[] =   // valid formats to write to
 {
     { L"BMP",   WIC_CODEC_BMP  },
     { L"JPG",   WIC_CODEC_JPEG },
@@ -339,7 +344,7 @@ const SValue g_pSaveFileTypes [] =     // valid formats to write to
     { nullptr,  CODEC_DDS      }
 };
 
-const SValue g_pFeatureLevels [] =     // valid feature levels for -fl for maximimum size
+const SValue g_pFeatureLevels[] =   // valid feature levels for -fl for maximimum size
 {
     { L"9.1",  2048 },
     { L"9.2",  2048 },
