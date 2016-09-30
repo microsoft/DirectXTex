@@ -88,6 +88,7 @@ enum OPTIONS
     OPT_WIC_LOSSLESS,
     OPT_COLORKEY,
     OPT_TONEMAP,
+    OPT_X2_BIAS,
     OPT_MAX
 };
 
@@ -157,6 +158,7 @@ const SValue g_pOptions[] =
     { L"wiclossless",   OPT_WIC_LOSSLESS },
     { L"c",             OPT_COLORKEY },
     { L"tonemap",       OPT_TONEMAP },
+    { L"x2bias",        OPT_X2_BIAS },
     { nullptr,          0 }
 };
 
@@ -676,6 +678,7 @@ namespace
             L"                       (defaults to 1.0)\n");
         wprintf(L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n");
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
+        wprintf(L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n");
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -861,6 +864,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
     DWORD dwFilter = TEX_FILTER_DEFAULT;
     DWORD dwSRGB = 0;
+    DWORD dwConvert = 0;
     DWORD dwCompress = TEX_COMPRESS_DEFAULT;
     DWORD dwFilterOpts = 0;
     DWORD FileType = CODEC_DDS;
@@ -1258,6 +1262,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 colorKey &= 0xFFFFFF;
                 useColorKey = true;
+                break;
+
+            case OPT_X2_BIAS:
+                dwConvert |= TEX_FILTER_FLOAT_X2BIAS;
                 break;
             }
         }
@@ -1733,7 +1741,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), tformat,
-                dwFilter | dwFilterOpts | dwSRGB, TEX_THRESHOLD_DEFAULT, *timage);
+                dwFilter | dwFilterOpts | dwSRGB | dwConvert, TEX_THRESHOLD_DEFAULT, *timage);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED [convert] (%x)\n", hr);

@@ -2815,7 +2815,7 @@ namespace
         { DXGI_FORMAT_D32_FLOAT_S8X24_UINT,         32, CONVF_FLOAT | CONVF_DEPTH | CONVF_STENCIL },
         { DXGI_FORMAT_R10G10B10A2_UNORM,            10, CONVF_UNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { DXGI_FORMAT_R10G10B10A2_UINT,             10, CONVF_UINT | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_R11G11B10_FLOAT,              10, CONVF_FLOAT | CONVF_R | CONVF_G | CONVF_B },
+        { DXGI_FORMAT_R11G11B10_FLOAT,              10, CONVF_FLOAT | CONVF_POS_ONLY | CONVF_R | CONVF_G | CONVF_B },
         { DXGI_FORMAT_R8G8B8A8_UNORM,               8, CONVF_UNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,          8, CONVF_UNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { DXGI_FORMAT_R8G8B8A8_UINT,                8, CONVF_UINT | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
@@ -2847,7 +2847,7 @@ namespace
         { DXGI_FORMAT_R8_SINT,                      8, CONVF_SINT | CONVF_R },
         { DXGI_FORMAT_A8_UNORM,                     8, CONVF_UNORM | CONVF_A },
         { DXGI_FORMAT_R1_UNORM,                     1, CONVF_UNORM | CONVF_R },
-        { DXGI_FORMAT_R9G9B9E5_SHAREDEXP,           9, CONVF_SHAREDEXP | CONVF_R | CONVF_G | CONVF_B },
+        { DXGI_FORMAT_R9G9B9E5_SHAREDEXP,           9, CONVF_FLOAT | CONVF_SHAREDEXP | CONVF_POS_ONLY | CONVF_R | CONVF_G | CONVF_B },
         { DXGI_FORMAT_R8G8_B8G8_UNORM,              8, CONVF_UNORM | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
         { DXGI_FORMAT_G8R8_G8B8_UNORM,              8, CONVF_UNORM | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
         { DXGI_FORMAT_BC1_UNORM,                    8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
@@ -2878,8 +2878,8 @@ namespace
         { DXGI_FORMAT_Y210,                         10, CONVF_UNORM | CONVF_YUV | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
         { DXGI_FORMAT_Y216,                         16, CONVF_UNORM | CONVF_YUV | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
         { DXGI_FORMAT_B4G4R4A4_UNORM,               4, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT,  10, CONVF_FLOAT | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT,  10, CONVF_FLOAT | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT,  10, CONVF_FLOAT | CONVF_POS_ONLY | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT,  10, CONVF_FLOAT | CONVF_POS_ONLY | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM,10, CONVF_SNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { XBOX_DXGI_FORMAT_R4G4_UNORM,               4, CONVF_UNORM | CONVF_R | CONVF_G },
     };
@@ -2916,7 +2916,12 @@ DWORD DirectX::_GetConvertFlags(DXGI_FORMAT format)
 }
 
 _Use_decl_annotations_
-void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outFormat, DXGI_FORMAT inFormat, DWORD flags)
+void DirectX::_ConvertScanline(
+    XMVECTOR* pBuffer,
+    size_t count,
+    DXGI_FORMAT outFormat,
+    DXGI_FORMAT inFormat,
+    DWORD flags)
 {
     assert(pBuffer && count > 0 && (((uintptr_t)pBuffer & 0xF) == 0));
     assert(IsValid(outFormat) && !IsTypeless(outFormat) && !IsPlanar(outFormat) && !IsPalettized(outFormat));
@@ -3011,10 +3016,9 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
     DWORD diffFlags = in->flags ^ out->flags;
     if (diffFlags != 0)
     {
-        static const XMVECTORF32 s_two = { 2.0f, 2.0f, 2.0f, 2.0f };
-
         if (diffFlags & CONVF_DEPTH)
         {
+            //--- Depth conversions ---
             if (in->flags & CONVF_DEPTH)
             {
                 // CONVF_DEPTH -> !CONVF_DEPTH
@@ -3033,8 +3037,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                             XMVECTOR v1 = XMVectorSplatY(v);
                             v1 = XMVectorClamp(v1, g_XMZero, S);
                             v1 = XMVectorDivide(v1, S);
-                            v = XMVectorSelect(v1, v, g_XMSelect1110);
-                            *ptr++ = v;
+                            *ptr++ = XMVectorSelect(v1, v, g_XMSelect1110);
                         }
                     }
                     else if (out->flags & CONVF_SNORM)
@@ -3047,9 +3050,8 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                             XMVECTOR v1 = XMVectorSplatY(v);
                             v1 = XMVectorClamp(v1, g_XMZero, S);
                             v1 = XMVectorDivide(v1, S);
-                            v1 = XMVectorMultiplyAdd(v1, s_two, g_XMNegativeOne);
-                            v = XMVectorSelect(v1, v, g_XMSelect1110);
-                            *ptr++ = v;
+                            v1 = XMVectorMultiplyAdd(v1, g_XMTwo, g_XMNegativeOne);
+                            *ptr++ = XMVectorSelect(v1, v, g_XMSelect1110);
                         }
                     }
                     else
@@ -3059,8 +3061,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                         {
                             XMVECTOR v = *ptr;
                             XMVECTOR v1 = XMVectorSplatY(v);
-                            v = XMVectorSelect(v1, v, g_XMSelect1110);
-                            *ptr++ = v;
+                            *ptr++ = XMVectorSelect(v1, v, g_XMSelect1110);
                         }
                     }
                 }
@@ -3075,8 +3076,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                         XMVECTOR v = *ptr;
                         XMVECTOR v1 = XMVectorSaturate(v);
                         v1 = XMVectorSplatX(v1);
-                        v = XMVectorSelect(v, v1, g_XMSelect1110);
-                        *ptr++ = v;
+                        *ptr++ = XMVectorSelect(v, v1, g_XMSelect1110);
                     }
                 }
                 else if (out->flags & CONVF_SNORM)
@@ -3088,10 +3088,9 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                         for (size_t i = 0; i < count; ++i)
                         {
                             XMVECTOR v = *ptr;
-                            XMVECTOR v1 = XMVectorMultiplyAdd(v, s_two, g_XMNegativeOne);
+                            XMVECTOR v1 = XMVectorMultiplyAdd(v, g_XMTwo, g_XMNegativeOne);
                             v1 = XMVectorSplatX(v1);
-                            v = XMVectorSelect(v, v1, g_XMSelect1110);
-                            *ptr++ = v;
+                            *ptr++ = XMVectorSelect(v, v1, g_XMSelect1110);
                         }
                     }
                     else
@@ -3103,8 +3102,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                             XMVECTOR v = *ptr;
                             XMVECTOR v1 = XMVectorClamp(v, g_XMNegativeOne, g_XMOne);
                             v1 = XMVectorSplatX(v1);
-                            v = XMVectorSelect(v, v1, g_XMSelect1110);
-                            *ptr++ = v;
+                            *ptr++ = XMVectorSelect(v, v1, g_XMSelect1110);
                         }
                     }
                 }
@@ -3115,8 +3113,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                     {
                         XMVECTOR v = *ptr;
                         XMVECTOR v1 = XMVectorSplatX(v);
-                        v = XMVectorSelect(v, v1, g_XMSelect1110);
-                        *ptr++ = v;
+                        *ptr++ = XMVectorSelect(v, v1, g_XMSelect1110);
                     }
                 }
             }
@@ -3134,8 +3131,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                     {
                         XMVECTOR v = *ptr;
                         XMVECTOR v1 = XMVectorSplatY(v);
-                        v = XMVectorSelect(v, v1, g_XMSelect1000);
-                        *ptr++ = v;
+                        *ptr++ = XMVectorSelect(v, v1, g_XMSelect1000);
                     }
                 }
                 break;
@@ -3147,8 +3143,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                     {
                         XMVECTOR v = *ptr;
                         XMVECTOR v1 = XMVectorSplatZ(v);
-                        v = XMVectorSelect(v, v1, g_XMSelect1000);
-                        *ptr++ = v;
+                        *ptr++ = XMVectorSelect(v, v1, g_XMSelect1000);
                     }
                 }
                 break;
@@ -3161,8 +3156,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                         {
                             XMVECTOR v = *ptr;
                             XMVECTOR v1 = XMVector3Dot(v, g_Grayscale);
-                            v = XMVectorSelect(v, v1, g_XMSelect1000);
-                            *ptr++ = v;
+                            *ptr++ = XMVectorSelect(v, v1, g_XMSelect1000);
                         }
                         break;
                     }
@@ -3176,8 +3170,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                     {
                         XMVECTOR v = *ptr;
                         XMVECTOR v1 = XMVectorSplatX(v);
-                        v = XMVectorSelect(v, v1, g_XMSelect1000);
-                        *ptr++ = v;
+                        *ptr++ = XMVectorSelect(v, v1, g_XMSelect1000);
                     }
                 }
                 break;
@@ -3194,8 +3187,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                         {
                             XMVECTOR v = *ptr;
                             XMVECTOR v1 = XMVectorMultiplyAdd(v, g_XMOneHalf, g_XMOneHalf);
-                            v = XMVectorSelect(v, v1, g_XMSelect1000);
-                            *ptr++ = v;
+                            *ptr++ = XMVectorSelect(v, v1, g_XMSelect1000);
                         }
                     }
                     else if (in->flags & CONVF_FLOAT)
@@ -3206,8 +3198,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                         {
                             XMVECTOR v = *ptr;
                             XMVECTOR v1 = XMVectorSaturate(v);
-                            v = XMVectorSelect(v, v1, g_XMSelect1000);
-                            *ptr++ = v;
+                            *ptr++ = XMVectorSelect(v, v1, g_XMSelect1000);
                         }
                     }
                 }
@@ -3227,8 +3218,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                             XMVECTOR v = *ptr;
                             XMVECTOR v1 = XMVectorMultiply(v, S);
                             v1 = XMVectorSplatW(v1);
-                            v = XMVectorSelect(v, v1, select0100);
-                            *ptr++ = v;
+                            *ptr++ = XMVectorSelect(v, v1, select0100);
                         }
                     }
                     else if (in->flags & CONVF_SNORM)
@@ -3241,8 +3231,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                             XMVECTOR v1 = XMVectorMultiplyAdd(v, g_XMOneHalf, g_XMOneHalf);
                             v1 = XMVectorMultiply(v1, S);
                             v1 = XMVectorSplatW(v1);
-                            v = XMVectorSelect(v, v1, select0100);
-                            *ptr++ = v;
+                            *ptr++ = XMVectorSelect(v, v1, select0100);
                         }
                     }
                     else
@@ -3252,8 +3241,7 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                         {
                             XMVECTOR v = *ptr;
                             XMVECTOR v1 = XMVectorSplatW(v);
-                            v = XMVectorSelect(v, v1, select0100);
-                            *ptr++ = v;
+                            *ptr++ = XMVectorSelect(v, v1, select0100);
                         }
                     }
                 }
@@ -3272,14 +3260,14 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                     {
                         XMVECTOR v = *ptr;
                         XMVECTOR v1 = XMVectorSaturate(v);
-                        v = XMVectorSelect(v, v1, g_XMSelect1000);
-                        *ptr++ = v;
+                        *ptr++ = XMVectorSelect(v, v1, g_XMSelect1000);
                     }
                 }
             }
         }
         else if (out->flags & CONVF_UNORM)
         {
+            //--- Converting to a UNORM ---
             if (in->flags & CONVF_SNORM)
             {
                 // SNORM -> UNORM
@@ -3292,17 +3280,31 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
             }
             else if (in->flags & CONVF_FLOAT)
             {
-                // FLOAT -> UNORM
                 XMVECTOR* ptr = pBuffer;
-                for (size_t i = 0; i < count; ++i)
+                if (!(in->flags & CONVF_POS_ONLY) && (flags & TEX_FILTER_FLOAT_X2BIAS))
                 {
-                    XMVECTOR v = *ptr;
-                    *ptr++ = XMVectorSaturate(v);
+                    // FLOAT -> UNORM (x2 bias)
+                    for (size_t i = 0; i < count; ++i)
+                    {
+                        XMVECTOR v = *ptr;
+                        v = XMVectorClamp(v, g_XMNegativeOne, g_XMOne);
+                        *ptr++ = XMVectorMultiplyAdd(v, g_XMOneHalf, g_XMOneHalf);
+                    }
+                }
+                else
+                {
+                    // FLOAT -> UNORM
+                    for (size_t i = 0; i < count; ++i)
+                    {
+                        XMVECTOR v = *ptr;
+                        *ptr++ = XMVectorSaturate(v);
+                    }
                 }
             }
         }
         else if (out->flags & CONVF_SNORM)
         {
+            //--- Converting to a SNORM ---
             if (in->flags & CONVF_UNORM)
             {
                 // UNORM -> SNORM
@@ -3310,17 +3312,92 @@ void DirectX::_ConvertScanline(XMVECTOR* pBuffer, size_t count, DXGI_FORMAT outF
                 for (size_t i = 0; i < count; ++i)
                 {
                     XMVECTOR v = *ptr;
-                    *ptr++ = XMVectorMultiplyAdd(v, s_two, g_XMNegativeOne);
+                    *ptr++ = XMVectorMultiplyAdd(v, g_XMTwo, g_XMNegativeOne);
                 }
             }
             else if (in->flags & CONVF_FLOAT)
             {
-                // FLOAT -> SNORM
                 XMVECTOR* ptr = pBuffer;
-                for (size_t i = 0; i < count; ++i)
+                if ((in->flags & CONVF_POS_ONLY) && (flags & TEX_FILTER_FLOAT_X2BIAS))
                 {
-                    XMVECTOR v = *ptr;
-                    *ptr++ = XMVectorClamp(v, g_XMNegativeOne, g_XMOne);
+                    // FLOAT (positive only, x2 bias) -> SNORM
+                    for (size_t i = 0; i < count; ++i)
+                    {
+                        XMVECTOR v = *ptr;
+                        v = XMVectorSaturate(v);
+                        *ptr++ = XMVectorMultiplyAdd(v, g_XMTwo, g_XMNegativeOne);
+                    }
+                }
+                else
+                {
+                    // FLOAT -> SNORM
+                    for (size_t i = 0; i < count; ++i)
+                    {
+                        XMVECTOR v = *ptr;
+                        *ptr++ = XMVectorClamp(v, g_XMNegativeOne, g_XMOne);
+                    }
+                }
+            }
+        }
+        else if (diffFlags & CONVF_UNORM)
+        {
+            //--- Converting from a UNORM ---
+            assert(in->flags & CONVF_UNORM);
+            if (out->flags & CONVF_FLOAT)
+            {
+                if (!(out->flags & CONVF_POS_ONLY) && (flags & TEX_FILTER_FLOAT_X2BIAS))
+                {
+                    // UNORM (x2 bias) -> FLOAT
+                    XMVECTOR* ptr = pBuffer;
+                    for (size_t i = 0; i < count; ++i)
+                    {
+                        XMVECTOR v = *ptr;
+                        *ptr++ = XMVectorMultiplyAdd(v, g_XMTwo, g_XMNegativeOne);
+                    }
+                }
+            }
+        }
+        else if (diffFlags & CONVF_POS_ONLY)
+        {
+            if (flags & TEX_FILTER_FLOAT_X2BIAS)
+            {
+                if (in->flags & CONVF_POS_ONLY)
+                {
+                    if (out->flags & CONVF_FLOAT)
+                    {
+                        // FLOAT (positive only, x2 bias) -> FLOAT
+                        XMVECTOR* ptr = pBuffer;
+                        for (size_t i = 0; i < count; ++i)
+                        {
+                            XMVECTOR v = *ptr;
+                            v = XMVectorSaturate(v);
+                            *ptr++ = XMVectorMultiplyAdd(v, g_XMTwo, g_XMNegativeOne);
+                        }
+                    }
+                }
+                else if (out->flags & CONVF_POS_ONLY)
+                {
+                    if (in->flags & CONVF_FLOAT)
+                    {
+                        // FLOAT -> FLOAT (positive only, x2 bias)
+                        XMVECTOR* ptr = pBuffer;
+                        for (size_t i = 0; i < count; ++i)
+                        {
+                            XMVECTOR v = *ptr;
+                            v = XMVectorClamp(v, g_XMNegativeOne, g_XMOne);
+                            *ptr++ = XMVectorMultiplyAdd(v, g_XMOneHalf, g_XMOneHalf);
+                        }
+                    }
+                    else if (in->flags & CONVF_SNORM)
+                    {
+                        // SNORM -> FLOAT (positive only, x2 bias)
+                        XMVECTOR* ptr = pBuffer;
+                        for (size_t i = 0; i < count; ++i)
+                        {
+                            XMVECTOR v = *ptr;
+                            *ptr++ = XMVectorMultiplyAdd(v, g_XMOneHalf, g_XMOneHalf);
+                        }
+                    }
                 }
             }
         }

@@ -411,6 +411,9 @@ namespace DirectX
         TEX_FILTER_SEPARATE_ALPHA   = 0x100,
             // Resize color and alpha channel independently
 
+        TEX_FILTER_FLOAT_X2BIAS     = 0x200,
+            // Enable *2 - 1 conversion cases for unorm<->float and positive-only float formats
+
         TEX_FILTER_RGB_COPY_RED     = 0x1000,
         TEX_FILTER_RGB_COPY_GREEN   = 0x2000,
         TEX_FILTER_RGB_COPY_BLUE    = 0x4000,
