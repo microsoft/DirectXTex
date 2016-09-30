@@ -4279,6 +4279,12 @@ namespace
             return false;
         }
 
+        if (filter & TEX_FILTER_FLOAT_X2BIAS)
+        {
+            // X2 Scale & Bias conversions not supported by WIC code paths
+            return false;
+        }
+
 #if defined(_XBOX_ONE) && defined(_TITLE)
         if (sformat == DXGI_FORMAT_R16G16B16A16_FLOAT
             || sformat == DXGI_FORMAT_R16_FLOAT
