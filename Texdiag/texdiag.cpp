@@ -30,6 +30,14 @@
 
 #include "directxtex.h"
 
+//Uncomment to add support for OpenEXR (.exr)
+//#define USE_OPENEXR
+
+#ifdef USE_OPENEXR
+// See <https://github.com/Microsoft/DirectXTex/wiki/Adding-OpenEXR> for details
+#include "DirectXTexEXR.h"
+#endif
+
 using namespace DirectX;
 
 enum COMMANDS
@@ -281,6 +289,7 @@ const SValue g_pFilters[] =
 #define CODEC_DDS 0xFFFF0001 
 #define CODEC_TGA 0xFFFF0002
 #define CODEC_HDR 0xFFFF0005
+#define CODEC_EXR 0xFFFF0006
 
 const SValue g_pExtFileTypes[] =
 {
@@ -296,6 +305,9 @@ const SValue g_pExtFileTypes[] =
     { L".WDP",  WIC_CODEC_WMP },
     { L".HDP",  WIC_CODEC_WMP },
     { L".JXR",  WIC_CODEC_WMP },
+#ifdef USE_OPENEXR
+    { L"EXR",   CODEC_EXR },
+#endif
     { nullptr,  CODEC_DDS }
 };
 
@@ -527,7 +539,7 @@ namespace
             if (dwOptions & (1 << OPT_DDS_BAD_DXTN_TAILS))
                 ddsFlags |= DDS_FLAGS_BAD_DXTN_TAILS;
 
-            HRESULT hr = LoadFromDDSFile(fileName, ddsFlags, &info, *image.get());
+            HRESULT hr = LoadFromDDSFile(fileName, ddsFlags, &info, *image);
             if (FAILED(hr))
                 return hr;
 
@@ -552,12 +564,18 @@ namespace
         }
         else if (_wcsicmp(ext, L".tga") == 0)
         {
-            return LoadFromTGAFile(fileName, &info, *image.get());
+            return LoadFromTGAFile(fileName, &info, *image);
         }
         else if (_wcsicmp(ext, L".hdr") == 0)
         {
-            return LoadFromHDRFile(fileName, &info, *image.get());
+            return LoadFromHDRFile(fileName, &info, *image);
         }
+#ifdef USE_OPENEXR
+        else if (_wcsicmp(ext, L".exr") == 0)
+        {
+            return LoadFromEXRFile(fileName, &info, *image);
+        }
+#endif
         else
         {
             // WIC shares the same filter values for mode and dither
@@ -568,7 +586,7 @@ namespace
             static_assert(WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match");
             static_assert(WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match");
 
-            return LoadFromWICFile(fileName, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image.get());
+            return LoadFromWICFile(fileName, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image);
         }
     }
 
@@ -584,6 +602,11 @@ namespace
 
         case CODEC_HDR:
             return SaveToHDRFile(*image, fileName);
+
+#ifdef USE_OPENEXR
+        case CODEC_EXR:
+            return SaveToEXRFile(*image, fileName);
+#endif
 
         default:
             return SaveToWICFile(*image, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(codec)), fileName);

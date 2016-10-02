@@ -30,6 +30,14 @@
 
 #include "directxtex.h"
 
+//Uncomment to add support for OpenEXR (.exr)
+//#define USE_OPENEXR
+
+#ifdef USE_OPENEXR
+// See <https://github.com/Microsoft/DirectXTex/wiki/Adding-OpenEXR> for details
+#include "DirectXTexEXR.h"
+#endif
+
 using namespace DirectX;
 
 enum COMMANDS
@@ -219,6 +227,7 @@ const SValue g_pFilters [] =
 #define CODEC_DDS 0xFFFF0001 
 #define CODEC_TGA 0xFFFF0002
 #define CODEC_HDR 0xFFFF0005
+#define CODEC_EXR 0xFFFF0006
 
 const SValue g_pExtFileTypes [] =
 {
@@ -234,6 +243,9 @@ const SValue g_pExtFileTypes [] =
     { L".WDP",  WIC_CODEC_WMP },
     { L".HDP",  WIC_CODEC_WMP },
     { L".JXR",  WIC_CODEC_WMP },
+#ifdef USE_OPENEXR
+    { L"EXR",   CODEC_EXR },
+#endif
     { nullptr,  CODEC_DDS }
 };
 
@@ -786,7 +798,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         case CMD_V_STRIP:
             if (_wcsicmp(ext, L".dds") == 0)
             {
-                hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image.get());
+                hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image);
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED (%x)\n", hr);
@@ -813,7 +825,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         default:
             if (_wcsicmp(ext, L".dds") == 0)
             {
-                hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image.get());
+                hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image);
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED (%x)\n", hr);
@@ -830,7 +842,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             else if (_wcsicmp(ext, L".tga") == 0)
             {
-                hr = LoadFromTGAFile(pConv->szSrc, &info, *image.get());
+                hr = LoadFromTGAFile(pConv->szSrc, &info, *image);
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED (%x)\n", hr);
@@ -839,13 +851,24 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             else if (_wcsicmp(ext, L".hdr") == 0)
             {
-                hr = LoadFromHDRFile(pConv->szSrc, &info, *image.get());
+                hr = LoadFromHDRFile(pConv->szSrc, &info, *image);
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED (%x)\n", hr);
                     return 1;
                 }
             }
+#ifdef USE_OPENEXR
+            else if (_wcsicmp(ext, L".exr") == 0)
+            {
+                hr = LoadFromEXRFile(pConv->szSrc, &info, *image);
+                if (FAILED(hr))
+                {
+                    wprintf(L" FAILED (%x)\n", hr);
+                    continue;
+                }
+            }
+#endif
             else
             {
                 // WIC shares the same filter values for mode and dither
@@ -856,7 +879,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 static_assert(WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match");
                 static_assert(WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match");
 
-                hr = LoadFromWICFile(pConv->szSrc, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image.get());
+                hr = LoadFromWICFile(pConv->szSrc, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image);
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED (%x)\n", hr);
@@ -1252,6 +1275,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         case CODEC_HDR:
             hr = SaveToHDRFile(*dest, szOutputFile);
             break;
+
+#ifdef USE_OPENEXR
+        case CODEC_EXR:
+            hr = SaveToEXRFile(*dest, szOutputFile);
+            break;
+#endif
 
         default:
             hr = SaveToWICFile(*dest, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(CrossFileType)), szOutputFile);
