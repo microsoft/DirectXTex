@@ -37,6 +37,14 @@
 
 #include "DirectXPackedVector.h"
 
+//Uncomment to add support for OpenEXR (.exr)
+//#define USE_OPENEXR
+
+#ifdef USE_OPENEXR
+// See <https://github.com/Microsoft/DirectXTex/wiki/Adding-OpenEXR> for details
+#include "DirectXTexEXR.h"
+#endif
+
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 using Microsoft::WRL::ComPtr;
@@ -328,6 +336,7 @@ const SValue g_pFilters[] =
 #define CODEC_HDP 0xFFFF0003
 #define CODEC_JXR 0xFFFF0004
 #define CODEC_HDR 0xFFFF0005
+#define CODEC_EXR 0xFFFF0006
 
 const SValue g_pSaveFileTypes[] =   // valid formats to write to
 {
@@ -343,6 +352,9 @@ const SValue g_pSaveFileTypes[] =   // valid formats to write to
     { L"WDP",   WIC_CODEC_WMP  },
     { L"HDP",   CODEC_HDP      },
     { L"JXR",   CODEC_JXR      },
+#ifdef USE_OPENEXR
+    { L"EXR",   CODEC_EXR      },
+#endif
     { nullptr,  CODEC_DDS      }
 };
 
@@ -1420,6 +1432,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 continue;
             }
         }
+#ifdef USE_OPENEXR
+        else if (_wcsicmp(ext, L".exr") == 0)
+        {
+            hr = LoadFromEXRFile(pConv->szSrc, &info, *image);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED (%x)\n", hr);
+                continue;
+            }
+        }
+#endif
         else
         {
             // WIC shares the same filter values for mode and dither
@@ -2291,6 +2314,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case CODEC_HDR:
                 hr = SaveToHDRFile(img[0], pConv->szDest);
                 break;
+
+#ifdef USE_OPENEXR
+            case CODEC_EXR:
+                hr = SaveToEXRFile(img[0], pConv->szDest);
+                break;
+#endif
 
             default:
             {
