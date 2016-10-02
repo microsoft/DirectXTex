@@ -3460,7 +3460,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 auto sizeInKb = static_cast<uint32_t>(image->GetPixelsSize() / 1024);
 
-                wprintf(L"   pixel size = %Iu (KB)\n\n", sizeInKb);
+                wprintf(L"   pixel size = %u (KB)\n\n", sizeInKb);
             }
             else if (dwCommand == CMD_DUMPBC)
             {
