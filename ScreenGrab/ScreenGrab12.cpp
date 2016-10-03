@@ -764,13 +764,17 @@ namespace
         // Transition the resource to the next state
         TransitionResource(commandList.Get(), pSource, D3D12_RESOURCE_STATE_COPY_SOURCE, afterState);
 
-        commandList->Close();
+        hr = commandList->Close();
+        if (FAILED(hr))
+            return hr;
 
         // Execute the command list
         pCommandQ->ExecuteCommandLists(1, (ID3D12CommandList**)commandList.GetAddressOf());
 
         // Signal the fence
-        pCommandQ->Signal(fence.Get(), 1);
+        hr = pCommandQ->Signal(fence.Get(), 1);
+        if (FAILED(hr))
+            return hr;
 
         // Block until the copy is complete
         while (fence->GetCompletedValue() < 1)
