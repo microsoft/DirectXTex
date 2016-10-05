@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-September 14, 2016
+October 5, 2016
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -112,6 +112,17 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+October 5, 2016
+    *breaking change*
+      Renamed Evaluate to EvaluateImage, Transform to TransformImage
+    texdiag: new command-line tool for texture debugging
+    texconv: -bcmax, -bcquick, -tonemap, and -x2bias switches
+    texconv: overwrite writing and -y switch
+    texconv/texassemble: optional OpenEXR support
+    texassemble: command syntax with support for generating strip and cross images from cubemap
+    Updates to DDSTextureLoader, WICTextureLoader, and ScreenGrab
+    Minor code cleanup
 
 September 14, 2016
     HDR (RGBE Radiance) file format reader and writer
