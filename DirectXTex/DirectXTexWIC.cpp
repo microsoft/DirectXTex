@@ -332,7 +332,7 @@ namespace
                 }
 #endif
 
-                PropVariantClear(&value);
+                (void)PropVariantClear(&value);
 
                 if (sRGB)
                     metadata.format = MakeSRGB(metadata.format);

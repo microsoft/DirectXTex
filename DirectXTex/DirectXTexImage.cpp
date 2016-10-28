@@ -783,7 +783,7 @@ bool ScratchImage::IsAlphaAllOpaque() const
                 if (!_LoadScanline(scanline.get(), img.width, pPixels, img.rowPitch, img.format))
                     return false;
 
-                XMVECTOR* ptr = scanline.get();
+                const XMVECTOR* ptr = scanline.get();
                 for (size_t w = 0; w < img.width; ++w)
                 {
                     XMVECTOR alpha = XMVectorSplatW(*ptr);

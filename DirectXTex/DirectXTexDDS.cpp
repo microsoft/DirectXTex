@@ -1786,7 +1786,7 @@ HRESULT DirectX::SaveToDDSMemory(
 
                     size_t rowPitch = images[index].rowPitch;
 
-                    const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(images[index].pixels);
+                    const uint8_t * __restrict sPtr = images[index].pixels;
                     uint8_t * __restrict dPtr = reinterpret_cast<uint8_t*>(pDestination);
 
                     size_t lines = ComputeScanlines(metadata.format, images[index].height);
@@ -1855,7 +1855,7 @@ HRESULT DirectX::SaveToDDSMemory(
 
                     size_t rowPitch = images[index].rowPitch;
 
-                    const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(images[index].pixels);
+                    const uint8_t * __restrict sPtr = images[index].pixels;
                     uint8_t * __restrict dPtr = reinterpret_cast<uint8_t*>(pDestination);
 
                     size_t lines = ComputeScanlines(metadata.format, images[index].height);
@@ -1986,7 +1986,7 @@ HRESULT DirectX::SaveToDDSFile(
                         return E_FAIL;
                     }
 
-                    const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(images[index].pixels);
+                    const uint8_t * __restrict sPtr = images[index].pixels;
 
                     size_t lines = ComputeScanlines(metadata.format, images[index].height);
                     for (size_t j = 0; j < lines; ++j)
@@ -2054,7 +2054,7 @@ HRESULT DirectX::SaveToDDSFile(
                         return E_FAIL;
                     }
 
-                    const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(images[index].pixels);
+                    const uint8_t * __restrict sPtr = images[index].pixels;
 
                     size_t lines = ComputeScanlines(metadata.format, images[index].height);
                     for (size_t j = 0; j < lines; ++j)

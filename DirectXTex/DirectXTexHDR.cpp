@@ -287,14 +287,17 @@ namespace
     //-------------------------------------------------------------------------------------
     // FloatToRGBE
     //-------------------------------------------------------------------------------------
-    inline void FloatToRGBE(_Out_writes_(width*4) uint8_t* pDestination, _In_reads_(width*bpp) const float* pSource, size_t width, int bpp)
+    inline void FloatToRGBE(_Out_writes_(width*4) uint8_t* pDestination, _In_reads_(width*fpp) const float* pSource, size_t width, _In_range_(3, 4) int fpp)
     {
+        auto ePtr = pSource + width * fpp;
+
         for (size_t j = 0; j < width; ++j)
         {
+            if (pSource + 2 >= ePtr) break;
             float r = pSource[0] >= 0.f ? pSource[0] : 0.f;
             float g = pSource[1] >= 0.f ? pSource[1] : 0.f;
             float b = pSource[2] >= 0.f ? pSource[2] : 0.f;
-            pSource += bpp;
+            pSource += fpp;
 
             const float max_xy = (r > g) ? r : g;
             float max_xyz = (max_xy > b) ? max_xy : b;
@@ -872,15 +875,15 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
-    int bpp;
+    int fpp;
     switch (image.format)
     {
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
-        bpp = 4;
+        fpp = 4;
         break;
 
     case DXGI_FORMAT_R32G32B32_FLOAT:
-        bpp = 3;
+        fpp = 3;
         break;
 
     default:
@@ -912,7 +915,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
     auto sPtr = reinterpret_cast<const uint8_t*>(image.pixels);
     for (size_t scan = 0; scan < image.height; ++scan)
     {
-        FloatToRGBE(dPtr, reinterpret_cast<const float*>(sPtr), image.width, bpp);
+        FloatToRGBE(dPtr, reinterpret_cast<const float*>(sPtr), image.width, fpp);
         dPtr += rowPitch;
         sPtr += image.rowPitch;
     }
@@ -930,7 +933,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
     auto sPtr = reinterpret_cast<const uint8_t*>(image.pixels);
     for (size_t scan = 0; scan < image.height; ++scan)
     {
-        FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, bpp);
+        FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
         sPtr += image.rowPitch;
 
         size_t encSize = EncodeRLE(enc, rgbe, rowPitch, image.width);
@@ -977,15 +980,15 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile)
         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
-    int bpp;
+    int fpp;
     switch (image.format)
     {
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
-        bpp = 4;
+        fpp = 4;
         break;
 
     case DXGI_FORMAT_R32G32B32_FLOAT:
-        bpp = 3;
+        fpp = 3;
         break;
 
     default:
@@ -1059,7 +1062,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile)
         auto sPtr = reinterpret_cast<const uint8_t*>(image.pixels);
         for (size_t scan = 0; scan < image.height; ++scan)
         {
-            FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, bpp);
+            FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
             sPtr += image.rowPitch;
 
             if (!WriteFile(hFile.get(), rgbe, static_cast<DWORD>(rowPitch), &bytesWritten, nullptr))
@@ -1076,7 +1079,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile)
         auto sPtr = reinterpret_cast<const uint8_t*>(image.pixels);
         for (size_t scan = 0; scan < image.height; ++scan)
         {
-            FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, bpp);
+            FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
             sPtr += image.rowPitch;
 
             size_t encSize = EncodeRLE(enc, rgbe, rowPitch, image.width);

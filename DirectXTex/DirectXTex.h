@@ -246,9 +246,9 @@ namespace DirectX
     {
     public:
         ScratchImage()
-            : m_nimages(0), m_size(0), m_image(nullptr), m_memory(nullptr) {}
+            : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr) {}
         ScratchImage(ScratchImage&& moveFrom)
-            : m_nimages(0), m_size(0), m_image(nullptr), m_memory(nullptr) { *this = std::move(moveFrom); }
+            : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr) { *this = std::move(moveFrom); }
         ~ScratchImage() { Release(); }
 
         ScratchImage& __cdecl operator= (ScratchImage&& moveFrom);

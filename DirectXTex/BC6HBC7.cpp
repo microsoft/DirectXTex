@@ -719,7 +719,7 @@ namespace
             INTColor aIPixels[NUM_PIXELS_PER_BLOCK];
 
             EncodeParams(const HDRColorA* const aOriginal, bool bSignedFormat) :
-                aHDRPixels(aOriginal), fBestErr(FLT_MAX), bSigned(bSignedFormat)
+                fBestErr(FLT_MAX), bSigned(bSignedFormat), aHDRPixels(aOriginal)
             {
                 for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
                 {

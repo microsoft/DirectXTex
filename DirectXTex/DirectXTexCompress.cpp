@@ -802,7 +802,7 @@ HRESULT DirectX::Decompress(
             return E_INVALIDARG;
 
         if (IsTypeless(format) || IsPlanar(format) || IsPalettized(format))
-            HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
     images.Release();

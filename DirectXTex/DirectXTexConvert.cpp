@@ -3673,6 +3673,7 @@ namespace
                 XMStoreFloat4A( &tmp, target ); \
                 \
                 auto dPtr = &dest[ index ]; \
+                if (dPtr >= ePtr) break; \
                 dPtr->x = static_cast<itype>( tmp.x ) & mask; \
                 dPtr->y = static_cast<itype>( tmp.y ) & mask; \
                 dPtr->z = static_cast<itype>( tmp.z ) & mask; \
@@ -3727,6 +3728,7 @@ namespace
                 XMStoreFloat4A( &tmp, target ); \
                 \
                 auto dPtr = &dest[ index ]; \
+                if (dPtr >= ePtr) break; \
                 dPtr->x = static_cast<itype>( tmp.x ) & mask; \
                 dPtr->y = static_cast<itype>( tmp.y ) & mask; \
             } \
@@ -3775,7 +3777,9 @@ namespace
                 target = XMVectorMin( scalev, target ); \
                 target = XMVectorMax( (clampzero) ? g_XMZero : ( -scalev + g_XMOne ), target ); \
                 \
-                dest[ index ] = static_cast<type>( (selectw) ? XMVectorGetW( target ) : XMVectorGetX( target ) ) & mask; \
+                auto dPtr = &dest[ index ]; \
+                if (dPtr >= ePtr) break; \
+                *dPtr = static_cast<type>( (selectw) ? XMVectorGetW( target ) : XMVectorGetX( target ) ) & mask; \
             } \
             return true; \
         } \
@@ -3836,6 +3840,8 @@ bool DirectX::_StoreScanlineDither(
     const XMVECTOR* __restrict sPtr = pSource;
     if (!sPtr)
         return false;
+
+    const void* ePtr = reinterpret_cast<const uint8_t*>(pDestination) + size;
 
     XMVECTOR vError = XMVectorZero();
 
@@ -3903,6 +3909,7 @@ bool DirectX::_StoreScanlineDither(
                 XMStoreFloat4A(&tmp, target);
 
                 auto dPtr = &dest[index];
+                if (dPtr >= ePtr) break;
                 dPtr->x = static_cast<uint16_t>(tmp.x) & 0x3FF;
                 dPtr->y = static_cast<uint16_t>(tmp.y) & 0x3FF;
                 dPtr->z = static_cast<uint16_t>(tmp.z) & 0x3FF;
@@ -3980,6 +3987,7 @@ bool DirectX::_StoreScanlineDither(
                 XMStoreFloat4A(&tmp, target);
 
                 auto dPtr = &dest[index];
+                if (dPtr >= ePtr) break;
                 *dPtr = (static_cast<uint32_t>(tmp.x) & 0xFFFFFF)
                     | ((static_cast<uint32_t>(tmp.y) & 0xFF) << 24);
             }
@@ -4067,6 +4075,7 @@ bool DirectX::_StoreScanlineDither(
                 XMStoreFloat4A(&tmp, target);
 
                 auto dPtr = &dest[index];
+                if (dPtr >= ePtr) break;
                 dPtr->x = static_cast<uint16_t>(tmp.x) & 0x1F;
                 dPtr->y = static_cast<uint16_t>(tmp.y) & 0x3F;
                 dPtr->z = static_cast<uint16_t>(tmp.z) & 0x1F;
@@ -4115,6 +4124,7 @@ bool DirectX::_StoreScanlineDither(
                 XMStoreFloat4A(&tmp, target);
 
                 auto dPtr = &dest[index];
+                if (dPtr >= ePtr) break;
                 dPtr->x = static_cast<uint16_t>(tmp.x) & 0x1F;
                 dPtr->y = static_cast<uint16_t>(tmp.y) & 0x1F;
                 dPtr->z = static_cast<uint16_t>(tmp.z) & 0x1F;
@@ -4169,6 +4179,7 @@ bool DirectX::_StoreScanlineDither(
                 XMStoreFloat4A(&tmp, target);
 
                 auto dPtr = &dest[index];
+                if (dPtr >= ePtr) break;
                 dPtr->x = static_cast<uint8_t>(tmp.x) & 0xFF;
                 dPtr->y = static_cast<uint8_t>(tmp.y) & 0xFF;
                 dPtr->z = static_cast<uint8_t>(tmp.z) & 0xFF;
@@ -4222,7 +4233,9 @@ bool DirectX::_StoreScanlineDither(
                 XMFLOAT4A tmp;
                 XMStoreFloat4A(&tmp, target);
 
-                dest[index] = (static_cast<uint8_t>(tmp.x) & 0xF)
+                auto dPtr = &dest[index];
+                if (dPtr >= ePtr) break;
+                *dPtr = (static_cast<uint8_t>(tmp.x) & 0xF)
                     | ((static_cast<uint8_t>(tmp.y) & 0xF) << 4);
             }
             return true;

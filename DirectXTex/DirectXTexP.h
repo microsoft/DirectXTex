@@ -201,15 +201,15 @@ namespace DirectX
                                       _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DXGI_FORMAT format, _In_ DWORD flags  );
 
     _Success_(return != false)
-    bool __cdecl _StoreScanline( void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
+    bool __cdecl _StoreScanline( _Out_writes_bytes_(size) void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
                                  _In_reads_(count) const XMVECTOR* pSource, _In_ size_t count, _In_ float threshold = 0 );
 
     _Success_(return != false)
-    bool __cdecl _StoreScanlineLinear( void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
+    bool __cdecl _StoreScanlineLinear( _Out_writes_bytes_(size) void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
                                        _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ DWORD flags, _In_ float threshold = 0 );
 
     _Success_(return != false)
-    bool __cdecl _StoreScanlineDither( void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
+    bool __cdecl _StoreScanlineDither( _Out_writes_bytes_(size) void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
                                        _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ float threshold, size_t y, size_t z,
                                        _Inout_updates_all_opt_(count+2) XMVECTOR* pDiffusionErrors );
 
