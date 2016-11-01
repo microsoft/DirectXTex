@@ -322,7 +322,7 @@ June 22, 2012
 May 31, 2012
     Minor fix for DDSTextureLoader's retry fallback that can happen with 10level9 feature levels
     Switched to use "_DEBUG" instead of "DEBUG" and cleaned up debug warnings
-    added Metro style application project files for DirectXTex
+    added Windows Store style application project files for DirectXTex
 
 April 20, 2012
     DirectTex's WIC-based writer opts-in for the Windows 8 BMP encoder option for writing 32 bpp RGBA files with the BITMAPV5HEADER
@@ -350,7 +350,7 @@ February 20, 2012
     Fixed bug in _SwizzleScanline when copying alpha channel for BGRA<->RGBA swizzling
 
 February 11, 2012
-    Update of DDSTextureLoader to also build in Metro style apps; added WICTextureLoader
+    Update of DDSTextureLoader to also build in Windows Store style apps; added WICTextureLoader
     Added CMYK WIC pixel formats to the DirectXTex conversion table
 
 January 30, 2012
