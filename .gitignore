@@ -16,6 +16,7 @@
 *.lastbuildstate
 *.ilk
 *.VC.db
+.vs
 Bin
 /ipch
 Debug
