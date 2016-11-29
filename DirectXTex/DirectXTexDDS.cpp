@@ -154,7 +154,7 @@ namespace
         {
             const LegacyDDS* entry = &g_LegacyDDSMap[index];
 
-            if (ddpf.dwFlags & entry->ddpf.dwFlags)
+            if ((ddpf.dwFlags & entry->ddpf.dwFlags) == entry->ddpf.dwFlags)
             {
                 if (entry->ddpf.dwFlags & DDS_FOURCC)
                 {
@@ -166,14 +166,58 @@ namespace
                     if (ddpf.dwRGBBitCount == entry->ddpf.dwRGBBitCount)
                         break;
                 }
-                else if (ddpf.dwRGBBitCount == entry->ddpf.dwRGBBitCount)
+                else if (entry->ddpf.dwFlags & DDS_ALPHA)
                 {
-                    // RGB, RGBA, ALPHA, LUMINANCE
-                    if (ddpf.dwRBitMask == entry->ddpf.dwRBitMask
+                    if (ddpf.dwRGBBitCount == entry->ddpf.dwRGBBitCount
+                        && ddpf.dwABitMask == entry->ddpf.dwABitMask)
+                        break;
+                }
+                else if (entry->ddpf.dwFlags & DDS_LUMINANCE)
+                {
+                    if (entry->ddpf.dwFlags & 0x1 /*DDPF_ALPHAPIXELS*/)
+                    {
+                        // LUMINANCEA
+                        if (ddpf.dwRGBBitCount == entry->ddpf.dwRGBBitCount
+                            && ddpf.dwRBitMask == entry->ddpf.dwRBitMask
+                            && ddpf.dwABitMask == entry->ddpf.dwABitMask)
+                            break;
+                    }
+                    else
+                    {
+                        // LUMINANCE
+                        if (ddpf.dwRGBBitCount == entry->ddpf.dwRGBBitCount
+                            && ddpf.dwRBitMask == entry->ddpf.dwRBitMask)
+                            break;
+                    }
+                }
+                else if (entry->ddpf.dwFlags & DDS_BUMPDUDV)
+                {
+                    if (ddpf.dwRGBBitCount == entry->ddpf.dwRGBBitCount
+                        && ddpf.dwRBitMask == entry->ddpf.dwRBitMask
                         && ddpf.dwGBitMask == entry->ddpf.dwGBitMask
                         && ddpf.dwBBitMask == entry->ddpf.dwBBitMask
                         && ddpf.dwABitMask == entry->ddpf.dwABitMask)
                         break;
+                }
+                else if (ddpf.dwRGBBitCount == entry->ddpf.dwRGBBitCount)
+                {
+                    if (entry->ddpf.dwFlags & 0x1 /*DDPF_ALPHAPIXELS*/)
+                    {
+                        // RGBA
+                        if (ddpf.dwRBitMask == entry->ddpf.dwRBitMask
+                            && ddpf.dwGBitMask == entry->ddpf.dwGBitMask
+                            && ddpf.dwBBitMask == entry->ddpf.dwBBitMask
+                            && ddpf.dwABitMask == entry->ddpf.dwABitMask)
+                            break;
+                    }
+                    else
+                    {
+                        // RGB
+                        if (ddpf.dwRBitMask == entry->ddpf.dwRBitMask
+                            && ddpf.dwGBitMask == entry->ddpf.dwGBitMask
+                            && ddpf.dwBBitMask == entry->ddpf.dwBBitMask)
+                            break;
+                    }
                 }
             }
         }
