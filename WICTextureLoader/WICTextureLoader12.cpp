@@ -296,12 +296,12 @@ namespace
             if (width > height)
             {
                 twidth = static_cast<UINT>(maxsize);
-                theight = static_cast<UINT>(static_cast<float>(maxsize) * ar);
+                theight = std::max<UINT>(1, static_cast<UINT>(static_cast<float>(maxsize) * ar));
             }
             else
             {
                 theight = static_cast<UINT>(maxsize);
-                twidth = static_cast<UINT>(static_cast<float>(maxsize) / ar);
+                twidth = std::max<UINT>(1, static_cast<UINT>(static_cast<float>(maxsize) / ar));
             }
             assert(twidth <= maxsize && theight <= maxsize);
         }
@@ -381,7 +381,7 @@ namespace
                         sRGB = true;
                     }
 
-                    PropVariantClear(&value);
+                    (void)PropVariantClear(&value);
 
                     if (sRGB)
                         format = MakeSRGB(format);
@@ -487,7 +487,7 @@ namespace
         }
 
         // Count the number of mips
-        uint32_t mipCount = (loadFlags & (WIC_LOADER_MIP_AUTOGEN | WIC_LOADER_MIP_RESERVE)) ? CountMips(twidth, theight) : 1;
+        uint32_t mipCount = (loadFlags & (WIC_LOADER_MIP_AUTOGEN|WIC_LOADER_MIP_RESERVE)) ? CountMips(twidth, theight) : 1;
 
         // Create texture
         D3D12_RESOURCE_DESC desc = {};
