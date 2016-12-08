@@ -54,6 +54,7 @@ struct DDS_PIXELFORMAT
 #define DDS_LUMINANCEA  0x00020001  // DDPF_LUMINANCE | DDPF_ALPHAPIXELS
 #define DDS_ALPHA       0x00000002  // DDPF_ALPHA
 #define DDS_PAL8        0x00000020  // DDPF_PALETTEINDEXED8
+#define DDS_PAL8A       0x00000021  // DDPF_PALETTEINDEXED8 | DDPF_ALPHAPIXELS
 #define DDS_BUMPDUDV    0x00080000  // DDPF_BUMPDUDV
 
 #ifndef MAKEFOURCC
@@ -133,6 +134,9 @@ extern __declspec(selectany) const DDS_PIXELFORMAT DDSPF_L16 =
 
 extern __declspec(selectany) const DDS_PIXELFORMAT DDSPF_A8L8 =
     { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCEA, 0, 16, 0x00ff, 0x0000, 0x0000, 0xff00 };
+
+extern __declspec(selectany) const DDS_PIXELFORMAT DDSPF_A8L8_ALT =
+    { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCEA, 0, 8, 0x00ff, 0x0000, 0x0000, 0xff00 };
 
 extern __declspec(selectany) const DDS_PIXELFORMAT DDSPF_A8 =
     { sizeof(DDS_PIXELFORMAT), DDS_ALPHA, 0, 8, 0x00, 0x00, 0x00, 0xff };
