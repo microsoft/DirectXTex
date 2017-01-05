@@ -184,16 +184,8 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
     const float *pC = (6 == cSteps) ? pC6 : pC8;
     const float *pD = (6 == cSteps) ? pD6 : pD8;
 
-    float MAX_VALUE = 1.0f;
-    float MIN_VALUE;
-    if (bRange)
-    {
-        MIN_VALUE = -1.0f;
-    }
-    else
-    {
-        MIN_VALUE = 0.0f;
-    }
+    const float MAX_VALUE = 1.0f;
+    const float MIN_VALUE = (bRange) ? -1.0f : 0.0f;
 
     // Find Min and Max points, as starting point
     float fX = MAX_VALUE;

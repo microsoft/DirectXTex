@@ -190,17 +190,13 @@ namespace
         _Out_ uint8_t &endpointU_1)
     {
         // The boundary of codec for signed/unsigned format
-        float MIN_NORM;
-        float MAX_NORM = 1.0f;
-        int8_t iStart, iEnd;
-        size_t i;
-
-        MIN_NORM = 0.0f;
+        const float MIN_NORM = 0.f;
+        const float MAX_NORM = 1.f;
 
         // Find max/min of input texels
         float fBlockMax = theTexelsU[0];
         float fBlockMin = theTexelsU[0];
-        for (i = 0; i < BLOCK_SIZE; ++i)
+        for (size_t i = 0; i < BLOCK_SIZE; ++i)
         {
             if (theTexelsU[i] < fBlockMin)
             {
@@ -212,7 +208,7 @@ namespace
             }
         }
 
-        //  If there are boundary values in input texels, Should use 4 block-codec to guarantee
+        //  If there are boundary values in input texels, should use 4 interpolated color values to guarantee
         //  the exact code of the boundary values.
         bool bUsing4BlockCodec = (MIN_NORM == fBlockMin || MAX_NORM == fBlockMax);
 
@@ -221,20 +217,22 @@ namespace
 
         if (!bUsing4BlockCodec)
         {
+            // 6 interpolated color values
             OptimizeAlpha<false>(&fStart, &fEnd, theTexelsU, 8);
 
-            iStart = (uint8_t)(fStart * 255.0f);
-            iEnd = (uint8_t)(fEnd   * 255.0f);
+            uint8_t iStart = static_cast<uint8_t>(fStart * 255.0f);
+            uint8_t iEnd = static_cast<uint8_t>(fEnd * 255.0f);
 
             endpointU_0 = iEnd;
             endpointU_1 = iStart;
         }
         else
         {
+            // 4 interpolated color values
             OptimizeAlpha<false>(&fStart, &fEnd, theTexelsU, 6);
 
-            iStart = (uint8_t)(fStart * 255.0f);
-            iEnd = (uint8_t)(fEnd   * 255.0f);
+            uint8_t iStart = static_cast<uint8_t>(fStart * 255.0f);
+            uint8_t iEnd = static_cast<uint8_t>(fEnd * 255.0f);
 
             endpointU_1 = iEnd;
             endpointU_0 = iStart;
@@ -247,17 +245,13 @@ namespace
         _Out_ int8_t &endpointU_1)
     {
         //  The boundary of codec for signed/unsigned format
-        float MIN_NORM;
-        float MAX_NORM = 1.0f;
-        int8_t iStart, iEnd;
-        size_t i;
-
-        MIN_NORM = -1.0f;
+        const float MIN_NORM = -1.f;
+        const float MAX_NORM = 1.f;
 
         // Find max/min of input texels
         float fBlockMax = theTexelsU[0];
         float fBlockMin = theTexelsU[0];
-        for (i = 0; i < BLOCK_SIZE; ++i)
+        for (size_t i = 0; i < BLOCK_SIZE; ++i)
         {
             if (theTexelsU[i] < fBlockMin)
             {
@@ -269,7 +263,7 @@ namespace
             }
         }
 
-        //  If there are boundary values in input texels, Should use 4 block-codec to guarantee
+        //  If there are boundary values in input texels, should use 4 interpolated color values to guarantee
         //  the exact code of the boundary values.
         bool bUsing4BlockCodec = (MIN_NORM == fBlockMin || MAX_NORM == fBlockMax);
 
@@ -278,8 +272,10 @@ namespace
 
         if (!bUsing4BlockCodec)
         {
+            // 6 interpolated color values
             OptimizeAlpha<true>(&fStart, &fEnd, theTexelsU, 8);
 
+            int8_t iStart, iEnd;
             FloatToSNorm(fStart, &iStart);
             FloatToSNorm(fEnd, &iEnd);
 
@@ -288,8 +284,10 @@ namespace
         }
         else
         {
+            // 4 interpolated color values
             OptimizeAlpha<true>(&fStart, &fEnd, theTexelsU, 6);
 
+            int8_t iStart, iEnd;
             FloatToSNorm(fStart, &iStart);
             FloatToSNorm(fEnd, &iEnd);
 
@@ -333,12 +331,12 @@ namespace
         _In_reads_(NUM_PIXELS_PER_BLOCK) const float theTexelsU[])
     {
         float rGradient[8];
-        int i;
-        for (i = 0; i < 8; ++i)
+        for (size_t i = 0; i < 8; ++i)
         {
             rGradient[i] = pBC->DecodeFromIndex(i);
         }
-        for (i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
+
+        for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
             size_t uBestIndex = 0;
             float fBestDelta = 100000;
@@ -360,12 +358,12 @@ namespace
         _In_reads_(NUM_PIXELS_PER_BLOCK) const float theTexelsU[])
     {
         float rGradient[8];
-        int i;
-        for (i = 0; i < 8; ++i)
+        for (size_t i = 0; i < 8; ++i)
         {
             rGradient[i] = pBC->DecodeFromIndex(i);
         }
-        for (i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
+
+        for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
             size_t uBestIndex = 0;
             float fBestDelta = 100000;
