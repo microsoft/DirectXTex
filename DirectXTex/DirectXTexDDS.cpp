@@ -19,6 +19,10 @@
 
 using namespace DirectX;
 
+static_assert(TEX_DIMENSION_TEXTURE1D == DDS_DIMENSION_TEXTURE1D, "header enum mismatch");
+static_assert(TEX_DIMENSION_TEXTURE2D == DDS_DIMENSION_TEXTURE2D, "header enum mismatch");
+static_assert(TEX_DIMENSION_TEXTURE3D == DDS_DIMENSION_TEXTURE3D, "header enum mismatch");
+
 namespace
 {
     //-------------------------------------------------------------------------------------
@@ -607,7 +611,7 @@ HRESULT DirectX::_EncodeDDSHeader(
     {
         header->dwFlags |= DDS_HEADER_FLAGS_MIPMAP;
 
-        if (metadata.mipLevels > UINT32_MAX)
+        if (metadata.mipLevels > UINT16_MAX)
             return E_INVALIDARG;
 
         header->dwMipMapCount = static_cast<uint32_t>(metadata.mipLevels);
@@ -645,7 +649,7 @@ HRESULT DirectX::_EncodeDDSHeader(
     case TEX_DIMENSION_TEXTURE3D:
         if (metadata.height > UINT32_MAX
             || metadata.width > UINT32_MAX
-            || metadata.depth > UINT32_MAX)
+            || metadata.depth > UINT16_MAX)
             return E_INVALIDARG;
 
         header->dwFlags |= DDS_HEADER_FLAGS_VOLUME;
@@ -688,7 +692,7 @@ HRESULT DirectX::_EncodeDDSHeader(
         ext->dxgiFormat = metadata.format;
         ext->resourceDimension = metadata.dimension;
 
-        if (metadata.arraySize > UINT32_MAX)
+        if (metadata.arraySize > UINT16_MAX)
             return E_INVALIDARG;
 
         static_assert(TEX_MISC_TEXTURECUBE == DDS_RESOURCE_MISC_TEXTURECUBE, "DDS header mismatch");

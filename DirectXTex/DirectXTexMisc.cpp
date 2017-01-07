@@ -517,7 +517,7 @@ HRESULT DirectX::EvaluateImage(
         || metadata.height > UINT32_MAX)
         return E_INVALIDARG;
 
-    if (metadata.IsVolumemap() && metadata.depth > UINT32_MAX)
+    if (metadata.IsVolumemap() && metadata.depth > UINT16_MAX)
         return E_INVALIDARG;
 
     ScratchImage temp;
@@ -645,7 +645,7 @@ HRESULT DirectX::TransformImage(
         || metadata.height > UINT32_MAX)
         return E_INVALIDARG;
 
-    if (metadata.IsVolumemap() && metadata.depth > UINT32_MAX)
+    if (metadata.IsVolumemap() && metadata.depth > UINT16_MAX)
         return E_INVALIDARG;
 
     HRESULT hr = result.Initialize(metadata);

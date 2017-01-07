@@ -26,6 +26,10 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
+static_assert(TEX_DIMENSION_TEXTURE1D == D3D11_RESOURCE_DIMENSION_TEXTURE1D, "header enum mismatch");
+static_assert(TEX_DIMENSION_TEXTURE2D == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "header enum mismatch");
+static_assert(TEX_DIMENSION_TEXTURE3D == D3D11_RESOURCE_DIMENSION_TEXTURE3D, "header enum mismatch");
+
 namespace
 {
     HRESULT Capture(
@@ -425,7 +429,7 @@ HRESULT DirectX::CreateTextureEx(
         return E_INVALIDARG;
 
     if ((metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX)
-        || (metadata.mipLevels > UINT32_MAX) || (metadata.arraySize > UINT32_MAX))
+        || (metadata.mipLevels > UINT16_MAX) || (metadata.arraySize > UINT16_MAX))
         return E_INVALIDARG;
 
     std::unique_ptr<D3D11_SUBRESOURCE_DATA[]> initData(new (std::nothrow) D3D11_SUBRESOURCE_DATA[metadata.mipLevels * metadata.arraySize]);
@@ -439,7 +443,7 @@ HRESULT DirectX::CreateTextureEx(
         if (!metadata.depth)
             return E_INVALIDARG;
 
-        if (metadata.depth > UINT32_MAX)
+        if (metadata.depth > UINT16_MAX)
             return E_INVALIDARG;
 
         if (metadata.arraySize > 1)
@@ -537,7 +541,7 @@ HRESULT DirectX::CreateTextureEx(
     {
     case TEX_DIMENSION_TEXTURE1D:
     {
-        D3D11_TEXTURE1D_DESC desc;
+        D3D11_TEXTURE1D_DESC desc = {};
         desc.Width = static_cast<UINT>(metadata.width);
         desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
         desc.ArraySize = static_cast<UINT>(metadata.arraySize);
@@ -553,7 +557,7 @@ HRESULT DirectX::CreateTextureEx(
 
     case TEX_DIMENSION_TEXTURE2D:
     {
-        D3D11_TEXTURE2D_DESC desc;
+        D3D11_TEXTURE2D_DESC desc = {};
         desc.Width = static_cast<UINT>(metadata.width);
         desc.Height = static_cast<UINT>(metadata.height);
         desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
@@ -575,7 +579,7 @@ HRESULT DirectX::CreateTextureEx(
 
     case TEX_DIMENSION_TEXTURE3D:
     {
-        D3D11_TEXTURE3D_DESC desc;
+        D3D11_TEXTURE3D_DESC desc = {};
         desc.Width = static_cast<UINT>(metadata.width);
         desc.Height = static_cast<UINT>(metadata.height);
         desc.Depth = static_cast<UINT>(metadata.depth);
@@ -711,7 +715,7 @@ HRESULT DirectX::CreateShaderResourceViewEx(
 
 
 //-------------------------------------------------------------------------------------
-// Save a texture resource to a DDS file in memory/on disk
+// Save a texture resource
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT DirectX::CaptureTexture(
