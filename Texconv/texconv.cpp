@@ -2334,7 +2334,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         {
                             PROPBAG2 options = {};
                             VARIANT varValues = {};
-                            options.pstrName = L"ImageQuality";
+                            options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
                             varValues.vt = VT_R4;
                             varValues.fltVal = (wicLossless) ? 1.f : wicQuality;
                             (void)props->Write(1, &options, &varValues);
@@ -2347,13 +2347,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         VARIANT varValues = {};
                         if (wicLossless)
                         {
-                            options.pstrName = L"TiffCompressionMethod";
+                            options.pstrName = const_cast<wchar_t*>(L"TiffCompressionMethod");
                             varValues.vt = VT_UI1;
                             varValues.bVal = WICTiffCompressionNone;
                         }
                         else if (wicQuality >= 0.f)
                         {
-                            options.pstrName = L"CompressionQuality";
+                            options.pstrName = const_cast<wchar_t*>(L"CompressionQuality");
                             varValues.vt = VT_R4;
                             varValues.fltVal = wicQuality;
                         }
@@ -2369,13 +2369,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         VARIANT varValues = {};
                         if (wicLossless)
                         {
-                            options.pstrName = L"Lossless";
+                            options.pstrName = const_cast<wchar_t*>(L"Lossless");
                             varValues.vt = VT_BOOL;
                             varValues.bVal = TRUE;
                         }
                         else if (wicQuality >= 0.f)
                         {
-                            options.pstrName = L"ImageQuality";
+                            options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
                             varValues.vt = VT_R4;
                             varValues.fltVal = wicQuality;
                         }

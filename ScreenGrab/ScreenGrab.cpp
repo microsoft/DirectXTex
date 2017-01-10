@@ -211,7 +211,7 @@ namespace
         {
             if (m_handle)
             {
-                FILE_DISPOSITION_INFO info = {0};
+                FILE_DISPOSITION_INFO info = {};
                 info.DeleteFile = TRUE;
                 (void)SetFileInformationByHandle(m_handle, FileDispositionInfo, &info, sizeof(info));
             }
@@ -602,8 +602,8 @@ namespace
     HRESULT CaptureTexture(
         _In_ ID3D11DeviceContext* pContext,
         _In_ ID3D11Resource* pSource,
-        _Inout_ D3D11_TEXTURE2D_DESC& desc,
-        _Inout_ ComPtr<ID3D11Texture2D>& pStaging )
+        D3D11_TEXTURE2D_DESC& desc,
+        ComPtr<ID3D11Texture2D>& pStaging )
     {
         if ( !pContext || !pSource )
             return E_INVALIDARG;
@@ -615,7 +615,7 @@ namespace
             return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
         ComPtr<ID3D11Texture2D> pTexture;
-        HRESULT hr = pSource->QueryInterface( IID_PPV_ARGS( pTexture.GetAddressOf() ) );
+        HRESULT hr = pSource->QueryInterface(IID_PPV_ARGS(pTexture.GetAddressOf()));
         if ( FAILED(hr) )
             return hr;
 
@@ -663,7 +663,7 @@ namespace
             desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
             desc.Usage = D3D11_USAGE_STAGING;
 
-            hr = d3dDevice->CreateTexture2D( &desc, 0, pStaging.GetAddressOf() );
+            hr = d3dDevice->CreateTexture2D(&desc, 0, pStaging.ReleaseAndGetAddressOf());
             if ( FAILED(hr) )
                 return hr;
 
@@ -684,7 +684,7 @@ namespace
             desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
             desc.Usage = D3D11_USAGE_STAGING;
 
-            hr = d3dDevice->CreateTexture2D( &desc, 0, pStaging.GetAddressOf() );
+            hr = d3dDevice->CreateTexture2D(&desc, 0, pStaging.ReleaseAndGetAddressOf());
             if ( FAILED(hr) )
                 return hr;
 
@@ -756,7 +756,7 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
     if ( !fileName )
         return E_INVALIDARG;
 
-    D3D11_TEXTURE2D_DESC desc = { 0 };
+    D3D11_TEXTURE2D_DESC desc = {};
     ComPtr<ID3D11Texture2D> pStaging;
     HRESULT hr = CaptureTexture( pContext, pSource, desc, pStaging );
     if ( FAILED(hr) )
@@ -891,13 +891,13 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
 
     // Write header & pixels
     DWORD bytesWritten;
-    if ( !WriteFile( hFile.get(), fileHeader, static_cast<DWORD>( headerSize ), &bytesWritten, 0 ) )
+    if ( !WriteFile( hFile.get(), fileHeader, static_cast<DWORD>( headerSize ), &bytesWritten, nullptr ) )
         return HRESULT_FROM_WIN32( GetLastError() );
 
     if ( bytesWritten != headerSize )
         return E_FAIL;
 
-    if ( !WriteFile( hFile.get(), pixels.get(), static_cast<DWORD>( slicePitch ), &bytesWritten, 0 ) )
+    if ( !WriteFile( hFile.get(), pixels.get(), static_cast<DWORD>( slicePitch ), &bytesWritten, nullptr ) )
         return HRESULT_FROM_WIN32( GetLastError() );
 
     if ( bytesWritten != slicePitch )
@@ -919,7 +919,7 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     if ( !fileName )
         return E_INVALIDARG;
 
-    D3D11_TEXTURE2D_DESC desc = { 0 };
+    D3D11_TEXTURE2D_DESC desc = {};
     ComPtr<ID3D11Texture2D> pStaging;
     HRESULT hr = CaptureTexture( pContext, pSource, desc, pStaging );
     if ( FAILED(hr) )
@@ -974,7 +974,7 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
     }
 
-    IWICImagingFactory* pWIC = _GetWIC();
+    auto pWIC = _GetWIC();
     if ( !pWIC )
         return E_NOINTERFACE;
 
@@ -1007,8 +1007,8 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     if ( targetFormat && memcmp( &guidContainerFormat, &GUID_ContainerFormatBmp, sizeof(WICPixelFormatGUID) ) == 0 && g_WIC2 )
     {
         // Opt-in to the WIC2 support for writing 32-bit Windows BMP files with an alpha channel
-        PROPBAG2 option = { 0 };
-        option.pstrName = L"EnableV5Header32bppBGRA";
+        PROPBAG2 option = {};
+        option.pstrName = const_cast<wchar_t*>(L"EnableV5Header32bppBGRA");
 
         VARIANT varValue;    
         varValue.vt = VT_BOOL;
@@ -1094,7 +1094,7 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
         PropVariantInit( &value );
 
         value.vt = VT_LPSTR;
-        value.pszVal = "DirectXTK";
+        value.pszVal = const_cast<char*>("DirectXTK");
 
         if ( memcmp( &guidContainerFormat, &GUID_ContainerFormatPng, sizeof(GUID) ) == 0 )
         {

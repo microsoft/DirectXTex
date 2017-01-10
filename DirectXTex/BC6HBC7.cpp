@@ -367,7 +367,7 @@ namespace DirectX
             }
         }
 
-        LDRColorA LDRColorA::operator = (_In_ const HDRColorA& c)
+        LDRColorA operator = (_In_ const HDRColorA& c)
         {
             LDRColorA ret;
             HDRColorA tmp(c);

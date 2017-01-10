@@ -888,7 +888,7 @@ HRESULT DirectX::CreateWICTextureFromFileEx(ID3D11Device* d3dDevice,
     {
         if (texture != 0 || textureView != 0)
         {
-            CHAR strFileA[MAX_PATH];
+            char strFileA[MAX_PATH];
             int result = WideCharToMultiByte(CP_ACP,
                 WC_NO_BEST_FIT_CHARS,
                 fileName,
@@ -900,7 +900,7 @@ HRESULT DirectX::CreateWICTextureFromFileEx(ID3D11Device* d3dDevice,
             );
             if (result > 0)
             {
-                const CHAR* pstrName = strrchr(strFileA, '\\');
+                const char* pstrName = strrchr(strFileA, '\\');
                 if (!pstrName)
                 {
                     pstrName = strFileA;
