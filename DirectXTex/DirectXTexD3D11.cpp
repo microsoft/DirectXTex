@@ -260,6 +260,11 @@ bool DirectX::IsSupportedTexture(
         formatSupport = 0;
     }
 
+    if (metadata.mipLevels > 1 && !(formatSupport & D3D11_FORMAT_SUPPORT_MIP))
+    {
+        return false;
+    }
+
     switch (metadata.dimension)
     {
     case TEX_DIMENSION_TEXTURE1D:
