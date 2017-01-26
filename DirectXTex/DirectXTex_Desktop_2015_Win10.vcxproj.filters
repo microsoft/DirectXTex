@@ -42,6 +42,9 @@
     <CLInclude Include="scoped.h">
       <Filter>Source Files</Filter>
     </CLInclude>
+    <ClInclude Include="d3dx12.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BC.cpp">
@@ -99,6 +102,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DirectXTexHDR.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexD3D12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

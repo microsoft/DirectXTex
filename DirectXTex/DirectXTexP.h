@@ -32,6 +32,17 @@
 #endif
 
 #include <windows.h>
+
+#if defined(_XBOX_ONE) && defined(_TITLE)
+#include <d3d12_x.h>
+#include <d3d11_x.h>
+#elif (_WIN32_WINNT >= _WIN32_WINNT_WIN10)
+#include <d3d12.h>
+#include <d3d11_4.h>
+#else
+#include <d3d11_1.h>
+#endif
+
 #include <directxmath.h>
 #include <directxpackedvector.h>
 #include <assert.h>

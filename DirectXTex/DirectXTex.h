@@ -19,19 +19,22 @@
 
 #include <algorithm>
 #include <functional>
+#include <vector>
 
+#if !defined(__d3d11_h__) && !defined(__d3d11_x_h__) && !defined(__d3d12_h__) && !defined(__d3d12_x_h__)
 #if defined(_XBOX_ONE) && defined(_TITLE)
 #include <d3d11_x.h>
 #define DCOMMON_H_INCLUDED
 #else
 #include <d3d11_1.h>
 #endif
+#endif
 
 #include <directxmath.h>
 
 #include <ocidl.h>
 
-#define DIRECTX_TEX_VERSION 140
+#define DIRECTX_TEX_VERSION 150
 
 struct IWICImagingFactory;
 struct IWICMetadataQueryReader;
@@ -542,11 +545,13 @@ namespace DirectX
                               _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float threshold, _Out_ ScratchImage& cImages );
         // Note that threshold is only used by BC1. TEX_THRESHOLD_DEFAULT is a typical value to use
 
+#if defined(__d3d11_h__) || defined(__d3d11_x_h__)
     HRESULT __cdecl Compress( _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ DWORD compress,
                               _In_ float alphaWeight, _Out_ ScratchImage& image );
     HRESULT __cdecl Compress( _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                               _In_ DXGI_FORMAT format, _In_ DWORD compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages );
         // DirectCompute-based compression (alphaWeight is only used by BC7. 1.0 is the typical value to use)
+#endif
 
     HRESULT __cdecl Decompress( _In_ const Image& cImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image );
     HRESULT __cdecl Decompress( _In_reads_(nimages) const Image* cImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
@@ -657,6 +662,7 @@ namespace DirectX
 
     //---------------------------------------------------------------------------------
     // Direct3D 11 functions
+#if defined(__d3d11_h__) || defined(__d3d11_x_h__)
     bool __cdecl IsSupportedTexture( _In_ ID3D11Device* pDevice, _In_ const TexMetadata& metadata );
 
     HRESULT __cdecl CreateTexture( _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
@@ -674,6 +680,28 @@ namespace DirectX
                                                 _Outptr_ ID3D11ShaderResourceView** ppSRV );
 
     HRESULT __cdecl CaptureTexture( _In_ ID3D11Device* pDevice, _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource* pSource, _Out_ ScratchImage& result );
+#endif
+
+    //---------------------------------------------------------------------------------
+    // Direct3D 12 functions
+#if defined(__d3d12_h__) || defined(__d3d12_x_h__)
+    bool __cdecl IsSupportedTexture( _In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata );
+
+    HRESULT __cdecl CreateTexture( _In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata,
+                                   _Outptr_ ID3D12Resource** ppResource );
+
+    HRESULT __cdecl CreateTextureEx( _In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata,
+                                     _In_ D3D12_RESOURCE_FLAGS resFlags, _In_ bool forceSRGB,
+                                     _Outptr_ ID3D12Resource** ppResource );
+
+    HRESULT __cdecl PrepareUpload( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+                                   std::vector<D3D12_SUBRESOURCE_DATA>& subresources );
+
+    HRESULT __cdecl CaptureTexture( _In_ ID3D12CommandQueue* pCommandQueue, _In_ ID3D12Resource* pSource, _In_ bool isCubeMap,
+                                    _Out_ ScratchImage& result,
+                                    _In_ D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET,
+                                    _In_ D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_RENDER_TARGET );
+#endif
 
 #include "DirectXTex.inl"
 
