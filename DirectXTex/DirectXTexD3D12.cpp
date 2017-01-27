@@ -638,6 +638,9 @@ HRESULT DirectX::CaptureTexture(
                 return hr;
         }
         break;
+
+    default:
+        return E_FAIL;
     }
 
     BYTE* pData;
