@@ -34,6 +34,52 @@ static_assert(TEX_DIMENSION_TEXTURE3D == D3D12_RESOURCE_DIMENSION_TEXTURE3D, "he
 
 namespace
 {
+    template<typename T> void AdjustPlaneResource(
+        _In_ DXGI_FORMAT fmt,
+        _In_ size_t height,
+        _In_ size_t slicePlane,
+        _Inout_ T& res)
+    {
+        switch (static_cast<int>(fmt))
+        {
+        case DXGI_FORMAT_NV12:
+        case DXGI_FORMAT_P010:
+        case DXGI_FORMAT_P016:
+        case XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT:
+        case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
+        case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:
+            if (!slicePlane)
+            {
+                // Plane 0
+                res.SlicePitch = res.RowPitch * height;
+            }
+            else
+            {
+                // Plane 1
+                res.pData = (uint8_t*)(res.pData) + res.RowPitch * height;
+                res.SlicePitch = res.RowPitch * ((height + 1) >> 1);
+            }
+            break;
+
+        case DXGI_FORMAT_NV11:
+            if (!slicePlane)
+            {
+                // Plane 0
+                res.SlicePitch = res.RowPitch * height;
+            }
+            else
+            {
+                // Plane 1
+                res.pData = (uint8_t*)(res.pData) + res.RowPitch * height;
+                res.RowPitch = (res.RowPitch >> 1);
+                res.SlicePitch = res.RowPitch * height;
+            }
+            break;
+        }
+    }
+
+
+    //--------------------------------------------------------------------------------------
     inline void TransitionResource(
         _In_ ID3D12GraphicsCommandList* commandList,
         _In_ ID3D12Resource* resource,
@@ -64,6 +110,7 @@ namespace
         const D3D12_RESOURCE_DESC& desc,
         ComPtr<ID3D12Resource>& pStaging,
         std::unique_ptr<uint8_t[]>& layoutBuff,
+        UINT& numberOfPlanes,
         UINT& numberOfResources,
         D3D12_RESOURCE_STATES beforeState,
         D3D12_RESOURCE_STATES afterState)
@@ -71,16 +118,27 @@ namespace
         if (!pCommandQ || !pSource)
             return E_INVALIDARG;
 
+        numberOfPlanes = D3D12GetFormatPlaneCount(device, desc.Format);
+        if (!numberOfPlanes)
+            return E_INVALIDARG;
+
+        if ((numberOfPlanes > 1) && IsDepthStencil(desc.Format))
+        {
+            // DirectX 12 uses planes for stencil, DirectX 11 does not
+            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        }
+
         D3D12_HEAP_PROPERTIES sourceHeapProperties;
         D3D12_HEAP_FLAGS sourceHeapFlags;
         HRESULT hr = pSource->GetHeapProperties(&sourceHeapProperties, &sourceHeapFlags);
         if (FAILED(hr))
             return hr;
 
-        // TODO - planar?
         numberOfResources = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
                             ? 1 : desc.DepthOrArraySize;
         numberOfResources *= desc.MipLevels;
+        numberOfResources *= numberOfPlanes;
+
         if (numberOfResources > D3D12_REQ_SUBRESOURCES)
             return E_UNEXPECTED;
 
@@ -177,12 +235,15 @@ namespace
             if (!(formatInfo.Support1 & D3D12_FORMAT_SUPPORT1_TEXTURE2D))
                 return E_FAIL;
 
-            for (UINT item = 0; item < desc.DepthOrArraySize; ++item)
+            for (UINT plane = 0; plane < numberOfPlanes; ++plane)
             {
-                for (UINT level = 0; level < desc.MipLevels; ++level)
+                for (UINT item = 0; item < desc.DepthOrArraySize; ++item)
                 {
-                    UINT index = D3D12CalcSubresource(level, item, 0, desc.MipLevels, desc.DepthOrArraySize);
-                    commandList->ResolveSubresource(pTemp.Get(), index, pSource, index, fmt);
+                    for (UINT level = 0; level < desc.MipLevels; ++level)
+                    {
+                        UINT index = D3D12CalcSubresource(level, item, plane, desc.MipLevels, desc.DepthOrArraySize);
+                        commandList->ResolveSubresource(pTemp.Get(), index, pSource, index, fmt);
+                    }
                 }
             }
 
@@ -426,23 +487,35 @@ HRESULT DirectX::CreateTextureEx(
 
 _Use_decl_annotations_
 HRESULT DirectX::PrepareUpload(
+    ID3D12Device* pDevice,
     const Image* srcImages,
     size_t nimages,
     const TexMetadata& metadata,
     std::vector<D3D12_SUBRESOURCE_DATA>& subresources)
 {
-    if (!srcImages || !nimages || !metadata.mipLevels || !metadata.arraySize)
+    if (!pDevice || !srcImages || !nimages || !metadata.mipLevels || !metadata.arraySize)
         return E_INVALIDARG;
+
+    UINT numberOfPlanes = D3D12GetFormatPlaneCount(pDevice, metadata.format);
+    if (!numberOfPlanes)
+        return E_INVALIDARG;
+
+    if ((numberOfPlanes > 1) && IsDepthStencil(metadata.format))
+    {
+        // DirectX 12 uses planes for stencil, DirectX 11 does not
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+    }
 
     size_t numberOfResources = (metadata.dimension == TEX_DIMENSION_TEXTURE3D)
                                ? 1 : metadata.arraySize;
     numberOfResources *= metadata.mipLevels;
+    numberOfResources *= numberOfPlanes;
+
     if (numberOfResources > D3D12_REQ_SUBRESOURCES)
         return E_INVALIDARG;
 
+    subresources.clear();
     subresources.reserve(numberOfResources);
-
-    // TODO - Needs special handling for planar formats (planes treated are independant subresources in DX12)
 
     // Fill out subresource array
     if (metadata.IsVolumemap())
@@ -458,61 +531,13 @@ HRESULT DirectX::PrepareUpload(
             // Direct3D 12 doesn't support arrays of 3D textures
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
 
-        size_t depth = metadata.depth;
-
-        for (size_t level = 0; level < metadata.mipLevels; ++level)
+        for (size_t plane = 0; plane < numberOfPlanes; ++plane)
         {
-            size_t index = metadata.ComputeIndex(level, 0, 0);
-            if (index >= nimages)
-                return E_FAIL;
+            size_t depth = metadata.depth;
 
-            const Image& img = srcImages[index];
-
-            if (img.format != metadata.format)
-                return E_FAIL;
-
-            if (!img.pixels)
-                return E_POINTER;
-
-            // Verify pixels in image 1 .. (depth-1) are exactly image->slicePitch apart
-            // For 3D textures, this relies on all slices of the same miplevel being continous in memory
-            // (this is how ScratchImage lays them out), which is why we just give the 0th slice to Direct3D 11
-            const uint8_t* pSlice = img.pixels + img.slicePitch;
-            for (size_t slice = 1; slice < depth; ++slice)
-            {
-                size_t tindex = metadata.ComputeIndex(level, 0, slice);
-                if (tindex >= nimages)
-                    return E_FAIL;
-
-                const Image& timg = srcImages[tindex];
-
-                if (!timg.pixels)
-                    return E_POINTER;
-
-                if (timg.pixels != pSlice
-                    || timg.format != metadata.format
-                    || timg.rowPitch != img.rowPitch
-                    || timg.slicePitch != img.slicePitch)
-                    return E_FAIL;
-
-                pSlice = timg.pixels + img.slicePitch;
-            }
-
-            D3D12_SUBRESOURCE_DATA sr = { img.pixels, static_cast<LONG_PTR>(img.rowPitch), static_cast<LONG_PTR>(img.slicePitch) };
-            subresources.emplace_back(sr);
-
-            if (depth > 1)
-                depth >>= 1;
-        }
-    }
-    else
-    {
-        //--- 1D or 2D texture case ---------------------------------------------------
-        for (size_t item = 0; item < metadata.arraySize; ++item)
-        {
             for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
-                size_t index = metadata.ComputeIndex(level, item, 0);
+                size_t index = metadata.ComputeIndex(level, 0, 0);
                 if (index >= nimages)
                     return E_FAIL;
 
@@ -524,13 +549,78 @@ HRESULT DirectX::PrepareUpload(
                 if (!img.pixels)
                     return E_POINTER;
 
-                D3D12_SUBRESOURCE_DATA sr =
+                // Verify pixels in image 1 .. (depth-1) are exactly image->slicePitch apart
+                // For 3D textures, this relies on all slices of the same miplevel being continous in memory
+                // (this is how ScratchImage lays them out), which is why we just give the 0th slice to Direct3D 11
+                const uint8_t* pSlice = img.pixels + img.slicePitch;
+                for (size_t slice = 1; slice < depth; ++slice)
+                {
+                    size_t tindex = metadata.ComputeIndex(level, 0, slice);
+                    if (tindex >= nimages)
+                        return E_FAIL;
+
+                    const Image& timg = srcImages[tindex];
+
+                    if (!timg.pixels)
+                        return E_POINTER;
+
+                    if (timg.pixels != pSlice
+                        || timg.format != metadata.format
+                        || timg.rowPitch != img.rowPitch
+                        || timg.slicePitch != img.slicePitch)
+                        return E_FAIL;
+
+                    pSlice = timg.pixels + img.slicePitch;
+                }
+
+                D3D12_SUBRESOURCE_DATA res =
                 {
                     img.pixels,
                     static_cast<LONG_PTR>(img.rowPitch),
                     static_cast<LONG_PTR>(img.slicePitch)
                 };
-                subresources.emplace_back(sr);
+
+                AdjustPlaneResource(metadata.format, img.height, plane, res);
+
+                subresources.emplace_back(res);
+
+                if (depth > 1)
+                    depth >>= 1;
+            }
+        }
+    }
+    else
+    {
+        //--- 1D or 2D texture case ---------------------------------------------------
+        for (size_t plane = 0; plane < numberOfPlanes; ++plane)
+        {
+            for (size_t item = 0; item < metadata.arraySize; ++item)
+            {
+                for (size_t level = 0; level < metadata.mipLevels; ++level)
+                {
+                    size_t index = metadata.ComputeIndex(level, item, 0);
+                    if (index >= nimages)
+                        return E_FAIL;
+
+                    const Image& img = srcImages[index];
+
+                    if (img.format != metadata.format)
+                        return E_FAIL;
+
+                    if (!img.pixels)
+                        return E_POINTER;
+
+                    D3D12_SUBRESOURCE_DATA res =
+                    {
+                        img.pixels,
+                        static_cast<LONG_PTR>(img.rowPitch),
+                        static_cast<LONG_PTR>(img.slicePitch)
+                    };
+
+                    AdjustPlaneResource(metadata.format, img.height, plane, res);
+
+                    subresources.emplace_back(res);
+                }
             }
         }
     }
@@ -561,20 +651,21 @@ HRESULT DirectX::CaptureTexture(
 
     ComPtr<ID3D12Resource> pStaging;
     std::unique_ptr<uint8_t[]> layoutBuff;
-    UINT numberOfResources;
+    UINT numberOfPlanes, numberOfResources;
     HRESULT hr = Capture(device.Get(),
         pCommandQueue,
         pSource,
         desc,
         pStaging,
         layoutBuff,
+        numberOfPlanes,
         numberOfResources,
         beforeState,
         afterState);
     if (FAILED(hr))
         return hr;
 
-    if (!layoutBuff || !numberOfResources)
+    if (!layoutBuff || !numberOfPlanes || !numberOfResources)
         return E_UNEXPECTED;
 
     auto pLayout = reinterpret_cast<const D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(layoutBuff.get());
@@ -663,54 +754,54 @@ HRESULT DirectX::CaptureTexture(
         depth = 1;
     }
 
-    for (UINT item = 0; item < arraySize; ++item)
+    for (UINT plane = 0; plane < numberOfPlanes; ++plane)
     {
-        UINT height = desc.Height;
-
-        for (UINT level = 0; level < desc.MipLevels; ++level)
+        for (UINT item = 0; item < arraySize; ++item)
         {
-            UINT dindex = D3D12CalcSubresource(level, item, 0 /* TODO planes */,
-                desc.MipLevels, arraySize);
-            assert(dindex < numberOfResources);
-
-            const Image* img = result.GetImage(level, item, 0);
-            if (!img)
+            for (UINT level = 0; level < desc.MipLevels; ++level)
             {
-                pStaging->Unmap(0, nullptr);
-                result.Release();
-                return E_FAIL;
+                UINT dindex = D3D12CalcSubresource(level, item, plane, desc.MipLevels, arraySize);
+                assert(dindex < numberOfResources);
+
+                const Image* img = result.GetImage(level, item, 0);
+                if (!img)
+                {
+                    pStaging->Unmap(0, nullptr);
+                    result.Release();
+                    return E_FAIL;
+                }
+
+                if (!img->pixels)
+                {
+                    pStaging->Unmap(0, nullptr);
+                    result.Release();
+                    return E_POINTER;
+                }
+
+                D3D12_MEMCPY_DEST destData = { img->pixels, img->rowPitch, img->slicePitch };
+
+                AdjustPlaneResource(img->format, img->height, plane, destData);
+
+                D3D12_SUBRESOURCE_DATA srcData =
+                {
+                    pData + pLayout[dindex].Offset,
+                    static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch),
+                    static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch * pNumRows[dindex])
+                };
+
+                if (pRowSizesInBytes[dindex] > (SIZE_T)-1)
+                {
+                    pStaging->Unmap(0, nullptr);
+                    result.Release();
+                    return E_FAIL;
+                }
+
+                MemcpySubresource(&destData, &srcData,
+                    (SIZE_T)pRowSizesInBytes[dindex],
+                    pNumRows[dindex],
+                    pLayout[dindex].Footprint.Depth);
             }
-
-            if (!img->pixels)
-            {
-                pStaging->Unmap(0, nullptr);
-                result.Release();
-                return E_POINTER;
-            }
-
-            D3D12_MEMCPY_DEST destData = { img->pixels, img->rowPitch, img->slicePitch };
-            D3D12_SUBRESOURCE_DATA srcData =
-            {
-                pData + pLayout[dindex].Offset,
-                static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch),
-                static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch * pNumRows[dindex])
-            };
-
-            if (pRowSizesInBytes[dindex] > (SIZE_T)-1)
-            {
-                pStaging->Unmap(0, nullptr);
-                result.Release();
-                return E_FAIL;
-            }
-                
-            MemcpySubresource(&destData, &srcData,
-                (SIZE_T)pRowSizesInBytes[dindex],
-                pNumRows[dindex],
-                pLayout[dindex].Footprint.Depth);
         }
-
-        if (height > 1)
-            height >>= 1;
     }
 
     pStaging->Unmap(0, nullptr);

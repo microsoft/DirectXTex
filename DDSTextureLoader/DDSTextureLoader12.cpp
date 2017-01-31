@@ -819,11 +819,84 @@ namespace
 
 
     //--------------------------------------------------------------------------------------
+    inline bool IsDepthStencil(DXGI_FORMAT fmt)
+    {
+        switch (fmt)
+        {
+        case DXGI_FORMAT_R32G8X24_TYPELESS:
+        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+        case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+        case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+        case DXGI_FORMAT_D32_FLOAT:
+        case DXGI_FORMAT_R24G8_TYPELESS:
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:
+        case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+        case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+        case DXGI_FORMAT_D16_UNORM:
+            return true;
+
+        default:
+            return false;
+        }
+    }
+
+
+    //--------------------------------------------------------------------------------------
+    inline void AdjustPlaneResource(
+        _In_ DXGI_FORMAT fmt,
+        _In_ size_t height,
+        _In_ size_t slicePlane,
+        _Inout_ D3D12_SUBRESOURCE_DATA& res)
+    {
+        switch (fmt)
+        {
+        case DXGI_FORMAT_NV12:
+        case DXGI_FORMAT_P010:
+        case DXGI_FORMAT_P016:
+
+#if defined(_XBOX_ONE) && defined(_TITLE)
+        case DXGI_FORMAT_D16_UNORM_S8_UINT:
+        case DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
+        case DXGI_FORMAT_X16_TYPELESS_G8_UINT:
+#endif
+            if (!slicePlane)
+            {
+                // Plane 0
+                res.SlicePitch = res.RowPitch * height;
+            }
+            else
+            {
+                // Plane 1
+                res.pData = reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * height;
+                res.SlicePitch = res.RowPitch * ((height + 1) >> 1);
+            }
+            break;
+
+        case DXGI_FORMAT_NV11:
+            if (!slicePlane)
+            {
+                // Plane 0
+                res.SlicePitch = res.RowPitch * height;
+            }
+            else
+            {
+                // Plane 1
+                res.pData = reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * height;
+                res.RowPitch = (res.RowPitch >> 1);
+                res.SlicePitch = res.RowPitch * height;
+            }
+            break;
+        }
+    }
+
+
+    //--------------------------------------------------------------------------------------
     HRESULT FillInitData(_In_ size_t width,
         _In_ size_t height,
         _In_ size_t depth,
         _In_ size_t mipCount,
         _In_ size_t arraySize,
+        _In_ size_t numberOfPlanes,
         _In_ DXGI_FORMAT format,
         _In_ size_t maxsize,
         _In_ size_t bitSize,
@@ -832,9 +905,9 @@ namespace
         _Out_ size_t& theight,
         _Out_ size_t& tdepth,
         _Out_ size_t& skipMip,
-        _Out_writes_(mipCount*arraySize) D3D12_SUBRESOURCE_DATA* initData)
+        std::vector<D3D12_SUBRESOURCE_DATA>& initData)
     {
-        if (!bitData || !initData)
+        if (!bitData)
         {
             return E_POINTER;
         }
@@ -849,70 +922,78 @@ namespace
         const uint8_t* pSrcBits = bitData;
         const uint8_t* pEndBits = bitData + bitSize;
 
-        size_t index = 0;
-        for (size_t j = 0; j < arraySize; j++)
-        {
-            size_t w = width;
-            size_t h = height;
-            size_t d = depth;
-            for (size_t i = 0; i < mipCount; i++)
-            {
-                GetSurfaceInfo(w,
-                    h,
-                    format,
-                    &NumBytes,
-                    &RowBytes,
-                    nullptr
-                );
+        initData.clear();
 
-                if ((mipCount <= 1) || !maxsize || (w <= maxsize && h <= maxsize && d <= maxsize))
+        for (size_t p = 0; p < numberOfPlanes; ++p)
+        {
+            for (size_t j = 0; j < arraySize; j++)
+            {
+                size_t w = width;
+                size_t h = height;
+                size_t d = depth;
+                for (size_t i = 0; i < mipCount; i++)
                 {
-                    if (!twidth)
+                    GetSurfaceInfo(w,
+                        h,
+                        format,
+                        &NumBytes,
+                        &RowBytes,
+                        nullptr
+                    );
+
+                    if ((mipCount <= 1) || !maxsize || (w <= maxsize && h <= maxsize && d <= maxsize))
                     {
-                        twidth = w;
-                        theight = h;
-                        tdepth = d;
+                        if (!twidth)
+                        {
+                            twidth = w;
+                            theight = h;
+                            tdepth = d;
+                        }
+
+                        D3D12_SUBRESOURCE_DATA res =
+                        {
+                            reinterpret_cast<const void*>(pSrcBits),
+                            static_cast<LONG_PTR>(RowBytes),
+                            static_cast<LONG_PTR>(NumBytes)
+                        };
+
+                        AdjustPlaneResource(format, h, p, res);
+
+                        initData.emplace_back(res);
+                    }
+                    else if (!j)
+                    {
+                        // Count number of skipped mipmaps (first item only)
+                        ++skipMip;
                     }
 
-                    assert(index < mipCount * arraySize);
-                    _Analysis_assume_(index < mipCount * arraySize);
-                    initData[index].pData = reinterpret_cast<const void*>(pSrcBits);
-                    initData[index].RowPitch = RowBytes;
-                    initData[index].SlicePitch = NumBytes;
-                    ++index;
-                }
-                else if (!j)
-                {
-                    // Count number of skipped mipmaps (first item only)
-                    ++skipMip;
-                }
+                    if (pSrcBits + (NumBytes*d) > pEndBits)
+                    {
+                        return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+                    }
 
-                if (pSrcBits + (NumBytes*d) > pEndBits)
-                {
-                    return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
-                }
+                    pSrcBits += NumBytes * d;
 
-                pSrcBits += NumBytes * d;
-
-                w = w >> 1;
-                h = h >> 1;
-                d = d >> 1;
-                if (w == 0)
-                {
-                    w = 1;
-                }
-                if (h == 0)
-                {
-                    h = 1;
-                }
-                if (d == 0)
-                {
-                    d = 1;
+                    w = w >> 1;
+                    h = h >> 1;
+                    d = d >> 1;
+                    if (w == 0)
+                    {
+                        w = 1;
+                    }
+                    if (h == 0)
+                    {
+                        h = 1;
+                    }
+                    if (d == 0)
+                    {
+                        d = 1;
+                    }
                 }
             }
         }
 
-        return (index > 0) ? S_OK : E_FAIL;
+        return initData.empty() ? E_FAIL : S_OK;
     }
 
 
@@ -1150,21 +1231,40 @@ namespace
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
         }
 
+        UINT numberOfPlanes = D3D12GetFormatPlaneCount(d3dDevice, format);
+        if (!numberOfPlanes)
+            return E_INVALIDARG;
+
+        if ((numberOfPlanes > 1) && IsDepthStencil(format))
+        {
+            // DirectX 12 uses planes for stencil, DirectX 11 does not
+            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        }
+
         if (outIsCubeMap != nullptr)
         {
             *outIsCubeMap = isCubeMap;
         }
 
         // Create the texture
-        std::vector<D3D12_SUBRESOURCE_DATA> initData;
-        initData.resize(mipCount * arraySize);
+        size_t numberOfResources = (resDim == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+                                   ? 1 : arraySize;
+        numberOfResources *= mipCount;
+        numberOfResources *= numberOfPlanes;
+
+        if (numberOfResources > D3D12_REQ_SUBRESOURCES)
+            return E_INVALIDARG;
+
+        subresources.reserve(numberOfResources);
 
         size_t skipMip = 0;
         size_t twidth = 0;
         size_t theight = 0;
         size_t tdepth = 0;
-        hr = FillInitData(width, height, depth, mipCount, arraySize, format, maxsize, bitSize, bitData,
-            twidth, theight, tdepth, skipMip, &initData[0]);
+        hr = FillInitData(width, height, depth, mipCount, arraySize,
+            numberOfPlanes, format,
+            maxsize, bitSize, bitData,
+            twidth, theight, tdepth, skipMip, subresources);
 
         if (SUCCEEDED(hr))
         {
@@ -1179,12 +1279,16 @@ namespace
 
             if (FAILED(hr) && !maxsize && (mipCount > 1))
             {
+                subresources.clear();
+
                 maxsize = (resDim == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
                     ? D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
                     : D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 
-                hr = FillInitData(width, height, depth, mipCount, arraySize, format, maxsize, bitSize, bitData,
-                    twidth, theight, tdepth, skipMip, &initData[0]);
+                hr = FillInitData(width, height, depth, mipCount, arraySize,
+                    numberOfPlanes, format,
+                    maxsize, bitSize, bitData,
+                    twidth, theight, tdepth, skipMip, subresources);
                 if (SUCCEEDED(hr))
                 {
                     hr = CreateTextureResource(d3dDevice, resDim, twidth, theight, tdepth, mipCount - skipMip, arraySize,
@@ -1193,9 +1297,9 @@ namespace
             }
         }
 
-        if (SUCCEEDED(hr))
+        if (FAILED(hr))
         {
-            subresources.insert(subresources.end(), initData.begin(), initData.end());
+            subresources.clear();
         }
 
         return hr;

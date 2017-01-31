@@ -694,7 +694,8 @@ namespace DirectX
                                      _In_ D3D12_RESOURCE_FLAGS resFlags, _In_ bool forceSRGB,
                                      _Outptr_ ID3D12Resource** ppResource );
 
-    HRESULT __cdecl PrepareUpload( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+    HRESULT __cdecl PrepareUpload( _In_ ID3D12Device* pDevice,
+                                   _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
                                    std::vector<D3D12_SUBRESOURCE_DATA>& subresources );
 
     HRESULT __cdecl CaptureTexture( _In_ ID3D12CommandQueue* pCommandQueue, _In_ ID3D12Resource* pSource, _In_ bool isCubeMap,

@@ -638,6 +638,10 @@ namespace
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D)
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
 
+        UINT numberOfPlanes = D3D12GetFormatPlaneCount(device, desc.Format);
+        if (numberOfPlanes != 1)
+            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+
         D3D12_HEAP_PROPERTIES sourceHeapProperties;
         D3D12_HEAP_FLAGS sourceHeapFlags;
         HRESULT hr = pSource->GetHeapProperties(&sourceHeapProperties, &sourceHeapFlags);
