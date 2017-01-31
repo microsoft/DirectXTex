@@ -919,13 +919,14 @@ namespace
 
         size_t NumBytes = 0;
         size_t RowBytes = 0;
-        const uint8_t* pSrcBits = bitData;
         const uint8_t* pEndBits = bitData + bitSize;
 
         initData.clear();
 
         for (size_t p = 0; p < numberOfPlanes; ++p)
         {
+            const uint8_t* pSrcBits = bitData;
+
             for (size_t j = 0; j < arraySize; j++)
             {
                 size_t w = width;
