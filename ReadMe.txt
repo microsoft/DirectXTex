@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-December 5, 2016
+January 31, 2017
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -112,6 +112,15 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+January 31, 2017
+    DirectX 12 versions of IsSupported, CreateTexture (PrepareUpload), and CaptureTexture
+    Update to DirectX 11 version of IsSupported
+    WIC format 40bppCMYKAlpha should be converted to RGBA8 rather than RGBA16
+    DDS support for L8A8 with bitcount 8 rather than 16
+    DXGI_FORMAT_R32G8X24_TYPELESS and DXGI_FORMAT_R24G8_TYPELESS should be IsDepthStencil formats
+    Updates to DDSTextureLoader, ScreenGrab, and WICTextureLoader
+    Minor code cleanup
 
 December 5, 2016
     Fixed over-validation in DDS header parsing
