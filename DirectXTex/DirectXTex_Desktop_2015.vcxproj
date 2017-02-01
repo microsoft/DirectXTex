@@ -444,4 +444,9 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
+  <Target Name="ATGEnsureShaders" BeforeTargets="PrepareForBuild">
+    <Exec Condition="!Exists('Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc')"
+        WorkingDirectory="$(ProjectDir)Shaders"
+        Command="CompileShaders" />
+  </Target>
 </Project>
