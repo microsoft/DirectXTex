@@ -3161,7 +3161,7 @@ void DirectX::_ConvertScanline(
                         break;
                     }
 
-                    // fall-through
+                    __fallthrough;
 
                 case TEX_FILTER_RGB_COPY_RED:
                 {
@@ -3445,7 +3445,7 @@ void DirectX::_ConvertScanline(
                     break;
                 }
 
-                // fall-through
+                __fallthrough;
 
             case TEX_FILTER_RGB_COPY_RED:
             {
@@ -3538,7 +3538,7 @@ void DirectX::_ConvertScanline(
                         break;
                     }
 
-                    // fall-through
+                    __fallthrough;
 
                 case TEX_FILTER_RGB_COPY_RED:
                     // Leave data unchanged and the store will handle this...
