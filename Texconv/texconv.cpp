@@ -96,6 +96,7 @@ enum OPTIONS
     OPT_COMPRESS_DITHER,
     OPT_WIC_QUALITY,
     OPT_WIC_LOSSLESS,
+    OPT_WIC_MULTIFRAME,
     OPT_COLORKEY,
     OPT_TONEMAP,
     OPT_X2_BIAS,
@@ -166,6 +167,7 @@ const SValue g_pOptions[] =
     { L"bcdither",      OPT_COMPRESS_DITHER },
     { L"wicq",          OPT_WIC_QUALITY },
     { L"wiclossless",   OPT_WIC_LOSSLESS },
+    { L"wicmulti",      OPT_WIC_MULTIFRAME },
     { L"c",             OPT_COLORKEY },
     { L"tonemap",       OPT_TONEMAP },
     { L"x2bias",        OPT_X2_BIAS },
@@ -687,6 +689,7 @@ namespace
         wprintf(L"   -bcquick            Use quick compression (BC7 only)\n");
         wprintf(L"   -wicq <quality>     When writing images with WIC use quality (0.0 to 1.0)\n");
         wprintf(L"   -wiclossless        When writing images with WIC use lossless mode\n");
+        wprintf(L"   -wicmulti           When writing images with WIC encode multiframe images\n");
         wprintf(
             L"   -aw <weight>        BC7 GPU compressor weighting for alpha error metric\n"
             L"                       (defaults to 1.0)\n");
@@ -888,8 +891,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     DWORD dwNormalMap = 0;
     float nmapAmplitude = 1.f;
     float wicQuality = -1.f;
-    bool wicLossless = false;
-    bool useColorKey = false;
     DWORD colorKey = 0;
 
     wchar_t szPrefix[MAX_PATH];
@@ -1262,10 +1263,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 break;
 
-            case OPT_WIC_LOSSLESS:
-                wicLossless = true;
-                break;
-
             case OPT_COLORKEY:
                 if (swscanf_s(pValue, L"%x", &colorKey) != 1)
                 {
@@ -1275,7 +1272,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
                 colorKey &= 0xFFFFFF;
-                useColorKey = true;
                 break;
 
             case OPT_X2_BIAS:
@@ -1870,7 +1866,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- ColorKey/ChromaKey ------------------------------------------------------
-        if (useColorKey && HasAlpha(info.format))
+        if ((dwOptions & (DWORD64(1) << OPT_COLORKEY))
+            && HasAlpha(info.format))
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -2329,9 +2326,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             default:
             {
                 WICCodecs codec = (FileType == CODEC_HDP || FileType == CODEC_JXR) ? WIC_CODEC_WMP : static_cast<WICCodecs>(FileType);
-                hr = SaveToWICFile(img, nimg, WIC_FLAGS_ALL_FRAMES, GetWICCodec(codec), pConv->szDest, nullptr,
+                size_t nimages = (dwOptions & (DWORD64(1) << OPT_WIC_MULTIFRAME)) ? nimg : 1;
+                hr = SaveToWICFile(img, nimages, WIC_FLAGS_NONE, GetWICCodec(codec), pConv->szDest, nullptr,
                     [&](IPropertyBag2* props)
                 {
+                    bool wicLossless = (dwOptions & (DWORD64(1) << OPT_WIC_LOSSLESS)) != 0;
+
                     switch (FileType)
                     {
                     case WIC_CODEC_JPEG:
