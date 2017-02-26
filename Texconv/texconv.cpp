@@ -4,6 +4,8 @@
 // DirectX Texture Converter
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
+//
+// http://go.microsoft.com/fwlink/?LinkId=248926
 //--------------------------------------------------------------------------------------
 
 #pragma warning(push)
@@ -1715,6 +1717,85 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             cimage.reset();
         }
 
+        // --- Tonemap (if requested) --------------------------------------------------
+        if (dwOptions & DWORD64(1) << OPT_TONEMAP)
+        {
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
+            // Compute max luminosity across all images
+            XMVECTOR maxLum = XMVectorZero();
+            hr = EvaluateImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                [&](const XMVECTOR* pixels, size_t width, size_t y)
+            {
+                UNREFERENCED_PARAMETER(y);
+
+                for (size_t j = 0; j < width; ++j)
+                {
+                    static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
+
+                    XMVECTOR v = *pixels++;
+
+                    v = XMVector3Dot(v, s_luminance);
+
+                    maxLum = XMVectorMax(v, maxLum);
+                }
+            });
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [tonemap maxlum] (%x)\n", hr);
+                return 1;
+            }
+
+            // Reinhard et al, "Photographic Tone Reproduction for Digital Images" 
+            // http://www.cs.utah.edu/~reinhard/cdrom/
+            maxLum = XMVectorMultiply(maxLum, maxLum);
+
+            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+            {
+                UNREFERENCED_PARAMETER(y);
+
+                for (size_t j = 0; j < width; ++j)
+                {
+                    XMVECTOR value = inPixels[j];
+
+                    XMVECTOR scale = XMVectorDivide(
+                        XMVectorAdd(g_XMOne, XMVectorDivide(value, maxLum)),
+                        XMVectorAdd(g_XMOne, value));
+                    XMVECTOR nvalue = XMVectorMultiply(value, scale);
+
+                    value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                    outPixels[j] = value;
+                }
+            }, *timage);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [tonemap apply] (%x)\n", hr);
+                return 1;
+            }
+
+            auto& tinfo = timage->GetMetadata();
+            tinfo;
+
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.format == tinfo.format);
+            assert(info.dimension == tinfo.dimension);
+
+            image.swap(timage);
+            cimage.reset();
+        }
+
         // --- Convert -----------------------------------------------------------------
         if (dwOptions & (DWORD64(1) << OPT_NORMAL_MAP))
         {
@@ -1838,6 +1919,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert(info.arraySize == tinfo.arraySize);
             assert(info.mipLevels == tinfo.mipLevels);
             assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.format == tinfo.format);
             assert(info.dimension == tinfo.dimension);
 
             image.swap(timage);
@@ -1986,84 +2068,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             assert(info.depth == tinfo.depth);
             assert(info.arraySize == tinfo.arraySize);
             assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.dimension == tinfo.dimension);
-
-            image.swap(timage);
-            cimage.reset();
-        }
-
-        // --- Tonemap (if requested) --------------------------------------------------
-        if (dwOptions & DWORD64(1) << OPT_TONEMAP)
-        {
-            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
-            if (!timage)
-            {
-                wprintf(L"\nERROR: Memory allocation failed\n");
-                return 1;
-            }
-
-            // Compute max luminosity across all images
-            XMVECTOR maxLum = XMVectorZero();
-            hr = EvaluateImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [&](const XMVECTOR* pixels, size_t width, size_t y)
-            {
-                UNREFERENCED_PARAMETER(y);
-
-                for (size_t j = 0; j < width; ++j)
-                {
-                    static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
-
-                    XMVECTOR v = *pixels++;
-
-                    v = XMVector3Dot(v, s_luminance);
-
-                    maxLum = XMVectorMax(v, maxLum);
-                }
-            });
-            if (FAILED(hr))
-            {
-                wprintf(L" FAILED [tonemap maxlum] (%x)\n", hr);
-                return 1;
-            }
-
-            // Reinhard et al, "Photographic Tone Reproduction for Digital Images" 
-            // http://www.cs.utah.edu/~reinhard/cdrom/
-            maxLum = XMVectorMultiply(maxLum, maxLum);
-
-            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
-            {
-                UNREFERENCED_PARAMETER(y);
-
-                for (size_t j = 0; j < width; ++j)
-                {
-                    XMVECTOR value = inPixels[j];
-
-                    XMVECTOR scale = XMVectorDivide(
-                        XMVectorAdd(g_XMOne, XMVectorDivide(value, maxLum)),
-                        XMVectorAdd(g_XMOne, value));
-                    XMVECTOR nvalue = XMVectorMultiply(value, scale);
-
-                    value = XMVectorSelect(value, nvalue, g_XMSelect1110);
-
-                    outPixels[j] = value;
-                }
-            }, *timage);
-            if (FAILED(hr))
-            {
-                wprintf(L" FAILED [tonemap apply] (%x)\n", hr);
-                return 1;
-            }
-
-            auto& tinfo = timage->GetMetadata();
-            tinfo;
-
-            assert(info.width == tinfo.width);
-            assert(info.height == tinfo.height);
-            assert(info.depth == tinfo.depth);
-            assert(info.arraySize == tinfo.arraySize);
-            assert(info.mipLevels == tinfo.mipLevels);
-            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.format == tinfo.format);
             assert(info.dimension == tinfo.dimension);
 
             image.swap(timage);

@@ -4,6 +4,8 @@
 // DirectX Texture diagnostic tool
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
+//
+// http://go.microsoft.com/fwlink/?LinkId=248926
 //--------------------------------------------------------------------------------------
 
 #pragma warning(push)
