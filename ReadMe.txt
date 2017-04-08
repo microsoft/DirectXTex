@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-January 31, 2017
+April 7, 2017
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -112,6 +112,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+April 7, 2017
+    VS 2017 updated for Windows Creators Update SDK (15063)
+    texassemble: -tonemap switch
+    texconv: -wicmulti switch
 
 January 31, 2017
     DirectX 12 versions of IsSupported, CreateTexture (PrepareUpload), and CaptureTexture
