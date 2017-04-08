@@ -36,7 +36,11 @@
 
     #include <wrl\client.h>
     #include <wrl\wrappers\corewrappers.h>
+
+#pragma warning(push)
+#pragma warning(disable : 4471)
     #include <windows.storage.streams.h>
+#pragma warning(pop)
 
     static inline HRESULT CreateMemoryStream( _Outptr_ IStream** stream )
     {

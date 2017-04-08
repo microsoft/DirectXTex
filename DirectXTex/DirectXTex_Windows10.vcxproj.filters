@@ -1,6 +1,40 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{f4d68f4f-adbe-40a1-b052-f2e4cae3b5ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{b42472b0-7a63-47b0-b77f-4ffe492471a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shaders">
+      <UniqueIdentifier>{1838e3e6-1f80-4713-9a98-41ea7e654d12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shaders\Compiled">
+      <UniqueIdentifier>{7c13ba68-1ec8-4710-a8dd-cd973621b725}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shaders\Symbols">
+      <UniqueIdentifier>{fbc9373c-d511-4fd1-a7b8-d55df1b27d2e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{f4d68f4f-adbe-40a1-b052-f2e4cae3b5ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{b42472b0-7a63-47b0-b77f-4ffe492471a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shaders">
+      <UniqueIdentifier>{1838e3e6-1f80-4713-9a98-41ea7e654d12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shaders\Compiled">
+      <UniqueIdentifier>{7c13ba68-1ec8-4710-a8dd-cd973621b725}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shaders\Symbols">
+      <UniqueIdentifier>{fbc9373c-d511-4fd1-a7b8-d55df1b27d2e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="BC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -90,23 +124,6 @@
     <ClInclude Include="d3dx12.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{f4d68f4f-adbe-40a1-b052-f2e4cae3b5ae}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{b42472b0-7a63-47b0-b77f-4ffe492471a0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Shaders">
-      <UniqueIdentifier>{1838e3e6-1f80-4713-9a98-41ea7e654d12}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Shaders\Compiled">
-      <UniqueIdentifier>{7c13ba68-1ec8-4710-a8dd-cd973621b725}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Shaders\Symbols">
-      <UniqueIdentifier>{fbc9373c-d511-4fd1-a7b8-d55df1b27d2e}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="DirectXTex.inl">
