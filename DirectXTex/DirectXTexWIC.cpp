@@ -412,7 +412,7 @@ namespace
                 return E_UNEXPECTED;
             }
 
-            hr = FC->Initialize(frame, convertGUID, _GetWICDither(flags), 0, 0, WICBitmapPaletteTypeCustom);
+            hr = FC->Initialize(frame, convertGUID, _GetWICDither(flags), nullptr, 0, WICBitmapPaletteTypeMedianCut);
             if (FAILED(hr))
                 return hr;
 
@@ -494,7 +494,7 @@ namespace
                         return E_UNEXPECTED;
                     }
 
-                    hr = FC->Initialize(frame.Get(), sourceGUID, _GetWICDither(flags), 0, 0, WICBitmapPaletteTypeCustom);
+                    hr = FC->Initialize(frame.Get(), sourceGUID, _GetWICDither(flags), nullptr, 0, WICBitmapPaletteTypeMedianCut);
                     if (FAILED(hr))
                         return hr;
 
@@ -542,7 +542,7 @@ namespace
                         return E_UNEXPECTED;
                     }
 
-                    hr = FC->Initialize(scaler.Get(), sourceGUID, _GetWICDither(flags), 0, 0, WICBitmapPaletteTypeCustom);
+                    hr = FC->Initialize(scaler.Get(), sourceGUID, _GetWICDither(flags), nullptr, 0, WICBitmapPaletteTypeMedianCut);
                     if (FAILED(hr))
                         return hr;
 
@@ -724,7 +724,7 @@ namespace
                 return E_UNEXPECTED;
             }
 
-            hr = FC->Initialize(source.Get(), targetGuid, _GetWICDither(flags), 0, 0, WICBitmapPaletteTypeCustom);
+            hr = FC->Initialize(source.Get(), targetGuid, _GetWICDither(flags), nullptr, 0, WICBitmapPaletteTypeMedianCut);
             if (FAILED(hr))
                 return hr;
 

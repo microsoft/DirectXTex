@@ -1157,7 +1157,7 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
             return E_UNEXPECTED;
         }
 
-        hr = FC->Initialize( source.Get(), targetGuid, WICBitmapDitherTypeNone, 0, 0, WICBitmapPaletteTypeCustom );
+        hr = FC->Initialize( source.Get(), targetGuid, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut );
         if ( FAILED(hr) )
         {
             pContext->Unmap( pStaging.Get(), 0 );

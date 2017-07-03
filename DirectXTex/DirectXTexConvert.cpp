@@ -4417,7 +4417,7 @@ namespace
         if (FAILED(hr))
             return hr;
 
-        hr = FC->Initialize(source.Get(), targetGUID, _GetWICDither(filter), 0, threshold * 100.f, WICBitmapPaletteTypeCustom);
+        hr = FC->Initialize(source.Get(), targetGUID, _GetWICDither(filter), nullptr, threshold * 100.f, WICBitmapPaletteTypeMedianCut);
         if (FAILED(hr))
             return hr;
 

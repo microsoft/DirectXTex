@@ -108,7 +108,7 @@ namespace
 
                 if (SUCCEEDED(hr))
                 {
-                    hr = converter->Initialize(src, desiredPixelFormat, _GetWICDither(filter), 0, 0, WICBitmapPaletteTypeCustom);
+                    hr = converter->Initialize(src, desiredPixelFormat, _GetWICDither(filter), nullptr, 0, WICBitmapPaletteTypeMedianCut);
                 }
 
                 if (SUCCEEDED(hr))
@@ -571,7 +571,7 @@ namespace
                         return E_UNEXPECTED;
                     }
 
-                    hr = FC->Initialize(scaler.Get(), pfGUID, _GetWICDither(filter), 0, 0, WICBitmapPaletteTypeCustom);
+                    hr = FC->Initialize(scaler.Get(), pfGUID, _GetWICDither(filter), nullptr, 0, WICBitmapPaletteTypeMedianCut);
                     if (FAILED(hr))
                         return hr;
 
