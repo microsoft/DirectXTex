@@ -486,7 +486,8 @@ namespace
                     {
                         if (spanPtr[(runLen - 1) * 4] != spanPtr[runLen * 4])
                         {
-                            scan[runLen++] = spanPtr[runLen * 4];
+                            scan[runLen] = spanPtr[runLen * 4];
+                            runLen++;
                         }
                         else
                             break;

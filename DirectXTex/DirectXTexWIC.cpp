@@ -234,6 +234,10 @@ namespace
                 if (pConvert)
                     memcpy(pConvert, &GUID_WICPixelFormat8bppGray, sizeof(WICPixelFormatGUID));
             }
+            break;
+
+        default:
+            break;
         }
 
         return format;
@@ -1153,7 +1157,7 @@ HRESULT DirectX::SaveToWICMemory(
     if (FAILED(hr))
         return hr;
 
-    LARGE_INTEGER li = { 0 };
+    LARGE_INTEGER li = { { 0 } };
     hr = stream->Seek(li, STREAM_SEEK_SET, 0);
     if (FAILED(hr))
         return hr;
@@ -1210,7 +1214,7 @@ HRESULT DirectX::SaveToWICMemory(
     if (FAILED(hr))
         return hr;
 
-    LARGE_INTEGER li = { 0 };
+    LARGE_INTEGER li = { { 0 } };
     hr = stream->Seek(li, STREAM_SEEK_SET, 0);
     if (FAILED(hr))
         return hr;

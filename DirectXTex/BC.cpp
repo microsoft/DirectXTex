@@ -329,7 +329,7 @@ namespace
         assert(pColor && pBC);
         static_assert(sizeof(D3DX_BC1) == 8, "D3DX_BC1 should be 8 bytes");
 
-        static XMVECTORF32 s_Scale = { 1.f / 31.f, 1.f / 63.f, 1.f / 31.f, 1.f };
+        static XMVECTORF32 s_Scale = { { { 1.f / 31.f, 1.f / 63.f, 1.f / 31.f, 1.f } } };
 
         XMVECTOR clr0 = XMLoadU565(reinterpret_cast<const XMU565*>(&pBC->rgb[0]));
         XMVECTOR clr1 = XMLoadU565(reinterpret_cast<const XMU565*>(&pBC->rgb[1]));

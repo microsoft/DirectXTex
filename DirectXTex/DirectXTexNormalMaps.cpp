@@ -25,7 +25,7 @@ namespace
     {
         XMFLOAT4A f;
 
-        static XMVECTORF32 lScale = { 0.2125f, 0.7154f, 0.0721f, 1.f };
+        static XMVECTORF32 lScale = { { { 0.2125f, 0.7154f, 0.0721f, 1.f } } };
 
         static_assert(CNMAP_CHANNEL_RED == 0x1, "CNMAP_CHANNEL_ flag values don't match mask");
         switch (flags & 0xf)

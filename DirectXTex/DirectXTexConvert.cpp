@@ -192,10 +192,10 @@ namespace
     }
 #endif
 
-    const XMVECTORF32 g_Grayscale = { 0.2125f, 0.7154f, 0.0721f, 0.0f };
-    const XMVECTORF32 g_HalfMin = { -65504.f, -65504.f, -65504.f, -65504.f };
-    const XMVECTORF32 g_HalfMax = { 65504.f, 65504.f, 65504.f, 65504.f };
-    const XMVECTORF32 g_8BitBias = { 0.5f / 255.f, 0.5f / 255.f, 0.5f / 255.f, 0.5f / 255.f };
+    const XMVECTORF32 g_Grayscale = { { { 0.2125f, 0.7154f, 0.0721f, 0.0f } } };
+    const XMVECTORF32 g_HalfMin   = { { { -65504.f, -65504.f, -65504.f, -65504.f } } };
+    const XMVECTORF32 g_HalfMax   = { { { 65504.f, 65504.f, 65504.f, 65504.f } } };
+    const XMVECTORF32 g_8BitBias  = { { { 0.5f / 255.f, 0.5f / 255.f, 0.5f / 255.f, 0.5f / 255.f } } };
 }
 
 //-------------------------------------------------------------------------------------
@@ -707,9 +707,10 @@ bool DirectX::_ExpandScanline(
             return true;
         }
         return false;
-    }
 
-    return false;
+    default:
+        return false;
+    }
 }
 
 
@@ -1209,7 +1210,7 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
     case DXGI_FORMAT_B5G6R5_UNORM:
         if (size >= sizeof(XMU565))
         {
-            static const XMVECTORF32 s_Scale = { 1.f / 31.f, 1.f / 63.f, 1.f / 31.f, 1.f };
+            static const XMVECTORF32 s_Scale = { { { 1.f / 31.f, 1.f / 63.f, 1.f / 31.f, 1.f } } };
             const XMU565 * __restrict sPtr = reinterpret_cast<const XMU565*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(XMU565) + 1); icount += sizeof(XMU565))
             {
@@ -1226,7 +1227,7 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
     case DXGI_FORMAT_B5G5R5A1_UNORM:
         if (size >= sizeof(XMU555))
         {
-            static const XMVECTORF32 s_Scale = { 1.f / 31.f, 1.f / 31.f, 1.f / 31.f, 1.f };
+            static const XMVECTORF32 s_Scale = { { { 1.f / 31.f, 1.f / 31.f, 1.f / 31.f, 1.f } } };
             const XMU555 * __restrict sPtr = reinterpret_cast<const XMU555*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(XMU555) + 1); icount += sizeof(XMU555))
             {
@@ -1493,7 +1494,7 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         if (size >= sizeof(XMUNIBBLE4))
         {
-            static const XMVECTORF32 s_Scale = { 1.f / 15.f, 1.f / 15.f, 1.f / 15.f, 1.f / 15.f };
+            static const XMVECTORF32 s_Scale = { { { 1.f / 15.f, 1.f / 15.f, 1.f / 15.f, 1.f / 15.f } } };
             const XMUNIBBLE4 * __restrict sPtr = reinterpret_cast<const XMUNIBBLE4*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(XMUNIBBLE4) + 1); icount += sizeof(XMUNIBBLE4))
             {
@@ -1515,12 +1516,12 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             {
                 if (dPtr >= ePtr) break;
 
-                XMVECTORF32 vResult = {
+                XMVECTORF32 vResult = { { {
                     FloatFrom7e3(sPtr->x),
                     FloatFrom7e3(sPtr->y),
                     FloatFrom7e3(sPtr->z),
                     (float)(sPtr->v >> 30) / 3.0f
-                };
+                } } };
 
                 ++sPtr;
 
@@ -1539,12 +1540,12 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             {
                 if (dPtr >= ePtr) break;
 
-                XMVECTORF32 vResult = {
+                XMVECTORF32 vResult = { { {
                     FloatFrom6e4(sPtr->x),
                     FloatFrom6e4(sPtr->y),
                     FloatFrom6e4(sPtr->z),
                     (float)(sPtr->v >> 30) / 3.0f
-                };
+                } } };
 
                 ++sPtr;
 
@@ -1562,7 +1563,7 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
         // Xbox One specific format
         if (size >= sizeof(uint8_t))
         {
-            static const XMVECTORF32 s_Scale = { 1.f / 15.f, 1.f / 15.f, 0.f, 0.f };
+            static const XMVECTORF32 s_Scale = { { { 1.f / 15.f, 1.f / 15.f, 0.f, 0.f } } };
             const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(uint8_t) + 1); icount += sizeof(uint8_t))
             {
@@ -1810,7 +1811,7 @@ bool DirectX::_StoreScanline(
     case DXGI_FORMAT_D24_UNORM_S8_UINT:
         if (size >= sizeof(uint32_t))
         {
-            static const XMVECTORF32 clamp = { 1.f, 255.f, 0.f, 0.f };
+            static const XMVECTORF32 clamp = { { { 1.f, 255.f, 0.f, 0.f } } };
             XMVECTOR zero = XMVectorZero();
             uint32_t *dPtr = reinterpret_cast<uint32_t*>(pDestination);
             for (size_t icount = 0; icount < (size - sizeof(uint32_t) + 1); icount += sizeof(uint32_t))
@@ -2035,7 +2036,7 @@ bool DirectX::_StoreScanline(
     case DXGI_FORMAT_G8R8_G8B8_UNORM:
         if (size >= sizeof(XMUBYTEN4))
         {
-            static XMVECTORU32 select1101 = { XM_SELECT_1, XM_SELECT_1, XM_SELECT_0, XM_SELECT_1 };
+            static XMVECTORU32 select1101 = { { { XM_SELECT_1, XM_SELECT_1, XM_SELECT_0, XM_SELECT_1 } } };
 
             XMUBYTEN4 * __restrict dPtr = reinterpret_cast<XMUBYTEN4*>(pDestination);
             for (size_t icount = 0; icount < (size - sizeof(XMUBYTEN4) + 1); icount += sizeof(XMUBYTEN4))
@@ -2054,7 +2055,7 @@ bool DirectX::_StoreScanline(
     case DXGI_FORMAT_B5G6R5_UNORM:
         if (size >= sizeof(XMU565))
         {
-            static const XMVECTORF32 s_Scale = { 31.f, 63.f, 31.f, 1.f };
+            static const XMVECTORF32 s_Scale = { { { 31.f, 63.f, 31.f, 1.f } } };
             XMU565 * __restrict dPtr = reinterpret_cast<XMU565*>(pDestination);
             for (size_t icount = 0; icount < (size - sizeof(XMU565) + 1); icount += sizeof(XMU565))
             {
@@ -2070,7 +2071,7 @@ bool DirectX::_StoreScanline(
     case DXGI_FORMAT_B5G5R5A1_UNORM:
         if (size >= sizeof(XMU555))
         {
-            static const XMVECTORF32 s_Scale = { 31.f, 31.f, 31.f, 1.f };
+            static const XMVECTORF32 s_Scale = { { { 31.f, 31.f, 31.f, 1.f } } };
             XMU555 * __restrict dPtr = reinterpret_cast<XMU555*>(pDestination);
             for (size_t icount = 0; icount < (size - sizeof(XMU555) + 1); icount += sizeof(XMU555))
             {
@@ -2358,7 +2359,7 @@ bool DirectX::_StoreScanline(
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         if (size >= sizeof(XMUNIBBLE4))
         {
-            static const XMVECTORF32 s_Scale = { 15.f, 15.f, 15.f, 15.f };
+            static const XMVECTORF32 s_Scale = { { { 15.f, 15.f, 15.f, 15.f } } };
             XMUNIBBLE4 * __restrict dPtr = reinterpret_cast<XMUNIBBLE4*>(pDestination);
             for (size_t icount = 0; icount < (size - sizeof(XMUNIBBLE4) + 1); icount += sizeof(XMUNIBBLE4))
             {
@@ -2375,8 +2376,8 @@ bool DirectX::_StoreScanline(
         // Xbox One specific 7e3 format with alpha
         if (size >= sizeof(XMUDECN4))
         {
-            static const XMVECTORF32  Scale = { 1.0f, 1.0f, 1.0f, 3.0f };
-            static const XMVECTORF32  C = { 31.875f, 31.875f, 31.875f, 3.f };
+            static const XMVECTORF32  Scale = { { { 1.0f, 1.0f, 1.0f, 3.0f } } };
+            static const XMVECTORF32  C = { { { 31.875f, 31.875f, 31.875f, 3.f } } };
 
             XMUDECN4 * __restrict dPtr = reinterpret_cast<XMUDECN4*>(pDestination);
             for (size_t icount = 0; icount < (size - sizeof(XMUDECN4) + 1); icount += sizeof(XMUDECN4))
@@ -2403,8 +2404,8 @@ bool DirectX::_StoreScanline(
         // Xbox One specific 6e4 format with alpha
         if (size >= sizeof(XMUDECN4))
         {
-            static const XMVECTORF32  Scale = { 1.0f, 1.0f, 1.0f, 3.0f };
-            static const XMVECTORF32  C = { 508.f, 508.f, 508.f, 3.f };
+            static const XMVECTORF32  Scale = { { { 1.0f, 1.0f, 1.0f, 3.0f } } };
+            static const XMVECTORF32  C = { { { 508.f, 508.f, 508.f, 3.f } } };
 
             XMUDECN4 * __restrict dPtr = reinterpret_cast<XMUDECN4*>(pDestination);
             for (size_t icount = 0; icount < (size - sizeof(XMUDECN4) + 1); icount += sizeof(XMUDECN4))
@@ -2435,7 +2436,7 @@ bool DirectX::_StoreScanline(
         // Xbox One specific format
         if (size >= sizeof(uint8_t))
         {
-            static const XMVECTORF32 s_Scale = { 15.f, 15.f, 0.f, 0.f };
+            static const XMVECTORF32 s_Scale = { { { 15.f, 15.f, 0.f, 0.f } } };
             uint8_t * __restrict dPtr = reinterpret_cast<uint8_t*>(pDestination);
             for (size_t icount = 0; icount < (size - sizeof(uint8_t) + 1); icount += sizeof(uint8_t))
             {
@@ -2974,6 +2975,9 @@ void DirectX::_ConvertScanline(
     case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
         flags &= ~TEX_FILTER_SRGB_IN;
         break;
+
+    default:
+        break;
     }
 
     switch (outFormat)
@@ -2991,6 +2995,9 @@ void DirectX::_ConvertScanline(
     case DXGI_FORMAT_A8_UNORM:
     case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
         flags &= ~TEX_FILTER_SRGB_OUT;
+        break;
+
+    default:
         break;
     }
 
@@ -3025,7 +3032,7 @@ void DirectX::_ConvertScanline(
                 if (in->flags & CONVF_STENCIL)
                 {
                     // Stencil -> Alpha
-                    static const XMVECTORF32 S = { 1.f, 1.f, 1.f, 255.f };
+                    static const XMVECTORF32 S = { { { 1.f, 1.f, 1.f, 255.f } } };
 
                     if (out->flags & CONVF_UNORM)
                     {
@@ -3206,8 +3213,8 @@ void DirectX::_ConvertScanline(
                 if (out->flags & CONVF_STENCIL)
                 {
                     // Alpha -> Stencil (green channel)
-                    static const XMVECTORU32 select0100 = { XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_0 };
-                    static const XMVECTORF32 S = { 255.f, 255.f, 255.f, 255.f };
+                    static const XMVECTORU32 select0100 = { { { XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_0 } } };
+                    static const XMVECTORF32 S = { { { 255.f, 255.f, 255.f, 255.f } } };
 
                     if (in->flags & CONVF_UNORM)
                     {
@@ -3613,20 +3620,20 @@ namespace
         -0.468750f,  0.031250f, -0.343750f, 0.156250f, -0.468750f, 0.031250f, -0.343750f, 0.156250f,
     };
 
-    const XMVECTORF32 g_Scale16pc = { 65535.f, 65535.f, 65535.f, 65535.f };
-    const XMVECTORF32 g_Scale15pc = { 32767.f, 32767.f, 32767.f, 32767.f };
-    const XMVECTORF32 g_Scale10pc = { 1023.f,  1023.f,  1023.f,     3.f };
-    const XMVECTORF32 g_Scale9pc = { 511.f,   511.f,   511.f,     3.f };
-    const XMVECTORF32 g_Scale8pc = { 255.f,   255.f,   255.f,   255.f };
-    const XMVECTORF32 g_Scale7pc = { 127.f,   127.f,   127.f,   127.f };
-    const XMVECTORF32 g_Scale565pc = { 31.f,    63.f,    31.f,     1.f };
-    const XMVECTORF32 g_Scale5551pc = { 31.f,    31.f,    31.f,     1.f };
-    const XMVECTORF32 g_Scale4pc = { 15.f,    15.f,    15.f,    15.f };
+    const XMVECTORF32 g_Scale16pc   = { { { 65535.f, 65535.f, 65535.f, 65535.f } } };
+    const XMVECTORF32 g_Scale15pc   = { { { 32767.f, 32767.f, 32767.f, 32767.f } } };
+    const XMVECTORF32 g_Scale10pc   = { { {  1023.f,  1023.f,  1023.f,     3.f } } };
+    const XMVECTORF32 g_Scale9pc    = { { {   511.f,   511.f,   511.f,     3.f } } };
+    const XMVECTORF32 g_Scale8pc    = { { {   255.f,   255.f,   255.f,   255.f } } };
+    const XMVECTORF32 g_Scale7pc    = { { {   127.f,   127.f,   127.f,   127.f } } };
+    const XMVECTORF32 g_Scale565pc  = { { {    31.f,    63.f,    31.f,     1.f } } };
+    const XMVECTORF32 g_Scale5551pc = { { {    31.f,    31.f,    31.f,     1.f } } };
+    const XMVECTORF32 g_Scale4pc    = { { {    15.f,    15.f,    15.f,    15.f } } };
 
-    const XMVECTORF32 g_ErrorWeight3 = { 3.f / 16.f, 3.f / 16.f, 3.f / 16.f, 3.f / 16.f };
-    const XMVECTORF32 g_ErrorWeight5 = { 5.f / 16.f, 5.f / 16.f, 5.f / 16.f, 5.f / 16.f };
-    const XMVECTORF32 g_ErrorWeight1 = { 1.f / 16.f, 1.f / 16.f, 1.f / 16.f, 1.f / 16.f };
-    const XMVECTORF32 g_ErrorWeight7 = { 7.f / 16.f, 7.f / 16.f, 7.f / 16.f, 7.f / 16.f };
+    const XMVECTORF32 g_ErrorWeight3 = { { { 3.f / 16.f, 3.f / 16.f, 3.f / 16.f, 3.f / 16.f } } };
+    const XMVECTORF32 g_ErrorWeight5 = { { { 5.f / 16.f, 5.f / 16.f, 5.f / 16.f, 5.f / 16.f } } };
+    const XMVECTORF32 g_ErrorWeight1 = { { { 1.f / 16.f, 1.f / 16.f, 1.f / 16.f, 1.f / 16.f } } };
+    const XMVECTORF32 g_ErrorWeight7 = { { { 7.f / 16.f, 7.f / 16.f, 7.f / 16.f, 7.f / 16.f } } };
 
 #define STORE_SCANLINE( type, scalev, clampzero, norm, itype, mask, row, bgr ) \
         if ( size >= sizeof(type) ) \
@@ -3868,10 +3875,10 @@ bool DirectX::_StoreScanlineDither(
     case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
         if (size >= sizeof(XMUDEC4))
         {
-            static const XMVECTORF32  Scale = { 510.0f, 510.0f, 510.0f, 3.0f };
-            static const XMVECTORF32  Bias = { 384.0f, 384.0f, 384.0f, 0.0f };
-            static const XMVECTORF32  MinXR = { -0.7529f, -0.7529f, -0.7529f, 0.f };
-            static const XMVECTORF32  MaxXR = { 1.2529f, 1.2529f, 1.2529f, 1.0f };
+            static const XMVECTORF32  Scale = { { { 510.0f, 510.0f, 510.0f, 3.0f } } };
+            static const XMVECTORF32  Bias  = { { { 384.0f, 384.0f, 384.0f, 0.0f } } };
+            static const XMVECTORF32  MinXR = { { { -0.7529f, -0.7529f, -0.7529f, 0.f } } };
+            static const XMVECTORF32  MaxXR = { { { 1.2529f, 1.2529f, 1.2529f, 1.0f } } };
 
             XMUDEC4 * __restrict dest = reinterpret_cast<XMUDEC4*>(pDestination);
             for (size_t i = 0; i < count; ++i)
@@ -3947,9 +3954,9 @@ bool DirectX::_StoreScanlineDither(
     case DXGI_FORMAT_D24_UNORM_S8_UINT:
         if (size >= sizeof(uint32_t))
         {
-            static const XMVECTORF32 Clamp = { 1.f,  255.f, 0.f, 0.f };
-            static const XMVECTORF32 Scale = { 16777215.f,   1.f, 0.f, 0.f };
-            static const XMVECTORF32 Scale2 = { 16777215.f, 255.f, 0.f, 0.f };
+            static const XMVECTORF32 Clamp  = { { { 1.f,  255.f, 0.f, 0.f } } };
+            static const XMVECTORF32 Scale  = { { { 16777215.f,   1.f, 0.f, 0.f } } };
+            static const XMVECTORF32 Scale2 = { { { 16777215.f, 255.f, 0.f, 0.f } } };
 
             uint32_t * __restrict dest = reinterpret_cast<uint32_t*>(pDestination);
             for (size_t i = 0; i < count; ++i)

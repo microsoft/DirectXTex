@@ -28,9 +28,9 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
-static_assert(TEX_DIMENSION_TEXTURE1D == D3D12_RESOURCE_DIMENSION_TEXTURE1D, "header enum mismatch");
-static_assert(TEX_DIMENSION_TEXTURE2D == D3D12_RESOURCE_DIMENSION_TEXTURE2D, "header enum mismatch");
-static_assert(TEX_DIMENSION_TEXTURE3D == D3D12_RESOURCE_DIMENSION_TEXTURE3D, "header enum mismatch");
+static_assert(static_cast<int>(TEX_DIMENSION_TEXTURE1D) == static_cast<int>(D3D12_RESOURCE_DIMENSION_TEXTURE1D), "header enum mismatch");
+static_assert(static_cast<int>(TEX_DIMENSION_TEXTURE2D) == static_cast<int>(D3D12_RESOURCE_DIMENSION_TEXTURE2D), "header enum mismatch");
+static_assert(static_cast<int>(TEX_DIMENSION_TEXTURE3D) == static_cast<int>(D3D12_RESOURCE_DIMENSION_TEXTURE3D), "header enum mismatch");
 
 namespace
 {

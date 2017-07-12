@@ -26,9 +26,9 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
-static_assert(TEX_DIMENSION_TEXTURE1D == D3D11_RESOURCE_DIMENSION_TEXTURE1D, "header enum mismatch");
-static_assert(TEX_DIMENSION_TEXTURE2D == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "header enum mismatch");
-static_assert(TEX_DIMENSION_TEXTURE3D == D3D11_RESOURCE_DIMENSION_TEXTURE3D, "header enum mismatch");
+static_assert(static_cast<int>(TEX_DIMENSION_TEXTURE1D) == static_cast<int>(D3D11_RESOURCE_DIMENSION_TEXTURE1D), "header enum mismatch");
+static_assert(static_cast<int>(TEX_DIMENSION_TEXTURE2D) == static_cast<int>(D3D11_RESOURCE_DIMENSION_TEXTURE2D), "header enum mismatch");
+static_assert(static_cast<int>(TEX_DIMENSION_TEXTURE3D) == static_cast<int>(D3D11_RESOURCE_DIMENSION_TEXTURE3D), "header enum mismatch");
 
 namespace
 {
@@ -239,6 +239,9 @@ bool DirectX::IsSupportedTexture(
     case DXGI_FORMAT_BC7_UNORM_SRGB:
         if (fl < D3D_FEATURE_LEVEL_11_0)
             return false;
+        break;
+
+    default:
         break;
     }
 

@@ -1040,7 +1040,7 @@ HRESULT DirectX::LoadFromTGAFile(
     if (offset > sizeof(TGA_HEADER))
     {
         // Skip past the id string
-        LARGE_INTEGER filePos = { static_cast<DWORD>(offset), 0 };
+        LARGE_INTEGER filePos = { { static_cast<DWORD>(offset), 0 } };
         if (!SetFilePointerEx(hFile.get(), filePos, 0, FILE_BEGIN))
         {
             return HRESULT_FROM_WIN32(GetLastError());
@@ -1184,6 +1184,9 @@ HRESULT DirectX::LoadFromTGAFile(
             }
         }
         break;
+
+        default:
+            break;
         }
     }
     else // RLE || EXPAND || INVERTX || !INVERTY

@@ -157,12 +157,12 @@ HRESULT DirectX::FlipRotate(
         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
-    static_assert(TEX_FR_ROTATE0 == WICBitmapTransformRotate0, "TEX_FR_ROTATE0 no longer matches WIC");
-    static_assert(TEX_FR_ROTATE90 == WICBitmapTransformRotate90, "TEX_FR_ROTATE90 no longer matches WIC");
-    static_assert(TEX_FR_ROTATE180 == WICBitmapTransformRotate180, "TEX_FR_ROTATE180 no longer matches WIC");
-    static_assert(TEX_FR_ROTATE270 == WICBitmapTransformRotate270, "TEX_FR_ROTATE270 no longer matches WIC");
-    static_assert(TEX_FR_FLIP_HORIZONTAL == WICBitmapTransformFlipHorizontal, "TEX_FR_FLIP_HORIZONTAL no longer matches WIC");
-    static_assert(TEX_FR_FLIP_VERTICAL == WICBitmapTransformFlipVertical, "TEX_FR_FLIP_VERTICAL no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE0) == static_cast<int>(WICBitmapTransformRotate0), "TEX_FR_ROTATE0 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE90) == static_cast<int>(WICBitmapTransformRotate90), "TEX_FR_ROTATE90 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE180) == static_cast<int>(WICBitmapTransformRotate180), "TEX_FR_ROTATE180 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE270) == static_cast<int>(WICBitmapTransformRotate270), "TEX_FR_ROTATE270 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_FLIP_HORIZONTAL) == static_cast<int>(WICBitmapTransformFlipHorizontal), "TEX_FR_FLIP_HORIZONTAL no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical), "TEX_FR_FLIP_VERTICAL no longer matches WIC");
 
     // Only supports 90, 180, 270, or no rotation flags... not a combination of rotation flags
     switch (flags & (TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270))
@@ -239,12 +239,12 @@ HRESULT DirectX::FlipRotate(
         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
-    static_assert(TEX_FR_ROTATE0 == WICBitmapTransformRotate0, "TEX_FR_ROTATE0 no longer matches WIC");
-    static_assert(TEX_FR_ROTATE90 == WICBitmapTransformRotate90, "TEX_FR_ROTATE90 no longer matches WIC");
-    static_assert(TEX_FR_ROTATE180 == WICBitmapTransformRotate180, "TEX_FR_ROTATE180 no longer matches WIC");
-    static_assert(TEX_FR_ROTATE270 == WICBitmapTransformRotate270, "TEX_FR_ROTATE270 no longer matches WIC");
-    static_assert(TEX_FR_FLIP_HORIZONTAL == WICBitmapTransformFlipHorizontal, "TEX_FR_FLIP_HORIZONTAL no longer matches WIC");
-    static_assert(TEX_FR_FLIP_VERTICAL == WICBitmapTransformFlipVertical, "TEX_FR_FLIP_VERTICAL no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE0) == static_cast<int>(WICBitmapTransformRotate0), "TEX_FR_ROTATE0 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE90) == static_cast<int>(WICBitmapTransformRotate90), "TEX_FR_ROTATE90 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE180) == static_cast<int>(WICBitmapTransformRotate180), "TEX_FR_ROTATE180 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE270) == static_cast<int>(WICBitmapTransformRotate270), "TEX_FR_ROTATE270 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_FLIP_HORIZONTAL) == static_cast<int>(WICBitmapTransformFlipHorizontal), "TEX_FR_FLIP_HORIZONTAL no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical), "TEX_FR_FLIP_VERTICAL no longer matches WIC");
 
     // Only supports 90, 180, 270, or no rotation flags... not a combination of rotation flags
     switch (flags & (TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270))

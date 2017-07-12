@@ -23,9 +23,9 @@ namespace
 {
     inline DWORD GetSRGBFlags(_In_ DWORD compress)
     {
-        static_assert(TEX_COMPRESS_SRGB_IN == TEX_FILTER_SRGB_IN, "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*");
-        static_assert(TEX_COMPRESS_SRGB_OUT == TEX_FILTER_SRGB_OUT, "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*");
-        static_assert(TEX_COMPRESS_SRGB == TEX_FILTER_SRGB, "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_COMPRESS_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN), "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_COMPRESS_SRGB_OUT) == static_cast<int>(TEX_FILTER_SRGB_OUT), "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_COMPRESS_SRGB) == static_cast<int>(TEX_FILTER_SRGB), "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*");
         return (compress & TEX_COMPRESS_SRGB);
     }
 

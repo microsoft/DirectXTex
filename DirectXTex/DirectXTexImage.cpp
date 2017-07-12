@@ -768,7 +768,7 @@ bool ScratchImage::IsAlphaAllOpaque() const
         if (!scanline)
             return false;
 
-        static const XMVECTORF32 threshold = { 0.99f, 0.99f, 0.99f, 0.99f };
+        static const XMVECTORF32 threshold = { { { 0.99f, 0.99f, 0.99f, 0.99f } } };
 
         for (size_t index = 0; index < m_nimages; ++index)
         {

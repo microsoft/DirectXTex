@@ -19,7 +19,7 @@ using namespace DirectX;
 
 namespace
 {
-    const XMVECTORF32 g_Gamma22 = { 2.2f, 2.2f, 2.2f, 1.f };
+    const XMVECTORF32 g_Gamma22 = { { { 2.2f, 2.2f, 2.2f, 1.f } } };
 
     //-------------------------------------------------------------------------------------
     HRESULT ComputeMSE_(
@@ -60,6 +60,9 @@ namespace
         case DXGI_FORMAT_BC7_UNORM_SRGB:
             flags |= CMSE_IMAGE1_SRGB;
             break;
+
+        default:
+            break;
         }
 
         switch (image2.format)
@@ -80,6 +83,9 @@ namespace
         case DXGI_FORMAT_BC7_UNORM_SRGB:
             flags |= CMSE_IMAGE2_SRGB;
             break;
+
+        default:
+            break;
         }
 
         const uint8_t *pSrc1 = image1.pixels;
@@ -89,7 +95,7 @@ namespace
         const size_t rowPitch2 = image2.rowPitch;
 
         XMVECTOR acc = g_XMZero;
-        static XMVECTORF32 two = { 2.0f, 2.0f, 2.0f, 2.0f };
+        static XMVECTORF32 two = { { { 2.0f, 2.0f, 2.0f, 2.0f } } };
 
         for (size_t h = 0; h < image1.height; ++h)
         {

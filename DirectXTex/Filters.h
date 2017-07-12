@@ -27,8 +27,8 @@ namespace DirectX
 // Box filtering helpers
 //-------------------------------------------------------------------------------------
 
-XMGLOBALCONST XMVECTORF32 g_boxScale = { 0.25f, 0.25f, 0.25f, 0.25f };
-XMGLOBALCONST XMVECTORF32 g_boxScale3D = { 0.125f, 0.125f, 0.125f, 0.125f };
+XMGLOBALCONST XMVECTORF32 g_boxScale   = { { { 0.25f, 0.25f, 0.25f, 0.25f } } };
+XMGLOBALCONST XMVECTORF32 g_boxScale3D = { { { 0.125f, 0.125f, 0.125f, 0.125f } } };
 
 #define AVERAGE4( res, p0, p1, p2, p3 ) \
 { \
@@ -116,9 +116,9 @@ inline void _CreateLinearFilter(_In_ size_t source, _In_ size_t dest, _In_ bool 
 // Cubic filtering helpers
 //-------------------------------------------------------------------------------------
 
-XMGLOBALCONST XMVECTORF32 g_cubicThird = { 1.f/3.f, 1.f/3.f, 1.f/3.f, 1.f/3.f }; 
-XMGLOBALCONST XMVECTORF32 g_cubicSixth = { 1.f/6.f, 1.f/6.f, 1.f/6.f, 1.f/6.f }; 
-XMGLOBALCONST XMVECTORF32 g_cubicHalf = { 1.f/2.f, 1.f/2.f, 1.f/2.f, 1.f/2.f };
+XMGLOBALCONST XMVECTORF32 g_cubicThird = { { { 1.f / 3.f, 1.f / 3.f, 1.f / 3.f, 1.f / 3.f } } };
+XMGLOBALCONST XMVECTORF32 g_cubicSixth = { { { 1.f / 6.f, 1.f / 6.f, 1.f / 6.f, 1.f / 6.f } } };
+XMGLOBALCONST XMVECTORF32 g_cubicHalf  = { { { 1.f / 2.f, 1.f / 2.f, 1.f / 2.f, 1.f / 2.f } } };
 
 inline ptrdiff_t bounduvw(ptrdiff_t u, ptrdiff_t maxu, bool wrap, bool mirror)
 {
