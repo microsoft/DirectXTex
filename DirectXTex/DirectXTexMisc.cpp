@@ -126,7 +126,7 @@ namespace
                 }
                 if (flags & CMSE_IMAGE2_X2_BIAS)
                 {
-                    v1 = XMVectorMultiplyAdd(v2, two, g_XMNegativeOne);
+                    v2 = XMVectorMultiplyAdd(v2, two, g_XMNegativeOne);
                 }
 
                 // sum[ (I1 - I2)^2 ]
