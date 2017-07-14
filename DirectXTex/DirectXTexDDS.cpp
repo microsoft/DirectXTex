@@ -155,15 +155,22 @@ namespace
     //      FourCC CTX1 (Xbox 360 only)
     //      FourCC EAR, EARG, ET2, ET2A (Ericsson Texture Compression)
 
-    DXGI_FORMAT GetDXGIFormat(const DDS_PIXELFORMAT& ddpf, DWORD flags, _Inout_ DWORD& convFlags)
+    DXGI_FORMAT GetDXGIFormat(const DDS_HEADER& hdr, const DDS_PIXELFORMAT& ddpf, DWORD flags, _Inout_ DWORD& convFlags)
     {
+        uint32_t ddpfFlags = ddpf.dwFlags;
+        if (hdr.dwReserved1[9] == MAKEFOURCC('N', 'V', 'T', 'T'))
+        {
+            // Clear out non-standard nVidia DDS flags
+            ddpfFlags &= ~0xC0000000 /* DDPF_SRGB | DDPF_NORMAL */;
+        }
+
         const size_t MAP_SIZE = sizeof(g_LegacyDDSMap) / sizeof(LegacyDDS);
         size_t index = 0;
         for (index = 0; index < MAP_SIZE; ++index)
         {
             const LegacyDDS* entry = &g_LegacyDDSMap[index];
 
-            if (ddpf.dwFlags == entry->ddpf.dwFlags)
+            if (ddpfFlags == entry->ddpf.dwFlags)
             {
                 if (entry->ddpf.dwFlags & DDS_FOURCC)
                 {
@@ -243,6 +250,12 @@ namespace
         if ((format == DXGI_FORMAT_R10G10B10A2_UNORM) && (flags & DDS_FLAGS_NO_R10B10G10A2_FIXUP))
         {
             cflags ^= CONV_FLAGS_SWIZZLE;
+        }
+
+        if ((hdr.dwReserved1[9] == MAKEFOURCC('N', 'V', 'T', 'T'))
+            && (ddpf.dwFlags & 0x40000000 /* DDPF_SRGB */))
+        {
+            format = MakeSRGB(format);
         }
 
         convFlags = cflags;
@@ -409,7 +422,7 @@ namespace
                 // Note there's no way for a legacy Direct3D 9 DDS to express a '1D' texture
             }
 
-            metadata.format = GetDXGIFormat(pHeader->ddspf, flags, convFlags);
+            metadata.format = GetDXGIFormat(*pHeader, pHeader->ddspf, flags, convFlags);
 
             if (metadata.format == DXGI_FORMAT_UNKNOWN)
                 return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
