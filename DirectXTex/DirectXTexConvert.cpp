@@ -4331,6 +4331,9 @@ namespace
             case DXGI_FORMAT_A8_UNORM:
                 // Conversion logic for these kinds of textures is unintuitive for WIC code paths
                 return false;
+
+            default:
+                break;
             }
             break;
 
@@ -4343,6 +4346,9 @@ namespace
             case DXGI_FORMAT_A8_UNORM:
                 // Conversion logic for these kinds of textures is unintuitive for WIC code paths
                 return false;
+
+            default:
+                break;
             }
             break;
 
@@ -4356,6 +4362,9 @@ namespace
             case DXGI_FORMAT_A8_UNORM:
                 // Conversion logic for these kinds of textures is unintuitive for WIC code paths
                 return false;
+
+            default:
+                break;
             }
         }
 

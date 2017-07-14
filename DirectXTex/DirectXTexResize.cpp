@@ -767,6 +767,9 @@ namespace
                         }
                     }
                     break;
+
+                    default:
+                        break;
                     }
 
                     // This performs any required clamping
