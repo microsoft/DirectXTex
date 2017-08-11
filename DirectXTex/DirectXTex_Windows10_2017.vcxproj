@@ -95,7 +95,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{fb3f52b5-bfe8-43fd-836f-363735dab738}</ProjectGuid>
     <Keyword>StaticLibrary</Keyword>
-    <ProjectName>DirectXTex</ProjectName>
+    <ProjectName>DirectXTex_2017</ProjectName>
     <RootNamespace>DirectXTex</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
@@ -162,38 +162,38 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>Bin\Windows10\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>Bin\Windows10\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>Bin\Windows10_2017\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Bin\Windows10_2017\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>Bin\Windows10\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>Bin\Windows10\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>Bin\Windows10_2017\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Bin\Windows10_2017\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
-    <OutDir>Bin\Windows10\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>Bin\Windows10\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>Bin\Windows10_2017\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Bin\Windows10_2017\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
-    <OutDir>Bin\Windows10\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>Bin\Windows10\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>Bin\Windows10_2017\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Bin\Windows10_2017\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>Bin\Windows10\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>Bin\Windows10\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>Bin\Windows10_2017\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Bin\Windows10_2017\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>Bin\Windows10\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>Bin\Windows10\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>Bin\Windows10_2017\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Bin\Windows10_2017\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
