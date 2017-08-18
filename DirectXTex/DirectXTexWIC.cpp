@@ -34,8 +34,11 @@
 
 #else
 
+#pragma warning(push)
+#pragma warning(disable : 4619 5038)
     #include <wrl\client.h>
     #include <wrl\wrappers\corewrappers.h>
+#pragma warning(pop)
 
 #pragma warning(push)
 #pragma warning(disable : 4471)
