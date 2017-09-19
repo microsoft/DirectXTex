@@ -599,13 +599,12 @@ namespace
                     value.bVal = 0;
                     (void)metawriter->SetMetadataByName(L"/sRGB/RenderingIntent", &value);
                 }
-                // linear space.
                 else
                 {
                     // add gAMA chunk with gamma 1.0
                     value.vt = VT_UI4;
                     value.uintVal = 100000; // gama value * 100,000 -- i.e. gamma 1.0
-                    (void)metawriter->SetMetadataByName( L"/gAMA/ImageGamma", &value );
+                    (void)metawriter->SetMetadataByName(L"/gAMA/ImageGamma", &value);
 
                     // remove sRGB chunk which is added by default.
                     (void)metawriter->RemoveMetadataByName(L"/sRGB/RenderingIntent");
