@@ -697,6 +697,12 @@ bool ScratchImage::OverrideFormat(DXGI_FORMAT f)
 _Use_decl_annotations_
 const Image* ScratchImage::GetImage(size_t mip, size_t item, size_t slice) const
 {
+    return GetWritableImage(mip, item, slice);
+}
+
+_Use_decl_annotations_
+Image* ScratchImage::GetWritableImage(size_t mip, size_t item, size_t slice) const
+{
     if (mip >= m_metadata.mipLevels)
         return nullptr;
 

@@ -277,6 +277,7 @@ namespace DirectX
 
         const TexMetadata& __cdecl GetMetadata() const { return m_metadata; }
         const Image* __cdecl GetImage(_In_ size_t mip, _In_ size_t item, _In_ size_t slice) const;
+        Image* __cdecl GetWritableImage(_In_ size_t mip, _In_ size_t item, _In_ size_t slice) const;
 
         const Image* __cdecl GetImages() const { return m_image; }
         size_t __cdecl GetImageCount() const { return m_nimages; }
@@ -474,7 +475,7 @@ namespace DirectX
     HRESULT __cdecl GenerateMipMaps( _In_ const Image& baseImage, _In_ DWORD filter, _In_ size_t levels,
                                      _Inout_ ScratchImage& mipChain, _In_ bool allow1D = false );
     HRESULT __cdecl GenerateMipMaps( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                                     _In_ DWORD filter, _In_ size_t levels, _Inout_ ScratchImage& mipChain );
+                                     _In_ DWORD filter, _In_ size_t levels, _Inout_ ScratchImage& mipChain, const float alphaCoverageRatio = 1.0f);
         // levels of '0' indicates a full mipchain, otherwise is generates that number of total levels (including the source base image)
         // Defaults to Fant filtering which is equivalent to a box filter
 

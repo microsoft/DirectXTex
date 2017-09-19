@@ -2527,6 +2527,129 @@ namespace
 // Entry-points
 //=====================================================================================
 
+float clamp(float value, float min, float max)
+{
+    return value < min ? min : value > max ? max : value;
+}
+
+//-------------------------------------------------------------------------------------
+// Alpha to coverage, for mip generation
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
+float CalculateAlphaCoverage(const Image& image, const float alphaCoverageRatio, const float scale)
+{
+    float coverage = 0.0f;
+
+    ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR) * image.width), 16)));
+    const uint8_t *pPixels = image.pixels;
+    assert(pPixels);
+
+    const float width = static_cast<float>(image.width);
+    const float height = static_cast<float>(image.height);
+
+    const unsigned int n = 8;
+
+    for (size_t h = 0; h < image.height - 1; ++h)
+    {
+        if (!_LoadScanline(scanline.get(), image.width, pPixels, image.rowPitch, image.format))
+            continue;
+
+        XMVECTOR* currentRowPixels = scanline.get();
+
+        if (!_LoadScanline(scanline.get(), image.width, pPixels  + image.rowPitch, image.rowPitch, image.format))
+            continue;
+
+        XMVECTOR* nextRowPixels = scanline.get();
+
+        for (size_t w = 0; w < image.width - 1; ++w)
+        {            
+            // TODO: Use std::clamp when c++17 is available.
+            float alpha00 = clamp(currentRowPixels[w].m128_f32[3] * scale, 0.0f, 1.0f);
+            float alpha10 = clamp(currentRowPixels[w + 1].m128_f32[3] * scale, 0.0f, 1.0f);
+            float alpha01 = clamp(nextRowPixels[w].m128_f32[3] * scale, 0.0f, 1.0f);
+            float alpha11 = clamp(nextRowPixels[w + 1].m128_f32[3] * scale, 0.0f, 1.0f);
+
+            for (float fy = 0.5f / n; fy < 1.0f; fy++) {
+                for (float fx = 0.5f / n; fx < 1.0f; fx++) {
+                    float alpha = alpha00 * (1 - fx) * (1 - fy) + alpha10 * fx * (1 - fy) + alpha01 * (1 - fx) * fy + alpha11 * fx * fy;
+                    if (alpha > alphaCoverageRatio)
+                    {
+                        coverage += 1.0f;
+                    }
+                }
+            }
+        }
+
+        pPixels += image.rowPitch;
+    }
+
+    return coverage / float(width * height * n * n);
+}
+
+_Use_decl_annotations_
+void ScaleAlphaToCoverage(Image& image, const float alphaCoverageRatio, const float desiredCoverage)
+{
+    float minScale = 0.0f;
+    float maxScale = 4.0f;
+    float scale = 1.0f;
+
+    static const int s_iterationCount = 10;
+    for (int scalingIndex = 0; scalingIndex < s_iterationCount; ++scalingIndex)
+    {
+        const float curCoverage = CalculateAlphaCoverage(image, alphaCoverageRatio, scale);
+        if (curCoverage < desiredCoverage)
+        {
+            minScale = scale;
+        }
+        else if (curCoverage > desiredCoverage)
+        {
+            maxScale = scale;
+        }
+        scale = (minScale + maxScale) * 0.5f;
+    }
+
+    // No scaling required
+    if (scale == 1.0f)
+    {
+        return;
+    }
+
+    // Find closest scale
+    const float minVarience = abs(desiredCoverage - CalculateAlphaCoverage(image, alphaCoverageRatio, minScale));
+    const float curVarience = abs(desiredCoverage - CalculateAlphaCoverage(image, alphaCoverageRatio, scale));
+    const float maxVarience = abs(desiredCoverage - CalculateAlphaCoverage(image, alphaCoverageRatio, maxScale));
+
+    if (minVarience < curVarience && minVarience < maxVarience)
+    {
+        scale = minScale;
+    }
+    else if (maxVarience < minVarience && maxVarience < curVarience)
+    {
+        scale = maxScale;
+    }
+
+    ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR) * image.width), 16)));
+    uint8_t *pPixels = image.pixels;
+    assert(pPixels);
+
+    for (size_t h = 0; h < image.height; ++h)
+    {
+        if (!_LoadScanline(scanline.get(), image.width, pPixels, image.rowPitch, image.format))
+            continue;
+
+        XMVECTOR* currentRowPixels = scanline.get();
+        for (size_t w = 0; w < image.width; ++w)
+        {
+            XMVECTOR& rgba = currentRowPixels[w];
+            rgba.m128_f32[3] = std::min<float>(rgba.m128_f32[3] * scale, 1.0f);
+        }
+
+        _StoreScanline(pPixels, image.rowPitch, image.format, scanline.get(), image.width);
+
+        pPixels += image.rowPitch;
+    }
+}
+
 //-------------------------------------------------------------------------------------
 // Generate mipmap chain
 //-------------------------------------------------------------------------------------
@@ -2710,7 +2833,8 @@ HRESULT DirectX::GenerateMipMaps(
     const TexMetadata& metadata,
     DWORD filter,
     size_t levels,
-    ScratchImage& mipChain)
+    ScratchImage& mipChain,
+    const float alphaCoverageRatio)
 {
     if (!srcImages || !nimages || !IsValid(metadata.format))
         return E_INVALIDARG;
@@ -2748,7 +2872,18 @@ HRESULT DirectX::GenerateMipMaps(
 
     assert(baseImages.size() == metadata.arraySize);
 
-    HRESULT hr;
+    // Determine the alpha coverage for each map.
+    std::vector<float> alphaCoverages;
+    if (alphaCoverageRatio < 1.0f)
+    {
+        alphaCoverages.reserve(baseImages.size());
+        for (auto imageIt = baseImages.begin(); imageIt != baseImages.end(); ++imageIt)
+        {
+            alphaCoverages.emplace_back(CalculateAlphaCoverage(*imageIt, alphaCoverageRatio, 1.0f));
+        }
+    }
+
+    HRESULT hr = HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
 
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
@@ -2785,7 +2920,7 @@ HRESULT DirectX::GenerateMipMaps(
                     }
                 }
 
-                return S_OK;
+                hr = S_OK;
             }
             else
             {
@@ -2816,7 +2951,7 @@ HRESULT DirectX::GenerateMipMaps(
                         return hr;
                 }
 
-                return _ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), metadata.format, mipChain);
+                hr = _ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), metadata.format, mipChain);
             }
         }
         break;
@@ -2851,7 +2986,7 @@ HRESULT DirectX::GenerateMipMaps(
                 if (FAILED(hr))
                     mipChain.Release();
             }
-            return hr;
+            break;
 
         case TEX_FILTER_POINT:
             hr = Setup2DMips(&baseImages[0], metadata.arraySize, mdata2, mipChain);
@@ -2864,7 +2999,7 @@ HRESULT DirectX::GenerateMipMaps(
                 if (FAILED(hr))
                     mipChain.Release();
             }
-            return hr;
+            break;
 
         case TEX_FILTER_LINEAR:
             hr = Setup2DMips(&baseImages[0], metadata.arraySize, mdata2, mipChain);
@@ -2877,7 +3012,7 @@ HRESULT DirectX::GenerateMipMaps(
                 if (FAILED(hr))
                     mipChain.Release();
             }
-            return hr;
+            break;
 
         case TEX_FILTER_CUBIC:
             hr = Setup2DMips(&baseImages[0], metadata.arraySize, mdata2, mipChain);
@@ -2890,7 +3025,7 @@ HRESULT DirectX::GenerateMipMaps(
                 if (FAILED(hr))
                     mipChain.Release();
             }
-            return hr;
+            break;
 
         case TEX_FILTER_TRIANGLE:
             hr = Setup2DMips(&baseImages[0], metadata.arraySize, mdata2, mipChain);
@@ -2903,12 +3038,27 @@ HRESULT DirectX::GenerateMipMaps(
                 if (FAILED(hr))
                     mipChain.Release();
             }
-            return hr;
+            break;
 
         default:
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
         }
     }
+
+    // Scale alpha on all mips
+    if (hr == S_OK && alphaCoverageRatio < 1.0f)
+    {
+        for (size_t imageIndex = 0; imageIndex < metadata.arraySize; ++imageIndex)
+        {
+            const float alphaCoverage = alphaCoverages[imageIndex];
+            for (size_t mipIndex = 1; mipIndex < levels; ++mipIndex)
+            {
+                ScaleAlphaToCoverage(*mipChain.GetWritableImage(mipIndex, 0, 0), alphaCoverageRatio, alphaCoverage);
+            }
+        }
+    }
+
+    return hr;
 }
 
 

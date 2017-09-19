@@ -100,6 +100,7 @@ enum OPTIONS
     OPT_COLORKEY,
     OPT_TONEMAP,
     OPT_X2_BIAS,
+    OPT_ALPHA_COVERAGE,
     OPT_MAX
 };
 
@@ -171,6 +172,7 @@ const SValue g_pOptions[] =
     { L"c",             OPT_COLORKEY },
     { L"tonemap",       OPT_TONEMAP },
     { L"x2bias",        OPT_X2_BIAS },
+    { L"alphacoverage", OPT_ALPHA_COVERAGE },    
     { nullptr,          0 }
 };
 
@@ -696,6 +698,9 @@ namespace
         wprintf(L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n");
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
         wprintf(L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n");
+        wprintf(L"   -alphacoverage      The alpha coverage threshold to use when computing mipmaps.\n"
+                L"                       (0.0 to 1.0, where 1.0 or greater will disable the feature).\n"
+                L"                       (defaults to 1.0)\n");
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -892,6 +897,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float nmapAmplitude = 1.f;
     float wicQuality = -1.f;
     DWORD colorKey = 0;
+    float alphaCoverageRatio = 1.0f;
 
     wchar_t szPrefix[MAX_PATH];
     wchar_t szSuffix[MAX_PATH];
@@ -956,6 +962,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_NORMAL_MAP_AMPLITUDE:
             case OPT_WIC_QUALITY:
             case OPT_COLORKEY:
+            case OPT_ALPHA_COVERAGE:
                 if (!*pValue)
                 {
                     if ((iArg + 1 >= argc))
@@ -1276,6 +1283,24 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case OPT_X2_BIAS:
                 dwConvert |= TEX_FILTER_FLOAT_X2BIAS;
+                break;
+
+            case OPT_ALPHA_COVERAGE:
+                if (swscanf_s(pValue, L"%f", &alphaCoverageRatio) != 1)
+                {
+                    wprintf(L"Invalid value specified with -alphacoverage (%s)\n", pValue);
+                    wprintf(L"\n");
+                    PrintUsage();
+                    return 1;
+                }
+
+                if (alphaCoverageRatio < 0.0f)
+                {
+                    wprintf(L"Invalid value specified with -alphacoverage (%s). Value must be positive.\n", pValue);
+                    wprintf(L"\n");
+                    PrintUsage();
+                    return 1;
+                }
                 break;
             }
         }
@@ -2049,7 +2074,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             else
             {
-                hr = GenerateMipMaps(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFilter | dwFilterOpts, tMips, *timage);
+                hr = GenerateMipMaps(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFilter | dwFilterOpts, tMips, *timage, alphaCoverageRatio);
             }
             if (FAILED(hr))
             {
