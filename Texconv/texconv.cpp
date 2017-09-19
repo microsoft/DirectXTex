@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include <fstream>
 #include <memory>
 #include <list>
 
@@ -100,6 +101,7 @@ enum OPTIONS
     OPT_COLORKEY,
     OPT_TONEMAP,
     OPT_X2_BIAS,
+    OPT_FILELIST,
     OPT_MAX
 };
 
@@ -171,6 +173,7 @@ const SValue g_pOptions[] =
     { L"c",             OPT_COLORKEY },
     { L"tonemap",       OPT_TONEMAP },
     { L"x2bias",        OPT_X2_BIAS },
+    { L"flist",         OPT_FILELIST },
     { nullptr,          0 }
 };
 
@@ -696,6 +699,7 @@ namespace
         wprintf(L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n");
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
         wprintf(L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n");
+        wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -956,6 +960,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_NORMAL_MAP_AMPLITUDE:
             case OPT_WIC_QUALITY:
             case OPT_COLORKEY:
+            case OPT_FILELIST:
                 if (!*pValue)
                 {
                     if ((iArg + 1 >= argc))
@@ -1276,6 +1281,48 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case OPT_X2_BIAS:
                 dwConvert |= TEX_FILTER_FLOAT_X2BIAS;
+                break;
+
+            case OPT_FILELIST:
+                {
+                    std::wifstream inFile(pValue);
+                    if (!inFile)
+                    {
+                        wprintf(L"Error opening -flist file %ls\n", pValue);
+                        return 1;
+                    }
+                    wchar_t fname[1024] = {};
+                    for (;;)
+                    {
+                        inFile >> fname;
+                        if (!inFile)
+                            break;
+
+                        if (*fname == L'#')
+                        {
+                            // Comment
+                        }
+                        else if (*fname == L'-')
+                        {
+                            wprintf(L"Command-line arguments not supported in -flist file\n");
+                            return 1;
+                        }
+                        else if (wcspbrk(fname, L"?*") != nullptr)
+                        {
+                            wprintf(L"Wildcards not supported in -flist file\n");
+                            return 1;
+                        }
+                        else
+                        {
+                            SConversion conv;
+                            wcscpy_s(conv.szSrc, MAX_PATH, fname);
+                            conversion.push_back(conv);
+                        }
+
+                        inFile.ignore(1000, '\n');
+                    }
+                    inFile.close();
+                }
                 break;
             }
         }

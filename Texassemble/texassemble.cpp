@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include <fstream>
 #include <memory>
 #include <list>
 #include <vector>
@@ -74,6 +75,7 @@ enum OPTIONS
     OPT_TA_WRAP,
     OPT_TA_MIRROR,
     OPT_TONEMAP,
+    OPT_FILELIST,
     OPT_MAX
 };
 
@@ -126,6 +128,7 @@ const SValue g_pOptions [] =
     { L"wrap",      OPT_TA_WRAP },
     { L"mirror",    OPT_TA_MIRROR },
     { L"tonemap",   OPT_TONEMAP },
+    { L"flist",     OPT_FILELIST },
     { nullptr,      0 }
 };
 
@@ -495,6 +498,7 @@ namespace
         wprintf(L"   -dx10               Force use of 'DX10' extended header\n");
         wprintf(L"   -nologo             suppress copyright message\n");
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
+        wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -592,6 +596,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_FORMAT:
             case OPT_FILTER:
             case OPT_OUTPUTFILE:
+            case OPT_FILELIST:
                 if (!*pValue)
                 {
                     if ((iArg + 1 >= argc))
@@ -702,6 +707,48 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
                 dwFilterOpts |= TEX_FILTER_MIRROR;
+                break;
+
+            case OPT_FILELIST:
+                {
+                    std::wifstream inFile(pValue);
+                    if (!inFile)
+                    {
+                        wprintf(L"Error opening -flist file %ls\n", pValue);
+                        return 1;
+                    }
+                    wchar_t fname[1024] = {};
+                    for (;;)
+                    {
+                        inFile >> fname;
+                        if (!inFile)
+                            break;
+
+                        if (*fname == L'#')
+                        {
+                            // Comment
+                        }
+                        else if (*fname == L'-')
+                        {
+                            wprintf(L"Command-line arguments not supported in -flist file\n");
+                            return 1;
+                        }
+                        else if (wcspbrk(fname, L"?*") != nullptr)
+                        {
+                            wprintf(L"Wildcards not supported in -flist file\n");
+                            return 1;
+                        }
+                        else
+                        {
+                            SConversion conv;
+                            wcscpy_s(conv.szSrc, MAX_PATH, fname);
+                            conversion.push_back(conv);
+                        }
+
+                        inFile.ignore(1000, '\n');
+                    }
+                    inFile.close();
+                }
                 break;
             }
         }
