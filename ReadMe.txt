@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-July 26, 2017
+September 22, 2017
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -121,6 +121,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+September 22, 2017
+    Updated for VS 2017 15.3 update /permissive- changes
+    WIC writer and ScreenGrab updated to use non-sRGB metadata for PNG
+    texassemble, texconv, texdiag: added -flist option
 
 July 26, 2017
     Support for reading non-standard DDS files written by nVidia Texture Tools (NVTT)
