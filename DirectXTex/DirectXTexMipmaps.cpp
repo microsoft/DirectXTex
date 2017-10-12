@@ -28,7 +28,7 @@ namespace
     }
 
 
-    size_t _CountMips(_In_ size_t width, _In_ size_t height)
+    size_t CountMips(_In_ size_t width, _In_ size_t height)
     {
         size_t mipLevels = 1;
 
@@ -47,7 +47,7 @@ namespace
     }
 
 
-    size_t _CountMips3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth)
+    size_t CountMips3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth)
     {
         size_t mipLevels = 1;
 
@@ -129,13 +129,13 @@ namespace DirectX
     {
         if (mipLevels > 1)
         {
-            size_t maxMips = _CountMips(width, height);
+            size_t maxMips = CountMips(width, height);
             if (mipLevels > maxMips)
                 return false;
         }
         else if (mipLevels == 0)
         {
-            mipLevels = _CountMips(width, height);
+            mipLevels = CountMips(width, height);
         }
         else
         {
@@ -148,13 +148,13 @@ namespace DirectX
     {
         if (mipLevels > 1)
         {
-            size_t maxMips = _CountMips3D(width, height, depth);
+            size_t maxMips = CountMips3D(width, height, depth);
             if (mipLevels > maxMips)
                 return false;
         }
         else if (mipLevels == 0)
         {
-            mipLevels = _CountMips3D(width, height, depth);
+            mipLevels = CountMips3D(width, height, depth);
         }
         else
         {
