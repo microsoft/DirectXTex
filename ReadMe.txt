@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-September 22, 2017
+November 1, 2017
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -13,8 +13,10 @@ use of the Windows Image Component (WIC) APIs. It also includes simple .TGA and 
 readers and writers since these image file formats are commonly used for texture content
 processing pipelines, but are not currently supported by a built-in WIC codec.
 
-The source is written for Visual Studio 2013 or 2015. It is recommended that you
-make use of VS 2013 Update 5 or VS 2015 Update 3 and Windows 7 Service Pack 1 or later.
+This code is designed to build with Visual Studio 2013 Update 5, Visual Studio 2015 Update 3,
+or Visual Studio 2017. It is recommended that you make use of VS 2015 Update 3, Windows Tools
+1.4.1, and the Windows 10 Anniversary Update SDK (14393) or VS 2017 with the Windows 10
+Fall Creators Update SDK (16299).
 
 DirectXTex\
     This contains the DirectXTex library. This includes a full-featured DDS reader and writer
@@ -126,6 +128,9 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+November 1, 2017
+    VS 2017 updated for Windows 10 Fall Creators Update SDK (16299)
 
 September 22, 2017
     Updated for VS 2017 15.3 update /permissive- changes
