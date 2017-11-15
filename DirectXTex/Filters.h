@@ -195,9 +195,9 @@ inline void _CreateCubicFilter(_In_ size_t source, _In_ size_t dest, _In_ bool w
     XMVECTOR d0 = (p0) - a0; \
     XMVECTOR d2 = (p2) - a0; \
     XMVECTOR d3 = (p3) - a0; \
-    XMVECTOR a1 = d2 - g_cubicThird*d0 - g_cubicSixth*d3; \
-    XMVECTOR a2 = g_cubicHalf*d0 + g_cubicHalf*d2; \
-    XMVECTOR a3 = g_cubicSixth*d3 - g_cubicSixth*d0 - g_cubicHalf*d2;  \
+    XMVECTOR a1 = d2 - XMVectorMultiply( g_cubicThird, d0 ) - XMVectorMultiply( g_cubicSixth, d3 ); \
+    XMVECTOR a2 = XMVectorMultiply( g_cubicHalf, d0 ) + XMVectorMultiply( g_cubicHalf, d2 ); \
+    XMVECTOR a3 = XMVectorMultiply( g_cubicSixth, d3 ) - XMVectorMultiply( g_cubicSixth, d0 ) - XMVectorMultiply( g_cubicHalf, d2 ); \
     XMVECTOR vdx = XMVectorReplicate( dx ); \
     XMVECTOR vdx2 = vdx * vdx; \
     XMVECTOR vdx3 = vdx2 * vdx; \
