@@ -3649,7 +3649,7 @@ namespace
                 if ( norm && clampzero ) v = XMVectorSaturate( v ) ; \
                 else if ( clampzero ) v = XMVectorClamp( v, g_XMZero, scalev ); \
                 else if ( norm ) v = XMVectorClamp( v, g_XMNegativeOne, g_XMOne ); \
-                else v = XMVectorClamp( v, -scalev + g_XMOne, scalev ); \
+                else v = XMVectorClamp( v, XMVectorAdd( XMVectorNegate( scalev ), g_XMOne ), scalev ); \
                 v = XMVectorAdd( v, vError ); \
                 if ( norm ) v = XMVectorMultiply( v, scalev ); \
                 \
@@ -3674,7 +3674,7 @@ namespace
                 } \
                 \
                 target = XMVectorMin( scalev, target ); \
-                target = XMVectorMax( (clampzero) ? g_XMZero : ( -scalev + g_XMOne ), target ); \
+                target = XMVectorMax( (clampzero) ? g_XMZero : ( XMVectorAdd( XMVectorNegate( scalev ), g_XMOne ) ), target ); \
                 \
                 XMFLOAT4A tmp; \
                 XMStoreFloat4A( &tmp, target ); \
@@ -3704,7 +3704,7 @@ namespace
                 if ( norm && clampzero ) v = XMVectorSaturate( v ) ; \
                 else if ( clampzero ) v = XMVectorClamp( v, g_XMZero, scalev ); \
                 else if ( norm ) v = XMVectorClamp( v, g_XMNegativeOne, g_XMOne ); \
-                else v = XMVectorClamp( v, -scalev + g_XMOne, scalev ); \
+                else v = XMVectorClamp( v, XMVectorAdd( XMVectorNegate( scalev ), g_XMOne ), scalev ); \
                 v = XMVectorAdd( v, vError ); \
                 if ( norm ) v = XMVectorMultiply( v, scalev ); \
                 \
@@ -3729,7 +3729,7 @@ namespace
                 } \
                 \
                 target = XMVectorMin( scalev, target ); \
-                target = XMVectorMax( (clampzero) ? g_XMZero : ( -scalev + g_XMOne ), target ); \
+                target = XMVectorMax( (clampzero) ? g_XMZero : ( XMVectorAdd( XMVectorNegate( scalev ), g_XMOne ) ), target ); \
                 \
                 XMFLOAT4A tmp; \
                 XMStoreFloat4A( &tmp, target ); \
@@ -3757,7 +3757,7 @@ namespace
                 if ( norm && clampzero ) v = XMVectorSaturate( v ) ; \
                 else if ( clampzero ) v = XMVectorClamp( v, g_XMZero, scalev ); \
                 else if ( norm ) v = XMVectorClamp( v, g_XMNegativeOne, g_XMOne ); \
-                else v = XMVectorClamp( v, -scalev + g_XMOne, scalev ); \
+                else v = XMVectorClamp( v,  XMVectorAdd( XMVectorNegate( scalev ), g_XMOne ), scalev ); \
                 v = XMVectorAdd( v, vError ); \
                 if ( norm ) v = XMVectorMultiply( v, scalev ); \
                 \
@@ -3782,7 +3782,7 @@ namespace
                 } \
                 \
                 target = XMVectorMin( scalev, target ); \
-                target = XMVectorMax( (clampzero) ? g_XMZero : ( -scalev + g_XMOne ), target ); \
+                target = XMVectorMax( (clampzero) ? g_XMZero : (  XMVectorAdd( XMVectorNegate( scalev ), g_XMOne ) ), target ); \
                 \
                 auto dPtr = &dest[ index ]; \
                 if (dPtr >= ePtr) break; \
