@@ -3661,9 +3661,9 @@ namespace
                     if (norm) vError = XMVectorDivide( vError, scalev ); \
                     \
                     /* Distribute error to next scanline and next pixel */ \
-                    pDiffusionErrors[ index-delta ]   += XMVectorMultiply( g_ErrorWeight3, vError ); \
-                    pDiffusionErrors[ index+1 ]       += XMVectorMultiply( g_ErrorWeight5, vError ); \
-                    pDiffusionErrors[ index+2+delta ] += XMVectorMultiply( g_ErrorWeight1, vError ); \
+                    pDiffusionErrors[ index-delta ]   = XMVectorMultiplyAdd( g_ErrorWeight3, vError, pDiffusionErrors[ index-delta ] ); \
+                    pDiffusionErrors[ index+1 ]       = XMVectorMultiplyAdd( g_ErrorWeight5, vError, pDiffusionErrors[ index+1 ] ); \
+                    pDiffusionErrors[ index+2+delta ] = XMVectorMultiplyAdd( g_ErrorWeight1, vError, pDiffusionErrors[ index+2+delta ] ); \
                     vError = XMVectorMultiply( vError, g_ErrorWeight7 ); \
                 } \
                 else \
@@ -3716,9 +3716,9 @@ namespace
                     if (norm) vError = XMVectorDivide( vError, scalev ); \
                     \
                     /* Distribute error to next scanline and next pixel */ \
-                    pDiffusionErrors[ index-delta ]   += XMVectorMultiply( g_ErrorWeight3, vError ); \
-                    pDiffusionErrors[ index+1 ]       += XMVectorMultiply( g_ErrorWeight5, vError ); \
-                    pDiffusionErrors[ index+2+delta ] += XMVectorMultiply( g_ErrorWeight1, vError ); \
+                    pDiffusionErrors[ index-delta ]   = XMVectorMultiplyAdd( g_ErrorWeight3, vError, pDiffusionErrors[ index-delta ] ); \
+                    pDiffusionErrors[ index+1 ]       = XMVectorMultiplyAdd( g_ErrorWeight5, vError, pDiffusionErrors[ index+1 ] ); \
+                    pDiffusionErrors[ index+2+delta ] = XMVectorMultiplyAdd( g_ErrorWeight1, vError, pDiffusionErrors[ index+2+delta ] ); \
                     vError = XMVectorMultiply( vError, g_ErrorWeight7 ); \
                 } \
                 else \
@@ -3769,9 +3769,9 @@ namespace
                     if (norm) vError = XMVectorDivide( vError, scalev ); \
                     \
                     /* Distribute error to next scanline and next pixel */ \
-                    pDiffusionErrors[ index-delta ]   += XMVectorMultiply( g_ErrorWeight3, vError ); \
-                    pDiffusionErrors[ index+1 ]       += XMVectorMultiply( g_ErrorWeight5, vError ); \
-                    pDiffusionErrors[ index+2+delta ] += XMVectorMultiply( g_ErrorWeight1, vError ); \
+                    pDiffusionErrors[ index-delta ]   = XMVectorMultiplyAdd( g_ErrorWeight3, vError, pDiffusionErrors[ index-delta ] ); \
+                    pDiffusionErrors[ index+1 ]       = XMVectorMultiplyAdd( g_ErrorWeight5, vError, pDiffusionErrors[ index+1 ] ); \
+                    pDiffusionErrors[ index+2+delta ] = XMVectorMultiplyAdd( g_ErrorWeight1, vError, pDiffusionErrors[ index+2+delta ] ); \
                     vError = XMVectorMultiply( vError, g_ErrorWeight7 ); \
                 } \
                 else \
@@ -3897,9 +3897,9 @@ bool DirectX::_StoreScanlineDither(
                     vError = XMVectorDivide(vError, Scale);
 
                     // Distribute error to next scanline and next pixel
-                    pDiffusionErrors[index - delta] += XMVectorMultiply(g_ErrorWeight3, vError);
-                    pDiffusionErrors[index + 1] += XMVectorMultiply(g_ErrorWeight5, vError);
-                    pDiffusionErrors[index + 2 + delta] += XMVectorMultiply(g_ErrorWeight1, vError);
+                    pDiffusionErrors[index - delta]     = XMVectorMultiplyAdd(g_ErrorWeight3, vError, pDiffusionErrors[index - delta]);
+                    pDiffusionErrors[index + 1]         = XMVectorMultiplyAdd(g_ErrorWeight5, vError, pDiffusionErrors[index + 1]);
+                    pDiffusionErrors[index + 2 + delta] = XMVectorMultiplyAdd(g_ErrorWeight1, vError, pDiffusionErrors[index + 2 + delta]);
                     vError = XMVectorMultiply(vError, g_ErrorWeight7);
                 }
                 else
@@ -3976,9 +3976,9 @@ bool DirectX::_StoreScanlineDither(
                     vError = XMVectorDivide(vError, Scale);
 
                     // Distribute error to next scanline and next pixel
-                    pDiffusionErrors[index - delta] += XMVectorMultiply(g_ErrorWeight3, vError);
-                    pDiffusionErrors[index + 1] += XMVectorMultiply(g_ErrorWeight5, vError);
-                    pDiffusionErrors[index + 2 + delta] += XMVectorMultiply(g_ErrorWeight1, vError);
+                    pDiffusionErrors[index - delta]     = XMVectorMultiplyAdd(g_ErrorWeight3, vError, pDiffusionErrors[index - delta]);
+                    pDiffusionErrors[index + 1]         = XMVectorMultiplyAdd(g_ErrorWeight5, vError, pDiffusionErrors[index + 1]);
+                    pDiffusionErrors[index + 2 + delta] = XMVectorMultiplyAdd(g_ErrorWeight1, vError, pDiffusionErrors[index + 2 + delta]);
                     vError = XMVectorMultiply(vError, g_ErrorWeight7);
                 }
                 else
@@ -4064,9 +4064,9 @@ bool DirectX::_StoreScanlineDither(
                     vError = XMVectorDivide(vError, g_Scale565pc);
 
                     // Distribute error to next scanline and next pixel
-                    pDiffusionErrors[index - delta] += XMVectorMultiply(g_ErrorWeight3, vError);
-                    pDiffusionErrors[index + 1] += XMVectorMultiply(g_ErrorWeight5, vError);
-                    pDiffusionErrors[index + 2 + delta] += XMVectorMultiply(g_ErrorWeight1, vError);
+                    pDiffusionErrors[index - delta]     = XMVectorMultiplyAdd(g_ErrorWeight3, vError, pDiffusionErrors[index - delta]);
+                    pDiffusionErrors[index + 1]         = XMVectorMultiplyAdd(g_ErrorWeight5, vError, pDiffusionErrors[index + 1]);
+                    pDiffusionErrors[index + 2 + delta] = XMVectorMultiplyAdd(g_ErrorWeight1, vError, pDiffusionErrors[index + 2 + delta]);
                     vError = XMVectorMultiply(vError, g_ErrorWeight7);
                 }
                 else
@@ -4113,9 +4113,9 @@ bool DirectX::_StoreScanlineDither(
                     vError = XMVectorDivide(vError, g_Scale5551pc);
 
                     // Distribute error to next scanline and next pixel
-                    pDiffusionErrors[index - delta] += XMVectorMultiply(g_ErrorWeight3, vError);
-                    pDiffusionErrors[index + 1] += XMVectorMultiply(g_ErrorWeight5, vError);
-                    pDiffusionErrors[index + 2 + delta] += XMVectorMultiply(g_ErrorWeight1, vError);
+                    pDiffusionErrors[index - delta]     = XMVectorMultiplyAdd(g_ErrorWeight3, vError, pDiffusionErrors[index - delta]);
+                    pDiffusionErrors[index + 1]         = XMVectorMultiplyAdd(g_ErrorWeight5, vError, pDiffusionErrors[index + 1]);
+                    pDiffusionErrors[index + 2 + delta] = XMVectorMultiplyAdd(g_ErrorWeight1, vError, pDiffusionErrors[index + 2 + delta]);
                     vError = XMVectorMultiply(vError, g_ErrorWeight7);
                 }
                 else
@@ -4168,9 +4168,9 @@ bool DirectX::_StoreScanlineDither(
                     vError = XMVectorDivide(vError, g_Scale8pc);
 
                     // Distribute error to next scanline and next pixel
-                    pDiffusionErrors[index - delta] += XMVectorMultiply(g_ErrorWeight3, vError);
-                    pDiffusionErrors[index + 1] += XMVectorMultiply(g_ErrorWeight5, vError);
-                    pDiffusionErrors[index + 2 + delta] += XMVectorMultiply(g_ErrorWeight1, vError);
+                    pDiffusionErrors[index - delta]     = XMVectorMultiplyAdd(g_ErrorWeight3, vError, pDiffusionErrors[index - delta]);
+                    pDiffusionErrors[index + 1]         = XMVectorMultiplyAdd(g_ErrorWeight5, vError, pDiffusionErrors[index + 1]);
+                    pDiffusionErrors[index + 2 + delta] = XMVectorMultiplyAdd(g_ErrorWeight1, vError, pDiffusionErrors[index + 2 + delta]);
                     vError = XMVectorMultiply(vError, g_ErrorWeight7);
                 }
                 else
@@ -4223,9 +4223,9 @@ bool DirectX::_StoreScanlineDither(
                     vError = XMVectorDivide(vError, g_Scale4pc);
 
                     // Distribute error to next scanline and next pixel
-                    pDiffusionErrors[index - delta] += XMVectorMultiply(g_ErrorWeight3, vError);
-                    pDiffusionErrors[index + 1] += XMVectorMultiply(g_ErrorWeight5, vError);
-                    pDiffusionErrors[index + 2 + delta] += XMVectorMultiply(g_ErrorWeight1, vError);
+                    pDiffusionErrors[index - delta]     = XMVectorMultiplyAdd(g_ErrorWeight3, vError, pDiffusionErrors[index - delta]);
+                    pDiffusionErrors[index + 1]         = XMVectorMultiplyAdd(g_ErrorWeight5, vError, pDiffusionErrors[index + 1]);
+                    pDiffusionErrors[index + 2 + delta] = XMVectorMultiplyAdd(g_ErrorWeight1, vError, pDiffusionErrors[index + 2 + delta]);
                     vError = XMVectorMultiply(vError, g_ErrorWeight7);
                 }
                 else
