@@ -2143,7 +2143,7 @@ void D3DX_BC6H::OptimizeOne(const EncodeParams* pEP, const INTColor aColors[], s
     int do_b;
 
     // now optimize each channel separately
-    for (uint8_t ch = 0; ch < 3; ++ch)
+    for (uint8_t ch = 0; ch < BC6H_NUM_CHANNELS; ++ch)
     {
         // figure out which endpoint when perturbed gives the most improvement and start there
         // if we just alternate, we can easily end up in a local minima
