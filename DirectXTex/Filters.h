@@ -201,7 +201,7 @@ inline void _CreateCubicFilter(_In_ size_t source, _In_ size_t dest, _In_ bool w
     a1 = XMVectorSubtract( a1, XMVectorMultiply( g_cubicSixth, d3 ) ); \
     XMVECTOR a2 = XMVectorAdd( XMVectorMultiply( g_cubicHalf, d0 ), XMVectorMultiply( g_cubicHalf, d2 ) ); \
     XMVECTOR a3 = XMVectorSubtract( XMVectorMultiply( g_cubicSixth, d3 ), XMVectorMultiply( g_cubicSixth, d0 ) ); \
-    d3 = XMVectorSubtract( d3, XMVectorMultiply( g_cubicHalf, d2 ) ); \
+    a3 = XMVectorSubtract( a3, XMVectorMultiply( g_cubicHalf, d2 ) ); \
     XMVECTOR vdx = XMVectorReplicate( dx ); \
     XMVECTOR vdx2 = XMVectorMultiply( vdx, vdx ); \
     XMVECTOR vdx3 = XMVectorMultiply( vdx2, vdx ); \
