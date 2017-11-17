@@ -102,15 +102,17 @@ inline void _CreateLinearFilter(_In_ size_t source, _In_ size_t dest, _In_ bool 
 }
 
 #define BILINEAR_INTERPOLATE( res, x, y, r0, r1 ) \
-    res = ( y.weight0 * ( (r0)[ x.u0 ] * x.weight0 + (r0)[ x.u1 ] * x.weight1 ) ) \
-          + ( y.weight1 * ( (r1)[ x.u0 ] * x.weight0 + (r1)[ x.u1 ] * x.weight1 ) )
+    res = XMVectorAdd( XMVectorScale( XMVectorAdd( XMVectorScale( (r0)[ x.u0 ], x.weight0 ), XMVectorScale( (r0)[ x.u1 ], x.weight1 ) ), y.weight0 ), \
+                       XMVectorScale( XMVectorAdd( XMVectorScale( (r1)[ x.u0 ], x.weight0 ), XMVectorScale( (r1)[ x.u1 ], x.weight1 ) ), y.weight1 ) )
 
 #define TRILINEAR_INTERPOLATE( res, x, y, z, r0, r1, r2, r3 ) \
-    res = ( z.weight0 * ( ( y.weight0 * ( (r0)[ x.u0 ] * x.weight0 + (r0)[ x.u1 ] * x.weight1 ) ) \
-                          + ( y.weight1 * ( (r1)[ x.u0 ] * x.weight0 + (r1)[ x.u1 ] * x.weight1 ) ) ) ) \
-          + ( z.weight1 * ( ( y.weight0 * ( (r2)[ x.u0 ] * x.weight0 + (r2)[ x.u1 ] * x.weight1 ) ) \
-                             + ( y.weight1 * ( (r3)[ x.u0 ] * x.weight0 + (r3)[ x.u1 ] * x.weight1 ) ) ) )
-
+{\
+    XMVECTOR a0 = XMVectorScale( XMVectorAdd( XMVectorScale( (r0)[ x.u0 ], x.weight0 ), XMVectorScale( (r0)[ x.u1 ], x.weight1 ) ), y.weight0 ); \
+    XMVECTOR a1 = XMVectorScale( XMVectorAdd( XMVectorScale( (r1)[ x.u0 ], x.weight0 ), XMVectorScale( (r1)[ x.u1 ], x.weight1 ) ), y.weight1 ); \
+    XMVECTOR a2 = XMVectorScale( XMVectorAdd( XMVectorScale( (r2)[ x.u0 ], x.weight0 ), XMVectorScale( (r2)[ x.u1 ], x.weight1 ) ), y.weight0 ); \
+    XMVECTOR a3 = XMVectorScale( XMVectorAdd( XMVectorScale( (r3)[ x.u0 ], x.weight0 ), XMVectorScale( (r3)[ x.u1 ], x.weight1 ) ), y.weight1 ); \
+    res = XMVectorAdd( XMVectorScale( XMVectorAdd( a0, a1 ), z.weight0 ), XMVectorScale( XMVectorAdd( a2, a3 ), z.weight1 ) ); \
+}
 
 //-------------------------------------------------------------------------------------
 // Cubic filtering helpers
@@ -192,16 +194,18 @@ inline void _CreateCubicFilter(_In_ size_t source, _In_ size_t dest, _In_ bool w
 #define CUBIC_INTERPOLATE( res, dx, p0, p1, p2, p3 ) \
 { \
     XMVECTOR a0 = (p1); \
-    XMVECTOR d0 = (p0) - a0; \
-    XMVECTOR d2 = (p2) - a0; \
-    XMVECTOR d3 = (p3) - a0; \
-    XMVECTOR a1 = d2 - g_cubicThird*d0 - g_cubicSixth*d3; \
-    XMVECTOR a2 = g_cubicHalf*d0 + g_cubicHalf*d2; \
-    XMVECTOR a3 = g_cubicSixth*d3 - g_cubicSixth*d0 - g_cubicHalf*d2;  \
+    XMVECTOR d0 = XMVectorSubtract( p0, a0 ); \
+    XMVECTOR d2 = XMVectorSubtract( p2, a0 ); \
+    XMVECTOR d3 = XMVectorSubtract( p3, a0 ); \
+    XMVECTOR a1 = XMVectorSubtract( d2, XMVectorMultiply( g_cubicThird, d0 ) ); \
+    a1 = XMVectorSubtract( a1, XMVectorMultiply( g_cubicSixth, d3 ) ); \
+    XMVECTOR a2 = XMVectorAdd( XMVectorMultiply( g_cubicHalf, d0 ), XMVectorMultiply( g_cubicHalf, d2 ) ); \
+    XMVECTOR a3 = XMVectorSubtract( XMVectorMultiply( g_cubicSixth, d3 ), XMVectorMultiply( g_cubicSixth, d0 ) ); \
+    a3 = XMVectorSubtract( a3, XMVectorMultiply( g_cubicHalf, d2 ) ); \
     XMVECTOR vdx = XMVectorReplicate( dx ); \
-    XMVECTOR vdx2 = vdx * vdx; \
-    XMVECTOR vdx3 = vdx2 * vdx; \
-    res = a0 + a1*vdx + a2*vdx2 + a3*vdx3; \
+    XMVECTOR vdx2 = XMVectorMultiply( vdx, vdx ); \
+    XMVECTOR vdx3 = XMVectorMultiply( vdx2, vdx ); \
+    res = XMVectorAdd( XMVectorAdd( XMVectorAdd( a0, XMVectorMultiply( a1, vdx ) ), XMVectorMultiply( a2, vdx2 ) ), XMVectorMultiply( a3, vdx3 ) ); \
 }
 
 
