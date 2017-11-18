@@ -1188,6 +1188,8 @@ void EncodeBlockCS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
     uint bits2 = candidateSectionBit2[partition - 64];
 
     uint2x4 ep;
+    ep[0] = MAX_UINT;
+    ep[1] = MIN_UINT;
     uint2x4 ep_quantized;
     [unroll]
     for (int ii = 2; ii >= 0; -- ii)
@@ -1572,7 +1574,7 @@ uint4 unquantize( uint4 color, uint uPrec )
 uint2x4 compress_endpoints0( inout uint2x4 endPoint, uint2 P )
 {
     uint2x4 quantized;
-    for ( uint j = 0; j < 2; j ++ )
+    [unroll] for ( uint j = 0; j < 2; j ++ )
     {
         quantized[j].rgb = quantize(endPoint[j].rgbb, 5).rgb & 0xFFFFFFFE;
 	    quantized[j].rgb |= P[j];
@@ -1588,7 +1590,7 @@ uint2x4 compress_endpoints0( inout uint2x4 endPoint, uint2 P )
 uint2x4 compress_endpoints1( inout uint2x4 endPoint, uint2 P )
 {
     uint2x4 quantized;
-    for ( uint j = 0; j < 2; j ++ )
+    [unroll] for ( uint j = 0; j < 2; j ++ )
     {
         quantized[j].rgb = quantize(endPoint[j].rgbb, 7).rgb & 0xFFFFFFFE;
 	    quantized[j].rgb |= P[j];
@@ -1604,7 +1606,7 @@ uint2x4 compress_endpoints1( inout uint2x4 endPoint, uint2 P )
 uint2x4 compress_endpoints2( inout uint2x4 endPoint )
 {
     uint2x4 quantized;
-    for ( uint j = 0; j < 2; j ++ )
+    [unroll] for ( uint j = 0; j < 2; j ++ )
     {
         quantized[j].rgb = quantize(endPoint[j].rgbb, 5).rgb;
         quantized[j].a = 0xFF;
@@ -1633,7 +1635,7 @@ uint2x4 compress_endpoints3( inout uint2x4 endPoint, uint2 P )
 uint2x4 compress_endpoints4( inout uint2x4 endPoint )
 {
     uint2x4 quantized;
-    for ( uint j = 0; j < 2; j ++ )
+    [unroll] for ( uint j = 0; j < 2; j ++ )
     {
         quantized[j].rgb = quantize(endPoint[j].rgbb, 5).rgb;
         quantized[j].a = quantize(endPoint[j].a, 6).r;
@@ -1649,7 +1651,7 @@ uint2x4 compress_endpoints4( inout uint2x4 endPoint )
 uint2x4 compress_endpoints5( inout uint2x4 endPoint )
 {
     uint2x4 quantized;
-    for ( uint j = 0; j < 2; j ++ )
+    [unroll] for ( uint j = 0; j < 2; j ++ )
     {
         quantized[j].rgb = quantize(endPoint[j].rgbb, 7).rgb;
         quantized[j].a = endPoint[j].a;
@@ -1676,7 +1678,7 @@ uint2x4 compress_endpoints6( inout uint2x4 endPoint, uint2 P )
 uint2x4 compress_endpoints7( inout uint2x4 endPoint, uint2 P )
 {
     uint2x4 quantized;
-    for ( uint j = 0; j < 2; j ++ )
+    [unroll] for ( uint j = 0; j < 2; j ++ )
     {
         quantized[j] = quantize(endPoint[j], 6) & 0xFFFFFFFE;
 	    quantized[j] |= P[j];
