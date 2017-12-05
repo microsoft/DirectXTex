@@ -240,7 +240,7 @@ IWICImagingFactory* DirectX::GetWICFactory(bool& iswic2)
     static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
     InitOnceExecuteOnce(&s_initOnce,
-        [](PINIT_ONCE, PVOID, LPVOID *factory) -> BOOL
+        [](PINIT_ONCE, PVOID, LPVOID *factory) DIRECTX_NOEXCEPT -> BOOL
     {
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         HRESULT hr = CoCreateInstance(

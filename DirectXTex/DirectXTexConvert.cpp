@@ -2886,7 +2886,7 @@ namespace
     };
 
 #pragma prefast( suppress : 25004, "Signature must match bsearch_s" );
-    int __cdecl _ConvertCompare(void *context, const void* ptr1, const void *ptr2)
+    int __cdecl ConvertCompare(void *context, const void* ptr1, const void *ptr2) DIRECTX_NOEXCEPT
     {
         UNREFERENCED_PARAMETER(context);
         const ConvertData *p1 = reinterpret_cast<const ConvertData*>(ptr1);
@@ -2912,7 +2912,7 @@ DWORD DirectX::_GetConvertFlags(DXGI_FORMAT format)
 
     ConvertData key = { format, 0 };
     const ConvertData* in = (const ConvertData*)bsearch_s(&key, g_ConvertTable, _countof(g_ConvertTable), sizeof(ConvertData),
-        _ConvertCompare, nullptr);
+        ConvertCompare, nullptr);
     return (in) ? in->flags : 0;
 }
 
@@ -2945,10 +2945,10 @@ void DirectX::_ConvertScanline(
     // Determine conversion details about source and dest formats
     ConvertData key = { inFormat, 0 };
     const ConvertData* in = (const ConvertData*)bsearch_s(&key, g_ConvertTable, _countof(g_ConvertTable), sizeof(ConvertData),
-        _ConvertCompare, nullptr);
+        ConvertCompare, nullptr);
     key.format = outFormat;
     const ConvertData* out = (const ConvertData*)bsearch_s(&key, g_ConvertTable, _countof(g_ConvertTable), sizeof(ConvertData),
-        _ConvertCompare, nullptr);
+        ConvertCompare, nullptr);
     if (!in || !out)
     {
         assert(false);
