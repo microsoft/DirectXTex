@@ -354,8 +354,7 @@ HRESULT InitDevice( const TexMetadata& mdata )
     };
 	UINT numFeatureLevels = ARRAYSIZE( featureLevels );
 
-    DXGI_SWAP_CHAIN_DESC sd;
-    ZeroMemory( &sd, sizeof( sd ) );
+    DXGI_SWAP_CHAIN_DESC sd = {};
     sd.BufferCount = 1;
     sd.BufferDesc.Width = width;
     sd.BufferDesc.Height = height;
@@ -385,8 +384,7 @@ HRESULT InitDevice( const TexMetadata& mdata )
     if( FAILED( hr ) )
         return hr;
 
-    D3D11_RENDER_TARGET_VIEW_DESC vd;
-    ZeroMemory(&vd, sizeof(vd));
+    D3D11_RENDER_TARGET_VIEW_DESC vd = {};
     vd.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
     vd.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     hr = g_pd3dDevice->CreateRenderTargetView( pBackBuffer, &vd, &g_pRenderTargetView );
@@ -395,8 +393,7 @@ HRESULT InitDevice( const TexMetadata& mdata )
         return hr;
 
     // Create depth stencil texture
-    D3D11_TEXTURE2D_DESC descDepth;
-    ZeroMemory( &descDepth, sizeof(descDepth) );
+    D3D11_TEXTURE2D_DESC descDepth = {};
     descDepth.Width = width;
     descDepth.Height = height;
     descDepth.MipLevels = 1;
@@ -413,8 +410,7 @@ HRESULT InitDevice( const TexMetadata& mdata )
         return hr;
 
     // Create the depth stencil view
-    D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
-    ZeroMemory( &descDSV, sizeof(descDSV) );
+    D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
     descDSV.Format = descDepth.Format;
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     descDSV.Texture2D.MipSlice = 0;
@@ -514,8 +510,7 @@ HRESULT InitDevice( const TexMetadata& mdata )
 
     // Create vertex buffer
     UINT nverts;
-    D3D11_SUBRESOURCE_DATA InitData;
-    ZeroMemory( &InitData, sizeof(InitData) );
+    D3D11_SUBRESOURCE_DATA InitData = {};
 
     static const SimpleVertex verticesCube[] =
     {
@@ -590,8 +585,7 @@ HRESULT InitDevice( const TexMetadata& mdata )
         InitData.pSysMem = vertices;
     }
 
-    D3D11_BUFFER_DESC bd;
-    ZeroMemory( &bd, sizeof(bd) );
+    D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.ByteWidth = sizeof( SimpleVertex ) * nverts;
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -663,8 +657,7 @@ HRESULT InitDevice( const TexMetadata& mdata )
         return hr;
 
     // Create the state objects
-    D3D11_SAMPLER_DESC sampDesc;
-    ZeroMemory( &sampDesc, sizeof(sampDesc) );
+    D3D11_SAMPLER_DESC sampDesc = {};
     sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
