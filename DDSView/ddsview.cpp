@@ -385,7 +385,11 @@ HRESULT InitDevice( const TexMetadata& mdata )
     if( FAILED( hr ) )
         return hr;
 
-    hr = g_pd3dDevice->CreateRenderTargetView( pBackBuffer, nullptr, &g_pRenderTargetView );
+    D3D11_RENDER_TARGET_VIEW_DESC vd;
+    ZeroMemory(&vd, sizeof(vd));
+    vd.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    vd.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    hr = g_pd3dDevice->CreateRenderTargetView( pBackBuffer, &vd, &g_pRenderTargetView );
     pBackBuffer->Release();
     if( FAILED( hr ) )
         return hr;
