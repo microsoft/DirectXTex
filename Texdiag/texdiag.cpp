@@ -440,7 +440,7 @@ namespace
             if ((DXGI_FORMAT)pFormat->dwValue == Format)
             {
                 wprintf(pFormat->pName);
-                break;
+                return;
             }
         }
 
