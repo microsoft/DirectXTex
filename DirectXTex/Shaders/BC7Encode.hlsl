@@ -1770,7 +1770,7 @@ void block_package1( out uint4 block, uint partition, uint threadBase )
     else //candidateFixUpIndex1DOrdered[partition] == 6
     {
         block.w = (get_color_index(15) << 29) | (get_color_index(14) << 26) | (get_color_index(13) << 23) | (get_color_index(12) << 20) | (get_color_index(11) << 17) | (get_color_index(10) << 14)
-            | (get_color_index(9) << 11) | (get_color_index(8) << 8) | (get_color_index(7) << 6) | (get_color_index(6) << 4) | get_color_index(5);
+            | (get_color_index(9) << 11) | (get_color_index(8) << 8) | (get_color_index(7) << 5) | (get_color_index(6) << 3) | get_color_index(5);
         block.z |= (get_color_index(4) << 29) | (get_color_index(3) << 26) | (get_color_index(2) << 23) | (get_color_index(1) << 20) | (get_color_index(0) << 18);
     }
 }
