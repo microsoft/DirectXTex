@@ -801,7 +801,7 @@ namespace
         if (memcmp(&containerFormat, &GUID_ContainerFormatBmp, sizeof(WICPixelFormatGUID)) == 0 && iswic2)
         {
             // Opt-in to the WIC2 support for writing 32-bit Windows BMP files with an alpha channel
-            PROPBAG2 option = { 0 };
+            PROPBAG2 option = {};
             option.pstrName = const_cast<wchar_t*>(L"EnableV5Header32bppBGRA");
 
             VARIANT varValue;
@@ -1043,7 +1043,7 @@ HRESULT DirectX::LoadFromWICMemory(
 
     // Get metadata
     TexMetadata mdata;
-    WICPixelFormatGUID convertGUID = { 0 };
+    WICPixelFormatGUID convertGUID = {};
     hr = DecodeMetadata(flags, iswic2, decoder.Get(), frame.Get(), mdata, &convertGUID, getMQR);
     if (FAILED(hr))
         return hr;
@@ -1104,7 +1104,7 @@ HRESULT DirectX::LoadFromWICFile(
 
     // Get metadata
     TexMetadata mdata;
-    WICPixelFormatGUID convertGUID = { 0 };
+    WICPixelFormatGUID convertGUID = {};
     hr = DecodeMetadata(flags, iswic2, decoder.Get(), frame.Get(), mdata, &convertGUID, getMQR);
     if (FAILED(hr))
         return hr;
@@ -1170,7 +1170,7 @@ HRESULT DirectX::SaveToWICMemory(
     if (FAILED(hr))
         return hr;
 
-    LARGE_INTEGER li = { { 0 } };
+    LARGE_INTEGER li = {};
     hr = stream->Seek(li, STREAM_SEEK_SET, 0);
     if (FAILED(hr))
         return hr;
@@ -1227,7 +1227,7 @@ HRESULT DirectX::SaveToWICMemory(
     if (FAILED(hr))
         return hr;
 
-    LARGE_INTEGER li = { { 0 } };
+    LARGE_INTEGER li = {};
     hr = stream->Seek(li, STREAM_SEEK_SET, 0);
     if (FAILED(hr))
         return hr;

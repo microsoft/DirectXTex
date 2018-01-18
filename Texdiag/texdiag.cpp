@@ -2977,7 +2977,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     int pixely = -1;
     DXGI_FORMAT diffFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
     DWORD diffFileType = WIC_CODEC_BMP;
-    wchar_t szOutputFile[MAX_PATH] = { 0 };
+    wchar_t szOutputFile[MAX_PATH] = {};
 
     // Initialize COM (needed for WIC)
     HRESULT hr = hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);

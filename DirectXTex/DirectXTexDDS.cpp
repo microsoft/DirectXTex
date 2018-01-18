@@ -550,7 +550,7 @@ HRESULT DirectX::_EncodeDDSHeader(
         flags |= DDS_FLAGS_FORCE_DX10_EXT;
     }
 
-    DDS_PIXELFORMAT ddpf = { 0 };
+    DDS_PIXELFORMAT ddpf = {};
     if (!(flags & DDS_FLAGS_FORCE_DX10_EXT))
     {
         switch (metadata.format)

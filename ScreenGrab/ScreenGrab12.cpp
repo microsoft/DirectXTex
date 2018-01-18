@@ -211,7 +211,7 @@ namespace
         {
             if (m_handle)
             {
-                FILE_DISPOSITION_INFO info = {0};
+                FILE_DISPOSITION_INFO info = {};
                 info.DeleteFile = TRUE;
                 (void)SetFileInformationByHandle(m_handle, FileDispositionInfo, &info, sizeof(info));
             }
