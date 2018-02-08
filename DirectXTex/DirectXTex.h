@@ -634,10 +634,10 @@ namespace DirectX
 
     HRESULT __cdecl TransformImage( _In_ const Image& image,
                                     _In_ std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels,
-                                        _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
+                                    _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
                                     ScratchImage& result );
     HRESULT __cdecl TransformImage( _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-                                        _In_ std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels,
+                                    _In_ std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels,
                                     _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
                                     ScratchImage& result );
 
