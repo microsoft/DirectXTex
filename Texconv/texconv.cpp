@@ -102,7 +102,19 @@ enum OPTIONS
     OPT_TONEMAP,
     OPT_X2_BIAS,
     OPT_FILELIST,
+    OPT_ROTATE_COLOR,
+    OPT_PAPER_WHITE_NITS,
     OPT_MAX
+};
+
+enum
+{
+    ROTATE_709_TO_HDR10 = 1,
+    ROTATE_HDR10_TO_709,
+    ROTATE_709_TO_2020,
+    ROTATE_2020_TO_709,
+    ROTATE_P3_TO_HDR10,
+    ROTATE_P3_TO_2020,
 };
 
 static_assert(OPT_MAX <= 64, "dwOptions is a DWORD64 bitfield");
@@ -174,6 +186,8 @@ const SValue g_pOptions[] =
     { L"tonemap",       OPT_TONEMAP },
     { L"x2bias",        OPT_X2_BIAS },
     { L"flist",         OPT_FILELIST },
+    { L"rotatecolor",   OPT_ROTATE_COLOR },
+    { L"nits",          OPT_PAPER_WHITE_NITS },
     { nullptr,          0 }
 };
 
@@ -336,6 +350,17 @@ const SValue g_pFilters[] =
     { L"BOX_DITHER_DIFFUSION",      TEX_FILTER_BOX | TEX_FILTER_DITHER_DIFFUSION },
     { L"TRIANGLE_DITHER_DIFFUSION", TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER_DIFFUSION },
     { nullptr,                      TEX_FILTER_DEFAULT                              }
+};
+
+const SValue g_pRotateColor[] =
+{
+    { L"709to2020", ROTATE_709_TO_2020 },
+    { L"2020to709", ROTATE_2020_TO_709 },
+    { L"709toHDR10", ROTATE_709_TO_HDR10 },
+    { L"HDR10to709", ROTATE_HDR10_TO_709 },
+    { L"P3to2020", ROTATE_P3_TO_2020 },
+    { L"P3toHDR10", ROTATE_P3_TO_HDR10 },
+    { nullptr, 0 },
 };
 
 #define CODEC_DDS 0xFFFF0001 
@@ -697,6 +722,8 @@ namespace
             L"   -aw <weight>        BC7 GPU compressor weighting for alpha error metric\n"
             L"                       (defaults to 1.0)\n");
         wprintf(L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n");
+        wprintf(L"   -rotatecolor <rot>  rotates color primaries and/or applies a curve\n");
+        wprintf(L"   -nits <value>       paper-white value in nits to use for HDR10 (defaults to 200.0)\n");
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
         wprintf(L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n");
         wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
@@ -706,6 +733,9 @@ namespace
 
         wprintf(L"\n   <filter>: ");
         PrintList(13, g_pFilters);
+
+        wprintf(L"\n   <rot>: ");
+        PrintList(13, g_pRotateColor);
 
         wprintf(L"\n   <filetype>: ");
         PrintList(15, g_pSaveFileTypes);
@@ -868,6 +898,44 @@ namespace
             }
         }
     }
+
+    const XMVECTORF32 c_MaxNitsFor2084 = { 10000.0f, 10000.0f, 10000.0f, 1.f };
+
+    const XMMATRIX c_from709to2020 =
+    {
+        { 0.6274040f, 0.0690970f, 0.0163916f, 0.f },
+        { 0.3292820f, 0.9195400f, 0.0880132f, 0.f },
+        { 0.0433136f, 0.0113612f, 0.8955950f, 0.f },
+        { 0.f,        0.f,        0.f,        1.f }
+    };
+
+    const XMMATRIX c_from2020to709 =
+    {
+        { 1.6604910f,  -0.1245505f, -0.0181508f, 0.f },
+        { -0.5876411f,  1.1328999f, -0.1005789f, 0.f },
+        { -0.0728499f, -0.0083494f,  1.1187297f, 0.f },
+        { 0.f,          0.f,         0.f,        1.f }
+    };
+
+    const XMMATRIX c_fromP3to2020 =
+    {
+        { 0.753845f, 0.0457456f, -0.00121055f, 0.f },
+        { 0.198593f, 0.941777f,   0.0176041f,  0.f },
+        { 0.047562f, 0.0124772f,  0.983607f,   0.f },
+        { 0.f,       0.f,         0.f,         1.f }
+    };
+
+    inline float LinearToST2084(float normalizedLinearValue)
+    {
+        float ST2084 = pow((0.8359375f + 18.8515625f * pow(abs(normalizedLinearValue), 0.1593017578f)) / (1.0f + 18.6875f * pow(abs(normalizedLinearValue), 0.1593017578f)), 78.84375f);
+        return ST2084;  // Don't clamp between [0..1], so we can still perform operations on scene values higher than 10,000 nits
+    }
+
+    inline float ST2084ToLinear(float ST2084)
+    {
+        float normalizedLinear = pow(std::max(pow(abs(ST2084), 1.0f / 78.84375f) - 0.8359375f, 0.0f) / (18.8515625f - 18.6875f * pow(abs(ST2084), 1.0f / 78.84375f)), 1.0f / 0.1593017578f);
+        return normalizedLinear;
+    }
 }
 
 
@@ -896,6 +964,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float nmapAmplitude = 1.f;
     float wicQuality = -1.f;
     DWORD colorKey = 0;
+    DWORD dwRotateColor = 0;
+    float paperWhiteNits = 200.f;
 
     wchar_t szPrefix[MAX_PATH];
     wchar_t szSuffix[MAX_PATH];
@@ -961,6 +1031,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_WIC_QUALITY:
             case OPT_COLORKEY:
             case OPT_FILELIST:
+            case OPT_ROTATE_COLOR:
+            case OPT_PAPER_WHITE_NITS:
                 if (!*pValue)
                 {
                     if ((iArg + 1 >= argc))
@@ -1023,6 +1095,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (!dwFilter)
                 {
                     wprintf(L"Invalid value specified with -if (%ls)\n", pValue);
+                    wprintf(L"\n");
+                    PrintUsage();
+                    return 1;
+                }
+                break;
+
+            case OPT_ROTATE_COLOR:
+                dwRotateColor = LookupByName(pValue, g_pRotateColor);
+                if (!dwRotateColor)
+                {
+                    wprintf(L"Invalid value specified with -rotatecolor (%ls)\n", pValue);
                     wprintf(L"\n");
                     PrintUsage();
                     return 1;
@@ -1322,6 +1405,22 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         inFile.ignore(1000, '\n');
                     }
                     inFile.close();
+                }
+                break;
+
+            case OPT_PAPER_WHITE_NITS:
+                if (swscanf_s(pValue, L"%f", &paperWhiteNits) != 1)
+                {
+                    wprintf(L"Invalid value specified with -nits (%ls)\n", pValue);
+                    wprintf(L"\n");
+                    PrintUsage();
+                    return 1;
+                }
+                else if (paperWhiteNits > 10000.f || paperWhiteNits <= 0.f)
+                {
+                    wprintf(L"-nits (%ls) parameter must be between 0 and 10000\n", pValue);
+                    wprintf(L"\n");
+                    return 1;
                 }
                 break;
             }
@@ -1752,6 +1851,200 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             assert(info.depth == tinfo.depth);
             assert(info.arraySize == tinfo.arraySize);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.format == tinfo.format);
+            assert(info.dimension == tinfo.dimension);
+
+            image.swap(timage);
+            cimage.reset();
+        }
+
+        // --- Color rotation (if requested) -------------------------------------------
+        if (dwRotateColor)
+        {
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
+            switch (dwRotateColor)
+            {
+            case ROTATE_709_TO_HDR10:
+                hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                {
+                    UNREFERENCED_PARAMETER(y);
+
+                    XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
+
+                    for (size_t j = 0; j < width; ++j)
+                    {
+                        XMVECTOR value = inPixels[j];
+
+                        XMVECTOR nvalue = XMVector3Transform(value, c_from709to2020);
+
+                        // Convert to ST.2084
+                        nvalue = XMVectorDivide(XMVectorMultiply(nvalue, paperWhite), c_MaxNitsFor2084);
+
+                        XMFLOAT4A tmp;
+                        XMStoreFloat4A(&tmp, nvalue);
+
+                        tmp.x = LinearToST2084(tmp.x);
+                        tmp.y = LinearToST2084(tmp.y);
+                        tmp.z = LinearToST2084(tmp.z);
+
+                        nvalue = XMLoadFloat4A(&tmp);
+
+                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                        outPixels[j] = value;
+                    }
+                }, *timage);
+                break;
+
+            case ROTATE_709_TO_2020:
+                hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                {
+                    UNREFERENCED_PARAMETER(y);
+
+                    for (size_t j = 0; j < width; ++j)
+                    {
+                        XMVECTOR value = inPixels[j];
+
+                        XMVECTOR nvalue = XMVector3Transform(value, c_from709to2020);
+
+                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                        outPixels[j] = value;
+                    }
+                }, *timage);
+                break;
+
+            case ROTATE_HDR10_TO_709:
+                hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                {
+                    UNREFERENCED_PARAMETER(y);
+
+                    XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
+
+                    for (size_t j = 0; j < width; ++j)
+                    {
+                        XMVECTOR value = inPixels[j];
+
+                        // Convert from ST.2084
+                        XMFLOAT4A tmp;
+                        XMStoreFloat4A(&tmp, value);
+
+                        tmp.x = ST2084ToLinear(tmp.x);
+                        tmp.y = ST2084ToLinear(tmp.y);
+                        tmp.z = ST2084ToLinear(tmp.z);
+
+                        XMVECTOR nvalue = XMLoadFloat4A(&tmp);
+
+                        nvalue = XMVectorDivide(XMVectorMultiply(nvalue, c_MaxNitsFor2084), paperWhite);
+
+                        nvalue = XMVector3Transform(nvalue, c_from2020to709);
+
+                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                        outPixels[j] = value;
+                    }
+                }, *timage);
+                break;
+
+            case ROTATE_2020_TO_709:
+                hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                {
+                    UNREFERENCED_PARAMETER(y);
+
+                    for (size_t j = 0; j < width; ++j)
+                    {
+                        XMVECTOR value = inPixels[j];
+
+                        XMVECTOR nvalue = XMVector3Transform(value, c_from2020to709);
+
+                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                        outPixels[j] = value;
+                    }
+                }, *timage);
+                break;
+
+            case ROTATE_P3_TO_HDR10:
+                hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                {
+                    UNREFERENCED_PARAMETER(y);
+
+                    XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
+
+                    for (size_t j = 0; j < width; ++j)
+                    {
+                        XMVECTOR value = inPixels[j];
+
+                        XMVECTOR nvalue = XMVector3Transform(value, c_fromP3to2020);
+
+                        // Convert to ST.2084
+                        nvalue = XMVectorDivide(XMVectorMultiply(nvalue, paperWhite), c_MaxNitsFor2084);
+
+                        XMFLOAT4A tmp;
+                        XMStoreFloat4A(&tmp, nvalue);
+
+                        tmp.x = LinearToST2084(tmp.x);
+                        tmp.y = LinearToST2084(tmp.y);
+                        tmp.z = LinearToST2084(tmp.z);
+
+                        nvalue = XMLoadFloat4A(&tmp);
+
+                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                        outPixels[j] = value;
+                    }
+                }, *timage);
+                break;
+
+            case ROTATE_P3_TO_2020:
+                hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                {
+                    UNREFERENCED_PARAMETER(y);
+
+                    for (size_t j = 0; j < width; ++j)
+                    {
+                        XMVECTOR value = inPixels[j];
+
+                        XMVECTOR nvalue = XMVector3Transform(value, c_fromP3to2020);
+
+                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                        outPixels[j] = value;
+                    }
+                }, *timage);
+                break;
+
+            default:
+                hr = E_NOTIMPL;
+                break;
+            }
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [rotate color apply] (%x)\n", hr);
+                return 1;
+            }
+
+            auto& tinfo = timage->GetMetadata();
+            tinfo;
+
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
             assert(info.miscFlags == tinfo.miscFlags);
             assert(info.format == tinfo.format);
             assert(info.dimension == tinfo.dimension);
