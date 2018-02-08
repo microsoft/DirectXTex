@@ -53,6 +53,7 @@ enum COMMANDS
     CMD_V_CROSS,
     CMD_H_STRIP,
     CMD_V_STRIP,
+    CMD_MERGE,
     CMD_MAX
 };
 
@@ -106,6 +107,7 @@ const SValue g_pCommands[] =
     { L"v-cross",   CMD_V_CROSS },
     { L"h-strip",   CMD_H_STRIP },
     { L"v-strip",   CMD_V_STRIP },
+    { L"merge",     CMD_MERGE },
     { nullptr,      0 }
 };
 
@@ -250,9 +252,9 @@ const SValue g_pExtFileTypes [] =
     { L".WDP",  WIC_CODEC_WMP },
     { L".HDP",  WIC_CODEC_WMP },
     { L".JXR",  WIC_CODEC_WMP },
-#ifdef USE_OPENEXR
+    #ifdef USE_OPENEXR
     { L"EXR",   CODEC_EXR },
-#endif
+    #endif
     { nullptr,  CODEC_DDS }
 };
 
@@ -483,7 +485,8 @@ namespace
         wprintf(L"   array               create texture array\n");
         wprintf(L"   cubearray           create cubemap array\n");
         wprintf(L"   h-cross or v-cross  create a cross image from a cubemap\n");
-        wprintf(L"   h-strip or v-strip  create a strip image from a cubemap\n\n");
+        wprintf(L"   h-strip or v-strip  create a strip image from a cubemap\n");
+        wprintf(L"   merge               create texture from rgb image and alpha image\n\n");
         wprintf(L"   -r                  wildcard filename search is recursive\n");
         wprintf(L"   -w <n>              width\n");
         wprintf(L"   -h <n>              height\n");
@@ -506,6 +509,29 @@ namespace
         wprintf(L"\n   <filter>: ");
         PrintList(13, g_pFilters);
     }
+
+    HRESULT SaveImageFile(const Image& img, DWORD fileType, const wchar_t* szOutputFile)
+    {
+        switch (fileType)
+        {
+        case CODEC_DDS:
+            return SaveToDDSFile(img, DDS_FLAGS_NONE, szOutputFile);
+
+        case CODEC_TGA:
+            return SaveToTGAFile(img, szOutputFile);
+
+        case CODEC_HDR:
+            return SaveToHDRFile(img, szOutputFile);
+
+        #ifdef USE_OPENEXR
+        case CODEC_EXR:
+            return SaveToEXRFile(img, szOutputFile);
+        #endif
+
+        default:
+            return SaveToWICFile(img, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(fileType)), szOutputFile);
+        }
+    }
 }
 
 
@@ -524,7 +550,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     DWORD dwFilter = TEX_FILTER_DEFAULT;
     DWORD dwSRGB = 0;
     DWORD dwFilterOpts = 0;
-    DWORD CrossFileType = WIC_CODEC_BMP;
+    DWORD fileType = WIC_CODEC_BMP;
 
     wchar_t szOutputFile[MAX_PATH] = {};
 
@@ -554,10 +580,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_V_CROSS:
     case CMD_H_STRIP:
     case CMD_V_STRIP:
+    case CMD_MERGE:
         break;
 
     default:
-        wprintf(L"Must use one of: cube, volume, array, cubearray,\n   h-cross, v-cross, h-strip, or v-strip\n\n");
+        wprintf(L"Must use one of: cube, volume, array, cubearray,\n   h-cross, v-cross, h-strip, v-strip, or merge\n\n");
         return 1;
     }
 
@@ -669,7 +696,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 wchar_t ext[_MAX_EXT];
                 _wsplitpath_s(szOutputFile, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
 
-                CrossFileType = LookupByName(ext, g_pExtFileTypes);
+                fileType = LookupByName(ext, g_pExtFileTypes);
 
                 switch (dwCommand)
                 {
@@ -677,10 +704,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 case CMD_V_CROSS:
                 case CMD_H_STRIP:
                 case CMD_V_STRIP:
+                case CMD_MERGE:
                     break;
 
                 default:
-                    if (CrossFileType != CODEC_DDS)
+                    if (fileType != CODEC_DDS)
                     {
                         wprintf(L"Assembled output file must be a dds\n");
                         return 1;
@@ -789,6 +817,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         if (conversion.size() > 1)
         {
             wprintf(L"ERROR: cross/strip output only accepts 1 input file\n");
+            return 1;
+        }
+        break;
+
+    case CMD_MERGE:
+        if (conversion.size() > 2)
+        {
+            wprintf(L"ERROR: merge output only accepts 2 input files\n");
             return 1;
         }
         break;
@@ -910,7 +946,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
             }
-#ifdef USE_OPENEXR
+            #ifdef USE_OPENEXR
             else if (_wcsicmp(ext, L".exr") == 0)
             {
                 hr = LoadFromEXRFile(pConv->szSrc, &info, *image);
@@ -920,7 +956,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     continue;
                 }
             }
-#endif
+            #endif
             else
             {
                 // WIC shares the same filter values for mode and dither
@@ -1392,31 +1428,89 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
         }
 
-        switch (CrossFileType)
+        hr = SaveImageFile(*dest, fileType, szOutputFile);
+        if (FAILED(hr))
         {
-        case CODEC_DDS:
-            hr = SaveToDDSFile(*dest, DDS_FLAGS_NONE, szOutputFile);
-            break;
+            wprintf(L" FAILED (%x)\n", hr);
+            return 1;
+        }
+        break;
+    }
 
-        case CODEC_TGA:
-            hr = SaveToTGAFile(*dest, szOutputFile);
-            break;
-
-        case CODEC_HDR:
-            hr = SaveToHDRFile(*dest, szOutputFile);
-            break;
-
-#ifdef USE_OPENEXR
-        case CODEC_EXR:
-            hr = SaveToEXRFile(*dest, szOutputFile);
-            break;
-#endif
-
-        default:
-            hr = SaveToWICFile(*dest, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(CrossFileType)), szOutputFile);
-            break;
+    case CMD_MERGE:
+    {
+        // Capture alpha from source image (the second input filename)
+        ScratchImage alphaImage;
+        hr = alphaImage.Initialize2D(DXGI_FORMAT_R32_FLOAT, width, height, 1, 1);
+        if (FAILED(hr))
+        {
+            wprintf(L"FAILED setting up alpha image (%x)\n", hr);
+            return 1;
         }
 
+        const Image& img = *alphaImage.GetImage(0, 0, 0);
+
+        hr = EvaluateImage(*loadedImages[1]->GetImage(0, 0, 0),
+            [&](const XMVECTOR* pixels, size_t width, size_t y)
+        {
+            auto alphaPtr = reinterpret_cast<float*>(img.pixels + img.rowPitch * y);
+
+            for (size_t j = 0; j < width; ++j)
+            {
+                XMVECTOR value = pixels[j];
+
+                // DXTex's Open Alpha onto Surface always loaded alpha from the blue channel
+
+                *alphaPtr++ = XMVectorGetZ(value);
+            }
+        });
+        if (FAILED(hr))
+        {
+            wprintf(L" FAILED [reading alpha image] (%x)\n", hr);
+            return 1;
+        }
+
+        // Merge with rgb from our source iamge (the first input filename)
+        const Image& rgb = *loadedImages[0]->GetImage(0, 0, 0);
+
+        ScratchImage result;
+        hr = TransformImage(rgb, [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+        {
+            auto alphaPtr = reinterpret_cast<float*>(img.pixels + img.rowPitch * y);
+
+            for (size_t j = 0; j < width; ++j)
+            {
+                XMVECTOR value = inPixels[j];
+
+                XMVECTOR nvalue = XMVectorReplicate(*alphaPtr++);
+
+                value = XMVectorSelect(nvalue, value, g_XMSelect1110);
+
+                outPixels[j] = value;
+            }
+        }, result);
+        if (FAILED(hr))
+        {
+            wprintf(L" FAILED [merge image] (%x)\n", hr);
+            return 1;
+        }
+
+        // Write merged texture
+        wprintf(L"\nWriting %ls ", szOutputFile);
+        PrintInfo(result.GetMetadata());
+        wprintf(L"\n");
+        fflush(stdout);
+
+        if (~dwOptions & (1 << OPT_OVERWRITE))
+        {
+            if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+            {
+                wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
+                return 1;
+            }
+        }
+
+        hr = SaveImageFile(*result.GetImage(0, 0, 0), fileType, szOutputFile);
         if (FAILED(hr))
         {
             wprintf(L" FAILED (%x)\n", hr);
