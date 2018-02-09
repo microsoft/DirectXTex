@@ -50,6 +50,7 @@ enum COMMANDS
     CMD_COMPARE,
     CMD_DIFF,
     CMD_DUMPBC,
+    CMD_DUMPDDS,
     CMD_MAX
 };
 
@@ -62,6 +63,7 @@ enum OPTIONS
     OPT_DDS_BAD_DXTN_TAILS,
     OPT_OUTPUTFILE,
     OPT_OVERWRITE,
+    OPT_FILETYPE,
     OPT_NOLOGO,
     OPT_TYPELESS_UNORM,
     OPT_TYPELESS_FLOAT,
@@ -96,6 +98,7 @@ const SValue g_pCommands[] =
     { L"compare",   CMD_COMPARE },
     { L"diff",      CMD_DIFF },
     { L"dumpbc",    CMD_DUMPBC },
+    { L"dumpdds",   CMD_DUMPDDS },
     { nullptr,      0 }
 };
 
@@ -109,6 +112,7 @@ const SValue g_pOptions[] =
     { L"nologo",    OPT_NOLOGO },
     { L"o",         OPT_OUTPUTFILE },
     { L"y",         OPT_OVERWRITE },
+    { L"ft",        OPT_FILETYPE },
     { L"tu",        OPT_TYPELESS_UNORM },
     { L"tf",        OPT_TYPELESS_FLOAT },
     { L"xlum",      OPT_EXPAND_LUMINANCE },
@@ -295,6 +299,23 @@ const SValue g_pFilters[] =
 #define CODEC_TGA 0xFFFF0002
 #define CODEC_HDR 0xFFFF0005
 #define CODEC_EXR 0xFFFF0006
+
+const SValue g_pDumpFileTypes[] =
+{
+    { L"BMP",   WIC_CODEC_BMP  },
+    { L"JPG",   WIC_CODEC_JPEG },
+    { L"JPEG",  WIC_CODEC_JPEG },
+    { L"PNG",   WIC_CODEC_PNG  },
+    { L"TGA",   CODEC_TGA      },
+    { L"HDR",   CODEC_HDR      },
+    { L"TIF",   WIC_CODEC_TIFF },
+    { L"TIFF",  WIC_CODEC_TIFF },
+    { L"JXR",   WIC_CODEC_WMP  },
+#ifdef USE_OPENEXR
+    { L"EXR",   CODEC_EXR      },
+#endif
+    { nullptr,  CODEC_DDS      }
+};
 
 const SValue g_pExtFileTypes[] =
 {
@@ -498,7 +519,8 @@ namespace
         wprintf(L"   analyze             Analyze and summarize image information\n");
         wprintf(L"   compare             Compare two images with MSE error metric\n");
         wprintf(L"   diff                Generate difference image from two images\n");
-        wprintf(L"   dumpbc              Dump out compressed blocks (DDS BC only)\n\n");
+        wprintf(L"   dumpbc              Dump out compressed blocks (DDS BC only)\n");
+        wprintf(L"   dumpdds             Dump out all the images in a complex DDS\n\n");
         wprintf(L"   -r                  wildcard filename search is recursive\n");
         wprintf(L"   -if <filter>        image filtering\n");
         wprintf(L"\n                       (DDS input only)\n");
@@ -513,6 +535,8 @@ namespace
         wprintf(L"\n                       (dumpbc only)\n");
         wprintf(L"   -targetx <num>      dump pixels at location x (defaults to all)\n");
         wprintf(L"   -targety <num>      dump pixels at location y (defaults to all)\n");
+        wprintf(L"\n                       (dumpdds only)\n");
+        wprintf(L"   -ft <filetype>      output file type\n");
         wprintf(L"\n   -nologo             suppress copyright message\n");
         wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
 
@@ -521,6 +545,9 @@ namespace
 
         wprintf(L"\n   <filter>: ");
         PrintList(13, g_pFilters);
+
+        wprintf(L"\n   <filetype>: ");
+        PrintList(15, g_pDumpFileTypes);
     }
 
     HRESULT LoadImage(const wchar_t *fileName, DWORD dwOptions, DWORD dwFilter, TexMetadata& info, std::unique_ptr<ScratchImage>& image)
@@ -2976,7 +3003,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     int pixelx = -1;
     int pixely = -1;
     DXGI_FORMAT diffFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
-    DWORD diffFileType = WIC_CODEC_BMP;
+    DWORD fileType = WIC_CODEC_BMP;
     wchar_t szOutputFile[MAX_PATH] = {};
 
     // Initialize COM (needed for WIC)
@@ -3002,10 +3029,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_COMPARE:
     case CMD_DIFF:
     case CMD_DUMPBC:
+    case CMD_DUMPDDS:
         break;
 
     default:
-        wprintf(L"Must use one of: info, analyze, compare, diff, or dumpbc\n\n");
+        wprintf(L"Must use one of: info, analyze, compare, diff, dumpbc, or dumpdds\n\n");
         return 1;
     }
 
@@ -3041,6 +3069,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
             case OPT_FILTER:
             case OPT_FORMAT:
+            case OPT_FILETYPE:
             case OPT_OUTPUTFILE:
             case OPT_TARGET_PIXELX:
             case OPT_TARGET_PIXELY:
@@ -3100,7 +3129,26 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     wchar_t ext[_MAX_EXT];
                     _wsplitpath_s(szOutputFile, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
 
-                    diffFileType = LookupByName(ext, g_pExtFileTypes);
+                    fileType = LookupByName(ext, g_pExtFileTypes);
+                }
+                break;
+
+            case OPT_FILETYPE:
+                if (dwCommand != CMD_DUMPDDS)
+                {
+                    wprintf(L"-ft only valid for use with dumpdds command\n");
+                    return 1;
+                }
+                else
+                {
+                    fileType = LookupByName(pValue, g_pDumpFileTypes);
+                    if (!fileType)
+                    {
+                        wprintf(L"Invalid value specified with -ft (%ls)\n", pValue);
+                        wprintf(L"\n");
+                        PrintUsage();
+                        return 1;
+                    }
                 }
                 break;
 
@@ -3288,7 +3336,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }
                 }
 
-                hr = SaveImage(diffImage.GetImage(0, 0, 0), szOutputFile, diffFileType);
+                hr = SaveImage(diffImage.GetImage(0, 0, 0), szOutputFile, fileType);
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED (%x)\n", hr);
@@ -3533,6 +3581,107 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 auto sizeInKb = static_cast<uint32_t>(image->GetPixelsSize() / 1024);
 
                 wprintf(L"   pixel size = %u (KB)\n\n", sizeInKb);
+            }
+            else if (dwCommand == CMD_DUMPDDS)
+            {
+                // --- Dump DDS ------------------------------------------------------------
+                if (IsCompressed(info.format))
+                {
+                    wprintf(L"ERROR: dumpdds only operates on non-compressed format DDS files\n");
+                    return 1;
+                }
+
+                wchar_t ext[_MAX_EXT];
+                wchar_t fname[_MAX_FNAME];
+                _wsplitpath_s(pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, nullptr, 0);
+
+                wcscpy_s(ext, LookupByValue(fileType, g_pDumpFileTypes));
+
+                if (info.depth > 1)
+                {
+                    wprintf(L"Writing by mip (%3Iu) and slice (%3Iu)...", info.mipLevels, info.depth);
+
+                    size_t depth = info.depth;
+                    for (size_t mip = 0; mip < info.mipLevels; ++mip)
+                    {
+                        for (size_t slice = 0; slice < depth; ++slice)
+                        {
+                            const Image* img = image->GetImage(mip, 0, slice);
+
+                            if (!img)
+                            {
+                                wprintf(L"ERROR: Unexpected error at slice %3Iu, mip %3Iu\n", slice, mip);
+                                return 1;
+                            }
+                            else
+                            {
+                                wchar_t subFname[_MAX_FNAME];
+                                if (info.mipLevels > 1)
+                                {
+                                    swprintf_s(subFname, L"%ls_slice%03Iu_mip%03Iu", fname, slice, mip);
+                                }
+                                else
+                                {
+                                    swprintf_s(subFname, L"%ls_slice%03Iu", fname, slice);
+                                }
+
+                                _wmakepath_s(szOutputFile, nullptr, nullptr, subFname, ext);
+
+                                hr = SaveImage(img, szOutputFile, fileType);
+                                if (FAILED(hr))
+                                {
+                                    wprintf(L" FAILED (%x)\n", hr);
+                                    return 1;
+                                }
+                            }
+                        }
+
+                        if (depth > 1)
+                            depth >>= 1;
+                    }
+                    wprintf(L"\n");
+                }
+                else
+                {
+                    wprintf(L"Writing by item (%3Iu) and mip (%3Iu)...", info.arraySize, info.mipLevels);
+
+                    for (size_t item = 0; item < info.arraySize; ++item)
+                    {
+                        for (size_t mip = 0; mip < info.mipLevels; ++mip)
+                        {
+                            const Image* img = image->GetImage(mip, item, 0);
+
+                            if (!img)
+                            {
+                                wprintf(L"ERROR: Unexpected error at item %3Iu, mip %3Iu\n", item, mip);
+                                return 1;
+                            }
+                            else
+                            {
+                                wchar_t subFname[_MAX_FNAME];
+                                if (info.mipLevels > 1)
+                                {
+                                    swprintf_s(subFname, L"%ls_item%03Iu_mip%03Iu", fname, item, mip);
+                                }
+                                else
+                                {
+                                    swprintf_s(subFname, L"%ls_item%03Iu", fname, item);
+                                }
+
+                                _wmakepath_s(szOutputFile, nullptr, nullptr, subFname, ext);
+
+                                hr = SaveImage(img, szOutputFile, fileType);
+                                if (FAILED(hr))
+                                {
+                                    wprintf(L" FAILED (%x)\n", hr);
+                                    return 1;
+                                }
+                            }
+                        }
+                    }
+
+                    wprintf(L"\n");
+                }
             }
             else if (dwCommand == CMD_DUMPBC)
             {
