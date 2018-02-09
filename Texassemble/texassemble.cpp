@@ -29,7 +29,11 @@
 #include <list>
 #include <vector>
 
+#include <wrl/client.h>
+
 #include <dxgiformat.h>
+
+#include <wincodec.h>
 
 #include "directxtex.h"
 
@@ -42,6 +46,7 @@
 #endif
 
 using namespace DirectX;
+using Microsoft::WRL::ComPtr;
 
 enum COMMANDS
 {
@@ -54,6 +59,7 @@ enum COMMANDS
     CMD_H_STRIP,
     CMD_V_STRIP,
     CMD_MERGE,
+    CMD_GIF,
     CMD_MAX
 };
 
@@ -108,6 +114,7 @@ const SValue g_pCommands[] =
     { L"h-strip",   CMD_H_STRIP },
     { L"v-strip",   CMD_V_STRIP },
     { L"merge",     CMD_MERGE },
+    { L"gif",       CMD_GIF },
     { nullptr,      0 }
 };
 
@@ -486,7 +493,8 @@ namespace
         wprintf(L"   cubearray           create cubemap array\n");
         wprintf(L"   h-cross or v-cross  create a cross image from a cubemap\n");
         wprintf(L"   h-strip or v-strip  create a strip image from a cubemap\n");
-        wprintf(L"   merge               create texture from rgb image and alpha image\n\n");
+        wprintf(L"   merge               create texture from rgb image and alpha image\n");
+        wprintf(L"   gif                 create array from animated gif\n\n");
         wprintf(L"   -r                  wildcard filename search is recursive\n");
         wprintf(L"   -w <n>              width\n");
         wprintf(L"   -h <n>              height\n");
@@ -531,6 +539,184 @@ namespace
         default:
             return SaveToWICFile(img, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(fileType)), szOutputFile);
         }
+    }
+
+    enum
+    {
+        DM_UNDEFINED = 0,
+        DM_NONE = 1,
+        DM_BACKGROUND = 2,
+        DM_PREVIOUS = 3
+    };
+
+    HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<ScratchImage>>& loadedImages)
+    {
+        // https://code.msdn.microsoft.com/windowsapps/Windows-Imaging-Component-65abbc6a/
+
+        bool iswic2;
+        auto pWIC = GetWICFactory(iswic2);
+        if (!pWIC)
+            return E_NOINTERFACE;
+
+        ComPtr<IWICBitmapDecoder> decoder;
+        HRESULT hr = pWIC->CreateDecoderFromFilename(szFile, 0, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
+        if (FAILED(hr))
+            return hr;
+
+        {
+            GUID containerFormat;
+            hr = decoder->GetContainerFormat(&containerFormat);
+            if (FAILED(hr))
+                return hr;
+
+            if (memcmp(&containerFormat, &GUID_ContainerFormatGif, sizeof(GUID)) != 0)
+                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        }
+
+        ComPtr<IWICMetadataQueryReader> metareader;
+        hr = decoder->GetMetadataQueryReader(metareader.GetAddressOf());
+        if (FAILED(hr))
+            return hr;
+
+        PROPVARIANT propValue;
+        PropVariantInit(&propValue);
+
+        // Get background color
+        // TODO -
+        UINT bgColor = 0x000000ff;
+
+        // Get global frame size
+        UINT width = 0;
+        UINT height = 0;
+
+        hr = metareader->GetMetadataByName(L"/logscrdesc/Width", &propValue);
+        if (FAILED(hr))
+            return hr;
+
+        if (propValue.vt != VT_UI2)
+            return E_FAIL;
+
+        width = propValue.uiVal;
+        PropVariantClear(&propValue);
+
+        hr = metareader->GetMetadataByName(L"/logscrdesc/Height", &propValue);
+        if (FAILED(hr))
+            return hr;
+
+        if (propValue.vt != VT_UI2)
+            return E_FAIL;
+
+        height = propValue.uiVal;
+        PropVariantClear(&propValue);
+
+        UINT fcount;
+        hr = decoder->GetFrameCount(&fcount);
+        if (FAILED(hr))
+            return hr;
+
+        UINT disposal = DM_NONE;
+        RECT rct = {};
+
+        for (UINT iframe = 0; iframe < fcount; ++iframe)
+        {
+            std::unique_ptr<ScratchImage> frameImage(new (std::nothrow) ScratchImage);
+            if (!frameImage)
+                return E_OUTOFMEMORY;
+
+            if (disposal == DM_PREVIOUS && iframe > 0)
+            {
+                hr = frameImage->InitializeFromImage(*loadedImages[iframe - 1]->GetImage(0, 0, 0));
+            }
+            else
+            {
+                hr = frameImage->Initialize2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, 1, 1);
+            }
+            if (FAILED(hr))
+                return hr;
+
+            if (disposal == DM_BACKGROUND)
+            {
+                // TODO - Clear rectangle to background color using rct
+                bgColor;
+            }
+
+            ComPtr<IWICBitmapFrameDecode> frame;
+            hr = decoder->GetFrame(iframe, frame.GetAddressOf());
+            if (FAILED(hr))
+                return hr;
+
+            ComPtr<IWICMetadataQueryReader> frameMeta;
+            hr = frame->GetMetadataQueryReader(frameMeta.GetAddressOf());
+            if (SUCCEEDED(hr))
+            {
+                hr = frameMeta->GetMetadataByName(L"/imgdesc/Left", &propValue);
+                if (SUCCEEDED(hr))
+                {
+                    hr = (propValue.vt == VT_UI2 ? S_OK : E_FAIL);
+                    if (SUCCEEDED(hr))
+                    {
+                        rct.left = static_cast<long>(propValue.uiVal);
+                    }
+                    PropVariantClear(&propValue);
+                }
+
+                hr = frameMeta->GetMetadataByName(L"/imgdesc/Top", &propValue);
+                if (SUCCEEDED(hr))
+                {
+                    hr = (propValue.vt == VT_UI2 ? S_OK : E_FAIL);
+                    if (SUCCEEDED(hr))
+                    {
+                        rct.top = static_cast<long>(propValue.uiVal);
+                    }
+                    PropVariantClear(&propValue);
+                }
+
+                hr = frameMeta->GetMetadataByName(L"/imgdesc/Width", &propValue);
+                if (SUCCEEDED(hr))
+                {
+                    hr = (propValue.vt == VT_UI2 ? S_OK : E_FAIL);
+                    if (SUCCEEDED(hr))
+                    {
+                        rct.right = static_cast<long>(propValue.uiVal) + rct.left;
+                    }
+                    PropVariantClear(&propValue);
+                }
+
+                hr = frameMeta->GetMetadataByName(L"/imgdesc/Height", &propValue);
+                if (SUCCEEDED(hr))
+                {
+                    hr = (propValue.vt == VT_UI2 ? S_OK : E_FAIL);
+                    if (SUCCEEDED(hr))
+                    {
+                        rct.bottom = static_cast<long>(propValue.uiVal) + rct.top;
+                    }
+                    PropVariantClear(&propValue);
+                }
+
+                disposal = DM_UNDEFINED;
+                hr = frameMeta->GetMetadataByName(L"/grctlext/Disposal", &propValue);
+                if (SUCCEEDED(hr))
+                {
+                    hr = (propValue.vt == VT_UI1 ? S_OK : E_FAIL);
+                    if (SUCCEEDED(hr))
+                    {
+                        disposal = propValue.bVal;
+                    }
+                    PropVariantClear(&propValue);
+                }
+
+                // TODO - Load raw frame
+
+                // TODO - CopyRectangle
+            }
+
+            loadedImages.emplace_back(std::move(frameImage));
+        }
+
+        PropVariantClear(&propValue);
+
+        // TODO -
+        return E_NOTIMPL;
     }
 }
 
@@ -581,10 +767,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_H_STRIP:
     case CMD_V_STRIP:
     case CMD_MERGE:
+    case CMD_GIF:
         break;
 
     default:
-        wprintf(L"Must use one of: cube, volume, array, cubearray,\n   h-cross, v-cross, h-strip, v-strip, or merge\n\n");
+        wprintf(L"Must use one of: cube, volume, array, cubearray,\n   h-cross, v-cross, h-strip, v-strip\n   merge, gif\n\n");
         return 1;
     }
 
@@ -814,9 +1001,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_V_CROSS:
     case CMD_H_STRIP:
     case CMD_V_STRIP:
+    case CMD_GIF:
         if (conversion.size() > 1)
         {
-            wprintf(L"ERROR: cross/strip output only accepts 1 input file\n");
+            wprintf(L"ERROR: cross/strip/gif output only accepts 1 input file\n");
             return 1;
         }
         break;
@@ -835,239 +1023,178 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     std::vector<std::unique_ptr<ScratchImage>> loadedImages;
 
-    for (auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv)
+    if (dwCommand == CMD_GIF)
     {
         wchar_t ext[_MAX_EXT];
         wchar_t fname[_MAX_FNAME];
-        _wsplitpath_s(pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT);
+        _wsplitpath_s(conversion.front().szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT);
 
-        // Load source image
-        if (pConv != conversion.begin())
-            wprintf(L"\n");
-        else if (!*szOutputFile)
+        wprintf(L"reading %ls", conversion.front().szSrc);
+        fflush(stdout);
+
+        if (!*szOutputFile)
         {
+            _wmakepath_s(szOutputFile, nullptr, nullptr, fname, L".dds");
+        }
+
+        hr = LoadAnimatedGif(conversion.front().szSrc, loadedImages);
+        if (FAILED(hr))
+        {
+            wprintf(L" FAILED (%x)\n", hr);
+            return 1;
+        }
+    }
+    else
+    {
+        for (auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv)
+        {
+            wchar_t ext[_MAX_EXT];
+            wchar_t fname[_MAX_FNAME];
+            _wsplitpath_s(pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT);
+
+            // Load source image
+            if (pConv != conversion.begin())
+                wprintf(L"\n");
+            else if (!*szOutputFile)
+            {
+                switch (dwCommand)
+                {
+                case CMD_H_CROSS:
+                case CMD_V_CROSS:
+                case CMD_H_STRIP:
+                case CMD_V_STRIP:
+                    _wmakepath_s(szOutputFile, nullptr, nullptr, fname, L".bmp");
+                    break;
+
+                default:
+                    if (_wcsicmp(ext, L".dds") == 0)
+                    {
+                        wprintf(L"ERROR: Need to specify output file via -o\n");
+                        return 1;
+                    }
+
+                    _wmakepath_s(szOutputFile, nullptr, nullptr, fname, L".dds");
+                    break;
+                }
+            }
+
+            wprintf(L"reading %ls", pConv->szSrc);
+            fflush(stdout);
+
+            TexMetadata info;
+            std::unique_ptr<ScratchImage> image(new (std::nothrow) ScratchImage);
+            if (!image)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
             switch (dwCommand)
             {
             case CMD_H_CROSS:
             case CMD_V_CROSS:
             case CMD_H_STRIP:
             case CMD_V_STRIP:
-                _wmakepath_s(szOutputFile, nullptr, nullptr, fname, L".bmp");
+                if (_wcsicmp(ext, L".dds") == 0)
+                {
+                    hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED (%x)\n", hr);
+                        return 1;
+                    }
+
+                    if (!info.IsCubemap())
+                    {
+                        wprintf(L"\nERROR: Input must be a cubemap\n");
+                        return 1;
+                    }
+                    else if (info.arraySize != 6)
+                    {
+                        wprintf(L"\nWARNING: Only the first cubemap in an array is written out as a cross/strip\n");
+                    }
+                }
+                else
+                {
+                    wprintf(L"\nERROR: Input must be a dds of a cubemap\n");
+                    return 1;
+                }
                 break;
 
             default:
                 if (_wcsicmp(ext, L".dds") == 0)
                 {
-                    wprintf(L"ERROR: Need to specify output file via -o\n");
-                    return 1;
-                }
+                    hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED (%x)\n", hr);
+                        return 1;
+                    }
 
-                _wmakepath_s(szOutputFile, nullptr, nullptr, fname, L".dds");
+                    if (info.mipLevels > 1
+                        || info.IsVolumemap()
+                        || info.IsCubemap())
+                    {
+                        wprintf(L"\nERROR: Can't assemble complex surfaces\n");
+                        return 1;
+                    }
+                }
+                else if (_wcsicmp(ext, L".tga") == 0)
+                {
+                    hr = LoadFromTGAFile(pConv->szSrc, &info, *image);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED (%x)\n", hr);
+                        return 1;
+                    }
+                }
+                else if (_wcsicmp(ext, L".hdr") == 0)
+                {
+                    hr = LoadFromHDRFile(pConv->szSrc, &info, *image);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED (%x)\n", hr);
+                        return 1;
+                    }
+                }
+#ifdef USE_OPENEXR
+                else if (_wcsicmp(ext, L".exr") == 0)
+                {
+                    hr = LoadFromEXRFile(pConv->szSrc, &info, *image);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED (%x)\n", hr);
+                        continue;
+                    }
+                }
+#endif
+                else
+                {
+                    // WIC shares the same filter values for mode and dither
+                    static_assert(WIC_FLAGS_DITHER == TEX_FILTER_DITHER, "WIC_FLAGS_* & TEX_FILTER_* should match");
+                    static_assert(WIC_FLAGS_DITHER_DIFFUSION == TEX_FILTER_DITHER_DIFFUSION, "WIC_FLAGS_* & TEX_FILTER_* should match");
+                    static_assert(WIC_FLAGS_FILTER_POINT == TEX_FILTER_POINT, "WIC_FLAGS_* & TEX_FILTER_* should match");
+                    static_assert(WIC_FLAGS_FILTER_LINEAR == TEX_FILTER_LINEAR, "WIC_FLAGS_* & TEX_FILTER_* should match");
+                    static_assert(WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match");
+                    static_assert(WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match");
+
+                    hr = LoadFromWICFile(pConv->szSrc, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED (%x)\n", hr);
+                        return 1;
+                    }
+                }
                 break;
             }
-        }
 
-        wprintf(L"reading %ls", pConv->szSrc);
-        fflush(stdout);
+            PrintInfo(info);
 
-        TexMetadata info;
-        std::unique_ptr<ScratchImage> image(new (std::nothrow) ScratchImage);
-        if (!image)
-        {
-            wprintf(L"\nERROR: Memory allocation failed\n");
-            return 1;
-        }
+            // Convert texture
+            fflush(stdout);
 
-        switch (dwCommand)
-        {
-        case CMD_H_CROSS:
-        case CMD_V_CROSS:
-        case CMD_H_STRIP:
-        case CMD_V_STRIP:
-            if (_wcsicmp(ext, L".dds") == 0)
-            {
-                hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image);
-                if (FAILED(hr))
-                {
-                    wprintf(L" FAILED (%x)\n", hr);
-                    return 1;
-                }
-
-                if (!info.IsCubemap())
-                {
-                    wprintf(L"\nERROR: Input must be a cubemap\n");
-                    return 1;
-                }
-                else if (info.arraySize != 6)
-                {
-                    wprintf(L"\nWARNING: Only the first cubemap in an array is written out as a cross/strip\n");
-                }
-            }
-            else
-            {
-                wprintf(L"\nERROR: Input must be a dds of a cubemap\n");
-                return 1;
-            }
-            break;
-
-        default:
-            if (_wcsicmp(ext, L".dds") == 0)
-            {
-                hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image);
-                if (FAILED(hr))
-                {
-                    wprintf(L" FAILED (%x)\n", hr);
-                    return 1;
-                }
-
-                if (info.mipLevels > 1
-                    || info.IsVolumemap()
-                    || info.IsCubemap())
-                {
-                    wprintf(L"\nERROR: Can't assemble complex surfaces\n");
-                    return 1;
-                }
-            }
-            else if (_wcsicmp(ext, L".tga") == 0)
-            {
-                hr = LoadFromTGAFile(pConv->szSrc, &info, *image);
-                if (FAILED(hr))
-                {
-                    wprintf(L" FAILED (%x)\n", hr);
-                    return 1;
-                }
-            }
-            else if (_wcsicmp(ext, L".hdr") == 0)
-            {
-                hr = LoadFromHDRFile(pConv->szSrc, &info, *image);
-                if (FAILED(hr))
-                {
-                    wprintf(L" FAILED (%x)\n", hr);
-                    return 1;
-                }
-            }
-            #ifdef USE_OPENEXR
-            else if (_wcsicmp(ext, L".exr") == 0)
-            {
-                hr = LoadFromEXRFile(pConv->szSrc, &info, *image);
-                if (FAILED(hr))
-                {
-                    wprintf(L" FAILED (%x)\n", hr);
-                    continue;
-                }
-            }
-            #endif
-            else
-            {
-                // WIC shares the same filter values for mode and dither
-                static_assert(WIC_FLAGS_DITHER == TEX_FILTER_DITHER, "WIC_FLAGS_* & TEX_FILTER_* should match");
-                static_assert(WIC_FLAGS_DITHER_DIFFUSION == TEX_FILTER_DITHER_DIFFUSION, "WIC_FLAGS_* & TEX_FILTER_* should match");
-                static_assert(WIC_FLAGS_FILTER_POINT == TEX_FILTER_POINT, "WIC_FLAGS_* & TEX_FILTER_* should match");
-                static_assert(WIC_FLAGS_FILTER_LINEAR == TEX_FILTER_LINEAR, "WIC_FLAGS_* & TEX_FILTER_* should match");
-                static_assert(WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match");
-                static_assert(WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match");
-
-                hr = LoadFromWICFile(pConv->szSrc, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image);
-                if (FAILED(hr))
-                {
-                    wprintf(L" FAILED (%x)\n", hr);
-                    return 1;
-                }
-            }
-            break;
-        }
-
-        PrintInfo(info);
-
-        // Convert texture
-        fflush(stdout);
-
-        // --- Planar ------------------------------------------------------------------
-        if (IsPlanar(info.format))
-        {
-            auto img = image->GetImage(0, 0, 0);
-            assert(img);
-            size_t nimg = image->GetImageCount();
-
-            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
-            if (!timage)
-            {
-                wprintf(L"\nERROR: Memory allocation failed\n");
-                return 1;
-            }
-
-            hr = ConvertToSinglePlane(img, nimg, info, *timage);
-            if (FAILED(hr))
-            {
-                wprintf(L" FAILED [converttosingleplane] (%x)\n", hr);
-                continue;
-            }
-
-            auto& tinfo = timage->GetMetadata();
-
-            info.format = tinfo.format;
-
-            assert(info.width == tinfo.width);
-            assert(info.height == tinfo.height);
-            assert(info.depth == tinfo.depth);
-            assert(info.arraySize == tinfo.arraySize);
-            assert(info.mipLevels == tinfo.mipLevels);
-            assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.dimension == tinfo.dimension);
-
-            image.swap(timage);
-        }
-
-        // --- Decompress --------------------------------------------------------------
-        if (IsCompressed(info.format))
-        {
-            const Image* img = image->GetImage(0, 0, 0);
-            assert(img);
-            size_t nimg = image->GetImageCount();
-
-            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
-            if (!timage)
-            {
-                wprintf(L"\nERROR: Memory allocation failed\n");
-                return 1;
-            }
-
-            hr = Decompress(img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage.get());
-            if (FAILED(hr))
-            {
-                wprintf(L" FAILED [decompress] (%x)\n", hr);
-                continue;
-            }
-
-            const TexMetadata& tinfo = timage->GetMetadata();
-
-            info.format = tinfo.format;
-
-            assert(info.width == tinfo.width);
-            assert(info.height == tinfo.height);
-            assert(info.depth == tinfo.depth);
-            assert(info.arraySize == tinfo.arraySize);
-            assert(info.mipLevels == tinfo.mipLevels);
-            assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.dimension == tinfo.dimension);
-
-            image.swap(timage);
-        }
-
-        // --- Undo Premultiplied Alpha (if requested) ---------------------------------
-        if ((dwOptions & (1 << OPT_DEMUL_ALPHA))
-            && HasAlpha(info.format)
-            && info.format != DXGI_FORMAT_A8_UNORM)
-        {
-            if (info.GetAlphaMode() == TEX_ALPHA_MODE_STRAIGHT)
-            {
-                printf("\nWARNING: Image is already using straight alpha\n");
-            }
-            else if (!info.IsPMAlpha())
-            {
-                printf("\nWARNING: Image is not using premultipled alpha\n");
-            }
-            else
+            // --- Planar ------------------------------------------------------------------
+            if (IsPlanar(info.format))
             {
                 auto img = image->GetImage(0, 0, 0);
                 assert(img);
@@ -1080,15 +1207,16 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                hr = PremultiplyAlpha(img, nimg, info, TEX_PMALPHA_REVERSE | dwSRGB, *timage);
+                hr = ConvertToSinglePlane(img, nimg, info, *timage);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [demultiply alpha] (%x)\n", hr);
+                    wprintf(L" FAILED [converttosingleplane] (%x)\n", hr);
                     continue;
                 }
 
                 auto& tinfo = timage->GetMetadata();
-                info.miscFlags2 = tinfo.miscFlags2;
+
+                info.format = tinfo.format;
 
                 assert(info.width == tinfo.width);
                 assert(info.height == tinfo.height);
@@ -1100,167 +1228,251 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 image.swap(timage);
             }
-        }
 
-        // --- Resize ------------------------------------------------------------------
-        if (!width)
-        {
-            width = info.width;
-        }
-        if (!height)
-        {
-            height = info.height;
-        }
-        if (info.width != width || info.height != height)
-        {
-            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
-            if (!timage)
+            // --- Decompress --------------------------------------------------------------
+            if (IsCompressed(info.format))
             {
-                wprintf(L"\nERROR: Memory allocation failed\n");
-                return 1;
-            }
+                const Image* img = image->GetImage(0, 0, 0);
+                assert(img);
+                size_t nimg = image->GetImageCount();
 
-            hr = Resize(image->GetImages(), image->GetImageCount(), image->GetMetadata(), width, height, dwFilter | dwFilterOpts, *timage.get());
-            if (FAILED(hr))
-            {
-                wprintf(L" FAILED [resize] (%x)\n", hr);
-                return 1;
-            }
-
-            const TexMetadata& tinfo = timage->GetMetadata();
-
-            assert(tinfo.width == width && tinfo.height == height && tinfo.mipLevels == 1);
-            info.width = tinfo.width;
-            info.height = tinfo.height;
-            info.mipLevels = 1;
-
-            assert(info.depth == tinfo.depth);
-            assert(info.arraySize == tinfo.arraySize);
-            assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.format == tinfo.format);
-            assert(info.dimension == tinfo.dimension);
-
-            image.swap(timage);
-        }
-
-        // --- Tonemap (if requested) --------------------------------------------------
-        if (dwOptions & (1 << OPT_TONEMAP))
-        {
-            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
-            if (!timage)
-            {
-                wprintf(L"\nERROR: Memory allocation failed\n");
-                return 1;
-            }
-
-            // Compute max luminosity across all images
-            XMVECTOR maxLum = XMVectorZero();
-            hr = EvaluateImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [&](const XMVECTOR* pixels, size_t width, size_t y)
-            {
-                UNREFERENCED_PARAMETER(y);
-
-                for (size_t j = 0; j < width; ++j)
+                std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                if (!timage)
                 {
-                    static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
-
-                    XMVECTOR v = *pixels++;
-
-                    v = XMVector3Dot(v, s_luminance);
-
-                    maxLum = XMVectorMax(v, maxLum);
+                    wprintf(L"\nERROR: Memory allocation failed\n");
+                    return 1;
                 }
-            });
-            if (FAILED(hr))
-            {
-                wprintf(L" FAILED [tonemap maxlum] (%x)\n", hr);
-                return 1;
-            }
 
-            // Reinhard et al, "Photographic Tone Reproduction for Digital Images" 
-            // http://www.cs.utah.edu/~reinhard/cdrom/
-            maxLum = XMVectorMultiply(maxLum, maxLum);
-
-            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
-            {
-                UNREFERENCED_PARAMETER(y);
-
-                for (size_t j = 0; j < width; ++j)
+                hr = Decompress(img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage.get());
+                if (FAILED(hr))
                 {
-                    XMVECTOR value = inPixels[j];
-
-                    XMVECTOR scale = XMVectorDivide(
-                        XMVectorAdd(g_XMOne, XMVectorDivide(value, maxLum)),
-                        XMVectorAdd(g_XMOne, value));
-                    XMVECTOR nvalue = XMVectorMultiply(value, scale);
-
-                    value = XMVectorSelect(value, nvalue, g_XMSelect1110);
-
-                    outPixels[j] = value;
+                    wprintf(L" FAILED [decompress] (%x)\n", hr);
+                    continue;
                 }
-            }, *timage);
-            if (FAILED(hr))
-            {
-                wprintf(L" FAILED [tonemap apply] (%x)\n", hr);
-                return 1;
+
+                const TexMetadata& tinfo = timage->GetMetadata();
+
+                info.format = tinfo.format;
+
+                assert(info.width == tinfo.width);
+                assert(info.height == tinfo.height);
+                assert(info.depth == tinfo.depth);
+                assert(info.arraySize == tinfo.arraySize);
+                assert(info.mipLevels == tinfo.mipLevels);
+                assert(info.miscFlags == tinfo.miscFlags);
+                assert(info.dimension == tinfo.dimension);
+
+                image.swap(timage);
             }
 
-            auto& tinfo = timage->GetMetadata();
-            tinfo;
-
-            assert(info.width == tinfo.width);
-            assert(info.height == tinfo.height);
-            assert(info.depth == tinfo.depth);
-            assert(info.arraySize == tinfo.arraySize);
-            assert(info.mipLevels == tinfo.mipLevels);
-            assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.format == tinfo.format);
-            assert(info.dimension == tinfo.dimension);
-
-            image.swap(timage);
-        }
-
-        // --- Convert -----------------------------------------------------------------
-        if (format == DXGI_FORMAT_UNKNOWN)
-        {
-            format = info.format;
-        }
-        else if (info.format != format && !IsCompressed(format))
-        {
-            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
-            if (!timage)
+            // --- Undo Premultiplied Alpha (if requested) ---------------------------------
+            if ((dwOptions & (1 << OPT_DEMUL_ALPHA))
+                && HasAlpha(info.format)
+                && info.format != DXGI_FORMAT_A8_UNORM)
             {
-                wprintf(L"\nERROR: Memory allocation failed\n");
-                return 1;
+                if (info.GetAlphaMode() == TEX_ALPHA_MODE_STRAIGHT)
+                {
+                    printf("\nWARNING: Image is already using straight alpha\n");
+                }
+                else if (!info.IsPMAlpha())
+                {
+                    printf("\nWARNING: Image is not using premultipled alpha\n");
+                }
+                else
+                {
+                    auto img = image->GetImage(0, 0, 0);
+                    assert(img);
+                    size_t nimg = image->GetImageCount();
+
+                    std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                    if (!timage)
+                    {
+                        wprintf(L"\nERROR: Memory allocation failed\n");
+                        return 1;
+                    }
+
+                    hr = PremultiplyAlpha(img, nimg, info, TEX_PMALPHA_REVERSE | dwSRGB, *timage);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED [demultiply alpha] (%x)\n", hr);
+                        continue;
+                    }
+
+                    auto& tinfo = timage->GetMetadata();
+                    info.miscFlags2 = tinfo.miscFlags2;
+
+                    assert(info.width == tinfo.width);
+                    assert(info.height == tinfo.height);
+                    assert(info.depth == tinfo.depth);
+                    assert(info.arraySize == tinfo.arraySize);
+                    assert(info.mipLevels == tinfo.mipLevels);
+                    assert(info.miscFlags == tinfo.miscFlags);
+                    assert(info.dimension == tinfo.dimension);
+
+                    image.swap(timage);
+                }
             }
 
-            hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), format,
-                dwFilter | dwFilterOpts | dwSRGB, TEX_THRESHOLD_DEFAULT, *timage.get());
-            if (FAILED(hr))
+            // --- Resize ------------------------------------------------------------------
+            if (!width)
             {
-                wprintf(L" FAILED [convert] (%x)\n", hr);
-                return 1;
+                width = info.width;
+            }
+            if (!height)
+            {
+                height = info.height;
+            }
+            if (info.width != width || info.height != height)
+            {
+                std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                if (!timage)
+                {
+                    wprintf(L"\nERROR: Memory allocation failed\n");
+                    return 1;
+                }
+
+                hr = Resize(image->GetImages(), image->GetImageCount(), image->GetMetadata(), width, height, dwFilter | dwFilterOpts, *timage.get());
+                if (FAILED(hr))
+                {
+                    wprintf(L" FAILED [resize] (%x)\n", hr);
+                    return 1;
+                }
+
+                const TexMetadata& tinfo = timage->GetMetadata();
+
+                assert(tinfo.width == width && tinfo.height == height && tinfo.mipLevels == 1);
+                info.width = tinfo.width;
+                info.height = tinfo.height;
+                info.mipLevels = 1;
+
+                assert(info.depth == tinfo.depth);
+                assert(info.arraySize == tinfo.arraySize);
+                assert(info.miscFlags == tinfo.miscFlags);
+                assert(info.format == tinfo.format);
+                assert(info.dimension == tinfo.dimension);
+
+                image.swap(timage);
             }
 
-            const TexMetadata& tinfo = timage->GetMetadata();
+            // --- Tonemap (if requested) --------------------------------------------------
+            if (dwOptions & (1 << OPT_TONEMAP))
+            {
+                std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                if (!timage)
+                {
+                    wprintf(L"\nERROR: Memory allocation failed\n");
+                    return 1;
+                }
 
-            assert(tinfo.format == format);
-            info.format = tinfo.format;
+                // Compute max luminosity across all images
+                XMVECTOR maxLum = XMVectorZero();
+                hr = EvaluateImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                    [&](const XMVECTOR* pixels, size_t width, size_t y)
+                {
+                    UNREFERENCED_PARAMETER(y);
 
-            assert(info.width == tinfo.width);
-            assert(info.height == tinfo.height);
-            assert(info.depth == tinfo.depth);
-            assert(info.arraySize == tinfo.arraySize);
-            assert(info.mipLevels == tinfo.mipLevels);
-            assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.dimension == tinfo.dimension);
+                    for (size_t j = 0; j < width; ++j)
+                    {
+                        static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
 
-            image.swap(timage);
+                        XMVECTOR v = *pixels++;
+
+                        v = XMVector3Dot(v, s_luminance);
+
+                        maxLum = XMVectorMax(v, maxLum);
+                    }
+                });
+                if (FAILED(hr))
+                {
+                    wprintf(L" FAILED [tonemap maxlum] (%x)\n", hr);
+                    return 1;
+                }
+
+                // Reinhard et al, "Photographic Tone Reproduction for Digital Images" 
+                // http://www.cs.utah.edu/~reinhard/cdrom/
+                maxLum = XMVectorMultiply(maxLum, maxLum);
+
+                hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                {
+                    UNREFERENCED_PARAMETER(y);
+
+                    for (size_t j = 0; j < width; ++j)
+                    {
+                        XMVECTOR value = inPixels[j];
+
+                        XMVECTOR scale = XMVectorDivide(
+                            XMVectorAdd(g_XMOne, XMVectorDivide(value, maxLum)),
+                            XMVectorAdd(g_XMOne, value));
+                        XMVECTOR nvalue = XMVectorMultiply(value, scale);
+
+                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                        outPixels[j] = value;
+                    }
+                }, *timage);
+                if (FAILED(hr))
+                {
+                    wprintf(L" FAILED [tonemap apply] (%x)\n", hr);
+                    return 1;
+                }
+
+                auto& tinfo = timage->GetMetadata();
+                tinfo;
+
+                assert(info.width == tinfo.width);
+                assert(info.height == tinfo.height);
+                assert(info.depth == tinfo.depth);
+                assert(info.arraySize == tinfo.arraySize);
+                assert(info.mipLevels == tinfo.mipLevels);
+                assert(info.miscFlags == tinfo.miscFlags);
+                assert(info.format == tinfo.format);
+                assert(info.dimension == tinfo.dimension);
+
+                image.swap(timage);
+            }
+
+            // --- Convert -----------------------------------------------------------------
+            if (format == DXGI_FORMAT_UNKNOWN)
+            {
+                format = info.format;
+            }
+            else if (info.format != format && !IsCompressed(format))
+            {
+                std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                if (!timage)
+                {
+                    wprintf(L"\nERROR: Memory allocation failed\n");
+                    return 1;
+                }
+
+                hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), format,
+                    dwFilter | dwFilterOpts | dwSRGB, TEX_THRESHOLD_DEFAULT, *timage.get());
+                if (FAILED(hr))
+                {
+                    wprintf(L" FAILED [convert] (%x)\n", hr);
+                    return 1;
+                }
+
+                const TexMetadata& tinfo = timage->GetMetadata();
+
+                assert(tinfo.format == format);
+                info.format = tinfo.format;
+
+                assert(info.width == tinfo.width);
+                assert(info.height == tinfo.height);
+                assert(info.depth == tinfo.depth);
+                assert(info.arraySize == tinfo.arraySize);
+                assert(info.mipLevels == tinfo.mipLevels);
+                assert(info.miscFlags == tinfo.miscFlags);
+                assert(info.dimension == tinfo.dimension);
+
+                image.swap(timage);
+            }
+
+            images += info.arraySize;
+            loadedImages.emplace_back(std::move(image));
         }
-
-        images += info.arraySize;
-        loadedImages.push_back(std::move(image));
     }
 
     switch (dwCommand)
@@ -1518,6 +1730,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         break;
     }
+
+    case CMD_GIF:
+        // TODO -
+        break;
 
     default:
     {
