@@ -1862,6 +1862,40 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         // --- Color rotation (if requested) -------------------------------------------
         if (dwRotateColor)
         {
+            if (dwRotateColor == ROTATE_HDR10_TO_709)
+            {
+                std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                if (!timage)
+                {
+                    wprintf(L"\nERROR: Memory allocation failed\n");
+                    return 1;
+                }
+
+                hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), DXGI_FORMAT_R16G16B16A16_FLOAT,
+                             dwFilter | dwFilterOpts | dwSRGB | dwConvert, TEX_THRESHOLD_DEFAULT, *timage);
+                if (FAILED(hr))
+                {
+                    wprintf(L" FAILED [convert] (%x)\n", hr);
+                    return 1;
+                }
+
+                auto& tinfo = timage->GetMetadata();
+
+                assert(tinfo.format == DXGI_FORMAT_R16G16B16A16_FLOAT);
+                info.format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+
+                assert(info.width == tinfo.width);
+                assert(info.height == tinfo.height);
+                assert(info.depth == tinfo.depth);
+                assert(info.arraySize == tinfo.arraySize);
+                assert(info.mipLevels == tinfo.mipLevels);
+                assert(info.miscFlags == tinfo.miscFlags);
+                assert(info.dimension == tinfo.dimension);
+
+                image.swap(timage);
+                cimage.reset();
+            }
+
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
             {
