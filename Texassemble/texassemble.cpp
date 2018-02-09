@@ -33,6 +33,7 @@
 
 #include <dxgiformat.h>
 
+#include <DirectXPackedVector.h>
 #include <wincodec.h>
 
 #include "directxtex.h"
@@ -83,6 +84,7 @@ enum OPTIONS
     OPT_TA_MIRROR,
     OPT_TONEMAP,
     OPT_FILELIST,
+    OPT_GIF_BGCOLOR,
     OPT_MAX
 };
 
@@ -138,6 +140,7 @@ const SValue g_pOptions [] =
     { L"mirror",    OPT_TA_MIRROR },
     { L"tonemap",   OPT_TONEMAP },
     { L"flist",     OPT_FILELIST },
+    { L"bgcolor",   OPT_GIF_BGCOLOR },
     { nullptr,      0 }
 };
 
@@ -510,6 +513,8 @@ namespace
         wprintf(L"   -nologo             suppress copyright message\n");
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
         wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
+        wprintf(L"\n                       (gif only)\n");
+        wprintf(L"   -bgcolor            Use background color instead of transparency\n");
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -549,9 +554,72 @@ namespace
         DM_PREVIOUS = 3
     };
 
-    HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<ScratchImage>>& loadedImages)
+    void FillRectangle(const Image& img, const RECT& destRect, uint32_t color)
+    {
+        RECT clipped =
+        {
+            (destRect.left < 0) ? 0 : destRect.left,
+            (destRect.top < 0) ? 0 : destRect.top,
+            (destRect.right > static_cast<long>(img.width)) ? static_cast<long>(img.width) : destRect.right,
+            (destRect.bottom > static_cast<long>(img.height)) ? static_cast<long>(img.height) : destRect.bottom
+        };
+
+        auto ptr = reinterpret_cast<uint8_t*>(img.pixels + clipped.top * img.rowPitch + clipped.left * sizeof(uint32_t));
+
+        for (long y = clipped.top; y < clipped.bottom; ++y)
+        {
+            auto pixelPtr = reinterpret_cast<uint32_t*>(ptr);
+            for (long x = clipped.left; x < clipped.right; ++x)
+            {
+                *pixelPtr++ = color;
+            }
+
+            ptr += img.rowPitch;
+        }
+    }
+
+    void BlendRectangle(const Image& composed, const Image& raw, const RECT& destRect)
+    {
+        using namespace DirectX::PackedVector;
+
+        RECT clipped =
+        {
+            (destRect.left < 0) ? 0 : destRect.left,
+            (destRect.top < 0) ? 0 : destRect.top,
+            (destRect.right > static_cast<long>(composed.width)) ? static_cast<long>(composed.width) : destRect.right,
+            (destRect.bottom > static_cast<long>(composed.height)) ? static_cast<long>(composed.height) : destRect.bottom
+        };
+
+        auto rawPtr = reinterpret_cast<uint8_t*>(raw.pixels);
+        auto composedPtr = reinterpret_cast<uint8_t*>(composed.pixels + clipped.top * composed.rowPitch + clipped.left * sizeof(uint32_t));
+
+        for (long y = clipped.top; y < clipped.bottom; ++y)
+        {
+            auto srcPtr = reinterpret_cast<uint32_t*>(rawPtr);
+            auto destPtr = reinterpret_cast<uint32_t*>(composedPtr);
+            for (long x = clipped.left; x < clipped.right; ++x)
+            {
+                XMVECTOR a = XMLoadUByteN4(reinterpret_cast<const XMUBYTEN4*>(srcPtr++));
+                XMVECTOR b = XMLoadUByteN4(reinterpret_cast<const XMUBYTEN4*>(destPtr));
+
+                XMVECTOR alpha = XMVectorSplatW(a);
+
+                XMVECTOR blended = XMVectorMultiply(a, alpha) + XMVectorMultiply(b, XMVectorSubtract(g_XMOne, alpha));
+
+                blended = XMVectorSelect(g_XMIdentityR3, blended, g_XMSelect1110);
+
+                XMStoreUByteN4(reinterpret_cast<XMUBYTEN4*>(destPtr++), blended);
+            }
+
+            rawPtr += raw.rowPitch;
+            composedPtr += composed.rowPitch;
+        }
+    }
+
+    HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<ScratchImage>>& loadedImages, bool usebgcolor)
     {
         // https://code.msdn.microsoft.com/windowsapps/Windows-Imaging-Component-65abbc6a/
+        // http://www.imagemagick.org/Usage/anim_basics/#dispose
 
         bool iswic2;
         auto pWIC = GetWICFactory(iswic2);
@@ -570,7 +638,10 @@ namespace
                 return hr;
 
             if (memcmp(&containerFormat, &GUID_ContainerFormatGif, sizeof(GUID)) != 0)
+            {
+                // This function only works for GIF
                 return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            }
         }
 
         ComPtr<IWICMetadataQueryReader> metareader;
@@ -582,8 +653,50 @@ namespace
         PropVariantInit(&propValue);
 
         // Get background color
-        // TODO -
-        UINT bgColor = 0x000000ff;
+        UINT bgColor = 0;
+        if (usebgcolor)
+        {
+            // Most browsers just ignore the background color metadata and always use transparency
+            hr = metareader->GetMetadataByName(L"/logscrdesc/GlobalColorTableFlag", &propValue);
+            if (SUCCEEDED(hr))
+            {
+                bool hasTable = (propValue.vt == VT_BOOL && propValue.boolVal);
+                PropVariantClear(&propValue);
+
+                if (hasTable)
+                {
+                    hr = metareader->GetMetadataByName(L"/logscrdesc/BackgroundColorIndex", &propValue);
+                    if (SUCCEEDED(hr))
+                    {
+                        if (propValue.vt == VT_UI1)
+                        {
+                            uint8_t index = propValue.bVal;
+
+                            ComPtr<IWICPalette> palette;
+                            hr = pWIC->CreatePalette(palette.GetAddressOf());
+                            if (FAILED(hr))
+                                return hr;
+
+                            hr = decoder->CopyPalette(palette.Get());
+                            if (FAILED(hr))
+                                return hr;
+
+                            WICColor rgColors[256];
+                            UINT actualColors = 0;
+                            hr = palette->GetColors(_countof(rgColors), rgColors, &actualColors);
+                            if (FAILED(hr))
+                                return hr;
+
+                            if (index < actualColors)
+                            {
+                                bgColor = rgColors[index];
+                            }
+                        }
+                        PropVariantClear(&propValue);
+                    }
+                }
+            }
+        }
 
         // Get global frame size
         UINT width = 0;
@@ -614,36 +727,58 @@ namespace
         if (FAILED(hr))
             return hr;
 
-        UINT disposal = DM_NONE;
+        UINT disposal = DM_UNDEFINED;
         RECT rct = {};
 
+        UINT previousFrame = 0;
         for (UINT iframe = 0; iframe < fcount; ++iframe)
         {
             std::unique_ptr<ScratchImage> frameImage(new (std::nothrow) ScratchImage);
             if (!frameImage)
                 return E_OUTOFMEMORY;
 
-            if (disposal == DM_PREVIOUS && iframe > 0)
+            if (disposal == DM_PREVIOUS)
             {
-                hr = frameImage->InitializeFromImage(*loadedImages[iframe - 1]->GetImage(0, 0, 0));
+                hr = frameImage->InitializeFromImage(*loadedImages[previousFrame]->GetImage(0, 0, 0));
+            }
+            else if (iframe > 0)
+            {
+                hr = frameImage->InitializeFromImage(*loadedImages[iframe-1]->GetImage(0, 0, 0));
             }
             else
             {
-                hr = frameImage->Initialize2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, 1, 1);
+                hr = frameImage->Initialize2D(DXGI_FORMAT_B8G8R8A8_UNORM, width, height, 1, 1);
             }
             if (FAILED(hr))
                 return hr;
 
-            if (disposal == DM_BACKGROUND)
+            auto composedImage = frameImage->GetImage(0, 0, 0);
+
+            if (!iframe)
             {
-                // TODO - Clear rectangle to background color using rct
-                bgColor;
+                RECT fullRct = { 0, 0, static_cast<long>(width), static_cast<long>(height) };
+                FillRectangle(*composedImage, fullRct, bgColor);
+            }
+            else if (disposal == DM_BACKGROUND)
+            {
+                FillRectangle(*composedImage, rct, bgColor);
             }
 
             ComPtr<IWICBitmapFrameDecode> frame;
             hr = decoder->GetFrame(iframe, frame.GetAddressOf());
             if (FAILED(hr))
                 return hr;
+
+            WICPixelFormatGUID pixelFormat;
+            hr = frame->GetPixelFormat(&pixelFormat);
+            if (FAILED(hr))
+                return hr;
+
+            if (memcmp(&pixelFormat, &GUID_WICPixelFormat8bppIndexed, sizeof(GUID)) != 0)
+            {
+                // GIF is always loaded as this format
+                return E_UNEXPECTED;
+            }
 
             ComPtr<IWICMetadataQueryReader> frameMeta;
             hr = frame->GetMetadataQueryReader(frameMeta.GetAddressOf());
@@ -704,10 +839,49 @@ namespace
                     }
                     PropVariantClear(&propValue);
                 }
+            }
 
-                // TODO - Load raw frame
+            UINT w, h;
+            hr = frame->GetSize(&w, &h);
+            if (FAILED(hr))
+                return hr;
 
-                // TODO - CopyRectangle
+            ScratchImage rawFrame;
+            hr = rawFrame.Initialize2D(DXGI_FORMAT_B8G8R8A8_UNORM, w, h, 1, 1);
+            if (FAILED(hr))
+                return hr;
+
+            ComPtr<IWICFormatConverter> FC;
+            hr = pWIC->CreateFormatConverter(FC.GetAddressOf());
+            if (FAILED(hr))
+                return hr;
+
+            hr = FC->Initialize(frame.Get(), GUID_WICPixelFormat32bppBGRA, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut);
+            if (FAILED(hr))
+                return hr;
+
+            auto img = rawFrame.GetImage(0, 0, 0);
+
+            hr = FC->CopyPixels(0, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
+            if (FAILED(hr))
+                return hr;
+
+            if (!iframe)
+            {
+                Rect fullRect(0, 0, img->width, img->height);
+
+                hr = CopyRectangle(*img, fullRect, *composedImage, TEX_FILTER_DEFAULT, rct.left, rct.top);
+                if (FAILED(hr))
+                    return hr;
+            }
+            else
+            {
+                BlendRectangle(*composedImage, *img, rct);
+            }
+
+            if (disposal == DM_UNDEFINED || disposal == DM_NONE)
+            {
+                previousFrame = iframe;
             }
 
             loadedImages.emplace_back(std::move(frameImage));
@@ -715,8 +889,7 @@ namespace
 
         PropVariantClear(&propValue);
 
-        // TODO -
-        return E_NOTIMPL;
+        return S_OK;
     }
 }
 
@@ -965,6 +1138,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     inFile.close();
                 }
                 break;
+
+            case OPT_GIF_BGCOLOR:
+                if (dwCommand != CMD_GIF)
+                {
+                    wprintf(L"-bgcolor only applies to gif command\n");
+                    return 1;
+                }
+                break;
             }
         }
         else if (wcspbrk(pArg, L"?*") != nullptr)
@@ -1037,7 +1218,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             _wmakepath_s(szOutputFile, nullptr, nullptr, fname, L".dds");
         }
 
-        hr = LoadAnimatedGif(conversion.front().szSrc, loadedImages);
+        hr = LoadAnimatedGif(conversion.front().szSrc, loadedImages, (dwOptions & (1 << OPT_GIF_BGCOLOR)) != 0);
         if (FAILED(hr))
         {
             wprintf(L" FAILED (%x)\n", hr);
@@ -1497,6 +1678,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_V_CROSS:
     case CMD_H_STRIP:
     case CMD_V_STRIP:
+    case CMD_GIF:
         break;
 
     default:
@@ -1731,10 +1913,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         break;
     }
 
-    case CMD_GIF:
-        // TODO -
-        break;
-
     default:
     {
         std::vector<Image> imageArray;
@@ -1760,6 +1938,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             break;
 
         case CMD_ARRAY:
+        case CMD_GIF:
             hr = result.InitializeArrayFromImages(&imageArray[0], imageArray.size(), (dwOptions & (1 << OPT_USE_DX10)) != 0);
             break;
 
