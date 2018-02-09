@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-December 13, 2017
+February 7, 2018
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -15,8 +15,8 @@ processing pipelines, but are not currently supported by a built-in WIC codec.
 
 This code is designed to build with Visual Studio 2013 Update 5, Visual Studio 2015 Update 3,
 or Visual Studio 2017. It is recommended that you make use of VS 2015 Update 3, Windows Tools
-1.4.1, and the Windows 10 Anniversary Update SDK (14393) or VS 2017 with the Windows 10
-Fall Creators Update SDK (16299).
+1.4.1, and the Windows 10 Anniversary Update SDK (14393) or VS 2017 (15.5 update) with the
+Windows 10 Fall Creators Update SDK (16299).
 
 DirectXTex\
     This contains the DirectXTex library. This includes a full-featured DDS reader and writer
@@ -128,6 +128,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+February 7, 2018
+    Fixed bug with GPU BC7 encoding (mode 1, fixup 6)
+    Updated for a few more VS 2017 warnings
+    Code cleanup
 
 December 13, 2017
     Updated for VS 2017 15.5 update warnings
