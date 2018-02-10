@@ -42,6 +42,11 @@ using namespace DirectX;
 namespace
 {
     const char g_Signature[] = "#?RADIANCE";
+        // This is the official header signature for the .HDR (RGBE) file format.
+
+    const char g_AltSignature[] = "#?RGBE";
+        // This is a common variant header signature that is otherwise exactly the same format.
+
     const char g_Format[] = "FORMAT=";
     const char g_Exposure[] = "EXPOSURE=";
 
@@ -93,7 +98,8 @@ namespace
         }
 
         // Verify magic signature
-        if (memcmp(pSource, g_Signature, sizeof(g_Signature) - 1) != 0)
+        if (memcmp(pSource, g_Signature, sizeof(g_Signature) - 1) != 0
+            && memcmp(pSource, g_AltSignature, sizeof(g_AltSignature) - 1) != 0)
         {
             return E_FAIL;
         }
