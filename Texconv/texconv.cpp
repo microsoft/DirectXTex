@@ -280,6 +280,20 @@ const SValue g_pFormats[] =
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
 
+const SValue g_pFormatAliases[] =
+{
+    { L"DXT1", DXGI_FORMAT_BC1_UNORM },
+    { L"DXT2", DXGI_FORMAT_BC2_UNORM },
+    { L"DXT3", DXGI_FORMAT_BC2_UNORM },
+    { L"DXT4", DXGI_FORMAT_BC3_UNORM },
+    { L"DXT5", DXGI_FORMAT_BC3_UNORM },
+
+    { L"FP16", DXGI_FORMAT_R16G16B16A16_FLOAT },
+    { L"FP32", DXGI_FORMAT_R32G32B32A32_FLOAT },
+
+    { nullptr, DXGI_FORMAT_UNKNOWN }
+};
+
 const SValue g_pReadOnlyFormats[] =
 {
     DEFFMT(R32G32B32A32_TYPELESS),
@@ -730,6 +744,8 @@ namespace
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
+        wprintf(L"      ");
+        PrintList(13, g_pFormatAliases);
 
         wprintf(L"\n   <filter>: ");
         PrintList(13, g_pFilters);
@@ -1080,13 +1096,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_FORMAT:
-                format = (DXGI_FORMAT)LookupByName(pValue, g_pFormats);
+                format = static_cast<DXGI_FORMAT>(LookupByName(pValue, g_pFormats));
                 if (!format)
                 {
-                    wprintf(L"Invalid value specified with -f (%ls)\n", pValue);
-                    wprintf(L"\n");
-                    PrintUsage();
-                    return 1;
+                    format = static_cast<DXGI_FORMAT>(LookupByName(pValue, g_pFormatAliases));
+                    if (!format)
+                    {
+                        wprintf(L"Invalid value specified with -f (%ls)\n", pValue);
+                        wprintf(L"\n");
+                        PrintUsage();
+                        return 1;
+                    }
                 }
                 break;
 

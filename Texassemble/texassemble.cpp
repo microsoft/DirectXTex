@@ -220,6 +220,14 @@ const SValue g_pFormats [] =
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
 
+const SValue g_pFormatAliases [] =
+{
+    { L"FP16", DXGI_FORMAT_R16G16B16A16_FLOAT },
+    { L"FP32", DXGI_FORMAT_R32G32B32A32_FLOAT },
+
+    { nullptr, DXGI_FORMAT_UNKNOWN }
+};
+
 const SValue g_pFilters [] =
 {
     { L"POINT",                     TEX_FILTER_POINT },
@@ -518,6 +526,8 @@ namespace
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
+        wprintf(L"      ");
+        PrintList(13, g_pFormatAliases);
 
         wprintf(L"\n   <filter>: ");
         PrintList(13, g_pFilters);
@@ -1016,11 +1026,15 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_FORMAT:
-                format = (DXGI_FORMAT)LookupByName(pValue, g_pFormats);
+                format = static_cast<DXGI_FORMAT>(LookupByName(pValue, g_pFormats));
                 if (!format)
                 {
-                    wprintf(L"Invalid value specified with -f (%ls)\n", pValue);
-                    return 1;
+                    format = static_cast<DXGI_FORMAT>(LookupByName(pValue, g_pFormatAliases));
+                    if (!format)
+                    {
+                        wprintf(L"Invalid value specified with -f (%ls)\n", pValue);
+                        return 1;
+                    }
                 }
                 break;
 
