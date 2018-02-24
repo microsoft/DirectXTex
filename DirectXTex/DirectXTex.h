@@ -702,4 +702,4 @@ namespace DirectX
 
 #include "DirectXTex.inl"
 
-}; // namespace
+} // namespace

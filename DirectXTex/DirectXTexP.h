@@ -277,4 +277,4 @@ namespace DirectX
     HRESULT __cdecl _EncodeDDSHeader( _In_ const TexMetadata& metadata, DWORD flags,
                                       _Out_writes_bytes_to_opt_(maxsize, required) void* pDestination, _In_ size_t maxsize, _Out_ size_t& required );
 
-}; // namespace
+} // namespace

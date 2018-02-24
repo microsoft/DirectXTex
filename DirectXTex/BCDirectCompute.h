@@ -61,4 +61,4 @@ private:
     Microsoft::WRL::ComPtr<ID3D11ComputeShader>         m_BC7_encodeBlockCS;    
 };
 
-}; // namespace
+} // namespace

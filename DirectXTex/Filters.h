@@ -418,6 +418,6 @@ namespace TriangleFilter
         return S_OK;
     }
 
-}; // namespace TriangleFilter
+} // namespace TriangleFilter
 
-}; // namespace DirectX
+} // namespace DirectX

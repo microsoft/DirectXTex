@@ -240,4 +240,4 @@ struct DDS_HEADER_DXT10
 static_assert( sizeof(DDS_HEADER) == 124, "DDS Header size mismatch" );
 static_assert( sizeof(DDS_HEADER_DXT10) == 20, "DDS DX10 Extended Header size mismatch");
 
-}; // namespace
+} // namespace
