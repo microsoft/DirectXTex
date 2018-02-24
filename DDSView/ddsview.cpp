@@ -4,6 +4,7 @@
 // DirectX 11 DDS File Viewer
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 //--------------------------------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN

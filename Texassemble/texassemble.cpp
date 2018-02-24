@@ -4,6 +4,7 @@
 // DirectX Texture assembler for cube maps, volume maps, and arrays
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //--------------------------------------------------------------------------------------
