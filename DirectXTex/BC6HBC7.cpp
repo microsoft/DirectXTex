@@ -3229,14 +3229,14 @@ void D3DX_BC7::EmitBlock(const EncodeParams* pEP, size_t uShape, size_t uRotatio
 _Use_decl_annotations_
 float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation, size_t uIndexMode)
 {
-    assert( pEP );
-    assert( uShape < BC7_MAX_SHAPES );
-    _Analysis_assume_( uShape < BC7_MAX_SHAPES );
+    assert(pEP);
+    assert(uShape < BC7_MAX_SHAPES);
+    _Analysis_assume_(uShape < BC7_MAX_SHAPES);
     const LDREndPntPair* aEndPts = pEP->aEndPts[uShape];
 
     const size_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
-    assert( uPartitions < BC7_MAX_REGIONS );
-    _Analysis_assume_( uPartitions < BC7_MAX_REGIONS );
+    assert(uPartitions < BC7_MAX_REGIONS);
+    _Analysis_assume_(uPartitions < BC7_MAX_REGIONS);
 
     LDREndPntPair aOrgEndPts[BC7_MAX_REGIONS];
     LDREndPntPair aOptEndPts[BC7_MAX_REGIONS];
@@ -3247,7 +3247,7 @@ float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation,
     float aOrgErr[BC7_MAX_REGIONS];
     float aOptErr[BC7_MAX_REGIONS];
 
-    for(size_t p = 0; p <= uPartitions; p++)
+    for (size_t p = 0; p <= uPartitions; p++)
     {
         aOrgEndPts[p].A = Quantize(aEndPts[p].A, ms_aInfo[pEP->uMode].RGBAPrecWithP);
         aOrgEndPts[p].B = Quantize(aEndPts[p].B, ms_aInfo[pEP->uMode].RGBAPrecWithP);
@@ -3258,12 +3258,12 @@ float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation,
     AssignIndices(pEP, uShape, uIndexMode, aOptEndPts, aOptIdx, aOptIdx2, aOptErr);
 
     float fOrgTotErr = 0, fOptTotErr = 0;
-    for(size_t p = 0; p <= uPartitions; p++)
+    for (size_t p = 0; p <= uPartitions; p++)
     {
         fOrgTotErr += aOrgErr[p];
         fOptTotErr += aOptErr[p];
     }
-    if(fOptTotErr < fOrgTotErr)
+    if (fOptTotErr < fOrgTotErr)
     {
         EmitBlock(pEP, uShape, uRotation, uIndexMode, aOptEndPts, aOptIdx, aOptIdx2);
         return fOptTotErr;

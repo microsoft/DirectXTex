@@ -22,10 +22,10 @@
 
 #ifdef __cplusplus_winrt
 
-    static inline HRESULT CreateMemoryStream( _Outptr_ IStream** stream )
+    static inline HRESULT CreateMemoryStream(_Outptr_ IStream** stream)
     {
         auto randomAccessStream = ref new ::Windows::Storage::Streams::InMemoryRandomAccessStream();
-        return CreateStreamOverRandomAccessStream( randomAccessStream, IID_PPV_ARGS( stream ) );
+        return CreateStreamOverRandomAccessStream(randomAccessStream, IID_PPV_ARGS(stream));
     }
 
 #else
@@ -41,16 +41,16 @@
     #include <windows.storage.streams.h>
 #pragma warning(pop)
 
-    static inline HRESULT CreateMemoryStream( _Outptr_ IStream** stream )
+    static inline HRESULT CreateMemoryStream(_Outptr_ IStream** stream)
     {
         Microsoft::WRL::ComPtr<ABI::Windows::Storage::Streams::IRandomAccessStream> abiStream;
         HRESULT hr = Windows::Foundation::ActivateInstance(
-            Microsoft::WRL::Wrappers::HStringReference( RuntimeClass_Windows_Storage_Streams_InMemoryRandomAccessStream ).Get(),
-            abiStream.GetAddressOf() );
+            Microsoft::WRL::Wrappers::HStringReference(RuntimeClass_Windows_Storage_Streams_InMemoryRandomAccessStream).Get(),
+            abiStream.GetAddressOf());
 
         if (SUCCEEDED(hr))
         {
-            hr = CreateStreamOverRandomAccessStream( abiStream.Get(), IID_PPV_ARGS( stream ) );
+            hr = CreateStreamOverRandomAccessStream(abiStream.Get(), IID_PPV_ARGS(stream));
         }
         return hr;
     }
@@ -60,9 +60,9 @@
 #else
 
     #pragma prefast(suppress:6387 28196, "a simple wrapper around an existing annotated function" );
-    static inline HRESULT CreateMemoryStream( _Outptr_ IStream** stream )
+    static inline HRESULT CreateMemoryStream(_Outptr_ IStream** stream)
     {
-        return CreateStreamOnHGlobal( 0, TRUE, stream );
+        return CreateStreamOnHGlobal(0, TRUE, stream);
     }
 
 #endif

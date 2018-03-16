@@ -854,13 +854,13 @@ _Use_decl_annotations_
 HRESULT DirectX::GetMetadataFromTGAMemory(
     const void* pSource,
     size_t size,
-    TexMetadata& metadata )
+    TexMetadata& metadata)
 {
-    if ( !pSource || size == 0 )
+    if (!pSource || size == 0)
         return E_INVALIDARG;
 
     size_t offset;
-    return DecodeTGAHeader( pSource, size, metadata, offset, 0 );
+    return DecodeTGAHeader(pSource, size, metadata, offset, 0);
 }
 
 _Use_decl_annotations_

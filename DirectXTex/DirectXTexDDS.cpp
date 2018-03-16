@@ -1149,7 +1149,7 @@ namespace
 
         if (pixelSize > size)
         {
-            return HRESULT_FROM_WIN32( ERROR_HANDLE_EOF );
+            return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
         }
 
         std::unique_ptr<Image[]> timages(new (std::nothrow) Image[nimages]);
@@ -1733,7 +1733,7 @@ HRESULT DirectX::LoadFromDDSFile(
         if (remaining < image.GetPixelsSize())
         {
             image.Release();
-            return HRESULT_FROM_WIN32( ERROR_HANDLE_EOF );
+            return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
         }
 
         if (!ReadFile(hFile.get(), image.GetPixels(), static_cast<DWORD>(image.GetPixelsSize()), &bytesRead, nullptr))

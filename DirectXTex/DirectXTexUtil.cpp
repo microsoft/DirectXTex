@@ -99,63 +99,63 @@ DXGI_FORMAT DirectX::_WICToDXGI(const GUID& guid)
 }
 
 _Use_decl_annotations_
-bool DirectX::_DXGIToWIC( DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR )
+bool DirectX::_DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR)
 {
-    switch( format )
+    switch (format)
     {
-    case DXGI_FORMAT_R8G8B8A8_UNORM:
-    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-        if ( ignoreRGBvsBGR )
-        {
-            // If we are not doing conversion so don't really care about BGR vs RGB color-order,
-            // we can use the canonical WIC 32bppBGRA format which avoids an extra format conversion when using the WIC scaler
-            memcpy( &guid, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID) );
-        }
-        else
-        {
-            memcpy( &guid, &GUID_WICPixelFormat32bppRGBA, sizeof(GUID) );      
-        }
-        return true;
-
-    case DXGI_FORMAT_D32_FLOAT:
-        memcpy( &guid, &GUID_WICPixelFormat32bppGrayFloat, sizeof(GUID) );
-        return true;
-
-    case DXGI_FORMAT_D16_UNORM:
-        memcpy( &guid, &GUID_WICPixelFormat16bppGray, sizeof(GUID) );
-        return true;    
-
-    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-        memcpy( &guid, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID) );
-        return true;
-
-    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-        memcpy( &guid, &GUID_WICPixelFormat32bppBGR, sizeof(GUID) );
-        return true;
-
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
-    case DXGI_FORMAT_R32G32B32_FLOAT:
-        if ( g_WIC2 )
-        {
-            memcpy( &guid, &GUID_WICPixelFormat96bppRGBFloat, sizeof(GUID) );
-            return true;
-        }
-        break;
-#endif
-
-    default:
-        for( size_t i=0; i < _countof(g_WICFormats); ++i )
-        {
-            if ( g_WICFormats[i].format == format )
+        case DXGI_FORMAT_R8G8B8A8_UNORM:
+        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+            if (ignoreRGBvsBGR)
             {
-                memcpy( &guid, &g_WICFormats[i].wic, sizeof(GUID) );
+                // If we are not doing conversion so don't really care about BGR vs RGB color-order,
+                // we can use the canonical WIC 32bppBGRA format which avoids an extra format conversion when using the WIC scaler
+                memcpy(&guid, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID));
+            }
+            else
+            {
+                memcpy(&guid, &GUID_WICPixelFormat32bppRGBA, sizeof(GUID));
+            }
+            return true;
+
+        case DXGI_FORMAT_D32_FLOAT:
+            memcpy(&guid, &GUID_WICPixelFormat32bppGrayFloat, sizeof(GUID));
+            return true;
+
+        case DXGI_FORMAT_D16_UNORM:
+            memcpy(&guid, &GUID_WICPixelFormat16bppGray, sizeof(GUID));
+            return true;
+
+        case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+            memcpy(&guid, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID));
+            return true;
+
+        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+            memcpy(&guid, &GUID_WICPixelFormat32bppBGR, sizeof(GUID));
+            return true;
+
+        #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+        case DXGI_FORMAT_R32G32B32_FLOAT:
+            if (g_WIC2)
+            {
+                memcpy(&guid, &GUID_WICPixelFormat96bppRGBFloat, sizeof(GUID));
                 return true;
             }
-        }
-        break;
+            break;
+        #endif
+
+        default:
+            for (size_t i = 0; i < _countof(g_WICFormats); ++i)
+            {
+                if (g_WICFormats[i].format == format)
+                {
+                    memcpy(&guid, &g_WICFormats[i].wic, sizeof(GUID));
+                    return true;
+                }
+            }
+            break;
     }
 
-    memcpy( &guid, &GUID_NULL, sizeof(GUID) );
+    memcpy(&guid, &GUID_NULL, sizeof(GUID));
     return false;
 }
 

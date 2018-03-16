@@ -54,34 +54,34 @@ public:
     HDRColorA(const HDRColorA& c) : r(c.r), g(c.g), b(c.b), a(c.a) {}
 
     // binary operators
-    HDRColorA operator + ( const HDRColorA& c ) const
+    HDRColorA operator + (const HDRColorA& c) const
     {
         return HDRColorA(r + c.r, g + c.g, b + c.b, a + c.a);
     }
 
-    HDRColorA operator - ( const HDRColorA& c ) const
+    HDRColorA operator - (const HDRColorA& c) const
     {
         return HDRColorA(r - c.r, g - c.g, b - c.b, a - c.a);
     }
 
-    HDRColorA operator * ( float f ) const
+    HDRColorA operator * (float f) const
     {
         return HDRColorA(r * f, g * f, b * f, a * f);
     }
 
-    HDRColorA operator / ( float f ) const
+    HDRColorA operator / (float f) const
     {
         float fInv = 1.0f / f;
         return HDRColorA(r * fInv, g * fInv, b * fInv, a * fInv);
     }
 
-    float operator * ( const HDRColorA& c ) const
+    float operator * (const HDRColorA& c) const
     {
         return r * c.r + g * c.g + b * c.b + a * c.a;
     }
 
     // assignment operators
-    HDRColorA& operator += ( const HDRColorA& c )
+    HDRColorA& operator += (const HDRColorA& c)
     {
         r += c.r;
         g += c.g;
@@ -89,8 +89,8 @@ public:
         a += c.a;
         return *this;
     }
-    
-    HDRColorA& operator -= ( const HDRColorA& c )
+
+    HDRColorA& operator -= (const HDRColorA& c)
     {
         r -= c.r;
         g -= c.g;
@@ -98,8 +98,8 @@ public:
         a -= c.a;
         return *this;
     }
-    
-    HDRColorA& operator *= ( float f )
+
+    HDRColorA& operator *= (float f)
     {
         r *= f;
         g *= f;
@@ -107,8 +107,8 @@ public:
         a *= f;
         return *this;
     }
-    
-    HDRColorA& operator /= ( float f )
+
+    HDRColorA& operator /= (float f)
     {
         float fInv = 1.0f / f;
         r *= fInv;
