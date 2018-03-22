@@ -218,10 +218,9 @@ namespace
 		return S_OK;
 	}
 
-
-	void GenerateAlphaCoverageConvolutionMatrices(
+	void GenerateAlphaCoverageConvolutionVectors(
 		_In_ size_t N,
-		_Out_ XMMATRIX* matrices)
+		_Out_ XMVECTOR* vectors)
 	{
 		for (size_t sy = 0; sy < N; ++sy)
 		{
@@ -234,11 +233,7 @@ namespace
 				const float ifx = 1.0f - fx;
 
 				// [0]=(x+0, y+0), [1]=(x+0, y+1), [2]=(x+1, y+0), [3]=(x+1, y+1)
-				XMMATRIX& matrix = matrices[sy * N + sx];
-				matrix.r[0] = XMVectorReplicate(ifx * ify);
-				matrix.r[1] = XMVectorReplicate(ifx * fy);
-				matrix.r[2] = XMVectorReplicate(fx * ify);
-				matrix.r[3] = XMVectorReplicate(fx * fy);
+				vectors[sy * N + sx] = XMVectorSet(ifx * ify, ifx * fy, fx * ify, fx * fy);
 			}
 		}
 	}
@@ -3291,8 +3286,10 @@ HRESULT DirectX::CalculateAlphaCoverage(
 	}
 
 	const size_t N = 8;
-	XMMATRIX convolution[N * N];
-	GenerateAlphaCoverageConvolutionMatrices(N, convolution);
+	XMVECTOR convolution[N * N];
+	GenerateAlphaCoverageConvolutionVectors(N, convolution);
+
+	XMMATRIX alpha;
 
 	size_t coverageCount = 0;
 	for (size_t y = 0; y < srcImage.height - 1; ++y)
@@ -3308,8 +3305,6 @@ HRESULT DirectX::CalculateAlphaCoverage(
 			return E_FAIL;
 		}
 
-		XMMATRIX alpha;
-
 		XMVECTOR* pRow0 = row0.get();
 		XMVECTOR* pRow1 = row1.get();
 		for (size_t x = 0; x < srcImage.width - 1; ++x)
@@ -3319,14 +3314,15 @@ HRESULT DirectX::CalculateAlphaCoverage(
 			alpha.r[1] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*pRow1), scale));
 			alpha.r[2] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow0++)), scale));
 			alpha.r[3] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow1++)), scale));
-
+			XMVECTOR v = XMVectorSet(XMVectorGetX(alpha.r[0]), XMVectorGetX(alpha.r[1]), XMVectorGetX(alpha.r[2]), XMVectorGetX(alpha.r[3]));
+			
 			for (size_t sy = 0; sy < N; ++sy)
 			{
 				const size_t ry = sy * N;
 				for (size_t sx = 0; sx < N; ++sx)
 				{
-					alpha = XMMatrixMultiply(alpha, convolution[ry + sx]);
-					if (XMVectorGetW(alpha.r[0]) > alphaReference)
+					v = XMVectorSum(XMVectorMultiply(v, convolution[ry + sx]));
+					if (XMVectorGetX(v) > alphaReference)
 					{
 						++coverageCount;
 					}
