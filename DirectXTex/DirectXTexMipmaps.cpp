@@ -139,7 +139,7 @@ namespace
 			return E_POINTER;
 		}
 
-		XMVECTOR vscale = XMVectorReplicate(alphaScale);
+		const XMVECTOR vscale = XMVectorReplicate(alphaScale);
 
 		for (size_t h = 0; h < srcImage.height; ++h)
 		{
@@ -3305,8 +3305,8 @@ HRESULT DirectX::CalculateAlphaCoverage(
 			return E_FAIL;
 		}
 
-		XMVECTOR* pRow0 = row0.get();
-		XMVECTOR* pRow1 = row1.get();
+		const XMVECTOR* pRow0 = row0.get();
+		const XMVECTOR* pRow1 = row1.get();
 		for (size_t x = 0; x < srcImage.width - 1; ++x)
 		{
 			// [0]=(x+0, y+0), [1]=(x+0, y+1), [2]=(x+1, y+0), [3]=(x+1, y+1)
