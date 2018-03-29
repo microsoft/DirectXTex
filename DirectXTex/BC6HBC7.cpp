@@ -451,8 +451,8 @@ namespace
 
     public:
         INTColor() = default;
-        INTColor(int nr, int ng, int nb) { r = nr; g = ng; b = nb; }
-        INTColor(const INTColor& c) { r = c.r; g = c.g; b = c.b; }
+        INTColor(int nr, int ng, int nb) : pad(0) { r = nr; g = ng; b = nb; }
+        INTColor(const INTColor& c) : pad(0) { r = c.r; g = c.g; b = c.b; }
 
         INTColor operator - (_In_ const INTColor& c) const
         {

@@ -3384,7 +3384,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
 
                 wprintf(L"Result: %f (%f %f %f %f) PSNR %f dB\n", mse, mseV[0], mseV[1], mseV[2], mseV[3],
-                    10.f * log10f(3.f / (mseV[0] + mseV[1] + mseV[2])));
+                    10.0 * log10(3.0 / (double(mseV[0]) + double(mseV[1]) + double(mseV[2]))));
             }
             else
             {
@@ -3444,7 +3444,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 ++total_images;
 
                                 wprintf(L"[%3Iu,%3Iu]: %f (%f %f %f %f) PSNR %f dB\n", mip, slice, mse, mseV[0], mseV[1], mseV[2], mseV[3],
-                                    10.f * log10f(3.f / (mseV[0] + mseV[1] + mseV[2])));
+                                    10.0 * log10(3.0 / (double(mseV[0]) + double(mseV[1]) + double(mseV[2]))));
                             }
                         }
 
@@ -3495,7 +3495,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 ++total_images;
 
                                 wprintf(L"[%3Iu,%3Iu]: %f (%f %f %f %f) PSNR %f dB\n", item, mip, mse, mseV[0], mseV[1], mseV[2], mseV[3],
-                                    10.f * log10f(3.f / (mseV[0] + mseV[1] + mseV[2])));
+                                    10.0 * log10(3.0 / (double(mseV[0]) + double(mseV[1]) + double(mseV[2]))));
                             }
                         }
                     }
@@ -3505,7 +3505,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (total_images > 1)
                 {
                     wprintf(L"\n    Minimum MSE: %f (%f %f %f %f) PSNR %f dB\n", min_mse, min_mseV[0], min_mseV[1], min_mseV[2], min_mseV[3],
-                        10.f * log10f(3.f / (min_mseV[0] + min_mseV[1] + min_mseV[2])));
+                        10.0 * log10(3.0 / (double(min_mseV[0]) + double(min_mseV[1]) + double(min_mseV[2]))));
                     double total_mseV0 = sum_mseV[0] / double(total_images);
                     double total_mseV1 = sum_mseV[1] / double(total_images);
                     double total_mseV2 = max_mseV[2] / double(total_images);
@@ -3516,7 +3516,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         sum_mseV[3] / double(total_images),
                         10.0 * log10(3.0 / (total_mseV0 + total_mseV1 + total_mseV2)));
                     wprintf(L"    Maximum MSE: %f (%f %f %f %f) PSNR %f dB\n", max_mse, max_mseV[0], max_mseV[1], max_mseV[2], max_mseV[3],
-                        10.f * log10f(3.f / (max_mseV[0] + max_mseV[1] + max_mseV[2])));
+                        10.0 * log10(3.0 / (double(max_mseV[0]) + double(max_mseV[1]) + double(max_mseV[2]))));
                 }
             }
         }

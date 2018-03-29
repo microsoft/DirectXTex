@@ -234,7 +234,7 @@ bool DirectX::_SetupImageArray(
 // ScratchImage - Bitmap image container
 //=====================================================================================
 
-ScratchImage& ScratchImage::operator= (ScratchImage&& moveFrom)
+ScratchImage& ScratchImage::operator= (ScratchImage&& moveFrom) DIRECTX_NOEXCEPT
 {
     if (this != &moveFrom)
     {

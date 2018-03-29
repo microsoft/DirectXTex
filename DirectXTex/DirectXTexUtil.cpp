@@ -1413,7 +1413,7 @@ size_t TexMetadata::ComputeIndex(size_t mip, size_t item, size_t slice) const
 // Blob - Bitmap image container
 //=====================================================================================
 
-Blob& Blob::operator= (Blob&& moveFrom)
+Blob& Blob::operator= (Blob&& moveFrom) DIRECTX_NOEXCEPT
 {
     if (this != &moveFrom)
     {

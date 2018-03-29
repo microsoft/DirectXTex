@@ -237,7 +237,7 @@ namespace TriangleFilter
         TriangleRow*                next;
         ScopedAlignedArrayXMVECTOR  scanline;
 
-        TriangleRow() : remaining(0), next(nullptr) {}
+        TriangleRow() DIRECTX_NOEXCEPT : remaining(0), next(nullptr) {}
     };
 
     static const size_t TF_FILTER_SIZE = sizeof(Filter) - sizeof(FilterFrom);
