@@ -589,7 +589,7 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
     HRESULT hr = pContext->Map(m_outputCPU.Get(), 0, D3D11_MAP_READ, 0, &mapped);
     if (SUCCEEDED(hr))
     {
-        const uint8_t *pSrc = reinterpret_cast<const uint8_t *>(mapped.pData);
+        auto pSrc = static_cast<const uint8_t *>(mapped.pData);
         uint8_t *pDest = destImage.pixels;
 
         size_t pitch = xblocks * sizeof(BufferBC6HBC7);

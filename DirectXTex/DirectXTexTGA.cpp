@@ -131,7 +131,7 @@ namespace
             return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
         }
 
-        auto pHeader = reinterpret_cast<const TGA_HEADER*>(pSource);
+        auto pHeader = static_cast<const TGA_HEADER*>(pSource);
 
         if (pHeader->bColorMapType != 0
             || pHeader->wColorMapLength != 0)
@@ -237,7 +237,7 @@ namespace
     {
         assert(image);
 
-        auto pPixels = reinterpret_cast<uint8_t*>(image->pixels);
+        uint8_t* pPixels = image->pixels;
         if (!pPixels)
             return E_POINTER;
 
@@ -277,7 +277,7 @@ namespace
             ComputePitch(image->format, image->width, image->height, rowPitch, slicePitch, CP_FLAGS_NONE);
         }
 
-        auto sPtr = reinterpret_cast<const uint8_t*>(pSource);
+        auto sPtr = static_cast<const uint8_t*>(pSource);
         const uint8_t* endPtr = sPtr + size;
 
         switch (image->format)
@@ -289,7 +289,7 @@ namespace
                 size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
                 assert(offset < rowPitch);
 
-                uint8_t* dPtr = reinterpret_cast<uint8_t*>(image->pixels)
+                uint8_t* dPtr = image->pixels
                     + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1)))
                     + offset;
 
@@ -355,7 +355,7 @@ namespace
                 size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
                 assert(offset * 2 < rowPitch);
 
-                uint16_t* dPtr = reinterpret_cast<uint16_t*>(reinterpret_cast<uint8_t*>(image->pixels)
+                auto dPtr = reinterpret_cast<uint16_t*>(image->pixels
                     + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
                     + offset;
 
@@ -438,7 +438,7 @@ namespace
             {
                 size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
 
-                uint32_t* dPtr = reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(image->pixels)
+                auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
                     + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
                     + offset;
 
@@ -601,7 +601,7 @@ namespace
             ComputePitch(image->format, image->width, image->height, rowPitch, slicePitch, CP_FLAGS_NONE);
         }
 
-        const uint8_t* sPtr = reinterpret_cast<const uint8_t*>(pSource);
+        auto sPtr = static_cast<const uint8_t*>(pSource);
         const uint8_t* endPtr = sPtr + size;
 
         switch (image->format)
@@ -613,7 +613,7 @@ namespace
                 size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
                 assert(offset < rowPitch);
 
-                uint8_t* dPtr = reinterpret_cast<uint8_t*>(image->pixels)
+                uint8_t* dPtr = image->pixels
                     + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1)))
                     + offset;
 
@@ -641,7 +641,7 @@ namespace
                 size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
                 assert(offset * 2 < rowPitch);
 
-                uint16_t* dPtr = reinterpret_cast<uint16_t*>(reinterpret_cast<uint8_t*>(image->pixels)
+                auto dPtr = reinterpret_cast<uint16_t*>(image->pixels
                     + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
                     + offset;
 
@@ -682,7 +682,7 @@ namespace
             {
                 size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
 
-                uint32_t* dPtr = reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(image->pixels)
+                auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
                     + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
                     + offset;
 
@@ -820,8 +820,8 @@ namespace
 
         assert(pDestination != pSource);
 
-        const uint32_t * __restrict sPtr = reinterpret_cast<const uint32_t*>(pSource);
-        uint8_t * __restrict dPtr = reinterpret_cast<uint8_t*>(pDestination);
+        const uint32_t * __restrict sPtr = static_cast<const uint32_t*>(pSource);
+        uint8_t * __restrict dPtr = static_cast<uint8_t*>(pDestination);
 
         if (inSize >= 4 && outSize >= 3)
         {
@@ -900,7 +900,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TexMetadata& meta
     }
 
     // Read the standard header (we don't need the file footer to parse the file)
-    uint8_t header[sizeof(TGA_HEADER)];
+    uint8_t header[sizeof(TGA_HEADER)] = {};
     DWORD bytesRead = 0;
     if (!ReadFile(hFile.get(), header, sizeof(TGA_HEADER), &bytesRead, nullptr))
     {
@@ -937,7 +937,7 @@ HRESULT DirectX::LoadFromTGAMemory(
     if (offset > size)
         return E_FAIL;
 
-    auto pPixels = reinterpret_cast<const void*>(reinterpret_cast<const uint8_t*>(pSource) + offset);
+    const void* pPixels = static_cast<const uint8_t*>(pSource) + offset;
 
     size_t remaining = size - offset;
     if (remaining == 0)
@@ -1014,7 +1014,7 @@ HRESULT DirectX::LoadFromTGAFile(
     }
 
     // Read the header
-    uint8_t header[sizeof(TGA_HEADER)];
+    uint8_t header[sizeof(TGA_HEADER)] = {};
     DWORD bytesRead = 0;
     if (!ReadFile(hFile.get(), header, sizeof(TGA_HEADER), &bytesRead, nullptr))
     {
@@ -1238,7 +1238,7 @@ HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob)
     if (!image.pixels)
         return E_POINTER;
 
-    TGA_HEADER tga_header;
+    TGA_HEADER tga_header = {};
     DWORD convFlags = 0;
     HRESULT hr = EncodeTGAHeader(image, tga_header, convFlags);
     if (FAILED(hr))
@@ -1263,12 +1263,12 @@ HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob)
         return hr;
 
     // Copy header
-    auto dPtr = reinterpret_cast<uint8_t*>(blob.GetBufferPointer());
+    auto dPtr = static_cast<uint8_t*>(blob.GetBufferPointer());
     assert(dPtr != 0);
     memcpy_s(dPtr, blob.GetBufferSize(), &tga_header, sizeof(TGA_HEADER));
     dPtr += sizeof(TGA_HEADER);
 
-    auto pPixels = reinterpret_cast<const uint8_t*>(image.pixels);
+    const uint8_t* pPixels = image.pixels;
     assert(pPixels);
 
     for (size_t y = 0; y < image.height; ++y)
@@ -1307,7 +1307,7 @@ HRESULT DirectX::SaveToTGAFile(const Image& image, const wchar_t* szFile)
     if (!image.pixels)
         return E_POINTER;
 
-    TGA_HEADER tga_header;
+    TGA_HEADER tga_header = {};
     DWORD convFlags = 0;
     HRESULT hr = EncodeTGAHeader(image, tga_header, convFlags);
     if (FAILED(hr))
@@ -1378,7 +1378,7 @@ HRESULT DirectX::SaveToTGAFile(const Image& image, const wchar_t* szFile)
             return E_FAIL;
 
         // Write pixels
-        auto pPixels = reinterpret_cast<const uint8_t*>(image.pixels);
+        const uint8_t* pPixels = image.pixels;
 
         for (size_t y = 0; y < image.height; ++y)
         {

@@ -281,7 +281,7 @@ namespace
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        uint32_t dwMagicNumber = *reinterpret_cast<const uint32_t*>(pSource);
+        auto dwMagicNumber = *static_cast<const uint32_t*>(pSource);
         if (dwMagicNumber != DDS_MAGIC)
         {
             return E_FAIL;
@@ -618,9 +618,9 @@ HRESULT DirectX::_EncodeDDSHeader(
     if (maxsize < required)
         return E_NOT_SUFFICIENT_BUFFER;
 
-    *reinterpret_cast<uint32_t*>(pDestination) = DDS_MAGIC;
+    *static_cast<uint32_t*>(pDestination) = DDS_MAGIC;
 
-    auto header = reinterpret_cast<DDS_HEADER*>(reinterpret_cast<uint8_t*>(pDestination) + sizeof(uint32_t));
+    auto header = reinterpret_cast<DDS_HEADER*>(static_cast<uint8_t*>(pDestination) + sizeof(uint32_t));
     assert(header);
 
     memset(header, 0, sizeof(DDS_HEADER));
@@ -827,8 +827,8 @@ namespace
             // D3DFMT_R8G8B8 -> DXGI_FORMAT_R8G8B8A8_UNORM
             if (inSize >= 3 && outSize >= 4)
             {
-                const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
-                uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                const uint8_t * __restrict sPtr = static_cast<const uint8_t*>(pSource);
+                uint32_t * __restrict dPtr = static_cast<uint32_t*>(pDestination);
 
                 for (size_t ocount = 0, icount = 0; ((icount < (inSize - 2)) && (ocount < (outSize - 3))); icount += 3, ocount += 4)
                 {
@@ -851,8 +851,8 @@ namespace
                 // D3DFMT_R3G3B2 -> DXGI_FORMAT_R8G8B8A8_UNORM
                 if (inSize >= 1 && outSize >= 4)
                 {
-                    const uint8_t* __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
-                    uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                    const uint8_t* __restrict sPtr = static_cast<const uint8_t*>(pSource);
+                    uint32_t * __restrict dPtr = static_cast<uint32_t*>(pDestination);
 
                     for (size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < (outSize - 3))); ++icount, ocount += 4)
                     {
@@ -872,8 +872,8 @@ namespace
                 // D3DFMT_R3G3B2 -> DXGI_FORMAT_B5G6R5_UNORM
                 if (inSize >= 1 && outSize >= 2)
                 {
-                    const uint8_t* __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
-                    uint16_t * __restrict dPtr = reinterpret_cast<uint16_t*>(pDestination);
+                    const uint8_t* __restrict sPtr = static_cast<const uint8_t*>(pSource);
+                    uint16_t * __restrict dPtr = static_cast<uint16_t*>(pDestination);
 
                     for (size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < (outSize - 1))); ++icount, ocount += 2)
                     {
@@ -901,8 +901,8 @@ namespace
             // D3DFMT_A8R3G3B2 -> DXGI_FORMAT_R8G8B8A8_UNORM
             if (inSize >= 2 && outSize >= 4)
             {
-                const uint16_t* __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
-                uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                const uint16_t* __restrict sPtr = static_cast<const uint16_t*>(pSource);
+                uint32_t * __restrict dPtr = static_cast<uint32_t*>(pDestination);
 
                 for (size_t ocount = 0, icount = 0; ((icount < (inSize - 1)) && (ocount < (outSize - 3))); icount += 2, ocount += 4)
                 {
@@ -926,8 +926,8 @@ namespace
             // D3DFMT_P8 -> DXGI_FORMAT_R8G8B8A8_UNORM
             if (inSize >= 1 && outSize >= 4)
             {
-                const uint8_t* __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
-                uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                const uint8_t* __restrict sPtr = static_cast<const uint8_t*>(pSource);
+                uint32_t * __restrict dPtr = static_cast<uint32_t*>(pDestination);
 
                 for (size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < (outSize - 3))); ++icount, ocount += 4)
                 {
@@ -946,8 +946,8 @@ namespace
             // D3DFMT_A8P8 -> DXGI_FORMAT_R8G8B8A8_UNORM
             if (inSize >= 2 && outSize >= 4)
             {
-                const uint16_t* __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
-                uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                const uint16_t* __restrict sPtr = static_cast<const uint16_t*>(pSource);
+                uint32_t * __restrict dPtr = static_cast<uint32_t*>(pDestination);
 
                 for (size_t ocount = 0, icount = 0; ((icount < (inSize - 1)) && (ocount < (outSize - 3))); icount += 2, ocount += 4)
                 {
@@ -969,8 +969,8 @@ namespace
                 // D3DFMT_A4L4 -> DXGI_FORMAT_B4G4R4A4_UNORM 
                 if (inSize >= 1 && outSize >= 2)
                 {
-                    const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
-                    uint16_t * __restrict dPtr = reinterpret_cast<uint16_t*>(pDestination);
+                    const uint8_t * __restrict sPtr = static_cast<const uint8_t*>(pSource);
+                    uint16_t * __restrict dPtr = static_cast<uint16_t*>(pDestination);
 
                     for (size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < (outSize - 1))); ++icount, ocount += 2)
                     {
@@ -989,8 +989,8 @@ namespace
                 // D3DFMT_A4L4 -> DXGI_FORMAT_R8G8B8A8_UNORM
                 if (inSize >= 1 && outSize >= 4)
                 {
-                    const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
-                    uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                    const uint8_t * __restrict sPtr = static_cast<const uint8_t*>(pSource);
+                    uint32_t * __restrict dPtr = static_cast<uint32_t*>(pDestination);
 
                     for (size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < (outSize - 3))); ++icount, ocount += 4)
                     {
@@ -1017,8 +1017,8 @@ namespace
             // D3DFMT_A4R4G4B4 -> DXGI_FORMAT_R8G8B8A8_UNORM
             if (inSize >= 2 && outSize >= 4)
             {
-                const uint16_t * __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
-                uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                const uint16_t * __restrict sPtr = static_cast<const uint16_t*>(pSource);
+                uint32_t * __restrict dPtr = static_cast<uint32_t*>(pDestination);
 
                 for (size_t ocount = 0, icount = 0; ((icount < (inSize - 1)) && (ocount < (outSize - 3))); icount += 2, ocount += 4)
                 {
@@ -1042,8 +1042,8 @@ namespace
             // D3DFMT_L8 -> DXGI_FORMAT_R8G8B8A8_UNORM
             if (inSize >= 1 && outSize >= 4)
             {
-                const uint8_t * __restrict sPtr = reinterpret_cast<const uint8_t*>(pSource);
-                uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                const uint8_t * __restrict sPtr = static_cast<const uint8_t*>(pSource);
+                uint32_t * __restrict dPtr = static_cast<uint32_t*>(pDestination);
 
                 for (size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < (outSize - 3))); ++icount, ocount += 4)
                 {
@@ -1064,8 +1064,8 @@ namespace
             // D3DFMT_L16 -> DXGI_FORMAT_R16G16B16A16_UNORM
             if (inSize >= 2 && outSize >= 8)
             {
-                const uint16_t* __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
-                uint64_t * __restrict dPtr = reinterpret_cast<uint64_t*>(pDestination);
+                const uint16_t* __restrict sPtr = static_cast<const uint16_t*>(pSource);
+                uint64_t * __restrict dPtr = static_cast<uint64_t*>(pDestination);
 
                 for (size_t ocount = 0, icount = 0; ((icount < (inSize - 1)) && (ocount < (outSize - 7))); icount += 2, ocount += 8)
                 {
@@ -1088,8 +1088,8 @@ namespace
             // D3DFMT_A8L8 -> DXGI_FORMAT_R8G8B8A8_UNORM
             if (inSize >= 2 && outSize >= 4)
             {
-                const uint16_t* __restrict sPtr = reinterpret_cast<const uint16_t*>(pSource);
-                uint32_t * __restrict dPtr = reinterpret_cast<uint32_t*>(pDestination);
+                const uint16_t* __restrict sPtr = static_cast<const uint16_t*>(pSource);
+                uint32_t * __restrict dPtr = static_cast<uint32_t*>(pDestination);
 
                 for (size_t ocount = 0, icount = 0; ((icount < (inSize - 1)) && (ocount < (outSize - 3))); icount += 2, ocount += 4)
                 {
@@ -1198,7 +1198,7 @@ namespace
                     size_t dpitch = images[index].rowPitch;
                     size_t spitch = timages[index].rowPitch;
 
-                    const uint8_t *pSrc = const_cast<const uint8_t*>(timages[index].pixels);
+                    const uint8_t *pSrc = timages[index].pixels;
                     if (!pSrc)
                         return E_POINTER;
 
@@ -1300,7 +1300,7 @@ namespace
                     size_t dpitch = images[index].rowPitch;
                     size_t spitch = timages[index].rowPitch;
 
-                    const uint8_t *pSrc = const_cast<const uint8_t*>(timages[index].pixels);
+                    const uint8_t *pSrc = timages[index].pixels;
                     if (!pSrc)
                         return E_POINTER;
 
@@ -1492,7 +1492,7 @@ HRESULT DirectX::GetMetadataFromDDSFile(
 
     // Read the header in (including extended header if present)
     const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
-    uint8_t header[MAX_HEADER_SIZE];
+    uint8_t header[MAX_HEADER_SIZE] = {};
 
     DWORD bytesRead = 0;
     if (!ReadFile(hFile.get(), header, MAX_HEADER_SIZE, &bytesRead, nullptr))
@@ -1536,7 +1536,7 @@ HRESULT DirectX::LoadFromDDSMemory(
     const uint32_t *pal8 = nullptr;
     if (convFlags & CONV_FLAGS_PAL8)
     {
-        pal8 = reinterpret_cast<const uint32_t*>(reinterpret_cast<const uint8_t*>(pSource) + offset);
+        pal8 = reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(pSource) + offset);
         assert(pal8);
         offset += (256 * sizeof(uint32_t));
         if (size < offset)
@@ -1557,7 +1557,7 @@ HRESULT DirectX::LoadFromDDSMemory(
         cflags |= CP_FLAGS_BAD_DXTN_TAILS;
     }
 
-    auto pPixels = reinterpret_cast<const void*>(reinterpret_cast<const uint8_t*>(pSource) + offset);
+    const void* pPixels = static_cast<const uint8_t*>(pSource) + offset;
     assert(pPixels);
     hr = CopyImage(pPixels,
         size - offset,
@@ -1626,7 +1626,7 @@ HRESULT DirectX::LoadFromDDSFile(
 
     // Read the header in (including extended header if present)
     const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
-    uint8_t header[MAX_HEADER_SIZE];
+    uint8_t header[MAX_HEADER_SIZE] = {};
 
     DWORD bytesRead = 0;
     if (!ReadFile(hFile.get(), header, MAX_HEADER_SIZE, &bytesRead, nullptr))
@@ -1813,7 +1813,7 @@ HRESULT DirectX::SaveToDDSMemory(
     if (FAILED(hr))
         return hr;
 
-    auto pDestination = reinterpret_cast<uint8_t*>(blob.GetBufferPointer());
+    auto pDestination = static_cast<uint8_t*>(blob.GetBufferPointer());
     assert(pDestination);
 
     hr = _EncodeDDSHeader(metadata, flags, pDestination, blob.GetBufferSize(), required);
@@ -1868,7 +1868,7 @@ HRESULT DirectX::SaveToDDSMemory(
                     size_t rowPitch = images[index].rowPitch;
 
                     const uint8_t * __restrict sPtr = images[index].pixels;
-                    uint8_t * __restrict dPtr = reinterpret_cast<uint8_t*>(pDestination);
+                    uint8_t * __restrict dPtr = pDestination;
 
                     size_t lines = ComputeScanlines(metadata.format, images[index].height);
                     size_t csize = std::min<size_t>(rowPitch, ddsRowPitch);
@@ -1937,7 +1937,7 @@ HRESULT DirectX::SaveToDDSMemory(
                     size_t rowPitch = images[index].rowPitch;
 
                     const uint8_t * __restrict sPtr = images[index].pixels;
-                    uint8_t * __restrict dPtr = reinterpret_cast<uint8_t*>(pDestination);
+                    uint8_t * __restrict dPtr = pDestination;
 
                     size_t lines = ComputeScanlines(metadata.format, images[index].height);
                     size_t csize = std::min<size_t>(rowPitch, ddsRowPitch);

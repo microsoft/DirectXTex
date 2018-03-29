@@ -247,7 +247,7 @@ namespace
         assert(srcImage.format == destImage.format);
 
         // Allocate temporary space (2 scanlines)
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc(
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(
             (sizeof(XMVECTOR) * (srcImage.width + destImage.width)), 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
@@ -308,7 +308,7 @@ namespace
             return E_FAIL;
 
         // Allocate temporary space (3 scanlines)
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc(
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(
             (sizeof(XMVECTOR) * (srcImage.width * 2 + destImage.width)), 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
@@ -367,7 +367,7 @@ namespace
         assert(srcImage.format == destImage.format);
 
         // Allocate temporary space (3 scanlines, plus X and Y filters)
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc(
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(
             (sizeof(XMVECTOR) * (srcImage.width * 2 + destImage.width)), 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
@@ -453,7 +453,7 @@ namespace
         assert(srcImage.format == destImage.format);
 
         // Allocate temporary space (5 scanlines, plus X and Y filters)
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc(
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(
             (sizeof(XMVECTOR) * (srcImage.width * 4 + destImage.width)), 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
@@ -615,7 +615,7 @@ namespace
         using namespace TriangleFilter;
 
         // Allocate initial temporary space (1 scanline, accumulation rows, plus X and Y filters)
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * srcImage.width, 16)));
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * srcImage.width, 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -684,7 +684,7 @@ namespace
                     }
                     else
                     {
-                        rowAcc->scanline.reset(reinterpret_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * destImage.width, 16)));
+                        rowAcc->scanline.reset(static_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * destImage.width, 16)));
                         if (!rowAcc->scanline)
                             return E_OUTOFMEMORY;
                     }

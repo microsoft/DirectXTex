@@ -102,7 +102,7 @@ namespace
 
         // Process first part of header
         bool formatFound = false;
-        const char* info = reinterpret_cast<const char*>(pSource);
+        auto info = static_cast<const char*>(pSource);
         while (size > 0)
         {
             if (*info == '\n')
@@ -275,7 +275,7 @@ namespace
             return E_FAIL;
         }
 
-        offset = info - reinterpret_cast<const char*>(pSource);
+        offset = info - static_cast<const char*>(pSource);
 
         metadata.width = width;
         metadata.height = height;
@@ -569,7 +569,7 @@ HRESULT DirectX::GetMetadataFromHDRFile(const wchar_t* szFile, TexMetadata& meta
     }
 
     // Read the first part of the file to find the header
-    uint8_t header[8192];
+    uint8_t header[8192] = {};
     DWORD bytesRead = 0;
     if (!ReadFile(hFile.get(), header, std::min<DWORD>(sizeof(header), fileInfo.EndOfFile.LowPart), &bytesRead, nullptr))
     {
@@ -612,7 +612,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
         return hr;
 
     // Copy pixels
-    auto sourcePtr = reinterpret_cast<const uint8_t*>(pSource) + offset;
+    auto sourcePtr = static_cast<const uint8_t*>(pSource) + offset;
 
     size_t pixelLen = remaining;
 
@@ -908,7 +908,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
         return hr;
 
     // Copy header
-    auto dPtr = reinterpret_cast<uint8_t*>(blob.GetBufferPointer());
+    auto dPtr = static_cast<uint8_t*>(blob.GetBufferPointer());
     assert(dPtr != 0);
     memcpy_s(dPtr, blob.GetBufferSize(), header, headerLen);
     dPtr += headerLen;
@@ -933,7 +933,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
     auto rgbe = temp.get();
     auto enc = temp.get() + rowPitch;
 
-    auto sPtr = reinterpret_cast<const uint8_t*>(image.pixels);
+    const uint8_t* sPtr = image.pixels;
     for (size_t scan = 0; scan < image.height; ++scan)
     {
         FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
@@ -953,7 +953,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
     }
 #endif
 
-    hr = blob.Trim(dPtr - reinterpret_cast<uint8_t*>(blob.GetBufferPointer()));
+    hr = blob.Trim(dPtr - static_cast<uint8_t*>(blob.GetBufferPointer()));
     if (FAILED(hr))
     {
         blob.Release();
@@ -1079,7 +1079,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile)
 #else
         auto enc = temp.get() + rowPitch;
 
-        auto sPtr = reinterpret_cast<const uint8_t*>(image.pixels);
+        const uint8_t* sPtr = image.pixels;
         for (size_t scan = 0; scan < image.height; ++scan)
         {
             FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);

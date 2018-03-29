@@ -928,7 +928,7 @@ HRESULT DirectX::GetMetadataFromWICMemory(
     if (FAILED(hr))
         return hr;
 
-    hr = stream->InitializeFromMemory(reinterpret_cast<BYTE*>(const_cast<void*>(pSource)),
+    hr = stream->InitializeFromMemory(static_cast<BYTE*>(const_cast<void*>(pSource)),
         static_cast<UINT>(size));
     if (FAILED(hr))
         return hr;
@@ -1022,7 +1022,7 @@ HRESULT DirectX::LoadFromWICMemory(
     if (FAILED(hr))
         return hr;
 
-    hr = stream->InitializeFromMemory(reinterpret_cast<uint8_t*>(const_cast<void*>(pSource)), static_cast<DWORD>(size));
+    hr = stream->InitializeFromMemory(static_cast<uint8_t*>(const_cast<void*>(pSource)), static_cast<DWORD>(size));
     if (FAILED(hr))
         return hr;
 

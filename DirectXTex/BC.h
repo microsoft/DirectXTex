@@ -220,12 +220,10 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
 
     for (size_t iIteration = 0; iIteration < 8; iIteration++)
     {
-        float fScale;
-
         if ((fY - fX) < (1.0f / 256.0f))
             break;
 
-        fScale = fSteps / (fY - fX);
+        float fScale = fSteps / (fY - fX);
 
         // Calculate new steps
         float pSteps[8];

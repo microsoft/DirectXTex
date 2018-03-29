@@ -58,7 +58,7 @@ namespace
             return E_POINTER;
         }
 
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR) * srcImage.width), 16)));
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR) * srcImage.width), 16)));
         if (!scanline)
         {
             image.Release();
@@ -163,7 +163,7 @@ namespace
         {
             // Convert format and then use as the source image
             ScratchImage image;
-            HRESULT hr;
+            HRESULT hr = E_UNEXPECTED;
 
             DWORD srgb = GetSRGBFlags(compress);
 
@@ -182,7 +182,6 @@ namespace
                 break;
 
             default:
-                hr = E_UNEXPECTED;
                 break;
             }
 

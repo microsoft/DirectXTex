@@ -327,7 +327,7 @@ HRESULT ScratchImage::Initialize(const TexMetadata& mdata, DWORD flags)
     m_nimages = nimages;
     memset(m_image, 0, sizeof(Image) * nimages);
 
-    m_memory = reinterpret_cast<uint8_t*>(_aligned_malloc(pixelSize, 16));
+    m_memory = static_cast<uint8_t*>(_aligned_malloc(pixelSize, 16));
     if (!m_memory)
     {
         Release();
@@ -393,7 +393,7 @@ HRESULT ScratchImage::Initialize2D(DXGI_FORMAT fmt, size_t width, size_t height,
     m_nimages = nimages;
     memset(m_image, 0, sizeof(Image) * nimages);
 
-    m_memory = reinterpret_cast<uint8_t*>(_aligned_malloc(pixelSize, 16));
+    m_memory = static_cast<uint8_t*>(_aligned_malloc(pixelSize, 16));
     if (!m_memory)
     {
         Release();
@@ -445,7 +445,7 @@ HRESULT ScratchImage::Initialize3D(DXGI_FORMAT fmt, size_t width, size_t height,
     m_nimages = nimages;
     memset(m_image, 0, sizeof(Image) * nimages);
 
-    m_memory = reinterpret_cast<uint8_t*>(_aligned_malloc(pixelSize, 16));
+    m_memory = static_cast<uint8_t*>(_aligned_malloc(pixelSize, 16));
     if (!m_memory)
     {
         Release();
@@ -492,11 +492,11 @@ HRESULT ScratchImage::InitializeFromImage(const Image& srcImage, bool allow1D, D
     if (!rowCount)
         return E_UNEXPECTED;
 
-    const uint8_t* sptr = reinterpret_cast<const uint8_t*>(srcImage.pixels);
+    const uint8_t* sptr = srcImage.pixels;
     if (!sptr)
         return E_POINTER;
 
-    auto dptr = reinterpret_cast<uint8_t*>(m_image[0].pixels);
+    uint8_t* dptr = m_image[0].pixels;
     if (!dptr)
         return E_POINTER;
 
@@ -550,12 +550,12 @@ HRESULT ScratchImage::InitializeArrayFromImages(const Image* images, size_t nIma
 
     for (size_t index = 0; index < nImages; ++index)
     {
-        auto sptr = reinterpret_cast<const uint8_t*>(images[index].pixels);
+        const uint8_t* sptr = images[index].pixels;
         if (!sptr)
             return E_POINTER;
 
         assert(index < m_nimages);
-        auto dptr = reinterpret_cast<uint8_t*>(m_image[index].pixels);
+        uint8_t* dptr = m_image[index].pixels;
         if (!dptr)
             return E_POINTER;
 
@@ -626,12 +626,12 @@ HRESULT ScratchImage::Initialize3DFromImages(const Image* images, size_t depth, 
 
     for (size_t slice = 0; slice < depth; ++slice)
     {
-        auto sptr = reinterpret_cast<const uint8_t*>(images[slice].pixels);
+        const uint8_t* sptr = images[slice].pixels;
         if (!sptr)
             return E_POINTER;
 
         assert(slice < m_nimages);
-        auto dptr = reinterpret_cast<uint8_t*>(m_image[slice].pixels);
+        uint8_t* dptr = m_image[slice].pixels;
         if (!dptr)
             return E_POINTER;
 
@@ -760,7 +760,7 @@ bool ScratchImage::IsAlphaAllOpaque() const
     }
     else
     {
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*m_metadata.width), 16)));
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*m_metadata.width), 16)));
         if (!scanline)
             return false;
 
