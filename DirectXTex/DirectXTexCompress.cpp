@@ -41,25 +41,25 @@ namespace
         return (compress & TEX_COMPRESS_SRGB);
     }
 
-    inline bool DetermineEncoderSettings(_In_ DXGI_FORMAT format, _Out_ BC_ENCODE& pfEncode, _Out_ size_t& blocksize, _Out_ DWORD& cflags)
+    inline bool DetermineEncoderSettings(_In_ DXGI_FORMAT format, _Out_ BC_ENCODE& pfEncode, _Out_ size_t& blocksize, _Out_ DWORD& cflags, _Out_ int& nBlocksPerChunk)
     {
         switch (format)
         {
         case DXGI_FORMAT_BC1_UNORM:
-        case DXGI_FORMAT_BC1_UNORM_SRGB:    pfEncode = nullptr;         blocksize = 8;   cflags = 0; break;
+        case DXGI_FORMAT_BC1_UNORM_SRGB:    pfEncode = nullptr;         blocksize = 8;   cflags = 0; nBlocksPerChunk = 1; break;
         case DXGI_FORMAT_BC2_UNORM:
-        case DXGI_FORMAT_BC2_UNORM_SRGB:    pfEncode = D3DXEncodeBC2;   blocksize = 16;  cflags = 0; break;
+        case DXGI_FORMAT_BC2_UNORM_SRGB:    pfEncode = D3DXEncodeBC2;   blocksize = 16;  cflags = 0; nBlocksPerChunk = 1; break;
         case DXGI_FORMAT_BC3_UNORM:
-        case DXGI_FORMAT_BC3_UNORM_SRGB:    pfEncode = D3DXEncodeBC3;   blocksize = 16;  cflags = 0; break;
-        case DXGI_FORMAT_BC4_UNORM:         pfEncode = D3DXEncodeBC4U;  blocksize = 8;   cflags = TEX_FILTER_RGB_COPY_RED; break;
-        case DXGI_FORMAT_BC4_SNORM:         pfEncode = D3DXEncodeBC4S;  blocksize = 8;   cflags = TEX_FILTER_RGB_COPY_RED; break;
-        case DXGI_FORMAT_BC5_UNORM:         pfEncode = D3DXEncodeBC5U;  blocksize = 16;  cflags = TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN; break;
-        case DXGI_FORMAT_BC5_SNORM:         pfEncode = D3DXEncodeBC5S;  blocksize = 16;  cflags = TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN; break;
-        case DXGI_FORMAT_BC6H_UF16:         pfEncode = D3DXEncodeBC6HU; blocksize = 16;  cflags = 0; break;
-        case DXGI_FORMAT_BC6H_SF16:         pfEncode = D3DXEncodeBC6HS; blocksize = 16;  cflags = 0; break;
+        case DXGI_FORMAT_BC3_UNORM_SRGB:    pfEncode = D3DXEncodeBC3;   blocksize = 16;  cflags = 0; nBlocksPerChunk = 1; break;
+        case DXGI_FORMAT_BC4_UNORM:         pfEncode = D3DXEncodeBC4U;  blocksize = 8;   cflags = TEX_FILTER_RGB_COPY_RED; nBlocksPerChunk = 1; break;
+        case DXGI_FORMAT_BC4_SNORM:         pfEncode = D3DXEncodeBC4S;  blocksize = 8;   cflags = TEX_FILTER_RGB_COPY_RED; nBlocksPerChunk = 1; break;
+        case DXGI_FORMAT_BC5_UNORM:         pfEncode = D3DXEncodeBC5U;  blocksize = 16;  cflags = TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN; nBlocksPerChunk = 1; break;
+        case DXGI_FORMAT_BC5_SNORM:         pfEncode = D3DXEncodeBC5S;  blocksize = 16;  cflags = TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN; nBlocksPerChunk = 1; break;
+        case DXGI_FORMAT_BC6H_UF16:         pfEncode = D3DXEncodeBC6HU; blocksize = 16;  cflags = 0; nBlocksPerChunk = 1; break;
+        case DXGI_FORMAT_BC6H_SF16:         pfEncode = D3DXEncodeBC6HS; blocksize = 16;  cflags = 0; nBlocksPerChunk = 1; break;
         case DXGI_FORMAT_BC7_UNORM:
-        case DXGI_FORMAT_BC7_UNORM_SRGB:    pfEncode = D3DXEncodeBC7;   blocksize = 16;  cflags = 0; break;
-        default:                            pfEncode = nullptr;         blocksize = 0;   cflags = 0; return false;
+        case DXGI_FORMAT_BC7_UNORM_SRGB:    pfEncode = D3DXEncodeBC7Parallel; blocksize = 16; cflags = 0; nBlocksPerChunk = BC7_NUM_PARALLEL_BLOCKS; break;
+        default:                            pfEncode = nullptr;         blocksize = 0;   cflags = 0; nBlocksPerChunk = 1; return false;
         }
 
         return true;
@@ -100,10 +100,11 @@ namespace
         BC_ENCODE pfEncode;
         size_t blocksize;
         DWORD cflags;
-        if (!DetermineEncoderSettings(result.format, pfEncode, blocksize, cflags))
+        int nBlocksPerChunk = 0;
+        if (!DetermineEncoderSettings(result.format, pfEncode, blocksize, cflags, nBlocksPerChunk))
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
 
-        __declspec(align(16)) XMVECTOR temp[16];
+        __declspec(align(16)) XMVECTOR tempBlocks[16 * MAX_PARALLEL_BLOCKS];
         const uint8_t *pSrc = image.pixels;
         const uint8_t *pEnd = image.pixels + image.slicePitch;
         const size_t rowPitch = image.rowPitch;
@@ -113,8 +114,12 @@ namespace
             uint8_t* dptr = pDest;
             size_t ph = std::min<size_t>(4, image.height - h);
             size_t w = 0;
+
+            int nQueuedBlocks = 0;
             for (size_t count = 0; (count < result.rowPitch) && (w < image.width); count += blocksize, w += 4)
             {
+                XMVECTOR *temp = tempBlocks + nQueuedBlocks * 16;
+
                 size_t pw = std::min<size_t>(4, image.width - w);
                 assert(pw > 0 && ph > 0);
 
@@ -177,13 +182,36 @@ namespace
 
                 _ConvertScanline(temp, 16, result.format, format, cflags | srgb);
 
-                if (pfEncode)
-                    pfEncode(dptr, temp, bcflags);
-                else
-                    D3DXEncodeBC1(dptr, temp, threshold, bcflags);
+                if (nQueuedBlocks == nBlocksPerChunk)
+                {
+                    if (pfEncode)
+                        pfEncode(dptr, tempBlocks, bcflags);
+                    else
+                        D3DXEncodeBC1(dptr, tempBlocks, threshold, bcflags);
+
+                    dptr += blocksize * nBlocksPerChunk;
+                    nQueuedBlocks = 0;
+                }
 
                 sptr += sbpp * 4;
-                dptr += blocksize;
+            }
+
+            if (nQueuedBlocks != 0)
+            {
+                uint8_t scratch[MAX_BLOCK_SIZE * MAX_PARALLEL_BLOCKS];
+
+                for (int i = nQueuedBlocks; i < nBlocksPerChunk; i++)
+                    for (int element = 0; element < NUM_PIXELS_PER_BLOCK; element++)
+                        tempBlocks[i * NUM_PIXELS_PER_BLOCK + element] = XMVectorSet(0.f, 0.f, 0.f, 0.f);
+
+                if (pfEncode)
+                    pfEncode(scratch, tempBlocks, bcflags);
+                else
+                    D3DXEncodeBC1(scratch, tempBlocks, threshold, bcflags);
+
+                memcpy(dptr, scratch, blocksize * nQueuedBlocks);
+                dptr += blocksize * nQueuedBlocks;
+                nQueuedBlocks = 0;
             }
 
             pSrc += rowPitch * 4;
@@ -229,7 +257,8 @@ namespace
         BC_ENCODE pfEncode;
         size_t blocksize;
         DWORD cflags;
-        if (!DetermineEncoderSettings(result.format, pfEncode, blocksize, cflags))
+        int nBlocksPerChunk;
+        if (!DetermineEncoderSettings(result.format, pfEncode, blocksize, cflags, nBlocksPerChunk))
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
 
         // Refactored version of loop to support parallel independance
@@ -238,89 +267,124 @@ namespace
         bool fail = false;
 
 #pragma omp parallel for
-        for (int nb = 0; nb < static_cast<int>(nBlocks); ++nb)
+        for (int nbBase = 0; nbBase < static_cast<int>(nBlocks); nbBase += nBlocksPerChunk)
         {
-            int nbWidth = std::max<int>(1, int((image.width + 3) / 4));
+            __declspec(align(16)) XMVECTOR tempBlocks[16 * MAX_PARALLEL_BLOCKS];
 
-            int y = nb / nbWidth;
-            int x = (nb - (y*nbWidth)) * 4;
-            y *= 4;
+            int numProcessableBlocks = std::min<int>(static_cast<int>(nBlocks) - nbBase, nBlocksPerChunk);
 
-            assert((x >= 0) && (x < int(image.width)));
-            assert((y >= 0) && (y < int(image.height)));
-
-            size_t rowPitch = image.rowPitch;
-            const uint8_t *pSrc = image.pixels + (y*rowPitch) + (x*sbpp);
-
-            uint8_t *pDest = result.pixels + (nb*blocksize);
-
-            size_t ph = std::min<size_t>(4, image.height - y);
-            size_t pw = std::min<size_t>(4, image.width - x);
-            assert(pw > 0 && ph > 0);
-
-            ptrdiff_t bytesLeft = pEnd - pSrc;
-            assert(bytesLeft > 0);
-            size_t bytesToRead = std::min<size_t>(rowPitch, bytesLeft);
-
-            __declspec(align(16)) XMVECTOR temp[16];
-            if (!_LoadScanline(&temp[0], pw, pSrc, bytesToRead, format))
-                fail = true;
-
-            if (ph > 1)
+            for (int subBlock = 0; subBlock < numProcessableBlocks; subBlock++)
             {
-                bytesToRead = std::min<size_t>(rowPitch, bytesLeft - rowPitch);
-                if (!_LoadScanline(&temp[4], pw, pSrc + rowPitch, bytesToRead, format))
+                XMVECTOR *temp = tempBlocks + subBlock * NUM_PIXELS_PER_BLOCK;
+                int nb = nbBase + subBlock;
+                if (nb >= static_cast<int>(nBlocks))
+                {
+                    for (int i = 0; i < 16; i++)
+                        temp[i] = XMVectorSet(0.f, 0.f, 0.f, 0.f);
+                    continue;
+                }
+
+                int nbWidth = std::max<int>(1, int((image.width + 3) / 4));
+
+                int y = nb / nbWidth;
+                int x = (nb - (y*nbWidth)) * 4;
+                y *= 4;
+
+                assert((x >= 0) && (x < int(image.width)));
+                assert((y >= 0) && (y < int(image.height)));
+
+                size_t rowPitch = image.rowPitch;
+                const uint8_t *pSrc = image.pixels + (y*rowPitch) + (x*sbpp);
+
+                size_t ph = std::min<size_t>(4, image.height - y);
+                size_t pw = std::min<size_t>(4, image.width - x);
+                assert(pw > 0 && ph > 0);
+
+                ptrdiff_t bytesLeft = pEnd - pSrc;
+                assert(bytesLeft > 0);
+                size_t bytesToRead = std::min<size_t>(rowPitch, bytesLeft);
+
+                if (!_LoadScanline(&temp[0], pw, pSrc, bytesToRead, format))
                     fail = true;
 
-                if (ph > 2)
+                if (ph > 1)
                 {
-                    bytesToRead = std::min<size_t>(rowPitch, bytesLeft - rowPitch * 2);
-                    if (!_LoadScanline(&temp[8], pw, pSrc + rowPitch * 2, bytesToRead, format))
+                    bytesToRead = std::min<size_t>(rowPitch, bytesLeft - rowPitch);
+                    if (!_LoadScanline(&temp[4], pw, pSrc + rowPitch, bytesToRead, format))
                         fail = true;
 
-                    if (ph > 3)
+                    if (ph > 2)
                     {
-                        bytesToRead = std::min<size_t>(rowPitch, bytesLeft - rowPitch * 3);
-                        if (!_LoadScanline(&temp[12], pw, pSrc + rowPitch * 3, bytesToRead, format))
+                        bytesToRead = std::min<size_t>(rowPitch, bytesLeft - rowPitch * 2);
+                        if (!_LoadScanline(&temp[8], pw, pSrc + rowPitch * 2, bytesToRead, format))
                             fail = true;
+
+                        if (ph > 3)
+                        {
+                            bytesToRead = std::min<size_t>(rowPitch, bytesLeft - rowPitch * 3);
+                            if (!_LoadScanline(&temp[12], pw, pSrc + rowPitch * 3, bytesToRead, format))
+                                fail = true;
+                        }
                     }
                 }
+
+                if (pw != 4 || ph != 4)
+                {
+                    // Replicate pixels for partial block
+                    static const size_t uSrc[] = { 0, 0, 0, 1 };
+
+                    if (pw < 4)
+                    {
+                        for (size_t t = 0; t < ph && t < 4; ++t)
+                        {
+                            for (size_t s = pw; s < 4; ++s)
+                            {
+                                temp[(t << 2) | s] = temp[(t << 2) | uSrc[s]];
+                            }
+                        }
+                    }
+
+                    if (ph < 4)
+                    {
+                        for (size_t t = ph; t < 4; ++t)
+                        {
+                            for (size_t s = 0; s < 4; ++s)
+                            {
+                                temp[(t << 2) | s] = temp[(uSrc[t] << 2) | s];
+                            }
+                        }
+                    }
+                }
+
+                _ConvertScanline(temp, 16, result.format, format, cflags | srgb);
             }
 
-            if (pw != 4 || ph != 4)
+            for (int fillBlock = numProcessableBlocks; fillBlock < nBlocksPerChunk; fillBlock++)
             {
-                // Replicate pixels for partial block
-                static const size_t uSrc[] = { 0, 0, 0, 1 };
-
-                if (pw < 4)
-                {
-                    for (size_t t = 0; t < ph && t < 4; ++t)
-                    {
-                        for (size_t s = pw; s < 4; ++s)
-                        {
-                            temp[(t << 2) | s] = temp[(t << 2) | uSrc[s]];
-                        }
-                    }
-                }
-
-                if (ph < 4)
-                {
-                    for (size_t t = ph; t < 4; ++t)
-                    {
-                        for (size_t s = 0; s < 4; ++s)
-                        {
-                            temp[(t << 2) | s] = temp[(uSrc[t] << 2) | s];
-                        }
-                    }
-                }
+                for (int element = 0; element < NUM_PIXELS_PER_BLOCK; element++)
+                    tempBlocks[fillBlock * NUM_PIXELS_PER_BLOCK + element] = XMVectorSet(0.f, 0.f, 0.f, 0.f);
             }
 
-            _ConvertScanline(temp, 16, result.format, format, cflags | srgb);
+            uint8_t *pDest = result.pixels + (nbBase*blocksize);
 
-            if (pfEncode)
-                pfEncode(pDest, temp, bcflags);
+            if (numProcessableBlocks == nBlocksPerChunk)
+            {
+                if (pfEncode)
+                    pfEncode(pDest, tempBlocks, bcflags);
+                else
+                    D3DXEncodeBC1(pDest, tempBlocks, threshold, bcflags);
+            }
             else
-                D3DXEncodeBC1(pDest, temp, threshold, bcflags);
+            {
+                uint8_t scratch[MAX_BLOCK_SIZE * MAX_PARALLEL_BLOCKS];
+
+                if (pfEncode)
+                    pfEncode(scratch, tempBlocks, bcflags);
+                else
+                    D3DXEncodeBC1(scratch, tempBlocks, threshold, bcflags);
+
+                memcpy(pDest, scratch, numProcessableBlocks * blocksize);
+            }
         }
 
         return (fail) ? E_FAIL : S_OK;

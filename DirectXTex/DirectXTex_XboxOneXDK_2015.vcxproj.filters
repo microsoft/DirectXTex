@@ -108,6 +108,9 @@
     <ClCompile Include="BC6HBC7.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BC7Parallel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="BCDirectCompute.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
