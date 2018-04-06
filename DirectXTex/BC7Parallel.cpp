@@ -27,31 +27,6 @@
     Licensed under the MIT License.
 
     http://go.microsoft.com/fwlink/?LinkId=248926
-
-    -------------------------------------------------------------------------------------
-
-    Contains portions of libsquish
-
-    Copyright (c) 2006 Simon Brown                          si@sjbrown.co.uk
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the 
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to 
-    permit persons to whom the Software is furnished to do so, subject to 
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY 
-    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
-    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 #include "directxtexp.h"
 
@@ -337,6 +312,11 @@ namespace
                 dest.m_values[i] = _mm_or_ps(_mm_andnot_ps(flag.m_values[i], dest.m_values[i]), _mm_and_ps(flag.m_values[i], src.m_values[i]));
         }
 
+        static void MakeSafeDenominator(Float& v)
+        {
+            ConditionalSet(v, Equal(v, MakeFloatZero()), MakeFloat(1.0f));
+        }
+
         static Int16 Min(Int16 a, Int16 b)
         {
             Int16 result;
@@ -533,6 +513,12 @@ namespace
                 dest = src;
         }
 
+        static void MakeSafeDenominator(float& v)
+        {
+            if (v == 0.f)
+                v = 1.0f;
+        }
+
         template<class T>
         inline static T Select(bool flag, T a, T b)
         {
@@ -588,11 +574,13 @@ namespace
 
         inline static int16_t ExtractUInt16(int16_t v, int offset)
         {
+            (void)offset;
             return v;
         }
 
         inline static float ExtractFloat(float v, int offset)
         {
+            (void)offset;
             return v;
         }
 
@@ -706,8 +694,22 @@ namespace
         typedef ParallelMath::Float MFloat;
         typedef ParallelMath::Int16 MInt16;
 
-        MFloat m_base[TVectorSize];
-        MFloat m_offset[TVectorSize];
+        UnfinishedEndpoints()
+        {
+        }
+
+        UnfinishedEndpoints(const MFloat base[TVectorSize], const MFloat offset[TVectorSize])
+        {
+            for (int ch = 0; ch < TVectorSize; ch++)
+                m_base[ch] = base[ch];
+            for (int ch = 0; ch < TVectorSize; ch++)
+                m_offset[ch] = offset[ch];
+        }
+
+        UnfinishedEndpoints(const UnfinishedEndpoints& other)
+            : UnfinishedEndpoints(other.m_base, other.m_offset)
+        {
+        }
 
         void Finish(int tweak, int bits, MInt16* outEP0, MInt16* outEP1)
         {
@@ -722,318 +724,204 @@ namespace
                 outEP1[ch] = ParallelMath::FloatToUInt16(ep1f);
             }
         }
+
+    private:
+        MFloat m_base[TVectorSize];
+        MFloat m_offset[TVectorSize];
     };
 
-    class EndpointSelectorRGBA
+    template<int TMatrixSize>
+    class PackedCovarianceMatrix
     {
     public:
-        static const int NumPasses = 3;
-        static const int NumPowerIterations = 8;
+        // 0: xx,
+        // 1: xy, yy
+        // 3: xz, yz, zz 
+        // 6: xw, yw, zw, ww
+        // ... etc.
+        static const int PyramidSize = (TMatrixSize * (TMatrixSize + 1)) / 2;
 
         typedef ParallelMath::Float MFloat;
-        typedef ParallelMath::Int16 MInt16;
 
-        MFloat m_total[4];
-        MFloat m_ctr[4];
-        MFloat m_axis[4];
-        MFloat m_xx;
-        MFloat m_xy;
-        MFloat m_xz;
-        MFloat m_xw;
-        MFloat m_yy;
-        MFloat m_yz;
-        MFloat m_yw;
-        MFloat m_zz;
-        MFloat m_zw;
-        MFloat m_ww;
-        MFloat m_minDist;
-        MFloat m_maxDist;
-
-        EndpointSelectorRGBA()
+        PackedCovarianceMatrix()
         {
-            for (int i = 0; i < 4; i++)
-            {
-                m_total[i] = ParallelMath::MakeFloatZero();
-                m_ctr[i] = ParallelMath::MakeFloatZero();
-                m_axis[i] = ParallelMath::MakeFloatZero();
-            }
-            m_xx = ParallelMath::MakeFloatZero();
-            m_xy = ParallelMath::MakeFloatZero();
-            m_xz = ParallelMath::MakeFloatZero();
-            m_xw = ParallelMath::MakeFloatZero();
-            m_yy = ParallelMath::MakeFloatZero();
-            m_yz = ParallelMath::MakeFloatZero();
-            m_yw = ParallelMath::MakeFloatZero();
-            m_zz = ParallelMath::MakeFloatZero();
-            m_zw = ParallelMath::MakeFloatZero();
-            m_ww = ParallelMath::MakeFloatZero();
-            m_minDist = ParallelMath::MakeFloat(1000.0f);
-            m_maxDist = ParallelMath::MakeFloat(-1000.0f);
+            for (int i = 0; i < PyramidSize; i++)
+                m_values[i] = ParallelMath::MakeFloatZero();
         }
 
-        void InitPass(int step)
+        void Add(const ParallelMath::Float vec[TMatrixSize], ParallelMath::Float weight)
         {
-            if (step == 1)
+            int index = 0;
+            for (int row = 0; row < TMatrixSize; row++)
             {
-                for (int i = 0; i < 4; i++)
-                    m_ctr[i] = m_ctr[i] / ParallelMath::Max(m_total[i], ParallelMath::MakeFloat(0.0001f));
-            }
-            else if (step == 2)
-            {
-                MFloat matrix[4][4] =
+                for (int col = 0; col <= row; col++)
                 {
-                    { m_xx, m_xy, m_xz, m_xw },
-                    { m_xy, m_yy, m_yz, m_yw },
-                    { m_xz, m_yz, m_zz, m_zw },
-                    { m_xw, m_yw, m_zw, m_ww }
-                };
-
-                MFloat v[4] = { ParallelMath::MakeFloat(1.0f), ParallelMath::MakeFloat(1.0f), ParallelMath::MakeFloat(1.0f), ParallelMath::MakeFloat(1.0f) };
-                for (int p = 0; p < NumPowerIterations; p++)
-                {
-                    // matrix multiply
-                    MFloat w[4];
-                    for (int i = 0; i < 4; i++)
-                    {
-                        w[i] = matrix[0][i] * v[0];
-                        for (int row = 1; row < 4; row++)
-                            w[i] = w[i] + matrix[row][i] * v[row];
-                    }
-
-                    MFloat a = ParallelMath::Max(w[0], ParallelMath::Max(w[1], ParallelMath::Max(w[2], w[3])));
-
-                    ParallelMath::FloatCompFlag aZero = ParallelMath::Equal(a, ParallelMath::MakeFloatZero());
-
-                    ParallelMath::ConditionalSet(a, aZero, ParallelMath::MakeFloat(1.0f));
-
-                    for (int c = 0; c < 4; c++)
-                        v[c] = w[c] / a;
-                }
-
-                MFloat vlen = ParallelMath::Sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2] + v[3] * v[3]);
-
-                ParallelMath::FloatCompFlag vZero = ParallelMath::Equal(vlen, ParallelMath::MakeFloatZero());
-                ParallelMath::ConditionalSet(vlen, vZero, ParallelMath::MakeFloat(1.0f));
-
-                for (int i = 0; i < 4; i++)
-                    m_axis[i] = v[i] / vlen;
-            }
-        }
-
-        void Contribute(int step, const MInt16* pixel, MFloat weight)
-        {
-            MFloat pt[4];
-            for (int i = 0; i < 4; i++)
-                pt[i] = ParallelMath::UInt16ToFloat(pixel[i]);
-
-            if (step == 0)
-            {
-                for (int i = 0; i < 4; i++)
-                {
-                    m_total[i] = m_total[i] + weight;
-                    m_ctr[i] = m_ctr[i] + weight * pt[i];
+                    m_values[index] = m_values[index] + vec[row] * vec[col] * weight;
+                    index++;
                 }
             }
-            else if (step == 1)
-            {
-                MFloat a[4];
-                MFloat b[4];
+        }
 
-                for (int i = 0; i < 4; i++)
+        void Product(MFloat outVec[TMatrixSize], const MFloat inVec[TMatrixSize])
+        {
+            for (int row = 0; row < TMatrixSize; row++)
+            {
+                MFloat sum = ParallelMath::MakeFloatZero();
+
+                int index = (row * (row + 1)) >> 1;
+                for (int col = 0; col < TMatrixSize; col++)
                 {
-                    a[i] = pt[i] - m_ctr[i];
-                    b[i] = weight * a[i];
+                    sum = sum + inVec[col] * m_values[index];
+                    if (col >= row)
+                        index += col;
+                    else
+                        index++;
                 }
 
-                m_xx = m_xx + a[0] * b[0];
-                m_xy = m_xy + a[0] * b[1];
-                m_xz = m_xz + a[0] * b[2];
-                m_xw = m_xw + a[0] * b[3];
-                m_yy = m_yy + a[1] * b[1];
-                m_yz = m_yz + a[1] * b[2];
-                m_yw = m_yw + a[1] * b[3];
-                m_zz = m_zz + a[2] * b[2];
-                m_zw = m_zw + a[2] * b[3];
-                m_ww = m_ww + a[3] * b[3];
-            }
-            else if (step == 2)
-            {
-                MFloat diff[4];
-                for (int i = 0; i < 4; i++)
-                    diff[i] = pt[i] - m_ctr[i];
-
-                MFloat dist = diff[0] * m_axis[0] + diff[1] * m_axis[1] + diff[2] * m_axis[2] + diff[3] * m_axis[3];
-                m_minDist = ParallelMath::Min(dist, m_minDist);
-                m_maxDist = ParallelMath::Max(dist, m_maxDist);
+                outVec[row] = sum;
             }
         }
 
-        UnfinishedEndpoints<4> GetEndpoints() const
-        {
-            MFloat len = m_maxDist - m_minDist;
-
-            UnfinishedEndpoints<4> result;
-            for (int i = 0; i < 4; i++)
-            {
-                result.m_base[i] = m_ctr[i] + m_axis[i] * m_minDist;
-                result.m_offset[i] = m_axis[i] * len;
-            }
-            return result;
-        }
+    private:
+        ParallelMath::Float m_values[PyramidSize];
     };
 
+    static const int NumEndpointSelectorPasses = 3;
 
-    class EndpointSelectorRGB
+    template<int TVectorSize, int TIterationCount>
+    class EndpointSelector
     {
     public:
-        static const int NumPasses = 3;
-        static const int NumPowerIterations = 8;
-
         typedef ParallelMath::Float MFloat;
-        typedef ParallelMath::Int16 MInt16;
 
-        MFloat m_total[3];
-        MFloat m_ctr[3];
-        MFloat m_axis[3];
-        MFloat m_xx;
-        MFloat m_xy;
-        MFloat m_xz;
-        MFloat m_xw;
-        MFloat m_yy;
-        MFloat m_yz;
-        MFloat m_yw;
-        MFloat m_zz;
-        MFloat m_zw;
-        MFloat m_ww;
-        MFloat m_minDist;
-        MFloat m_maxDist;
-
-        EndpointSelectorRGB()
+        EndpointSelector()
         {
-            for (int i = 0; i < 3; i++)
+            for (int ch = 0; ch < TVectorSize; ch++)
             {
-                m_total[i] = ParallelMath::MakeFloatZero();
-                m_ctr[i] = ParallelMath::MakeFloatZero();
-                m_axis[i] = ParallelMath::MakeFloatZero();
+                m_centroid[ch] = ParallelMath::MakeFloatZero();
+                m_direction[ch] = ParallelMath::MakeFloatZero();
             }
-            m_xx = ParallelMath::MakeFloatZero();
-            m_xy = ParallelMath::MakeFloatZero();
-            m_xz = ParallelMath::MakeFloatZero();
-            m_xw = ParallelMath::MakeFloatZero();
-            m_yy = ParallelMath::MakeFloatZero();
-            m_yz = ParallelMath::MakeFloatZero();
-            m_yw = ParallelMath::MakeFloatZero();
-            m_zz = ParallelMath::MakeFloatZero();
-            m_zw = ParallelMath::MakeFloatZero();
-            m_ww = ParallelMath::MakeFloatZero();
-            m_minDist = ParallelMath::MakeFloat(1000.0f);
-            m_maxDist = ParallelMath::MakeFloat(-1000.0f);
+            m_weightTotal = ParallelMath::MakeFloatZero();
+            m_minDist = ParallelMath::MakeFloat(FLT_MAX);
+            m_maxDist = ParallelMath::MakeFloat(-FLT_MAX);
         }
 
-        void InitPass(int step)
+        void ContributePass(const MFloat value[TVectorSize], int pass, MFloat weight)
         {
-            if (step == 1)
-            {
-                for (int i = 0; i < 3; i++)
-                    m_ctr[i] = m_ctr[i] / ParallelMath::Max(m_total[i], ParallelMath::MakeFloat(0.0001f));
-            }
-            else if (step == 2)
-            {
-                MFloat matrix[3][3] =
-                {
-                    { m_xx, m_xy, m_xz },
-                { m_xy, m_yy, m_yz },
-                { m_xz, m_yz, m_zz },
-                };
-
-                MFloat v[3] = { ParallelMath::MakeFloat(1.0f), ParallelMath::MakeFloat(1.0f), ParallelMath::MakeFloat(1.0f) };
-                for (int p = 0; p < NumPowerIterations; p++)
-                {
-                    // matrix multiply
-                    MFloat w[3];
-                    for (int i = 0; i < 3; i++)
-                    {
-                        w[i] = matrix[0][i] * v[0];
-                        for (int row = 1; row < 3; row++)
-                            w[i] = w[i] + matrix[row][i] * v[row];
-                    }
-
-                    MFloat a = ParallelMath::Max(w[0], ParallelMath::Max(w[1], w[2]));
-
-                    ParallelMath::FloatCompFlag aZero = ParallelMath::Equal(a, ParallelMath::MakeFloatZero());
-
-                    ParallelMath::ConditionalSet(a, aZero, ParallelMath::MakeFloat(1.0f));
-
-                    for (int c = 0; c < 3; c++)
-                        v[c] = w[c] / a;
-                }
-
-                MFloat vlen = ParallelMath::Sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-
-                ParallelMath::FloatCompFlag vZero = ParallelMath::Equal(vlen, ParallelMath::MakeFloatZero());
-                ParallelMath::ConditionalSet(vlen, vZero, ParallelMath::MakeFloat(1.0f));
-
-                for (int i = 0; i < 3; i++)
-                    m_axis[i] = v[i] / vlen;
-            }
+            if (pass == 0)
+                ContributeCentroid(value, weight);
+            else if (pass == 1)
+                ContributeDirection(value, weight);
+            else if (pass == 2)
+                ContributeMinMax(value);
         }
 
-        void Contribute(int step, const MInt16* pixel, MFloat weight)
+        void FinishPass(int pass)
         {
-            MFloat pt[3];
-            for (int i = 0; i < 3; i++)
-                pt[i] = ParallelMath::UInt16ToFloat(pixel[i]);
-
-            if (step == 0)
-            {
-                for (int i = 0; i < 3; i++)
-                {
-                    m_total[i] = m_total[i] + weight;
-                    m_ctr[i] = m_ctr[i] + weight * pt[i];
-                }
-            }
-            else if (step == 1)
-            {
-                MFloat a[3];
-                MFloat b[3];
-
-                for (int i = 0; i < 3; i++)
-                {
-                    a[i] = pt[i] - m_ctr[i];
-                    b[i] = weight * a[i];
-                }
-
-                m_xx = m_xx + a[0] * b[0];
-                m_xy = m_xy + a[0] * b[1];
-                m_xz = m_xz + a[0] * b[2];
-                m_yy = m_yy + a[1] * b[1];
-                m_yz = m_yz + a[1] * b[2];
-                m_zz = m_zz + a[2] * b[2];
-            }
-            else if (step == 2)
-            {
-                MFloat diff[3];
-                for (int i = 0; i < 3; i++)
-                    diff[i] = pt[i] - m_ctr[i];
-
-                MFloat dist = diff[0] * m_axis[0] + diff[1] * m_axis[1] + diff[2] * m_axis[2];
-                m_minDist = ParallelMath::Min(dist, m_minDist);
-                m_maxDist = ParallelMath::Max(dist, m_maxDist);
-            }
+            if (pass == 0)
+                FinishCentroid();
+            else if (pass == 1)
+                FinishDirection();
         }
 
-        UnfinishedEndpoints<3> GetEndpoints() const
+        UnfinishedEndpoints<TVectorSize> GetEndpoints(const float channelWeights[TVectorSize]) const
         {
-            MFloat len = m_maxDist - m_minDist;
+            MFloat unweightedBase[TVectorSize];
+            MFloat unweightedOffset[TVectorSize];
 
-            UnfinishedEndpoints<3> result;
-            for (int i = 0; i < 3; i++)
+            for (int ch = 0; ch < TVectorSize; ch++)
             {
-                result.m_base[i] = m_ctr[i] + m_axis[i] * m_minDist;
-                result.m_offset[i] = m_axis[i] * len;
+                MFloat min = m_centroid[ch] + m_direction[ch] * m_minDist;
+                MFloat max = m_centroid[ch] + m_direction[ch] * (m_maxDist - m_minDist);
+
+                float safeWeight = channelWeights[ch];
+                if (safeWeight == 0.f)
+                    safeWeight = 1.0f;
+
+                unweightedBase[ch] = min / channelWeights[ch];
+                unweightedOffset[ch] = (max - min) / channelWeights[ch];
             }
-            return result;
+
+            return UnfinishedEndpoints<TVectorSize>(unweightedBase, unweightedOffset);
         }
+
+    private:
+        void ContributeCentroid(const MFloat value[TVectorSize], MFloat weight)
+        {
+            for (int ch = 0; ch < TVectorSize; ch++)
+                m_centroid[ch] = m_centroid[ch] + value[ch] * weight;
+            m_weightTotal = m_weightTotal + weight;
+        }
+
+        void FinishCentroid()
+        {
+            MFloat denom = m_weightTotal;
+            ParallelMath::MakeSafeDenominator(denom);
+
+            for (int ch = 0; ch < TVectorSize; ch++)
+                m_centroid[ch] = m_centroid[ch] / denom;
+        }
+
+        void ContributeDirection(const MFloat value[TVectorSize], MFloat weight)
+        {
+            MFloat diff[TVectorSize];
+            for (int ch = 0; ch < TVectorSize; ch++)
+                diff[ch] = value[ch] - m_centroid[ch];
+
+            m_covarianceMatrix.Add(diff, weight);
+        }
+
+        void FinishDirection()
+        {
+            MFloat approx[TVectorSize];
+            for (int ch = 0; ch < TVectorSize; ch++)
+                approx[ch] = ParallelMath::MakeFloat(1.0f);
+
+            for (int i = 0; i < TIterationCount; i++)
+            {
+                MFloat product[TVectorSize];
+                m_covarianceMatrix.Product(product, approx);
+
+                MFloat largestComponent = product[0];
+                for (int ch = 1; ch < TVectorSize; ch++)
+                    largestComponent = ParallelMath::Max(largestComponent, product[ch]);
+
+                // product = largestComponent*newApprox
+                ParallelMath::MakeSafeDenominator(largestComponent);
+                for (int ch = 0; ch < TVectorSize; ch++)
+                    approx[ch] = product[ch] / largestComponent;
+            }
+
+            // Normalize
+            MFloat approxLen = ParallelMath::MakeFloatZero();
+            for (int ch = 0; ch < TVectorSize; ch++)
+                approxLen = approxLen + approx[ch] * approx[ch];
+
+            approxLen = ParallelMath::Sqrt(approxLen);
+
+            ParallelMath::MakeSafeDenominator(approxLen);
+
+            for (int ch = 0; ch < TVectorSize; ch++)
+                m_direction[ch] = approx[ch] / approxLen;
+        }
+
+        void ContributeMinMax(const MFloat value[TVectorSize])
+        {
+            MFloat dist = ParallelMath::MakeFloatZero();
+            for (int ch = 0; ch < TVectorSize; ch++)
+                dist = dist + m_direction[ch] * (value[ch] - m_centroid[ch]);
+
+            m_minDist = ParallelMath::Min(m_minDist, dist);
+            m_maxDist = ParallelMath::Max(m_maxDist, dist);
+        }
+        
+        ParallelMath::Float m_centroid[TVectorSize];
+        ParallelMath::Float m_direction[TVectorSize];
+        PackedCovarianceMatrix<TVectorSize> m_covarianceMatrix;
+        ParallelMath::Float m_weightTotal;
+
+        ParallelMath::Float m_minDist;
+        ParallelMath::Float m_maxDist;
     };
 
     template<int TVectorSize>
@@ -1043,14 +931,28 @@ namespace
         typedef ParallelMath::Float MFloat;
         typedef ParallelMath::Int16 MInt16;
 
-        MInt16 m_endPoint[2][TVectorSize];
-        int m_prec;
-        float m_maxValue;
-        MFloat m_origin[TVectorSize];
-        MFloat m_axis[TVectorSize];
-
-        void Init(MInt16 endPoint[2][TVectorSize], int prec)
+        void Init(const float channelWeights[TVectorSize], MInt16 endPoint[2][TVectorSize], int prec)
         {
+            m_isUniform = true;
+            for (int ch = 1; ch < TVectorSize; ch++)
+            {
+                if (channelWeights[ch] != channelWeights[0])
+                    m_isUniform = false;
+            }
+
+            // To work with channel weights, we need something where:
+            // pxDiff = px - ep[0]
+            // epDiff = ep[1] - ep[0]
+            //
+            // weightedEPDiff = epDiff * channelWeights
+            // normalizedWeightedAxis = weightedEPDiff / len(weightedEPDiff)
+            // normalizedIndex = dot(pxDiff * channelWeights, normalizedWeightedAxis) / len(weightedEPDiff)
+            // index = normalizedIndex * maxValue
+            //
+            // Equivalent to:
+            // axis = channelWeights * maxValue * epDiff * channelWeights / lenSquared(epDiff * channelWeights)
+            // index = dot(axis, pxDiff)
+
             for (int ep = 0; ep < 2; ep++)
                 for (int ch = 0; ch < TVectorSize; ch++)
                     m_endPoint[ep][ch] = endPoint[ep][ch];
@@ -1058,24 +960,22 @@ namespace
             m_prec = prec;
             m_maxValue = static_cast<float>((1 << m_prec) - 1);
 
-            MFloat axis[TVectorSize];
+            MFloat epDiffWeighted[TVectorSize];
             for (int ch = 0; ch < TVectorSize; ch++)
             {
                 m_origin[ch] = ParallelMath::UInt16ToFloat(endPoint[0][ch]);
 
-                axis[ch] = ParallelMath::UInt16ToFloat(endPoint[1][ch]) - m_origin[ch];
+                epDiffWeighted[ch] = (ParallelMath::UInt16ToFloat(endPoint[1][ch]) - m_origin[ch]) * channelWeights[ch];
             }
 
-            MFloat lenSquared = axis[0] * axis[0];
+            MFloat lenSquared = epDiffWeighted[0] * epDiffWeighted[0];
             for (int ch = 1; ch < TVectorSize; ch++)
-                lenSquared = lenSquared + axis[ch] * axis[ch];
+                lenSquared = lenSquared + epDiffWeighted[ch] * epDiffWeighted[ch];
 
-            ParallelMath::FloatCompFlag lenSquaredZero = ParallelMath::Equal(lenSquared, ParallelMath::MakeFloatZero());
-
-            ParallelMath::ConditionalSet(lenSquared, lenSquaredZero, ParallelMath::MakeFloat(1.0f));
+            ParallelMath::MakeSafeDenominator(lenSquared);
 
             for (int ch = 0; ch < TVectorSize; ch++)
-                m_axis[ch] = (axis[ch] / lenSquared) * m_maxValue;
+                m_axis[ch] = epDiffWeighted[ch] * (m_maxValue * channelWeights[ch]) / lenSquared;
         }
 
         void Reconstruct(MInt16 index, MInt16* pixel)
@@ -1106,6 +1006,14 @@ namespace
 
             return ParallelMath::FloatToUInt16(ParallelMath::Clamp(dist, 0.0f, m_maxValue));
         }
+
+    private:
+        MInt16 m_endPoint[2][TVectorSize];
+        MFloat m_origin[TVectorSize];
+        MFloat m_axis[TVectorSize];
+        int m_prec;
+        float m_maxValue;
+        bool m_isUniform;
     };
 
     // Solve for a, b where v = a*t + b
@@ -1127,8 +1035,9 @@ namespace
         MFloat m_w;
 
         float m_maxIndex;
+        float m_channelWeights[TVectorSize];
 
-        void Init(int indexBits)
+        void Init(int indexBits, const float channelWeights[TVectorSize])
         {
             for (int ch = 0; ch < TVectorSize; ch++)
             {
@@ -1140,6 +1049,9 @@ namespace
             m_w = ParallelMath::MakeFloatZero();
 
             m_maxIndex = static_cast<float>((1 << indexBits) - 1);
+
+            for (int ch = 0; ch < TVectorSize; ch++)
+                m_channelWeights[ch] = channelWeights[ch];
         }
 
         void Contribute(const MInt16* pixel, MInt16 index, MFloat weight)
@@ -1147,7 +1059,7 @@ namespace
             MFloat v[TVectorSize];
 
             for (int ch = 0; ch < TVectorSize; ch++)
-                v[ch] = ParallelMath::UInt16ToFloat(pixel[ch]);
+                v[ch] = ParallelMath::UInt16ToFloat(pixel[ch]) * m_channelWeights[ch];
 
             MFloat t = ParallelMath::UInt16ToFloat(index) / m_maxIndex;
 
@@ -1165,9 +1077,9 @@ namespace
         {
             // a = (tv - t*v/w)/(tt - t*t/w)
             // b = (v - a*t)/w
-            ParallelMath::FloatCompFlag wZero = ParallelMath::Equal(m_w, ParallelMath::MakeFloatZero());
+            MFloat w = m_w;
 
-            MFloat w = ParallelMath::Select(wZero, ParallelMath::MakeFloat(1.0f), m_w);
+            ParallelMath::MakeSafeDenominator(w);
 
             MFloat adenom = (m_tt - m_t * m_t / w);
 
@@ -1191,14 +1103,19 @@ namespace
                 MFloat a = (m_tv[ch] - m_t * m_v[ch] / w) / adenom;
                 MFloat b = (m_v[ch] - a * m_t) / w;
 
-                MFloat p1 = ParallelMath::Clamp(b, 0.0f, 255.0f);
-                MFloat p2 = ParallelMath::Clamp(a + b, 0.0f, 255.0f);
+                MFloat p1 = b;
+                MFloat p2 = a + b;
 
                 ParallelMath::ConditionalSet(p1, adenomZero, (m_v[ch] / w));
                 ParallelMath::ConditionalSet(p2, adenomZero, p1);
 
-                endPoint[0][ch] = ParallelMath::FloatToUInt16(p1);
-                endPoint[1][ch] = ParallelMath::FloatToUInt16(p2);
+                // Unweight
+                float inverseWeight = m_channelWeights[ch];
+                if (inverseWeight == 0.f)
+                    inverseWeight = 1.f;
+
+                endPoint[0][ch] = ParallelMath::FloatToUInt16(ParallelMath::Clamp(p1 / inverseWeight, 0.f, 255.0f));
+                endPoint[1][ch] = ParallelMath::FloatToUInt16(ParallelMath::Clamp(p2 / inverseWeight, 0.f, 255.0f));
             }
         }
     };
@@ -1362,7 +1279,8 @@ namespace
             }
         }
 
-        static MFloat ComputeError(DWORD flags, const MInt16 reconstructed[4], const MInt16 original[4])
+        template<int TVectorSize>
+        static MFloat ComputeError(DWORD flags, const MInt16 reconstructed[TVectorSize], const MInt16 original[TVectorSize], const float channelWeights[TVectorSize])
         {
             MFloat error = ParallelMath::MakeFloatZero();
             if (flags & BC_FLAGS_UNIFORM)
@@ -1372,22 +1290,31 @@ namespace
             }
             else
             {
-                const float perceptualWeights[4] = { 0.2125f / 0.7154f, 1.0f, 0.0721f / 0.7154f, 1.0f };
                 for (int ch = 0; ch < 4; ch++)
-                    error = error + ParallelMath::UInt16ToFloat(ParallelMath::SqDiff(reconstructed[ch], original[ch])) * ParallelMath::MakeFloat(perceptualWeights[ch]);
+                    error = error + ParallelMath::UInt16ToFloat(ParallelMath::SqDiff(reconstructed[ch], original[ch])) * ParallelMath::MakeFloat(channelWeights[ch]);
             }
 
             return error;
         }
 
-        static void TrySinglePlane(DWORD flags, const MInt16 pixels[16][4], WorkInfo& work)
+        template<int TChannelCount>
+        static void PreWeightPixels(MFloat preWeightedPixels[16][TChannelCount], const MInt16 pixels[16][TChannelCount], const float channelWeights[TChannelCount])
+        {
+            for (int px = 0; px < 16; px++)
+            {
+                for (int ch = 0; ch < TChannelCount; ch++)
+                    preWeightedPixels[px][ch] = ParallelMath::UInt16ToFloat(pixels[px][ch]) * channelWeights[ch];
+            }
+        }
+
+        static void TrySinglePlane(DWORD flags, const MInt16 pixels[16][4], const float channelWeights[4], WorkInfo& work)
         {
             for (uint16_t mode = 0; mode <= 7; mode++)
             {
                 if ((flags & BC_FLAGS_FORCE_BC7_MODE6) && mode != 6)
                     continue;
 
-                if ((flags & BC_FLAGS_USE_3SUBSETS) && g_modes[mode].m_numSubsets == 3)
+                if (!(flags & BC_FLAGS_USE_3SUBSETS) && g_modes[mode].m_numSubsets == 3)
                     continue;
 
                 if (mode == 4 || mode == 5)
@@ -1417,12 +1344,13 @@ namespace
 
                 for (uint16_t partition = 0; partition < numPartitions; partition++)
                 {
-                    EndpointSelectorRGBA epSelectors[3];
+                    EndpointSelector<4, 8> epSelectors[3];
 
-                    for (int epPass = 0; epPass < EndpointSelectorRGBA::NumPasses; epPass++)
+                    for (int epPass = 0; epPass < NumEndpointSelectorPasses; epPass++)
                     {
-                        for (int subset = 0; subset < numSubsets; subset++)
-                            epSelectors[subset].InitPass(epPass);
+                        MFloat preWeightedPixels[16][4];
+
+                        PreWeightPixels<4>(preWeightedPixels, rgbAdjustedPixels, channelWeights);
 
                         for (int px = 0; px < 16; px++)
                         {
@@ -1434,13 +1362,16 @@ namespace
 
                             assert(subset < 3);
 
-                            epSelectors[subset].Contribute(epPass, rgbAdjustedPixels[px], ParallelMath::MakeFloat(1.0f));
+                            epSelectors[subset].ContributePass(preWeightedPixels[px], epPass, ParallelMath::MakeFloat(1.0f));
                         }
+
+                        for (int subset = 0; subset < numSubsets; subset++)
+                            epSelectors[subset].FinishPass(epPass);
                     }
 
                     UnfinishedEndpoints<4> unfinishedEPs[3];
                     for (int subset = 0; subset < numSubsets; subset++)
-                        unfinishedEPs[subset] = epSelectors[subset].GetEndpoints();
+                        unfinishedEPs[subset] = epSelectors[subset].GetEndpoints(channelWeights);
 
                     MInt16 bestIndexes[16];
                     MInt16 bestEP[3][2][4];
@@ -1504,12 +1435,12 @@ namespace
                                 IndexSelector<4> indexSelectors[3];
 
                                 for (int subset = 0; subset < numSubsets; subset++)
-                                    indexSelectors[subset].Init(ep[subset], indexPrec);
+                                    indexSelectors[subset].Init(channelWeights, ep[subset], indexPrec);
 
                                 EndpointRefiner<4> epRefiners[3];
 
                                 for (int subset = 0; subset < numSubsets; subset++)
-                                    epRefiners[subset].Init(indexPrec);
+                                    epRefiners[subset].Init(indexPrec, channelWeights);
 
                                 MFloat subsetError[3] = { ParallelMath::MakeFloatZero(), ParallelMath::MakeFloatZero(), ParallelMath::MakeFloatZero() };
 
@@ -1533,7 +1464,7 @@ namespace
 
                                     indexSelectors[subset].Reconstruct(index, reconstructed);
 
-                                    subsetError[subset] = subsetError[subset] + ComputeError(flags, reconstructed, pixels[px]);
+                                    subsetError[subset] = subsetError[subset] + ComputeError<4>(flags, reconstructed, pixels[px], channelWeights);
 
                                     indexes[px] = index;
                                 }
@@ -1606,8 +1537,14 @@ namespace
             }
         }
 
-        static void TryDualPlane(DWORD flags, const MInt16 pixels[16][4], WorkInfo& work)
+        static void TryDualPlane(DWORD flags, const MInt16 pixels[16][4], const float channelWeights[4], WorkInfo& work)
         {
+            // TODO: These error calculations are not optimal for weight-by-alpha, but this routine needs to be mostly rewritten for that.
+            // The alpha/color solutions are co-dependent in that case, but a good way to solve it would probably be to
+            // solve the alpha channel first, then solve the RGB channels, which in turn breaks down into two cases:
+            // - Separate alpha channel, then weighted RGB
+            // - Alpha+2 other channels, then the independent channel
+
             if (flags & BC_FLAGS_FORCE_BC7_MODE6)
                 return; // Mode 6 is not a dual-plane mode, skip it
 
@@ -1631,15 +1568,24 @@ namespace
 
                     uint16_t maxIndexSelector = (mode == 4) ? 2 : 1;
 
+                    float rotatedRGBWeights[3] = { channelWeights[redChannel], channelWeights[greenChannel], channelWeights[blueChannel] };
+                    float rotatedAlphaWeight[1] = { channelWeights[alphaChannel] };
+
+                    float uniformWeight[1] = { 1.0f };   // Since the alpha channel is independent, there's no need to bother with weights when doing refinement or selection, only error
+
+                    MFloat preWeightedRotatedRGB[16][3];
+                    PreWeightPixels<3>(preWeightedRotatedRGB, rotatedRGB, rotatedRGBWeights);
+
                     for (uint16_t indexSelector = 0; indexSelector < maxIndexSelector; indexSelector++)
                     {
-                        EndpointSelectorRGB rgbSelector;
+                        EndpointSelector<3, 8> rgbSelector;
 
-                        for (int epPass = 0; epPass < EndpointSelectorRGB::NumPasses; epPass++)
+                        for (int epPass = 0; epPass < NumEndpointSelectorPasses; epPass++)
                         {
-                            rgbSelector.InitPass(epPass);
                             for (int px = 0; px < 16; px++)
-                                rgbSelector.Contribute(epPass, rotatedRGB[px], ParallelMath::MakeFloat(1.0f));
+                                rgbSelector.ContributePass(preWeightedRotatedRGB[px], epPass, ParallelMath::MakeFloat(1.0f));
+
+                            rgbSelector.FinishPass(epPass);
                         }
 
                         MInt16 alphaRange[2];
@@ -1662,7 +1608,7 @@ namespace
                         else
                             rgbPrec = alphaPrec = 2;
 
-                        UnfinishedEndpoints<3> unfinishedRGB = rgbSelector.GetEndpoints();
+                        UnfinishedEndpoints<3> unfinishedRGB = rgbSelector.GetEndpoints(rotatedRGBWeights);
 
                         MFloat bestRGBError = ParallelMath::MakeFloat(FLT_MAX);
                         MFloat bestAlphaError = ParallelMath::MakeFloat(FLT_MAX);
@@ -1690,20 +1636,21 @@ namespace
                                 else
                                     CompressEndpoints5(rgbEP, alphaEP);
 
+
                                 IndexSelector<1> alphaIndexSelector;
                                 IndexSelector<3> rgbIndexSelector;
 
                                 {
                                     MInt16 alphaEPTemp[2][1] = { { alphaEP[0] },{ alphaEP[1] } };
-                                    alphaIndexSelector.Init(alphaEPTemp, alphaPrec);
+                                    alphaIndexSelector.Init(uniformWeight, alphaEPTemp, alphaPrec);
                                 }
-                                rgbIndexSelector.Init(rgbEP, rgbPrec);
+                                rgbIndexSelector.Init(rotatedRGBWeights, rgbEP, rgbPrec);
 
                                 EndpointRefiner<3> rgbRefiner;
                                 EndpointRefiner<1> alphaRefiner;
 
-                                rgbRefiner.Init(rgbPrec);
-                                alphaRefiner.Init(alphaPrec);
+                                rgbRefiner.Init(rgbPrec, rotatedRGBWeights);
+                                alphaRefiner.Init(alphaPrec, uniformWeight);
 
                                 MFloat errorRGB = ParallelMath::MakeFloatZero();
                                 MFloat errorA = ParallelMath::MakeFloatZero();
@@ -1725,20 +1672,9 @@ namespace
                                     rgbIndexSelector.Reconstruct(rgbIndex, reconstructedRGB);
                                     alphaIndexSelector.Reconstruct(alphaIndex, reconstructedAlpha);
 
-                                    MInt16 reconstructedRGBA[4];
-                                    reconstructedRGBA[redChannel] = reconstructedRGB[0];
-                                    reconstructedRGBA[greenChannel] = reconstructedRGB[1];
-                                    reconstructedRGBA[blueChannel] = reconstructedRGB[2];
-                                    reconstructedRGBA[alphaChannel] = pixels[px][alphaChannel];
+                                    errorRGB = errorRGB + ComputeError<3>(flags, reconstructedRGB, rotatedRGB[px], rotatedRGBWeights);
 
-                                    errorRGB = errorRGB + ComputeError(flags, reconstructedRGBA, pixels[px]);
-
-                                    reconstructedRGBA[redChannel] = pixels[px][redChannel];
-                                    reconstructedRGBA[greenChannel] = pixels[px][greenChannel];
-                                    reconstructedRGBA[blueChannel] = pixels[px][blueChannel];
-                                    reconstructedRGBA[alphaChannel] = reconstructedAlpha[0];
-
-                                    errorA = errorA + ComputeError(flags, reconstructedRGBA, pixels[px]);
+                                    errorA = errorA + ComputeError<1>(flags, reconstructedAlpha, pixels[px] + alphaChannel, rotatedAlphaWeight);
 
                                     rgbIndexes[px] = rgbIndex;
                                     alphaIndexes[px] = alphaIndex;
@@ -1812,7 +1748,7 @@ namespace
             b = temp;
         }
 
-        static void Pack(DWORD flags, const InputBlock* inputs, uint8_t* packedBlocks)
+        static void Pack(DWORD flags, const InputBlock* inputs, uint8_t* packedBlocks, const float channelWeights[4])
         {
             MInt16 pixels[16][4];
 
@@ -1830,8 +1766,8 @@ namespace
 
             work.m_error = ParallelMath::MakeFloat(FLT_MAX);
 
-            TryDualPlane(flags, pixels, work);
-            TrySinglePlane(flags, pixels, work);
+            TryDualPlane(flags, pixels, channelWeights, work);
+            TrySinglePlane(flags, pixels, channelWeights, work);
 
             for (int block = 0; block < ParallelMath::ParallelSize; block++)
             {
@@ -2067,7 +2003,10 @@ void DirectX::D3DXEncodeBC7Parallel(uint8_t *pBC, const XMVECTOR *pColor, DWORD 
             }
         }
 
-        BC7Computer::Pack(flags, inputBlocks, pBC);
+        const float perceptualWeights[4] = { 0.2125f / 0.7154f, 1.0f, 0.0721f / 0.7154f, 1.0f };
+        const float uniformWeights[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+        BC7Computer::Pack(flags, inputBlocks, pBC, (flags & BC_FLAGS_UNIFORM) ? uniformWeights : perceptualWeights);
 
         pBC += ParallelMath::ParallelSize * 16;
     }
