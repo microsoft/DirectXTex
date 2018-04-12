@@ -1587,7 +1587,7 @@ struct CD3DX12_CPU_DESCRIPTOR_HANDLE : public D3D12_CPU_DESCRIPTOR_HANDLE
     }
     CD3DX12_CPU_DESCRIPTOR_HANDLE& Offset(INT offsetInDescriptors, UINT descriptorIncrementSize)
     { 
-        ptr += UINT64(offsetInDescriptors) * UINT64(descriptorIncrementSize);
+        ptr += INT64(offsetInDescriptors) * UINT64(descriptorIncrementSize);
         return *this;
     }
     CD3DX12_CPU_DESCRIPTOR_HANDLE& Offset(INT offsetScaledByIncrementSize) 
@@ -1626,7 +1626,7 @@ struct CD3DX12_CPU_DESCRIPTOR_HANDLE : public D3D12_CPU_DESCRIPTOR_HANDLE
     
     static inline void InitOffsetted(_Out_ D3D12_CPU_DESCRIPTOR_HANDLE &handle, _In_ const D3D12_CPU_DESCRIPTOR_HANDLE &base, INT offsetInDescriptors, UINT descriptorIncrementSize)
     {
-        handle.ptr = base.ptr + UINT64(offsetInDescriptors) * UINT64(descriptorIncrementSize);
+        handle.ptr = base.ptr + INT64(offsetInDescriptors) * UINT64(descriptorIncrementSize);
     }
 };
 
@@ -1648,7 +1648,7 @@ struct CD3DX12_GPU_DESCRIPTOR_HANDLE : public D3D12_GPU_DESCRIPTOR_HANDLE
     }
     CD3DX12_GPU_DESCRIPTOR_HANDLE& Offset(INT offsetInDescriptors, UINT descriptorIncrementSize)
     { 
-        ptr += UINT64(offsetInDescriptors) * UINT64(descriptorIncrementSize);
+        ptr += INT64(offsetInDescriptors) * UINT64(descriptorIncrementSize);
         return *this;
     }
     CD3DX12_GPU_DESCRIPTOR_HANDLE& Offset(INT offsetScaledByIncrementSize) 
@@ -1687,7 +1687,7 @@ struct CD3DX12_GPU_DESCRIPTOR_HANDLE : public D3D12_GPU_DESCRIPTOR_HANDLE
     
     static inline void InitOffsetted(_Out_ D3D12_GPU_DESCRIPTOR_HANDLE &handle, _In_ const D3D12_GPU_DESCRIPTOR_HANDLE &base, INT offsetInDescriptors, UINT descriptorIncrementSize)
     {
-        handle.ptr = base.ptr + UINT64(offsetInDescriptors) * UINT64(descriptorIncrementSize);
+        handle.ptr = base.ptr + INT64(offsetInDescriptors) * UINT64(descriptorIncrementSize);
     }
 };
 
