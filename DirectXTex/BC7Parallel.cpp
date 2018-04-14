@@ -1309,6 +1309,23 @@ namespace
 
         static void TrySinglePlane(DWORD flags, const MInt16 pixels[16][4], const float channelWeights[4], WorkInfo& work)
         {
+            MInt16 maxAlpha = ParallelMath::MakeUInt16(0);
+            MInt16 minAlpha = ParallelMath::MakeUInt16(255);
+            for (int px = 0; px < 16; px++)
+            {
+                maxAlpha = ParallelMath::Max(maxAlpha, pixels[px][3]);
+                minAlpha = ParallelMath::Min(minAlpha, pixels[px][3]);
+            }
+
+            // Try RGB modes if any block has a min alpha 251 or higher
+            bool allowRGBModes = ParallelMath::AnySet(ParallelMath::Less(ParallelMath::MakeUInt16(250), minAlpha));
+
+            // Try mode 7 if any block has alpha.
+            // Mode 7 is almost never selected for RGB blocks because mode 4 has very accurate 7.7.7.1 endpoints
+            // and its parity bit doesn't affect alpha, meaning mode 7 can only be better in extremely specific
+            // situations, and only by at most 1 unit of error per pixel.
+            bool allowMode7 = ParallelMath::AnySet(ParallelMath::Less(maxAlpha, ParallelMath::MakeUInt16(255)));
+
             for (uint16_t mode = 0; mode <= 7; mode++)
             {
                 if ((flags & BC_FLAGS_FORCE_BC7_MODE6) && mode != 6)
@@ -1318,6 +1335,12 @@ namespace
                     continue;
 
                 if (mode == 4 || mode == 5)
+                    continue;
+
+                if (mode < 4 && !allowRGBModes)
+                    continue;
+
+                if (mode == 7 && !allowMode7)
                     continue;
 
                 MInt16 rgbAdjustedPixels[16][4];
