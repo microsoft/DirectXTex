@@ -236,7 +236,7 @@ IWICImagingFactory* DirectX::GetWICFactory(bool& iswic2)
     static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
     InitOnceExecuteOnce(&s_initOnce,
-        [](PINIT_ONCE, PVOID, LPVOID *factory) DIRECTX_NOEXCEPT -> BOOL
+        [](PINIT_ONCE, PVOID, LPVOID *factory) throw() -> BOOL
     {
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         HRESULT hr = CoCreateInstance(
@@ -1413,7 +1413,7 @@ size_t TexMetadata::ComputeIndex(size_t mip, size_t item, size_t slice) const
 // Blob - Bitmap image container
 //=====================================================================================
 
-Blob& Blob::operator= (Blob&& moveFrom) DIRECTX_NOEXCEPT
+Blob& Blob::operator= (Blob&& moveFrom) throw()
 {
     if (this != &moveFrom)
     {

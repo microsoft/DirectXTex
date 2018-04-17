@@ -15,7 +15,7 @@ namespace DirectX
     class GPUCompressBC
     {
     public:
-        GPUCompressBC() DIRECTX_NOEXCEPT;
+        GPUCompressBC() throw();
 
         HRESULT Initialize(_In_ ID3D11Device* pDevice);
 

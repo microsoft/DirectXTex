@@ -2882,7 +2882,7 @@ namespace
     };
 
 #pragma prefast( suppress : 25004, "Signature must match bsearch_s" );
-    int __cdecl ConvertCompare(void *context, const void* ptr1, const void *ptr2) DIRECTX_NOEXCEPT
+    int __cdecl ConvertCompare(void *context, const void* ptr1, const void *ptr2) throw()
     {
         UNREFERENCED_PARAMETER(context);
         auto p1 = static_cast<const ConvertData*>(ptr1);

@@ -79,7 +79,7 @@ namespace
     }
 };
 
-GPUCompressBC::GPUCompressBC() DIRECTX_NOEXCEPT :
+GPUCompressBC::GPUCompressBC() throw() :
     m_bcformat(DXGI_FORMAT_UNKNOWN),
     m_srcformat(DXGI_FORMAT_UNKNOWN),
     m_alphaWeight(1.f),
