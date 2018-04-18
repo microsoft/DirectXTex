@@ -2469,23 +2469,18 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Generate mips -----------------------------------------------------------
+        DWORD dwFilter3D = dwFilter;
         if (!ispow2(info.width) || !ispow2(info.height) || !ispow2(info.depth))
         {
-            if (info.dimension == TEX_DIMENSION_TEXTURE3D)
-            {
-                if (!tMips)
-                {
-                    tMips = 1;
-                }
-                else
-                {
-                    wprintf(L"\nERROR: Cannot generate mips for non-power-of-2 volume textures\n");
-                    return 1;
-                }
-            }
-            else if (!tMips || info.mipLevels != 1)
+            if (!tMips || info.mipLevels != 1)
             {
                 nonpow2warn = true;
+            }
+
+            if (info.dimension == TEX_DIMENSION_TEXTURE3D)
+            {
+                // Must force triangle filter for non-power-of-2 volume textures to get correct results
+                dwFilter3D = TEX_FILTER_TRIANGLE;
             }
         }
 
@@ -2590,7 +2585,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             if (info.dimension == TEX_DIMENSION_TEXTURE3D)
             {
-                hr = GenerateMipMaps3D(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFilter | dwFilterOpts, tMips, *timage);
+                hr = GenerateMipMaps3D(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFilter3D | dwFilterOpts, tMips, *timage);
             }
             else
             {
