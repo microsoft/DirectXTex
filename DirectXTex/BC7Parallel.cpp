@@ -1285,12 +1285,12 @@ namespace
             MFloat error = ParallelMath::MakeFloatZero();
             if (flags & BC_FLAGS_UNIFORM)
             {
-                for (int ch = 0; ch < 4; ch++)
+                for (int ch = 0; ch < TVectorSize; ch++)
                     error = error + ParallelMath::UInt16ToFloat(ParallelMath::SqDiff(reconstructed[ch], original[ch]));
             }
             else
             {
-                for (int ch = 0; ch < 4; ch++)
+                for (int ch = 0; ch < TVectorSize; ch++)
                     error = error + ParallelMath::UInt16ToFloat(ParallelMath::SqDiff(reconstructed[ch], original[ch])) * ParallelMath::MakeFloat(channelWeights[ch]);
             }
 
