@@ -182,6 +182,8 @@ namespace
 
                 _ConvertScanline(temp, 16, result.format, format, cflags | srgb);
 
+                nQueuedBlocks++;
+
                 if (nQueuedBlocks == nBlocksPerChunk)
                 {
                     if (pfEncode)
