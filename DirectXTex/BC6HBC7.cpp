@@ -854,7 +854,7 @@ namespace
             _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t aIndex[],
             _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t aIndex2[]);
        float Refine(_In_ const EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uRotation, _In_ size_t uIndexMode);
-       void FixEndpointPBits(const EncodeParams* pEP, const LDREndPntPair *pOrigEndpoints, LDREndPntPair *pFixedEndpoints);
+       void FixEndpointPBits(_In_ const EncodeParams* pEP, _In_ const LDREndPntPair *pOrigEndpoints, _Out_writes_(3) LDREndPntPair *pFixedEndpoints);
 
         float MapColors(_In_ const EncodeParams* pEP, _In_reads_(np) const LDRColorA aColors[], _In_ size_t np, _In_ size_t uIndexMode,
             _In_ const LDREndPntPair& endPts, _In_ float fMinErr) const;
