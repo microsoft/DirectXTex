@@ -573,6 +573,9 @@ namespace DirectX
         TEX_COMPRESS_BC7_QUICK          = 0x100000,
             // Minimal modes (usually mode 6) for BC7 compression
 
+		TEX_COMPRESS_BC7_FASTER			= 0x200000,
+			// Try less hard to encode the output in BC7, also combinable with TEX_COMPRESS_BC7_QUICK. >10x faster, still uses most modes.
+
         TEX_COMPRESS_SRGB_IN            = 0x1000000,
         TEX_COMPRESS_SRGB_OUT           = 0x2000000,
         TEX_COMPRESS_SRGB               = (TEX_COMPRESS_SRGB_IN | TEX_COMPRESS_SRGB_OUT),

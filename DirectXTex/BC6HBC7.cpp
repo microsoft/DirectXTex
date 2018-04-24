@@ -787,6 +787,7 @@ namespace
         struct EncodeParams
         {
             uint8_t uMode;
+			bool bFaster;
             LDREndPntPair aEndPts[BC7_MAX_SHAPES][BC7_MAX_REGIONS];
             LDRColorA aLDRPixels[NUM_PIXELS_PER_BLOCK];
             const HDRColorA* const aHDRPixels;
@@ -854,11 +855,11 @@ namespace
             _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t aIndex[],
             _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t aIndex2[]);
        float Refine(_In_ const EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uRotation, _In_ size_t uIndexMode);
-       void FixEndpointPBits(_In_ const EncodeParams* pEP, _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair *pOrigEndpoints, _Out_writes_(BC7_MAX_REGIONS) LDREndPntPair *pFixedEndpoints);
+       void FixEndpointPBits(const EncodeParams* pEP, _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair *pOrigEndpoints, _Out_writes_(BC7_MAX_REGIONS) LDREndPntPair *pFixedEndpoints);
 
         float MapColors(_In_ const EncodeParams* pEP, _In_reads_(np) const LDRColorA aColors[], _In_ size_t np, _In_ size_t uIndexMode,
             _In_ const LDREndPntPair& endPts, _In_ float fMinErr) const;
-        static float RoughMSE(_Inout_ EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uIndexMode);
+        static float RoughMSE(_Inout_ EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uIndexMode, bool bEstimate);
 
     private:
         const static ModeInfo ms_aInfo[];
@@ -1191,7 +1192,8 @@ namespace
         _Out_ HDRColorA* pY,
         _In_range_(3, 4) size_t cSteps,
         size_t cPixels,
-        _In_reads_(cPixels) const size_t* pIndex)
+        _In_reads_(cPixels) const size_t* pIndex,
+        bool bEstimate = false)
     {
         float fError = FLT_MAX;
         const float *pC = (3 == cSteps) ? pC3 : pC4;
@@ -1219,8 +1221,8 @@ namespace
 
         float fAB = AB.r * AB.r + AB.g * AB.g + AB.b * AB.b;
 
-        // Single color block.. no need to root-find
-        if (fAB < FLT_MIN)
+        // Either we're estimating (only used when estimating the optimal partition to try), or it's a single color block.. no need to root-find
+        if ((bEstimate) || (fAB < FLT_MIN))
         {
             pX->r = X.r; pX->g = X.g; pX->b = X.b;
             pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
@@ -1387,7 +1389,8 @@ namespace
         _Out_ HDRColorA* pY,
         _In_range_(3, 4) size_t cSteps,
         size_t cPixels,
-        _In_reads_(cPixels) const size_t* pIndex)
+        _In_reads_(cPixels) const size_t* pIndex, 
+		bool bEstimate = false)
     {
         float fError = FLT_MAX;
         const float *pC = (3 == cSteps) ? pC3 : pC4;
@@ -1413,8 +1416,8 @@ namespace
         HDRColorA AB = Y - X;
         float fAB = AB * AB;
 
-        // Single color block.. no need to root-find
-        if (fAB < FLT_MIN)
+		// Either we're estimating (only used when estimating the optimal partition to try), or it's a single color block.. no need to root-find
+        if ((bEstimate) || (fAB < FLT_MIN))
         {
             *pX = X;
             *pY = Y;
@@ -2738,6 +2741,7 @@ void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
     D3DX_BC7 final = *this;
     EncodeParams EP(pIn);
     float fMSEBest = FLT_MAX;
+	uint32_t alphaMask = 0xFF;
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
@@ -2745,10 +2749,28 @@ void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
         EP.aLDRPixels[i].g = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].g * 255.0f + 0.01f)));
         EP.aLDRPixels[i].b = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].b * 255.0f + 0.01f)));
         EP.aLDRPixels[i].a = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].a * 255.0f + 0.01f)));
+		alphaMask &= EP.aLDRPixels[i].a;
     }
 
+	// bHasAlpha will be true if any input a were less than 255.
+	const bool bHasAlpha = (alphaMask != 0xFF);
+
+	// In faster mode, we only refine a single partition in each mode, use bounding box approximation in the partition estimator, disable some less useful modes, 
+	// and use the same estimated partition for 2 subset modes 1 and 3.
+	const bool bFasterBC7 = (flags & BC_FLAGS_FASTER_BC7) != 0;
+
+	EP.bFaster = bFasterBC7;
+
+	size_t bestMode1EstimatedPartition = 0;
+
     for (EP.uMode = 0; EP.uMode < 8 && fMSEBest > 0; ++EP.uMode)
-    {
+	{
+		if ((!bHasAlpha) && (EP.uMode == 7))
+		{
+			// There is no value in using mode 7 for completely opaque blocks (the other 2 subset modes handle this case for opaque blocks), so skip it for a small perf win.
+			continue;
+        }
+				
         if (!(flags & BC_FLAGS_USE_3SUBSETS) && (EP.uMode == 0 || EP.uMode == 2))
         {
             // 3 subset modes tend to be used rarely and add significant compression time
@@ -2769,7 +2791,8 @@ void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
         const size_t uNumIdxMode = size_t(1) << ms_aInfo[EP.uMode].uIndexModeBits;
         // Number of rough cases to look at. reasonable values of this are 1, uShapes/4, and uShapes
         // uShapes/4 gets nearly all the cases; you can increase that a bit (say by 3 or 4) if you really want to squeeze the last bit out
-        const size_t uItems = std::max<size_t>(1, uShapes >> 2);
+        // Only examine a single estimated partition if BC_FLAGS_FASTER_BC7 is specified.
+		const size_t uItems = bFasterBC7 ? 1 : std::max<size_t>(1, uShapes >> 2);
         float afRoughMSE[BC7_MAX_SHAPES];
         size_t auShape[BC7_MAX_SHAPES];
 
@@ -2784,25 +2807,36 @@ void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
 
             for (size_t im = 0; im < uNumIdxMode && fMSEBest > 0; ++im)
             {
-                // pick the best uItems shapes and refine these.
-                for (size_t s = 0; s < uShapes; s++)
-                {
-                    afRoughMSE[s] = RoughMSE(&EP, s, im);
-                    auShape[s] = s;
-                }
+				// In faster mode: In mode 3 just examine mode 1's estimated partition (they are both 2 subset modes with 64 partitions).
+				if ((bFasterBC7) && (EP.uMode == 3))
+				{
+					auShape[0] = bestMode1EstimatedPartition;
+				}
+				else
+				{
+					// pick the best uItems shapes and refine these.
+					for (size_t s = 0; s < uShapes; s++)
+					{
+						afRoughMSE[s] = RoughMSE(&EP, s, im, bFasterBC7);
+						auShape[s] = s;
+					}
 
-                // Bubble up the first uItems items
-                for (size_t i = 0; i < uItems; i++)
-                {
-                    for (size_t j = i + 1; j < uShapes; j++)
-                    {
-                        if (afRoughMSE[i] > afRoughMSE[j])
-                        {
-                            std::swap(afRoughMSE[i], afRoughMSE[j]);
-                            std::swap(auShape[i], auShape[j]);
-                        }
-                    }
-                }
+					// Bubble up the first uItems items
+					for (size_t i = 0; i < uItems; i++)
+					{
+						for (size_t j = i + 1; j < uShapes; j++)
+						{
+							if (afRoughMSE[i] > afRoughMSE[j])
+							{
+								std::swap(afRoughMSE[i], afRoughMSE[j]);
+								std::swap(auShape[i], auShape[j]);
+							}
+						}
+					}
+
+					if (EP.uMode == 1)
+						bestMode1EstimatedPartition = auShape[0];
+				}
 
                 for (size_t i = 0; i < uItems && fMSEBest > 0; i++)
                 {
@@ -3032,9 +3066,12 @@ void D3DX_BC7::OptimizeOne(const EncodeParams* pEP, const LDRColorA aColors[], s
         }
     }
 
-    // finally, do a small exhaustive search around what we think is the global minima to be sure
-    for (size_t ch = 0; ch < BC7_NUM_CHANNELS; ch++)
-        Exhaustive(pEP, aColors, np, uIndexMode, ch, fOptErr, opt);
+	if (!pEP->bFaster)
+	{
+		// finally, do a small exhaustive search around what we think is the global minima to be sure
+		for (size_t ch = 0; ch < BC7_NUM_CHANNELS; ch++)
+			Exhaustive(pEP, aColors, np, uIndexMode, ch, fOptErr, opt);
+	}
 }
 
 _Use_decl_annotations_
@@ -3396,7 +3433,7 @@ float D3DX_BC7::MapColors(const EncodeParams* pEP, const LDRColorA aColors[], si
 }
 
 _Use_decl_annotations_
-float D3DX_BC7::RoughMSE(EncodeParams* pEP, size_t uShape, size_t uIndexMode)
+float D3DX_BC7::RoughMSE(EncodeParams* pEP, size_t uShape, size_t uIndexMode, bool bEstimate)
 {
     assert(pEP);
     assert(uShape < BC7_MAX_SHAPES);
@@ -3443,7 +3480,7 @@ float D3DX_BC7::RoughMSE(EncodeParams* pEP, size_t uShape, size_t uIndexMode)
         if (uIndexPrec2 == 0)
         {
             HDRColorA epA, epB;
-            OptimizeRGBA(pEP->aHDRPixels, &epA, &epB, 4, np, auPixIdx);
+            OptimizeRGBA(pEP->aHDRPixels, &epA, &epB, 4, np, auPixIdx, bEstimate);
             epA.Clamp(0.0f, 1.0f);
             epB.Clamp(0.0f, 1.0f);
             epA *= 255.0f;
@@ -3461,7 +3498,7 @@ float D3DX_BC7::RoughMSE(EncodeParams* pEP, size_t uShape, size_t uIndexMode)
             }
 
             HDRColorA epA, epB;
-            OptimizeRGB(pEP->aHDRPixels, &epA, &epB, 4, np, auPixIdx);
+            OptimizeRGB(pEP->aHDRPixels, &epA, &epB, 4, np, auPixIdx, bEstimate);
             epA.Clamp(0.0f, 1.0f);
             epB.Clamp(0.0f, 1.0f);
             epA *= 255.0f;

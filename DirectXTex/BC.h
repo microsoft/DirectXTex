@@ -36,6 +36,7 @@ enum BC_FLAGS
     BC_FLAGS_UNIFORM            = 0x40000,  // By default, uses perceptual weighting for BC1-3; this flag makes it a uniform weighting
     BC_FLAGS_USE_3SUBSETS       = 0x80000,  // By default, BC7 skips mode 0 & 2; this flag adds those modes back
     BC_FLAGS_FORCE_BC7_MODE6    = 0x100000, // BC7 should only use mode 6; skip other modes
+    BC_FLAGS_FASTER_BC7         = 0x200000, // BC7 should try much less harder, but still use most modes - ~10x faster
 };
 
 //-------------------------------------------------------------------------------------
