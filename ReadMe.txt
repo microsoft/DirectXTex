@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-February 9, 2018
+April 23, 2018
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -128,6 +128,12 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+April 23, 2018
+    Code cleanup
+    texconv: Updated with support reading "Extended BMP" files using DXTn
+    texconv: Updated to handle non-power-of-2 volume textures with mipmaps
+    texassemble, texconv, texdiag: support format name aliases like DXT3, RGBA, BGRA, FP16, etc. in addition to truncated DXGI_FORMAT_ values
 
 February 9, 2018
     HDR (RGBE Radiance) file format reader updated to support #?RGBE signature
