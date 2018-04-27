@@ -773,7 +773,7 @@ namespace
                 {
                     sum = sum + inVec[col] * m_values[index];
                     if (col >= row)
-                        index += col;
+                        index += col + 1;
                     else
                         index++;
                 }
@@ -832,7 +832,7 @@ namespace
             for (int ch = 0; ch < TVectorSize; ch++)
             {
                 MFloat min = m_centroid[ch] + m_direction[ch] * m_minDist;
-                MFloat max = m_centroid[ch] + m_direction[ch] * (m_maxDist - m_minDist);
+                MFloat max = m_centroid[ch] + m_direction[ch] * m_maxDist;
 
                 float safeWeight = channelWeights[ch];
                 if (safeWeight == 0.f)
