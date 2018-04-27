@@ -204,33 +204,33 @@ namespace
         }
 
         // Get orientation
-        char orient[256] = {};
+        char orientation[256] = {};
 
-        size_t len = FindEOL(info, std::min<size_t>(sizeof(orient), size - 1));
+        size_t len = FindEOL(info, std::min<size_t>(sizeof(orientation), size - 1));
         if (len == size_t(-1)
             || len <= 2)
         {
             return E_FAIL;
         }
 
-        strncpy_s(orient, info, len);
+        strncpy_s(orientation, info, len);
 
-        if (orient[0] != '-' && orient[1] != 'Y')
+        if (orientation[0] != '-' && orientation[1] != 'Y')
         {
             // We only support the -Y +X orientation (see top of file)
             return HRESULT_FROM_WIN32(
-                ((orient[0] == '+' || orient[0] == '-') && (orient[1] == 'X' || orient[1] == 'Y'))
+                ((orientation[0] == '+' || orientation[0] == '-') && (orientation[1] == 'X' || orientation[1] == 'Y'))
                 ? ERROR_NOT_SUPPORTED : ERROR_INVALID_DATA
             );
         }
 
         uint32_t height = 0;
-        if (sscanf_s(orient + 2, "%u", &height) != 1)
+        if (sscanf_s(orientation + 2, "%u", &height) != 1)
         {
             return E_FAIL;
         }
 
-        const char* ptr = orient + 2;
+        const char* ptr = orientation + 2;
         while (*ptr != 0 && *ptr != '-' && *ptr != '+')
             ++ptr;
 
