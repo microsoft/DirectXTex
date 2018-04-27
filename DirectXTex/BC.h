@@ -23,6 +23,9 @@ namespace DirectX
 
 // Because these are used in SAL annotations, they need to remain macros rather than const values
 #define NUM_PIXELS_PER_BLOCK 16
+#define MAX_PARALLEL_BLOCKS 8
+#define MAX_BLOCK_SIZE 16
+#define BC7_NUM_PARALLEL_BLOCKS 8
 
 //-------------------------------------------------------------------------------------
 // Constants
@@ -322,5 +325,6 @@ void D3DXEncodeBC5S(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLO
 void D3DXEncodeBC6HU(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags);
 void D3DXEncodeBC6HS(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags);
 void D3DXEncodeBC7(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags);
+void D3DXEncodeBC7Parallel(_Out_writes_(16 * BC7_NUM_PARALLEL_BLOCKS) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK * BC7_NUM_PARALLEL_BLOCKS) const XMVECTOR *pColor, _In_ DWORD flags);
 
 } // namespace
