@@ -715,7 +715,7 @@ namespace
             INTColor aIPixels[NUM_PIXELS_PER_BLOCK];
 
             EncodeParams(const HDRColorA* const aOriginal, bool bSignedFormat) :
-                fBestErr(FLT_MAX), bSigned(bSignedFormat), aHDRPixels(aOriginal)
+                fBestErr(FLT_MAX), bSigned(bSignedFormat), uMode(0), uShape(0), aHDRPixels(aOriginal), aUnqEndPts{}, aIPixels{}
             {
                 for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
                 {
@@ -791,7 +791,7 @@ namespace
             LDRColorA aLDRPixels[NUM_PIXELS_PER_BLOCK];
             const HDRColorA* const aHDRPixels;
 
-            EncodeParams(const HDRColorA* const aOriginal) : aHDRPixels(aOriginal) {}
+            EncodeParams(const HDRColorA* const aOriginal) : uMode(0), aEndPts{}, aLDRPixels{}, aHDRPixels(aOriginal) {}
         };
 #pragma warning(pop)
 
@@ -1671,8 +1671,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const
         _Analysis_assume_(ms_aModeToInfo[uMode] < ARRAYSIZE(ms_aDesc));
         const ModeInfo& info = ms_aInfo[ms_aModeToInfo[uMode]];
 
-        INTEndPntPair aEndPts[BC6H_MAX_REGIONS];
-        memset(aEndPts, 0, BC6H_MAX_REGIONS * 2 * sizeof(INTColor));
+        INTEndPntPair aEndPts[BC6H_MAX_REGIONS] = {};
         uint32_t uShape = 0;
 
         // Read header

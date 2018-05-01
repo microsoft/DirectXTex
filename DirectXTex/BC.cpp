@@ -739,8 +739,7 @@ void DirectX::D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshol
 
     if (flags & BC_FLAGS_DITHER_A)
     {
-        float fError[NUM_PIXELS_PER_BLOCK];
-        memset(fError, 0x00, NUM_PIXELS_PER_BLOCK * sizeof(float));
+        float fError[NUM_PIXELS_PER_BLOCK] = {};
 
         for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
@@ -839,10 +838,7 @@ void DirectX::D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
     pBC2->bitmap[0] = 0;
     pBC2->bitmap[1] = 0;
 
-    float fError[NUM_PIXELS_PER_BLOCK];
-    if (flags & BC_FLAGS_DITHER_A)
-        memset(fError, 0x00, NUM_PIXELS_PER_BLOCK * sizeof(float));
-
+    float fError[NUM_PIXELS_PER_BLOCK] = {};
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
         float fAlph = Color[i].a;
@@ -957,14 +953,11 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
     // Quantize block to A8, using Floyd Stienberg error diffusion.  This 
     // increases the chance that colors will map directly to the quantized 
     // axis endpoints.
-    float fAlpha[NUM_PIXELS_PER_BLOCK];
-    float fError[NUM_PIXELS_PER_BLOCK];
+    float fAlpha[NUM_PIXELS_PER_BLOCK] = {};
+    float fError[NUM_PIXELS_PER_BLOCK] = {};
 
     float fMinAlpha = Color[0].a;
     float fMaxAlpha = Color[0].a;
-
-    if (flags & BC_FLAGS_DITHER_A)
-        memset(fError, 0x00, NUM_PIXELS_PER_BLOCK * sizeof(float));
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
@@ -1054,7 +1047,7 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
     static const size_t pSteps8[] = { 0, 2, 3, 4, 5, 6, 7, 1 };
 
     const size_t *pSteps;
-    float fStep[8];
+    float fStep[8] = {};
 
     if (6 == uSteps)
     {
