@@ -301,7 +301,7 @@ namespace
                     if (*sPtr & 0x80)
                     {
                         // Repeat
-                        size_t j = (*sPtr & 0x7F) + 1;
+                        size_t j = size_t(*sPtr & 0x7F) + 1;
                         if (++sPtr >= endPtr)
                             return E_FAIL;
 
@@ -323,7 +323,7 @@ namespace
                     else
                     {
                         // Literal
-                        size_t j = (*sPtr & 0x7F) + 1;
+                        size_t j = size_t(*sPtr & 0x7F) + 1;
                         ++sPtr;
 
                         if (sPtr + j > endPtr)
@@ -367,7 +367,7 @@ namespace
                     if (*sPtr & 0x80)
                     {
                         // Repeat
-                        size_t j = (*sPtr & 0x7F) + 1;
+                        size_t j = size_t(*sPtr & 0x7F) + 1;
                         ++sPtr;
 
                         if (sPtr + 1 >= endPtr)
@@ -394,7 +394,7 @@ namespace
                     else
                     {
                         // Literal
-                        size_t j = (*sPtr & 0x7F) + 1;
+                        size_t j = size_t(*sPtr & 0x7F) + 1;
                         ++sPtr;
 
                         if (sPtr + (j * 2) > endPtr)
@@ -450,7 +450,7 @@ namespace
                     if (*sPtr & 0x80)
                     {
                         // Repeat
-                        size_t j = (*sPtr & 0x7F) + 1;
+                        size_t j = size_t(*sPtr & 0x7F) + 1;
                         ++sPtr;
 
                         DWORD t;
@@ -499,7 +499,7 @@ namespace
                     else
                     {
                         // Literal
-                        size_t j = (*sPtr & 0x7F) + 1;
+                        size_t j = size_t(*sPtr & 0x7F) + 1;
                         ++sPtr;
 
                         if (convFlags & CONV_FLAGS_EXPAND)

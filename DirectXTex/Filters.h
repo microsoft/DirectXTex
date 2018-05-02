@@ -263,8 +263,8 @@ namespace TriangleFilter
             float src = float(u) - 0.5f;
             float destMin = src * scale;
             float destMax = destMin + scale;
-
-            totalSize += TF_FROM_SIZE + TF_TO_SIZE + size_t(destMax - destMin + repeat + 1.f) * TF_TO_SIZE * 2;
+            float t = destMax - destMin + repeat + 1.f;
+            totalSize += TF_FROM_SIZE + TF_TO_SIZE + size_t(t) * TF_TO_SIZE * 2;
         }
 
         uint8_t* pFilter = nullptr;

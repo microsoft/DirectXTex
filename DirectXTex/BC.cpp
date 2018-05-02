@@ -64,7 +64,7 @@ namespace
         _Out_ HDRColorA *pX,
         _Out_ HDRColorA *pY,
         _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA *pPoints,
-        size_t cSteps,
+        uint32_t cSteps,
         DWORD flags)
     {
         static const float fEpsilon = (0.25f / 64.0f) * (0.25f / 64.0f);
@@ -252,13 +252,13 @@ namespace
                     (pPoints[iPoint].b - X.b) * Dir.b;
 
 
-                size_t iStep;
+                uint32_t iStep;
                 if (fDot <= 0.0f)
                     iStep = 0;
                 else if (fDot >= fSteps)
                     iStep = cSteps - 1;
                 else
-                    iStep = static_cast<size_t>(fDot + 0.5f);
+                    iStep = uint32_t(fDot + 0.5f);
 
 
                 HDRColorA Diff;
@@ -380,7 +380,7 @@ namespace
         static_assert(sizeof(D3DX_BC1) == 8, "D3DX_BC1 should be 8 bytes");
 
         // Determine if we need to colorkey this block
-        size_t uSteps;
+        uint32_t uSteps;
 
         if (bColorKey)
         {
@@ -628,14 +628,14 @@ namespace
                 }
 
                 float fDot = (Clr.r - Step[0].r) * Dir.r + (Clr.g - Step[0].g) * Dir.g + (Clr.b - Step[0].b) * Dir.b;
-                uint32_t iStep;
 
+                uint32_t iStep;
                 if (fDot <= 0.0f)
                     iStep = 0;
                 else if (fDot >= fSteps)
                     iStep = 1;
                 else
-                    iStep = static_cast<uint32_t>(pSteps[static_cast<size_t>(fDot + 0.5f)]);
+                    iStep = uint32_t(pSteps[uint32_t(fDot + 0.5f)]);
 
                 dw = (iStep << 30) | (dw >> 2);
 
@@ -1023,7 +1023,7 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
     }
 
     // Optimize and Quantize Min and Max values
-    size_t uSteps = ((0.0f == fMinAlpha) || (1.0f == fMaxAlpha)) ? 6 : 8;
+    uint32_t uSteps = ((0.0f == fMinAlpha) || (1.0f == fMaxAlpha)) ? 6 : 8;
 
     float fAlphaA, fAlphaB;
     OptimizeAlpha<false>(&fAlphaA, &fAlphaB, fAlpha, uSteps);
@@ -1106,7 +1106,7 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
             else if (fDot >= fSteps)
                 iStep = ((6 == uSteps) && (fAlph >= (fStep[1] + 1.0f) * 0.5f)) ? 7 : 1;
             else
-                iStep = static_cast<uint32_t>(pSteps[static_cast<size_t>(fDot + 0.5f)]);
+                iStep = uint32_t(pSteps[uint32_t(fDot + 0.5f)]);
 
             dw = (iStep << 21) | (dw >> 3);
 

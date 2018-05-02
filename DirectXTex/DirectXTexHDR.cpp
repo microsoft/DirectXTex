@@ -477,7 +477,7 @@ namespace
                     enc[1] = *spanPtr;
                     enc += 2;
                     encSize += 2;
-                    spanPtr += spanLen * 4;
+                    spanPtr += size_t(spanLen) * 4;
                     pixelCount += spanLen;
                 }
                 else
@@ -501,8 +501,8 @@ namespace
                     *enc++ = runLen;
                     memcpy(enc, scan, runLen);
                     enc += runLen;
-                    encSize += runLen + 1;
-                    spanPtr += runLen * 4;
+                    encSize += size_t(runLen) + 1;
+                    spanPtr += size_t(runLen) * 4;
                     pixelCount += runLen;
                 }
             }
@@ -647,7 +647,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
         if (inColor[0] == 2 && inColor[1] == 2 && inColor[2] < 128)
         {
             // Adaptive Run Length Encoding (RLE)
-            if (size_t((inColor[2] << 8) + inColor[3]) != mdata.width)
+            if (size_t((size_t(inColor[2]) << 8) + inColor[3]) != mdata.width)
             {
                 image.Release();
                 return E_FAIL;
@@ -686,7 +686,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
                         sourcePtr += 2;
                         pixelLen -= 2;
                     }
-                    else if ((size < size_t(runLen + 1)) || ((pixelCount + runLen) > mdata.width))
+                    else if ((size < size_t(runLen) + 1) || ((pixelCount + size_t(runLen)) > mdata.width))
                     {
                         image.Release();
                         return E_FAIL;
@@ -701,7 +701,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
                             pixelLoc += 4;
                         }
                         pixelCount += runLen;
-                        pixelLen -= runLen + 1;
+                        pixelLen -= size_t(runLen) + 1;
                     }
                 }
             }
