@@ -686,7 +686,7 @@ namespace
 
             if ((specials_x > 0) || (specials_y > 0) || (specials_z > 0) || (specials_w > 0))
             {
-                wprintf(L"     FP specials - (%Iu %Iu %Iu %Iu)\n", specials_x, specials_y, specials_z, specials_w);
+                wprintf(L"     FP specials - (%zu %zu %zu %zu)\n", specials_x, specials_y, specials_z, specials_w);
             }
         }
     };
@@ -793,36 +793,36 @@ namespace
         {
             wprintf(L"\t        Compression - ");
             PrintFormat(fmt);
-            wprintf(L"\n\t       Total blocks - %Iu\n", blocks);
+            wprintf(L"\n\t       Total blocks - %zu\n", blocks);
 
             switch (fmt)
             {
             case DXGI_FORMAT_BC1_UNORM:
             case DXGI_FORMAT_BC1_UNORM_SRGB:
-                wprintf(L"\t     4 color blocks - %Iu\n", blockHist[0]);
-                wprintf(L"\t     3 color blocks - %Iu\n", blockHist[1]);
+                wprintf(L"\t     4 color blocks - %zu\n", blockHist[0]);
+                wprintf(L"\t     3 color blocks - %zu\n", blockHist[1]);
                 break;
 
                 // BC2 only has a single 'type' of block
 
             case DXGI_FORMAT_BC3_UNORM:
             case DXGI_FORMAT_BC3_UNORM_SRGB:
-                wprintf(L"\t     8 alpha blocks - %Iu\n", blockHist[0]);
-                wprintf(L"\t     6 alpha blocks - %Iu\n", blockHist[1]);
+                wprintf(L"\t     8 alpha blocks - %zu\n", blockHist[0]);
+                wprintf(L"\t     6 alpha blocks - %zu\n", blockHist[1]);
                 break;
 
             case DXGI_FORMAT_BC4_UNORM:
             case DXGI_FORMAT_BC4_SNORM:
-                wprintf(L"\t     8 red blocks - %Iu\n", blockHist[0]);
-                wprintf(L"\t     6 red blocks - %Iu\n", blockHist[1]);
+                wprintf(L"\t     8 red blocks - %zu\n", blockHist[0]);
+                wprintf(L"\t     6 red blocks - %zu\n", blockHist[1]);
                 break;
 
             case DXGI_FORMAT_BC5_UNORM:
             case DXGI_FORMAT_BC5_SNORM:
-                wprintf(L"\t     8 red blocks - %Iu\n", blockHist[0]);
-                wprintf(L"\t     6 red blocks - %Iu\n", blockHist[1]);
-                wprintf(L"\t   8 green blocks - %Iu\n", blockHist[2]);
-                wprintf(L"\t   6 green blocks - %Iu\n", blockHist[3]);
+                wprintf(L"\t     8 red blocks - %zu\n", blockHist[0]);
+                wprintf(L"\t     6 red blocks - %zu\n", blockHist[1]);
+                wprintf(L"\t   8 green blocks - %zu\n", blockHist[2]);
+                wprintf(L"\t   6 green blocks - %zu\n", blockHist[3]);
                 break;
 
             case DXGI_FORMAT_BC6H_UF16:
@@ -830,10 +830,10 @@ namespace
                 for (size_t j = 1; j <= 14; ++j)
                 {
                     if (blockHist[j] > 0)
-                        wprintf(L"\t     Mode %02Iu blocks - %Iu\n", j, blockHist[j]);
+                        wprintf(L"\t     Mode %02Iu blocks - %zu\n", j, blockHist[j]);
                 }
                 if (blockHist[0] > 0)
-                    wprintf(L"\tReserved mode blcks - %Iu\n", blockHist[0]);
+                    wprintf(L"\tReserved mode blcks - %zu\n", blockHist[0]);
                 break;
 
             case DXGI_FORMAT_BC7_UNORM:
@@ -841,10 +841,10 @@ namespace
                 for (size_t j = 0; j <= 7; ++j)
                 {
                     if (blockHist[j] > 0)
-                        wprintf(L"\t     Mode %02Iu blocks - %Iu\n", j, blockHist[j]);
+                        wprintf(L"\t     Mode %02Iu blocks - %zu\n", j, blockHist[j]);
                 }
                 if (blockHist[8] > 0)
-                    wprintf(L"\tReserved mode blcks - %Iu\n", blockHist[8]);
+                    wprintf(L"\tReserved mode blcks - %zu\n", blockHist[8]);
                 break;
             }
         }
@@ -1521,7 +1521,7 @@ namespace
                         continue;
                 }
 
-                wprintf(L"   Block %Iu (pixel: %Iu x %Iu)\n", nblock, w, h);
+                wprintf(L"   Block %zu (pixel: %zu x %zu)\n", nblock, w, h);
                 switch (image.format)
                 {
                 case DXGI_FORMAT_BC1_UNORM:
@@ -3547,11 +3547,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (dwCommand == CMD_INFO)
             {
                 // --- Info ----------------------------------------------------------------
-                wprintf(L"        width = %Iu\n", info.width);
-                wprintf(L"       height = %Iu\n", info.height);
-                wprintf(L"        depth = %Iu\n", info.depth);
-                wprintf(L"    mipLevels = %Iu\n", info.mipLevels);
-                wprintf(L"    arraySize = %Iu\n", info.arraySize);
+                wprintf(L"        width = %zu\n", info.width);
+                wprintf(L"       height = %zu\n", info.height);
+                wprintf(L"        depth = %zu\n", info.depth);
+                wprintf(L"    mipLevels = %zu\n", info.mipLevels);
+                wprintf(L"    arraySize = %zu\n", info.arraySize);
                 wprintf(L"       format = ");
                 PrintFormat(info.format);
                 wprintf(L"\n    dimension = ");
@@ -3594,7 +3594,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     break;
                 }
 
-                wprintf(L"\n       images = %Iu\n", image->GetImageCount());
+                wprintf(L"\n       images = %zu\n", image->GetImageCount());
 
                 auto sizeInKb = static_cast<uint32_t>(image->GetPixelsSize() / 1024);
 
@@ -3713,7 +3713,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (pixelx >= (int)info.width
                     || pixely >= (int)info.height)
                 {
-                    wprintf(L"WARNING: Specified pixel location (%d x %d) is out of range for image (%Iu x %Iu)\n", pixelx, pixely, info.width, info.height);
+                    wprintf(L"WARNING: Specified pixel location (%d x %d) is out of range for image (%zu x %zu)\n", pixelx, pixely, info.width, info.height);
                     continue;
                 }
 

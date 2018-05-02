@@ -138,7 +138,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
         if ( mdata.arraySize > 1 )
         {
             wchar_t buff[2048] = {};
-            swprintf_s( buff, L"Arrays of volume textures are not supported\n\nFilename = %ls\nArray size %Iu", lpCmdLine, mdata.arraySize );
+            swprintf_s( buff, L"Arrays of volume textures are not supported\n\nFilename = %ls\nArray size %zu", lpCmdLine, mdata.arraySize );
             MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
             return 0;
         }
