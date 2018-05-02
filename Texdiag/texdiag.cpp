@@ -1395,12 +1395,12 @@ namespace
         {
             if (IsFixUpOffset(parts, shape, j))
             {
-                wprintf(L"%I64u%ls", bitmap & 0x1, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
+                wprintf(L"%llu%ls", bitmap & 0x1, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
                 bitmap >>= 1;
             }
             else
             {
-                wprintf(L"%I64u%ls", bitmap & 0x3, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
+                wprintf(L"%llu%ls", bitmap & 0x3, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
                 bitmap >>= 2;
             }
         }
@@ -1412,12 +1412,12 @@ namespace
         {
             if (IsFixUpOffset(parts, shape, j))
             {
-                wprintf(L"%I64u%ls", bitmap & 0x3, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
+                wprintf(L"%llu%ls", bitmap & 0x3, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
                 bitmap >>= 2;
             }
             else
             {
-                wprintf(L"%I64u%ls", bitmap & 0x7, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
+                wprintf(L"%llu%ls", bitmap & 0x7, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
                 bitmap >>= 3;
             }
         }
@@ -1429,12 +1429,12 @@ namespace
         {
             if (IsFixUpOffset(parts, shape, j))
             {
-                wprintf(L"%I64X%ls", bitmap & 0x7, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
+                wprintf(L"%llX%ls", bitmap & 0x7, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
                 bitmap >>= 3;
             }
             else
             {
-                wprintf(L"%I64X%ls", bitmap & 0xF, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
+                wprintf(L"%llX%ls", bitmap & 0xF, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
                 bitmap >>= 4;
             }
         }
@@ -1745,7 +1745,7 @@ namespace
                             e1_B.z = SIGN_EXTEND(e1_B.z, 5);
                         }
 
-                        wprintf(L"\tMode 1 - [10 5 5 5] shape %I64u\n", m->d);
+                        wprintf(L"\tMode 1 - [10 5 5 5] shape %llu\n", m->d);
                         wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
                         wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
                         wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
@@ -1821,7 +1821,7 @@ namespace
                             e1_B.z = SIGN_EXTEND(e1_B.z, 6);
                         }
 
-                        wprintf(L"\tMode 2 - [7 6 6 6] shape %I64u\n", m->d);
+                        wprintf(L"\tMode 2 - [7 6 6 6] shape %llu\n", m->d);
                         wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
                         wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
                         wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
@@ -1899,7 +1899,7 @@ namespace
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 4);
                             }
 
-                            wprintf(L"\tMode 3 - [11 5 4 4] shape %I64u\n", m->d);
+                            wprintf(L"\tMode 3 - [11 5 4 4] shape %llu\n", m->d);
                             wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
                             wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
                             wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
@@ -1977,7 +1977,7 @@ namespace
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 4);
                             }
 
-                            wprintf(L"\tMode 4 - [11 4 5 4] shape %I64u\n", m->d);
+                            wprintf(L"\tMode 4 - [11 4 5 4] shape %llu\n", m->d);
                             wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
                             wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
                             wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
@@ -2050,7 +2050,7 @@ namespace
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 5);
                             }
 
-                            wprintf(L"\tMode 5 - [11 4 4 5] shape %I64u\n", m->d);
+                            wprintf(L"\tMode 5 - [11 4 4 5] shape %llu\n", m->d);
                             wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
                             wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
                             wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
@@ -2124,7 +2124,7 @@ namespace
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 5);
                             }
 
-                            wprintf(L"\tMode 6 - [9 5 5 5] shape %I64u\n", m->d);
+                            wprintf(L"\tMode 6 - [9 5 5 5] shape %llu\n", m->d);
                             wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
                             wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
                             wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
@@ -2198,7 +2198,7 @@ namespace
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 5);
                             }
 
-                            wprintf(L"\tMode 7 - [8 6 5 5] shape %I64u\n", m->d);
+                            wprintf(L"\tMode 7 - [8 6 5 5] shape %llu\n", m->d);
                             wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
                             wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
                             wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
@@ -2274,7 +2274,7 @@ namespace
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 5);
                             }
 
-                            wprintf(L"\tMode 8 - [8 5 6 5] shape %I64u\n", m->d);
+                            wprintf(L"\tMode 8 - [8 5 6 5] shape %llu\n", m->d);
                             wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
                             wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
                             wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
@@ -2350,7 +2350,7 @@ namespace
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 6);
                             }
 
-                            wprintf(L"\tMode 9 - [8 5 5 6] shape %I64u\n", m->d);
+                            wprintf(L"\tMode 9 - [8 5 5 6] shape %llu\n", m->d);
                             wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
                             wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
                             wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
@@ -2426,7 +2426,7 @@ namespace
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 6);
                             }
 
-                            wprintf(L"\tMode 10 - [6 6 6 6] shape %I64u\n", m->d);
+                            wprintf(L"\tMode 10 - [6 6 6 6] shape %llu\n", m->d);
                             wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
                             wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
                             wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
@@ -2706,7 +2706,7 @@ namespace
 
                         auto m = reinterpret_cast<const bc7_mode0*>(sptr);
 
-                        wprintf(L"\tMode 0 - [4 4 4] partition %I64u\n", m->part);
+                        wprintf(L"\tMode 0 - [4 4 4] partition %llu\n", m->part);
                         wprintf(L"\t         E0:(%0.3f, %0.3f, %0.3f)\n", float((m->r0 << 1) | m->P0) / 31.f, float((m->g0 << 1) | m->P0) / 31.f, float((m->b0 << 1) | m->P0) / 31.f);
                         wprintf(L"\t         E1:(%0.3f, %0.3f, %0.3f)\n", float((m->r1 << 1) | m->P1) / 31.f, float((m->g1 << 1) | m->P1) / 31.f, float((m->b1 << 1) | m->P1) / 31.f);
                         wprintf(L"\t         E2:(%0.3f, %0.3f, %0.3f)\n", float((m->r2 << 1) | m->P2) / 31.f, float((m->g2 << 1) | m->P2) / 31.f, float(((m->b2 | (m->b2n << 3)) << 1) | m->P2) / 31.f);
@@ -2745,7 +2745,7 @@ namespace
 
                         auto m = reinterpret_cast<const bc7_mode1*>(sptr);
 
-                        wprintf(L"\tMode 1 - [6 6 6] partition %I64u\n", m->part);
+                        wprintf(L"\tMode 1 - [6 6 6] partition %llu\n", m->part);
                         wprintf(L"\t         E0:(%0.3f, %0.3f, %0.3f)\n", float((m->r0 << 1) | m->P0) / 127.f, float((m->g0 << 1) | m->P0) / 127.f, float((m->b0 << 1) | m->P0) / 127.f);
                         wprintf(L"\t         E1:(%0.3f, %0.3f, %0.3f)\n", float((m->r1 << 1) | m->P0) / 127.f, float((m->g1 << 1) | m->P0) / 127.f, float(((m->b1 | (m->b1n << 2)) << 1) | m->P0) / 127.f);
                         wprintf(L"\t         E2:(%0.3f, %0.3f, %0.3f)\n", float((m->r2 << 1) | m->P1) / 127.f, float((m->g2 << 1) | m->P1) / 127.f, float((m->b2 << 1) | m->P1) / 127.f);
@@ -2785,7 +2785,7 @@ namespace
 
                         auto m = reinterpret_cast<const bc7_mode2*>(sptr);
 
-                        wprintf(L"\tMode 2 - [5 5 5] partition %I64u\n", m->part);
+                        wprintf(L"\tMode 2 - [5 5 5] partition %llu\n", m->part);
                         wprintf(L"\t         E0:(%0.3f, %0.3f, %0.3f)\n", float(m->r0) / 31.f, float(m->g0) / 31.f, float(m->b0) / 31.f);
                         wprintf(L"\t         E1:(%0.3f, %0.3f, %0.3f)\n", float(m->r1) / 31.f, float(m->g1) / 31.f, float(m->b1) / 31.f);
                         wprintf(L"\t         E2:(%0.3f, %0.3f, %0.3f)\n", float(m->r2) / 31.f, float(m->g2) / 31.f, float(m->b2) / 31.f);
@@ -2826,7 +2826,7 @@ namespace
 
                         auto m = reinterpret_cast<const bc7_mode3*>(sptr);
 
-                        wprintf(L"\tMode 3 - [7 7 7] partition %I64u\n", m->part);
+                        wprintf(L"\tMode 3 - [7 7 7] partition %llu\n", m->part);
                         wprintf(L"\t         E0:(%0.3f, %0.3f, %0.3f)\n", float((m->r0 << 1) | m->P0) / 255.f, float((m->g0 << 1) | m->P0) / 255.f, float((m->b0 << 1) | m->P0) / 255.f);
                         wprintf(L"\t         E1:(%0.3f, %0.3f, %0.3f)\n", float((m->r1 << 1) | m->P1) / 255.f, float((m->g1 << 1) | m->P1) / 255.f, float((m->b1 << 1) | m->P1) / 255.f);
                         wprintf(L"\t         E2:(%0.3f, %0.3f, %0.3f)\n", float((m->r2 << 1) | m->P2) / 255.f, float((m->g2 << 1) | m->P2) / 255.f, float((m->b2 << 1) | m->P2) / 255.f);
@@ -2859,7 +2859,7 @@ namespace
 
                         auto m = reinterpret_cast<const bc7_mode4*>(sptr);
 
-                        wprintf(L"\tMode 4 - [5 5 5 A6] indx mode %ls, rot-bits %I64u%ls\n", m->idx ? L"3-bit" : L"2-bit", m->rot, GetRotBits(m->rot));
+                        wprintf(L"\tMode 4 - [5 5 5 A6] indx mode %ls, rot-bits %llu%ls\n", m->idx ? L"3-bit" : L"2-bit", m->rot, GetRotBits(m->rot));
                         wprintf(L"\t         C0:(%0.3f, %0.3f, %0.3f)\n", float(m->r0) / 31.f, float(m->g0) / 31.f, float(m->b0) / 31.f);
                         wprintf(L"\t         C1:(%0.3f, %0.3f, %0.3f)\n", float(m->r1) / 31.f, float(m->g1) / 31.f, float(m->b1) / 31.f);
                         wprintf(L"\t         A0:(%0.3f)\n", float(m->a0) / 63.f);
@@ -2899,7 +2899,7 @@ namespace
 
                         auto m = reinterpret_cast<const bc7_mode5*>(sptr);
 
-                        wprintf(L"\tMode 5 - [7 7 7 A8] rot-bits %I64u%ls\n", m->rot, GetRotBits(m->rot));
+                        wprintf(L"\tMode 5 - [7 7 7 A8] rot-bits %llu%ls\n", m->rot, GetRotBits(m->rot));
                         wprintf(L"\t         C0:(%0.3f, %0.3f, %0.3f)\n", float(m->r0) / 127.f, float(m->g0) / 127.f, float(m->b0) / 127.f);
                         wprintf(L"\t         C1:(%0.3f, %0.3f, %0.3f)\n", float(m->r1) / 127.f, float(m->g1) / 127.f, float(m->b1) / 127.f);
                         wprintf(L"\t         A0:(%0.3f)\n", float(m->a0) / 255.f);
@@ -2977,7 +2977,7 @@ namespace
 
                         auto m = reinterpret_cast<const bc7_mode7*>(sptr);
 
-                        wprintf(L"\tMode 7 - [5 5 5 A5] partition %I64u\n", m->part);
+                        wprintf(L"\tMode 7 - [5 5 5 A5] partition %llu\n", m->part);
                         wprintf(L"\t         C0:(%0.3f, %0.3f, %0.3f)\n", float((m->r0 << 1) | m->P0) / 63.f, float((m->g0 << 1) | m->P0) / 63.f, float((m->b0 << 1) | m->P0) / 63.f);
                         wprintf(L"\t         C1:(%0.3f, %0.3f, %0.3f)\n", float((m->r1 << 1) | m->P1) / 63.f, float((m->g1 << 1) | m->P1) / 63.f, float((m->b1 << 1) | m->P1) / 63.f);
                         wprintf(L"\t         C2:(%0.3f, %0.3f, %0.3f)\n", float((m->r2 << 1) | m->P2) / 63.f, float((m->g2 << 1) | m->P2) / 63.f, float((m->b2 << 1) | m->P2) / 63.f);
