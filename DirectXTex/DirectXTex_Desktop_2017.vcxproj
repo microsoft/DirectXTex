@@ -140,7 +140,6 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <Manifest>
       <EnableDPIAwareness>false</EnableDPIAwareness>
@@ -205,7 +204,6 @@
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <Manifest>
       <EnableDPIAwareness>false</EnableDPIAwareness>
@@ -271,7 +269,6 @@
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <Manifest>
       <EnableDPIAwareness>false</EnableDPIAwareness>
