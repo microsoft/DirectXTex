@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2017
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex", "DirectXTex\DirectXTex_Desktop_2017.vcxproj", "{371B9FA9-4C90-4AC6-A123-ACED756D6C77}"
 EndProject
@@ -15,6 +15,11 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sample", "Sample", "{E14090F7-2FE9-47EE-A331-14ED71801FDE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "texdiag", "Texdiag\texdiag_Desktop_2017.vcxproj", "{8E31A619-F4F8-413F-A973-4EE37B1AAA5D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A40FB626-EA42-48D5-AE40-EE5A6FD3742E}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -95,5 +100,8 @@ Global
 		{C3A65381-8FD3-4F69-B29E-654B4B0ED136} = {AEA1D9F7-EA95-4BF7-8E6D-0EA068077943}
 		{9D3EDCAD-A800-43F0-B77F-FE6E4DFA3D84} = {E14090F7-2FE9-47EE-A331-14ED71801FDE}
 		{8E31A619-F4F8-413F-A973-4EE37B1AAA5D} = {AEA1D9F7-EA95-4BF7-8E6D-0EA068077943}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CFB3C228-4C26-4746-8E0C-71C310403E8C}
 	EndGlobalSection
 EndGlobal
