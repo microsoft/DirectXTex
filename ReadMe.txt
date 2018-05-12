@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-April 23, 2018
+May 11, 2018
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -128,6 +128,12 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+May 11, 2018
+    Workaround for WIC issue doing FP32->FP16 conversions
+    Updated for VS 2017 15.7 update warnings
+    Code and project cleanup
+    Retired VS 2013 projects
 
 April 23, 2018
     Code cleanup
