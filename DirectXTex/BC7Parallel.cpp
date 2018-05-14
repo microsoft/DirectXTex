@@ -1236,8 +1236,11 @@ namespace
 
         static void CompressEndpoints3(MInt16 ep[2][4], uint16_t p[2])
         {
-            for (int j = 0; j < 2; j++)
-                QuantizeP(ep[j], 7, p[j], 3);
+			for (int j = 0; j < 2; j++)
+			{
+				QuantizeP(ep[j], 7, p[j], 3);
+				ep[j][3] = ParallelMath::MakeUInt16(255);
+			}
         }
 
         static void CompressEndpoints4(MInt16 epRGB[2][3], MInt16 epA[2])
