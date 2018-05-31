@@ -1562,8 +1562,7 @@ void EncodeBlockCS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
 
 uint4 quantize( uint4 color, uint uPrec )
 {
-    uint4 rnd = min(255, color + (1 << (7 - uPrec)));
-    return rnd >> (8 - uPrec);
+	return (((color << 8) + color) * ((1 << uPrec) - 1) + 32768) >> 16;
 }
 
 uint4 unquantize( uint4 color, uint uPrec )
