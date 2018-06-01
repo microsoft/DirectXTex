@@ -169,6 +169,110 @@ namespace
     }
 
 
+    void GenerateAlphaCoverageConvolutionVectors(
+        _In_ size_t N,
+        _Out_ XMVECTOR* vectors)
+    {
+        for (size_t sy = 0; sy < N; ++sy)
+        {
+            const float fy = (sy + 0.5f) / N;
+            const float ify = 1.0f - fy;
+
+            for (size_t sx = 0; sx < N; ++sx)
+            {
+                const float fx = (sx + 0.5f) / N;
+                const float ifx = 1.0f - fx;
+
+                // [0]=(x+0, y+0), [1]=(x+0, y+1), [2]=(x+1, y+0), [3]=(x+1, y+1)
+                vectors[sy * N + sx] = XMVectorSet(ifx * ify, ifx * fy, fx * ify, fx * fy);
+            }
+        }
+    }
+
+
+    HRESULT CalculateAlphaCoverage(
+        const Image& srcImage,
+        float alphaReference,
+        float alphaScale,
+        float& coverage)
+    {
+        coverage = 0.0f;
+
+        ScopedAlignedArrayXMVECTOR row0(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
+        if (!row0)
+        {
+            return E_OUTOFMEMORY;
+        }
+
+        ScopedAlignedArrayXMVECTOR row1(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
+        if (!row1)
+        {
+            return E_OUTOFMEMORY;
+        }
+
+        const DWORD flags = 0;
+        const XMVECTOR scale = XMVectorReplicate(alphaScale);
+
+        const uint8_t *pSrcRow0 = srcImage.pixels;
+        if (!pSrcRow0)
+        {
+            return E_POINTER;
+        }
+
+        const size_t N = 8;
+        XMVECTOR convolution[N * N];
+        GenerateAlphaCoverageConvolutionVectors(N, convolution);
+
+        XMMATRIX alpha;
+
+        size_t coverageCount = 0;
+        for (size_t y = 0; y < srcImage.height - 1; ++y)
+        {
+            if (!_LoadScanlineLinear(row0.get(), srcImage.width, pSrcRow0, srcImage.rowPitch, srcImage.format, flags))
+            {
+                return E_FAIL;
+            }
+
+            const uint8_t *pSrcRow1 = pSrcRow0 + srcImage.rowPitch;
+            if (!_LoadScanlineLinear(row1.get(), srcImage.width, pSrcRow1, srcImage.rowPitch, srcImage.format, flags))
+            {
+                return E_FAIL;
+            }
+
+            const XMVECTOR* pRow0 = row0.get();
+            const XMVECTOR* pRow1 = row1.get();
+            for (size_t x = 0; x < srcImage.width - 1; ++x)
+            {
+                // [0]=(x+0, y+0), [1]=(x+0, y+1), [2]=(x+1, y+0), [3]=(x+1, y+1)
+                alpha.r[0] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*pRow0), scale));
+                alpha.r[1] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*pRow1), scale));
+                alpha.r[2] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow0++)), scale));
+                alpha.r[3] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow1++)), scale));
+                XMVECTOR v = XMVectorSet(XMVectorGetX(alpha.r[0]), XMVectorGetX(alpha.r[1]), XMVectorGetX(alpha.r[2]), XMVectorGetX(alpha.r[3]));
+
+                for (size_t sy = 0; sy < N; ++sy)
+                {
+                    const size_t ry = sy * N;
+                    for (size_t sx = 0; sx < N; ++sx)
+                    {
+                        v = XMVectorSum(XMVectorMultiply(v, convolution[ry + sx]));
+                        if (XMVectorGetX(v) > alphaReference)
+                        {
+                            ++coverageCount;
+                        }
+                    }
+                }
+            }
+
+            pSrcRow0 = pSrcRow1;
+        }
+
+        coverage = static_cast<float>(coverageCount) / static_cast<float>((srcImage.width - 1) * (srcImage.height - 1) * N * N);
+
+        return S_OK;
+    }
+
+
     HRESULT EstimateAlphaScaleForCoverage(
             _In_ const Image& srcImage,
             _In_ float alphaReference,
@@ -216,26 +320,6 @@ namespace
         }
 
         return S_OK;
-    }
-
-    void GenerateAlphaCoverageConvolutionVectors(
-        _In_ size_t N,
-        _Out_ XMVECTOR* vectors)
-    {
-        for (size_t sy = 0; sy < N; ++sy)
-        {
-            const float fy = (sy + 0.5f) / N;
-            const float ify = 1.0f - fy;
-
-            for (size_t sx = 0; sx < N; ++sx)
-            {
-                const float fx = (sx + 0.5f) / N;
-                const float ifx = 1.0f - fx;
-
-                // [0]=(x+0, y+0), [1]=(x+0, y+1), [2]=(x+1, y+0), [3]=(x+1, y+1)
-                vectors[sy * N + sx] = XMVectorSet(ifx * ify, ifx * fy, fx * ify, fx * fy);
-            }
-        }
     }
 }
 
@@ -3256,98 +3340,21 @@ HRESULT DirectX::GenerateMipMaps3D(
 }
 
 _Use_decl_annotations_
-HRESULT DirectX::CalculateAlphaCoverage(
-    const Image& srcImage,
-    float alphaReference,
-    float alphaScale,
-    float& coverage)
-{
-    coverage = 0.0f;
-
-    ScopedAlignedArrayXMVECTOR row0(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
-    if (!row0)
-    {
-        return E_OUTOFMEMORY;
-    }
-
-    ScopedAlignedArrayXMVECTOR row1(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
-    if (!row1)
-    {
-        return E_OUTOFMEMORY;
-    }
-
-    const DWORD flags = 0;
-    const XMVECTOR scale = XMVectorReplicate(alphaScale);
-
-    const uint8_t *pSrcRow0 = srcImage.pixels;
-    if (!pSrcRow0)
-    {
-        return E_POINTER;
-    }
-
-    const size_t N = 8;
-    XMVECTOR convolution[N * N];
-    GenerateAlphaCoverageConvolutionVectors(N, convolution);
-
-    XMMATRIX alpha;
-
-    size_t coverageCount = 0;
-    for (size_t y = 0; y < srcImage.height - 1; ++y)
-    {
-        if (!_LoadScanlineLinear(row0.get(), srcImage.width, pSrcRow0, srcImage.rowPitch, srcImage.format, flags))
-        {
-            return E_FAIL;
-        }
-
-        const uint8_t *pSrcRow1 = pSrcRow0 + srcImage.rowPitch;
-        if (!_LoadScanlineLinear(row1.get(), srcImage.width, pSrcRow1, srcImage.rowPitch, srcImage.format, flags))
-        {
-            return E_FAIL;
-        }
-
-        const XMVECTOR* pRow0 = row0.get();
-        const XMVECTOR* pRow1 = row1.get();
-        for (size_t x = 0; x < srcImage.width - 1; ++x)
-        {
-            // [0]=(x+0, y+0), [1]=(x+0, y+1), [2]=(x+1, y+0), [3]=(x+1, y+1)
-            alpha.r[0] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*pRow0), scale));
-            alpha.r[1] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*pRow1), scale));
-            alpha.r[2] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow0++)), scale));
-            alpha.r[3] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow1++)), scale));
-            XMVECTOR v = XMVectorSet(XMVectorGetX(alpha.r[0]), XMVectorGetX(alpha.r[1]), XMVectorGetX(alpha.r[2]), XMVectorGetX(alpha.r[3]));
-            
-            for (size_t sy = 0; sy < N; ++sy)
-            {
-                const size_t ry = sy * N;
-                for (size_t sx = 0; sx < N; ++sx)
-                {
-                    v = XMVectorSum(XMVectorMultiply(v, convolution[ry + sx]));
-                    if (XMVectorGetX(v) > alphaReference)
-                    {
-                        ++coverageCount;
-                    }
-                }
-            }
-        }
-
-        pSrcRow0 = pSrcRow1;
-    }
-
-    coverage = static_cast<float>(coverageCount) / static_cast<float>((srcImage.width - 1) * (srcImage.height - 1) * N * N);
-
-    return S_OK;
-}
-
-_Use_decl_annotations_
 HRESULT DirectX::ScaleMipMapsAlphaForCoverage(
     const Image* srcImages,
     const TexMetadata& metadata,
     size_t item,
     float alphaReference,
-    float targetCoverage,
     ScratchImage& mipChain)
 {
     HRESULT hr;
+
+    float targetCoverage = 0.0f;
+    hr = CalculateAlphaCoverage(*srcImages, alphaReference, 1.0f, targetCoverage);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
 
     const size_t levels = metadata.mipLevels;
     for (size_t level = 1; level < levels; ++level)

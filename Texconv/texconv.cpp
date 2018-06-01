@@ -2673,15 +2673,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                float targetCoverage = 0.0f;
-                hr = CalculateAlphaCoverage(*img, preserveAlphaCoverageRef, 1.0f, targetCoverage);
-                if (FAILED(hr))
-                {
-                    wprintf(L" FAILED [keepcoverage] (%x)\n", hr);
-                    return 1;
-                }
-
-                hr = ScaleMipMapsAlphaForCoverage(img, info, item, preserveAlphaCoverageRef, targetCoverage, *timage);
+                hr = ScaleMipMapsAlphaForCoverage(img, info, item, preserveAlphaCoverageRef, *timage);
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [keepcoverage] (%x)\n", hr);
