@@ -185,7 +185,7 @@ const SValue g_pOptions[] =
     { L"c",             OPT_COLORKEY },
     { L"tonemap",       OPT_TONEMAP },
     { L"x2bias",        OPT_X2_BIAS },
-    { L"presalphacov",  OPT_PRESERVE_ALPHA_COVERAGE },
+    { L"keepcoverage",  OPT_PRESERVE_ALPHA_COVERAGE },
     { L"flist",         OPT_FILELIST },
     { L"rotatecolor",   OPT_ROTATE_COLOR },
     { L"nits",          OPT_PAPER_WHITE_NITS },
@@ -748,7 +748,7 @@ namespace
         wprintf(L"   -nits <value>       paper-white value in nits to use for HDR10 (defaults to 200.0)\n");
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
         wprintf(L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n");
-        wprintf(L"   -presalphacov <ref> Preserve alpha coverage in generated mips for alpha test ref\n");
+        wprintf(L"   -keepcoverage <ref> Preserve alpha coverage in generated mips for alpha test ref\n");
         wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
 
         wprintf(L"\n   <format>: ");
@@ -1578,13 +1578,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_PRESERVE_ALPHA_COVERAGE:
                 if (swscanf_s(pValue, L"%f", &preserveAlphaCoverageRef) != 1)
                 {
-                    wprintf(L"Invalid value specified with -presalphacov (%ls)\n\n", pValue);
+                    wprintf(L"Invalid value specified with -keepcoverage (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
                 else if (preserveAlphaCoverageRef < 0.0f || preserveAlphaCoverageRef > 1.0f)
                 {
-                    wprintf(L"-presalphacov (%ls) parameter must be between 0.0 and 1.0\n\n", pValue);
+                    wprintf(L"-keepcoverage (%ls) parameter must be between 0.0 and 1.0\n\n", pValue);
                     return 1;
                 }
                 break;
@@ -2656,7 +2656,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = timage->Initialize(image->GetMetadata());
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [presalphacov] (%x)\n", hr);
+                wprintf(L" FAILED [keepcoverage] (%x)\n", hr);
                 return 1;
             }
             
@@ -2669,7 +2669,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = CopyRectangle(*img, Rect(0, 0, info.width, info.height), *timage->GetImage(0, item, 0), TEX_FILTER_DEFAULT, 0, 0);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [presalphacov] (%x)\n", hr);
+                    wprintf(L" FAILED [keepcoverage] (%x)\n", hr);
                     return 1;
                 }
 
@@ -2677,14 +2677,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = CalculateAlphaCoverage(*img, preserveAlphaCoverageRef, 1.0f, targetCoverage);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [presalphacov] (%x)\n", hr);
+                    wprintf(L" FAILED [keepcoverage] (%x)\n", hr);
                     return 1;
                 }
 
                 hr = ScaleMipMapsAlphaForCoverage(img, info, item, preserveAlphaCoverageRef, targetCoverage, *timage);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [presalphacov] (%x)\n", hr);
+                    wprintf(L" FAILED [keepcoverage] (%x)\n", hr);
                     return 1;
                 }
             }
