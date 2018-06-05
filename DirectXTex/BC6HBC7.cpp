@@ -756,9 +756,9 @@ namespace
         float RoughMSE(_Inout_ EncodeParams* pEP) const;
 
     private:
-        const static ModeDescriptor ms_aDesc[][82];
-        const static ModeInfo ms_aInfo[];
-        const static int ms_aModeToInfo[];
+        static const ModeDescriptor ms_aDesc[][82];
+        static const ModeInfo ms_aInfo[];
+        static const int ms_aModeToInfo[];
     };
 
     // BC67 compression (16b bits per texel)
@@ -860,7 +860,7 @@ namespace
         static float RoughMSE(_Inout_ EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uIndexMode);
 
     private:
-        const static ModeInfo ms_aInfo[];
+        static const ModeInfo ms_aInfo[];
     };
 }
 
