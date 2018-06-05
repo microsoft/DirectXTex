@@ -42,6 +42,11 @@
 // C4986 exception specification does not match previous declaration
 // C5029 nonstandard extension used
 
+#ifdef __INTEL_COMPILER
+#pragma warning(disable : 161)
+// warning #161: unrecognized #pragma
+#endif
+
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #define WIN32_LEAN_AND_MEAN

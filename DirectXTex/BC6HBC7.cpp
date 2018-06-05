@@ -1664,12 +1664,12 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const
 
     if (ms_aModeToInfo[uMode] >= 0)
     {
-        assert(ms_aModeToInfo[uMode] < ARRAYSIZE(ms_aInfo));
-        _Analysis_assume_(ms_aModeToInfo[uMode] < ARRAYSIZE(ms_aInfo));
+        assert(static_cast<unsigned int>(ms_aModeToInfo[uMode]) < _countof(ms_aInfo));
+        _Analysis_assume_(ms_aModeToInfo[uMode] < _countof(ms_aInfo));
         const ModeDescriptor* desc = ms_aDesc[ms_aModeToInfo[uMode]];
 
-        assert(ms_aModeToInfo[uMode] < ARRAYSIZE(ms_aDesc));
-        _Analysis_assume_(ms_aModeToInfo[uMode] < ARRAYSIZE(ms_aDesc));
+        assert(static_cast<unsigned int>(ms_aModeToInfo[uMode]) < _countof(ms_aDesc));
+        _Analysis_assume_(ms_aModeToInfo[uMode] < _countof(ms_aDesc));
         const ModeInfo& info = ms_aInfo[ms_aModeToInfo[uMode]];
 
         INTEndPntPair aEndPts[BC6H_MAX_REGIONS] = {};
