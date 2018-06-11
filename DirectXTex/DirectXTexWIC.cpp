@@ -392,7 +392,7 @@ namespace
 
         if (memcmp(&convertGUID, &GUID_NULL, sizeof(GUID)) == 0)
         {
-            hr = frame->CopyPixels(0, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
+            hr = frame->CopyPixels(nullptr, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
             if (FAILED(hr))
                 return hr;
         }
@@ -419,7 +419,7 @@ namespace
             if (FAILED(hr))
                 return hr;
 
-            hr = FC->CopyPixels(0, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
+            hr = FC->CopyPixels(nullptr, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
             if (FAILED(hr))
                 return hr;
         }
@@ -479,7 +479,7 @@ namespace
                 // This frame does not need resized
                 if (memcmp(&pfGuid, &sourceGUID, sizeof(WICPixelFormatGUID)) == 0)
                 {
-                    hr = frame->CopyPixels(0, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
+                    hr = frame->CopyPixels(nullptr, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
                     if (FAILED(hr))
                         return hr;
                 }
@@ -501,7 +501,7 @@ namespace
                     if (FAILED(hr))
                         return hr;
 
-                    hr = FC->CopyPixels(0, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
+                    hr = FC->CopyPixels(nullptr, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
                     if (FAILED(hr))
                         return hr;
                 }
@@ -525,7 +525,7 @@ namespace
 
                 if (memcmp(&pfScaler, &sourceGUID, sizeof(WICPixelFormatGUID)) == 0)
                 {
-                    hr = scaler->CopyPixels(0, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
+                    hr = scaler->CopyPixels(nullptr, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
                     if (FAILED(hr))
                         return hr;
                 }
@@ -549,7 +549,7 @@ namespace
                     if (FAILED(hr))
                         return hr;
 
-                    hr = FC->CopyPixels(0, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
+                    hr = FC->CopyPixels(nullptr, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
                     if (FAILED(hr))
                         return hr;
                 }
@@ -780,7 +780,7 @@ namespace
             return E_NOINTERFACE;
 
         ComPtr<IWICBitmapEncoder> encoder;
-        HRESULT hr = pWIC->CreateEncoder(containerFormat, 0, encoder.GetAddressOf());
+        HRESULT hr = pWIC->CreateEncoder(containerFormat, nullptr, encoder.GetAddressOf());
         if (FAILED(hr))
             return hr;
 
@@ -848,7 +848,7 @@ namespace
             return E_NOINTERFACE;
 
         ComPtr<IWICBitmapEncoder> encoder;
-        HRESULT hr = pWIC->CreateEncoder(containerFormat, 0, encoder.GetAddressOf());
+        HRESULT hr = pWIC->CreateEncoder(containerFormat, nullptr, encoder.GetAddressOf());
         if (FAILED(hr))
             return hr;
 
@@ -935,7 +935,7 @@ HRESULT DirectX::GetMetadataFromWICMemory(
 
     // Initialize WIC
     ComPtr<IWICBitmapDecoder> decoder;
-    hr = pWIC->CreateDecoderFromStream(stream.Get(), 0, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
+    hr = pWIC->CreateDecoderFromStream(stream.Get(), nullptr, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
     if (FAILED(hr))
         return hr;
 
@@ -973,7 +973,7 @@ HRESULT DirectX::GetMetadataFromWICFile(
 
     // Initialize WIC
     ComPtr<IWICBitmapDecoder> decoder;
-    HRESULT hr = pWIC->CreateDecoderFromFilename(szFile, 0, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
+    HRESULT hr = pWIC->CreateDecoderFromFilename(szFile, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
     if (FAILED(hr))
         return hr;
 
@@ -1028,7 +1028,7 @@ HRESULT DirectX::LoadFromWICMemory(
 
     // Initialize WIC
     ComPtr<IWICBitmapDecoder> decoder;
-    hr = pWIC->CreateDecoderFromStream(stream.Get(), 0, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
+    hr = pWIC->CreateDecoderFromStream(stream.Get(), nullptr, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
     if (FAILED(hr))
         return hr;
 
@@ -1089,7 +1089,7 @@ HRESULT DirectX::LoadFromWICFile(
 
     // Initialize WIC
     ComPtr<IWICBitmapDecoder> decoder;
-    HRESULT hr = pWIC->CreateDecoderFromFilename(szFile, 0, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
+    HRESULT hr = pWIC->CreateDecoderFromFilename(szFile, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
     if (FAILED(hr))
         return hr;
 

@@ -547,7 +547,7 @@ namespace
 
                 if (memcmp(&pfScaler, &pfGUID, sizeof(WICPixelFormatGUID)) == 0)
                 {
-                    hr = scaler->CopyPixels(0, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
+                    hr = scaler->CopyPixels(nullptr, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
                     if (FAILED(hr))
                         return hr;
                 }
@@ -571,7 +571,7 @@ namespace
                     if (FAILED(hr))
                         return hr;
 
-                    hr = FC->CopyPixels(0, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
+                    hr = FC->CopyPixels(nullptr, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
                     if (FAILED(hr))
                         return hr;
                 }

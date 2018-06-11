@@ -70,7 +70,7 @@ namespace
         if (destImage.width != nwidth || destImage.height != nheight)
             return E_FAIL;
 
-        hr = FR->CopyPixels(0, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
+        hr = FR->CopyPixels(nullptr, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
         if (FAILED(hr))
             return hr;
 

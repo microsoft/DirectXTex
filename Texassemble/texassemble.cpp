@@ -641,7 +641,7 @@ namespace
             return E_NOINTERFACE;
 
         ComPtr<IWICBitmapDecoder> decoder;
-        HRESULT hr = pWIC->CreateDecoderFromFilename(szFile, 0, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
+        HRESULT hr = pWIC->CreateDecoderFromFilename(szFile, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
         if (FAILED(hr))
             return hr;
 
@@ -876,7 +876,7 @@ namespace
 
             auto img = rawFrame.GetImage(0, 0, 0);
 
-            hr = FC->CopyPixels(0, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
+            hr = FC->CopyPixels(nullptr, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
             if (FAILED(hr))
                 return hr;
 

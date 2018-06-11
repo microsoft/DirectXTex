@@ -789,14 +789,14 @@ namespace
 
         IWICImagingFactory2* factory = nullptr;
         (void)InitOnceExecuteOnce(&s_initOnce,
-            [](PINIT_ONCE, PVOID, PVOID *factory) -> BOOL
+            [](PINIT_ONCE, PVOID, PVOID *ifactory) -> BOOL
             {
                 return SUCCEEDED( CoCreateInstance(
                     CLSID_WICImagingFactory2,
                     nullptr,
                     CLSCTX_INPROC_SERVER,
                     __uuidof(IWICImagingFactory2),
-                    factory) ) ? TRUE : FALSE;
+                    ifactory) ) ? TRUE : FALSE;
             }, nullptr, reinterpret_cast<LPVOID*>(&factory));
 
         return factory;
@@ -1095,7 +1095,7 @@ HRESULT DirectX::SaveWICTextureToFile( ID3D12CommandQueue* pCommandQ,
     auto_delete_file_wic delonfail(stream, fileName);
 
     ComPtr<IWICBitmapEncoder> encoder;
-    hr = pWIC->CreateEncoder( guidContainerFormat, 0, encoder.GetAddressOf() );
+    hr = pWIC->CreateEncoder( guidContainerFormat, nullptr, encoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
