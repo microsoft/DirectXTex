@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexp.h"
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
 #include <d3d10.h>
@@ -763,7 +763,7 @@ HRESULT DirectX::CaptureTexture(
             desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
             desc.Usage = D3D11_USAGE_STAGING;
 
-            hr = pDevice->CreateTexture1D(&desc, 0, pStaging.GetAddressOf());
+            hr = pDevice->CreateTexture1D(&desc, nullptr, pStaging.GetAddressOf());
             if (FAILED(hr))
                 break;
 
@@ -809,7 +809,7 @@ HRESULT DirectX::CaptureTexture(
             desc.SampleDesc.Quality = 0;
 
             ComPtr<ID3D11Texture2D> pTemp;
-            hr = pDevice->CreateTexture2D(&desc, 0, pTemp.GetAddressOf());
+            hr = pDevice->CreateTexture2D(&desc, nullptr, pTemp.GetAddressOf());
             if (FAILED(hr))
                 break;
 
@@ -848,7 +848,7 @@ HRESULT DirectX::CaptureTexture(
             desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
             desc.Usage = D3D11_USAGE_STAGING;
 
-            hr = pDevice->CreateTexture2D(&desc, 0, pStaging.GetAddressOf());
+            hr = pDevice->CreateTexture2D(&desc, nullptr, pStaging.GetAddressOf());
             if (FAILED(hr))
                 break;
 
@@ -868,7 +868,7 @@ HRESULT DirectX::CaptureTexture(
             desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
             desc.Usage = D3D11_USAGE_STAGING;
 
-            hr = pDevice->CreateTexture2D(&desc, 0, &pStaging);
+            hr = pDevice->CreateTexture2D(&desc, nullptr, &pStaging);
             if (FAILED(hr))
                 break;
 
@@ -921,7 +921,7 @@ HRESULT DirectX::CaptureTexture(
             desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
             desc.Usage = D3D11_USAGE_STAGING;
 
-            hr = pDevice->CreateTexture3D(&desc, 0, pStaging.GetAddressOf());
+            hr = pDevice->CreateTexture3D(&desc, nullptr, pStaging.GetAddressOf());
             if (FAILED(hr))
                 break;
 

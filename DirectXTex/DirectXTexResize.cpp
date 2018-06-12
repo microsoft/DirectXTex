@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexp.h"
 
 #include "filters.h"
 
@@ -678,7 +678,7 @@ namespace
                     if (rowFree)
                     {
                         // Steal and reuse scanline from 'free row' list
-                        assert(rowFree->scanline != 0);
+                        assert(rowFree->scanline != nullptr);
                         rowAcc->scanline.reset(rowFree->scanline.release());
                         rowFree = rowFree->next;
                     }

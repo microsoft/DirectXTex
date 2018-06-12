@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexp.h"
 
 //
 // In theory HDR (RGBE) Radiance files can have any of the following data orientations
@@ -175,7 +175,7 @@ namespace
                 char buff[32] = {};
                 strncpy_s(buff, info, std::min<size_t>(31, len));
 
-                float newExposure = static_cast<float>(atof(buff));
+                auto newExposure = static_cast<float>(atof(buff));
                 if ((newExposure >= 1e-12) && (newExposure <= 1e12))
                 {
                     // Note that we ignore strange exposure values (like EXPOSURE=0)
@@ -347,7 +347,7 @@ namespace
         for (size_t pixelCount = 0; pixelCount < width;)
         {
             size_t spanLen = 1;
-            const uint32_t* spanPtr = reinterpret_cast<const uint32_t*>(scanPtr);
+            auto spanPtr = reinterpret_cast<const uint32_t*>(scanPtr);
             while (pixelCount + spanLen < width && spanLen < 32767)
             {
                 if (spanPtr[spanLen] == *spanPtr)
@@ -368,7 +368,7 @@ namespace
                 if (encSize + 8 > rowPitch)
                     return 0;
 
-                uint8_t rleLen = static_cast<uint8_t>(std::min<size_t>(spanLen - 1, 255));
+                auto rleLen = static_cast<uint8_t>(std::min<size_t>(spanLen - 1, 255));
 
                 enc[0] = scanPtr[0];
                 enc[1] = scanPtr[1];
@@ -676,7 +676,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
                             return E_FAIL;
                         }
 
-                        float val = static_cast<float>(sourcePtr[1]);
+                        auto val = static_cast<float>(sourcePtr[1]);
                         for (uint8_t j = 0; j < runLen; ++j)
                         {
                             *pixelLoc = val;
@@ -696,7 +696,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
                         ++sourcePtr;
                         for (uint8_t j = 0; j < runLen; ++j)
                         {
-                            float val = static_cast<float>(*sourcePtr++);
+                            auto val = static_cast<float>(*sourcePtr++);
                             *pixelLoc = val;
                             pixelLoc += 4;
                         }
@@ -782,7 +782,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
 
         for (size_t j = 0; j < image.GetPixelsSize(); j += 16)
         {
-            int exponent = static_cast<int>(fdata[3]);
+            auto exponent = static_cast<int>(fdata[3]);
             fdata[0] = 1.0f / exposure*ldexpf((fdata[0] + 0.5f), exponent - (128 + 8));
             fdata[1] = 1.0f / exposure*ldexpf((fdata[1] + 0.5f), exponent - (128 + 8));
             fdata[2] = 1.0f / exposure*ldexpf((fdata[2] + 0.5f), exponent - (128 + 8));
@@ -909,7 +909,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
 
     // Copy header
     auto dPtr = static_cast<uint8_t*>(blob.GetBufferPointer());
-    assert(dPtr != 0);
+    assert(dPtr != nullptr);
     memcpy_s(dPtr, blob.GetBufferSize(), header, headerLen);
     dPtr += headerLen;
 
@@ -1024,7 +1024,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile)
             return hr;
 
         // Write blob
-        const DWORD bytesToWrite = static_cast<DWORD>(blob.GetBufferSize());
+        auto bytesToWrite = static_cast<const DWORD>(blob.GetBufferSize());
         DWORD bytesWritten;
         if (!WriteFile(hFile.get(), blob.GetBufferPointer(), bytesToWrite, &bytesWritten, nullptr))
         {
