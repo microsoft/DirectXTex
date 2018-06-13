@@ -7,7 +7,7 @@
 // Licensed under the MIT License.
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexp.h"
 
 #include "BCDirectCompute.h"
 
@@ -427,7 +427,7 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
     size_t xblocks = std::max<size_t>(1, (m_width + 3) >> 2);
     size_t yblocks = std::max<size_t>(1, (m_height + 3) >> 2);
 
-    UINT num_total_blocks = static_cast<UINT>(xblocks * yblocks);
+    auto num_total_blocks = static_cast<UINT>(xblocks * yblocks);
     UINT num_blocks = num_total_blocks;
     int start_block_id = 0;
     while (num_blocks > 0)

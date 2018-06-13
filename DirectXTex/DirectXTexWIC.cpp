@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexp.h"
 
 //-------------------------------------------------------------------------------------
 // IStream support for WIC Memory routines
@@ -62,7 +62,7 @@
     #pragma prefast(suppress:6387 28196, "a simple wrapper around an existing annotated function" );
     static inline HRESULT CreateMemoryStream(_Outptr_ IStream** stream)
     {
-        return CreateStreamOnHGlobal(0, TRUE, stream);
+        return CreateStreamOnHGlobal(nullptr, TRUE, stream);
     }
 
 #endif
@@ -1167,7 +1167,7 @@ HRESULT DirectX::SaveToWICMemory(
         return hr;
 
     LARGE_INTEGER li = {};
-    hr = stream->Seek(li, STREAM_SEEK_SET, 0);
+    hr = stream->Seek(li, STREAM_SEEK_SET, nullptr);
     if (FAILED(hr))
         return hr;
 
@@ -1224,7 +1224,7 @@ HRESULT DirectX::SaveToWICMemory(
         return hr;
 
     LARGE_INTEGER li = {};
-    hr = stream->Seek(li, STREAM_SEEK_SET, 0);
+    hr = stream->Seek(li, STREAM_SEEK_SET, nullptr);
     if (FAILED(hr))
         return hr;
 

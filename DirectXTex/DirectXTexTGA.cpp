@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexp.h"
 
 //
 // The implementation here has the following limitations:
@@ -41,8 +41,6 @@ namespace
         TGA_FLAGS_INTERLEAVED_2WAY = 0x40, // Deprecated
         TGA_FLAGS_INTERLEAVED_4WAY = 0x80, // Deprecated
     };
-
-    const char* g_TGA20_Signature = "TRUEVISION-XFILE.";
 
 #pragma pack(push,1)
     struct TGA_HEADER
@@ -373,7 +371,7 @@ namespace
                         if (sPtr + 1 >= endPtr)
                             return E_FAIL;
 
-                        uint16_t t = *sPtr | (*(sPtr + 1) << 8);
+                        auto t = static_cast<uint16_t>(unsigned(*sPtr) | (*(sPtr + 1u) << 8));
                         if (t & 0x8000)
                             nonzeroa = true;
                         sPtr += 2;
@@ -405,7 +403,7 @@ namespace
                             if (x >= image->width)
                                 return E_FAIL;
 
-                            uint16_t t = *sPtr | (*(sPtr + 1) << 8);
+                            auto t = static_cast<uint16_t>(unsigned(*sPtr) | (*(sPtr + 1u) << 8));
                             if (t & 0x8000)
                                 nonzeroa = true;
                             sPtr += 2;
@@ -650,7 +648,7 @@ namespace
                     if (sPtr + 1 >= endPtr)
                         return E_FAIL;
 
-                    uint16_t t = *sPtr | (*(sPtr + 1) << 8);
+                    auto t = static_cast<uint16_t>(unsigned(*sPtr) | (*(sPtr + 1u) << 8));
                     sPtr += 2;
                     *dPtr = t;
 
@@ -860,7 +858,7 @@ HRESULT DirectX::GetMetadataFromTGAMemory(
         return E_INVALIDARG;
 
     size_t offset;
-    return DecodeTGAHeader(pSource, size, metadata, offset, 0);
+    return DecodeTGAHeader(pSource, size, metadata, offset, nullptr);
 }
 
 _Use_decl_annotations_
@@ -908,7 +906,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TexMetadata& meta
     }
 
     size_t offset;
-    return DecodeTGAHeader(header, bytesRead, metadata, offset, 0);
+    return DecodeTGAHeader(header, bytesRead, metadata, offset, nullptr);
 }
 
 
@@ -1029,7 +1027,7 @@ HRESULT DirectX::LoadFromTGAFile(
         return hr;
 
     // Read the pixels
-    DWORD remaining = static_cast<DWORD>(fileInfo.EndOfFile.LowPart - offset);
+    auto remaining = static_cast<DWORD>(fileInfo.EndOfFile.LowPart - offset);
     if (remaining == 0)
         return E_FAIL;
 
@@ -1037,7 +1035,7 @@ HRESULT DirectX::LoadFromTGAFile(
     {
         // Skip past the id string
         LARGE_INTEGER filePos = { { static_cast<DWORD>(offset), 0 } };
-        if (!SetFilePointerEx(hFile.get(), filePos, 0, FILE_BEGIN))
+        if (!SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
         {
             return HRESULT_FROM_WIN32(GetLastError());
         }
@@ -1091,7 +1089,7 @@ HRESULT DirectX::LoadFromTGAFile(
 
             for (size_t h = 0; h < img->height; ++h)
             {
-                const uint32_t* sPtr = reinterpret_cast<const uint32_t*>(pPixels);
+                auto sPtr = reinterpret_cast<const uint32_t*>(pPixels);
 
                 for (size_t x = 0; x < img->width; ++x)
                 {
@@ -1149,7 +1147,7 @@ HRESULT DirectX::LoadFromTGAFile(
 
             for (size_t h = 0; h < img->height; ++h)
             {
-                const uint16_t* sPtr = reinterpret_cast<const uint16_t*>(pPixels);
+                auto sPtr = reinterpret_cast<const uint16_t*>(pPixels);
 
                 for (size_t x = 0; x < img->width; ++x)
                 {
@@ -1264,7 +1262,7 @@ HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob)
 
     // Copy header
     auto dPtr = static_cast<uint8_t*>(blob.GetBufferPointer());
-    assert(dPtr != 0);
+    assert(dPtr != nullptr);
     memcpy_s(dPtr, blob.GetBufferSize(), &tga_header, sizeof(TGA_HEADER));
     dPtr += sizeof(TGA_HEADER);
 

@@ -63,7 +63,7 @@ inline void _CreateLinearFilter(_In_ size_t source, _In_ size_t dest, _In_ bool 
 {
     assert(source > 0);
     assert(dest > 0);
-    assert(lf != 0);
+    assert(lf != nullptr);
 
     float scale = float(source) / float(dest);
 
@@ -163,7 +163,7 @@ inline void _CreateCubicFilter(_In_ size_t source, _In_ size_t dest, _In_ bool w
 {
     assert(source > 0);
     assert(dest > 0);
-    assert(cf != 0);
+    assert(cf != nullptr);
 
     float scale = float(source) / float(dest);
 
@@ -294,7 +294,7 @@ namespace TriangleFilter
             tf->totalSize = totalSize;
         }
 
-        assert(pFilter != 0);
+        assert(pFilter != nullptr);
         _Analysis_assume_(pFilter != 0);
 
         // Filter setup

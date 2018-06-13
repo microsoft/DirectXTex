@@ -216,7 +216,7 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
     }
 
     // Use Newton's Method to find local minima of sum-of-squares error.
-    float fSteps = (float)(cSteps - 1);
+    auto fSteps = static_cast<float>(cSteps - 1);
 
     for (size_t iIteration = 0; iIteration < 8; iIteration++)
     {

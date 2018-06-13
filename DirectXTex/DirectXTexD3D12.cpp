@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexp.h"
 
 #if defined(_XBOX_ONE) && defined(_TITLE)
 #include "d3dx12_x.h"
@@ -52,7 +52,7 @@ namespace
             else
             {
                 // Plane 1
-                res.pData = (uint8_t*)(res.pData) + res.RowPitch * height;
+                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * height);
                 res.SlicePitch = res.RowPitch * ((height + 1) >> 1);
             }
             break;
@@ -66,7 +66,7 @@ namespace
             else
             {
                 // Plane 1
-                res.pData = (uint8_t*)(res.pData) + res.RowPitch * height;
+                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * height);
                 res.RowPitch = (res.RowPitch >> 1);
                 res.SlicePitch = res.RowPitch * height;
             }
@@ -82,8 +82,8 @@ namespace
         _In_ D3D12_RESOURCE_STATES stateBefore,
         _In_ D3D12_RESOURCE_STATES stateAfter)
     {
-        assert(commandList != 0);
-        assert(resource != 0);
+        assert(commandList != nullptr);
+        assert(resource != nullptr);
 
         if (stateBefore == stateAfter)
             return;
@@ -223,7 +223,7 @@ namespace
                 fmt = MakeTypelessFLOAT(fmt);
             }
 
-            D3D12_FEATURE_DATA_FORMAT_SUPPORT formatInfo = { fmt };
+            D3D12_FEATURE_DATA_FORMAT_SUPPORT formatInfo = { fmt, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
             hr = device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatInfo, sizeof(formatInfo));
             if (FAILED(hr))
                 return hr;
@@ -278,7 +278,7 @@ namespace
             return hr;
 
         // Execute the command list
-        pCommandQ->ExecuteCommandLists(1, (ID3D12CommandList**)commandList.GetAddressOf());
+        pCommandQ->ExecuteCommandLists(1, CommandListCast(commandList.GetAddressOf()));
 
         // Signal the fence
         hr = pCommandQ->Signal(fence.Get(), 1);
@@ -326,7 +326,7 @@ bool DirectX::IsSupportedTexture(
     size_t iDepth = metadata.depth;
 
     // Most cases are known apriori based on feature level, but we use this for robustness to handle the few optional cases
-    D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { fmt };
+    D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { fmt, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
     HRESULT hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatSupport, sizeof(formatSupport));
     if (FAILED(hr))
     {
@@ -349,7 +349,7 @@ bool DirectX::IsSupportedTexture(
             return false;
 
         {
-            UINT numberOfResources = static_cast<UINT>(arraySize * metadata.mipLevels);
+            auto numberOfResources = static_cast<UINT>(arraySize * metadata.mipLevels);
             if (numberOfResources > D3D12_REQ_SUBRESOURCES)
                 return false;
         }
@@ -378,7 +378,7 @@ bool DirectX::IsSupportedTexture(
         }
 
         {
-            UINT numberOfResources = static_cast<UINT>(arraySize * metadata.mipLevels);
+            auto numberOfResources = static_cast<UINT>(arraySize * metadata.mipLevels);
             if (numberOfResources > D3D12_REQ_SUBRESOURCES)
                 return false;
         }
@@ -395,7 +395,7 @@ bool DirectX::IsSupportedTexture(
             return false;
 
         {
-            UINT numberOfResources = static_cast<UINT>(metadata.mipLevels);
+            auto numberOfResources = static_cast<UINT>(metadata.mipLevels);
             if (numberOfResources > D3D12_REQ_SUBRESOURCES)
                 return false;
         }
@@ -785,7 +785,7 @@ HRESULT DirectX::CaptureTexture(
                     static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch * pNumRows[dindex])
                 };
 
-                if (pRowSizesInBytes[dindex] > (SIZE_T)-1)
+                if (pRowSizesInBytes[dindex] > SIZE_T(-1))
                 {
                     pStaging->Unmap(0, nullptr);
                     result.Release();
@@ -793,7 +793,7 @@ HRESULT DirectX::CaptureTexture(
                 }
 
                 MemcpySubresource(&destData, &srcData,
-                    (SIZE_T)pRowSizesInBytes[dindex],
+                    static_cast<SIZE_T>(pRowSizesInBytes[dindex]),
                     pNumRows[dindex],
                     pLayout[dindex].Footprint.Depth);
             }

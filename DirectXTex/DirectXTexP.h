@@ -75,6 +75,8 @@
 #include <d3d11_1.h>
 #endif
 
+#define _XM_NO_XMVECTOR_OVERLOADS_
+
 #include <directxmath.h>
 #include <directxpackedvector.h>
 #include <assert.h>

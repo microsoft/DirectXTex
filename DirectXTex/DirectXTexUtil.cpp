@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexp.h"
 
 #if defined(_XBOX_ONE) && defined(_TITLE)
 static_assert(XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT == DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT, "Xbox One XDK mismatch detected");
@@ -71,6 +71,48 @@ namespace
 
     bool g_WIC2 = false;
     IWICImagingFactory* g_Factory = nullptr;
+
+    BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID *ifactory) noexcept
+    {
+    #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+        HRESULT hr = CoCreateInstance(
+            CLSID_WICImagingFactory2,
+            nullptr,
+            CLSCTX_INPROC_SERVER,
+            __uuidof(IWICImagingFactory2),
+            ifactory
+        );
+
+        if (SUCCEEDED(hr))
+        {
+            // WIC2 is available on Windows 10, Windows 8.x, and Windows 7 SP1 with KB 2670838 installed
+            g_WIC2 = true;
+            return TRUE;
+        }
+        else
+        {
+            g_WIC2 = false;
+
+            hr = CoCreateInstance(
+                CLSID_WICImagingFactory1,
+                nullptr,
+                CLSCTX_INPROC_SERVER,
+                __uuidof(IWICImagingFactory),
+                ifactory
+            );
+            return SUCCEEDED(hr) ? TRUE : FALSE;
+        }
+    #else
+        g_WIC2 = false;
+
+        return SUCCEEDED(CoCreateInstance(
+            CLSID_WICImagingFactory,
+            nullptr,
+            CLSCTX_INPROC_SERVER,
+            __uuidof(IWICImagingFactory),
+            ifactory)) ? TRUE : FALSE;
+    #endif
+    }
 }
 
 
@@ -236,47 +278,9 @@ IWICImagingFactory* DirectX::GetWICFactory(bool& iswic2)
     static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
     InitOnceExecuteOnce(&s_initOnce,
-        [](PINIT_ONCE, PVOID, LPVOID *factory) noexcept -> BOOL
-    {
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
-        HRESULT hr = CoCreateInstance(
-            CLSID_WICImagingFactory2,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            __uuidof(IWICImagingFactory2),
-            factory
-        );
-
-        if (SUCCEEDED(hr))
-        {
-            // WIC2 is available on Windows 10, Windows 8.x, and Windows 7 SP1 with KB 2670838 installed
-            g_WIC2 = true;
-            return TRUE;
-        }
-        else
-        {
-            g_WIC2 = false;
-
-            hr = CoCreateInstance(
-                CLSID_WICImagingFactory1,
-                nullptr,
-                CLSCTX_INPROC_SERVER,
-                __uuidof(IWICImagingFactory),
-                factory
-            );
-            return SUCCEEDED(hr) ? TRUE : FALSE;
-        }
-#else
-        g_WIC2 = false;
-
-        return SUCCEEDED(CoCreateInstance(
-            CLSID_WICImagingFactory,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            __uuidof(IWICImagingFactory),
-            factory)) ? TRUE : FALSE;
-#endif
-    }, nullptr, reinterpret_cast<LPVOID*>(&g_Factory));
+        InitializeWICFactory,
+        nullptr,
+        reinterpret_cast<LPVOID*>(&g_Factory));
 
     iswic2 = g_WIC2;
     return g_Factory;
@@ -1401,7 +1405,6 @@ size_t TexMetadata::ComputeIndex(size_t mip, size_t item, size_t slice) const
 
             return index;
         }
-        break;
 
     default:
         return size_t(-1);

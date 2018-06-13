@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexp.h"
 
 using namespace DirectX;
 
@@ -38,7 +38,6 @@ namespace
             XMStoreFloat4A(&f, v);
             return f.x + f.y + f.z;
         }
-        break;
 
         default:
             assert(false);
