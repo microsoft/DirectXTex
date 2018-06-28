@@ -141,6 +141,14 @@ inline HDRColorA* HDRColorALerp(_Out_ HDRColorA *pOut, _In_ const HDRColorA *pC1
     return pOut;
 }
 
+inline HDRColorA* HDRColorALerpRGB(_Out_ HDRColorA *pOut, _In_ const HDRColorA *pC1, _In_ const HDRColorA *pC2, _In_ float s)
+{
+	pOut->r = pC1->r + s * (pC2->r - pC1->r);
+	pOut->g = pC1->g + s * (pC2->g - pC1->g);
+	pOut->b = pC1->b + s * (pC2->b - pC1->b);
+	return pOut;
+}
+
 #pragma pack(push,1)
 // BC1/DXT1 compression (4 bits per texel)
 struct D3DX_BC1
