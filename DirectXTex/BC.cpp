@@ -48,6 +48,7 @@ namespace
         Color.r = (pColor->r < 0.0f) ? 0.0f : (pColor->r > 1.0f) ? 1.0f : pColor->r;
         Color.g = (pColor->g < 0.0f) ? 0.0f : (pColor->g > 1.0f) ? 1.0f : pColor->g;
         Color.b = (pColor->b < 0.0f) ? 0.0f : (pColor->b > 1.0f) ? 1.0f : pColor->b;
+        Color.a = pColor->a;
 
         uint16_t w;
 
@@ -108,38 +109,30 @@ namespace
         }
 
         // Diagonal axis
-        HDRColorA AB;
-
-        AB.r = Y.r - X.r;
-        AB.g = Y.g - X.g;
-        AB.b = Y.b - X.b;
+        HDRColorA AB(Y.r - X.r, Y.g - X.g, Y.b - X.b, 0.0f);
 
         float fAB = AB.r * AB.r + AB.g * AB.g + AB.b * AB.b;
 
         // Single color block.. no need to root-find
         if (fAB < FLT_MIN)
         {
-            pX->r = X.r; pX->g = X.g; pX->b = X.b;
-            pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
+            pX->r = X.r; pX->g = X.g; pX->b = X.b; pX->a = 1.0f;
+            pY->r = Y.r; pY->g = Y.g; pY->b = Y.b; pY->a = 1.0f;
             return;
         }
 
         // Try all four axis directions, to determine which diagonal best fits data
         float fABInv = 1.0f / fAB;
 
-        HDRColorA Dir;
-        Dir.r = AB.r * fABInv;
-        Dir.g = AB.g * fABInv;
-        Dir.b = AB.b * fABInv;
+        HDRColorA Dir(AB.r * fABInv, AB.g * fABInv, AB.b * fABInv, 0.0f);
 
-        HDRColorA Mid;
-        Mid.r = (X.r + Y.r) * 0.5f;
-        Mid.g = (X.g + Y.g) * 0.5f;
-        Mid.b = (X.b + Y.b) * 0.5f;
+        HDRColorA Mid(
+            (X.r + Y.r) * 0.5f,
+            (X.g + Y.g) * 0.5f,
+            (X.b + Y.b) * 0.5f,
+            0.0f);
 
-        float fDir[4];
-        fDir[0] = fDir[1] = fDir[2] = fDir[3] = 0.0f;
-
+        float fDir[4] = {};
 
         for (size_t iPoint = 0; iPoint < NUM_PIXELS_PER_BLOCK; iPoint++)
         {
@@ -147,6 +140,7 @@ namespace
             Pt.r = (pPoints[iPoint].r - Mid.r) * Dir.r;
             Pt.g = (pPoints[iPoint].g - Mid.g) * Dir.g;
             Pt.b = (pPoints[iPoint].b - Mid.b) * Dir.b;
+            Pt.a = 0.0f;
 
             float f;
 
@@ -203,8 +197,8 @@ namespace
         // Two color block.. no need to root-find
         if (fAB < 1.0f / 4096.0f)
         {
-            pX->r = X.r; pX->g = X.g; pX->b = X.b;
-            pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
+            pX->r = X.r; pX->g = X.g; pX->b = X.b; pX->a = 1.0f;
+            pY->r = Y.r; pY->g = Y.g; pY->b = Y.b; pY->a = 1.0f;
             return;
         }
 
@@ -221,6 +215,7 @@ namespace
                 pSteps[iStep].r = X.r * pC[iStep] + Y.r * pD[iStep];
                 pSteps[iStep].g = X.g * pC[iStep] + Y.g * pD[iStep];
                 pSteps[iStep].b = X.b * pC[iStep] + Y.b * pD[iStep];
+                pSteps[iStep].a = 1.0f;
             }
 
 
@@ -242,9 +237,10 @@ namespace
 
 
             // Evaluate function, and derivatives
-            float d2X, d2Y;
-            HDRColorA dX, dY;
-            d2X = d2Y = dX.r = dX.g = dX.b = dY.r = dY.g = dY.b = 0.0f;
+            float d2X = 0.f;
+            float d2Y = 0.f;
+            HDRColorA dX = {};
+            HDRColorA dY = {};
 
             for (size_t iPoint = 0; iPoint < NUM_PIXELS_PER_BLOCK; iPoint++)
             {
@@ -266,6 +262,7 @@ namespace
                 Diff.r = pSteps[iStep].r - pPoints[iPoint].r;
                 Diff.g = pSteps[iStep].g - pPoints[iPoint].g;
                 Diff.b = pSteps[iStep].b - pPoints[iPoint].b;
+                Diff.a = 0.0f;
 
 #ifdef COLOR_WEIGHTS
                 float fC = pC[iStep] * pPoints[iPoint].a * (1.0f / 8.0f);
@@ -312,8 +309,8 @@ namespace
             }
         }
 
-        pX->r = X.r; pX->g = X.g; pX->b = X.b;
-        pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
+        pX->r = X.r; pX->g = X.g; pX->b = X.b; pX->a = 1.0f;
+        pY->r = Y.r; pY->g = Y.g; pY->b = Y.b; pY->a = 1.0f;
     }
 
 
@@ -424,6 +421,7 @@ namespace
             Clr.r = pColor[i].r;
             Clr.g = pColor[i].g;
             Clr.b = pColor[i].b;
+            Clr.a = 1.0f;
 
             if (flags & BC_FLAGS_DITHER_RGB)
             {
@@ -448,6 +446,7 @@ namespace
                 Diff.r = Color[i].a * (Clr.r - Color[i].r);
                 Diff.g = Color[i].a * (Clr.g - Color[i].g);
                 Diff.b = Color[i].a * (Clr.b - Color[i].b);
+                Diff.a = 0.0f;
 
                 if (3 != (i & 3))
                 {
@@ -582,10 +581,10 @@ namespace
 
         // Calculate color direction
         HDRColorA Dir;
-
         Dir.r = Step[1].r - Step[0].r;
         Dir.g = Step[1].g - Step[0].g;
         Dir.b = Step[1].b - Step[0].b;
+        Dir.a = 0.0f;
 
         auto fSteps = static_cast<float>(uSteps - 1);
         float fScale = (wColorA != wColorB) ? (fSteps / (Dir.r * Dir.r + Dir.g * Dir.g + Dir.b * Dir.b)) : 0.0f;
@@ -620,6 +619,7 @@ namespace
                     Clr.g = pColor[i].g * g_Luminance.g;
                     Clr.b = pColor[i].b * g_Luminance.b;
                 }
+                Clr.a = 1.0f;
 
                 if (flags & BC_FLAGS_DITHER_RGB)
                 {
@@ -646,6 +646,7 @@ namespace
                     Diff.r = Color[i].a * (Clr.r - Step[iStep].r);
                     Diff.g = Color[i].a * (Clr.g - Step[iStep].g);
                     Diff.b = Color[i].a * (Clr.b - Step[iStep].b);
+                    Diff.a = 0.0f;
 
                     if (3 != (i & 3))
                     {
