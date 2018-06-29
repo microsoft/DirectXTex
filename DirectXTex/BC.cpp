@@ -505,10 +505,12 @@ namespace
             ColorC.r = ColorA.r * g_LuminanceInv.r;
             ColorC.g = ColorA.g * g_LuminanceInv.g;
             ColorC.b = ColorA.b * g_LuminanceInv.b;
+            ColorC.a = ColorA.a;
 
             ColorD.r = ColorB.r * g_LuminanceInv.r;
             ColorD.g = ColorB.g * g_LuminanceInv.g;
             ColorD.b = ColorB.b * g_LuminanceInv.b;
+            ColorD.a = ColorB.a;
         }
 
         uint16_t wColorA = Encode565(&ColorC);
