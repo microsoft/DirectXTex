@@ -1318,7 +1318,7 @@ namespace
                 uint32_t iStep;
                 if (fDot <= 0.0f)
                     iStep = 0;
-                if (fDot >= fSteps)
+                else if (fDot >= fSteps)
                     iStep = cSteps - 1;
                 else
                     iStep = uint32_t(fDot + 0.5f);
@@ -1504,7 +1504,7 @@ namespace
                 uint32_t iStep;
                 if (fDot <= 0.0f)
                     iStep = 0;
-                if (fDot >= fSteps)
+                else if (fDot >= fSteps)
                     iStep = cSteps - 1;
                 else
                     iStep = uint32_t(fDot + 0.5f);
