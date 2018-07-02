@@ -782,7 +782,7 @@ HRESULT DirectX::CaptureTexture(
                 {
                     pData + pLayout[dindex].Offset,
                     static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch),
-                    static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch * pNumRows[dindex])
+                    static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch) * static_cast<LONG_PTR>(pNumRows[dindex])
                 };
 
                 if (pRowSizesInBytes[dindex] > SIZE_T(-1))
