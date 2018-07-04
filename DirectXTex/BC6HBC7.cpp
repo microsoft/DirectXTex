@@ -848,6 +848,7 @@ namespace
             _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair aEndPts[],
             _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t aIndex[],
             _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t aIndex2[]);
+        void FixEndpointPBits(_In_ const EncodeParams* pEP, _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair *pOrigEndpoints, _Out_writes_(BC7_MAX_REGIONS) LDREndPntPair *pFixedEndpoints);
         float Refine(_In_ const EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uRotation, _In_ size_t uIndexMode);
 
         float MapColors(_In_ const EncodeParams* pEP, _In_reads_(np) const LDRColorA aColors[], _In_ size_t np, _In_ size_t uIndexMode,
@@ -3222,12 +3223,93 @@ void D3DX_BC7::EmitBlock(const EncodeParams* pEP, size_t uShape, size_t uRotatio
 }
 
 _Use_decl_annotations_
+void D3DX_BC7::FixEndpointPBits(const EncodeParams* pEP, const LDREndPntPair *pOrigEndpoints, LDREndPntPair *pFixedEndpoints)
+{
+    const size_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
+
+    pFixedEndpoints[0] = pOrigEndpoints[0];
+    pFixedEndpoints[1] = pOrigEndpoints[1];
+    pFixedEndpoints[2] = pOrigEndpoints[2];
+
+    const size_t uPBits = ms_aInfo[pEP->uMode].uPBits;
+
+    if (uPBits)
+    {
+        const size_t uNumEP = size_t(1 + uPartitions) << 1;
+        uint8_t aPVote[BC7_MAX_REGIONS << 1] = { 0,0,0,0,0,0 };
+        uint8_t aCount[BC7_MAX_REGIONS << 1] = { 0,0,0,0,0,0 };
+
+        const LDRColorA RGBAPrec = ms_aInfo[pEP->uMode].RGBAPrec;
+        const LDRColorA RGBAPrecWithP = ms_aInfo[pEP->uMode].RGBAPrecWithP;
+
+        for (uint8_t ch = 0; ch < BC7_NUM_CHANNELS; ch++)
+        {
+            uint8_t ep = 0;
+            for (size_t i = 0; i <= uPartitions; i++)
+            {
+                if (RGBAPrec[ch] == RGBAPrecWithP[ch])
+                {
+                    pFixedEndpoints[i].A[ch] = pOrigEndpoints[i].A[ch];
+                    pFixedEndpoints[i].B[ch] = pOrigEndpoints[i].B[ch];
+                }
+                else
+                {
+                    pFixedEndpoints[i].A[ch] = pOrigEndpoints[i].A[ch] >> 1;
+                    pFixedEndpoints[i].B[ch] = pOrigEndpoints[i].B[ch] >> 1;
+
+                    size_t idx = ep++ * uPBits / uNumEP;
+                    assert(idx < (BC7_MAX_REGIONS << 1));
+                    _Analysis_assume_(idx < (BC7_MAX_REGIONS << 1));
+                    aPVote[idx] += pOrigEndpoints[i].A[ch] & 0x01;
+                    aCount[idx]++;
+                    idx = ep++ * uPBits / uNumEP;
+                    assert(idx < (BC7_MAX_REGIONS << 1));
+                    _Analysis_assume_(idx < (BC7_MAX_REGIONS << 1));
+                    aPVote[idx] += pOrigEndpoints[i].B[ch] & 0x01;
+                    aCount[idx]++;
+                }
+            }
+        }
+
+        // Compute the actual pbits we'll use when we encode block. Note this is not 
+        // rounding the component indices correctly in cases the pbits != a component's LSB.
+        int pbits[BC7_MAX_REGIONS << 1];
+        for (size_t i = 0; i < uPBits; i++)
+            pbits[i] = aPVote[i] >(aCount[i] >> 1) ? 1 : 0;
+
+        // Now calculate the actual endpoints with proper pbits, so error calculations are accurate.
+        if (pEP->uMode == 1)
+        {
+            // shared pbits
+            for (uint8_t ch = 0; ch < BC7_NUM_CHANNELS; ch++)
+            {
+                for (size_t i = 0; i <= uPartitions; i++)
+                {
+                    pFixedEndpoints[i].A[ch] = static_cast<uint8_t>((pFixedEndpoints[i].A[ch] << 1) | pbits[i]);
+                    pFixedEndpoints[i].B[ch] = static_cast<uint8_t>((pFixedEndpoints[i].B[ch] << 1) | pbits[i]);
+                }
+            }
+        }
+        else
+        {
+            for (uint8_t ch = 0; ch < BC7_NUM_CHANNELS; ch++)
+            {
+                for (size_t i = 0; i <= uPartitions; i++)
+                {
+                    pFixedEndpoints[i].A[ch] = static_cast<uint8_t>((pFixedEndpoints[i].A[ch] << 1) | pbits[i * 2 + 0]);
+                    pFixedEndpoints[i].B[ch] = static_cast<uint8_t>((pFixedEndpoints[i].B[ch] << 1) | pbits[i * 2 + 1]);
+                }
+            }
+        }
+    }
+}
+
+_Use_decl_annotations_
 float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation, size_t uIndexMode)
 {
     assert(pEP);
     assert(uShape < BC7_MAX_SHAPES);
     _Analysis_assume_(uShape < BC7_MAX_SHAPES);
-    const LDREndPntPair* aEndPts = pEP->aEndPts[uShape];
 
     const size_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
     assert(uPartitions < BC7_MAX_REGIONS);
@@ -3242,15 +3324,25 @@ float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation,
     float aOrgErr[BC7_MAX_REGIONS];
     float aOptErr[BC7_MAX_REGIONS];
 
+    const LDREndPntPair* aEndPts = &pEP->aEndPts[uShape][0];
+
     for (size_t p = 0; p <= uPartitions; p++)
     {
         aOrgEndPts[p].A = Quantize(aEndPts[p].A, ms_aInfo[pEP->uMode].RGBAPrecWithP);
         aOrgEndPts[p].B = Quantize(aEndPts[p].B, ms_aInfo[pEP->uMode].RGBAPrecWithP);
     }
 
-    AssignIndices(pEP, uShape, uIndexMode, aOrgEndPts, aOrgIdx, aOrgIdx2, aOrgErr);
-    OptimizeEndPoints(pEP, uShape, uIndexMode, aOrgErr, aOrgEndPts, aOptEndPts);
-    AssignIndices(pEP, uShape, uIndexMode, aOptEndPts, aOptIdx, aOptIdx2, aOptErr);
+    LDREndPntPair newEndPts1[BC7_MAX_REGIONS];
+    FixEndpointPBits(pEP, aOrgEndPts, newEndPts1);
+
+    AssignIndices(pEP, uShape, uIndexMode, newEndPts1, aOrgIdx, aOrgIdx2, aOrgErr);
+
+    OptimizeEndPoints(pEP, uShape, uIndexMode, aOrgErr, newEndPts1, aOptEndPts);
+
+    LDREndPntPair newEndPts2[BC7_MAX_REGIONS];
+    FixEndpointPBits(pEP, aOptEndPts, newEndPts2);
+
+    AssignIndices(pEP, uShape, uIndexMode, newEndPts2, aOptIdx, aOptIdx2, aOptErr);
 
     float fOrgTotErr = 0, fOptTotErr = 0;
     for (size_t p = 0; p <= uPartitions; p++)
@@ -3260,12 +3352,12 @@ float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation,
     }
     if (fOptTotErr < fOrgTotErr)
     {
-        EmitBlock(pEP, uShape, uRotation, uIndexMode, aOptEndPts, aOptIdx, aOptIdx2);
+        EmitBlock(pEP, uShape, uRotation, uIndexMode, newEndPts2, aOptIdx, aOptIdx2);
         return fOptTotErr;
     }
     else
     {
-        EmitBlock(pEP, uShape, uRotation, uIndexMode, aOrgEndPts, aOrgIdx, aOrgIdx2);
+        EmitBlock(pEP, uShape, uRotation, uIndexMode, newEndPts1, aOrgIdx, aOrgIdx2);
         return fOrgTotErr;
     }
 }
