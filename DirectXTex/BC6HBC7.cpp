@@ -2733,6 +2733,7 @@ void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
     D3DX_BC7 final = *this;
     EncodeParams EP(pIn);
     float fMSEBest = FLT_MAX;
+    uint32_t alphaMask = 0xFF;
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
@@ -2740,7 +2741,10 @@ void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
         EP.aLDRPixels[i].g = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].g * 255.0f + 0.01f)));
         EP.aLDRPixels[i].b = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].b * 255.0f + 0.01f)));
         EP.aLDRPixels[i].a = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].a * 255.0f + 0.01f)));
+        alphaMask &= EP.aLDRPixels[i].a;
     }
+
+    const bool bHasAlpha = (alphaMask != 0xFF);
 
     for (EP.uMode = 0; EP.uMode < 8 && fMSEBest > 0; ++EP.uMode)
     {
@@ -2753,6 +2757,12 @@ void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
         if ((flags & TEX_COMPRESS_BC7_QUICK) && (EP.uMode != 6))
         {
             // Use only mode 6
+            continue;
+        }
+
+        if ((!bHasAlpha) && (EP.uMode == 7))
+        {
+            // There is no value in using mode 7 for completely opaque blocks (the other 2 subset modes handle this case for opaque blocks), so skip it for a small perf win.
             continue;
         }
 
