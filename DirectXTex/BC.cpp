@@ -571,14 +571,14 @@ namespace
         {
             pSteps = pSteps3;
 
-            HDRColorALerp(&Step[2], &Step[0], &Step[1], 0.5f);
+            HDRColorALerpRGB(&Step[2], &Step[0], &Step[1], 0.5f);
         }
         else
         {
             pSteps = pSteps4;
 
-            HDRColorALerp(&Step[2], &Step[0], &Step[1], 1.0f / 3.0f);
-            HDRColorALerp(&Step[3], &Step[0], &Step[1], 2.0f / 3.0f);
+            HDRColorALerpRGB(&Step[2], &Step[0], &Step[1], 1.0f / 3.0f);
+            HDRColorALerpRGB(&Step[3], &Step[0], &Step[1], 2.0f / 3.0f);
         }
 
         // Calculate color direction
