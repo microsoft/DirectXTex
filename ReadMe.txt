@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-May 31, 2018
+July 3, 2018
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -135,6 +135,12 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+July 3, 2018
+    BC7 CPU codec fix for 3subsets/-bcmax and minor optimization
+    BC7 GPU codec quantize fix and pbit optimization
+    BC6H CPU codec bounds checking fix
+    Code and project cleanup
 
 May 31, 2018
     Fix for IsAlphaAllOpaque for 'near opaque' values
