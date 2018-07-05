@@ -7,7 +7,7 @@
 // Licensed under the MIT License.
 //--------------------------------------------------------------------------------------
 
-//#define REF_DEVICE
+#define REF_DEVICE
 
 #define CHAR_LENGTH			8
 #define NCHANNELS			4
