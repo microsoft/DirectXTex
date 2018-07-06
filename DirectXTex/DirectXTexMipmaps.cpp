@@ -171,7 +171,7 @@ namespace
 
     void GenerateAlphaCoverageConvolutionVectors(
         _In_ size_t N,
-        _Out_ XMVECTOR* vectors)
+        _Out_writes_(N*N) XMVECTOR* vectors)
     {
         for (size_t sy = 0; sy < N; ++sy)
         {
