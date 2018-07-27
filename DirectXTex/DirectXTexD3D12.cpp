@@ -349,7 +349,7 @@ bool DirectX::IsSupportedTexture(
             return false;
 
         {
-            auto numberOfResources = static_cast<UINT>(arraySize * metadata.mipLevels);
+            uint64_t numberOfResources = uint64_t(arraySize) * uint64_t(metadata.mipLevels);
             if (numberOfResources > D3D12_REQ_SUBRESOURCES)
                 return false;
         }
@@ -378,7 +378,7 @@ bool DirectX::IsSupportedTexture(
         }
 
         {
-            auto numberOfResources = static_cast<UINT>(arraySize * metadata.mipLevels);
+            uint64_t numberOfResources = uint64_t(arraySize) * uint64_t(metadata.mipLevels);
             if (numberOfResources > D3D12_REQ_SUBRESOURCES)
                 return false;
         }
@@ -395,8 +395,7 @@ bool DirectX::IsSupportedTexture(
             return false;
 
         {
-            auto numberOfResources = static_cast<UINT>(metadata.mipLevels);
-            if (numberOfResources > D3D12_REQ_SUBRESOURCES)
+            if (metadata.mipLevels > D3D12_REQ_SUBRESOURCES)
                 return false;
         }
         break;

@@ -4445,6 +4445,10 @@ namespace
             return E_UNEXPECTED;
         }
 
+        if (srcImage.rowPitch > UINT32_MAX || srcImage.slicePitch > UINT32_MAX
+            || destImage.rowPitch > UINT32_MAX || destImage.slicePitch > UINT32_MAX)
+            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
         ComPtr<IWICBitmap> source;
         hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height), pfGUID,
             static_cast<UINT>(srcImage.rowPitch), static_cast<UINT>(srcImage.slicePitch),

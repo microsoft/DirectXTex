@@ -361,6 +361,9 @@ namespace DirectX
 
         if (SUCCEEDED(hr))
         {
+            if (img->rowPitch > UINT32_MAX || img->slicePitch > UINT32_MAX)
+                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
             ComPtr<IWICBitmap> wicBitmap;
             hr = EnsureWicBitmapPixelFormat(pWIC, resizedColorWithAlpha.Get(), filter, desiredPixelFormat, wicBitmap.GetAddressOf());
             if (SUCCEEDED(hr))
@@ -468,6 +471,9 @@ namespace
         size_t width = baseImage.width;
         size_t height = baseImage.height;
 
+        if (baseImage.rowPitch > UINT32_MAX || baseImage.slicePitch > UINT32_MAX)
+            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
         ComPtr<IWICBitmap> source;
         HRESULT hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(width), static_cast<UINT>(height), pfGUID,
             static_cast<UINT>(baseImage.rowPitch), static_cast<UINT>(baseImage.slicePitch),
@@ -535,6 +541,9 @@ namespace
                 hr = pWIC->CreateBitmapScaler(scaler.GetAddressOf());
                 if (FAILED(hr))
                     return hr;
+
+                if (img->rowPitch > UINT32_MAX || img->slicePitch > UINT32_MAX)
+                    return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
                 hr = scaler->Initialize(source.Get(), static_cast<UINT>(width), static_cast<UINT>(height), _GetWICInterp(filter));
                 if (FAILED(hr))

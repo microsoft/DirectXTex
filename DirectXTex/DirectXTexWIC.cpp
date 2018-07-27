@@ -390,6 +390,9 @@ namespace
         if (!pWIC)
             return E_NOINTERFACE;
 
+        if (img->rowPitch > UINT32_MAX || img->slicePitch > UINT32_MAX)
+            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
         if (memcmp(&convertGUID, &GUID_NULL, sizeof(GUID)) == 0)
         {
             hr = frame->CopyPixels(nullptr, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
@@ -458,6 +461,9 @@ namespace
             const Image* img = image.GetImage(0, index, 0);
             if (!img)
                 return E_POINTER;
+
+            if (img->rowPitch > UINT32_MAX || img->slicePitch > UINT32_MAX)
+                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
             ComPtr<IWICBitmapFrameDecode> frame;
             hr = decoder->GetFrame(static_cast<UINT>(index), frame.GetAddressOf());
@@ -686,6 +692,9 @@ namespace
 
         if ((image.width > UINT32_MAX) || (image.height > UINT32_MAX))
             return E_INVALIDARG;
+
+        if (image.rowPitch > UINT32_MAX || image.slicePitch > UINT32_MAX)
+            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
         hr = frame->SetSize(static_cast<UINT>(image.width), static_cast<UINT>(image.height));
         if (FAILED(hr))

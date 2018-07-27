@@ -232,7 +232,12 @@ HRESULT GPUCompressBC::Prepare(size_t width, size_t height, DWORD flags, DXGI_FO
         return E_POINTER;
 
     // Create structured buffers
-    size_t bufferSize = num_blocks * sizeof(BufferBC6HBC7);
+    uint64_t sizeInBytes = uint64_t(num_blocks) * sizeof(BufferBC6HBC7);
+    if (sizeInBytes >= UINT32_MAX)
+        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+    auto bufferSize = static_cast<size_t>(sizeInBytes);
+
     {
         D3D11_BUFFER_DESC desc = {};
         desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
