@@ -84,7 +84,52 @@ namespace
 
     //-------------------------------------------------------------------------------------
     // Do conversion, flip/rotate using WIC, conversion cycle
+    //
+    // For large images we have to use F16 instead of F32 to avoid exceeding the 32-bit
+    // memory limitations of WIC.
     //-------------------------------------------------------------------------------------
+    HRESULT PerformFlipRotateViaF16(
+        const Image& srcImage,
+        DWORD flags,
+        const Image& destImage)
+    {
+        if (!srcImage.pixels || !destImage.pixels)
+            return E_POINTER;
+
+        assert(srcImage.format != DXGI_FORMAT_R16G16B16A16_FLOAT);
+        assert(srcImage.format == destImage.format);
+
+        ScratchImage temp;
+        HRESULT hr = _ConvertToR16G16B16A16(srcImage, temp);
+        if (FAILED(hr))
+            return hr;
+
+        const Image *tsrc = temp.GetImage(0, 0, 0);
+        if (!tsrc)
+            return E_POINTER;
+
+        ScratchImage rtemp;
+        hr = rtemp.Initialize2D(DXGI_FORMAT_R16G16B16A16_FLOAT, destImage.width, destImage.height, 1, 1);
+        if (FAILED(hr))
+            return hr;
+
+        const Image *tdest = rtemp.GetImage(0, 0, 0);
+        if (!tdest)
+            return E_POINTER;
+
+        hr = PerformFlipRotateUsingWIC(*tsrc, flags, GUID_WICPixelFormat64bppRGBAHalf, *tdest);
+        if (FAILED(hr))
+            return hr;
+
+        temp.Release();
+
+        hr = _ConvertFromR16G16B16A16(*tdest, destImage);
+        if (FAILED(hr))
+            return hr;
+
+        return S_OK;
+    }
+
     HRESULT PerformFlipRotateViaF32(
         const Image& srcImage,
         DWORD flags,
@@ -203,9 +248,14 @@ HRESULT DirectX::FlipRotate(
         // Case 1: Source format is supported by Windows Imaging Component
         hr = PerformFlipRotateUsingWIC(srcImage, flags, pfGUID, *rimage);
     }
+    else if (srcImage.slicePitch > UINT32_MAX)
+    {
+        // Case 2: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back (F16 for large images)
+        hr = PerformFlipRotateViaF16(srcImage, flags, *rimage);
+    }
     else
     {
-        // Case 2: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back
+        // Case 3: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back
         hr = PerformFlipRotateViaF32(srcImage, flags, *rimage);
     }
 
@@ -326,9 +376,14 @@ HRESULT DirectX::FlipRotate(
             // Case 1: Source format is supported by Windows Imaging Component
             hr = PerformFlipRotateUsingWIC(src, flags, pfGUID, dst);
         }
+        else if (src.slicePitch > UINT32_MAX)
+        {
+            // Case 2: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back (F16 for large images)
+            hr = PerformFlipRotateViaF16(src, flags, dst);
+        }
         else
         {
-            // Case 2: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back
+            // Case 3: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back
             hr = PerformFlipRotateViaF32(src, flags, dst);
         }
 

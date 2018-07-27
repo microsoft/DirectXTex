@@ -2628,6 +2628,96 @@ HRESULT DirectX::_ConvertFromR32G32B32A32(
 
 
 //-------------------------------------------------------------------------------------
+// Convert DXGI image to/from GUID_WICPixelFormat64bppRGBAHalf (no range conversions)
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
+HRESULT DirectX::_ConvertToR16G16B16A16(const Image& srcImage, ScratchImage& image)
+{
+    if (!srcImage.pixels)
+        return E_POINTER;
+
+    HRESULT hr = image.Initialize2D(DXGI_FORMAT_R16G16B16A16_FLOAT, srcImage.width, srcImage.height, 1, 1);
+    if (FAILED(hr))
+        return hr;
+
+    ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR) * srcImage.width), 16)));
+    if (!scanline)
+    {
+        image.Release();
+        return E_OUTOFMEMORY;
+    }
+
+    const Image *img = image.GetImage(0, 0, 0);
+    if (!img)
+    {
+        image.Release();
+        return E_POINTER;
+    }
+
+    uint8_t* pDest = img->pixels;
+    if (!pDest)
+    {
+        image.Release();
+        return E_POINTER;
+    }
+
+    const uint8_t *pSrc = srcImage.pixels;
+    for (size_t h = 0; h < srcImage.height; ++h)
+    {
+        if (!_LoadScanline(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format))
+        {
+            image.Release();
+            return E_FAIL;
+        }
+
+        if (!_StoreScanline(pDest, img->rowPitch, DXGI_FORMAT_R16G16B16A16_FLOAT, scanline.get(), srcImage.width))
+        {
+            image.Release();
+            return E_FAIL;
+        }
+
+        pSrc += srcImage.rowPitch;
+        pDest += img->rowPitch;
+    }
+
+    return S_OK;
+}
+
+_Use_decl_annotations_
+HRESULT DirectX::_ConvertFromR16G16B16A16(const Image& srcImage, const Image& destImage)
+{
+    assert(srcImage.format == DXGI_FORMAT_R16G16B16A16_FLOAT);
+
+    if (!srcImage.pixels || !destImage.pixels)
+        return E_POINTER;
+
+    if (srcImage.width != destImage.width || srcImage.height != destImage.height)
+        return E_FAIL;
+
+    ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR) * srcImage.width), 16)));
+    if (!scanline)
+        return E_OUTOFMEMORY;
+
+    const uint8_t *pSrc = srcImage.pixels;
+    uint8_t* pDest = destImage.pixels;
+
+    for (size_t h = 0; h < srcImage.height; ++h)
+    {
+        if (!_LoadScanline(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, DXGI_FORMAT_R16G16B16A16_FLOAT))
+            return E_FAIL;
+
+        if (!_StoreScanline(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width))
+            return E_FAIL;
+
+        pSrc += srcImage.rowPitch;
+        pDest += destImage.rowPitch;
+    }
+
+    return S_OK;
+}
+
+
+//-------------------------------------------------------------------------------------
 // Convert from Linear RGB to sRGB
 //
 // if C_linear <= 0.0031308 -> C_srgb = 12.92 * C_linear
