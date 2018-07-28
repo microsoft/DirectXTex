@@ -2592,30 +2592,63 @@ HRESULT DirectX::GenerateMipMaps(
             else
             {
                 // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
-                assert(baseImage.format != DXGI_FORMAT_R32G32B32A32_FLOAT);
-                ScratchImage temp;
-                hr = _ConvertToR32G32B32A32(baseImage, temp);
-                if (FAILED(hr))
-                    return hr;
+                uint64_t expandedSize = uint64_t(baseImage.width) * uint64_t(baseImage.height) * sizeof(float) * 4;
+                if (expandedSize > UINT32_MAX)
+                {
+                    // Image is too large for float32, so have to use float16 instead
 
-                const Image *timg = temp.GetImage(0, 0, 0);
-                if (!timg)
-                    return E_POINTER;
+                    assert(baseImage.format != DXGI_FORMAT_R16G16B16A16_FLOAT);
+                    ScratchImage temp;
+                    hr = _ConvertToR16G16B16A16(baseImage, temp);
+                    if (FAILED(hr))
+                        return hr;
 
-                ScratchImage tMipChain;
-                hr = (baseImage.height > 1 || !allow1D)
-                    ? tMipChain.Initialize2D(DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, baseImage.height, 1, levels)
-                    : tMipChain.Initialize1D(DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, 1, levels);
-                if (FAILED(hr))
-                    return hr;
+                    const Image *timg = temp.GetImage(0, 0, 0);
+                    if (!timg)
+                        return E_POINTER;
 
-                hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, 0);
-                if (FAILED(hr))
-                    return hr;
+                    ScratchImage tMipChain;
+                    hr = (baseImage.height > 1 || !allow1D)
+                        ? tMipChain.Initialize2D(DXGI_FORMAT_R16G16B16A16_FLOAT, baseImage.width, baseImage.height, 1, levels)
+                        : tMipChain.Initialize1D(DXGI_FORMAT_R16G16B16A16_FLOAT, baseImage.width, 1, levels);
+                    if (FAILED(hr))
+                        return hr;
 
-                temp.Release();
+                    hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat64bppRGBAHalf, tMipChain, 0);
+                    if (FAILED(hr))
+                        return hr;
 
-                return _ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), baseImage.format, mipChain);
+                    temp.Release();
+
+                    return _ConvertFromR16G16B16A16(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), baseImage.format, mipChain);
+                }
+                else
+                {
+                    assert(baseImage.format != DXGI_FORMAT_R32G32B32A32_FLOAT);
+                    ScratchImage temp;
+                    hr = _ConvertToR32G32B32A32(baseImage, temp);
+                    if (FAILED(hr))
+                        return hr;
+
+                    const Image *timg = temp.GetImage(0, 0, 0);
+                    if (!timg)
+                        return E_POINTER;
+
+                    ScratchImage tMipChain;
+                    hr = (baseImage.height > 1 || !allow1D)
+                        ? tMipChain.Initialize2D(DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, baseImage.height, 1, levels)
+                        : tMipChain.Initialize1D(DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, 1, levels);
+                    if (FAILED(hr))
+                        return hr;
+
+                    hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, 0);
+                    if (FAILED(hr))
+                        return hr;
+
+                    temp.Release();
+
+                    return _ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), baseImage.format, mipChain);
+                }
             }
         }
 
@@ -2754,6 +2787,9 @@ HRESULT DirectX::GenerateMipMaps(
 
     HRESULT hr = E_UNEXPECTED;
 
+    if (baseImages.empty())
+        return hr;
+
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
     if (!metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter))
@@ -2794,33 +2830,69 @@ HRESULT DirectX::GenerateMipMaps(
             else
             {
                 // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
-                assert(metadata.format != DXGI_FORMAT_R32G32B32A32_FLOAT);
-
-                TexMetadata mdata2 = metadata;
-                mdata2.mipLevels = levels;
-                mdata2.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-                ScratchImage tMipChain;
-                hr = tMipChain.Initialize(mdata2);
-                if (FAILED(hr))
-                    return hr;
-
-                for (size_t item = 0; item < metadata.arraySize; ++item)
+                uint64_t expandedSize = uint64_t(baseImages[0].width) * uint64_t(baseImages[0].height) * sizeof(float) * 4;
+                if (expandedSize > UINT32_MAX)
                 {
-                    ScratchImage temp;
-                    hr = _ConvertToR32G32B32A32(baseImages[item], temp);
+                    // Image is too large for float32, so have to use float16 instead
+
+                    assert(metadata.format != DXGI_FORMAT_R16G16B16A16_FLOAT);
+
+                    TexMetadata mdata2 = metadata;
+                    mdata2.mipLevels = levels;
+                    mdata2.format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+                    ScratchImage tMipChain;
+                    hr = tMipChain.Initialize(mdata2);
                     if (FAILED(hr))
                         return hr;
 
-                    const Image *timg = temp.GetImage(0, 0, 0);
-                    if (!timg)
-                        return E_POINTER;
+                    for (size_t item = 0; item < metadata.arraySize; ++item)
+                    {
+                        ScratchImage temp;
+                        hr = _ConvertToR16G16B16A16(baseImages[item], temp);
+                        if (FAILED(hr))
+                            return hr;
 
-                    hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, item);
-                    if (FAILED(hr))
-                        return hr;
+                        const Image *timg = temp.GetImage(0, 0, 0);
+                        if (!timg)
+                            return E_POINTER;
+
+                        hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat64bppRGBAHalf, tMipChain, item);
+                        if (FAILED(hr))
+                            return hr;
+                    }
+
+                    return _ConvertFromR16G16B16A16(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), metadata.format, mipChain);
                 }
+                else
+                {
+                    assert(metadata.format != DXGI_FORMAT_R32G32B32A32_FLOAT);
 
-                return _ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), metadata.format, mipChain);
+                    TexMetadata mdata2 = metadata;
+                    mdata2.mipLevels = levels;
+                    mdata2.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+                    ScratchImage tMipChain;
+                    hr = tMipChain.Initialize(mdata2);
+                    if (FAILED(hr))
+                        return hr;
+
+                    for (size_t item = 0; item < metadata.arraySize; ++item)
+                    {
+                        ScratchImage temp;
+                        hr = _ConvertToR32G32B32A32(baseImages[item], temp);
+                        if (FAILED(hr))
+                            return hr;
+
+                        const Image *timg = temp.GetImage(0, 0, 0);
+                        if (!timg)
+                            return E_POINTER;
+
+                        hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, item);
+                        if (FAILED(hr))
+                            return hr;
+                    }
+
+                    return _ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), metadata.format, mipChain);
+                }
             }
         }
 

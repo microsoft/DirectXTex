@@ -2716,6 +2716,88 @@ HRESULT DirectX::_ConvertFromR16G16B16A16(const Image& srcImage, const Image& de
     return S_OK;
 }
 
+_Use_decl_annotations_
+HRESULT DirectX::_ConvertFromR16G16B16A16(
+    const Image* srcImages,
+    size_t nimages,
+    const TexMetadata& metadata,
+    DXGI_FORMAT format,
+    ScratchImage& result)
+{
+    if (!srcImages)
+        return E_POINTER;
+
+    result.Release();
+
+    assert(metadata.format == DXGI_FORMAT_R16G16B16A16_FLOAT);
+
+    TexMetadata mdata2 = metadata;
+    mdata2.format = format;
+    HRESULT hr = result.Initialize(mdata2);
+    if (FAILED(hr))
+        return hr;
+
+    ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR) * metadata.width), 16)));
+    if (!scanline)
+        return E_OUTOFMEMORY;
+
+    if (nimages != result.GetImageCount())
+    {
+        result.Release();
+        return E_FAIL;
+    }
+
+    const Image* dest = result.GetImages();
+    if (!dest)
+    {
+        result.Release();
+        return E_POINTER;
+    }
+
+    for (size_t index = 0; index < nimages; ++index)
+    {
+        const Image& src = srcImages[index];
+        const Image& dst = dest[index];
+
+        assert(src.format == DXGI_FORMAT_R16G16B16A16_FLOAT);
+        assert(dst.format == format);
+
+        if (src.width != dst.width || src.height != dst.height || src.width > metadata.width)
+        {
+            result.Release();
+            return E_FAIL;
+        }
+
+        const uint8_t* pSrc = src.pixels;
+        uint8_t* pDest = dst.pixels;
+        if (!pSrc || !pDest)
+        {
+            result.Release();
+            return E_POINTER;
+        }
+
+        for (size_t h = 0; h < src.height; ++h)
+        {
+            if (!_LoadScanline(scanline.get(), src.width, pSrc, src.rowPitch, DXGI_FORMAT_R16G16B16A16_FLOAT))
+            {
+                result.Release();
+                return E_FAIL;
+            }
+
+            if (!_StoreScanline(pDest, dst.rowPitch, format, scanline.get(), src.width))
+            {
+                result.Release();
+                return E_FAIL;
+            }
+
+            pSrc += src.rowPitch;
+            pDest += dst.rowPitch;
+        }
+    }
+
+    return S_OK;
+}
+
 
 //-------------------------------------------------------------------------------------
 // Convert from Linear RGB to sRGB

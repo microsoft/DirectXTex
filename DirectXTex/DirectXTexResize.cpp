@@ -126,6 +126,50 @@ namespace
 
 
     //--- Do conversion, resize using WIC, conversion cycle ---
+    // For large images we have to use F16 instead of F32 to avoid exceeding the 32-bit
+    // memory limitations of WIC.
+    HRESULT PerformResizeViaF16(
+        const Image& srcImage,
+        DWORD filter,
+        const Image& destImage)
+    {
+        if (!srcImage.pixels || !destImage.pixels)
+            return E_POINTER;
+
+        assert(srcImage.format != DXGI_FORMAT_R16G16B16A16_FLOAT);
+        assert(srcImage.format == destImage.format);
+
+        ScratchImage temp;
+        HRESULT hr = _ConvertToR16G16B16A16(srcImage, temp);
+        if (FAILED(hr))
+            return hr;
+
+        const Image *tsrc = temp.GetImage(0, 0, 0);
+        if (!tsrc)
+            return E_POINTER;
+
+        ScratchImage rtemp;
+        hr = rtemp.Initialize2D(DXGI_FORMAT_R16G16B16A16_FLOAT, destImage.width, destImage.height, 1, 1);
+        if (FAILED(hr))
+            return hr;
+
+        const Image *tdest = rtemp.GetImage(0, 0, 0);
+        if (!tdest)
+            return E_POINTER;
+
+        hr = PerformResizeUsingWIC(*tsrc, filter, GUID_WICPixelFormat64bppRGBAHalf, *tdest);
+        if (FAILED(hr))
+            return hr;
+
+        temp.Release();
+
+        hr = _ConvertFromR16G16B16A16(*tdest, destImage);
+        if (FAILED(hr))
+            return hr;
+
+        return S_OK;
+    }
+
     HRESULT PerformResizeViaF32(
         const Image& srcImage,
         DWORD filter,
@@ -881,7 +925,15 @@ HRESULT DirectX::Resize(
         else
         {
             // Case 2: Source format is not supported by WIC, so we have to convert, resize, and convert back
-            hr = PerformResizeViaF32(srcImage, filter, *rimage);
+            uint64_t expandedSize = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
+            if (expandedSize > UINT32_MAX)
+            {
+                hr = PerformResizeViaF16(srcImage, filter, *rimage);
+            }
+            else
+            {
+                hr = PerformResizeViaF32(srcImage, filter, *rimage);
+            }
         }
     }
     else
@@ -976,7 +1028,16 @@ HRESULT DirectX::Resize(
                 else
                 {
                     // Case 2: Source format is not supported by WIC, so we have to convert, resize, and convert back
-                    hr = PerformResizeViaF32(*srcimg, filter, *destimg);
+                    uint64_t expandedSize = uint64_t(srcimg->width) * uint64_t(srcimg->height) * sizeof(float) * 4;
+                    if (expandedSize > UINT32_MAX)
+                    {
+                        // Image is too large for float32, so have to use float16 instead
+                        hr = PerformResizeViaF16(*srcimg, filter, *destimg);
+                    }
+                    else
+                    {
+                        hr = PerformResizeViaF32(*srcimg, filter, *destimg);
+                    }
                 }
             }
             else
@@ -1035,7 +1096,16 @@ HRESULT DirectX::Resize(
                 else
                 {
                     // Case 2: Source format is not supported by WIC, so we have to convert, resize, and convert back
-                    hr = PerformResizeViaF32(*srcimg, filter, *destimg);
+                    uint64_t expandedSize = uint64_t(srcimg->width) * uint64_t(srcimg->height) * sizeof(float) * 4;
+                    if (expandedSize > UINT32_MAX)
+                    {
+                        // Image is too large for float32, so have to use float16 instead
+                        hr = PerformResizeViaF16(*srcimg, filter, *destimg);
+                    }
+                    else
+                    {
+                        hr = PerformResizeViaF32(*srcimg, filter, *destimg);
+                    }
                 }
             }
             else

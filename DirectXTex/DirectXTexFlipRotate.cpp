@@ -248,15 +248,19 @@ HRESULT DirectX::FlipRotate(
         // Case 1: Source format is supported by Windows Imaging Component
         hr = PerformFlipRotateUsingWIC(srcImage, flags, pfGUID, *rimage);
     }
-    else if (srcImage.slicePitch > UINT32_MAX)
-    {
-        // Case 2: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back (F16 for large images)
-        hr = PerformFlipRotateViaF16(srcImage, flags, *rimage);
-    }
     else
     {
-        // Case 3: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back
-        hr = PerformFlipRotateViaF32(srcImage, flags, *rimage);
+        // Case 2: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back
+        uint64_t expandedSize = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX)
+        {
+            // Image is too large for float32, so have to use float16 instead
+            hr = PerformFlipRotateViaF16(srcImage, flags, *rimage);
+        }
+        else
+        {
+            hr = PerformFlipRotateViaF32(srcImage, flags, *rimage);
+        }
     }
 
     if (FAILED(hr))
@@ -376,15 +380,19 @@ HRESULT DirectX::FlipRotate(
             // Case 1: Source format is supported by Windows Imaging Component
             hr = PerformFlipRotateUsingWIC(src, flags, pfGUID, dst);
         }
-        else if (src.slicePitch > UINT32_MAX)
-        {
-            // Case 2: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back (F16 for large images)
-            hr = PerformFlipRotateViaF16(src, flags, dst);
-        }
         else
         {
-            // Case 3: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back
-            hr = PerformFlipRotateViaF32(src, flags, dst);
+            // Case 2: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back
+            uint64_t expandedSize = uint64_t(src.width) * uint64_t(src.height) * sizeof(float) * 4;
+            if (expandedSize > UINT32_MAX)
+            {
+                // Image is too large for float32, so have to use float16 instead
+                hr = PerformFlipRotateViaF16(src, flags, dst);
+            }
+            else
+            {
+                hr = PerformFlipRotateViaF32(src, flags, dst);
+            }
         }
 
         if (FAILED(hr))
