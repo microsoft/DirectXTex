@@ -2670,11 +2670,10 @@ HRESULT DirectX::_ConvertToR16G16B16A16(const Image& srcImage, ScratchImage& ima
             return E_FAIL;
         }
 
-        if (!_StoreScanline(pDest, img->rowPitch, DXGI_FORMAT_R16G16B16A16_FLOAT, scanline.get(), srcImage.width))
-        {
-            image.Release();
-            return E_FAIL;
-        }
+        XMConvertFloatToHalfStream(
+            reinterpret_cast<HALF*>(pDest), sizeof(HALF),
+            reinterpret_cast<float*>(scanline.get()), sizeof(float),
+            srcImage.width * 4);
 
         pSrc += srcImage.rowPitch;
         pDest += img->rowPitch;
@@ -2703,8 +2702,10 @@ HRESULT DirectX::_ConvertFromR16G16B16A16(const Image& srcImage, const Image& de
 
     for (size_t h = 0; h < srcImage.height; ++h)
     {
-        if (!_LoadScanline(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, DXGI_FORMAT_R16G16B16A16_FLOAT))
-            return E_FAIL;
+        XMConvertHalfToFloatStream(
+            reinterpret_cast<float*>(scanline.get()), sizeof(float),
+            reinterpret_cast<const HALF*>(pSrc), sizeof(HALF),
+            srcImage.width * 4);
 
         if (!_StoreScanline(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width))
             return E_FAIL;
@@ -2778,11 +2779,10 @@ HRESULT DirectX::_ConvertFromR16G16B16A16(
 
         for (size_t h = 0; h < src.height; ++h)
         {
-            if (!_LoadScanline(scanline.get(), src.width, pSrc, src.rowPitch, DXGI_FORMAT_R16G16B16A16_FLOAT))
-            {
-                result.Release();
-                return E_FAIL;
-            }
+            XMConvertHalfToFloatStream(
+                reinterpret_cast<float*>(scanline.get()), sizeof(float),
+                reinterpret_cast<const HALF*>(pSrc), sizeof(HALF),
+                src.width * 4);
 
             if (!_StoreScanline(pDest, dst.rowPitch, format, scanline.get(), src.width))
             {
