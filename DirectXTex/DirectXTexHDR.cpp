@@ -334,7 +334,7 @@ namespace
     _Success_(return > 0)
         size_t EncodeRLE(_Out_writes_(width * 4) uint8_t* enc, _In_reads_(width * 4) const uint8_t* rgbe, size_t rowPitch, size_t width)
     {
-        if (width < 8 || width > 32767)
+        if (width < 8 || width > INT16_MAX)
         {
             // Don't try to compress too narrow or too wide scan-lines
             return 0;
@@ -348,7 +348,7 @@ namespace
         {
             size_t spanLen = 1;
             auto spanPtr = reinterpret_cast<const uint32_t*>(scanPtr);
-            while (pixelCount + spanLen < width && spanLen < 32767)
+            while (pixelCount + spanLen < width && spanLen < INT16_MAX)
             {
                 if (spanPtr[spanLen] == *spanPtr)
                 {
@@ -871,7 +871,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
     if (!image.pixels)
         return E_POINTER;
 
-    if (image.width > 32767 || image.height > 32767)
+    if (image.width > INT16_MAX || image.height > INT16_MAX)
     {
         // Images larger than this can't be RLE encoded. They are technically allowed as
         // uncompresssed, but we just don't support them.
@@ -976,7 +976,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile)
     if (!image.pixels)
         return E_POINTER;
 
-    if (image.width > 32767 || image.height > 32767)
+    if (image.width > INT16_MAX || image.height > INT16_MAX)
     {
         // Images larger than this can't be RLE encoded. They are technically allowed as
         // uncompresssed, but we just don't support them.

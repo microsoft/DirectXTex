@@ -748,8 +748,8 @@ namespace
     {
         memset(&header, 0, sizeof(TGA_HEADER));
 
-        if ((image.width > 0xFFFF)
-            || (image.height > 0xFFFF))
+        if ((image.width > UINT16_MAX)
+            || (image.height > UINT16_MAX))
         {
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
         }
