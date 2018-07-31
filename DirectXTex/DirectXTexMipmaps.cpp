@@ -2597,6 +2597,12 @@ HRESULT DirectX::GenerateMipMaps(
                 {
                     // Image is too large for float32, so have to use float16 instead
 
+                    // Check to see if our base image is so large that the first mip is still too big for WIC to return the result as float32
+                    // Note: This is not likley since Direct3D only supports 16384 max size
+                    expandedSize = uint64_t(std::max<size_t>(1, baseImage.width >> 1)) * uint64_t(std::max<size_t>(1, baseImage.height >> 1)) * sizeof(float) * 4;
+                    if (expandedSize > UINT32_MAX)
+                        return E_UNEXPECTED;
+
                     assert(baseImage.format != DXGI_FORMAT_R16G16B16A16_FLOAT);
                     ScratchImage temp;
                     hr = _ConvertToR16G16B16A16(baseImage, temp);
@@ -2834,6 +2840,12 @@ HRESULT DirectX::GenerateMipMaps(
                 if (expandedSize > UINT32_MAX)
                 {
                     // Image is too large for float32, so have to use float16 instead
+
+                    // Check to see if our base image is so large that the first mip is still too big for WIC to return the result as float32
+                    // Note: This is not likley since Direct3D only supports 16384 max size
+                    expandedSize = uint64_t(std::max<size_t>(1, baseImages[0].width >> 1)) * uint64_t(std::max<size_t>(1, baseImages[0].height >> 1)) * sizeof(float) * 4;
+                    if (expandedSize > UINT32_MAX)
+                        return E_UNEXPECTED;
 
                     assert(metadata.format != DXGI_FORMAT_R16G16B16A16_FLOAT);
 
