@@ -925,14 +925,27 @@ HRESULT DirectX::Resize(
         else
         {
             // Case 2: Source format is not supported by WIC, so we have to convert, resize, and convert back
-            uint64_t expandedSize = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
+
+            // Check to see if the target size is too big for WIC to return the result as float32
+            uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
             if (expandedSize > UINT32_MAX)
             {
-                hr = PerformResizeViaF16(srcImage, filter, *rimage);
+                if (filter & TEX_FILTER_FORCE_WIC)
+                    return E_UNEXPECTED;
+
+                hr = PerformResizeUsingCustomFilters(srcImage, filter, *rimage);
             }
             else
             {
-                hr = PerformResizeViaF32(srcImage, filter, *rimage);
+                expandedSize = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
+                if (expandedSize > UINT32_MAX)
+                {
+                    hr = PerformResizeViaF16(srcImage, filter, *rimage);
+                }
+                else
+                {
+                    hr = PerformResizeViaF32(srcImage, filter, *rimage);
+                }
             }
         }
     }
@@ -982,6 +995,19 @@ HRESULT DirectX::Resize(
 
     WICPixelFormatGUID pfGUID = {};
     bool wicpf = (usewic) ? _DXGIToWIC(metadata.format, pfGUID, true) : false;
+
+    if (usewic && !wicpf)
+    {
+        // Check to see if the target size is too big for WIC to return the result as float32
+        uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX)
+        {
+            if (filter & TEX_FILTER_FORCE_WIC)
+                return E_UNEXPECTED;
+
+            usewic = false;
+        }
+    }
 
     switch (metadata.dimension)
     {
