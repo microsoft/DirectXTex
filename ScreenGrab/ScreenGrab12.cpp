@@ -601,8 +601,8 @@ namespace
         _In_ D3D12_RESOURCE_STATES stateBefore,
         _In_ D3D12_RESOURCE_STATES stateAfter)
     {
-        assert(commandList != 0);
-        assert(resource != 0);
+        assert(commandList != nullptr);
+        assert(resource != nullptr);
 
         if (stateBefore == stateAfter)
             return;
@@ -633,6 +633,9 @@ namespace
 
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D)
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+
+        if (srcPitch > UINT32_MAX)
+            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
         UINT numberOfPlanes = D3D12GetFormatPlaneCount(device, desc.Format);
         if (numberOfPlanes != 1)
@@ -711,7 +714,7 @@ namespace
 
             DXGI_FORMAT fmt = EnsureNotTypeless(desc.Format);
 
-            D3D12_FEATURE_DATA_FORMAT_SUPPORT formatInfo = { fmt };
+            D3D12_FEATURE_DATA_FORMAT_SUPPORT formatInfo = { fmt, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
             hr = device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatInfo, sizeof(formatInfo));
             if (FAILED(hr))
                 return hr;
@@ -769,7 +772,7 @@ namespace
             return hr;
 
         // Execute the command list
-        pCommandQ->ExecuteCommandLists(1, (ID3D12CommandList**)commandList.GetAddressOf());
+        pCommandQ->ExecuteCommandLists(1, CommandListCast(commandList.GetAddressOf()));
 
         // Signal the fence
         hr = pCommandQ->Signal(fence.Get(), 1);
@@ -806,11 +809,12 @@ namespace
 
 //--------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::SaveDDSTextureToFile( ID3D12CommandQueue* pCommandQ,
-                                       ID3D12Resource* pSource,
-                                       const wchar_t* fileName,
-                                       D3D12_RESOURCE_STATES beforeState,
-                                       D3D12_RESOURCE_STATES afterState)
+HRESULT DirectX::SaveDDSTextureToFile(
+    ID3D12CommandQueue* pCommandQ,
+    ID3D12Resource* pSource,
+    const wchar_t* fileName,
+    D3D12_RESOURCE_STATES beforeState,
+    D3D12_RESOURCE_STATES afterState)
 {
     if ( !fileName )
         return E_INVALIDARG;
@@ -819,7 +823,11 @@ HRESULT DirectX::SaveDDSTextureToFile( ID3D12CommandQueue* pCommandQ,
     pCommandQ->GetDevice(IID_PPV_ARGS(device.GetAddressOf()));
 
     // Get the size of the image
-    D3D12_RESOURCE_DESC desc = pSource->GetDesc();
+    const auto desc = pSource->GetDesc();
+
+    if (desc.Width > UINT32_MAX)
+        return E_INVALIDARG;
+
     UINT64 totalResourceSize = 0;
     UINT64 fpRowPitch = 0;
     UINT fpRowCount = 0;
@@ -836,6 +844,9 @@ HRESULT DirectX::SaveDDSTextureToFile( ID3D12CommandQueue* pCommandQ,
 
     // Round up the srcPitch to multiples of 256
     UINT64 dstRowPitch = (fpRowPitch + 255) & ~0xFF;
+
+    if (dstRowPitch > UINT32_MAX)
+        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
     ComPtr<ID3D12Resource> pStaging;
     HRESULT hr = CaptureTexture( device.Get(), pCommandQ, pSource, dstRowPitch, desc, pStaging, beforeState, afterState );
@@ -861,7 +872,7 @@ HRESULT DirectX::SaveDDSTextureToFile( ID3D12CommandQueue* pCommandQ,
     header->size = sizeof( DDS_HEADER );
     header->flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_MIPMAP;
     header->height = desc.Height;
-    header->width = (uint32_t) desc.Width;
+    header->width = static_cast<uint32_t>(desc.Width);
     header->mipMapCount = 1;
     header->caps = DDS_SURFACE_FLAGS_TEXTURE;
 
@@ -914,7 +925,7 @@ HRESULT DirectX::SaveDDSTextureToFile( ID3D12CommandQueue* pCommandQ,
         memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_DX10, sizeof(DDS_PIXELFORMAT) );
 
         headerSize += sizeof(DDS_HEADER_DXT10);
-        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>( reinterpret_cast<uint8_t*>(&fileHeader[0]) + sizeof(uint32_t) + sizeof(DDS_HEADER) );
+        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>(fileHeader + sizeof(uint32_t) + sizeof(DDS_HEADER) );
         memset( extHeader, 0, sizeof(DDS_HEADER_DXT10) );
         extHeader->dxgiFormat = desc.Format;
         extHeader->resourceDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -923,7 +934,10 @@ HRESULT DirectX::SaveDDSTextureToFile( ID3D12CommandQueue* pCommandQ,
     }
 
     size_t rowPitch, slicePitch, rowCount;
-    GetSurfaceInfo( (size_t)desc.Width, desc.Height, desc.Format, &slicePitch, &rowPitch, &rowCount );
+    GetSurfaceInfo(static_cast<size_t>(desc.Width), desc.Height, desc.Format, &slicePitch, &rowPitch, &rowCount);
+
+    if (rowPitch > UINT32_MAX || slicePitch > UINT32_MAX)
+        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
     if ( IsCompressed( desc.Format ) )
     {
@@ -944,14 +958,18 @@ HRESULT DirectX::SaveDDSTextureToFile( ID3D12CommandQueue* pCommandQ,
     assert(fpRowCount == rowCount);
     assert(fpRowPitch == rowPitch);
 
-    void* pMappedMemory;
-    D3D12_RANGE readRange = { 0, static_cast<SIZE_T>(dstRowPitch * rowCount) };
+    UINT64 imageSize = dstRowPitch * UINT64(rowCount);
+    if (imageSize > UINT32_MAX)
+        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+    void* pMappedMemory = nullptr;
+    D3D12_RANGE readRange = { 0, static_cast<SIZE_T>(imageSize) };
     D3D12_RANGE writeRange = { 0, 0 };
     hr = pStaging->Map(0, &readRange, &pMappedMemory );
     if ( FAILED(hr) )
         return hr;
 
-    auto sptr = reinterpret_cast<const uint8_t*>(pMappedMemory);
+    auto sptr = static_cast<const uint8_t*>(pMappedMemory);
     if ( !sptr )
     {
         pStaging->Unmap(0, &writeRange);
@@ -991,14 +1009,15 @@ HRESULT DirectX::SaveDDSTextureToFile( ID3D12CommandQueue* pCommandQ,
 
 //--------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::SaveWICTextureToFile( ID3D12CommandQueue* pCommandQ,
-                                       ID3D12Resource* pSource,
-                                       REFGUID guidContainerFormat, 
-                                       const wchar_t* fileName,
-                                       D3D12_RESOURCE_STATES beforeState,
-                                       D3D12_RESOURCE_STATES afterState,
-                                       const GUID* targetFormat,
-                                       std::function<void(IPropertyBag2*)> setCustomProps )
+HRESULT DirectX::SaveWICTextureToFile(
+    ID3D12CommandQueue* pCommandQ,
+    ID3D12Resource* pSource,
+    REFGUID guidContainerFormat, 
+    const wchar_t* fileName,
+    D3D12_RESOURCE_STATES beforeState,
+    D3D12_RESOURCE_STATES afterState,
+    const GUID* targetFormat,
+    std::function<void(IPropertyBag2*)> setCustomProps )
 {
     if ( !fileName )
         return E_INVALIDARG;
@@ -1007,7 +1026,11 @@ HRESULT DirectX::SaveWICTextureToFile( ID3D12CommandQueue* pCommandQ,
     pCommandQ->GetDevice(IID_PPV_ARGS(device.GetAddressOf()));
 
     // Get the size of the image
-    D3D12_RESOURCE_DESC desc = pSource->GetDesc();
+    const auto desc = pSource->GetDesc();
+
+    if (desc.Width > UINT32_MAX)
+        return E_INVALIDARG;
+
     UINT64 totalResourceSize = 0;
     UINT64 fpRowPitch = 0;
     UINT fpRowCount = 0;
@@ -1024,6 +1047,9 @@ HRESULT DirectX::SaveWICTextureToFile( ID3D12CommandQueue* pCommandQ,
 
     // Round up the srcPitch to multiples of 256
     UINT64 dstRowPitch = (fpRowPitch + 255) & ~0xFF;
+
+    if (dstRowPitch > UINT32_MAX)
+        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
     ComPtr<ID3D12Resource> pStaging;
     HRESULT hr = CaptureTexture(device.Get(), pCommandQ, pSource, dstRowPitch, desc, pStaging, beforeState, afterState);
@@ -1146,7 +1172,7 @@ HRESULT DirectX::SaveWICTextureToFile( ID3D12CommandQueue* pCommandQ,
     }
     else
     {
-        // Screenshots don’t typically include the alpha channel of the render target
+        // Screenshots don't typically include the alpha channel of the render target
         switch ( desc.Format )
         {
         case DXGI_FORMAT_R32G32B32A32_FLOAT:            
@@ -1230,8 +1256,12 @@ HRESULT DirectX::SaveWICTextureToFile( ID3D12CommandQueue* pCommandQ,
         }
     }
 
-    void* pMappedMemory;
-    D3D12_RANGE readRange = {0, static_cast<SIZE_T>(dstRowPitch * desc.Height)};
+    UINT64 imageSize = dstRowPitch * UINT64(desc.Height);
+    if (imageSize > UINT32_MAX)
+        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+    void* pMappedMemory = nullptr;
+    D3D12_RANGE readRange = {0, static_cast<SIZE_T>(imageSize)};
     D3D12_RANGE writeRange = {0, 0};
     hr = pStaging->Map(0, &readRange, &pMappedMemory);
     if (FAILED(hr))
@@ -1242,8 +1272,8 @@ HRESULT DirectX::SaveWICTextureToFile( ID3D12CommandQueue* pCommandQ,
         // Conversion required to write
         ComPtr<IWICBitmap> source;
         hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(desc.Width), desc.Height, pfGuid,
-                                          static_cast<UINT>(dstRowPitch), static_cast<UINT>(dstRowPitch * desc.Height),
-                                           reinterpret_cast<BYTE*>(pMappedMemory), source.GetAddressOf() );
+                                          static_cast<UINT>(dstRowPitch), static_cast<UINT>(imageSize),
+                                          static_cast<BYTE*>(pMappedMemory), source.GetAddressOf() );
         if ( FAILED(hr) )
         {
             pStaging->Unmap( 0, &writeRange );
@@ -1283,7 +1313,7 @@ HRESULT DirectX::SaveWICTextureToFile( ID3D12CommandQueue* pCommandQ,
     else
     {
         // No conversion required
-        hr = frame->WritePixels( desc.Height, static_cast<UINT>(dstRowPitch), static_cast<UINT>(dstRowPitch * desc.Height), reinterpret_cast<BYTE*>( pMappedMemory ) );
+        hr = frame->WritePixels( desc.Height, static_cast<UINT>(dstRowPitch), static_cast<UINT>(imageSize), static_cast<BYTE*>( pMappedMemory ) );
         if ( FAILED(hr) )
             return hr;
     }

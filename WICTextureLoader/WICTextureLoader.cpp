@@ -311,6 +311,9 @@ namespace
         if (FAILED(hr))
             return hr;
 
+        if (maxsize > UINT32_MAX)
+            return E_INVALIDARG;
+
         assert(width > 0 && height > 0);
 
         if (!maxsize)
@@ -421,7 +424,7 @@ namespace
         }
 
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
-        if ((format == DXGI_FORMAT_R32G32B32_FLOAT) && d3dContext != 0 && textureView != 0)
+        if ((format == DXGI_FORMAT_R32G32B32_FLOAT) && d3dContext && textureView)
         {
             // Special case test for optional device support for autogen mipchains for R32G32B32_FLOAT 
             UINT fmtSupport = 0;
@@ -492,8 +495,14 @@ namespace
         }
 
         // Allocate temporary memory for image
-        size_t rowPitch = (twidth * bpp + 7) / 8;
-        size_t imageSize = rowPitch * theight;
+        uint64_t rowBytes = (uint64_t(twidth) * uint64_t(bpp) + 7u) / 8u;
+        uint64_t numBytes = rowBytes * uint64_t(height);
+
+        if (rowBytes > UINT32_MAX || numBytes > UINT32_MAX)
+            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+        auto rowPitch = static_cast<size_t>(rowBytes);
+        auto imageSize = static_cast<size_t>(numBytes);
 
         std::unique_ptr<uint8_t[]> temp(new (std::nothrow) uint8_t[imageSize]);
         if (!temp)
@@ -590,7 +599,7 @@ namespace
 
         // See if format is supported for auto-gen mipmaps (varies by feature level)
         bool autogen = false;
-        if (d3dContext != 0 && textureView != 0) // Must have context and shader-view to auto generate mipmaps
+        if (d3dContext && textureView) // Must have context and shader-view to auto generate mipmaps
         {
             UINT fmtSupport = 0;
             hr = d3dDevice->CheckFormatSupport(format, &fmtSupport);
@@ -630,9 +639,9 @@ namespace
 
         ID3D11Texture2D* tex = nullptr;
         hr = d3dDevice->CreateTexture2D(&desc, (autogen) ? nullptr : &initData, &tex);
-        if (SUCCEEDED(hr) && tex != 0)
+        if (SUCCEEDED(hr) && tex)
         {
-            if (textureView != 0)
+            if (textureView)
             {
                 D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
                 SRVDesc.Format = desc.Format;
@@ -649,13 +658,13 @@ namespace
 
                 if (autogen)
                 {
-                    assert(d3dContext != 0);
+                    assert(d3dContext != nullptr);
                     d3dContext->UpdateSubresource(tex, 0, nullptr, temp.get(), static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize));
                     d3dContext->GenerateMips(*textureView);
                 }
             }
 
-            if (texture != 0)
+            if (texture)
             {
                 *texture = tex;
             }
@@ -779,12 +788,12 @@ HRESULT DirectX::CreateWICTextureFromMemoryEx(ID3D11Device* d3dDevice,
     if (FAILED(hr))
         return hr;
 
-    if (texture != 0 && *texture != 0)
+    if (texture && *texture)
     {
         SetDebugObjectName(*texture, "WICTextureLoader");
     }
 
-    if (textureView != 0 && *textureView != 0)
+    if (textureView && *textureView)
     {
         SetDebugObjectName(*textureView, "WICTextureLoader");
     }
@@ -882,7 +891,7 @@ HRESULT DirectX::CreateWICTextureFromFileEx(ID3D11Device* d3dDevice,
 #if !defined(NO_D3D11_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
     if (SUCCEEDED(hr))
     {
-        if (texture != 0 || textureView != 0)
+        if (texture || textureView)
         {
             char strFileA[MAX_PATH];
             int result = WideCharToMultiByte(CP_ACP,
@@ -906,7 +915,7 @@ HRESULT DirectX::CreateWICTextureFromFileEx(ID3D11Device* d3dDevice,
                     pstrName++;
                 }
 
-                if (texture != 0 && *texture != 0)
+                if (texture && *texture)
                 {
                     (*texture)->SetPrivateData(WKPDID_D3DDebugObjectName,
                         static_cast<UINT>(strnlen_s(pstrName, MAX_PATH)),
@@ -914,7 +923,7 @@ HRESULT DirectX::CreateWICTextureFromFileEx(ID3D11Device* d3dDevice,
                     );
                 }
 
-                if (textureView != 0 && *textureView != 0)
+                if (textureView && *textureView)
                 {
                     (*textureView)->SetPrivateData(WKPDID_D3DDebugObjectName,
                         static_cast<UINT>(strnlen_s(pstrName, MAX_PATH)),

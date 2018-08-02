@@ -278,12 +278,13 @@ namespace
 
         assert(width > 0 && height > 0);
 
+        if (maxsize > UINT32_MAX)
+            return E_INVALIDARG;
+
         if (!maxsize)
         {
             maxsize = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
         }
-
-        assert(maxsize > 0);
 
         UINT twidth, theight;
         if (width > maxsize || height > maxsize)
@@ -386,8 +387,14 @@ namespace
         }
 
         // Allocate memory for decoded image
-        size_t rowPitch = (twidth * bpp + 7) / 8;
-        size_t imageSize = rowPitch * theight;
+        uint64_t rowBytes = (uint64_t(twidth) * uint64_t(bpp) + 7u) / 8u;
+        uint64_t numBytes = rowBytes * uint64_t(height);
+
+        if (rowBytes > UINT32_MAX || numBytes > UINT32_MAX)
+            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+        auto rowPitch = static_cast<size_t>(rowBytes);
+        auto imageSize = static_cast<size_t>(numBytes);
 
         decodedData.reset(new (std::nothrow) uint8_t[imageSize]);
         if (!decodedData)
@@ -489,7 +496,7 @@ namespace
         D3D12_RESOURCE_DESC desc = {};
         desc.Width = twidth;
         desc.Height = theight;
-        desc.MipLevels = (uint16_t)mipCount;
+        desc.MipLevels = static_cast<UINT16>(mipCount);
         desc.DepthOrArraySize = 1;
         desc.Format = format;
         desc.SampleDesc.Count = 1;
@@ -513,7 +520,7 @@ namespace
             return hr;
         }
 
-        _Analysis_assume_(tex != 0);
+        _Analysis_assume_(tex != nullptr);
 
         subresource.pData = decodedData.get();
         subresource.RowPitch = rowPitch;
@@ -689,7 +696,7 @@ HRESULT DirectX::LoadWICTextureFromFileEx(
             pstrName++;
         }
 
-        if (texture != 0 && *texture != 0)
+        if (texture && *texture)
         {
             (*texture)->SetName(pstrName);
         }

@@ -629,7 +629,7 @@ namespace
             desc.SampleDesc.Quality = 0;
 
             ComPtr<ID3D11Texture2D> pTemp;
-            hr = d3dDevice->CreateTexture2D( &desc, 0, pTemp.GetAddressOf() );
+            hr = d3dDevice->CreateTexture2D( &desc, nullptr, pTemp.GetAddressOf() );
             if ( FAILED(hr) )
                 return hr;
 
@@ -659,7 +659,7 @@ namespace
             desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
             desc.Usage = D3D11_USAGE_STAGING;
 
-            hr = d3dDevice->CreateTexture2D(&desc, 0, pStaging.ReleaseAndGetAddressOf());
+            hr = d3dDevice->CreateTexture2D(&desc, nullptr, pStaging.ReleaseAndGetAddressOf());
             if ( FAILED(hr) )
                 return hr;
 
@@ -680,7 +680,7 @@ namespace
             desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
             desc.Usage = D3D11_USAGE_STAGING;
 
-            hr = d3dDevice->CreateTexture2D(&desc, 0, pStaging.ReleaseAndGetAddressOf());
+            hr = d3dDevice->CreateTexture2D(&desc, nullptr, pStaging.ReleaseAndGetAddressOf());
             if ( FAILED(hr) )
                 return hr;
 
@@ -745,9 +745,11 @@ namespace
 
 
 //--------------------------------------------------------------------------------------
-HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
-                                       _In_ ID3D11Resource* pSource,
-                                       _In_z_ const wchar_t* fileName )
+_Use_decl_annotations_
+HRESULT DirectX::SaveDDSTextureToFile(
+    ID3D11DeviceContext* pContext,
+    ID3D11Resource* pSource,
+    const wchar_t* fileName )
 {
     if ( !fileName )
         return E_INVALIDARG;
@@ -834,7 +836,7 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
         memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_DX10, sizeof(DDS_PIXELFORMAT) );
 
         headerSize += sizeof(DDS_HEADER_DXT10);
-        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>( reinterpret_cast<uint8_t*>(&fileHeader[0]) + sizeof(uint32_t) + sizeof(DDS_HEADER) );
+        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>( fileHeader + sizeof(uint32_t) + sizeof(DDS_HEADER) );
         memset( extHeader, 0, sizeof(DDS_HEADER_DXT10) );
         extHeader->dxgiFormat = desc.Format;
         extHeader->resourceDimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D;
@@ -844,6 +846,9 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
 
     size_t rowPitch, slicePitch, rowCount;
     GetSurfaceInfo( desc.Width, desc.Height, desc.Format, &slicePitch, &rowPitch, &rowCount );
+
+    if (rowPitch > UINT32_MAX || slicePitch > UINT32_MAX)
+        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
     if ( IsCompressed( desc.Format ) )
     {
@@ -866,7 +871,7 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
     if ( FAILED(hr) )
         return hr;
 
-    auto sptr = reinterpret_cast<const uint8_t*>( mapped.pData );
+    auto sptr = static_cast<const uint8_t*>( mapped.pData );
     if ( !sptr )
     {
         pContext->Unmap( pStaging.Get(), 0 );
@@ -905,12 +910,14 @@ HRESULT DirectX::SaveDDSTextureToFile( _In_ ID3D11DeviceContext* pContext,
 }
 
 //--------------------------------------------------------------------------------------
-HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
-                                       _In_ ID3D11Resource* pSource,
-                                       _In_ REFGUID guidContainerFormat, 
-                                       _In_z_ const wchar_t* fileName,
-                                       _In_opt_ const GUID* targetFormat,
-                                       _In_opt_ std::function<void(IPropertyBag2*)> setCustomProps )
+_Use_decl_annotations_
+HRESULT DirectX::SaveWICTextureToFile(
+    ID3D11DeviceContext* pContext,
+    ID3D11Resource* pSource,
+    REFGUID guidContainerFormat,
+    const wchar_t* fileName,
+    const GUID* targetFormat,
+    std::function<void(IPropertyBag2*)> setCustomProps )
 {
     if ( !fileName )
         return E_INVALIDARG;
@@ -1037,7 +1044,7 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     }
     else
     {
-        // Screenshots don’t typically include the alpha channel of the render target
+        // Screenshots don't typically include the alpha channel of the render target
         switch ( desc.Format )
         {
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
@@ -1141,7 +1148,7 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
         ComPtr<IWICBitmap> source;
         hr = pWIC->CreateBitmapFromMemory( desc.Width, desc.Height, pfGuid,
                                            mapped.RowPitch, mapped.RowPitch * desc.Height,
-                                           reinterpret_cast<BYTE*>( mapped.pData ), source.GetAddressOf() );
+                                           static_cast<BYTE*>( mapped.pData ), source.GetAddressOf() );
         if ( FAILED(hr) )
         {
             pContext->Unmap( pStaging.Get(), 0 );
@@ -1181,7 +1188,7 @@ HRESULT DirectX::SaveWICTextureToFile( _In_ ID3D11DeviceContext* pContext,
     else
     {
         // No conversion required
-        hr = frame->WritePixels( desc.Height, mapped.RowPitch, mapped.RowPitch * desc.Height, reinterpret_cast<BYTE*>( mapped.pData ) );
+        hr = frame->WritePixels( desc.Height, mapped.RowPitch, mapped.RowPitch * desc.Height, static_cast<BYTE*>( mapped.pData ) );
         if ( FAILED(hr) )
             return hr;
     }

@@ -930,13 +930,10 @@ namespace
                 size_t d = depth;
                 for (size_t i = 0; i < mipCount; i++)
                 {
-                    GetSurfaceInfo(w,
-                        h,
-                        format,
-                        &NumBytes,
-                        &RowBytes,
-                        nullptr
-                    );
+                    GetSurfaceInfo(w, h, format, &NumBytes, &RowBytes, nullptr);
+
+                    if (NumBytes > UINT32_MAX || RowBytes > UINT32_MAX)
+                        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
                     if ((mipCount <= 1) || !maxsize || (w <= maxsize && h <= maxsize && d <= maxsize))
                     {
@@ -1040,7 +1037,7 @@ namespace
             IID_PPV_ARGS(texture));
         if (SUCCEEDED(hr))
         {
-            _Analysis_assume_(*texture != 0);
+            _Analysis_assume_(*texture != nullptr);
 
             SetDebugObjectName(*texture, L"DDSTextureLoader");
         }
@@ -1207,8 +1204,8 @@ namespace
                 }
             }
             else if ((arraySize > D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) ||
-                (width > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION) ||
-                (height > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION))
+                     (width > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION) ||
+                     (height > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION))
             {
                 return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
             }
@@ -1434,7 +1431,7 @@ HRESULT DirectX::LoadDDSTextureFromMemoryEx(
         texture, subresources, isCubeMap);
     if (SUCCEEDED(hr))
     {
-        if (texture != 0 && *texture != 0)
+        if (texture && *texture)
         {
             SetDebugObjectName(*texture, L"DDSTextureLoader");
         }
@@ -1526,7 +1523,7 @@ HRESULT DirectX::LoadDDSTextureFromFileEx(
     if (SUCCEEDED(hr))
     {
 #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
-        if (texture != 0)
+        if (texture)
         {
             CHAR strFileA[MAX_PATH];
             int result = WideCharToMultiByte(CP_ACP,
@@ -1550,7 +1547,7 @@ HRESULT DirectX::LoadDDSTextureFromFileEx(
                     pstrName++;
                 }
 
-                if (texture != 0 && *texture != 0)
+                if (texture && *texture)
                 {
                     (*texture)->SetName(pstrName);
                 }

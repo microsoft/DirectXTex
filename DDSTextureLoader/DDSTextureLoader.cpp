@@ -851,13 +851,10 @@ namespace
             size_t d = depth;
             for (size_t i = 0; i < mipCount; i++)
             {
-                GetSurfaceInfo(w,
-                    h,
-                    format,
-                    &NumBytes,
-                    &RowBytes,
-                    nullptr
-                );
+                GetSurfaceInfo(w, h, format, &NumBytes, &RowBytes, nullptr);
+
+                if (NumBytes > UINT32_MAX || RowBytes > UINT32_MAX)
+                    return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
                 if ((mipCount <= 1) || !maxsize || (w <= maxsize && h <= maxsize && d <= maxsize))
                 {
@@ -959,9 +956,9 @@ namespace
                 initData,
                 &tex
             );
-            if (SUCCEEDED(hr) && tex != 0)
+            if (SUCCEEDED(hr) && tex)
             {
-                if (textureView != 0)
+                if (textureView)
                 {
                     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
                     SRVDesc.Format = format;
@@ -989,7 +986,7 @@ namespace
                     }
                 }
 
-                if (texture != 0)
+                if (texture)
                 {
                     *texture = tex;
                 }
@@ -1029,9 +1026,9 @@ namespace
                 initData,
                 &tex
             );
-            if (SUCCEEDED(hr) && tex != 0)
+            if (SUCCEEDED(hr) && tex)
             {
-                if (textureView != 0)
+                if (textureView)
                 {
                     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
                     SRVDesc.Format = format;
@@ -1075,7 +1072,7 @@ namespace
                     }
                 }
 
-                if (texture != 0)
+                if (texture)
                 {
                     *texture = tex;
                 }
@@ -1106,9 +1103,9 @@ namespace
                 initData,
                 &tex
             );
-            if (SUCCEEDED(hr) && tex != 0)
+            if (SUCCEEDED(hr) && tex)
             {
-                if (textureView != 0)
+                if (textureView)
                 {
                     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
                     SRVDesc.Format = format;
@@ -1127,7 +1124,7 @@ namespace
                     }
                 }
 
-                if (texture != 0)
+                if (texture)
                 {
                     *texture = tex;
                 }
@@ -1308,8 +1305,8 @@ namespace
                 }
             }
             else if ((arraySize > D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) ||
-                (width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) ||
-                (height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION))
+                     (width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) ||
+                     (height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION))
             {
                 return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
             }
@@ -1330,7 +1327,7 @@ namespace
         }
 
         bool autogen = false;
-        if (mipCount == 1 && d3dContext != 0 && textureView != 0) // Must have context and shader-view to auto generate mipmaps
+        if (mipCount == 1 && d3dContext && textureView) // Must have context and shader-view to auto generate mipmaps
         {
             // See if format is supported for auto-gen mipmaps (varies by feature level)
             UINT fmtSupport = 0;
@@ -1369,6 +1366,9 @@ namespace
                     tex->Release();
                     return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
                 }
+
+                if (numBytes > UINT32_MAX || rowBytes > UINT32_MAX)
+                    return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
                 D3D11_SHADER_RESOURCE_VIEW_DESC desc;
                 (*textureView)->GetDesc(&desc);
@@ -1653,12 +1653,12 @@ HRESULT DirectX::CreateDDSTextureFromMemoryEx(ID3D11Device* d3dDevice,
         texture, textureView);
     if (SUCCEEDED(hr))
     {
-        if (texture != 0 && *texture != 0)
+        if (texture && *texture)
         {
             SetDebugObjectName(*texture, "DDSTextureLoader");
         }
 
-        if (textureView != 0 && *textureView != 0)
+        if (textureView && *textureView)
         {
             SetDebugObjectName(*textureView, "DDSTextureLoader");
         }
@@ -1772,7 +1772,7 @@ HRESULT DirectX::CreateDDSTextureFromFileEx(ID3D11Device* d3dDevice,
     if (SUCCEEDED(hr))
     {
 #if !defined(NO_D3D11_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
-        if (texture != 0 || textureView != 0)
+        if (texture || textureView)
         {
             CHAR strFileA[MAX_PATH];
             int result = WideCharToMultiByte(CP_ACP,
@@ -1796,7 +1796,7 @@ HRESULT DirectX::CreateDDSTextureFromFileEx(ID3D11Device* d3dDevice,
                     pstrName++;
                 }
 
-                if (texture != 0 && *texture != 0)
+                if (texture && *texture)
                 {
                     (*texture)->SetPrivateData(WKPDID_D3DDebugObjectName,
                         static_cast<UINT>(strnlen_s(pstrName, MAX_PATH)),
@@ -1804,7 +1804,7 @@ HRESULT DirectX::CreateDDSTextureFromFileEx(ID3D11Device* d3dDevice,
                     );
                 }
 
-                if (textureView != 0 && *textureView != 0)
+                if (textureView && *textureView)
                 {
                     (*textureView)->SetPrivateData(WKPDID_D3DDebugObjectName,
                         static_cast<UINT>(strnlen_s(pstrName, MAX_PATH)),
