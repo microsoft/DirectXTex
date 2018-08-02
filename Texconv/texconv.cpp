@@ -75,6 +75,7 @@ enum OPTIONS
     OPT_NOLOGO,
     OPT_TIMING,
     OPT_SEPALPHA,
+    OPT_NO_WIC,
     OPT_TYPELESS_UNORM,
     OPT_TYPELESS_FLOAT,
     OPT_PREMUL_ALPHA,
@@ -159,6 +160,7 @@ const SValue g_pOptions[] =
     { L"nologo",        OPT_NOLOGO },
     { L"timing",        OPT_TIMING },
     { L"sepalpha",      OPT_SEPALPHA },
+    { L"nowic",         OPT_NO_WIC },
     { L"tu",            OPT_TYPELESS_UNORM },
     { L"tf",            OPT_TYPELESS_FLOAT },
     { L"pmalpha",       OPT_PREMUL_ALPHA },
@@ -707,6 +709,7 @@ namespace
         wprintf(L"   -vflip              vertical flip of source image\n");
         wprintf(L"   -sepalpha           resize/generate mips alpha channel separately\n");
         wprintf(L"                       from color channels\n");
+        wprintf(L"   -nowic              Force non-WIC filtering\n");
         wprintf(L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
         wprintf(L"   -pmalpha            convert final texture to use premultiplied alpha\n");
         wprintf(L"   -alpha              convert premultiplied alpha to straight alpha\n");
@@ -743,7 +746,7 @@ namespace
             L"                       (defaults to 1.0)\n");
         wprintf(L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n");
         wprintf(L"   -rotatecolor <rot>  rotates color primaries and/or applies a curve\n");
-        wprintf(L"   -nits <value>       paper-white value in nits to use for HDR10 (defaults to 200.0)\n");
+        wprintf(L"   -nits <value>       paper-white value in nits to use for HDR10 (def: 200.0)\n");
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
         wprintf(L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n");
         wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
@@ -1274,6 +1277,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case OPT_SEPALPHA:
                 dwFilterOpts |= TEX_FILTER_SEPARATE_ALPHA;
+                break;
+
+            case OPT_NO_WIC:
+                dwFilterOpts |= TEX_FILTER_FORCE_NON_WIC;
                 break;
 
             case OPT_PREFIX:

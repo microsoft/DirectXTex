@@ -862,6 +862,25 @@ HRESULT DirectX::Resize(
         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
+    bool usewic = UseWICFiltering(srcImage.format, filter);
+
+    WICPixelFormatGUID pfGUID = {};
+    bool wicpf = (usewic) ? _DXGIToWIC(srcImage.format, pfGUID, true) : false;
+
+    if (usewic && !wicpf)
+    {
+        // Check to see if the source and/or result size is too big for WIC
+        uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
+        uint64_t expandedSize2 = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
+        {
+            if (filter & TEX_FILTER_FORCE_WIC)
+                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+            usewic = false;
+        }
+    }
+
     HRESULT hr = image.Initialize2D(srcImage.format, width, height, 1, 1);
     if (FAILED(hr))
         return hr;
@@ -870,10 +889,9 @@ HRESULT DirectX::Resize(
     if (!rimage)
         return E_POINTER;
 
-    if (UseWICFiltering(srcImage.format, filter))
+    if (usewic)
     {
-        WICPixelFormatGUID pfGUID;
-        if (_DXGIToWIC(srcImage.format, pfGUID, true))
+        if (wicpf)
         {
             // Case 1: Source format is supported by Windows Imaging Component
             hr = PerformResizeUsingWIC(srcImage, filter, pfGUID, *rimage);
@@ -886,6 +904,7 @@ HRESULT DirectX::Resize(
     }
     else
     {
+        // Case 3: not using WIC resizing
         hr = PerformResizeUsingCustomFilters(srcImage, filter, *rimage);
     }
 
@@ -930,6 +949,20 @@ HRESULT DirectX::Resize(
 
     WICPixelFormatGUID pfGUID = {};
     bool wicpf = (usewic) ? _DXGIToWIC(metadata.format, pfGUID, true) : false;
+
+    if (usewic && !wicpf)
+    {
+        // Check to see if the source and/or result size is too big for WIC
+        uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
+        uint64_t expandedSize2 = uint64_t(metadata.width) * uint64_t(metadata.height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
+        {
+            if (filter & TEX_FILTER_FORCE_WIC)
+                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+            usewic = false;
+        }
+    }
 
     switch (metadata.dimension)
     {

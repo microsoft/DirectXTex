@@ -2564,7 +2564,26 @@ HRESULT DirectX::GenerateMipMaps(
 
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
-    if (UseWICFiltering(baseImage.format, filter))
+    bool usewic = UseWICFiltering(baseImage.format, filter);
+
+    WICPixelFormatGUID pfGUID = {};
+    bool wicpf = (usewic) ? _DXGIToWIC(baseImage.format, pfGUID, true) : false;
+
+    if (usewic && !wicpf)
+    {
+        // Check to see if the source and/or result size is too big for WIC
+        uint64_t expandedSize = uint64_t(std::max<size_t>(1, baseImage.width >> 1)) * uint64_t(std::max<size_t>(1, baseImage.height >> 1)) * sizeof(float) * 4;
+        uint64_t expandedSize2 = uint64_t(baseImage.width) * uint64_t(baseImage.height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
+        {
+            if (filter & TEX_FILTER_FORCE_WIC)
+                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+            usewic = false;
+        }
+    }
+
+    if (usewic)
     {
         //--- Use WIC filtering to generate mipmaps -----------------------------------
         switch (filter & TEX_FILTER_MASK)
@@ -2577,8 +2596,7 @@ HRESULT DirectX::GenerateMipMaps(
         {
             static_assert(TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flag alias mismatch");
 
-            WICPixelFormatGUID pfGUID;
-            if (_DXGIToWIC(baseImage.format, pfGUID, true))
+            if (wicpf)
             {
                 // Case 1: Base image format is supported by Windows Imaging Component
                 hr = (baseImage.height > 1 || !allow1D)
@@ -2754,9 +2772,31 @@ HRESULT DirectX::GenerateMipMaps(
 
     HRESULT hr = E_UNEXPECTED;
 
+    if (baseImages.empty())
+        return hr;
+
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
-    if (!metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter))
+    bool usewic = !metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter);
+
+    WICPixelFormatGUID pfGUID = {};
+    bool wicpf = (usewic) ? _DXGIToWIC(metadata.format, pfGUID, true) : false;
+
+    if (usewic && !wicpf)
+    {
+        // Check to see if the source and/or result size is too big for WIC
+        uint64_t expandedSize = uint64_t(std::max<size_t>(1, metadata.width >> 1)) * uint64_t(std::max<size_t>(1, metadata.height >> 1)) * sizeof(float) * 4;
+        uint64_t expandedSize2 = uint64_t(metadata.width) * uint64_t(metadata.height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
+        {
+            if (filter & TEX_FILTER_FORCE_WIC)
+                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+            usewic = false;
+        }
+    }
+
+    if (usewic)
     {
         //--- Use WIC filtering to generate mipmaps -----------------------------------
         switch (filter & TEX_FILTER_MASK)
@@ -2769,8 +2809,7 @@ HRESULT DirectX::GenerateMipMaps(
         {
             static_assert(TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flag alias mismatch");
 
-            WICPixelFormatGUID pfGUID;
-            if (_DXGIToWIC(metadata.format, pfGUID, true))
+            if (wicpf)
             {
                 // Case 1: Base image format is supported by Windows Imaging Component
                 TexMetadata mdata2 = metadata;

@@ -80,6 +80,7 @@ enum OPTIONS
     OPT_USE_DX10,
     OPT_NOLOGO,
     OPT_SEPALPHA,
+    OPT_NO_WIC,
     OPT_DEMUL_ALPHA,
     OPT_TA_WRAP,
     OPT_TA_MIRROR,
@@ -136,6 +137,7 @@ const SValue g_pOptions [] =
     { L"dx10",      OPT_USE_DX10 },
     { L"nologo",    OPT_NOLOGO },
     { L"sepalpha",  OPT_SEPALPHA },
+    { L"nowic",     OPT_NO_WIC },
     { L"alpha",     OPT_DEMUL_ALPHA },
     { L"wrap",      OPT_TA_WRAP },
     { L"mirror",    OPT_TA_MIRROR },
@@ -519,6 +521,7 @@ namespace
         wprintf(L"   -o <filename>       output filename\n");
         wprintf(L"   -y                  overwrite existing output file (if any)\n");
         wprintf(L"   -sepalpha           resize alpha channel separately from color channels\n");
+        wprintf(L"   -nowic              Force non-WIC filtering\n");
         wprintf(L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
         wprintf(L"   -alpha              convert premultiplied alpha to straight alpha\n");
         wprintf(L"   -dx10               Force use of 'DX10' extended header\n");
@@ -1065,6 +1068,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case OPT_SEPALPHA:
                 dwFilterOpts |= TEX_FILTER_SEPARATE_ALPHA;
+                break;
+
+            case OPT_NO_WIC:
+                dwFilterOpts |= TEX_FILTER_FORCE_NON_WIC;
                 break;
 
             case OPT_OUTPUTFILE:
