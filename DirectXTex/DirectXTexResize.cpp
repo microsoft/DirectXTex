@@ -875,7 +875,7 @@ HRESULT DirectX::Resize(
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
             if (filter & TEX_FILTER_FORCE_WIC)
-                return E_UNEXPECTED;
+                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
             usewic = false;
         }
@@ -958,7 +958,7 @@ HRESULT DirectX::Resize(
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
             if (filter & TEX_FILTER_FORCE_WIC)
-                return E_UNEXPECTED;
+                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
             usewic = false;
         }
