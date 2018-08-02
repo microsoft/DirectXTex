@@ -2564,7 +2564,26 @@ HRESULT DirectX::GenerateMipMaps(
 
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
-    if (UseWICFiltering(baseImage.format, filter))
+    bool usewic = UseWICFiltering(baseImage.format, filter);
+
+    WICPixelFormatGUID pfGUID = {};
+    bool wicpf = (usewic) ? _DXGIToWIC(baseImage.format, pfGUID, true) : false;
+
+    if (usewic && !wicpf)
+    {
+        // Check to see if the source and/or result size is too big for WIC
+        uint64_t expandedSize = uint64_t(std::max<size_t>(1, baseImage.width >> 1)) * uint64_t(std::max<size_t>(1, baseImage.height >> 1)) * sizeof(float) * 4;
+        uint64_t expandedSize2 = uint64_t(baseImage.width) * uint64_t(baseImage.height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
+        {
+            if (filter & TEX_FILTER_FORCE_WIC)
+                return E_UNEXPECTED;
+
+            usewic = false;
+        }
+    }
+
+    if (usewic)
     {
         //--- Use WIC filtering to generate mipmaps -----------------------------------
         switch (filter & TEX_FILTER_MASK)
@@ -2577,8 +2596,7 @@ HRESULT DirectX::GenerateMipMaps(
         {
             static_assert(TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flag alias mismatch");
 
-            WICPixelFormatGUID pfGUID;
-            if (_DXGIToWIC(baseImage.format, pfGUID, true))
+            if (wicpf)
             {
                 // Case 1: Base image format is supported by Windows Imaging Component
                 hr = (baseImage.height > 1 || !allow1D)
@@ -2592,69 +2610,30 @@ HRESULT DirectX::GenerateMipMaps(
             else
             {
                 // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
-                uint64_t expandedSize = uint64_t(baseImage.width) * uint64_t(baseImage.height) * sizeof(float) * 4;
-                if (expandedSize > UINT32_MAX)
-                {
-                    // Image is too large for float32, so have to use float16 instead
+                assert(baseImage.format != DXGI_FORMAT_R32G32B32A32_FLOAT);
+                ScratchImage temp;
+                hr = _ConvertToR32G32B32A32(baseImage, temp);
+                if (FAILED(hr))
+                    return hr;
 
-                    // Check to see if our base image is so large that the first mip is still too big for WIC to return the result as float32
-                    // Note: This is not likley since Direct3D only supports 16384 max size
-                    expandedSize = uint64_t(std::max<size_t>(1, baseImage.width >> 1)) * uint64_t(std::max<size_t>(1, baseImage.height >> 1)) * sizeof(float) * 4;
-                    if (expandedSize > UINT32_MAX)
-                        return E_UNEXPECTED;
+                const Image *timg = temp.GetImage(0, 0, 0);
+                if (!timg)
+                    return E_POINTER;
 
-                    assert(baseImage.format != DXGI_FORMAT_R16G16B16A16_FLOAT);
-                    ScratchImage temp;
-                    hr = _ConvertToR16G16B16A16(baseImage, temp);
-                    if (FAILED(hr))
-                        return hr;
+                ScratchImage tMipChain;
+                hr = (baseImage.height > 1 || !allow1D)
+                    ? tMipChain.Initialize2D(DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, baseImage.height, 1, levels)
+                    : tMipChain.Initialize1D(DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, 1, levels);
+                if (FAILED(hr))
+                    return hr;
 
-                    const Image *timg = temp.GetImage(0, 0, 0);
-                    if (!timg)
-                        return E_POINTER;
+                hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, 0);
+                if (FAILED(hr))
+                    return hr;
 
-                    ScratchImage tMipChain;
-                    hr = (baseImage.height > 1 || !allow1D)
-                        ? tMipChain.Initialize2D(DXGI_FORMAT_R16G16B16A16_FLOAT, baseImage.width, baseImage.height, 1, levels)
-                        : tMipChain.Initialize1D(DXGI_FORMAT_R16G16B16A16_FLOAT, baseImage.width, 1, levels);
-                    if (FAILED(hr))
-                        return hr;
+                temp.Release();
 
-                    hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat64bppRGBAHalf, tMipChain, 0);
-                    if (FAILED(hr))
-                        return hr;
-
-                    temp.Release();
-
-                    return _ConvertFromR16G16B16A16(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), baseImage.format, mipChain);
-                }
-                else
-                {
-                    assert(baseImage.format != DXGI_FORMAT_R32G32B32A32_FLOAT);
-                    ScratchImage temp;
-                    hr = _ConvertToR32G32B32A32(baseImage, temp);
-                    if (FAILED(hr))
-                        return hr;
-
-                    const Image *timg = temp.GetImage(0, 0, 0);
-                    if (!timg)
-                        return E_POINTER;
-
-                    ScratchImage tMipChain;
-                    hr = (baseImage.height > 1 || !allow1D)
-                        ? tMipChain.Initialize2D(DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, baseImage.height, 1, levels)
-                        : tMipChain.Initialize1D(DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, 1, levels);
-                    if (FAILED(hr))
-                        return hr;
-
-                    hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, 0);
-                    if (FAILED(hr))
-                        return hr;
-
-                    temp.Release();
-
-                    return _ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), baseImage.format, mipChain);
-                }
+                return _ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), baseImage.format, mipChain);
             }
         }
 
@@ -2798,7 +2777,26 @@ HRESULT DirectX::GenerateMipMaps(
 
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
-    if (!metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter))
+    bool usewic = !metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter);
+
+    WICPixelFormatGUID pfGUID = {};
+    bool wicpf = (usewic) ? _DXGIToWIC(metadata.format, pfGUID, true) : false;
+
+    if (usewic && !wicpf)
+    {
+        // Check to see if the source and/or result size is too big for WIC
+        uint64_t expandedSize = uint64_t(std::max<size_t>(1, metadata.width >> 1)) * uint64_t(std::max<size_t>(1, metadata.height >> 1)) * sizeof(float) * 4;
+        uint64_t expandedSize2 = uint64_t(metadata.width) * uint64_t(metadata.height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
+        {
+            if (filter & TEX_FILTER_FORCE_WIC)
+                return E_UNEXPECTED;
+
+            usewic = false;
+        }
+    }
+
+    if (usewic)
     {
         //--- Use WIC filtering to generate mipmaps -----------------------------------
         switch (filter & TEX_FILTER_MASK)
@@ -2811,8 +2809,7 @@ HRESULT DirectX::GenerateMipMaps(
         {
             static_assert(TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flag alias mismatch");
 
-            WICPixelFormatGUID pfGUID;
-            if (_DXGIToWIC(metadata.format, pfGUID, true))
+            if (wicpf)
             {
                 // Case 1: Base image format is supported by Windows Imaging Component
                 TexMetadata mdata2 = metadata;
@@ -2836,75 +2833,33 @@ HRESULT DirectX::GenerateMipMaps(
             else
             {
                 // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
-                uint64_t expandedSize = uint64_t(baseImages[0].width) * uint64_t(baseImages[0].height) * sizeof(float) * 4;
-                if (expandedSize > UINT32_MAX)
+                assert(metadata.format != DXGI_FORMAT_R32G32B32A32_FLOAT);
+
+                TexMetadata mdata2 = metadata;
+                mdata2.mipLevels = levels;
+                mdata2.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+                ScratchImage tMipChain;
+                hr = tMipChain.Initialize(mdata2);
+                if (FAILED(hr))
+                    return hr;
+
+                for (size_t item = 0; item < metadata.arraySize; ++item)
                 {
-                    // Image is too large for float32, so have to use float16 instead
-
-                    // Check to see if our base image is so large that the first mip is still too big for WIC to return the result as float32
-                    // Note: This is not likley since Direct3D only supports 16384 max size
-                    expandedSize = uint64_t(std::max<size_t>(1, baseImages[0].width >> 1)) * uint64_t(std::max<size_t>(1, baseImages[0].height >> 1)) * sizeof(float) * 4;
-                    if (expandedSize > UINT32_MAX)
-                        return E_UNEXPECTED;
-
-                    assert(metadata.format != DXGI_FORMAT_R16G16B16A16_FLOAT);
-
-                    TexMetadata mdata2 = metadata;
-                    mdata2.mipLevels = levels;
-                    mdata2.format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-                    ScratchImage tMipChain;
-                    hr = tMipChain.Initialize(mdata2);
+                    ScratchImage temp;
+                    hr = _ConvertToR32G32B32A32(baseImages[item], temp);
                     if (FAILED(hr))
                         return hr;
 
-                    for (size_t item = 0; item < metadata.arraySize; ++item)
-                    {
-                        ScratchImage temp;
-                        hr = _ConvertToR16G16B16A16(baseImages[item], temp);
-                        if (FAILED(hr))
-                            return hr;
+                    const Image *timg = temp.GetImage(0, 0, 0);
+                    if (!timg)
+                        return E_POINTER;
 
-                        const Image *timg = temp.GetImage(0, 0, 0);
-                        if (!timg)
-                            return E_POINTER;
-
-                        hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat64bppRGBAHalf, tMipChain, item);
-                        if (FAILED(hr))
-                            return hr;
-                    }
-
-                    return _ConvertFromR16G16B16A16(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), metadata.format, mipChain);
-                }
-                else
-                {
-                    assert(metadata.format != DXGI_FORMAT_R32G32B32A32_FLOAT);
-
-                    TexMetadata mdata2 = metadata;
-                    mdata2.mipLevels = levels;
-                    mdata2.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-                    ScratchImage tMipChain;
-                    hr = tMipChain.Initialize(mdata2);
+                    hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, item);
                     if (FAILED(hr))
                         return hr;
-
-                    for (size_t item = 0; item < metadata.arraySize; ++item)
-                    {
-                        ScratchImage temp;
-                        hr = _ConvertToR32G32B32A32(baseImages[item], temp);
-                        if (FAILED(hr))
-                            return hr;
-
-                        const Image *timg = temp.GetImage(0, 0, 0);
-                        if (!timg)
-                            return E_POINTER;
-
-                        hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, item);
-                        if (FAILED(hr))
-                            return hr;
-                    }
-
-                    return _ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), metadata.format, mipChain);
                 }
+
+                return _ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), metadata.format, mipChain);
             }
         }
 
