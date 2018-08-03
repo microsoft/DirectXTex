@@ -1011,8 +1011,13 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile)
 
     auto_delete_file delonfail(hFile.get());
 
-    size_t rowPitch = image.width * 4;
-    size_t slicePitch = image.height * rowPitch;
+    uint64_t pitch = uint64_t(image.width) * 4u;
+    uint64_t slicePitch = uint64_t(image.height) * pitch;
+
+    if (pitch > UINT32_MAX)
+        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+    size_t rowPitch = static_cast<size_t>(pitch);
 
     if (slicePitch < 65535)
     {
@@ -1088,6 +1093,9 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile)
             size_t encSize = EncodeRLE(enc, rgbe, rowPitch, image.width);
             if (encSize > 0)
             {
+                if (encSize > UINT32_MAX)
+                    return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
                 if (!WriteFile(hFile.get(), enc, static_cast<DWORD>(encSize), &bytesWritten, nullptr))
                 {
                     return HRESULT_FROM_WIN32(GetLastError());
