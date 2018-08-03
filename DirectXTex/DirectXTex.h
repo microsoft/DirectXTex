@@ -71,7 +71,7 @@ namespace DirectX
         CP_FLAGS_8BPP               = 0x40000,  // Override with a legacy 8 bits-per-pixel format size
     };
 
-    void __cdecl ComputePitch(
+    HRESULT __cdecl ComputePitch(
         _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height,
         _Out_ size_t& rowPitch, _Out_ size_t& slicePitch, _In_ DWORD flags = CP_FLAGS_NONE);
 

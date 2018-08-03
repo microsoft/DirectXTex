@@ -178,7 +178,7 @@ namespace DirectX
 
     //---------------------------------------------------------------------------------
     // Image helper functions
-    void __cdecl _DetermineImageArray(
+    _Success_(return != false) bool __cdecl _DetermineImageArray(
         _In_ const TexMetadata& metadata, _In_ DWORD cpFlags,
         _Out_ size_t& nImages, _Out_ size_t& pixelSize);
 
