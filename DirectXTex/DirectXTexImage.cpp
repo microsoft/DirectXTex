@@ -106,11 +106,14 @@ bool DirectX::_DetermineImageArray(
     }
 
 #if defined(_M_IX86) || defined(_M_ARM) || defined(_M_HYBRID_X86_ARM64)
+    static_assert(sizeof(size_t) == 4, "Not a 32-bit platform!");
     if (totalPixelSize > UINT32_MAX)
     {
         nImages = pixelSize = 0;
         return false;
     }
+#else
+    static_assert(sizeof(size_t) == 8, "Not a 64-bit platform!");
 #endif
 
     nImages = nimages;

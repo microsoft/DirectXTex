@@ -1051,11 +1051,14 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
     }
 
 #if defined(_M_IX86) || defined(_M_ARM) || defined(_M_HYBRID_X86_ARM64)
+    static_assert(sizeof(size_t) == 4, "Not a 32-bit platform!");
     if (pitch > UINT32_MAX || slice > UINT32_MAX)
     {
         rowPitch = slicePitch = 0;
         return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
     }
+#else
+    static_assert(sizeof(size_t) == 8, "Not a 64-bit platform!");
 #endif
 
     rowPitch = static_cast<size_t>(pitch);
