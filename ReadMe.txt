@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-July 3, 2018
+August 5, 2018
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -135,6 +135,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+August 5, 2018
+    Improved support and validation for 16k textures (requires x64 native)
+    ComputePitch now returns and HRESULT
+    Fix BC7 GPU shaders on WARP device
 
 July 3, 2018
     BC7 CPU codec fix for 3subsets/-bcmax and minor optimization
