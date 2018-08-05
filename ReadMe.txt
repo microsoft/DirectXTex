@@ -138,7 +138,7 @@ RELEASE HISTORY
 
 August 5, 2018
     Improved support and validation for 16k textures (requires x64 native)
-    ComputePitch now returns and HRESULT
+    ComputePitch now returns an HRESULT
     Fix BC7 GPU shaders on WARP device
 
 July 3, 2018
