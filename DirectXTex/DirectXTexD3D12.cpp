@@ -14,6 +14,7 @@
 #if defined(_XBOX_ONE) && defined(_TITLE)
 #include "d3dx12_x.h"
 #else
+#define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"
 #endif
 
