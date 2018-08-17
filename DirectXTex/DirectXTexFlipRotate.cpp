@@ -210,7 +210,9 @@ HRESULT DirectX::FlipRotate(
     static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical), "TEX_FR_FLIP_VERTICAL no longer matches WIC");
 
     // Only supports 90, 180, 270, or no rotation flags... not a combination of rotation flags
-    switch (flags & (TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270))
+    int rotateMode = static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270));
+
+    switch (rotateMode)
     {
     case 0:
     case TEX_FR_ROTATE90:
@@ -225,7 +227,7 @@ HRESULT DirectX::FlipRotate(
     size_t nwidth = srcImage.width;
     size_t nheight = srcImage.height;
 
-    if (flags & (TEX_FR_ROTATE90 | TEX_FR_ROTATE270))
+    if ((rotateMode == TEX_FR_ROTATE90) || (rotateMode == TEX_FR_ROTATE270))
     {
         nwidth = srcImage.height;
         nheight = srcImage.width;
@@ -301,7 +303,9 @@ HRESULT DirectX::FlipRotate(
     static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical), "TEX_FR_FLIP_VERTICAL no longer matches WIC");
 
     // Only supports 90, 180, 270, or no rotation flags... not a combination of rotation flags
-    switch (flags & (TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270))
+    int rotateMode = static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270));
+
+    switch (rotateMode)
     {
     case 0:
     case TEX_FR_ROTATE90:
@@ -316,7 +320,7 @@ HRESULT DirectX::FlipRotate(
     TexMetadata mdata2 = metadata;
 
     bool flipwh = false;
-    if (flags & (TEX_FR_ROTATE90 | TEX_FR_ROTATE270))
+    if ((rotateMode == TEX_FR_ROTATE90) || (rotateMode == TEX_FR_ROTATE270))
     {
         flipwh = true;
         mdata2.width = metadata.height;
