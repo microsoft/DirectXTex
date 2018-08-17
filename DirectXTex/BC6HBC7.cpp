@@ -451,8 +451,8 @@ namespace
 
     public:
         INTColor() = default;
-        INTColor(int nr, int ng, int nb) : pad(0) { r = nr; g = ng; b = nb; }
-        INTColor(const INTColor& c) : pad(0) { r = c.r; g = c.g; b = c.b; }
+        INTColor(int nr, int ng, int nb) : r(nr), g(ng), b(nb), pad(0) {}
+        INTColor(const INTColor& c) : r(c.r), g(c.g), b(c.b), pad(0) {}
 
         INTColor& operator += (_In_ const INTColor& c)
         {
@@ -507,9 +507,12 @@ namespace
 
         INTColor& SignExtend(_In_ const LDRColorA& Prec)
         {
+        #pragma prefast(push)
+        #pragma prefast(disable : 26453, "Shift here is never negative")
             r = SIGN_EXTEND(r, int(Prec.r));
             g = SIGN_EXTEND(g, int(Prec.g));
             b = SIGN_EXTEND(b, int(Prec.b));
+        #pragma prefast(pop)
             return *this;
         }
 

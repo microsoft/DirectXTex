@@ -1728,6 +1728,8 @@ namespace
 
                         if (bSigned)
                         {
+                        #pragma prefast(push)
+                        #pragma prefast(disable : 26453, "Shift here is never negative")
                             e0_A.x = SIGN_EXTEND(e0_A.x, 10);
                             e0_A.y = SIGN_EXTEND(e0_A.y, 10);
                             e0_A.z = SIGN_EXTEND(e0_A.z, 10);
@@ -1743,6 +1745,7 @@ namespace
                             e1_B.x = SIGN_EXTEND(e1_B.x, 5);
                             e1_B.y = SIGN_EXTEND(e1_B.y, 5);
                             e1_B.z = SIGN_EXTEND(e1_B.z, 5);
+                        #pragma prefast(pop)
                         }
 
                         wprintf(L"\tMode 1 - [10 5 5 5] shape %llu\n", m->d);
@@ -1804,6 +1807,8 @@ namespace
 
                         if (bSigned)
                         {
+                        #pragma prefast(push)
+                        #pragma prefast(disable : 26453, "Shift here is never negative")
                             e0_A.x = SIGN_EXTEND(e0_A.x, 7);
                             e0_A.y = SIGN_EXTEND(e0_A.y, 7);
                             e0_A.z = SIGN_EXTEND(e0_A.z, 7);
@@ -1819,6 +1824,7 @@ namespace
                             e1_B.x = SIGN_EXTEND(e1_B.x, 6);
                             e1_B.y = SIGN_EXTEND(e1_B.y, 6);
                             e1_B.z = SIGN_EXTEND(e1_B.z, 6);
+                        #pragma prefast(pop)
                         }
 
                         wprintf(L"\tMode 2 - [7 6 6 6] shape %llu\n", m->d);
@@ -1882,6 +1888,8 @@ namespace
 
                             if (bSigned)
                             {
+                            #pragma prefast(push)
+                            #pragma prefast(disable : 26453, "Shift here is never negative")
                                 e0_A.x = SIGN_EXTEND(e0_A.x, 11);
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 11);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 11);
@@ -1897,6 +1905,7 @@ namespace
                                 e1_B.x = SIGN_EXTEND(e1_B.x, 5);
                                 e1_B.y = SIGN_EXTEND(e1_B.y, 4);
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 4);
+                            #pragma prefast(pop)
                             }
 
                             wprintf(L"\tMode 3 - [11 5 4 4] shape %llu\n", m->d);
@@ -1960,6 +1969,8 @@ namespace
 
                             if (bSigned)
                             {
+                            #pragma prefast(push)
+                            #pragma prefast(disable : 26453, "Shift here is never negative")
                                 e0_A.x = SIGN_EXTEND(e0_A.x, 11);
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 11);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 11);
@@ -1975,6 +1986,7 @@ namespace
                                 e1_B.x = SIGN_EXTEND(e1_B.x, 4);
                                 e1_B.y = SIGN_EXTEND(e1_B.y, 5);
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 4);
+                            #pragma prefast(pop)
                             }
 
                             wprintf(L"\tMode 4 - [11 4 5 4] shape %llu\n", m->d);
@@ -2033,6 +2045,8 @@ namespace
 
                             if (bSigned)
                             {
+                            #pragma prefast(push)
+                            #pragma prefast(disable : 26453, "Shift here is never negative")
                                 e0_A.x = SIGN_EXTEND(e0_A.x, 11);
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 11);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 11);
@@ -2048,6 +2062,7 @@ namespace
                                 e1_B.x = SIGN_EXTEND(e1_B.x, 4);
                                 e1_B.y = SIGN_EXTEND(e1_B.y, 4);
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 5);
+                            #pragma prefast(pop)
                             }
 
                             wprintf(L"\tMode 5 - [11 4 4 5] shape %llu\n", m->d);
@@ -2107,6 +2122,8 @@ namespace
 
                             if (bSigned)
                             {
+                            #pragma prefast(push)
+                            #pragma prefast(disable : 26453, "Shift here is never negative")
                                 e0_A.x = SIGN_EXTEND(e0_A.x, 9);
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 9);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 9);
@@ -2122,6 +2139,7 @@ namespace
                                 e1_B.x = SIGN_EXTEND(e1_B.x, 5);
                                 e1_B.y = SIGN_EXTEND(e1_B.y, 5);
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 5);
+                            #pragma prefast(pop)
                             }
 
                             wprintf(L"\tMode 6 - [9 5 5 5] shape %llu\n", m->d);
@@ -2181,6 +2199,8 @@ namespace
 
                             if (bSigned)
                             {
+                            #pragma prefast(push)
+                            #pragma prefast(disable : 26453, "Shift here is never negative")
                                 e0_A.x = SIGN_EXTEND(e0_A.x, 8);
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 8);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 8);
@@ -2196,6 +2216,7 @@ namespace
                                 e1_B.x = SIGN_EXTEND(e1_B.x, 6);
                                 e1_B.y = SIGN_EXTEND(e1_B.y, 5);
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 5);
+                            #pragma prefast(pop)
                             }
 
                             wprintf(L"\tMode 7 - [8 6 5 5] shape %llu\n", m->d);
@@ -2257,6 +2278,8 @@ namespace
 
                             if (bSigned)
                             {
+                            #pragma prefast(push)
+                            #pragma prefast(disable : 26453, "Shift here is never negative")
                                 e0_A.x = SIGN_EXTEND(e0_A.x, 8);
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 8);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 8);
@@ -2272,6 +2295,7 @@ namespace
                                 e1_B.x = SIGN_EXTEND(e1_B.x, 5);
                                 e1_B.y = SIGN_EXTEND(e1_B.y, 6);
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 5);
+                            #pragma prefast(pop)
                             }
 
                             wprintf(L"\tMode 8 - [8 5 6 5] shape %llu\n", m->d);
@@ -2333,6 +2357,8 @@ namespace
 
                             if (bSigned)
                             {
+                            #pragma prefast(push)
+                            #pragma prefast(disable : 26453, "Shift here is never negative")
                                 e0_A.x = SIGN_EXTEND(e0_A.x, 8);
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 8);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 8);
@@ -2348,6 +2374,7 @@ namespace
                                 e1_B.x = SIGN_EXTEND(e1_B.x, 5);
                                 e1_B.y = SIGN_EXTEND(e1_B.y, 5);
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 6);
+                            #pragma prefast(pop)
                             }
 
                             wprintf(L"\tMode 9 - [8 5 5 6] shape %llu\n", m->d);
@@ -2409,6 +2436,8 @@ namespace
 
                             if (bSigned)
                             {
+                            #pragma prefast(push)
+                            #pragma prefast(disable : 26453, "Shift here is never negative")
                                 e0_A.x = SIGN_EXTEND(e0_A.x, 6);
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 6);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 6);
@@ -2424,6 +2453,7 @@ namespace
                                 e1_B.x = SIGN_EXTEND(e1_B.x, 6);
                                 e1_B.y = SIGN_EXTEND(e1_B.y, 6);
                                 e1_B.z = SIGN_EXTEND(e1_B.z, 6);
+                            #pragma prefast(pop)
                             }
 
                             wprintf(L"\tMode 10 - [6 6 6 6] shape %llu\n", m->d);
@@ -2464,6 +2494,8 @@ namespace
 
                             if (bSigned)
                             {
+                            #pragma prefast(push)
+                            #pragma prefast(disable : 26453, "Shift here is never negative")
                                 e0_A.x = SIGN_EXTEND(e0_A.x, 10);
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 10);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 10);
@@ -2471,6 +2503,7 @@ namespace
                                 e0_B.x = SIGN_EXTEND(e0_B.x, 10);
                                 e0_B.y = SIGN_EXTEND(e0_B.y, 10);
                                 e0_B.z = SIGN_EXTEND(e0_B.z, 10);
+                            #pragma prefast(pop)
                             }
 
                             wprintf(L"\tMode 11 - [10 10]\n");
@@ -2512,6 +2545,8 @@ namespace
 
                             if (bSigned)
                             {
+                            #pragma prefast(push)
+                            #pragma prefast(disable : 26453, "Shift here is never negative")
                                 e0_A.x = SIGN_EXTEND(e0_A.x, 11);
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 11);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 11);
@@ -2519,6 +2554,7 @@ namespace
                                 e0_B.x = SIGN_EXTEND(e0_B.x, 9);
                                 e0_B.y = SIGN_EXTEND(e0_B.y, 9);
                                 e0_B.z = SIGN_EXTEND(e0_B.z, 9);
+                            #pragma prefast(pop)
                             }
 
                             wprintf(L"\tMode 12 - [11 9]\n");
@@ -2563,6 +2599,8 @@ namespace
 
                             if (bSigned)
                             {
+                            #pragma prefast(push)
+                            #pragma prefast(disable : 26453, "Shift here is never negative")
                                 e0_A.x = SIGN_EXTEND(e0_A.x, 12);
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 12);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 12);
@@ -2570,6 +2608,7 @@ namespace
                                 e0_B.x = SIGN_EXTEND(e0_B.x, 8);
                                 e0_B.y = SIGN_EXTEND(e0_B.y, 8);
                                 e0_B.z = SIGN_EXTEND(e0_B.z, 8);
+                            #pragma prefast(pop)
                             }
 
                             wprintf(L"\tMode 13 - [12 8]\n");
@@ -2626,6 +2665,8 @@ namespace
 
                             if (bSigned)
                             {
+                            #pragma prefast(push)
+                            #pragma prefast(disable : 26453, "Shift here is never negative")
                                 e0_A.x = SIGN_EXTEND(e0_A.x, 16);
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 16);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 16);
@@ -2633,6 +2674,7 @@ namespace
                                 e0_B.x = SIGN_EXTEND(e0_B.x, 4);
                                 e0_B.y = SIGN_EXTEND(e0_B.y, 4);
                                 e0_B.z = SIGN_EXTEND(e0_B.z, 4);
+                            #pragma prefast(pop)
                             }
 
                             wprintf(L"\tMode 14 - [16 4]\n");
