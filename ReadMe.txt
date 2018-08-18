@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-August 5, 2018
+August 17, 2018
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -15,7 +15,7 @@ processing pipelines, but are not currently supported by a built-in WIC codec.
 
 This code is designed to build with Visual Studio 2015 Update 3 or Visual Studio 2017.
 It is recommended that you make use of VS 2015 Update 3, Windows Tools 1.4.1, and the
-Windows 10 Anniversary Update SDK (14393) or VS 2017 (15.7 update) or later with the
+Windows 10 Anniversary Update SDK (14393) or VS 2017 (15.8 update) with the
 Windows 10 April 2018 Update SDK (17134).
 
 DirectXTex\
@@ -127,7 +127,7 @@ RELEASE NOTES
 
 * The VS 2017 projects require the 15.5 update or later. For UWP and Win32 classic desktop projects with the 15.5
   or 15.6 updates, you need to install the standalone Windows 10 SDK (17134) which is otherwise included in
-  the 15.7 update. Older VS 2017 updates will fail to load the projects due to use of the <ConformanceMode> element.
+  the 15.7/15.8 update. Older VS 2017 updates will fail to load the projects due to use of the <ConformanceMode> element.
   If using the 15.5 or 15.6 updates, you will see "warning D9002: ignoring unknown option '/Zc:__cplusplus'" because
   this switch isn't supported until 15.7. It is safe to ignore this warning, or you can edit the project files
   <AdditionalOptions> elements.
@@ -135,6 +135,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+August 17, 2018
+    Fixed problem loading legacy DDS files containing FOURCC pixel formats with ALPHAPIXELS also set
+    Fixed FlipRotate bug when doing 180 degree rotation
+    Updated for VS 2017 15.8
 
 August 5, 2018
     Improved support and validation for 16k textures (requires x64 native)
