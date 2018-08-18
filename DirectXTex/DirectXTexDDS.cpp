@@ -166,14 +166,15 @@ namespace
         {
             const LegacyDDS* entry = &g_LegacyDDSMap[index];
 
-            if (ddpfFlags == entry->ddpf.flags)
+            if ((ddpfFlags & DDS_FOURCC) && (entry->ddpf.flags & DDS_FOURCC))
             {
-                if (entry->ddpf.flags & DDS_FOURCC)
-                {
-                    if (ddpf.fourCC == entry->ddpf.fourCC)
-                        break;
-                }
-                else if (entry->ddpf.flags & DDS_PAL8)
+                // In case of FourCC codes, ignore any other bits in ddpf.flags
+                if (ddpf.fourCC == entry->ddpf.fourCC)
+                    break;
+            }
+            else if (ddpfFlags == entry->ddpf.flags)
+            {
+                if (entry->ddpf.flags & DDS_PAL8)
                 {
                     if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount)
                         break;
