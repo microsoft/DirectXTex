@@ -4358,8 +4358,8 @@ namespace
         _Out_ WICPixelFormatGUID& pfGUID,
         _Out_ WICPixelFormatGUID& targetGUID)
     {
-        memcpy(&pfGUID, &GUID_NULL, sizeof(GUID));
-        memcpy(&targetGUID, &GUID_NULL, sizeof(GUID));
+        memset(&pfGUID, 0, sizeof(GUID));
+        memset(&targetGUID, 0, sizeof(GUID));
 
         if (filter & TEX_FILTER_FORCE_NON_WIC)
         {

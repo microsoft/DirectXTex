@@ -315,7 +315,7 @@ namespace
             return hr;
 
         WICPixelFormatGUID convertGUID;
-        memcpy(&convertGUID, &pixelFormat, sizeof(WICPixelFormatGUID));
+        memcpy_s(&convertGUID, sizeof(WICPixelFormatGUID), &pixelFormat, sizeof(GUID));
 
         size_t bpp = 0;
 
@@ -326,7 +326,7 @@ namespace
             {
                 if (memcmp(&g_WICConvert[i].source, &pixelFormat, sizeof(WICPixelFormatGUID)) == 0)
                 {
-                    memcpy(&convertGUID, &g_WICConvert[i].target, sizeof(WICPixelFormatGUID));
+                    memcpy_s(&convertGUID, sizeof(WICPixelFormatGUID), &g_WICConvert[i].target, sizeof(GUID));
 
                     format = _WICToDXGI(g_WICConvert[i].target);
                     assert(format != DXGI_FORMAT_UNKNOWN);

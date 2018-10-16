@@ -197,7 +197,7 @@ bool DirectX::_DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR)
             break;
     }
 
-    memcpy(&guid, &GUID_NULL, sizeof(GUID));
+    memset(&guid, 0, sizeof(GUID));
     return false;
 }
 
