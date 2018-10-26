@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-August 17, 2018
+October 25, 2018
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -135,6 +135,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+October 25, 2018
+    Use UTF-8 instead of ANSI for narrow strings
+    Updated D3DX12 internal copy to latest version
+    Minor code cleanup
 
 August 17, 2018
     Fixed problem loading legacy DDS files containing FOURCC pixel formats with ALPHAPIXELS also set
