@@ -31,7 +31,7 @@
     <ProjectGuid>{9D3EDCAD-A800-43F0-B77F-FE6E4DFA3D84}</ProjectGuid>
     <RootNamespace>DDSView</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
