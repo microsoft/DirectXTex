@@ -2666,7 +2666,7 @@ inline HRESULT D3DX12ParsePipelineStream(const D3D12_PIPELINE_STATE_STREAM_DESC&
 }
 #endif // NTDDI_WIN10_RS2
 
-// Requires the Windows 10 April 2018 Update SDK (17763)
+// Requires the Windows 10 October 2018 Update SDK (17763)
 #if defined(NTDDI_WIN10_RS5) && (NTDDI_VERSION >= NTDDI_WIN10_RS5)
 //------------------------------------------------------------------------------------------------
 inline bool operator==( const D3D12_CLEAR_VALUE &a, const D3D12_CLEAR_VALUE &b)
