@@ -732,8 +732,8 @@ bool DirectX::_ExpandScanline(
             const type * __restrict sPtr = reinterpret_cast<const type*>(pSource);\
             for(size_t icount = 0; icount < (size - sizeof(type) + 1); icount += sizeof(type))\
             {\
-                XMVECTOR v = func(sPtr++);\
                 if (dPtr >= ePtr) break;\
+                XMVECTOR v = func(sPtr++);\
                 *(dPtr++) = XMVectorSelect(defvec, v, g_XMSelect1110);\
             }\
             return true;\
@@ -746,8 +746,8 @@ bool DirectX::_ExpandScanline(
             const type * __restrict sPtr = reinterpret_cast<const type*>(pSource);\
             for(size_t icount = 0; icount < (size - sizeof(type) + 1); icount += sizeof(type))\
             {\
-                XMVECTOR v = func(sPtr++);\
                 if (dPtr >= ePtr) break;\
+                XMVECTOR v = func(sPtr++);\
                 *(dPtr++) = XMVectorSelect(defvec, v, g_XMSelect1100);\
             }\
             return true;\
@@ -920,8 +920,8 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             const float* __restrict sPtr = static_cast<const float*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(float) + 1); icount += sizeof(float))
             {
-                XMVECTOR v = XMLoadFloat(sPtr++);
                 if (dPtr >= ePtr) break;
+                XMVECTOR v = XMLoadFloat(sPtr++);
                 *(dPtr++) = XMVectorSelect(g_XMIdentityR3, v, g_XMSelect1000);
             }
             return true;
@@ -934,9 +934,9 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             const uint32_t* __restrict sPtr = static_cast<const uint32_t*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(uint32_t) + 1); icount += sizeof(uint32_t))
             {
+                if (dPtr >= ePtr) break;
                 XMVECTOR v = XMLoadInt(sPtr++);
                 v = XMConvertVectorUIntToFloat(v, 0);
-                if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSelect(g_XMIdentityR3, v, g_XMSelect1000);
             }
             return true;
@@ -949,9 +949,9 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             const int32_t * __restrict sPtr = static_cast<const int32_t*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(int32_t) + 1); icount += sizeof(int32_t))
             {
+                if (dPtr >= ePtr) break;
                 XMVECTOR v = XMLoadInt(reinterpret_cast<const uint32_t*>(sPtr++));
                 v = XMConvertVectorIntToFloat(v, 0);
-                if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSelect(g_XMIdentityR3, v, g_XMSelect1000);
             }
             return true;
@@ -1174,9 +1174,9 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             const XMUBYTEN4 * __restrict sPtr = static_cast<const XMUBYTEN4*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(XMUBYTEN4) + 1); icount += sizeof(XMUBYTEN4))
             {
+                if (dPtr >= ePtr) break;
                 XMVECTOR v = XMLoadUByteN4(sPtr++);
                 XMVECTOR v1 = XMVectorSwizzle<0, 3, 2, 1>(v);
-                if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSelect(g_XMIdentityR3, v, g_XMSelect1110);
                 if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSelect(g_XMIdentityR3, v1, g_XMSelect1110);
@@ -1191,10 +1191,10 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             const XMUBYTEN4 * __restrict sPtr = static_cast<const XMUBYTEN4*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(XMUBYTEN4) + 1); icount += sizeof(XMUBYTEN4))
             {
+                if (dPtr >= ePtr) break;
                 XMVECTOR v = XMLoadUByteN4(sPtr++);
                 XMVECTOR v0 = XMVectorSwizzle<1, 0, 3, 2>(v);
                 XMVECTOR v1 = XMVectorSwizzle<1, 2, 3, 0>(v);
-                if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSelect(g_XMIdentityR3, v0, g_XMSelect1110);
                 if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSelect(g_XMIdentityR3, v1, g_XMSelect1110);
@@ -1210,10 +1210,10 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             const XMU565 * __restrict sPtr = static_cast<const XMU565*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(XMU565) + 1); icount += sizeof(XMU565))
             {
+                if (dPtr >= ePtr) break;
                 XMVECTOR v = XMLoadU565(sPtr++);
                 v = XMVectorMultiply(v, s_Scale);
                 v = XMVectorSwizzle<2, 1, 0, 3>(v);
-                if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSelect(g_XMIdentityR3, v, g_XMSelect1110);
             }
             return true;
@@ -1227,9 +1227,9 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             const XMU555 * __restrict sPtr = static_cast<const XMU555*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(XMU555) + 1); icount += sizeof(XMU555))
             {
+                if (dPtr >= ePtr) break;
                 XMVECTOR v = XMLoadU555(sPtr++);
                 v = XMVectorMultiply(v, s_Scale);
-                if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSwizzle<2, 1, 0, 3>(v);
             }
             return true;
@@ -1243,8 +1243,8 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             const XMUBYTEN4 * __restrict sPtr = static_cast<const XMUBYTEN4*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(XMUBYTEN4) + 1); icount += sizeof(XMUBYTEN4))
             {
-                XMVECTOR v = XMLoadUByteN4(sPtr++);
                 if (dPtr >= ePtr) break;
+                XMVECTOR v = XMLoadUByteN4(sPtr++);
                 *(dPtr++) = XMVectorSwizzle<2, 1, 0, 3>(v);
             }
             return true;
@@ -1258,9 +1258,9 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             const XMUBYTEN4 * __restrict sPtr = static_cast<const XMUBYTEN4*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(XMUBYTEN4) + 1); icount += sizeof(XMUBYTEN4))
             {
+                if (dPtr >= ePtr) break;
                 XMVECTOR v = XMLoadUByteN4(sPtr++);
                 v = XMVectorSwizzle<2, 1, 0, 3>(v);
-                if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSelect(g_XMIdentityR3, v, g_XMSelect1110);
             }
             return true;
@@ -1494,9 +1494,9 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             const XMUNIBBLE4 * __restrict sPtr = static_cast<const XMUNIBBLE4*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(XMUNIBBLE4) + 1); icount += sizeof(XMUNIBBLE4))
             {
+                if (dPtr >= ePtr) break;
                 XMVECTOR v = XMLoadUNibble4(sPtr++);
                 v = XMVectorMultiply(v, s_Scale);
-                if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSwizzle<2, 1, 0, 3>(v);
             }
             return true;
@@ -1563,11 +1563,11 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
             const uint8_t * __restrict sPtr = static_cast<const uint8_t*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(uint8_t) + 1); icount += sizeof(uint8_t))
             {
+                if (dPtr >= ePtr) break;
                 XMUNIBBLE4 nibble;
                 nibble.v = static_cast<uint16_t>(*sPtr++);
                 XMVECTOR v = XMLoadUNibble4(&nibble);
                 v = XMVectorMultiply(v, s_Scale);
-                if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSelect(g_XMIdentityR3, v, g_XMSelect1100);
             }
             return true;
