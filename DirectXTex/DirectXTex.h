@@ -194,6 +194,9 @@ namespace DirectX
         WIC_FLAGS_IGNORE_SRGB           = 0x20,
             // Ignores sRGB metadata if present in the file
 
+        WIC_FLAGS_FORCE_SRGB            = 0x40,
+            // Writes sRGB metadata into the file reguardless of format
+
         WIC_FLAGS_DITHER                = 0x10000,
             // Use ordered 4x4 dithering for any required conversions
 
