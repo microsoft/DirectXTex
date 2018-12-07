@@ -570,6 +570,7 @@ namespace
     // Encodes image metadata
     //-------------------------------------------------------------------------------------
     HRESULT EncodeMetadata(
+        DWORD flags,
         _In_ IWICBitmapFrameEncode* frame,
         const GUID& containerFormat,
         DXGI_FORMAT format)
@@ -584,7 +585,7 @@ namespace
             PROPVARIANT value;
             PropVariantInit(&value);
 
-            bool sRGB = IsSRGB(format);
+            bool sRGB = ((flags & WIC_FLAGS_FORCE_LINEAR) == 0) && ((flags & WIC_FLAGS_FORCE_SRGB) != 0 || IsSRGB(format));
 
             value.vt = VT_LPSTR;
             value.pszVal = const_cast<char*>("DirectXTex");
@@ -715,7 +716,7 @@ namespace
             return E_FAIL;
         }
 
-        hr = EncodeMetadata(frame, containerFormat, image.format);
+        hr = EncodeMetadata(flags, frame, containerFormat, image.format);
         if (FAILED(hr))
             return hr;
 
