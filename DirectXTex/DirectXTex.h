@@ -197,6 +197,9 @@ namespace DirectX
         WIC_FLAGS_FORCE_SRGB            = 0x40,
             // Writes sRGB metadata into the file reguardless of format
 
+        WIC_FLAGS_FORCE_LINEAR          = 0x80,
+            // Writes linear gamma metadata into the file reguardless of format
+
         WIC_FLAGS_DITHER                = 0x10000,
             // Use ordered 4x4 dithering for any required conversions
 

@@ -585,7 +585,7 @@ namespace
             PROPVARIANT value;
             PropVariantInit(&value);
 
-            bool sRGB = IsSRGB(format) || (flags & WIC_FLAGS_FORCE_SRGB) != 0;
+            bool sRGB = ((flags & WIC_FLAGS_FORCE_LINEAR) == 0) && ((flags & WIC_FLAGS_FORCE_SRGB) != 0 || IsSRGB(format));
 
             value.vt = VT_LPSTR;
             value.pszVal = const_cast<char*>("DirectXTex");
