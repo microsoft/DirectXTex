@@ -75,6 +75,7 @@ enum OPTIONS
     OPT_NOLOGO,
     OPT_TIMING,
     OPT_SEPALPHA,
+    OPT_NO_WIC,
     OPT_TYPELESS_UNORM,
     OPT_TYPELESS_FLOAT,
     OPT_PREMUL_ALPHA,
@@ -101,6 +102,7 @@ enum OPTIONS
     OPT_TONEMAP,
     OPT_X2_BIAS,
     OPT_PRESERVE_ALPHA_COVERAGE,
+    OPT_INVERT_Y,
     OPT_FILELIST,
     OPT_ROTATE_COLOR,
     OPT_PAPER_WHITE_NITS,
@@ -160,6 +162,7 @@ const SValue g_pOptions[] =
     { L"nologo",        OPT_NOLOGO },
     { L"timing",        OPT_TIMING },
     { L"sepalpha",      OPT_SEPALPHA },
+    { L"nowic",         OPT_NO_WIC },
     { L"tu",            OPT_TYPELESS_UNORM },
     { L"tf",            OPT_TYPELESS_FLOAT },
     { L"pmalpha",       OPT_PREMUL_ALPHA },
@@ -186,6 +189,7 @@ const SValue g_pOptions[] =
     { L"tonemap",       OPT_TONEMAP },
     { L"x2bias",        OPT_X2_BIAS },
     { L"keepcoverage",  OPT_PRESERVE_ALPHA_COVERAGE },
+    { L"inverty",       OPT_INVERT_Y },
     { L"flist",         OPT_FILELIST },
     { L"rotatecolor",   OPT_ROTATE_COLOR },
     { L"nits",          OPT_PAPER_WHITE_NITS },
@@ -430,7 +434,7 @@ const SValue g_pFeatureLevels[] =   // valid feature levels for -fl for maximimu
 
 namespace
 {
-    inline HANDLE safe_handle(HANDLE h) { return (h == INVALID_HANDLE_VALUE) ? 0 : h; }
+    inline HANDLE safe_handle(HANDLE h) { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
     struct handle_closer { void operator()(HANDLE h) { assert(h != INVALID_HANDLE_VALUE); if (h) CloseHandle(h); } };
 
@@ -438,7 +442,7 @@ namespace
 
     struct find_closer { void operator()(HANDLE h) { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
 
-    typedef public std::unique_ptr<void, find_closer> ScopedFindHandle;
+    typedef std::unique_ptr<void, find_closer> ScopedFindHandle;
 
     inline static bool ispow2(size_t x)
     {
@@ -576,16 +580,16 @@ namespace
 
     void PrintInfo(const TexMetadata& info)
     {
-        wprintf(L" (%Iux%Iu", info.width, info.height);
+        wprintf(L" (%zux%zu", info.width, info.height);
 
         if (TEX_DIMENSION_TEXTURE3D == info.dimension)
-            wprintf(L"x%Iu", info.depth);
+            wprintf(L"x%zu", info.depth);
 
         if (info.mipLevels > 1)
-            wprintf(L",%Iu", info.mipLevels);
+            wprintf(L",%zu", info.mipLevels);
 
         if (info.arraySize > 1)
-            wprintf(L",%Iu", info.arraySize);
+            wprintf(L",%zu", info.arraySize);
 
         wprintf(L" ");
         PrintFormat(info.format);
@@ -709,6 +713,7 @@ namespace
         wprintf(L"   -vflip              vertical flip of source image\n");
         wprintf(L"   -sepalpha           resize/generate mips alpha channel separately\n");
         wprintf(L"                       from color channels\n");
+        wprintf(L"   -nowic              Force non-WIC filtering\n");
         wprintf(L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
         wprintf(L"   -pmalpha            convert final texture to use premultiplied alpha\n");
         wprintf(L"   -alpha              convert premultiplied alpha to straight alpha\n");
@@ -745,10 +750,11 @@ namespace
             L"                       (defaults to 1.0)\n");
         wprintf(L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n");
         wprintf(L"   -rotatecolor <rot>  rotates color primaries and/or applies a curve\n");
-        wprintf(L"   -nits <value>       paper-white value in nits to use for HDR10 (defaults to 200.0)\n");
+        wprintf(L"   -nits <value>       paper-white value in nits to use for HDR10 (def: 200.0)\n");
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
         wprintf(L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n");
         wprintf(L"   -keepcoverage <ref> Preserve alpha coverage in generated mips for alpha test ref\n");
+        wprintf(L"   -inverty            Invert Y (i.e. green) channel values\n");
         wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
 
         wprintf(L"\n   <format>: ");
@@ -1199,7 +1205,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             switch (dwOption)
             {
             case OPT_WIDTH:
-                if (swscanf_s(pValue, L"%Iu", &width) != 1)
+                if (swscanf_s(pValue, L"%zu", &width) != 1)
                 {
                     wprintf(L"Invalid value specified with -w (%ls)\n", pValue);
                     wprintf(L"\n");
@@ -1209,7 +1215,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_HEIGHT:
-                if (swscanf_s(pValue, L"%Iu", &height) != 1)
+                if (swscanf_s(pValue, L"%zu", &height) != 1)
                 {
                     wprintf(L"Invalid value specified with -h (%ls)\n", pValue);
                     printf("\n");
@@ -1219,7 +1225,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_MIPLEVELS:
-                if (swscanf_s(pValue, L"%Iu", &mipLevels) != 1)
+                if (swscanf_s(pValue, L"%zu", &mipLevels) != 1)
                 {
                     wprintf(L"Invalid value specified with -m (%ls)\n", pValue);
                     wprintf(L"\n");
@@ -1279,6 +1285,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case OPT_SEPALPHA:
                 dwFilterOpts |= TEX_FILTER_SEPARATE_ALPHA;
+                break;
+
+            case OPT_NO_WIC:
+                dwFilterOpts |= TEX_FILTER_FORCE_NON_WIC;
                 break;
 
             case OPT_PREFIX:
@@ -2486,30 +2496,73 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             cimage.reset();
         }
 
+        // --- Invert Y Channel --------------------------------------------------------
+        if (dwOptions & (DWORD64(1) << OPT_INVERT_Y))
+        {
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
+            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+            {
+                static const XMVECTORU32 s_selecty = { { { XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_0 } } };
+
+                UNREFERENCED_PARAMETER(y);
+
+                for (size_t j = 0; j < width; ++j)
+                {
+                    XMVECTOR value = inPixels[j];
+
+                    XMVECTOR inverty = XMVectorSubtract(g_XMOne, value);
+
+                    outPixels[j] = XMVectorSelect(value, inverty, s_selecty);
+                }
+            }, *timage);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [inverty] (%x)\n", hr);
+                return 1;
+            }
+
+            auto& tinfo = timage->GetMetadata();
+            tinfo;
+
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.format == tinfo.format);
+            assert(info.dimension == tinfo.dimension);
+
+            image.swap(timage);
+            cimage.reset();
+        }
+
         // --- Determine whether preserve alpha coverage is required (if requested) ----
         if (preserveAlphaCoverageRef > 0.0f && HasAlpha(info.format) && !image->IsAlphaAllOpaque())
         {
             preserveAlphaCoverage = true;
         }
-
+      
         // --- Generate mips -----------------------------------------------------------
+        DWORD dwFilter3D = dwFilter;
         if (!ispow2(info.width) || !ispow2(info.height) || !ispow2(info.depth))
         {
-            if (info.dimension == TEX_DIMENSION_TEXTURE3D)
-            {
-                if (!tMips)
-                {
-                    tMips = 1;
-                }
-                else
-                {
-                    wprintf(L"\nERROR: Cannot generate mips for non-power-of-2 volume textures\n");
-                    return 1;
-                }
-            }
-            else if (!tMips || info.mipLevels != 1)
+            if (!tMips || info.mipLevels != 1)
             {
                 nonpow2warn = true;
+            }
+
+            if (info.dimension == TEX_DIMENSION_TEXTURE3D)
+            {
+                // Must force triangle filter for non-power-of-2 volume textures to get correct results
+                dwFilter3D = TEX_FILTER_TRIANGLE;
             }
         }
 
@@ -2616,7 +2669,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             if (info.dimension == TEX_DIMENSION_TEXTURE3D)
             {
-                hr = GenerateMipMaps3D(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFilter | dwFilterOpts, tMips, *timage);
+                hr = GenerateMipMaps3D(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFilter3D | dwFilterOpts, tMips, *timage);
             }
             else
             {

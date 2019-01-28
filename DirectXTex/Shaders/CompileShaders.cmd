@@ -17,6 +17,7 @@ if exist %PCFXC% goto continue
 set PCFXC=fxc.exe
 
 :continue
+@if not exist Compiled mkdir Compiled
 call :CompileShader BC7Encode TryMode456CS
 call :CompileShader BC7Encode TryMode137CS
 call :CompileShader BC7Encode TryMode02CS

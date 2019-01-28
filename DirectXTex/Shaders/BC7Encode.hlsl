@@ -7,7 +7,7 @@
 // Licensed under the MIT License.
 //--------------------------------------------------------------------------------------
 
-//#define REF_DEVICE
+#define REF_DEVICE
 
 #define CHAR_LENGTH			8
 #define NCHANNELS			4
@@ -680,16 +680,16 @@ void TryMode137CS( uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID ) // mode
         if (1 == g_mode_id)
         {
             // in mode 1, there is only one p bit per subset
-            max_p = 4;
+            max_p = 2;
         }
         else
         {
             // in mode 3 7, there are two p bits per subset, one for each end point
-            max_p = 16;
+            max_p = 4;
         }
 
-        uint rotation = 0;
-        uint error = MAX_UINT;
+        uint final_p[2] = { 0, 0 };
+        uint error[2] = { MAX_UINT, MAX_UINT };
         for ( uint p = 0; p < max_p; p ++ )
         {
             endPoint[0] = endPointBackup[0];
@@ -699,15 +699,15 @@ void TryMode137CS( uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID ) // mode
             {
                 if (g_mode_id == 1)
                 {
-                    compress_endpoints1( endPoint[i], (p >> i) & 1 );
+                    compress_endpoints1( endPoint[i], p );
                 }
                 else if (g_mode_id == 3)
                 {
-                    compress_endpoints3( endPoint[i], uint2(p >> (i * 2 + 0), p >> (i * 2 + 1)) & 1 );
+                    compress_endpoints3( endPoint[i], uint2(p, p >> 1) & 1 );
                 }
                 else if (g_mode_id == 7)
                 {
-                    compress_endpoints7( endPoint[i], uint2(p >> (i * 2 + 0), p >> (i * 2 + 1)) & 1 );
+                    compress_endpoints7( endPoint[i], uint2(p, p >> 1) & 1 );
                 }
             }
 
@@ -748,10 +748,12 @@ void TryMode137CS( uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID ) // mode
                 step_selector = 1;  // mode 1 has 3 bit index
             }
 
-            uint p_error = 0;            
+            uint p_error[2] = { 0, 0 };
             for ( i = 0; i < 16; i ++ )
             {
-                if (((bits >> i) & 0x01) == 1)
+                uint subset_index = (bits >> i) & 0x01;
+
+                if (subset_index == 1)
                 {
                     dotProduct = dot( span[1], shared_temp[threadBase + i].pixel - endPoint[1][0] );
                     color_index = (span_norm_sqr[1] <= 0 || dotProduct <= 0) ? 0
@@ -764,8 +766,6 @@ void TryMode137CS( uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID ) // mode
                         : ((dotProduct < span_norm_sqr[0]) ? aStep[step_selector][uint(dotProduct * 63.49999 / span_norm_sqr[0])] : aStep[step_selector][63]);
                 }
 
-                uint subset_index = (bits >> i) & 0x01;
-
                 pixel_r = ((64 - aWeight[step_selector][color_index]) * endPoint[subset_index][0]
                     + aWeight[step_selector][color_index] * endPoint[subset_index][1] + 32) >> 6;
                 if (g_mode_id != 7)
@@ -776,20 +776,32 @@ void TryMode137CS( uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID ) // mode
                 uint4 pixel = shared_temp[threadBase + i].pixel;
                 Ensure_A_Is_Larger( pixel_r, pixel );
                 pixel_r -= pixel;
-                p_error += ComputeError(pixel_r, pixel_r);
+                uint pixel_error = ComputeError(pixel_r, pixel_r);
+                if ( subset_index == 1 )
+                    p_error[1] += pixel_error;
+                else
+                    p_error[0] += pixel_error;
             }
 
-            if (p_error < error)
+            for ( i = 0; i < 2; i++ )
             {
-                error = p_error;
-                rotation = p;
+                if (p_error[i] < error[i])
+                {
+                    error[i] = p_error[i];
+                    final_p[i] = p;
+                }
             }
         }
 
-        shared_temp[GI].error = error;
+        shared_temp[GI].error = error[0] + error[1];
         shared_temp[GI].mode = g_mode_id;
         shared_temp[GI].partition = partition;
-        shared_temp[GI].rotation = rotation; // mode 1 3 7 don't have rotation, we use rotation for p bits
+
+        // mode 1 3 7 don't have rotation, we use rotation for p bits
+        if ( g_mode_id == 1 )
+            shared_temp[GI].rotation = (final_p[1] << 1) | final_p[0];
+        else
+            shared_temp[GI].rotation = (final_p[1] << 2) | final_p[0];
     }
     GroupMemoryBarrierWithGroupSync();
 
@@ -955,15 +967,15 @@ void TryMode02CS( uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID ) // mode 
         uint max_p;
         if (0 == g_mode_id)
         {
-            max_p = 64; // changed from 32 to 64
+            max_p = 4;
         }
         else
         {
             max_p = 1;
         }
 
-        uint rotation = 0;
-        uint error = MAX_UINT;
+        uint final_p[3] = { 0, 0, 0 };
+        uint error[3] = { MAX_UINT, MAX_UINT, MAX_UINT };
         for ( uint p = 0; p < max_p; p ++ )
         {
             endPoint[0] = endPointBackup[0];
@@ -974,7 +986,7 @@ void TryMode02CS( uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID ) // mode 
             {
                 if (0 == g_mode_id)
                 {
-                    compress_endpoints0( endPoint[i], uint2(p >> (i * 2 + 0), p >> (i * 2 + 1)) & 1 );
+                    compress_endpoints0( endPoint[i], uint2(p, p >> 1) & 1 );
                 }
                 else
                 {
@@ -1006,7 +1018,7 @@ void TryMode02CS( uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID ) // mode 
                 }
             }
 
-            uint p_error = 0;
+            uint p_error[3] = { 0, 0, 0 };
             for ( i = 0; i < 16; i ++ )
             {
                 uint subset_index = ( bits2 >> ( i * 2 ) ) & 0x03;
@@ -1036,19 +1048,30 @@ void TryMode02CS( uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID ) // mode 
                 uint4 pixel = shared_temp[threadBase + i].pixel;                
                 Ensure_A_Is_Larger( pixel_r, pixel );
                 pixel_r -= pixel;
-                p_error += ComputeError(pixel_r, pixel_r);
+
+                uint pixel_error = ComputeError(pixel_r, pixel_r);
+
+                if ( subset_index == 2 )
+                    p_error[2] += pixel_error;
+                else if ( subset_index == 1 )
+                    p_error[1] += pixel_error;
+                else
+                    p_error[0] += pixel_error;
             }
 
-            if (p_error < error)
+            for ( i = 0; i < 3; i++ )
             {
-                error = p_error;
-                rotation = p;    // Borrow rotation for p
+                if (p_error[i] < error[i])
+                {
+                    error[i] = p_error[i];
+                    final_p[i] = p;    // Borrow rotation for p
+                }
             }
         }
 
-        shared_temp[GI].error = error;
+        shared_temp[GI].error = error[0] + error[1] + error[2];
         shared_temp[GI].partition = partition;
-        shared_temp[GI].rotation = rotation;
+        shared_temp[GI].rotation = (final_p[2] << 4) | (final_p[1] << 2) | final_p[0];
     }
     GroupMemoryBarrierWithGroupSync();
 
@@ -1562,8 +1585,7 @@ void EncodeBlockCS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
 
 uint4 quantize( uint4 color, uint uPrec )
 {
-    uint4 rnd = min(255, color + (1 << (7 - uPrec)));
-    return rnd >> (8 - uPrec);
+	return (((color << 8) + color) * ((1 << uPrec) - 1) + 32768) >> 16;
 }
 
 uint4 unquantize( uint4 color, uint uPrec )

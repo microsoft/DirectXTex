@@ -30,7 +30,7 @@
 
 #include <ocidl.h>
 
-#define DIRECTX_TEX_VERSION 152
+#define DIRECTX_TEX_VERSION 161
 
 struct IWICImagingFactory;
 struct IWICMetadataQueryReader;
@@ -71,7 +71,7 @@ namespace DirectX
         CP_FLAGS_8BPP               = 0x40000,  // Override with a legacy 8 bits-per-pixel format size
     };
 
-    void __cdecl ComputePitch(
+    HRESULT __cdecl ComputePitch(
         _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height,
         _Out_ size_t& rowPitch, _Out_ size_t& slicePitch, _In_ DWORD flags = CP_FLAGS_NONE);
 
@@ -194,6 +194,12 @@ namespace DirectX
         WIC_FLAGS_IGNORE_SRGB           = 0x20,
             // Ignores sRGB metadata if present in the file
 
+        WIC_FLAGS_FORCE_SRGB            = 0x40,
+            // Writes sRGB metadata into the file reguardless of format
+
+        WIC_FLAGS_FORCE_LINEAR          = 0x80,
+            // Writes linear gamma metadata into the file reguardless of format
+
         WIC_FLAGS_DITHER                = 0x10000,
             // Use ordered 4x4 dithering for any required conversions
 
@@ -257,13 +263,13 @@ namespace DirectX
     class ScratchImage
     {
     public:
-        ScratchImage()
+        ScratchImage() noexcept
             : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr) {}
-        ScratchImage(ScratchImage&& moveFrom)
+        ScratchImage(ScratchImage&& moveFrom) noexcept
             : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr) { *this = std::move(moveFrom); }
         ~ScratchImage() { Release(); }
 
-        ScratchImage& __cdecl operator= (ScratchImage&& moveFrom);
+        ScratchImage& __cdecl operator= (ScratchImage&& moveFrom) noexcept;
 
         ScratchImage(const ScratchImage&) = delete;
         ScratchImage& operator=(const ScratchImage&) = delete;
@@ -308,11 +314,11 @@ namespace DirectX
     class Blob
     {
     public:
-        Blob() : m_buffer(nullptr), m_size(0) {}
-        Blob(Blob&& moveFrom) : m_buffer(nullptr), m_size(0) { *this = std::move(moveFrom); }
+        Blob() noexcept : m_buffer(nullptr), m_size(0) {}
+        Blob(Blob&& moveFrom) noexcept : m_buffer(nullptr), m_size(0) { *this = std::move(moveFrom); }
         ~Blob() { Release(); }
 
-        Blob& __cdecl operator= (Blob&& moveFrom);
+        Blob& __cdecl operator= (Blob&& moveFrom) noexcept;
 
         Blob(const Blob&) = delete;
         Blob& operator=(const Blob&) = delete;

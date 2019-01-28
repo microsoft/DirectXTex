@@ -149,14 +149,14 @@ namespace
 
         IWICImagingFactory2* factory = nullptr;
         (void)InitOnceExecuteOnce(&s_initOnce,
-            [](PINIT_ONCE, PVOID, PVOID *factory) -> BOOL
+            [](PINIT_ONCE, PVOID, PVOID *ifactory) -> BOOL
             {
                 return SUCCEEDED( CoCreateInstance(
                     CLSID_WICImagingFactory2,
                     nullptr,
                     CLSCTX_INPROC_SERVER,
                     __uuidof(IWICImagingFactory2),
-                    factory) ) ? TRUE : FALSE;
+                    ifactory) ) ? TRUE : FALSE;
             }, nullptr, reinterpret_cast<LPVOID*>(&factory));
 
         return factory;
@@ -278,12 +278,13 @@ namespace
 
         assert(width > 0 && height > 0);
 
+        if (maxsize > UINT32_MAX)
+            return E_INVALIDARG;
+
         if (!maxsize)
         {
             maxsize = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
         }
-
-        assert(maxsize > 0);
 
         UINT twidth, theight;
         if (width > maxsize || height > maxsize)
@@ -314,7 +315,7 @@ namespace
             return hr;
 
         WICPixelFormatGUID convertGUID;
-        memcpy(&convertGUID, &pixelFormat, sizeof(WICPixelFormatGUID));
+        memcpy_s(&convertGUID, sizeof(WICPixelFormatGUID), &pixelFormat, sizeof(GUID));
 
         size_t bpp = 0;
 
@@ -325,7 +326,7 @@ namespace
             {
                 if (memcmp(&g_WICConvert[i].source, &pixelFormat, sizeof(WICPixelFormatGUID)) == 0)
                 {
-                    memcpy(&convertGUID, &g_WICConvert[i].target, sizeof(WICPixelFormatGUID));
+                    memcpy_s(&convertGUID, sizeof(WICPixelFormatGUID), &g_WICConvert[i].target, sizeof(GUID));
 
                     format = _WICToDXGI(g_WICConvert[i].target);
                     assert(format != DXGI_FORMAT_UNKNOWN);
@@ -386,8 +387,14 @@ namespace
         }
 
         // Allocate memory for decoded image
-        size_t rowPitch = (twidth * bpp + 7) / 8;
-        size_t imageSize = rowPitch * theight;
+        uint64_t rowBytes = (uint64_t(twidth) * uint64_t(bpp) + 7u) / 8u;
+        uint64_t numBytes = rowBytes * uint64_t(height);
+
+        if (rowBytes > UINT32_MAX || numBytes > UINT32_MAX)
+            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+        auto rowPitch = static_cast<size_t>(rowBytes);
+        auto imageSize = static_cast<size_t>(numBytes);
 
         decodedData.reset(new (std::nothrow) uint8_t[imageSize]);
         if (!decodedData)
@@ -399,7 +406,7 @@ namespace
             && theight == height)
         {
             // No format conversion or resize needed
-            hr = frame->CopyPixels(0, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), decodedData.get());
+            hr = frame->CopyPixels(nullptr, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), decodedData.get());
             if (FAILED(hr))
                 return hr;
         }
@@ -427,7 +434,7 @@ namespace
             if (memcmp(&convertGUID, &pfScaler, sizeof(GUID)) == 0)
             {
                 // No format conversion needed
-                hr = scaler->CopyPixels(0, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), decodedData.get());
+                hr = scaler->CopyPixels(nullptr, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), decodedData.get());
                 if (FAILED(hr))
                     return hr;
             }
@@ -449,7 +456,7 @@ namespace
                 if (FAILED(hr))
                     return hr;
 
-                hr = FC->CopyPixels(0, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), decodedData.get());
+                hr = FC->CopyPixels(nullptr, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), decodedData.get());
                 if (FAILED(hr))
                     return hr;
             }
@@ -477,7 +484,7 @@ namespace
             if (FAILED(hr))
                 return hr;
 
-            hr = FC->CopyPixels(0, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), decodedData.get());
+            hr = FC->CopyPixels(nullptr, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), decodedData.get());
             if (FAILED(hr))
                 return hr;
         }
@@ -489,7 +496,7 @@ namespace
         D3D12_RESOURCE_DESC desc = {};
         desc.Width = twidth;
         desc.Height = theight;
-        desc.MipLevels = (uint16_t)mipCount;
+        desc.MipLevels = static_cast<UINT16>(mipCount);
         desc.DepthOrArraySize = 1;
         desc.Format = format;
         desc.SampleDesc.Count = 1;
@@ -513,7 +520,7 @@ namespace
             return hr;
         }
 
-        _Analysis_assume_(tex != 0);
+        _Analysis_assume_(tex != nullptr);
 
         subresource.pData = decodedData.get();
         subresource.RowPitch = rowPitch;
@@ -592,7 +599,7 @@ HRESULT DirectX::LoadWICTextureFromMemoryEx(
 
     // Initialize WIC
     ComPtr<IWICBitmapDecoder> decoder;
-    hr = pWIC->CreateDecoderFromStream( stream.Get(), 0, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf() );
+    hr = pWIC->CreateDecoderFromStream( stream.Get(), nullptr, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -663,7 +670,7 @@ HRESULT DirectX::LoadWICTextureFromFileEx(
 
     // Initialize WIC
     ComPtr<IWICBitmapDecoder> decoder;
-    HRESULT hr = pWIC->CreateDecoderFromFilename( fileName, 0, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf() );
+    HRESULT hr = pWIC->CreateDecoderFromFilename( fileName, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf() );
     if ( FAILED(hr) )
         return hr;
 
@@ -689,7 +696,7 @@ HRESULT DirectX::LoadWICTextureFromFileEx(
             pstrName++;
         }
 
-        if (texture != 0 && *texture != 0)
+        if (texture && *texture)
         {
             (*texture)->SetName(pstrName);
         }

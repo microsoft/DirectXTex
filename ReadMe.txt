@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-February 9, 2018
+November 16, 2018
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -13,10 +13,10 @@ use of the Windows Image Component (WIC) APIs. It also includes simple .TGA and 
 readers and writers since these image file formats are commonly used for texture content
 processing pipelines, but are not currently supported by a built-in WIC codec.
 
-This code is designed to build with Visual Studio 2013 Update 5, Visual Studio 2015 Update 3,
-or Visual Studio 2017. It is recommended that you make use of VS 2015 Update 3, Windows Tools
-1.4.1, and the Windows 10 Anniversary Update SDK (14393) or VS 2017 (15.5 update) with the
-Windows 10 Fall Creators Update SDK (16299).
+This code is designed to build with Visual Studio 2015 Update 3 or Visual Studio 2017.
+It is recommended that you make use of VS 2015 Update 3, Windows Tools 1.4.1, and the
+Windows 10 Anniversary Update SDK (14393) -or- VS 2017 (15.9 update) with the
+Windows 10 October 2018 Update SDK (17763).
 
 DirectXTex\
     This contains the DirectXTex library. This includes a full-featured DDS reader and writer
@@ -122,12 +122,62 @@ RELEASE NOTES
 
 * The VS 2017 projects make use of /permissive- for improved C++ standard conformance. Use of a Windows 10 SDK prior to
   the Fall Creators Update (16299) or an Xbox One XDK prior to June 2017 QFE 4 may result in failures due to problems
-  with the system headers. You can work around these by deleting /permissive- from the project files which is found
-  in the <AdditionalOptions> element.
+  with the system headers. You can work around these by disabling this switch in the project files which is found
+  in the <ConformanceMode> elements.
+
+* The VS 2017 projects require the 15.5 update or later. For UWP and Win32 classic desktop projects with the 15.5 -
+  15.7 updates, you need to install the standalone Windows 10 SDK (17763) which is otherwise included in the 15.8.6 or
+  later update. Older VS 2017 updates will fail to load the projects due to use of the <ConformanceMode> element.
+  If using the 15.5 or 15.6 updates, you will see "warning D9002: ignoring unknown option '/Zc:__cplusplus'" because
+  this switch isn't supported until 15.7. It is safe to ignore this warning, or you can edit the project files
+  <AdditionalOptions> elements.
+
+* The UWP projects include configurations for the ARM64 platform. These require VS 2017 (15.9 update) to build.
 
 
 ------------------------------------
 RELEASE HISTORY
+
+November 16, 2018
+    VS 2017 updated for Windows 10 October 2018 Update SDK (17763)
+    ARM64 platform configurations added to UWP projects
+
+October 25, 2018
+    Use UTF-8 instead of ANSI for narrow strings
+    Updated D3DX12 internal copy to latest version
+    Minor code cleanup
+
+August 17, 2018
+    Fixed problem loading legacy DDS files containing FOURCC pixel formats with ALPHAPIXELS also set
+    Fixed FlipRotate bug when doing 180 degree rotation
+    Updated for VS 2017 15.8
+
+August 5, 2018
+    Improved support and validation for 16k textures (requires x64 native)
+    ComputePitch now returns an HRESULT
+    Fix BC7 GPU shaders on WARP device
+
+July 3, 2018
+    BC7 CPU codec fix for 3subsets/-bcmax and minor optimization
+    BC7 GPU codec quantize fix and pbit optimization
+    BC6H CPU codec bounds checking fix
+    Code and project cleanup
+
+May 31, 2018
+    Fix for IsAlphaAllOpaque for 'near opaque' values
+    VS 2017 updated for Windows 10 April 2018 Update SDK (17134)
+
+May 11, 2018
+    Workaround for WIC issue doing FP32->FP16 conversions
+    Updated for VS 2017 15.7 update warnings
+    Code and project cleanup
+    Retired VS 2013 projects
+
+April 23, 2018
+    Code cleanup
+    texconv: Updated with support reading "Extended BMP" files using DXTn
+    texconv: Updated to handle non-power-of-2 volume textures with mipmaps
+    texassemble, texconv, texdiag: support format name aliases like DXT3, RGBA, BGRA, FP16, etc. in addition to truncated DXGI_FORMAT_ values
 
 February 9, 2018
     HDR (RGBE Radiance) file format reader updated to support #?RGBE signature

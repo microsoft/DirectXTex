@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexp.h"
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -34,6 +34,10 @@ namespace
         IWICImagingFactory* pWIC = GetWICFactory(iswic2);
         if (!pWIC)
             return E_NOINTERFACE;
+
+        if (srcImage.rowPitch > UINT32_MAX || srcImage.slicePitch > UINT32_MAX
+            || destImage.rowPitch > UINT32_MAX || destImage.slicePitch > UINT32_MAX)
+            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
         ComPtr<IWICBitmap> source;
         HRESULT hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height), pfGUID,
@@ -70,7 +74,7 @@ namespace
         if (destImage.width != nwidth || destImage.height != nheight)
             return E_FAIL;
 
-        hr = FR->CopyPixels(0, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
+        hr = FR->CopyPixels(nullptr, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
         if (FAILED(hr))
             return hr;
 
@@ -80,7 +84,52 @@ namespace
 
     //-------------------------------------------------------------------------------------
     // Do conversion, flip/rotate using WIC, conversion cycle
+    //
+    // For large images we have to use F16 instead of F32 to avoid exceeding the 32-bit
+    // memory limitations of WIC.
     //-------------------------------------------------------------------------------------
+    HRESULT PerformFlipRotateViaF16(
+        const Image& srcImage,
+        DWORD flags,
+        const Image& destImage)
+    {
+        if (!srcImage.pixels || !destImage.pixels)
+            return E_POINTER;
+
+        assert(srcImage.format != DXGI_FORMAT_R16G16B16A16_FLOAT);
+        assert(srcImage.format == destImage.format);
+
+        ScratchImage temp;
+        HRESULT hr = _ConvertToR16G16B16A16(srcImage, temp);
+        if (FAILED(hr))
+            return hr;
+
+        const Image *tsrc = temp.GetImage(0, 0, 0);
+        if (!tsrc)
+            return E_POINTER;
+
+        ScratchImage rtemp;
+        hr = rtemp.Initialize2D(DXGI_FORMAT_R16G16B16A16_FLOAT, destImage.width, destImage.height, 1, 1);
+        if (FAILED(hr))
+            return hr;
+
+        const Image *tdest = rtemp.GetImage(0, 0, 0);
+        if (!tdest)
+            return E_POINTER;
+
+        hr = PerformFlipRotateUsingWIC(*tsrc, flags, GUID_WICPixelFormat64bppRGBAHalf, *tdest);
+        if (FAILED(hr))
+            return hr;
+
+        temp.Release();
+
+        hr = _ConvertFromR16G16B16A16(*tdest, destImage);
+        if (FAILED(hr))
+            return hr;
+
+        return S_OK;
+    }
+
     HRESULT PerformFlipRotateViaF32(
         const Image& srcImage,
         DWORD flags,
@@ -161,7 +210,9 @@ HRESULT DirectX::FlipRotate(
     static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical), "TEX_FR_FLIP_VERTICAL no longer matches WIC");
 
     // Only supports 90, 180, 270, or no rotation flags... not a combination of rotation flags
-    switch (flags & (TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270))
+    int rotateMode = static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270));
+
+    switch (rotateMode)
     {
     case 0:
     case TEX_FR_ROTATE90:
@@ -176,7 +227,7 @@ HRESULT DirectX::FlipRotate(
     size_t nwidth = srcImage.width;
     size_t nheight = srcImage.height;
 
-    if (flags & (TEX_FR_ROTATE90 | TEX_FR_ROTATE270))
+    if ((rotateMode == TEX_FR_ROTATE90) || (rotateMode == TEX_FR_ROTATE270))
     {
         nwidth = srcImage.height;
         nheight = srcImage.width;
@@ -202,7 +253,16 @@ HRESULT DirectX::FlipRotate(
     else
     {
         // Case 2: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back
-        hr = PerformFlipRotateViaF32(srcImage, flags, *rimage);
+        uint64_t expandedSize = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX)
+        {
+            // Image is too large for float32, so have to use float16 instead
+            hr = PerformFlipRotateViaF16(srcImage, flags, *rimage);
+        }
+        else
+        {
+            hr = PerformFlipRotateViaF32(srcImage, flags, *rimage);
+        }
     }
 
     if (FAILED(hr))
@@ -243,7 +303,9 @@ HRESULT DirectX::FlipRotate(
     static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical), "TEX_FR_FLIP_VERTICAL no longer matches WIC");
 
     // Only supports 90, 180, 270, or no rotation flags... not a combination of rotation flags
-    switch (flags & (TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270))
+    int rotateMode = static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270));
+
+    switch (rotateMode)
     {
     case 0:
     case TEX_FR_ROTATE90:
@@ -258,7 +320,7 @@ HRESULT DirectX::FlipRotate(
     TexMetadata mdata2 = metadata;
 
     bool flipwh = false;
-    if (flags & (TEX_FR_ROTATE90 | TEX_FR_ROTATE270))
+    if ((rotateMode == TEX_FR_ROTATE90) || (rotateMode == TEX_FR_ROTATE270))
     {
         flipwh = true;
         mdata2.width = metadata.height;
@@ -325,7 +387,16 @@ HRESULT DirectX::FlipRotate(
         else
         {
             // Case 2: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back
-            hr = PerformFlipRotateViaF32(src, flags, dst);
+            uint64_t expandedSize = uint64_t(src.width) * uint64_t(src.height) * sizeof(float) * 4;
+            if (expandedSize > UINT32_MAX)
+            {
+                // Image is too large for float32, so have to use float16 instead
+                hr = PerformFlipRotateViaF16(src, flags, dst);
+            }
+            else
+            {
+                hr = PerformFlipRotateViaF32(src, flags, dst);
+            }
         }
 
         if (FAILED(hr))

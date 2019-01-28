@@ -119,9 +119,9 @@ namespace
 {
     struct handle_closer { void operator()(HANDLE h) { if (h) CloseHandle(h); } };
 
-    typedef public std::unique_ptr<void, handle_closer> ScopedHandle;
+    typedef std::unique_ptr<void, handle_closer> ScopedHandle;
 
-    inline HANDLE safe_handle( HANDLE h ) { return (h == INVALID_HANDLE_VALUE) ? 0 : h; }
+    inline HANDLE safe_handle( HANDLE h ) { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
     template<UINT TNameLength>
     inline void SetDebugObjectName(_In_ ID3D11DeviceChild* resource, _In_ const char (&name)[TNameLength])
@@ -406,7 +406,7 @@ namespace
     //--------------------------------------------------------------------------------------
     // Get surface information for a particular format
     //--------------------------------------------------------------------------------------
-    void GetSurfaceInfo(
+    HRESULT GetSurfaceInfo(
         _In_ size_t width,
         _In_ size_t height,
         _In_ DXGI_FORMAT fmt,
@@ -414,9 +414,9 @@ namespace
         _Out_opt_ size_t* outRowBytes,
         _Out_opt_ size_t* outNumRows)
     {
-        size_t numBytes = 0;
-        size_t rowBytes = 0;
-        size_t numRows = 0;
+        uint64_t numBytes = 0;
+        uint64_t rowBytes = 0;
+        uint64_t numRows = 0;
 
         bool bc = false;
         bool packed = false;
@@ -477,19 +477,22 @@ namespace
             planar = true;
             bpe = 4;
             break;
+
+        default:
+            break;
         }
 
         if (bc)
         {
-            size_t numBlocksWide = 0;
+            uint64_t numBlocksWide = 0;
             if (width > 0)
             {
-                numBlocksWide = std::max<size_t>(1, (width + 3) / 4);
+                numBlocksWide = std::max<uint64_t>(1u, (uint64_t(width) + 3u) / 4u);
             }
-            size_t numBlocksHigh = 0;
+            uint64_t numBlocksHigh = 0;
             if (height > 0)
             {
-                numBlocksHigh = std::max<size_t>(1, (height + 3) / 4);
+                numBlocksHigh = std::max<uint64_t>(1u, (uint64_t(height) + 3u) / 4u);
             }
             rowBytes = numBlocksWide * bpe;
             numRows = numBlocksHigh;
@@ -497,42 +500,55 @@ namespace
         }
         else if (packed)
         {
-            rowBytes = ((width + 1) >> 1) * bpe;
-            numRows = height;
+            rowBytes = ((uint64_t(width) + 1u) >> 1) * bpe;
+            numRows = uint64_t(height);
             numBytes = rowBytes * height;
         }
         else if (fmt == DXGI_FORMAT_NV11)
         {
-            rowBytes = ((width + 3) >> 2) * 4;
-            numRows = height * 2; // Direct3D makes this simplifying assumption, although it is larger than the 4:1:1 data
+            rowBytes = ((uint64_t(width) + 3u) >> 2) * 4u;
+            numRows = uint64_t(height) * 2u; // Direct3D makes this simplifying assumption, although it is larger than the 4:1:1 data
             numBytes = rowBytes * numRows;
         }
         else if (planar)
         {
-            rowBytes = ((width + 1) >> 1) * bpe;
-            numBytes = (rowBytes * height) + ((rowBytes * height + 1) >> 1);
-            numRows = height + ((height + 1) >> 1);
+            rowBytes = ((uint64_t(width) + 1u) >> 1) * bpe;
+            numBytes = (rowBytes * uint64_t(height)) + ((rowBytes * uint64_t(height) + 1u) >> 1);
+            numRows = height + ((uint64_t(height) + 1u) >> 1);
         }
         else
         {
             size_t bpp = BitsPerPixel(fmt);
-            rowBytes = (width * bpp + 7) / 8; // round up to nearest byte
-            numRows = height;
+            if (!bpp)
+                return E_INVALIDARG;
+
+            rowBytes = (uint64_t(width) * bpp + 7u) / 8u; // round up to nearest byte
+            numRows = uint64_t(height);
             numBytes = rowBytes * height;
         }
 
+#if defined(_M_IX86) || defined(_M_ARM) || defined(_M_HYBRID_X86_ARM64)
+        static_assert(sizeof(size_t) == 4, "Not a 32-bit platform!");
+        if (numBytes > UINT32_MAX || rowBytes > UINT32_MAX || numRows > UINT32_MAX)
+            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+#else
+        static_assert(sizeof(size_t) == 8, "Not a 64-bit platform!");
+#endif
+
         if (outNumBytes)
         {
-            *outNumBytes = numBytes;
+            *outNumBytes = static_cast<size_t>(numBytes);
         }
         if (outRowBytes)
         {
-            *outRowBytes = rowBytes;
+            *outRowBytes = static_cast<size_t>(rowBytes);
         }
         if (outNumRows)
         {
-            *outNumRows = numRows;
+            *outNumRows = static_cast<size_t>(numRows);
         }
+
+        return S_OK;
     }
 
 
@@ -851,13 +867,12 @@ namespace
             size_t d = depth;
             for (size_t i = 0; i < mipCount; i++)
             {
-                GetSurfaceInfo(w,
-                    h,
-                    format,
-                    &NumBytes,
-                    &RowBytes,
-                    nullptr
-                );
+                HRESULT hr = GetSurfaceInfo(w, h, format, &NumBytes, &RowBytes, nullptr);
+                if (FAILED(hr))
+                    return hr;
+
+                if (NumBytes > UINT32_MAX || RowBytes > UINT32_MAX)
+                    return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
                 if ((mipCount <= 1) || !maxsize || (w <= maxsize && h <= maxsize && d <= maxsize))
                 {
@@ -959,9 +974,9 @@ namespace
                 initData,
                 &tex
             );
-            if (SUCCEEDED(hr) && tex != 0)
+            if (SUCCEEDED(hr) && tex)
             {
-                if (textureView != 0)
+                if (textureView)
                 {
                     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
                     SRVDesc.Format = format;
@@ -989,7 +1004,7 @@ namespace
                     }
                 }
 
-                if (texture != 0)
+                if (texture)
                 {
                     *texture = tex;
                 }
@@ -1029,9 +1044,9 @@ namespace
                 initData,
                 &tex
             );
-            if (SUCCEEDED(hr) && tex != 0)
+            if (SUCCEEDED(hr) && tex)
             {
-                if (textureView != 0)
+                if (textureView)
                 {
                     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
                     SRVDesc.Format = format;
@@ -1075,7 +1090,7 @@ namespace
                     }
                 }
 
-                if (texture != 0)
+                if (texture)
                 {
                     *texture = tex;
                 }
@@ -1106,9 +1121,9 @@ namespace
                 initData,
                 &tex
             );
-            if (SUCCEEDED(hr) && tex != 0)
+            if (SUCCEEDED(hr) && tex)
             {
-                if (textureView != 0)
+                if (textureView)
                 {
                     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
                     SRVDesc.Format = format;
@@ -1127,7 +1142,7 @@ namespace
                     }
                 }
 
-                if (texture != 0)
+                if (texture)
                 {
                     *texture = tex;
                 }
@@ -1308,8 +1323,8 @@ namespace
                 }
             }
             else if ((arraySize > D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) ||
-                (width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) ||
-                (height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION))
+                     (width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION) ||
+                     (height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION))
             {
                 return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
             }
@@ -1330,7 +1345,7 @@ namespace
         }
 
         bool autogen = false;
-        if (mipCount == 1 && d3dContext != 0 && textureView != 0) // Must have context and shader-view to auto generate mipmaps
+        if (mipCount == 1 && d3dContext && textureView) // Must have context and shader-view to auto generate mipmaps
         {
             // See if format is supported for auto-gen mipmaps (varies by feature level)
             UINT fmtSupport = 0;
@@ -1360,7 +1375,9 @@ namespace
             {
                 size_t numBytes = 0;
                 size_t rowBytes = 0;
-                GetSurfaceInfo(width, height, format, &numBytes, &rowBytes, nullptr);
+                hr = GetSurfaceInfo(width, height, format, &numBytes, &rowBytes, nullptr);
+                if (FAILED(hr))
+                    return hr;
 
                 if (numBytes > bitSize)
                 {
@@ -1369,6 +1386,9 @@ namespace
                     tex->Release();
                     return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
                 }
+
+                if (numBytes > UINT32_MAX || rowBytes > UINT32_MAX)
+                    return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
                 D3D11_SHADER_RESOURCE_VIEW_DESC desc;
                 (*textureView)->GetDesc(&desc);
@@ -1653,12 +1673,12 @@ HRESULT DirectX::CreateDDSTextureFromMemoryEx(ID3D11Device* d3dDevice,
         texture, textureView);
     if (SUCCEEDED(hr))
     {
-        if (texture != 0 && *texture != 0)
+        if (texture && *texture)
         {
             SetDebugObjectName(*texture, "DDSTextureLoader");
         }
 
-        if (textureView != 0 && *textureView != 0)
+        if (textureView && *textureView)
         {
             SetDebugObjectName(*textureView, "DDSTextureLoader");
         }
@@ -1772,10 +1792,10 @@ HRESULT DirectX::CreateDDSTextureFromFileEx(ID3D11Device* d3dDevice,
     if (SUCCEEDED(hr))
     {
 #if !defined(NO_D3D11_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
-        if (texture != 0 || textureView != 0)
+        if (texture || textureView)
         {
             CHAR strFileA[MAX_PATH];
-            int result = WideCharToMultiByte(CP_ACP,
+            int result = WideCharToMultiByte(CP_UTF8,
                 WC_NO_BEST_FIT_CHARS,
                 fileName,
                 -1,
@@ -1796,7 +1816,7 @@ HRESULT DirectX::CreateDDSTextureFromFileEx(ID3D11Device* d3dDevice,
                     pstrName++;
                 }
 
-                if (texture != 0 && *texture != 0)
+                if (texture && *texture)
                 {
                     (*texture)->SetPrivateData(WKPDID_D3DDebugObjectName,
                         static_cast<UINT>(strnlen_s(pstrName, MAX_PATH)),
@@ -1804,7 +1824,7 @@ HRESULT DirectX::CreateDDSTextureFromFileEx(ID3D11Device* d3dDevice,
                     );
                 }
 
-                if (textureView != 0 && *textureView != 0)
+                if (textureView && *textureView)
                 {
                     (*textureView)->SetPrivateData(WKPDID_D3DDebugObjectName,
                         static_cast<UINT>(strnlen_s(pstrName, MAX_PATH)),

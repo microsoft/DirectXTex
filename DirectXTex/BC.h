@@ -170,7 +170,7 @@ struct D3DX_BC3
 //-------------------------------------------------------------------------------------
 #pragma warning(push)
 #pragma warning(disable : 4127)
-template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPoints, size_t cSteps)
+template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPoints, uint32_t cSteps)
 {
     static const float pC6[] = { 5.0f / 5.0f, 4.0f / 5.0f, 3.0f / 5.0f, 2.0f / 5.0f, 1.0f / 5.0f, 0.0f / 5.0f };
     static const float pD6[] = { 0.0f / 5.0f, 1.0f / 5.0f, 2.0f / 5.0f, 3.0f / 5.0f, 4.0f / 5.0f, 5.0f / 5.0f };
@@ -216,16 +216,14 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
     }
 
     // Use Newton's Method to find local minima of sum-of-squares error.
-    float fSteps = (float)(cSteps - 1);
+    auto fSteps = static_cast<float>(cSteps - 1);
 
     for (size_t iIteration = 0; iIteration < 8; iIteration++)
     {
-        float fScale;
-
         if ((fY - fX) < (1.0f / 256.0f))
             break;
 
-        fScale = fSteps / (fY - fX);
+        float fScale = fSteps / (fY - fX);
 
         // Calculate new steps
         float pSteps[8];
@@ -249,14 +247,13 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
         {
             float fDot = (pPoints[iPoint] - fX) * fScale;
 
-            size_t iStep;
-
+            uint32_t iStep;
             if (fDot <= 0.0f)
                 iStep = ((6 == cSteps) && (pPoints[iPoint] <= fX * 0.5f)) ? 6 : 0;
             else if (fDot >= fSteps)
                 iStep = ((6 == cSteps) && (pPoints[iPoint] >= (fY + 1.0f) * 0.5f)) ? 7 : (cSteps - 1);
             else
-                iStep = static_cast<int32_t>(fDot + 0.5f);
+                iStep = uint32_t(fDot + 0.5f);
 
 
             if (iStep < cSteps)

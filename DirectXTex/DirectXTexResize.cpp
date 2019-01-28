@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexp.h"
 
 #include "filters.h"
 
@@ -56,6 +56,10 @@ namespace
         if (FAILED(hr))
             return hr;
 
+        if (srcImage.rowPitch > UINT32_MAX || srcImage.slicePitch > UINT32_MAX
+            || destImage.rowPitch > UINT32_MAX || destImage.slicePitch > UINT32_MAX)
+            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
         ComPtr<IWICBitmap> source;
         hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height), pfGUID,
             static_cast<UINT>(srcImage.rowPitch), static_cast<UINT>(srcImage.slicePitch),
@@ -87,7 +91,7 @@ namespace
 
             if (memcmp(&pfScaler, &pfGUID, sizeof(WICPixelFormatGUID)) == 0)
             {
-                hr = scaler->CopyPixels(0, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
+                hr = scaler->CopyPixels(nullptr, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
                 if (FAILED(hr))
                     return hr;
             }
@@ -111,7 +115,7 @@ namespace
                 if (FAILED(hr))
                     return hr;
 
-                hr = FC->CopyPixels(0, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
+                hr = FC->CopyPixels(nullptr, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
                 if (FAILED(hr))
                     return hr;
             }
@@ -247,7 +251,7 @@ namespace
         assert(srcImage.format == destImage.format);
 
         // Allocate temporary space (2 scanlines)
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc(
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(
             (sizeof(XMVECTOR) * (srcImage.width + destImage.width)), 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
@@ -308,7 +312,7 @@ namespace
             return E_FAIL;
 
         // Allocate temporary space (3 scanlines)
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc(
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(
             (sizeof(XMVECTOR) * (srcImage.width * 2 + destImage.width)), 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
@@ -367,7 +371,7 @@ namespace
         assert(srcImage.format == destImage.format);
 
         // Allocate temporary space (3 scanlines, plus X and Y filters)
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc(
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(
             (sizeof(XMVECTOR) * (srcImage.width * 2 + destImage.width)), 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
@@ -453,7 +457,7 @@ namespace
         assert(srcImage.format == destImage.format);
 
         // Allocate temporary space (5 scanlines, plus X and Y filters)
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc(
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(
             (sizeof(XMVECTOR) * (srcImage.width * 4 + destImage.width)), 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
@@ -615,7 +619,7 @@ namespace
         using namespace TriangleFilter;
 
         // Allocate initial temporary space (1 scanline, accumulation rows, plus X and Y filters)
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * srcImage.width, 16)));
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * srcImage.width, 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -678,13 +682,13 @@ namespace
                     if (rowFree)
                     {
                         // Steal and reuse scanline from 'free row' list
-                        assert(rowFree->scanline != 0);
+                        assert(rowFree->scanline != nullptr);
                         rowAcc->scanline.reset(rowFree->scanline.release());
                         rowFree = rowFree->next;
                     }
                     else
                     {
-                        rowAcc->scanline.reset(reinterpret_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * destImage.width, 16)));
+                        rowAcc->scanline.reset(static_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * destImage.width, 16)));
                         if (!rowAcc->scanline)
                             return E_OUTOFMEMORY;
                     }
@@ -858,6 +862,25 @@ HRESULT DirectX::Resize(
         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
+    bool usewic = UseWICFiltering(srcImage.format, filter);
+
+    WICPixelFormatGUID pfGUID = {};
+    bool wicpf = (usewic) ? _DXGIToWIC(srcImage.format, pfGUID, true) : false;
+
+    if (usewic && !wicpf)
+    {
+        // Check to see if the source and/or result size is too big for WIC
+        uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
+        uint64_t expandedSize2 = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
+        {
+            if (filter & TEX_FILTER_FORCE_WIC)
+                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+            usewic = false;
+        }
+    }
+
     HRESULT hr = image.Initialize2D(srcImage.format, width, height, 1, 1);
     if (FAILED(hr))
         return hr;
@@ -866,10 +889,9 @@ HRESULT DirectX::Resize(
     if (!rimage)
         return E_POINTER;
 
-    if (UseWICFiltering(srcImage.format, filter))
+    if (usewic)
     {
-        WICPixelFormatGUID pfGUID;
-        if (_DXGIToWIC(srcImage.format, pfGUID, true))
+        if (wicpf)
         {
             // Case 1: Source format is supported by Windows Imaging Component
             hr = PerformResizeUsingWIC(srcImage, filter, pfGUID, *rimage);
@@ -882,6 +904,7 @@ HRESULT DirectX::Resize(
     }
     else
     {
+        // Case 3: not using WIC resizing
         hr = PerformResizeUsingCustomFilters(srcImage, filter, *rimage);
     }
 
@@ -926,6 +949,20 @@ HRESULT DirectX::Resize(
 
     WICPixelFormatGUID pfGUID = {};
     bool wicpf = (usewic) ? _DXGIToWIC(metadata.format, pfGUID, true) : false;
+
+    if (usewic && !wicpf)
+    {
+        // Check to see if the source and/or result size is too big for WIC
+        uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
+        uint64_t expandedSize2 = uint64_t(metadata.width) * uint64_t(metadata.height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
+        {
+            if (filter & TEX_FILTER_FORCE_WIC)
+                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+            usewic = false;
+        }
+    }
 
     switch (metadata.dimension)
     {

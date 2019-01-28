@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexp.h"
 
 using namespace DirectX;
 
@@ -22,7 +22,7 @@ namespace
         assert(srcImage.width == destImage.width);
         assert(srcImage.height == destImage.height);
 
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -65,7 +65,7 @@ namespace
         static_assert(static_cast<int>(TEX_PMALPHA_SRGB) == static_cast<int>(TEX_FILTER_SRGB), "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
         flags &= TEX_PMALPHA_SRGB;
 
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -105,7 +105,7 @@ namespace
         assert(srcImage.width == destImage.width);
         assert(srcImage.height == destImage.height);
 
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -148,7 +148,7 @@ namespace
         static_assert(static_cast<int>(TEX_PMALPHA_SRGB) == static_cast<int>(TEX_FILTER_SRGB), "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
         flags &= TEX_PMALPHA_SRGB;
 
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
+        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
         if (!scanline)
             return E_OUTOFMEMORY;
 

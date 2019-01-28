@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata minClientVersion="2.8.6">
+        <id>directxtex_desktop_2015</id>
+        <version>0.0.0-SpecifyVersionOnCommandline</version>
+        <title>DirectXTex Library (VS 2015/VS 2017 Win32)</title>
+        <authors>Microsoft</authors>
+        <owners>microsoft,directxtk</owners>
+        <summary>DirectXTex texture processing library</summary>
+        <description>This version is for Windows desktop applications using Visual Studio 2015 Update 3 or Visual Studio 2017 and supports Windows 7 / DirectX 11.
+
+DirectXTex, a shared source library for reading and writing .DDS files, and performing various texture content processing operations including resizing, format conversion, mip-map generation, block compression for Direct3D runtime texture resources, and height-map to normal-map conversion. This library makes use of the Windows Image Component (WIC) APIs. It also includes simple .TGA and .HDR readers and writers since these image file format are commonly used for texture content processing pipelines, but are not currently supported by a built-in WIC codec.</description>
+        <releaseNotes>Matches the November 16, 2018 release on GitHub.</releaseNotes>
+        <projectUrl>http://go.microsoft.com/fwlink/?LinkId=248926</projectUrl>
+        <iconUrl>https://github.com/Microsoft/DirectXTex/wiki/X_jpg.jpg</iconUrl>
+        <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <copyright>© Microsoft Corporation. All rights reserved.</copyright>
+        <tags>DirectX  DirectXTex  native nativepackage</tags>
+    </metadata>
+
+    <files>
+
+        <file target="docs" src="Readme.*" />
+
+        <file target="include" src="DirectXTex\DirectXTex.h" />
+        <file target="include" src="DirectXTex\DirectXTex.inl" />
+
+        <file target="lib\Win32\Debug" src="DirectXTex\Bin\Desktop_2015\Win32\Debug\*.lib" />
+        <file target="lib\Win32\Debug" src="DirectXTex\Bin\Desktop_2015\Win32\Debug\*.pdb" />
+
+        <file target="lib\Win32\Release" src="DirectXTex\Bin\Desktop_2015\Win32\Release\*.lib" />
+        <file target="lib\Win32\Release" src="DirectXTex\Bin\Desktop_2015\Win32\Release\*.pdb" />
+
+        <file target="lib\x64\Debug" src="DirectXTex\Bin\Desktop_2015\x64\Debug\*.lib" />
+        <file target="lib\x64\Debug" src="DirectXTex\Bin\Desktop_2015\x64\Debug\*.pdb" />
+
+        <file target="lib\x64\Release" src="DirectXTex\Bin\Desktop_2015\x64\Release\*.lib" />
+        <file target="lib\x64\Release" src="DirectXTex\Bin\Desktop_2015\x64\Release\*.pdb" />
+
+        <file src=".nuget/directxtex_desktop_2015.targets" target="build\native" />
+      
+    </files>
+</package>

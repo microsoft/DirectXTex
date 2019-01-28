@@ -11,16 +11,9 @@
 
 #pragma once
 
-// VS 2013 related Off by default warnings
-#pragma warning(disable : 4619 4616 4350 4351 4472 4640)
-// C4619/4616 #pragma warning warnings
-// C4350 behavior change
-// C4351 behavior change; warning removed in later versions
-// C4472 'X' is a native enum: add an access specifier (private/public) to declare a WinRT enum
-// C4640 construction of local static object is not thread-safe
-
 // Off by default warnings
-#pragma warning(disable : 4061 4265 4365 4571 4623 4625 4626 4628 4668 4710 4711 4746 4774 4820 4987 5026 5027 5031 5032 5039)
+#pragma warning(disable : 4619 4616 4061 4265 4365 4571 4623 4625 4626 4628 4668 4710 4711 4746 4774 4820 4987 5026 5027 5031 5032 5039 5045)
+// C4619/4616 #pragma warning warnings
 // C4061 enumerator 'X' in switch of enum 'X' is not explicitly handled by a case label
 // C4265 class has virtual functions, but destructor is not virtual
 // C4365 signed/unsigned mismatch
@@ -40,6 +33,7 @@
 // C5027 move assignment operator was implicitly defined as deleted
 // C5031/5032 push/pop mismatches in windows headers
 // C5039 pointer or reference to potentially throwing function passed to extern C function under - EHc
+// C5045 Spectre mitigation warning
 
 // Windows 8.1 SDK related Off by default warnings
 #pragma warning(disable : 4471 4917 4986 5029)
@@ -47,6 +41,15 @@
 // C4917 a GUID can only be associated with a class, interface or namespace
 // C4986 exception specification does not match previous declaration
 // C5029 nonstandard extension used
+
+// Xbox One XDK related Off by default warnings
+#pragma warning(disable : 4643)
+// C4643 Forward declaring in namespace std is not permitted by the C++ Standard
+
+#ifdef __INTEL_COMPILER
+#pragma warning(disable : 161)
+// warning #161: unrecognized #pragma
+#endif
 
 #pragma warning(push)
 #pragma warning(disable : 4005)
@@ -75,6 +78,8 @@
 #else
 #include <d3d11_1.h>
 #endif
+
+#define _XM_NO_XMVECTOR_OVERLOADS_
 
 #include <directxmath.h>
 #include <directxpackedvector.h>
@@ -115,12 +120,6 @@
 #endif
 
 #define XBOX_DXGI_FORMAT_R4G4_UNORM DXGI_FORMAT(190)
-
-#if !defined(DIRECTX_NOEXCEPT) && defined(_MSC_VER) && (_MSC_VER < 1900)
-#define DIRECTX_NOEXCEPT
-#else
-#define DIRECTX_NOEXCEPT noexcept
-#endif
 
 namespace DirectX
 {
@@ -179,7 +178,7 @@ namespace DirectX
 
     //---------------------------------------------------------------------------------
     // Image helper functions
-    void __cdecl _DetermineImageArray(
+    _Success_(return != false) bool __cdecl _DetermineImageArray(
         _In_ const TexMetadata& metadata, _In_ DWORD cpFlags,
         _Out_ size_t& nImages, _Out_ size_t& pixelSize);
 
@@ -272,6 +271,10 @@ namespace DirectX
     HRESULT __cdecl _ConvertFromR32G32B32A32(
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
         _In_ DXGI_FORMAT format, _Out_ ScratchImage& result);
+
+    HRESULT __cdecl _ConvertToR16G16B16A16(_In_ const Image& srcImage, _Inout_ ScratchImage& image);
+
+    HRESULT __cdecl _ConvertFromR16G16B16A16(_In_ const Image& srcImage, _In_ const Image& destImage);
 
     void __cdecl _ConvertScanline(
         _Inout_updates_all_(count) XMVECTOR* pBuffer, _In_ size_t count,
