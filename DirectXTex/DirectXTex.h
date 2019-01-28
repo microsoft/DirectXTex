@@ -534,6 +534,11 @@ namespace DirectX
         // levels of '0' indicates a full mipchain, otherwise is generates that number of total levels (including the source base image)
         // Defaults to Fant filtering which is equivalent to a box filter
 
+    HRESULT __cdecl ScaleMipMapsAlphaForCoverage(
+        _In_ const Image* srcImages,  _In_ const TexMetadata& metadata, _In_ size_t item,
+        _In_ float alphaReference, _Out_ ScratchImage& mipChain);
+
+
     enum TEX_PMALPHA_FLAGS
     {
         TEX_PMALPHA_DEFAULT         = 0,
