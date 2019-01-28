@@ -2697,7 +2697,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Preserve mipmap alpha coverage (if requested) ---------------------------
-        if (preserveAlphaCoverage && info.mipLevels != 1)
+        if (preserveAlphaCoverage && info.mipLevels != 1 && (info.dimension != TEX_DIMENSION_TEXTURE3D))
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -2719,14 +2719,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 auto img = image->GetImage(0, item, 0);
                 assert(img);
 
-                hr = CopyRectangle(*img, Rect(0, 0, info.width, info.height), *timage->GetImage(0, item, 0), TEX_FILTER_DEFAULT, 0, 0);
-                if (FAILED(hr))
-                {
-                    wprintf(L" FAILED [keepcoverage] (%x)\n", hr);
-                    return 1;
-                }
-
-                hr = ScaleMipMapsAlphaForCoverage(img, info, item, preserveAlphaCoverageRef, *timage);
+                hr = ScaleMipMapsAlphaForCoverage(img, info.mipLevels, info, item, preserveAlphaCoverageRef, *timage);
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [keepcoverage] (%x)\n", hr);

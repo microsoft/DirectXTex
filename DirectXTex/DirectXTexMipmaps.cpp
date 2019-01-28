@@ -118,10 +118,26 @@ namespace
     }
 
 
+#if DIRECTX_MATH_VERSION >= 310
+#define VectorSum XMVectorSum
+#else
+    inline XMVECTOR XM_CALLCONV VectorSum
+    (
+        FXMVECTOR V
+    )
+    {
+        XMVECTOR vTemp = XMVectorSwizzle<2, 3, 0, 1>(V);
+        XMVECTOR vTemp2 = XMVectorAdd(V, vTemp);
+        vTemp = XMVectorSwizzle<1, 0, 3, 2>(vTemp2);
+        return XMVectorAdd(vTemp, vTemp2);
+    }
+#endif
+
+
     HRESULT ScaleAlpha(
-        _In_ const Image& srcImage,
-        _In_ float alphaScale,
-        _Out_ const Image& destImage)
+        const Image& srcImage,
+        float alphaScale,
+        const Image& destImage)
     {
         assert(srcImage.width == destImage.width);
         assert(srcImage.height == destImage.height);
@@ -223,8 +239,6 @@ namespace
         XMVECTOR convolution[N * N];
         GenerateAlphaCoverageConvolutionVectors(N, convolution);
 
-        XMMATRIX alpha;
-
         size_t coverageCount = 0;
         for (size_t y = 0; y < srcImage.height - 1; ++y)
         {
@@ -244,18 +258,22 @@ namespace
             for (size_t x = 0; x < srcImage.width - 1; ++x)
             {
                 // [0]=(x+0, y+0), [1]=(x+0, y+1), [2]=(x+1, y+0), [3]=(x+1, y+1)
-                alpha.r[0] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*pRow0), scale));
-                alpha.r[1] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*pRow1), scale));
-                alpha.r[2] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow0++)), scale));
-                alpha.r[3] = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow1++)), scale));
-                XMVECTOR v = XMVectorSet(XMVectorGetX(alpha.r[0]), XMVectorGetX(alpha.r[1]), XMVectorGetX(alpha.r[2]), XMVectorGetX(alpha.r[3]));
+                XMVECTOR v1 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*pRow0), scale));
+                XMVECTOR v2 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*pRow1), scale));
+                XMVECTOR v3 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow0++)), scale));
+                XMVECTOR v4 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow1++)), scale));
+
+                v1 = XMVectorMergeXY(v1, v2); // [v1.x v2.x --- ---]
+                v3 = XMVectorMergeXY(v3, v4); // [v3.x v4.x --- ---]
+
+                XMVECTOR v = XMVectorPermute<0, 1, 4, 5>(v1, v3); // [v1.x v2.x v3.x v4.x]
 
                 for (size_t sy = 0; sy < N; ++sy)
                 {
                     const size_t ry = sy * N;
                     for (size_t sx = 0; sx < N; ++sx)
                     {
-                        v = XMVectorSum(XMVectorMultiply(v, convolution[ry + sx]));
+                        v = VectorSum(XMVectorMultiply(v, convolution[ry + sx]));
                         if (XMVectorGetX(v) > alphaReference)
                         {
                             ++coverageCount;
@@ -274,10 +292,10 @@ namespace
 
 
     HRESULT EstimateAlphaScaleForCoverage(
-            _In_ const Image& srcImage,
-            _In_ float alphaReference,
-            _In_ float targetCoverage,
-            _Out_ float& alphaScale)
+            const Image& srcImage,
+            float alphaReference,
+            float targetCoverage,
+            float& alphaScale)
     {
         float minAlphaScale = 0.0f;
         float maxAlphaScale = 4.0f;
@@ -3388,35 +3406,70 @@ HRESULT DirectX::GenerateMipMaps3D(
 _Use_decl_annotations_
 HRESULT DirectX::ScaleMipMapsAlphaForCoverage(
     const Image* srcImages,
+    size_t nimages,
     const TexMetadata& metadata,
     size_t item,
     float alphaReference,
     ScratchImage& mipChain)
 {
-    HRESULT hr;
+    if (!srcImages || !nimages || !IsValid(metadata.format) || nimages > metadata.mipLevels || !mipChain.GetImages())
+        return E_INVALIDARG;
 
-    float targetCoverage = 0.0f;
-    hr = CalculateAlphaCoverage(*srcImages, alphaReference, 1.0f, targetCoverage);
-    if (FAILED(hr))
+    if (metadata.IsVolumemap()
+        || IsCompressed(metadata.format) || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+
+    if (srcImages[0].format != metadata.format || srcImages[0].width != metadata.width || srcImages[0].height != metadata.height)
     {
-        return hr;
+        // Base image must be the same format, width, and height
+        return E_FAIL;
     }
 
-    const size_t levels = metadata.mipLevels;
-    for (size_t level = 1; level < levels; ++level)
+    float targetCoverage = 0.0f;
+    HRESULT hr = CalculateAlphaCoverage(srcImages[0], alphaReference, 1.0f, targetCoverage);
+    if (FAILED(hr))
+        return hr;
+
+    // Copy base image
     {
+        const Image& src = srcImages[0];
+
+        const Image *dest = mipChain.GetImage(0, item, 0);
+        if (!dest)
+            return E_POINTER;
+
+        uint8_t* pDest = dest->pixels;
+        if (!pDest)
+            return E_POINTER;
+
+        const uint8_t *pSrc = src.pixels;
+        size_t rowPitch = src.rowPitch;
+        for (size_t h = 0; h < metadata.height; ++h)
+        {
+            size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
+            memcpy_s(pDest, dest->rowPitch, pSrc, msize);
+            pSrc += rowPitch;
+            pDest += dest->rowPitch;
+        }
+    }
+
+    for (size_t level = 1; level < metadata.mipLevels; ++level)
+    {
+        if (level >= nimages)
+            return E_FAIL;
+
         float alphaScale = 0.0f;
         hr = EstimateAlphaScaleForCoverage(srcImages[level], alphaReference, targetCoverage, alphaScale);
         if (FAILED(hr))
-        {
             return hr;
-        }
 
-        hr = ScaleAlpha(srcImages[level], alphaScale, *mipChain.GetImage(level, item, 0));
+        const Image* mipImage = mipChain.GetImage(level, item, 0);
+        if (!mipImage)
+            return E_POINTER;
+
+        hr = ScaleAlpha(srcImages[level], alphaScale, *mipImage);
         if (FAILED(hr))
-        {
             return hr;
-        }
     }
     
     return S_OK;

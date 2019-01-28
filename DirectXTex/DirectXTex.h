@@ -535,8 +535,8 @@ namespace DirectX
         // Defaults to Fant filtering which is equivalent to a box filter
 
     HRESULT __cdecl ScaleMipMapsAlphaForCoverage(
-        _In_ const Image* srcImages,  _In_ const TexMetadata& metadata, _In_ size_t item,
-        _In_ float alphaReference, _Out_ ScratchImage& mipChain);
+        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ size_t item,
+        _In_ float alphaReference, _Inout_ ScratchImage& mipChain);
 
 
     enum TEX_PMALPHA_FLAGS
