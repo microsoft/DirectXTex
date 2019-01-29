@@ -62,6 +62,7 @@ enum COMMANDS
     CMD_V_STRIP,
     CMD_MERGE,
     CMD_GIF,
+    CMD_2D_ARRAY_H_STRIP,
     CMD_MAX
 };
 
@@ -119,6 +120,7 @@ const SValue g_pCommands[] =
     { L"v-strip",   CMD_V_STRIP },
     { L"merge",     CMD_MERGE },
     { L"gif",       CMD_GIF },
+    { L"2d-strip",       CMD_2D_ARRAY_H_STRIP },
     { nullptr,      0 }
 };
 
@@ -958,6 +960,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_V_STRIP:
     case CMD_MERGE:
     case CMD_GIF:
+    case CMD_2D_ARRAY_H_STRIP:
         break;
 
     default:
@@ -1208,6 +1211,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_H_STRIP:
     case CMD_V_STRIP:
     case CMD_GIF:
+    case CMD_2D_ARRAY_H_STRIP:
         if (conversion.size() > 1)
         {
             wprintf(L"ERROR: cross/strip/gif output only accepts 1 input file\n");
@@ -1326,7 +1330,28 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
                 break;
+            case CMD_2D_ARRAY_H_STRIP:
+                if (_wcsicmp(ext, L".dds") == 0)
+                {
+                    hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED (%x)\n", hr);
+                        return 1;
+                    }
 
+                    if (info.dimension != TEX_DIMENSION_TEXTURE2D || info.arraySize < 2)
+                    {
+                        wprintf(L"\nERROR: Input must be a 2d array\n");
+                        return 1;
+                    }
+                }
+                else
+                {
+                    wprintf(L"\nERROR: Input must be a dds of a 2d array\n");
+                    return 1;
+                }
+                break;
             default:
                 if (_wcsicmp(ext, L".dds") == 0)
                 {
@@ -1938,6 +1963,76 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         break;
     }
 
+    case CMD_2D_ARRAY_H_STRIP:
+    {
+        size_t twidth = 0;
+        size_t theight = 0;
+
+        twidth = width;
+        theight = height * images;
+
+        ScratchImage result;
+        hr = result.Initialize2D(format, twidth, theight, 1, 1);
+        if (FAILED(hr))
+        {
+            wprintf(L"FAILED setting up result image (%x)\n", hr);
+            return 1;
+        }
+
+        memset(result.GetPixels(), 0, result.GetPixelsSize());
+
+        auto src = loadedImages.cbegin();
+        auto dest = result.GetImage(0, 0, 0);
+
+        for (size_t index = 0; index < images; ++index)
+        {
+            auto img = (*src)->GetImage(0, index, 0);
+            if (!img)
+            {
+                wprintf(L"FAILED: Unexpected error\n");
+                return 1;
+            }
+
+            Rect rect(0, 0, width, height);
+
+            size_t offsetx = 0;
+            size_t offsety = 0;
+
+            // posx, negx, posy, negy, posz, negz
+            offsety = index * height;
+
+
+            hr = CopyRectangle(*img, rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
+            if (FAILED(hr))
+            {
+                wprintf(L"FAILED building result image (%x)\n", hr);
+                return 1;
+            }
+        }
+
+        // Write cross/strip
+        wprintf(L"\nWriting %ls ", szOutputFile);
+        PrintInfo(result.GetMetadata());
+        wprintf(L"\n");
+        fflush(stdout);
+
+        if (~dwOptions & (1 << OPT_OVERWRITE))
+        {
+            if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+            {
+                wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
+                return 1;
+            }
+        }
+
+        hr = SaveImageFile(*dest, fileType, szOutputFile);
+        if (FAILED(hr))
+        {
+            wprintf(L" FAILED (%x)\n", hr);
+            return 1;
+        }
+        break;
+    }
     default:
     {
         std::vector<Image> imageArray;
