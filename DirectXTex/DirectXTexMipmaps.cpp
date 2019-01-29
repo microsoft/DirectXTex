@@ -285,7 +285,11 @@ namespace
             pSrcRow0 = pSrcRow1;
         }
 
-        coverage = static_cast<float>(coverageCount) / static_cast<float>((srcImage.width - 1) * (srcImage.height - 1) * N * N);
+        float cscale = static_cast<float>((srcImage.width - 1) * (srcImage.height - 1) * N * N);
+        if (cscale > 0.f)
+        {
+            coverage = static_cast<float>(coverageCount) / cscale;
+        }
 
         return S_OK;
     }
