@@ -62,7 +62,7 @@ enum COMMANDS
     CMD_V_STRIP,
     CMD_MERGE,
     CMD_GIF,
-    CMD_2D_ARRAY_H_STRIP,
+    CMD_ARRAY_STRIP,
     CMD_MAX
 };
 
@@ -110,18 +110,18 @@ struct SValue
 
 const SValue g_pCommands[] =
 {
-    { L"cube",      CMD_CUBE },
-    { L"volume",    CMD_VOLUME },
-    { L"array",     CMD_ARRAY },
-    { L"cubearray", CMD_CUBEARRAY },
-    { L"h-cross",   CMD_H_CROSS },
-    { L"v-cross",   CMD_V_CROSS },
-    { L"h-strip",   CMD_H_STRIP },
-    { L"v-strip",   CMD_V_STRIP },
-    { L"merge",     CMD_MERGE },
-    { L"gif",       CMD_GIF },
-    { L"2d-strip",       CMD_2D_ARRAY_H_STRIP },
-    { nullptr,      0 }
+    { L"cube",          CMD_CUBE },
+    { L"volume",        CMD_VOLUME },
+    { L"array",         CMD_ARRAY },
+    { L"cubearray",     CMD_CUBEARRAY },
+    { L"h-cross",       CMD_H_CROSS },
+    { L"v-cross",       CMD_V_CROSS },
+    { L"h-strip",       CMD_H_STRIP },
+    { L"v-strip",       CMD_V_STRIP },
+    { L"merge",         CMD_MERGE },
+    { L"gif",           CMD_GIF },
+    { L"array-strip",   CMD_ARRAY_STRIP },
+    { nullptr,          0 }
 };
 
 const SValue g_pOptions [] =
@@ -512,6 +512,7 @@ namespace
         wprintf(L"   cubearray           create cubemap array\n");
         wprintf(L"   h-cross or v-cross  create a cross image from a cubemap\n");
         wprintf(L"   h-strip or v-strip  create a strip image from a cubemap\n");
+        wprintf(L"   array-strip         creates a strip image from a 1D/2D array\n");
         wprintf(L"   merge               create texture from rgb image and alpha image\n");
         wprintf(L"   gif                 create array from animated gif\n\n");
         wprintf(L"   -r                  wildcard filename search is recursive\n");
@@ -960,11 +961,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_V_STRIP:
     case CMD_MERGE:
     case CMD_GIF:
-    case CMD_2D_ARRAY_H_STRIP:
+    case CMD_ARRAY_STRIP:
         break;
 
     default:
-        wprintf(L"Must use one of: cube, volume, array, cubearray,\n   h-cross, v-cross, h-strip, v-strip\n   merge, gif\n\n");
+        wprintf(L"Must use one of: cube, volume, array, cubearray,\n   h-cross, v-cross, h-strip, v-strip, array-strip\n   merge, gif\n\n");
         return 1;
     }
 
@@ -1093,6 +1094,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 case CMD_H_STRIP:
                 case CMD_V_STRIP:
                 case CMD_MERGE:
+                case CMD_ARRAY_STRIP:
                     break;
 
                 default:
@@ -1211,7 +1213,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_H_STRIP:
     case CMD_V_STRIP:
     case CMD_GIF:
-    case CMD_2D_ARRAY_H_STRIP:
+    case CMD_ARRAY_STRIP:
         if (conversion.size() > 1)
         {
             wprintf(L"ERROR: cross/strip/gif output only accepts 1 input file\n");
@@ -1273,6 +1275,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 case CMD_V_CROSS:
                 case CMD_H_STRIP:
                 case CMD_V_STRIP:
+                case CMD_ARRAY_STRIP:
                     _wmakepath_s(szOutputFile, nullptr, nullptr, fname, L".bmp");
                     break;
 
@@ -1330,7 +1333,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
                 break;
-            case CMD_2D_ARRAY_H_STRIP:
+
+            case CMD_ARRAY_STRIP:
                 if (_wcsicmp(ext, L".dds") == 0)
                 {
                     hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image);
@@ -1340,18 +1344,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         return 1;
                     }
 
-                    if (info.dimension != TEX_DIMENSION_TEXTURE2D || info.arraySize < 2)
+                    if (info.dimension == TEX_DIMENSION_TEXTURE3D || info.arraySize < 2 || info.IsCubemap())
                     {
-                        wprintf(L"\nERROR: Input must be a 2d array\n");
+                        wprintf(L"\nERROR: Input must be a 1D/2D array\n");
                         return 1;
                     }
                 }
                 else
                 {
-                    wprintf(L"\nERROR: Input must be a dds of a 2d array\n");
+                    wprintf(L"\nERROR: Input must be a dds of a 1D/2D array\n");
                     return 1;
                 }
                 break;
+
             default:
                 if (_wcsicmp(ext, L".dds") == 0)
                 {
@@ -1963,13 +1968,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         break;
     }
 
-    case CMD_2D_ARRAY_H_STRIP:
+    case CMD_ARRAY_STRIP:
     {
-        size_t twidth = 0;
-        size_t theight = 0;
-
-        twidth = width;
-        theight = height * images;
+        size_t twidth = width;
+        size_t theight = height * images;
 
         ScratchImage result;
         hr = result.Initialize2D(format, twidth, theight, 1, 1);
@@ -1998,9 +2000,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             size_t offsetx = 0;
             size_t offsety = 0;
 
-            // posx, negx, posy, negy, posz, negz
             offsety = index * height;
-
 
             hr = CopyRectangle(*img, rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
             if (FAILED(hr))
@@ -2010,7 +2010,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
         }
 
-        // Write cross/strip
+        // Write array strip
         wprintf(L"\nWriting %ls ", szOutputFile);
         PrintInfo(result.GetMetadata());
         wprintf(L"\n");
