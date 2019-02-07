@@ -108,7 +108,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
     if ( !*lpCmdLine )
     {
-        MessageBox( nullptr, L"Usage: ddsview <filename>", L"DDSView", MB_OK | MB_ICONEXCLAMATION );
+        MessageBoxW( nullptr, L"Usage: ddsview <filename>", L"DDSView", MB_OK | MB_ICONEXCLAMATION );
         return 0;
     }
 
@@ -118,7 +118,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     {
         wchar_t buff[2048] = {};
         swprintf_s( buff, L"Failed to open texture file\n\nFilename = %ls\nHRESULT %08X", lpCmdLine, hr );
-        MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
+        MessageBoxW( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
         return 0;
     }
 
@@ -139,7 +139,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
         {
             wchar_t buff[2048] = {};
             swprintf_s( buff, L"Arrays of volume textures are not supported\n\nFilename = %ls\nArray size %zu", lpCmdLine, mdata.arraySize );
-            MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
+            MessageBoxW( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
             return 0;
         }
 
@@ -162,7 +162,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
         {
             wchar_t buff[2048] = {};
             swprintf_s( buff, L"BC6H/BC7 requires DirectX 11 hardware\n\nFilename = %ls\nDXGI Format %d\nFeature Level %d", lpCmdLine, mdata.format, g_featureLevel );
-            MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
+            MessageBoxW( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
             return 0;
         }
         break;
@@ -175,7 +175,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
             {
                 wchar_t buff[2048] = {};
                 swprintf_s( buff, L"Format not supported by DirectX hardware\n\nFilename = %ls\nDXGI Format %d\nFeature Level %d\nHRESULT = %08X", lpCmdLine, mdata.format, g_featureLevel, hr );
-                MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
+                MessageBoxW( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
                 return 0;
             }
         }
@@ -188,7 +188,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     {
         wchar_t buff[2048] = {};
         swprintf_s( buff, L"Failed to load texture file\n\nFilename = %ls\nHRESULT %08X", lpCmdLine, hr );
-        MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
+        MessageBoxW( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
         return 0;
     }
 
@@ -200,7 +200,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     {
         wchar_t buff[2048] = {};
         swprintf_s( buff, L"Failed creating texture from file\n\nFilename = %ls\nHRESULT = %08X", lpCmdLine, hr );
-        MessageBox( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
+        MessageBoxW( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
         return 0;
     }
 
@@ -228,8 +228,8 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow, const TexMetadata& mdata )
 {
     // Register class
-    WNDCLASSEX wcex;
-    wcex.cbSize = sizeof( WNDCLASSEX );
+    WNDCLASSEXW wcex;
+    wcex.cbSize = sizeof( WNDCLASSEXW );
     wcex.style = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc = WndProc;
     wcex.cbClsExtra = 0;
@@ -241,7 +241,7 @@ HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow, const TexMetadata& mdata 
     wcex.lpszMenuName = nullptr;
     wcex.lpszClassName = L"DDSViewWindowClass";
     wcex.hIconSm = LoadIcon( wcex.hInstance, ( LPCTSTR )IDI_MAIN_ICON );
-    if( !RegisterClassEx( &wcex ) )
+    if( !RegisterClassExW( &wcex ) )
         return E_FAIL;
 
     // Create window
@@ -265,9 +265,9 @@ HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow, const TexMetadata& mdata 
         rc.bottom = screenY;
 
     AdjustWindowRect( &rc, WS_OVERLAPPEDWINDOW, FALSE );
-    g_hWnd = CreateWindow( L"DDSViewWindowClass", L"DDS View", WS_OVERLAPPEDWINDOW,
-                           CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance,
-                           nullptr );
+    g_hWnd = CreateWindowW( L"DDSViewWindowClass", L"DDS View", WS_OVERLAPPEDWINDOW,
+                            CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance,
+                            nullptr );
     if( !g_hWnd )
         return E_FAIL;
 

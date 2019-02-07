@@ -482,7 +482,7 @@ namespace
     void SearchForFiles(const wchar_t* path, std::list<SConversion>& files, bool recursive)
     {
         // Process files
-        WIN32_FIND_DATA findData = {};
+        WIN32_FIND_DATAW findData = {};
         ScopedFindHandle hFile(safe_handle(FindFirstFileExW(path,
             FindExInfoBasic, &findData,
             FindExSearchNameMatch, nullptr,
@@ -502,7 +502,7 @@ namespace
                     files.push_back(conv);
                 }
 
-                if (!FindNextFile(hFile.get(), &findData))
+                if (!FindNextFileW(hFile.get(), &findData))
                     break;
             }
         }
@@ -547,7 +547,7 @@ namespace
                     }
                 }
 
-                if (!FindNextFile(hFile.get(), &findData))
+                if (!FindNextFileW(hFile.get(), &findData))
                     break;
             }
         }
@@ -679,7 +679,7 @@ namespace
 
         if (!s_CreateDXGIFactory1)
         {
-            HMODULE hModDXGI = LoadLibrary(L"dxgi.dll");
+            HMODULE hModDXGI = LoadLibraryW(L"dxgi.dll");
             if (!hModDXGI)
                 return false;
 
@@ -804,7 +804,7 @@ namespace
 
         if (!s_DynamicD3D11CreateDevice)
         {
-            HMODULE hModD3D11 = LoadLibrary(L"d3d11.dll");
+            HMODULE hModD3D11 = LoadLibraryW(L"d3d11.dll");
             if (!hModD3D11)
                 return false;
 
