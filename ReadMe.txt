@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-November 16, 2018
+February 7, 2019
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -137,6 +137,12 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+February 7, 2019
+    Added ScaleMipMapsAlphaForCoverage function to the library
+    WIC Writer now has two new flags: WIC_FLAGS_FORCE_SRGB and WIC_FLAGS_FORCE_LINEAR
+    texassemble: added array-strip command
+    texconv: added -inverty, -keepcoverage switches
 
 November 16, 2018
     VS 2017 updated for Windows 10 October 2018 Update SDK (17763)

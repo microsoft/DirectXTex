@@ -10,7 +10,7 @@
         <description>This version is for Windows desktop applications using Visual Studio 2015 Update 3 or Visual Studio 2017 and supports Windows 10 including both DirectX 11 and DirectX 12.
 
 DirectXTex, a shared source library for reading and writing .DDS files, and performing various texture content processing operations including resizing, format conversion, mip-map generation, block compression for Direct3D runtime texture resources, and height-map to normal-map conversion. This library makes use of the Windows Image Component (WIC) APIs. It also includes simple .TGA and .HDR readers and writers since these image file format are commonly used for texture content processing pipelines, but are not currently supported by a built-in WIC codec.</description>
-        <releaseNotes>Matches the November 16, 2018 release on GitHub.</releaseNotes>
+        <releaseNotes>Matches the February 7, 2019 release on GitHub.</releaseNotes>
         <projectUrl>http://go.microsoft.com/fwlink/?LinkId=248926</projectUrl>
         <iconUrl>https://github.com/Microsoft/DirectXTex/wiki/X_jpg.jpg</iconUrl>
         <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
