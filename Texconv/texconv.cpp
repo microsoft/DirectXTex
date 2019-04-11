@@ -2078,7 +2078,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
 
                 auto& tinfo = timage->GetMetadata();
-                tinfo;
+                (void)tinfo;
 
                 assert(tinfo.format == DXGI_FORMAT_R16G16B16A16_FLOAT);
                 info.format = DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -2271,7 +2271,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+            (void)tinfo;
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2350,7 +2350,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+            (void)tinfo;
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2481,7 +2481,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+            (void)tinfo;
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2529,7 +2529,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+            (void)tinfo;
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2728,7 +2728,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+            (void)tinfo;
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
