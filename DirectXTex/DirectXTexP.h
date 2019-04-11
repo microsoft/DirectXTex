@@ -67,7 +67,7 @@
 #define _WIN32_WINNT_WIN10 0x0A00
 #endif
 
-#include <windows.h>
+#include <Windows.h>
 
 #if defined(_XBOX_ONE) && defined(_TITLE)
 #include <d3d12_x.h>
@@ -81,8 +81,8 @@
 
 #define _XM_NO_XMVECTOR_OVERLOADS_
 
-#include <directxmath.h>
-#include <directxpackedvector.h>
+#include <DirectXMath.h>
+#include <DirectXPackedVector.h>
 #include <assert.h>
 
 #include <malloc.h>
@@ -93,9 +93,9 @@
 #include <stdlib.h>
 #include <search.h>
 
-#include <ole2.h>
+#include <Ole2.h>
 
-#include "directxtex.h"
+#include "DirectXTex.h"
 
 #include <wincodec.h>
 

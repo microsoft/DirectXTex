@@ -12,8 +12,8 @@
 #pragma once
 
 #include <assert.h>
-#include <directxmath.h>
-#include <directxpackedvector.h>
+#include <DirectXMath.h>
+#include <DirectXPackedVector.h>
 
 namespace DirectX
 {

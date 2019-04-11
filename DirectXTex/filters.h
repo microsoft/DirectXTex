@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <directxmath.h>
-#include <directxpackedvector.h>
+#include <DirectXMath.h>
+#include <DirectXPackedVector.h>
 
 #include <memory>
 

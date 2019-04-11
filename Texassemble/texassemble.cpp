@@ -37,7 +37,7 @@
 #include <DirectXPackedVector.h>
 #include <wincodec.h>
 
-#include "directxtex.h"
+#include "DirectXTex.h"
 
 //Uncomment to add support for OpenEXR (.exr)
 //#define USE_OPENEXR

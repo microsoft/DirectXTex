@@ -26,9 +26,9 @@
 #endif
 #endif
 
-#include <directxmath.h>
+#include <DirectXMath.h>
 
-#include <ocidl.h>
+#include <OCIdl.h>
 
 #define DIRECTX_TEX_VERSION 161
 
