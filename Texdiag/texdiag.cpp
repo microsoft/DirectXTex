@@ -705,7 +705,7 @@ namespace
 
         HRESULT hr = EvaluateImage(image, [&](const XMVECTOR * pixels, size_t width, size_t y)
         {
-            static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
+            static const XMVECTORF32 s_luminance = {{{ 0.3f, 0.59f, 0.11f, 0.f }}};
 
             UNREFERENCED_PARAMETER(y);
 

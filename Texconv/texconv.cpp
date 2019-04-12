@@ -930,7 +930,7 @@ namespace
         }
     }
 
-    const XMVECTORF32 c_MaxNitsFor2084 = { 10000.0f, 10000.0f, 10000.0f, 1.f };
+    const XMVECTORF32 c_MaxNitsFor2084 = {{{ 10000.0f, 10000.0f, 10000.0f, 1.f }}};
 
     const XMMATRIX c_from709to2020 =
     {
@@ -2305,7 +2305,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 for (size_t j = 0; j < width; ++j)
                 {
-                    static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
+                    static const XMVECTORF32 s_luminance = {{{ 0.3f, 0.59f, 0.11f, 0.f }}};
 
                     XMVECTOR v = *pixels++;
 
@@ -2454,7 +2454,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                 [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
             {
-                static const XMVECTORF32 s_tolerance = { 0.2f, 0.2f, 0.2f, 0.f };
+                static const XMVECTORF32 s_tolerance = {{{ 0.2f, 0.2f, 0.2f, 0.f }}};
 
                 UNREFERENCED_PARAMETER(y);
 

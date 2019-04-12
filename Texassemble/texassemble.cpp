@@ -1609,7 +1609,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                     for (size_t j = 0; j < width; ++j)
                     {
-                        static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
+                        static const XMVECTORF32 s_luminance = {{{ 0.3f, 0.59f, 0.11f, 0.f }}};
 
                         XMVECTOR v = *pixels++;
 
