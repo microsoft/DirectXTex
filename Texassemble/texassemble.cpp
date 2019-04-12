@@ -312,20 +312,6 @@ namespace
     }
 
 
-    const wchar_t* LookupByValue(DWORD pValue, const SValue *pArray)
-    {
-        while (pArray->pName)
-        {
-            if (pValue == pArray->dwValue)
-                return pArray->pName;
-
-            pArray++;
-        }
-
-        return L"";
-    }
-
-
     void SearchForFiles(const wchar_t* path, std::list<SConversion>& files, bool recursive)
     {
         // Process files
