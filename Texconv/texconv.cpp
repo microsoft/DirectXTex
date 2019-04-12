@@ -1788,12 +1788,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         else
         {
             // WIC shares the same filter values for mode and dither
-            static_assert(WIC_FLAGS_DITHER == TEX_FILTER_DITHER, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_DITHER_DIFFUSION == TEX_FILTER_DITHER_DIFFUSION, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_POINT == TEX_FILTER_POINT, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_LINEAR == TEX_FILTER_LINEAR, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_DITHER == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_DITHER), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_DITHER_DIFFUSION == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_DITHER_DIFFUSION), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_FILTER_POINT == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_POINT), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_FILTER_LINEAR == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_LINEAR), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_FILTER_CUBIC == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_CUBIC), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_FILTER_FANT == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_FANT), "WIC_FLAGS_* & TEX_FILTER_* should match");
 
             DWORD wicFlags = dwFilter;
             if (FileType == CODEC_DDS)
