@@ -37,7 +37,7 @@ namespace
             {
                 // The number is too small to be represented as a normalized 7e3.
                 // Convert it to a denormalized value.
-                uint32_t Shift = 125U - (IValue >> 23U);
+                uint32_t Shift = std::min<uint32_t>(125U - (IValue >> 23U), 24U);
                 IValue = (0x800000U | (IValue & 0x7FFFFFU)) >> Shift;
             }
             else
@@ -103,7 +103,7 @@ namespace
             {
                 // The number is too small to be represented as a normalized 6e4.
                 // Convert it to a denormalized value.
-                uint32_t Shift = 121U - (IValue >> 23U);
+                uint32_t Shift = std::min<uint32_t>(121U - (IValue >> 23U), 24U);
                 IValue = (0x800000U | (IValue & 0x7FFFFFU)) >> Shift;
             }
             else
