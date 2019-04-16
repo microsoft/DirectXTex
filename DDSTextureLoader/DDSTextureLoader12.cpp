@@ -147,6 +147,72 @@ namespace
         return count;
     }
 
+
+    //--------------------------------------------------------------------------------------
+    HRESULT LoadTextureDataFromMemory(
+        _In_reads_(ddsDataSize) const uint8_t* ddsData,
+        size_t ddsDataSize,
+        const DDS_HEADER** header,
+        const uint8_t** bitData,
+        size_t* bitSize)
+    {
+        if (!header || !bitData || !bitSize)
+        {
+            return E_POINTER;
+        }
+
+        if (ddsDataSize > UINT32_MAX)
+        {
+            return E_FAIL;
+        }
+
+        if (ddsDataSize < (sizeof(uint32_t) + sizeof(DDS_HEADER)))
+        {
+            return E_FAIL;
+        }
+
+        // DDS files always start with the same magic number ("DDS ")
+        auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData);
+        if (dwMagicNumber != DDS_MAGIC)
+        {
+            return E_FAIL;
+        }
+
+        auto hdr = reinterpret_cast<const DDS_HEADER*>(ddsData + sizeof(uint32_t));
+
+        // Verify header to validate DDS file
+        if (hdr->size != sizeof(DDS_HEADER) ||
+            hdr->ddspf.size != sizeof(DDS_PIXELFORMAT))
+        {
+            return E_FAIL;
+        }
+
+        // Check for DX10 extension
+        bool bDXT10Header = false;
+        if ((hdr->ddspf.flags & DDS_FOURCC) &&
+            (MAKEFOURCC('D', 'X', '1', '0') == hdr->ddspf.fourCC))
+        {
+            // Must be long enough for both headers and magic value
+            if (ddsDataSize < (sizeof(DDS_HEADER) + sizeof(uint32_t) + sizeof(DDS_HEADER_DXT10)))
+            {
+                return E_FAIL;
+            }
+
+            bDXT10Header = true;
+        }
+
+        // setup the pointers in the process request
+        *header = hdr;
+        ptrdiff_t offset = sizeof(uint32_t)
+            + sizeof(DDS_HEADER)
+            + (bDXT10Header ? sizeof(DDS_HEADER_DXT10) : 0);
+        *bitData = ddsData + offset;
+        *bitSize = ddsDataSize - offset;
+
+        return S_OK;
+    }
+
+
     //--------------------------------------------------------------------------------------
     HRESULT LoadTextureDataFromFile(
         _In_z_ const wchar_t* fileName,
@@ -216,7 +282,7 @@ namespace
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        uint32_t dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
+        auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
         if (dwMagicNumber != DDS_MAGIC)
         {
             return E_FAIL;
@@ -1342,6 +1408,42 @@ namespace
 
         return DDS_ALPHA_MODE_UNKNOWN;
     }
+
+    //--------------------------------------------------------------------------------------
+    void SetDebugTextureInfo(
+        _In_z_ const wchar_t* fileName,
+        _In_ ID3D12Resource** texture)
+    {
+#if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
+#if defined(_XBOX_ONE) && defined(_TITLE)
+        if (texture != 0 && *texture != 0)
+        {
+            (*texture)->SetName(fileName);
+        }
+#else
+        if (texture)
+        {
+            const wchar_t* pstrName = wcsrchr(fileName, '\\');
+            if (!pstrName)
+            {
+                pstrName = fileName;
+            }
+            else
+            {
+                pstrName++;
+            }
+
+            if (texture && *texture)
+            {
+                (*texture)->SetName(pstrName);
+            }
+        }
+#endif
+#else
+        UNREFERENCED_PARAMETER(fileName);
+        UNREFERENCED_PARAMETER(texture);
+#endif
+    }
 } // anonymous namespace
 
 
@@ -1403,46 +1505,22 @@ HRESULT DirectX::LoadDDSTextureFromMemoryEx(
     }
 
     // Validate DDS file in memory
-    if (ddsDataSize < (sizeof(uint32_t) + sizeof(DDS_HEADER)))
+    const DDS_HEADER* header = nullptr;
+    const uint8_t* bitData = nullptr;
+    size_t bitSize = 0;
+
+    HRESULT hr = LoadTextureDataFromMemory(ddsData, ddsDataSize,
+        &header,
+        &bitData,
+        &bitSize
+    );
+    if (FAILED(hr))
     {
-        return E_FAIL;
+        return hr;
     }
 
-    uint32_t dwMagicNumber = *(const uint32_t*)(ddsData);
-    if (dwMagicNumber != DDS_MAGIC)
-    {
-        return E_FAIL;
-    }
-
-    auto header = reinterpret_cast<const DDS_HEADER*>(ddsData + sizeof(uint32_t));
-
-    // Verify header to validate DDS file
-    if (header->size != sizeof(DDS_HEADER) ||
-        header->ddspf.size != sizeof(DDS_PIXELFORMAT))
-    {
-        return E_FAIL;
-    }
-
-    // Check for DX10 extension
-    bool bDXT10Header = false;
-    if ((header->ddspf.flags & DDS_FOURCC) &&
-        (MAKEFOURCC('D', 'X', '1', '0') == header->ddspf.fourCC))
-    {
-        // Must be long enough for both headers and magic value
-        if (ddsDataSize < (sizeof(DDS_HEADER) + sizeof(uint32_t) + sizeof(DDS_HEADER_DXT10)))
-        {
-            return E_FAIL;
-        }
-
-        bDXT10Header = true;
-    }
-
-    ptrdiff_t offset = sizeof(uint32_t)
-        + sizeof(DDS_HEADER)
-        + (bDXT10Header ? sizeof(DDS_HEADER_DXT10) : 0);
-
-    HRESULT hr = CreateTextureFromDDS(d3dDevice,
-        header, ddsData + offset, ddsDataSize - offset, maxsize,
+    hr = CreateTextureFromDDS(d3dDevice,
+        header, bitData, bitSize, maxsize,
         resFlags, loadFlags,
         texture, subresources, isCubeMap);
     if (SUCCEEDED(hr))
@@ -1538,38 +1616,7 @@ HRESULT DirectX::LoadDDSTextureFromFileEx(
 
     if (SUCCEEDED(hr))
     {
-#if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
-        if (texture)
-        {
-            CHAR strFileA[MAX_PATH];
-            int result = WideCharToMultiByte(CP_UTF8,
-                WC_NO_BEST_FIT_CHARS,
-                fileName,
-                -1,
-                strFileA,
-                MAX_PATH,
-                nullptr,
-                FALSE
-            );
-            if (result > 0)
-            {
-                const wchar_t* pstrName = wcsrchr(fileName, '\\');
-                if (!pstrName)
-                {
-                    pstrName = fileName;
-                }
-                else
-                {
-                    pstrName++;
-                }
-
-                if (texture && *texture)
-                {
-                    (*texture)->SetName(pstrName);
-                }
-            }
-        }
-#endif
+        SetDebugTextureInfo(fileName, texture);
 
         if (alphaMode)
             *alphaMode = GetAlphaMode(header);
