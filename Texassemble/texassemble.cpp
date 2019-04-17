@@ -37,7 +37,7 @@
 #include <DirectXPackedVector.h>
 #include <wincodec.h>
 
-#include "directxtex.h"
+#include "DirectXTex.h"
 
 //Uncomment to add support for OpenEXR (.exr)
 //#define USE_OPENEXR
@@ -309,20 +309,6 @@ namespace
         }
 
         return 0;
-    }
-
-
-    const wchar_t* LookupByValue(DWORD pValue, const SValue *pArray)
-    {
-        while (pArray->pName)
-        {
-            if (pValue == pArray->dwValue)
-                return pArray->pName;
-
-            pArray++;
-        }
-
-        return L"";
     }
 
 
@@ -1407,12 +1393,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 else
                 {
                     // WIC shares the same filter values for mode and dither
-                    static_assert(WIC_FLAGS_DITHER == TEX_FILTER_DITHER, "WIC_FLAGS_* & TEX_FILTER_* should match");
-                    static_assert(WIC_FLAGS_DITHER_DIFFUSION == TEX_FILTER_DITHER_DIFFUSION, "WIC_FLAGS_* & TEX_FILTER_* should match");
-                    static_assert(WIC_FLAGS_FILTER_POINT == TEX_FILTER_POINT, "WIC_FLAGS_* & TEX_FILTER_* should match");
-                    static_assert(WIC_FLAGS_FILTER_LINEAR == TEX_FILTER_LINEAR, "WIC_FLAGS_* & TEX_FILTER_* should match");
-                    static_assert(WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match");
-                    static_assert(WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match");
+                    static_assert(WIC_FLAGS_DITHER == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_DITHER), "WIC_FLAGS_* & TEX_FILTER_* should match");
+                    static_assert(WIC_FLAGS_DITHER_DIFFUSION == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_DITHER_DIFFUSION), "WIC_FLAGS_* & TEX_FILTER_* should match");
+                    static_assert(WIC_FLAGS_FILTER_POINT == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_POINT), "WIC_FLAGS_* & TEX_FILTER_* should match");
+                    static_assert(WIC_FLAGS_FILTER_LINEAR == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_LINEAR), "WIC_FLAGS_* & TEX_FILTER_* should match");
+                    static_assert(WIC_FLAGS_FILTER_CUBIC == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_CUBIC), "WIC_FLAGS_* & TEX_FILTER_* should match");
+                    static_assert(WIC_FLAGS_FILTER_FANT == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_FANT), "WIC_FLAGS_* & TEX_FILTER_* should match");
 
                     hr = LoadFromWICFile(pConv->szSrc, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image);
                     if (FAILED(hr))
@@ -1609,7 +1595,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                     for (size_t j = 0; j < width; ++j)
                     {
-                        static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
+                        static const XMVECTORF32 s_luminance = {{{ 0.3f, 0.59f, 0.11f, 0.f }}};
 
                         XMVECTOR v = *pixels++;
 
@@ -1654,7 +1640,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
 
                 auto& tinfo = timage->GetMetadata();
-                tinfo;
+                (void)tinfo;
 
                 assert(info.width == tinfo.width);
                 assert(info.height == tinfo.height);

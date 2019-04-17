@@ -16,7 +16,7 @@
 #pragma warning(disable : 4616 6993)
 #endif
 
-#include "bc.h"
+#include "BC.h"
 
 using namespace DirectX;
 

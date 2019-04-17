@@ -20,7 +20,7 @@ using namespace DirectX::PackedVector;
 // Macros
 //-------------------------------------------------------------------------------------
 
-#define SIGN_EXTEND(x,nb) ((((x)&(1<<((nb)-1)))?((~0)<<(nb)):0)|(x))
+#define SIGN_EXTEND(x,nb) ((((x)&(1<<((nb)-1)))?((~0)^((1<<(nb))-1)):0)|(x))
 
 // Because these are used in SAL annotations, they need to remain macros rather than const values
 #define BC6H_MAX_REGIONS 2
@@ -507,12 +507,9 @@ namespace
 
         INTColor& SignExtend(_In_ const LDRColorA& Prec)
         {
-        #pragma prefast(push)
-        #pragma prefast(disable : 26453, "Shift here is never negative")
             r = SIGN_EXTEND(r, int(Prec.r));
             g = SIGN_EXTEND(g, int(Prec.g));
             b = SIGN_EXTEND(b, int(Prec.b));
-        #pragma prefast(pop)
             return *this;
         }
 

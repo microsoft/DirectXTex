@@ -35,7 +35,7 @@
 
 #include <wincodec.h>
 
-#include "directxtex.h"
+#include "DirectXTex.h"
 
 #include "DirectXPackedVector.h"
 
@@ -930,30 +930,30 @@ namespace
         }
     }
 
-    const XMVECTORF32 c_MaxNitsFor2084 = { 10000.0f, 10000.0f, 10000.0f, 1.f };
+    const XMVECTORF32 c_MaxNitsFor2084 = {{{ 10000.0f, 10000.0f, 10000.0f, 1.f }}};
 
     const XMMATRIX c_from709to2020 =
     {
-        { 0.6274040f, 0.0690970f, 0.0163916f, 0.f },
-        { 0.3292820f, 0.9195400f, 0.0880132f, 0.f },
-        { 0.0433136f, 0.0113612f, 0.8955950f, 0.f },
-        { 0.f,        0.f,        0.f,        1.f }
+        0.6274040f, 0.0690970f, 0.0163916f, 0.f,
+        0.3292820f, 0.9195400f, 0.0880132f, 0.f,
+        0.0433136f, 0.0113612f, 0.8955950f, 0.f,
+        0.f,        0.f,        0.f,        1.f
     };
 
     const XMMATRIX c_from2020to709 =
     {
-        { 1.6604910f,  -0.1245505f, -0.0181508f, 0.f },
-        { -0.5876411f,  1.1328999f, -0.1005789f, 0.f },
-        { -0.0728499f, -0.0083494f,  1.1187297f, 0.f },
-        { 0.f,          0.f,         0.f,        1.f }
+        1.6604910f,  -0.1245505f, -0.0181508f, 0.f,
+        -0.5876411f,  1.1328999f, -0.1005789f, 0.f,
+        -0.0728499f, -0.0083494f,  1.1187297f, 0.f,
+        0.f,          0.f,         0.f,        1.f
     };
 
     const XMMATRIX c_fromP3to2020 =
     {
-        { 0.753845f, 0.0457456f, -0.00121055f, 0.f },
-        { 0.198593f, 0.941777f,   0.0176041f,  0.f },
-        { 0.047562f, 0.0124772f,  0.983607f,   0.f },
-        { 0.f,       0.f,         0.f,         1.f }
+        0.753845f, 0.0457456f, -0.00121055f, 0.f,
+        0.198593f, 0.941777f,   0.0176041f,  0.f,
+        0.047562f, 0.0124772f,  0.983607f,   0.f,
+        0.f,       0.f,         0.f,         1.f
     };
 
     inline float LinearToST2084(float normalizedLinearValue)
@@ -1788,12 +1788,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         else
         {
             // WIC shares the same filter values for mode and dither
-            static_assert(WIC_FLAGS_DITHER == TEX_FILTER_DITHER, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_DITHER_DIFFUSION == TEX_FILTER_DITHER_DIFFUSION, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_POINT == TEX_FILTER_POINT, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_LINEAR == TEX_FILTER_LINEAR, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_DITHER == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_DITHER), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_DITHER_DIFFUSION == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_DITHER_DIFFUSION), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_FILTER_POINT == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_POINT), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_FILTER_LINEAR == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_LINEAR), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_FILTER_CUBIC == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_CUBIC), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(WIC_FLAGS_FILTER_FANT == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_FANT), "WIC_FLAGS_* & TEX_FILTER_* should match");
 
             DWORD wicFlags = dwFilter;
             if (FileType == CODEC_DDS)
@@ -2078,7 +2078,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
 
                 auto& tinfo = timage->GetMetadata();
-                tinfo;
+                (void)tinfo;
 
                 assert(tinfo.format == DXGI_FORMAT_R16G16B16A16_FLOAT);
                 info.format = DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -2271,7 +2271,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+            (void)tinfo;
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2305,7 +2305,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 for (size_t j = 0; j < width; ++j)
                 {
-                    static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
+                    static const XMVECTORF32 s_luminance = {{{ 0.3f, 0.59f, 0.11f, 0.f }}};
 
                     XMVECTOR v = *pixels++;
 
@@ -2350,7 +2350,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+            (void)tinfo;
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2454,7 +2454,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                 [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
             {
-                static const XMVECTORF32 s_tolerance = { 0.2f, 0.2f, 0.2f, 0.f };
+                static const XMVECTORF32 s_tolerance = {{{ 0.2f, 0.2f, 0.2f, 0.f }}};
 
                 UNREFERENCED_PARAMETER(y);
 
@@ -2481,7 +2481,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+            (void)tinfo;
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2529,7 +2529,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+            (void)tinfo;
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2728,7 +2728,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+            (void)tinfo;
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);

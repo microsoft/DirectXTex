@@ -11,7 +11,7 @@
 
 #include "DirectXTexp.h"
 
-#include "bcdirectcompute.h"
+#include "BCDirectCompute.h"
 
 using namespace DirectX;
 

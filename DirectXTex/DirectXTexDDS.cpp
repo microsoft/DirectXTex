@@ -11,7 +11,7 @@
 
 #include "DirectXTexp.h"
 
-#include "dds.h"
+#include "DDS.h"
 
 using namespace DirectX;
 
