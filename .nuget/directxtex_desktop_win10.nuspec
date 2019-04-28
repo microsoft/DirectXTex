@@ -3,7 +3,7 @@
     <metadata minClientVersion="2.8.6">
         <id>directxtex_desktop_win10</id>
         <version>0.0.0-SpecifyVersionOnCommandline</version>
-        <title>DirectXTex Library (VS 2015/VS 2017 Win32 for Windows 10)</title>
+        <title>DirectXTex Library (VS 2015/2017/2019 Win32 for Windows 10)</title>
         <authors>Microsoft</authors>
         <owners>microsoft,directxtk</owners>
         <summary>DirectXTex texture processing library</summary>
