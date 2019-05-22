@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "DirectXTexp.h"
+#include "DirectXTexP.h"
 
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -3255,7 +3255,12 @@ void DirectX::_ConvertScanline(
                         break;
                     }
 
+#ifdef _MSC_VER
                     __fallthrough;
+#endif
+#ifdef __clang__
+                    [[clang::fallthrough]];
+#endif
 
                 case TEX_FILTER_RGB_COPY_RED:
                 {
@@ -3539,7 +3544,12 @@ void DirectX::_ConvertScanline(
                     break;
                 }
 
+#ifdef _MSC_VER
                 __fallthrough;
+#endif
+#ifdef __clang__
+                [[clang::fallthrough]];
+#endif
 
             case TEX_FILTER_RGB_COPY_RED:
             {
@@ -3632,7 +3642,12 @@ void DirectX::_ConvertScanline(
                         break;
                     }
 
+#ifdef _MSC_VER
                     __fallthrough;
+#endif
+#ifdef __clang__
+                    [[clang::fallthrough]];
+#endif
 
                 case TEX_FILTER_RGB_COPY_RED:
                     // Leave data unchanged and the store will handle this...
@@ -4547,7 +4562,7 @@ namespace
         if (FAILED(hr))
             return hr;
 
-        hr = FC->Initialize(source.Get(), targetGUID, _GetWICDither(filter), nullptr, threshold * 100.0, WICBitmapPaletteTypeMedianCut);
+        hr = FC->Initialize(source.Get(), targetGUID, _GetWICDither(filter), nullptr, static_cast<double>(threshold) * 100.0, WICBitmapPaletteTypeMedianCut);
         if (FAILED(hr))
             return hr;
 

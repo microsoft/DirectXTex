@@ -9,13 +9,23 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "DirectXTexp.h"
+#include "DirectXTexP.h"
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wsign-conversion"
+#pragma clang diagnostic ignored "-Wtautological-type-limit-compare"
+#endif
 
 #if defined(_XBOX_ONE) && defined(_TITLE)
 #include "d3dx12_x.h"
 #else
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"
+#endif
+
+#ifdef __clang__
+#pragma clang diagnostic pop
 #endif
 
 #ifndef IID_GRAPHICS_PPV_ARGS

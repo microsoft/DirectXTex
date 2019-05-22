@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "DirectXTexp.h"
+#include "DirectXTexP.h"
 
 //
 // In theory HDR (RGBE) Radiance files can have any of the following data orientations
@@ -176,7 +176,7 @@ namespace
                 strncpy_s(buff, info, std::min<size_t>(31, len));
 
                 auto newExposure = static_cast<float>(atof(buff));
-                if ((newExposure >= 1e-12) && (newExposure <= 1e12))
+                if ((newExposure >= 1e-12f) && (newExposure <= 1e12f))
                 {
                     // Note that we ignore strange exposure values (like EXPOSURE=0)
                     exposure *= newExposure;
@@ -304,7 +304,7 @@ namespace
             const float max_xy = (r > g) ? r : g;
             float max_xyz = (max_xy > b) ? max_xy : b;
 
-            if (max_xyz > 1e-32)
+            if (max_xyz > 1e-32f)
             {
                 int e;
                 max_xyz = frexpf(max_xyz, &e) * 256.f / max_xyz;
