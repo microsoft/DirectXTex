@@ -53,7 +53,7 @@ if ( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
     target_compile_options( directxtex PRIVATE -Wall -Wpedantic -Wextra )
 endif()
 if ( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
-    target_compile_options( directxtex PRIVATE /Wall )
+    target_compile_options( directxtex PRIVATE /Wall /fp:fast /permissive- /Zc:__cplusplus )
 endif()
 
 add_compile_definitions(_UNICODE UNICODE _WIN32_WINNT=0x0A00)
