@@ -14,7 +14,6 @@
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wsign-conversion"
-#pragma clang diagnostic ignored "-Wtautological-type-limit-compare"
 #endif
 
 #if defined(_XBOX_ONE) && defined(_TITLE)
