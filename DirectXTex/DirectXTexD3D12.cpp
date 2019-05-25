@@ -41,7 +41,7 @@ static_assert(static_cast<int>(TEX_DIMENSION_TEXTURE3D) == static_cast<int>(D3D1
 
 namespace
 {
-    template<typename T> void AdjustPlaneResource(
+    template<typename T, typename PT> void AdjustPlaneResource(
         _In_ DXGI_FORMAT fmt,
         _In_ size_t height,
         _In_ size_t slicePlane,
@@ -58,13 +58,13 @@ namespace
             if (!slicePlane)
             {
                 // Plane 0
-                res.SlicePitch = res.RowPitch * static_cast<LONG>(height);
+                res.SlicePitch = res.RowPitch * static_cast<PT>(height);
             }
             else
             {
                 // Plane 1
-                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * height);
-                res.SlicePitch = res.RowPitch * static_cast<LONG>((height + 1) >> 1);
+                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * PT(height));
+                res.SlicePitch = res.RowPitch * static_cast<PT>((height + 1) >> 1);
             }
             break;
 
@@ -72,14 +72,14 @@ namespace
             if (!slicePlane)
             {
                 // Plane 0
-                res.SlicePitch = res.RowPitch * static_cast<LONG>(height);
+                res.SlicePitch = res.RowPitch * static_cast<PT>(height);
             }
             else
             {
                 // Plane 1
-                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * height);
+                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * PT(height));
                 res.RowPitch = (res.RowPitch >> 1);
-                res.SlicePitch = res.RowPitch * static_cast<LONG>(height);
+                res.SlicePitch = res.RowPitch * static_cast<PT>(height);
             }
             break;
         }
@@ -586,7 +586,7 @@ HRESULT DirectX::PrepareUpload(
                     static_cast<LONG_PTR>(img.slicePitch)
                 };
 
-                AdjustPlaneResource(metadata.format, img.height, plane, res);
+                AdjustPlaneResource<D3D12_SUBRESOURCE_DATA, intptr_t>(metadata.format, img.height, plane, res);
 
                 subresources.emplace_back(res);
 
@@ -623,7 +623,7 @@ HRESULT DirectX::PrepareUpload(
                         static_cast<LONG_PTR>(img.slicePitch)
                     };
 
-                    AdjustPlaneResource(metadata.format, img.height, plane, res);
+                    AdjustPlaneResource<D3D12_SUBRESOURCE_DATA, intptr_t>(metadata.format, img.height, plane, res);
 
                     subresources.emplace_back(res);
                 }
@@ -786,7 +786,7 @@ HRESULT DirectX::CaptureTexture(
 
                 D3D12_MEMCPY_DEST destData = { img->pixels, img->rowPitch, img->slicePitch };
 
-                AdjustPlaneResource(img->format, img->height, plane, destData);
+                AdjustPlaneResource<D3D12_MEMCPY_DEST, uintptr_t>(img->format, img->height, plane, destData);
 
                 D3D12_SUBRESOURCE_DATA srcData =
                 {

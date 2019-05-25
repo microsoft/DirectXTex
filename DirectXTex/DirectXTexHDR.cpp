@@ -291,7 +291,7 @@ namespace
     //-------------------------------------------------------------------------------------
     inline void FloatToRGBE(_Out_writes_(width*4) uint8_t* pDestination, _In_reads_(width*fpp) const float* pSource, size_t width, _In_range_(3, 4) int fpp)
     {
-        auto ePtr = pSource + width * fpp;
+        auto ePtr = pSource + width * size_t(fpp);
 
         for (size_t j = 0; j < width; ++j)
         {

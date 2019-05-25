@@ -2774,7 +2774,7 @@ bool DirectX::_StoreScanlineLinear(
 
     default:
         // can't treat A8, XR, Depth, SNORM, UINT, or SINT as sRGB
-        flags &= ~TEX_FILTER_SRGB;
+        flags &= ~static_cast<uint32_t>(TEX_FILTER_SRGB);
         break;
     }
 
@@ -2849,7 +2849,7 @@ bool DirectX::_LoadScanlineLinear(
 
     default:
         // can't treat A8, XR, Depth, SNORM, UINT, or SINT as sRGB
-        flags &= ~TEX_FILTER_SRGB;
+        flags &= ~static_cast<uint32_t>(TEX_FILTER_SRGB);
         break;
     }
 
@@ -3060,7 +3060,7 @@ void DirectX::_ConvertScanline(
 
     case DXGI_FORMAT_A8_UNORM:
     case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
-        flags &= ~TEX_FILTER_SRGB_IN;
+        flags &= ~static_cast<uint32_t>(TEX_FILTER_SRGB_IN);
         break;
 
     default:
@@ -3081,7 +3081,7 @@ void DirectX::_ConvertScanline(
 
     case DXGI_FORMAT_A8_UNORM:
     case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
-        flags &= ~TEX_FILTER_SRGB_OUT;
+        flags &= ~static_cast<uint32_t>(TEX_FILTER_SRGB_OUT);
         break;
 
     default:
@@ -3090,7 +3090,7 @@ void DirectX::_ConvertScanline(
 
     if ((flags & (TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT)) == (TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT))
     {
-        flags &= ~(TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT);
+        flags &= ~static_cast<uint32_t>(TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT);
     }
 
     // sRGB input processing (sRGB -> Linear RGB)
@@ -4502,7 +4502,7 @@ namespace
 
         if ((filter & (TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT)) == (TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT))
         {
-            filter &= ~(TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT);
+            filter &= ~static_cast<uint32_t>(TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT);
         }
 
         DWORD wicsrgb = _CheckWICColorSpace(pfGUID, targetGUID);

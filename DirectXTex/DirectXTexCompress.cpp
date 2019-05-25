@@ -126,19 +126,19 @@ namespace
 
                 if (ph > 1)
                 {
-                    bytesToRead = std::min<size_t>(rowPitch, static_cast<size_t>(bytesLeft - rowPitch));
+                    bytesToRead = std::min<size_t>(rowPitch, static_cast<size_t>(bytesLeft) - rowPitch);
                     if (!_LoadScanline(&temp[4], pw, sptr + rowPitch, bytesToRead, format))
                         return E_FAIL;
 
                     if (ph > 2)
                     {
-                        bytesToRead = std::min<size_t>(rowPitch, static_cast<size_t>(bytesLeft - rowPitch * 2));
+                        bytesToRead = std::min<size_t>(rowPitch, static_cast<size_t>(bytesLeft) - rowPitch * 2);
                         if (!_LoadScanline(&temp[8], pw, sptr + rowPitch * 2, bytesToRead, format))
                             return E_FAIL;
 
                         if (ph > 3)
                         {
-                            bytesToRead = std::min<size_t>(rowPitch, static_cast<size_t>(bytesLeft - rowPitch * 3));
+                            bytesToRead = std::min<size_t>(rowPitch, static_cast<size_t>(bytesLeft) - rowPitch * 3);
                             if (!_LoadScanline(&temp[12], pw, sptr + rowPitch * 3, bytesToRead, format))
                                 return E_FAIL;
                         }

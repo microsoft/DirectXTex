@@ -373,7 +373,7 @@ namespace
                         if (sPtr + 1 >= endPtr)
                             return E_FAIL;
 
-                        auto t = static_cast<uint16_t>(unsigned(*sPtr) | (*(sPtr + 1u) << 8));
+                        auto t = static_cast<uint16_t>(uint32_t(*sPtr) | uint32_t(*(sPtr + 1u) << 8));
                         if (t & 0x8000)
                             nonzeroa = true;
                         sPtr += 2;
@@ -405,7 +405,7 @@ namespace
                             if (x >= image->width)
                                 return E_FAIL;
 
-                            auto t = static_cast<uint16_t>(unsigned(*sPtr) | (*(sPtr + 1u) << 8));
+                            auto t = static_cast<uint16_t>(uint32_t(*sPtr) | uint32_t(*(sPtr + 1u) << 8));
                             if (t & 0x8000)
                                 nonzeroa = true;
                             sPtr += 2;
@@ -462,7 +462,7 @@ namespace
                                 return E_FAIL;
 
                             // BGR -> RGBA
-                            t = (*sPtr << 16) | (*(sPtr + 1) << 8) | (*(sPtr + 2)) | 0xFF000000;
+                            t = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | 0xFF000000;
                             sPtr += 3;
 
                             nonzeroa = true;
@@ -526,7 +526,7 @@ namespace
                                     return E_FAIL;
 
                                 // BGR -> RGBA
-                                *dPtr = (*sPtr << 16) | (*(sPtr + 1) << 8) | (*(sPtr + 2)) | 0xFF000000;
+                                *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | 0xFF000000;
                                 sPtr += 3;
 
                                 nonzeroa = true;
@@ -652,7 +652,7 @@ namespace
                     if (sPtr + 1 >= endPtr)
                         return E_FAIL;
 
-                    auto t = static_cast<uint16_t>(unsigned(*sPtr) | (*(sPtr + 1u) << 8));
+                    auto t = static_cast<uint16_t>(uint32_t(*sPtr) | uint32_t(*(sPtr + 1u) << 8));
                     sPtr += 2;
                     *dPtr = t;
 
@@ -698,7 +698,7 @@ namespace
                             return E_FAIL;
 
                         // BGR -> RGBA
-                        *dPtr = (*sPtr << 16) | (*(sPtr + 1) << 8) | (*(sPtr + 2)) | 0xFF000000;
+                        *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | 0xFF000000;
                         sPtr += 3;
 
                         nonzeroa = true;

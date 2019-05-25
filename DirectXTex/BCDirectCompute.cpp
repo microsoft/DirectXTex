@@ -449,7 +449,7 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
             ConstantsBC6HBC7 param;
             param.tex_width = static_cast<UINT>(srcImage.width);
             param.num_block_x = static_cast<UINT>(xblocks);
-            param.format = m_bcformat;
+            param.format = static_cast<UINT>(m_bcformat);
             param.mode_id = 0;
             param.start_block_id = start_block_id;
             param.num_total_blocks = num_total_blocks;
@@ -487,7 +487,7 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
                         ConstantsBC6HBC7 param;
                         param.tex_width = static_cast<UINT>(srcImage.width);
                         param.num_block_x = static_cast<UINT>(xblocks);
-                        param.format = m_bcformat;
+                        param.format = static_cast<UINT>(m_bcformat);
                         param.mode_id = modes[i];
                         param.start_block_id = start_block_id;
                         param.num_total_blocks = num_total_blocks;
@@ -522,7 +522,7 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
                         ConstantsBC6HBC7 param;
                         param.tex_width = static_cast<UINT>(srcImage.width);
                         param.num_block_x = static_cast<UINT>(xblocks);
-                        param.format = m_bcformat;
+                        param.format = static_cast<UINT>(m_bcformat);
                         param.mode_id = modes[i];
                         param.start_block_id = start_block_id;
                         param.num_total_blocks = num_total_blocks;
@@ -562,7 +562,7 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
                     ConstantsBC6HBC7 param;
                     param.tex_width = static_cast<UINT>(srcImage.width);
                     param.num_block_x = static_cast<UINT>(xblocks);
-                    param.format = m_bcformat;
+                    param.format = static_cast<UINT>(m_bcformat);
                     param.mode_id = i;
                     param.start_block_id = start_block_id;
                     param.num_total_blocks = num_total_blocks;
