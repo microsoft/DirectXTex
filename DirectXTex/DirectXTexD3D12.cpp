@@ -58,13 +58,13 @@ namespace
             if (!slicePlane)
             {
                 // Plane 0
-                res.SlicePitch = res.RowPitch * height;
+                res.SlicePitch = res.RowPitch * static_cast<LONG>(height);
             }
             else
             {
                 // Plane 1
                 res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * height);
-                res.SlicePitch = res.RowPitch * ((height + 1) >> 1);
+                res.SlicePitch = res.RowPitch * static_cast<LONG>((height + 1) >> 1);
             }
             break;
 
@@ -72,14 +72,14 @@ namespace
             if (!slicePlane)
             {
                 // Plane 0
-                res.SlicePitch = res.RowPitch * height;
+                res.SlicePitch = res.RowPitch * static_cast<LONG>(height);
             }
             else
             {
                 // Plane 1
                 res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * height);
                 res.RowPitch = (res.RowPitch >> 1);
-                res.SlicePitch = res.RowPitch * height;
+                res.SlicePitch = res.RowPitch * static_cast<LONG>(height);
             }
             break;
         }
@@ -142,7 +142,7 @@ namespace
             return hr;
 
         numberOfResources = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
-                            ? 1 : desc.DepthOrArraySize;
+                            ? 1u : desc.DepthOrArraySize;
         numberOfResources *= desc.MipLevels;
         numberOfResources *= numberOfPlanes;
 
@@ -706,7 +706,7 @@ HRESULT DirectX::CaptureTexture(
             mdata.depth = 1;
             mdata.arraySize = desc.DepthOrArraySize;
             mdata.mipLevels = desc.MipLevels;
-            mdata.miscFlags = isCubeMap ? TEX_MISC_TEXTURECUBE : 0;
+            mdata.miscFlags = isCubeMap ? TEX_MISC_TEXTURECUBE : 0u;
             mdata.miscFlags2 = 0;
             mdata.format = desc.Format;
             mdata.dimension = TEX_DIMENSION_TEXTURE2D;

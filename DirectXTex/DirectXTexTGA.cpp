@@ -475,7 +475,7 @@ namespace
                                 return E_FAIL;
 
                             // BGRA -> RGBA
-                            t = (*sPtr << 16) | (*(sPtr + 1) << 8) | (*(sPtr + 2)) | (*(sPtr + 3) << 24);
+                            t = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(*(sPtr + 3) << 24);
 
                             if (*(sPtr + 3) > 0)
                                 nonzeroa = true;
@@ -539,7 +539,7 @@ namespace
                                     return E_FAIL;
 
                                 // BGRA -> RGBA
-                                *dPtr = (*sPtr << 16) | (*(sPtr + 1) << 8) | (*(sPtr + 2)) | (*(sPtr + 3) << 24);
+                                *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(*(sPtr + 3) << 24);
 
                                 if (*(sPtr + 3) > 0)
                                     nonzeroa = true;
@@ -711,7 +711,7 @@ namespace
                             return E_FAIL;
 
                         // BGRA -> RGBA
-                        *dPtr = (*sPtr << 16) | (*(sPtr + 1) << 8) | (*(sPtr + 2)) | (*(sPtr + 3) << 24);
+                        *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(*(sPtr + 3) << 24);
 
                         if (*(sPtr + 3) > 0)
                             nonzeroa = true;

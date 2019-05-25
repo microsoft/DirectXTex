@@ -219,8 +219,8 @@ namespace
         {
             // We only support the -Y +X orientation (see top of file)
             return HRESULT_FROM_WIN32(
-                ((orientation[0] == '+' || orientation[0] == '-') && (orientation[1] == 'X' || orientation[1] == 'Y'))
-                ? ERROR_NOT_SUPPORTED : ERROR_INVALID_DATA
+                static_cast<unsigned long>(((orientation[0] == '+' || orientation[0] == '-') && (orientation[1] == 'X' || orientation[1] == 'Y'))
+                ? ERROR_NOT_SUPPORTED : ERROR_INVALID_DATA)
             );
         }
 
@@ -275,7 +275,7 @@ namespace
             return E_FAIL;
         }
 
-        offset = info - static_cast<const char*>(pSource);
+        offset = size_t(info - static_cast<const char*>(pSource));
 
         metadata.width = width;
         metadata.height = height;
@@ -317,7 +317,7 @@ namespace
                 pDestination[0] = red;
                 pDestination[1] = green;
                 pDestination[2] = blue;
-                pDestination[3] = (red || green || blue) ? uint8_t(e & 0xff) : 0;
+                pDestination[3] = (red || green || blue) ? uint8_t(e & 0xff) : 0u;
             }
             else
             {
@@ -473,7 +473,7 @@ namespace
                     if (encSize + 2 > rowPitch)
                         return 0;
 
-                    enc[0] = 128 + spanLen;
+                    enc[0] = 128u + spanLen;
                     enc[1] = *spanPtr;
                     enc += 2;
                     encSize += 2;
@@ -953,7 +953,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
     }
 #endif
 
-    hr = blob.Trim(dPtr - static_cast<uint8_t*>(blob.GetBufferPointer()));
+    hr = blob.Trim(size_t(dPtr - static_cast<uint8_t*>(blob.GetBufferPointer())));
     if (FAILED(hr))
     {
         blob.Release();

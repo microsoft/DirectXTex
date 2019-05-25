@@ -583,7 +583,7 @@ namespace
             assert(uStartBit < 128);
             _Analysis_assume_(uStartBit < 128);
             size_t uIndex = uStartBit >> 3;
-            uint8_t ret = (m_uBits[uIndex] >> (uStartBit - (uIndex << 3))) & 0x01;
+            auto ret = static_cast<uint8_t>((m_uBits[uIndex] >> (uStartBit - (uIndex << 3))) & 0x01);
             uStartBit++;
             return ret;
         }
@@ -604,7 +604,7 @@ namespace
             }
             else
             {
-                ret = (m_uBits[uIndex] >> uBase) & ((1 << uNumBits) - 1);
+                ret = static_cast<uint8_t>((m_uBits[uIndex] >> uBase) & ((1 << uNumBits) - 1));
             }
             assert(ret < (1 << uNumBits));
             uStartBit += uNumBits;
@@ -794,7 +794,7 @@ namespace
         {
             assert(0 < uPrec && uPrec <= 8);
             uint8_t rnd = std::min<uint8_t>(255u, static_cast<uint8_t>(unsigned(comp) + (1u << (7 - uPrec))));
-            return rnd >> (8 - uPrec);
+            return uint8_t(rnd >> (8u - uPrec));
         }
 
         static LDRColorA Quantize(_In_ const LDRColorA& c, _In_ const LDRColorA& RGBAPrec)
@@ -814,7 +814,7 @@ namespace
         {
             assert(0 < uPrec && uPrec <= 8);
             comp = static_cast<uint8_t>(unsigned(comp) << (8 - uPrec));
-            return comp | (comp >> uPrec);
+            return uint8_t(comp | (comp >> uPrec));
         }
 
         static LDRColorA Unquantize(_In_ const LDRColorA& c, _In_ const LDRColorA& RGBAPrec)
@@ -823,7 +823,7 @@ namespace
             q.r = Unquantize(c.r, RGBAPrec.r);
             q.g = Unquantize(c.g, RGBAPrec.g);
             q.b = Unquantize(c.b, RGBAPrec.b);
-            q.a = RGBAPrec.a > 0 ? Unquantize(c.a, RGBAPrec.a) : 255;
+            q.a = RGBAPrec.a > 0 ? Unquantize(c.a, RGBAPrec.a) : 255u;
             return q;
         }
 
@@ -1649,7 +1649,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const
     assert(pOut);
 
     size_t uStartBit = 0;
-    uint8_t uMode = GetBits(uStartBit, 2);
+    uint8_t uMode = GetBits(uStartBit, 2u);
     if (uMode != 0x00 && uMode != 0x01)
     {
         uMode = static_cast<uint8_t>((unsigned(GetBits(uStartBit, 3)) << 2) | uMode);
@@ -1672,7 +1672,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const
         uint32_t uShape = 0;
 
         // Read header
-        const size_t uHeaderBits = info.uPartitions > 0 ? 82 : 65;
+        const size_t uHeaderBits = info.uPartitions > 0 ? 82u : 65u;
         while (uStartBit < uHeaderBits)
         {
             size_t uCurBit = uStartBit;
@@ -1736,7 +1736,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const
         // Read indices
         for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
-            size_t uNumBits = IsFixUpOffset(info.uPartitions, uShape, i) ? info.uIndexPrec - 1 : info.uIndexPrec;
+            size_t uNumBits = IsFixUpOffset(info.uPartitions, uShape, i) ? info.uIndexPrec - 1u : info.uIndexPrec;
             if (uStartBit + uNumBits > 128)
             {
 #ifdef _DEBUG
@@ -1813,10 +1813,10 @@ void D3DX_BC6H::Encode(bool bSigned, const HDRColorA* const pIn)
 
     for (EP.uMode = 0; EP.uMode < ARRAYSIZE(ms_aInfo) && EP.fBestErr > 0; ++EP.uMode)
     {
-        const uint8_t uShapes = ms_aInfo[EP.uMode].uPartitions ? 32 : 1;
+        const uint8_t uShapes = ms_aInfo[EP.uMode].uPartitions ? 32u : 1u;
         // Number of rough cases to look at. reasonable values of this are 1, uShapes/4, and uShapes
         // uShapes/4 gets nearly all the cases; you can increase that a bit (say by 3 or 4) if you really want to squeeze the last bit out
-        const size_t uItems = std::max<size_t>(1, uShapes >> 2);
+        const size_t uItems = std::max<size_t>(1u, size_t(uShapes >> 2));
         float afRoughMSE[BC6H_MAX_SHAPES];
         uint8_t auShape[BC6H_MAX_SHAPES];
 
@@ -2301,7 +2301,7 @@ void D3DX_BC6H::EmitBlock(const EncodeParams* pEP, const INTEndPntPair aEndPts[]
     const uint8_t uRealMode = ms_aInfo[pEP->uMode].uMode;
     const uint8_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
     const uint8_t uIndexPrec = ms_aInfo[pEP->uMode].uIndexPrec;
-    const size_t uHeaderBits = uPartitions > 0 ? 82 : 65;
+    const size_t uHeaderBits = uPartitions > 0 ? 82u : 65u;
     const ModeDescriptor* desc = ms_aDesc[pEP->uMode];
     size_t uStartBit = 0;
 
@@ -2309,20 +2309,20 @@ void D3DX_BC6H::EmitBlock(const EncodeParams* pEP, const INTEndPntPair aEndPts[]
     {
         switch (desc[uStartBit].m_eField)
         {
-        case M:  SetBit(uStartBit, uint8_t(uRealMode >> desc[uStartBit].m_uBit) & 0x01); break;
-        case D:  SetBit(uStartBit, uint8_t(pEP->uShape >> desc[uStartBit].m_uBit) & 0x01); break;
-        case RW: SetBit(uStartBit, uint8_t(aEndPts[0].A.r >> desc[uStartBit].m_uBit) & 0x01); break;
-        case RX: SetBit(uStartBit, uint8_t(aEndPts[0].B.r >> desc[uStartBit].m_uBit) & 0x01); break;
-        case RY: SetBit(uStartBit, uint8_t(aEndPts[1].A.r >> desc[uStartBit].m_uBit) & 0x01); break;
-        case RZ: SetBit(uStartBit, uint8_t(aEndPts[1].B.r >> desc[uStartBit].m_uBit) & 0x01); break;
-        case GW: SetBit(uStartBit, uint8_t(aEndPts[0].A.g >> desc[uStartBit].m_uBit) & 0x01); break;
-        case GX: SetBit(uStartBit, uint8_t(aEndPts[0].B.g >> desc[uStartBit].m_uBit) & 0x01); break;
-        case GY: SetBit(uStartBit, uint8_t(aEndPts[1].A.g >> desc[uStartBit].m_uBit) & 0x01); break;
-        case GZ: SetBit(uStartBit, uint8_t(aEndPts[1].B.g >> desc[uStartBit].m_uBit) & 0x01); break;
-        case BW: SetBit(uStartBit, uint8_t(aEndPts[0].A.b >> desc[uStartBit].m_uBit) & 0x01); break;
-        case BX: SetBit(uStartBit, uint8_t(aEndPts[0].B.b >> desc[uStartBit].m_uBit) & 0x01); break;
-        case BY: SetBit(uStartBit, uint8_t(aEndPts[1].A.b >> desc[uStartBit].m_uBit) & 0x01); break;
-        case BZ: SetBit(uStartBit, uint8_t(aEndPts[1].B.b >> desc[uStartBit].m_uBit) & 0x01); break;
+        case M:  SetBit(uStartBit, uint8_t(uRealMode >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case D:  SetBit(uStartBit, uint8_t(pEP->uShape >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case RW: SetBit(uStartBit, uint8_t(aEndPts[0].A.r >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case RX: SetBit(uStartBit, uint8_t(aEndPts[0].B.r >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case RY: SetBit(uStartBit, uint8_t(aEndPts[1].A.r >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case RZ: SetBit(uStartBit, uint8_t(aEndPts[1].B.r >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case GW: SetBit(uStartBit, uint8_t(aEndPts[0].A.g >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case GX: SetBit(uStartBit, uint8_t(aEndPts[0].B.g >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case GY: SetBit(uStartBit, uint8_t(aEndPts[1].A.g >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case GZ: SetBit(uStartBit, uint8_t(aEndPts[1].B.g >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case BW: SetBit(uStartBit, uint8_t(aEndPts[0].A.b >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case BX: SetBit(uStartBit, uint8_t(aEndPts[0].B.b >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case BY: SetBit(uStartBit, uint8_t(aEndPts[1].A.b >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case BZ: SetBit(uStartBit, uint8_t(aEndPts[1].B.b >> desc[uStartBit].m_uBit) & 0x01u); break;
         default: assert(false);
         }
     }
@@ -2330,7 +2330,7 @@ void D3DX_BC6H::EmitBlock(const EncodeParams* pEP, const INTEndPntPair aEndPts[]
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
         if (IsFixUpOffset(ms_aInfo[pEP->uMode].uPartitions, pEP->uShape, i))
-            SetBits(uStartBit, uIndexPrec - 1, static_cast<uint8_t>(aIndices[i]));
+            SetBits(uStartBit, uIndexPrec - 1u, static_cast<uint8_t>(aIndices[i]));
         else
             SetBits(uStartBit, uIndexPrec, static_cast<uint8_t>(aIndices[i]));
     }
@@ -2610,7 +2610,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
                 return;
             }
 
-            c[i].a = RGBAPrec.a ? GetBits(uStartBit, RGBAPrec.a) : 255;
+            c[i].a = RGBAPrec.a ? GetBits(uStartBit, RGBAPrec.a) : 255u;
         }
 
         // P-bits
@@ -2655,7 +2655,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
         // read color indices
         for (i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
         {
-            size_t uNumBits = IsFixUpOffset(ms_aInfo[uMode].uPartitions, uShape, i) ? uIndexPrec - 1 : uIndexPrec;
+            size_t uNumBits = IsFixUpOffset(ms_aInfo[uMode].uPartitions, uShape, i) ? uIndexPrec - 1u : uIndexPrec;
             if (uStartBit + uNumBits > 128)
             {
 #ifdef _DEBUG
@@ -2672,7 +2672,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
         {
             for (i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
             {
-                size_t uNumBits = i ? uIndexPrec2 : uIndexPrec2 - 1;
+                size_t uNumBits = i ? uIndexPrec2 : uIndexPrec2 - 1u;
                 if (uStartBit + uNumBits > 128)
                 {
 #ifdef _DEBUG
@@ -3033,7 +3033,7 @@ void D3DX_BC7::OptimizeOne(const EncodeParams* pEP, const LDRColorA aColors[], s
             else
                 copt_b = cnew_b;
             fOptErr = fErr;
-            do_b = 1 - do_b;	// now move the other endpoint
+            do_b = 1u - do_b;	// now move the other endpoint
         }
     }
 
@@ -3085,8 +3085,8 @@ void D3DX_BC7::AssignIndices(const EncodeParams* pEP, size_t uShape, size_t uInd
     assert((uNumIndices <= BC7_MAX_INDICES) && (uNumIndices2 <= BC7_MAX_INDICES));
     _Analysis_assume_((uNumIndices <= BC7_MAX_INDICES) && (uNumIndices2 <= BC7_MAX_INDICES));
 
-    const uint8_t uHighestIndexBit = uNumIndices >> 1;
-    const uint8_t uHighestIndexBit2 = uNumIndices2 >> 1;
+    const uint8_t uHighestIndexBit = uint8_t(uNumIndices >> 1);
+    const uint8_t uHighestIndexBit2 = uint8_t(uNumIndices2 >> 1);
     LDRColorA aPalette[BC7_MAX_REGIONS][BC7_MAX_INDICES];
 
     // build list of possibles
@@ -3183,8 +3183,8 @@ void D3DX_BC7::EmitBlock(const EncodeParams* pEP, size_t uShape, size_t uRotatio
                 }
                 else
                 {
-                    SetBits(uStartBit, RGBAPrec[ch], aEndPts[i].A[ch] >> 1);
-                    SetBits(uStartBit, RGBAPrec[ch], aEndPts[i].B[ch] >> 1);
+                    SetBits(uStartBit, RGBAPrec[ch], uint8_t(aEndPts[i].A[ch] >> 1));
+                    SetBits(uStartBit, RGBAPrec[ch], uint8_t(aEndPts[i].B[ch] >> 1));
                     size_t idx = ep++ * uPBits / uNumEP;
                     assert(idx < (BC7_MAX_REGIONS << 1));
                     _Analysis_assume_(idx < (BC7_MAX_REGIONS << 1));
@@ -3201,7 +3201,7 @@ void D3DX_BC7::EmitBlock(const EncodeParams* pEP, size_t uShape, size_t uRotatio
 
         for (i = 0; i < uPBits; i++)
         {
-            SetBits(uStartBit, 1, aPVote[i] > (aCount[i] >> 1) ? 1 : 0);
+            SetBits(uStartBit, 1, aPVote[i] > (aCount[i] >> 1) ? 1u : 0u);
         }
     }
     else
@@ -3264,8 +3264,8 @@ void D3DX_BC7::FixEndpointPBits(const EncodeParams* pEP, const LDREndPntPair *pO
                 }
                 else
                 {
-                    pFixedEndpoints[i].A[ch] = pOrigEndpoints[i].A[ch] >> 1;
-                    pFixedEndpoints[i].B[ch] = pOrigEndpoints[i].B[ch] >> 1;
+                    pFixedEndpoints[i].A[ch] = uint8_t(pOrigEndpoints[i].A[ch] >> 1);
+                    pFixedEndpoints[i].B[ch] = uint8_t(pOrigEndpoints[i].B[ch] >> 1);
 
                     size_t idx = ep++ * uPBits / uNumEP;
                     assert(idx < (BC7_MAX_REGIONS << 1));

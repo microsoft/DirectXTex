@@ -392,7 +392,7 @@ void DirectX::_CopyScanline(
                     size_t size = std::min<size_t>(outSize, inSize);
                     for (size_t count = 0; count < (size - 1); count += 2)
                     {
-                        *(dPtr++) = *(sPtr++) | 0x8000;
+                        *(dPtr++) = uint16_t(*(sPtr++) | 0x8000);
                     }
                 }
             }
@@ -422,7 +422,7 @@ void DirectX::_CopyScanline(
                     size_t size = std::min<size_t>(outSize, inSize);
                     for (size_t count = 0; count < (size - 1); count += 2)
                     {
-                        *(dPtr++) = *(sPtr++) | 0xF000;
+                        *(dPtr++) = uint16_t(*(sPtr++) | 0xF000);
                     }
                 }
             }
@@ -644,9 +644,9 @@ bool DirectX::_ExpandScanline(
             {
                 uint16_t t = *(sPtr++);
 
-                uint32_t t1 = ((t & 0xf800) >> 8) | ((t & 0xe000) >> 13);
-                uint32_t t2 = ((t & 0x07e0) << 5) | ((t & 0x0600) >> 5);
-                uint32_t t3 = ((t & 0x001f) << 19) | ((t & 0x001c) << 14);
+                uint32_t t1 = uint32_t(((t & 0xf800) >> 8) | ((t & 0xe000) >> 13));
+                uint32_t t2 = uint32_t(((t & 0x07e0) << 5) | ((t & 0x0600) >> 5));
+                uint32_t t3 = uint32_t(((t & 0x001f) << 19) | ((t & 0x001c) << 14));
 
                 *(dPtr++) = t1 | t2 | t3 | 0xff000000;
             }
@@ -668,9 +668,9 @@ bool DirectX::_ExpandScanline(
             {
                 uint16_t t = *(sPtr++);
 
-                uint32_t t1 = ((t & 0x7c00) >> 7) | ((t & 0x7000) >> 12);
-                uint32_t t2 = ((t & 0x03e0) << 6) | ((t & 0x0380) << 1);
-                uint32_t t3 = ((t & 0x001f) << 19) | ((t & 0x001c) << 14);
+                uint32_t t1 = uint32_t(((t & 0x7c00) >> 7) | ((t & 0x7000) >> 12));
+                uint32_t t2 = uint32_t(((t & 0x03e0) << 6) | ((t & 0x0380) << 1));
+                uint32_t t3 = uint32_t(((t & 0x001f) << 19) | ((t & 0x001c) << 14));
                 uint32_t ta = (flags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : ((t & 0x8000) ? 0xff000000 : 0);
 
                 *(dPtr++) = t1 | t2 | t3 | ta;
@@ -693,10 +693,10 @@ bool DirectX::_ExpandScanline(
             {
                 uint16_t t = *(sPtr++);
 
-                uint32_t t1 = ((t & 0x0f00) >> 4) | ((t & 0x0f00) >> 8);
-                uint32_t t2 = ((t & 0x00f0) << 8) | ((t & 0x00f0) << 4);
-                uint32_t t3 = ((t & 0x000f) << 20) | ((t & 0x000f) << 16);
-                uint32_t ta = (flags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : (((t & 0xf000) << 16) | ((t & 0xf000) << 12));
+                uint32_t t1 = uint32_t(((t & 0x0f00) >> 4) | ((t & 0x0f00) >> 8));
+                uint32_t t2 = uint32_t(((t & 0x00f0) << 8) | ((t & 0x00f0) << 4));
+                uint32_t t3 = uint32_t(((t & 0x000f) << 20) | ((t & 0x000f) << 16));
+                uint32_t ta = (flags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t(((t & 0xf000) << 16) | ((t & 0xf000) << 12));
 
                 *(dPtr++) = t1 | t2 | t3 | ta;
             }
@@ -1348,7 +1348,7 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
                 int64_t u = int64_t(sPtr->x) - 32768;
                 int64_t y = int64_t(sPtr->y) - 4096;
                 int64_t v = int64_t(sPtr->z) - 32768;
-                unsigned int a = sPtr->w;
+                auto a = static_cast<int>(sPtr->w);
                 ++sPtr;
 
                 // http://msdn.microsoft.com/en-us/library/windows/desktop/bb970578.aspx
@@ -2075,7 +2075,7 @@ bool DirectX::_StoreScanline(
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>(*sPtr++);
                 v = XMVectorMultiply(v, s_Scale);
                 XMStoreU555(dPtr, v);
-                dPtr->w = (XMVectorGetW(v) > threshold) ? 1 : 0;
+                dPtr->w = (XMVectorGetW(v) > threshold) ? 1u : 0u;
                 ++dPtr;
             }
             return true;
@@ -3783,10 +3783,10 @@ namespace
                 \
                 auto dPtr = &dest[ index ]; \
                 if (dPtr >= ePtr) break; \
-                dPtr->x = static_cast<itype>(tmp.x) & mask; \
-                dPtr->y = static_cast<itype>(tmp.y) & mask; \
-                dPtr->z = static_cast<itype>(tmp.z) & mask; \
-                dPtr->w = static_cast<itype>(tmp.w) & mask; \
+                dPtr->x = itype(static_cast<itype>(tmp.x) & mask); \
+                dPtr->y = itype(static_cast<itype>(tmp.y) & mask); \
+                dPtr->z = itype(static_cast<itype>(tmp.z) & mask); \
+                dPtr->w = itype(static_cast<itype>(tmp.w) & mask); \
             } \
             return true; \
         } \
@@ -3838,8 +3838,8 @@ namespace
                 \
                 auto dPtr = &dest[ index ]; \
                 if (dPtr >= ePtr) break; \
-                dPtr->x = static_cast<itype>(tmp.x) & mask; \
-                dPtr->y = static_cast<itype>(tmp.y) & mask; \
+                dPtr->x = itype(static_cast<itype>(tmp.x) & mask); \
+                dPtr->y = itype(static_cast<itype>(tmp.y) & mask); \
             } \
             return true; \
         } \
@@ -3888,7 +3888,7 @@ namespace
                 \
                 auto dPtr = &dest[ index ]; \
                 if (dPtr >= ePtr) break; \
-                *dPtr = static_cast<type>((selectw) ? XMVectorGetW(target) : XMVectorGetX(target)) & mask; \
+                *dPtr = type(static_cast<type>((selectw) ? XMVectorGetW(target) : XMVectorGetX(target)) & mask); \
             } \
             return true; \
         } \
@@ -4019,9 +4019,9 @@ bool DirectX::_StoreScanlineDither(
 
                 auto dPtr = &dest[index];
                 if (dPtr >= ePtr) break;
-                dPtr->x = static_cast<uint16_t>(tmp.x) & 0x3FF;
-                dPtr->y = static_cast<uint16_t>(tmp.y) & 0x3FF;
-                dPtr->z = static_cast<uint16_t>(tmp.z) & 0x3FF;
+                dPtr->x = uint16_t(static_cast<uint16_t>(tmp.x) & 0x3FF);
+                dPtr->y = uint16_t(static_cast<uint16_t>(tmp.y) & 0x3FF);
+                dPtr->z = uint16_t(static_cast<uint16_t>(tmp.z) & 0x3FF);
                 dPtr->w = static_cast<uint16_t>(tmp.w);
             }
             return true;
@@ -4185,9 +4185,9 @@ bool DirectX::_StoreScanlineDither(
 
                 auto dPtr = &dest[index];
                 if (dPtr >= ePtr) break;
-                dPtr->x = static_cast<uint16_t>(tmp.x) & 0x1F;
-                dPtr->y = static_cast<uint16_t>(tmp.y) & 0x3F;
-                dPtr->z = static_cast<uint16_t>(tmp.z) & 0x1F;
+                dPtr->x = uint16_t(static_cast<uint16_t>(tmp.x) & 0x1F);
+                dPtr->y = uint16_t(static_cast<uint16_t>(tmp.y) & 0x3F);
+                dPtr->z = uint16_t(static_cast<uint16_t>(tmp.z) & 0x1F);
             }
             return true;
         }
@@ -4234,10 +4234,10 @@ bool DirectX::_StoreScanlineDither(
 
                 auto dPtr = &dest[index];
                 if (dPtr >= ePtr) break;
-                dPtr->x = static_cast<uint16_t>(tmp.x) & 0x1F;
-                dPtr->y = static_cast<uint16_t>(tmp.y) & 0x1F;
-                dPtr->z = static_cast<uint16_t>(tmp.z) & 0x1F;
-                dPtr->w = (XMVectorGetW(target) > threshold) ? 1 : 0;
+                dPtr->x = uint16_t(static_cast<uint16_t>(tmp.x) & 0x1F);
+                dPtr->y = uint16_t(static_cast<uint16_t>(tmp.y) & 0x1F);
+                dPtr->z = uint16_t(static_cast<uint16_t>(tmp.z) & 0x1F);
+                dPtr->w = (XMVectorGetW(target) > threshold) ? 1u : 0u;
             }
             return true;
         }
@@ -4289,9 +4289,9 @@ bool DirectX::_StoreScanlineDither(
 
                 auto dPtr = &dest[index];
                 if (dPtr >= ePtr) break;
-                dPtr->x = static_cast<uint8_t>(tmp.x) & 0xFF;
-                dPtr->y = static_cast<uint8_t>(tmp.y) & 0xFF;
-                dPtr->z = static_cast<uint8_t>(tmp.z) & 0xFF;
+                dPtr->x = uint8_t(static_cast<uint8_t>(tmp.x) & 0xFF);
+                dPtr->y = uint8_t(static_cast<uint8_t>(tmp.y) & 0xFF);
+                dPtr->z = uint8_t(static_cast<uint8_t>(tmp.z) & 0xFF);
                 dPtr->w = 0;
             }
             return true;

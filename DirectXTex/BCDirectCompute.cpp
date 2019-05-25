@@ -434,7 +434,7 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
 
     auto num_total_blocks = static_cast<UINT>(xblocks * yblocks);
     UINT num_blocks = num_total_blocks;
-    int start_block_id = 0;
+    UINT start_block_id = 0;
     while (num_blocks > 0)
     {
         UINT n = std::min<UINT>(num_blocks, MAX_BLOCK_BATCH);

@@ -883,7 +883,7 @@ HRESULT DirectX::CaptureTexture(
         mdata.depth = 1;
         mdata.arraySize = desc.ArraySize;
         mdata.mipLevels = desc.MipLevels;
-        mdata.miscFlags = (desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE) ? TEX_MISC_TEXTURECUBE : 0;
+        mdata.miscFlags = (desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE) ? TEX_MISC_TEXTURECUBE : 0u;
         mdata.miscFlags2 = 0;
         mdata.format = desc.Format;
         mdata.dimension = TEX_DIMENSION_TEXTURE2D;

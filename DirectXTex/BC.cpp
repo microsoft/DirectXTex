@@ -398,11 +398,11 @@ namespace
                 return;
             }
 
-            uSteps = (uColorKey > 0) ? 3 : 4;
+            uSteps = (uColorKey > 0) ? 3u : 4u;
         }
         else
         {
-            uSteps = 4;
+            uSteps = 4u;
         }
 
         // Quantize block to R56B5, using Floyd Stienberg error diffusion.  This 
@@ -929,12 +929,12 @@ void DirectX::D3DXDecodeBC3(XMVECTOR *pColor, const uint8_t *pBC)
         fAlpha[7] = 1.0f;
     }
 
-    DWORD dw = pBC3->bitmap[0] | (pBC3->bitmap[1] << 8) | (pBC3->bitmap[2] << 16);
+    DWORD dw = uint32_t(pBC3->bitmap[0]) | uint32_t(pBC3->bitmap[1] << 8) | uint32_t(pBC3->bitmap[2] << 16);
 
     for (size_t i = 0; i < 8; ++i, dw >>= 3)
         pColor[i] = XMVectorSetW(pColor[i], fAlpha[dw & 0x7]);
 
-    dw = pBC3->bitmap[3] | (pBC3->bitmap[4] << 8) | (pBC3->bitmap[5] << 16);
+    dw = uint32_t(pBC3->bitmap[3]) | uint32_t(pBC3->bitmap[4] << 8) | uint32_t(pBC3->bitmap[5] << 16);
 
     for (size_t i = 8; i < NUM_PIXELS_PER_BLOCK; ++i, dw >>= 3)
         pColor[i] = XMVectorSetW(pColor[i], fAlpha[dw & 0x7]);
@@ -1027,7 +1027,7 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
     }
 
     // Optimize and Quantize Min and Max values
-    uint32_t uSteps = ((0.0f == fMinAlpha) || (1.0f == fMaxAlpha)) ? 6 : 8;
+    uint32_t uSteps = ((0.0f == fMinAlpha) || (1.0f == fMaxAlpha)) ? 6u : 8u;
 
     float fAlphaA, fAlphaB;
     OptimizeAlpha<false>(&fAlphaA, &fAlphaB, fAlpha, uSteps);
@@ -1106,9 +1106,9 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
 
             uint32_t iStep;
             if (fDot <= 0.0f)
-                iStep = ((6 == uSteps) && (fAlph <= fStep[0] * 0.5f)) ? 6 : 0;
+                iStep = ((6 == uSteps) && (fAlph <= fStep[0] * 0.5f)) ? 6u : 0u;
             else if (fDot >= fSteps)
-                iStep = ((6 == uSteps) && (fAlph >= (fStep[1] + 1.0f) * 0.5f)) ? 7 : 1;
+                iStep = ((6 == uSteps) && (fAlph >= (fStep[1] + 1.0f) * 0.5f)) ? 7u : 1u;
             else
                 iStep = uint32_t(pSteps[uint32_t(fDot + 0.5f)]);
 
