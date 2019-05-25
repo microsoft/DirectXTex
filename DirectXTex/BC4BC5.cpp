@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "DirectXTexp.h"
+#include "DirectXTexP.h"
 
 #include "BC.h"
 
@@ -159,7 +159,7 @@ namespace
     {
         const uint32_t dwMostNeg = (1 << (8 * sizeof(int8_t) - 1));
 
-        if (_isnan(fVal))
+        if (isnan(fVal))
             fVal = 0;
         else
             if (fVal > 1)

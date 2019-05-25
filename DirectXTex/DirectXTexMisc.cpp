@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "DirectXTexp.h"
+#include "DirectXTexP.h"
 
 using namespace DirectX;
 
@@ -322,7 +322,7 @@ HRESULT DirectX::CopyRectangle(
             if (((pSrc + copyW) > pEndSrc) || (pDest > pEndDest))
                 return E_FAIL;
 
-            memcpy_s(pDest, pEndDest - pDest, pSrc, copyW);
+            memcpy_s(pDest, size_t(pEndDest - pDest), pSrc, copyW);
 
             pSrc += srcImage.rowPitch;
             pDest += dstImage.rowPitch;

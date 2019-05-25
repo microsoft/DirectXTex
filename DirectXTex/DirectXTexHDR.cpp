@@ -9,7 +9,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "DirectXTexp.h"
+#include "DirectXTexP.h"
 
 //
 // In theory HDR (RGBE) Radiance files can have any of the following data orientations
@@ -176,7 +176,7 @@ namespace
                 strncpy_s(buff, info, std::min<size_t>(31, len));
 
                 auto newExposure = static_cast<float>(atof(buff));
-                if ((newExposure >= 1e-12) && (newExposure <= 1e12))
+                if ((newExposure >= 1e-12f) && (newExposure <= 1e12f))
                 {
                     // Note that we ignore strange exposure values (like EXPOSURE=0)
                     exposure *= newExposure;
@@ -219,8 +219,8 @@ namespace
         {
             // We only support the -Y +X orientation (see top of file)
             return HRESULT_FROM_WIN32(
-                ((orientation[0] == '+' || orientation[0] == '-') && (orientation[1] == 'X' || orientation[1] == 'Y'))
-                ? ERROR_NOT_SUPPORTED : ERROR_INVALID_DATA
+                static_cast<unsigned long>(((orientation[0] == '+' || orientation[0] == '-') && (orientation[1] == 'X' || orientation[1] == 'Y'))
+                ? ERROR_NOT_SUPPORTED : ERROR_INVALID_DATA)
             );
         }
 
@@ -275,7 +275,7 @@ namespace
             return E_FAIL;
         }
 
-        offset = info - static_cast<const char*>(pSource);
+        offset = size_t(info - static_cast<const char*>(pSource));
 
         metadata.width = width;
         metadata.height = height;
@@ -291,7 +291,7 @@ namespace
     //-------------------------------------------------------------------------------------
     inline void FloatToRGBE(_Out_writes_(width*4) uint8_t* pDestination, _In_reads_(width*fpp) const float* pSource, size_t width, _In_range_(3, 4) int fpp)
     {
-        auto ePtr = pSource + width * fpp;
+        auto ePtr = pSource + width * size_t(fpp);
 
         for (size_t j = 0; j < width; ++j)
         {
@@ -304,7 +304,7 @@ namespace
             const float max_xy = (r > g) ? r : g;
             float max_xyz = (max_xy > b) ? max_xy : b;
 
-            if (max_xyz > 1e-32)
+            if (max_xyz > 1e-32f)
             {
                 int e;
                 max_xyz = frexpf(max_xyz, &e) * 256.f / max_xyz;
@@ -317,7 +317,7 @@ namespace
                 pDestination[0] = red;
                 pDestination[1] = green;
                 pDestination[2] = blue;
-                pDestination[3] = (red || green || blue) ? uint8_t(e & 0xff) : 0;
+                pDestination[3] = (red || green || blue) ? uint8_t(e & 0xff) : 0u;
             }
             else
             {
@@ -473,7 +473,7 @@ namespace
                     if (encSize + 2 > rowPitch)
                         return 0;
 
-                    enc[0] = 128 + spanLen;
+                    enc[0] = 128u + spanLen;
                     enc[1] = *spanPtr;
                     enc += 2;
                     encSize += 2;
@@ -953,7 +953,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
     }
 #endif
 
-    hr = blob.Trim(dPtr - static_cast<uint8_t*>(blob.GetBufferPointer()));
+    hr = blob.Trim(size_t(dPtr - static_cast<uint8_t*>(blob.GetBufferPointer())));
     if (FAILED(hr))
     {
         blob.Release();

@@ -9,13 +9,22 @@
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "DirectXTexp.h"
+#include "DirectXTexP.h"
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wsign-conversion"
+#endif
 
 #if defined(_XBOX_ONE) && defined(_TITLE)
 #include "d3dx12_x.h"
 #else
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"
+#endif
+
+#ifdef __clang__
+#pragma clang diagnostic pop
 #endif
 
 #ifndef IID_GRAPHICS_PPV_ARGS
@@ -31,7 +40,7 @@ static_assert(static_cast<int>(TEX_DIMENSION_TEXTURE3D) == static_cast<int>(D3D1
 
 namespace
 {
-    template<typename T> void AdjustPlaneResource(
+    template<typename T, typename PT> void AdjustPlaneResource(
         _In_ DXGI_FORMAT fmt,
         _In_ size_t height,
         _In_ size_t slicePlane,
@@ -48,13 +57,13 @@ namespace
             if (!slicePlane)
             {
                 // Plane 0
-                res.SlicePitch = res.RowPitch * height;
+                res.SlicePitch = res.RowPitch * static_cast<PT>(height);
             }
             else
             {
                 // Plane 1
-                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * height);
-                res.SlicePitch = res.RowPitch * ((height + 1) >> 1);
+                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * PT(height));
+                res.SlicePitch = res.RowPitch * static_cast<PT>((height + 1) >> 1);
             }
             break;
 
@@ -62,14 +71,14 @@ namespace
             if (!slicePlane)
             {
                 // Plane 0
-                res.SlicePitch = res.RowPitch * height;
+                res.SlicePitch = res.RowPitch * static_cast<PT>(height);
             }
             else
             {
                 // Plane 1
-                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * height);
+                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * PT(height));
                 res.RowPitch = (res.RowPitch >> 1);
-                res.SlicePitch = res.RowPitch * height;
+                res.SlicePitch = res.RowPitch * static_cast<PT>(height);
             }
             break;
         }
@@ -132,7 +141,7 @@ namespace
             return hr;
 
         numberOfResources = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
-                            ? 1 : desc.DepthOrArraySize;
+                            ? 1u : desc.DepthOrArraySize;
         numberOfResources *= desc.MipLevels;
         numberOfResources *= numberOfPlanes;
 
@@ -576,7 +585,7 @@ HRESULT DirectX::PrepareUpload(
                     static_cast<LONG_PTR>(img.slicePitch)
                 };
 
-                AdjustPlaneResource(metadata.format, img.height, plane, res);
+                AdjustPlaneResource<D3D12_SUBRESOURCE_DATA, intptr_t>(metadata.format, img.height, plane, res);
 
                 subresources.emplace_back(res);
 
@@ -613,7 +622,7 @@ HRESULT DirectX::PrepareUpload(
                         static_cast<LONG_PTR>(img.slicePitch)
                     };
 
-                    AdjustPlaneResource(metadata.format, img.height, plane, res);
+                    AdjustPlaneResource<D3D12_SUBRESOURCE_DATA, intptr_t>(metadata.format, img.height, plane, res);
 
                     subresources.emplace_back(res);
                 }
@@ -696,7 +705,7 @@ HRESULT DirectX::CaptureTexture(
             mdata.depth = 1;
             mdata.arraySize = desc.DepthOrArraySize;
             mdata.mipLevels = desc.MipLevels;
-            mdata.miscFlags = isCubeMap ? TEX_MISC_TEXTURECUBE : 0;
+            mdata.miscFlags = isCubeMap ? TEX_MISC_TEXTURECUBE : 0u;
             mdata.miscFlags2 = 0;
             mdata.format = desc.Format;
             mdata.dimension = TEX_DIMENSION_TEXTURE2D;
@@ -776,7 +785,7 @@ HRESULT DirectX::CaptureTexture(
 
                 D3D12_MEMCPY_DEST destData = { img->pixels, img->rowPitch, img->slicePitch };
 
-                AdjustPlaneResource(img->format, img->height, plane, destData);
+                AdjustPlaneResource<D3D12_MEMCPY_DEST, uintptr_t>(img->format, img->height, plane, destData);
 
                 D3D12_SUBRESOURCE_DATA srcData =
                 {
