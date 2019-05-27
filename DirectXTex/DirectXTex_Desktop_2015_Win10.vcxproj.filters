@@ -165,5 +165,47 @@
     <None Include="Shaders\Compiled\BC7Encode_TryMode456CS.pdb">
       <Filter>Source Files\Shaders\Symbols</Filter>
     </None>
+    <None Include="Shaders\Compiled\BC6HEncode_EncodeBlockCS_cs40.inc">
+      <Filter>Source Files\Shaders\Compiled</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC6HEncode_TryModeG10CS_cs40.inc">
+      <Filter>Source Files\Shaders\Compiled</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC6HEncode_TryModeLE10CS_cs40.inc">
+      <Filter>Source Files\Shaders\Compiled</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_EncodeBlockCS_cs40.inc">
+      <Filter>Source Files\Shaders\Compiled</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_TryMode02CS_cs40.inc">
+      <Filter>Source Files\Shaders\Compiled</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_TryMode137CS_cs40.inc">
+      <Filter>Source Files\Shaders\Compiled</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_TryMode456CS_cs40.inc">
+      <Filter>Source Files\Shaders\Compiled</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC6HEncode_EncodeBlockCS_cs40.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC6HEncode_TryModeG10CS_cs40.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC6HEncode_TryModeLE10CS_cs40.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_EncodeBlockCS_cs40.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_TryMode02CS_cs40.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_TryMode137CS_cs40.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
+    <None Include="Shaders\Compiled\BC7Encode_TryMode456CS_cs40.pdb">
+      <Filter>Source Files\Shaders\Symbols</Filter>
+    </None>
   </ItemGroup>
 </Project>

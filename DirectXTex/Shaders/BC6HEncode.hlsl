@@ -979,14 +979,15 @@ void EncodeBlockCS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
     }
 }
 
-uint float2half1( float f )
+#ifdef EMULATE_F16C
+uint float2half1(float f)
 {
     uint Result;
 
     uint IValue = asuint(f);
     uint Sign = (IValue & 0x80000000U) >> 16U;
     IValue = IValue & 0x7FFFFFFFU;
-    
+
     if (IValue > 0x47FFEFFFU)
     {
         // The number is too large to be represented as a half.  Saturate to infinity.
@@ -1007,27 +1008,19 @@ uint float2half1( float f )
             IValue += 0xC8000000U;
         }
 
-        Result = ((IValue + 0x0FFFU + ((IValue >> 13U) & 1U)) >> 13U)&0x7FFFU; 
+        Result = ((IValue + 0x0FFFU + ((IValue >> 13U) & 1U)) >> 13U) & 0x7FFFU;
     }
-    return (Result|Sign);
+    return (Result | Sign);
 }
+#endif
 
 uint3 float2half( float3 endPoint_f )
 {
-    //uint3 sign = asuint(endPoint_f) & 0x80000000;
-    //uint3 expo = asuint(endPoint_f) & 0x7F800000;
-    //uint3 base = asuint(endPoint_f) & 0x007FFFFF;
-    //return ( expo < 0x33800000 ) ? 0 
-    //                    //0x33800000 indicating 2^-24, which is minimal denormalized number that half can present 
-    //    : ( ( expo < 0x38800000 ) ? ( sign >> 16 ) | ( ( base + 0x00800000 ) >> ( 23 - ( ( expo - 0x33800000 ) >> 23 ) ) )//fixed a bug in v0.2
-    //                    //0x38800000 indicating 2^-14, which is minimal normalized number that half can present, so need to use denormalized half presentation
-    //    : ( ( expo == 0x7F800000 || expo > 0x47000000 ) ? ( ( sign >> 16 ) | 0x7bff )
-    //                    // treat NaN as INF, treat INF (including NaN) as the maximum/minimum number that half can present
-    //                    // 0x47000000 indicating 2^15, which is maximum exponent that half can present, so cut to 0x7bff which is the maximum half number
-    //    : ( ( sign >> 16 ) | ( ( ( expo - 0x38000000 ) | base ) >> 13 ) ) ) );
-
-
-    return uint3( float2half1( endPoint_f.x ), float2half1( endPoint_f.y ), float2half1( endPoint_f.z ) );
+#ifdef EMULATE_F16C
+    return uint3(float2half1(endPoint_f.x), float2half1(endPoint_f.y), float2half1(endPoint_f.z));
+#else
+    return uint3(f32tof16(endPoint_f.x), f32tof16(endPoint_f.y), f32tof16(endPoint_f.z));
+#endif
 }
 int3 start_quantize( uint3 pixel_h )
 {
@@ -1204,7 +1197,8 @@ void generate_palette_unquantized16( out uint3 palette, int3 low, int3 high, int
     palette = finish_unquantize( tmp );
 }
 
-float half2float1( uint Value )
+#ifdef EMULATE_F16C
+float half2float1(uint Value)
 {
     uint Mantissa = (uint)(Value & 0x03FF);
 
@@ -1232,21 +1226,20 @@ float half2float1( uint Value )
     }
 
     uint Result = ((Value & 0x8000) << 16) | // Sign
-                      ((Exponent + 112) << 23) | // Exponent
-                      (Mantissa << 13);          // Mantissa
+        ((Exponent + 112) << 23) | // Exponent
+        (Mantissa << 13);          // Mantissa
 
     return asfloat(Result);
 }
+#endif
 
 float3 half2float(uint3 color_h )
 {
-    //uint3 sign = color_h & 0x8000;
-    //uint3 expo = color_h & 0x7C00;
-    //uint3 base = color_h & 0x03FF;
-    //return ( expo == 0 ) ? asfloat( ( sign << 16 ) | asuint( float3(base) / 16777216 ) ) //16777216 = 2^24
-    //    : asfloat( ( sign << 16 ) | ( ( ( expo + 0x1C000 ) | base ) << 13 ) ); //0x1C000 = 0x1FC00 - 0x3C00
-
-    return float3( half2float1( color_h.x ), half2float1( color_h.y ), half2float1( color_h.z ) );
+#ifdef EMULATE_F16C
+    return float3(half2float1(color_h.x), half2float1(color_h.y), half2float1(color_h.z));
+#else
+    return float3(f16tof32(color_h.x), f16tof32(color_h.y), f16tof32(color_h.z));
+#endif
 }
 
 void block_package( inout uint4 block, int2x3 endPoint[2], uint mode_type, uint partition_index ) // for mode 1 - 10

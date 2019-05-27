@@ -26,7 +26,6 @@ call :CompileShader BC7Encode EncodeBlockCS
 call :CompileShader BC6HEncode TryModeG10CS
 call :CompileShader BC6HEncode TryModeLE10CS
 call :CompileShader BC6HEncode EncodeBlockCS
-
 echo.
 
 if %error% == 0 (
@@ -39,8 +38,10 @@ endlocal
 exit /b
 
 :CompileShader
-set fxc=%PCFXC% %1.hlsl %FXCOPTS% /Tcs_4_0 /E%2 /FhCompiled\%1_%2.inc /FdCompiled\%1_%2.pdb /Vn%1_%2
+set fxc=%PCFXC% %1.hlsl %FXCOPTS% /Tcs_5_0 /E%2 /FhCompiled\%1_%2.inc /FdCompiled\%1_%2.pdb /Vn%1_%2
+set fxc4=%PCFXC% %1.hlsl %FXCOPTS% /Tcs_4_0 /DEMULATE_F16C /E%2 /FhCompiled\%1_%2_cs40.inc /FdCompiled\%1_%2_cs40.pdb /Vn%1_%2
 echo.
 echo %fxc%
 %fxc% || set error=1
+%fxc4% || set error=1
 exit /b

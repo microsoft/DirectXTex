@@ -426,6 +426,14 @@ const SValue g_pFeatureLevels[] =   // valid feature levels for -fl for maximimu
     { nullptr, 0 },
 };
 
+const SValue g_pDirectCompute[] =
+{
+    { L"4.0", D3D_FEATURE_LEVEL_10_0 },
+    { L"4.1", D3D_FEATURE_LEVEL_10_1 },
+    { L"5.0", D3D_FEATURE_LEVEL_11_0 },
+    { nullptr, 0 }
+};
+
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -878,7 +886,7 @@ namespace
                     hr = pAdapter->GetDesc(&desc);
                     if (SUCCEEDED(hr))
                     {
-                        wprintf(L"\n[Using DirectCompute on \"%ls\"]\n", desc.Description);
+                        wprintf(L"\n[Using DirectCompute %ls on \"%ls\"]\n", LookupByValue(fl, g_pDirectCompute), desc.Description);
                     }
                 }
             }

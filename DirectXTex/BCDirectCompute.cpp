@@ -20,13 +20,29 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    #include "Shaders\Compiled\BC7Encode_EncodeBlockCS.inc"
-    #include "Shaders\Compiled\BC7Encode_TryMode02CS.inc"
-    #include "Shaders\Compiled\BC7Encode_TryMode137CS.inc"
-    #include "Shaders\Compiled\BC7Encode_TryMode456CS.inc"
-    #include "Shaders\Compiled\BC6HEncode_EncodeBlockCS.inc"
-    #include "Shaders\Compiled\BC6HEncode_TryModeG10CS.inc"
-    #include "Shaders\Compiled\BC6HEncode_TryModeLE10CS.inc"
+    namespace cs5
+    {
+        #include "Shaders\Compiled\BC7Encode_EncodeBlockCS.inc"
+        #include "Shaders\Compiled\BC7Encode_TryMode02CS.inc"
+        #include "Shaders\Compiled\BC7Encode_TryMode137CS.inc"
+        #include "Shaders\Compiled\BC7Encode_TryMode456CS.inc"
+        #include "Shaders\Compiled\BC6HEncode_EncodeBlockCS.inc"
+        #include "Shaders\Compiled\BC6HEncode_TryModeG10CS.inc"
+        #include "Shaders\Compiled\BC6HEncode_TryModeLE10CS.inc"
+    }
+
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+    namespace cs4
+    {
+        #include "Shaders\Compiled\BC7Encode_EncodeBlockCS_cs40.inc"
+        #include "Shaders\Compiled\BC7Encode_TryMode02CS_cs40.inc"
+        #include "Shaders\Compiled\BC7Encode_TryMode137CS_cs40.inc"
+        #include "Shaders\Compiled\BC7Encode_TryMode456CS_cs40.inc"
+        #include "Shaders\Compiled\BC6HEncode_EncodeBlockCS_cs40.inc"
+        #include "Shaders\Compiled\BC6HEncode_TryModeG10CS_cs40.inc"
+        #include "Shaders\Compiled\BC6HEncode_TryModeLE10CS_cs40.inc"
+    }
+#endif
 
     struct BufferBC6HBC7
     {
@@ -132,39 +148,88 @@ HRESULT GPUCompressBC::Initialize(ID3D11Device* pDevice)
     //--- Create compute shader library: BC6H -----------------------------------------
 
     // Modes 11-14
-    HRESULT hr = pDevice->CreateComputeShader(BC6HEncode_TryModeG10CS, sizeof(BC6HEncode_TryModeG10CS), nullptr, m_BC6H_tryModeG10CS.ReleaseAndGetAddressOf());
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    auto blob = cs5::BC6HEncode_TryModeG10CS;
+    auto blobSize = sizeof(cs5::BC6HEncode_TryModeG10CS);
+#else
+    auto blob = (fl >= D3D_FEATURE_LEVEL_11_0) ? cs5::BC6HEncode_TryModeG10CS : cs4::BC6HEncode_TryModeG10CS;
+    auto blobSize = (fl >= D3D_FEATURE_LEVEL_11_0) ? sizeof(cs5::BC6HEncode_TryModeG10CS) : sizeof(cs4::BC6HEncode_TryModeG10CS);
+#endif
+    HRESULT hr = pDevice->CreateComputeShader(blob, blobSize, nullptr, m_BC6H_tryModeG10CS.ReleaseAndGetAddressOf());
     if (FAILED(hr))
         return hr;
 
     // Modes 1-10
-    hr = pDevice->CreateComputeShader(BC6HEncode_TryModeLE10CS, sizeof(BC6HEncode_TryModeLE10CS), nullptr, m_BC6H_tryModeLE10CS.ReleaseAndGetAddressOf());
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    blob = cs5::BC6HEncode_TryModeLE10CS;
+    blobSize = sizeof(cs5::BC6HEncode_TryModeLE10CS);
+#else
+    blob = (fl >= D3D_FEATURE_LEVEL_11_0) ? cs5::BC6HEncode_TryModeLE10CS : cs4::BC6HEncode_TryModeLE10CS;
+    blobSize = (fl >= D3D_FEATURE_LEVEL_11_0) ? sizeof(cs5::BC6HEncode_TryModeLE10CS) : sizeof(cs4::BC6HEncode_TryModeLE10CS);
+#endif
+    hr = pDevice->CreateComputeShader(blob, blobSize, nullptr, m_BC6H_tryModeLE10CS.ReleaseAndGetAddressOf());
     if (FAILED(hr))
         return hr;
 
     // Encode
-    hr = pDevice->CreateComputeShader(BC6HEncode_EncodeBlockCS, sizeof(BC6HEncode_EncodeBlockCS), nullptr, m_BC6H_encodeBlockCS.ReleaseAndGetAddressOf());
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    blob = cs5::BC6HEncode_EncodeBlockCS;
+    blobSize = sizeof(cs5::BC6HEncode_EncodeBlockCS);
+#else
+    blob = (fl >= D3D_FEATURE_LEVEL_11_0) ? cs5::BC6HEncode_EncodeBlockCS : cs4::BC6HEncode_EncodeBlockCS;
+    blobSize = (fl >= D3D_FEATURE_LEVEL_11_0) ? sizeof(cs5::BC6HEncode_EncodeBlockCS) : sizeof(cs4::BC6HEncode_EncodeBlockCS);
+#endif
+    hr = pDevice->CreateComputeShader(blob, blobSize, nullptr, m_BC6H_encodeBlockCS.ReleaseAndGetAddressOf());
     if (FAILED(hr))
         return hr;
 
     //--- Create compute shader library: BC7 ------------------------------------------
 
     // Modes 4, 5, 6
-    hr = pDevice->CreateComputeShader(BC7Encode_TryMode456CS, sizeof(BC7Encode_TryMode456CS), nullptr, m_BC7_tryMode456CS.ReleaseAndGetAddressOf());
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    blob = cs5::BC7Encode_TryMode456CS;
+    blobSize = sizeof(cs5::BC7Encode_TryMode456CS);
+#else
+    blob = (fl >= D3D_FEATURE_LEVEL_11_0) ? cs5::BC7Encode_TryMode456CS : cs4::BC7Encode_TryMode456CS;
+    blobSize = (fl >= D3D_FEATURE_LEVEL_11_0) ? sizeof(cs5::BC7Encode_TryMode456CS) : sizeof(cs4::BC7Encode_TryMode456CS);
+#endif
+    hr = pDevice->CreateComputeShader(blob, blobSize, nullptr, m_BC7_tryMode456CS.ReleaseAndGetAddressOf());
     if (FAILED(hr))
         return hr;
 
     // Modes 1, 3, 7
-    hr = pDevice->CreateComputeShader(BC7Encode_TryMode137CS, sizeof(BC7Encode_TryMode137CS), nullptr, m_BC7_tryMode137CS.ReleaseAndGetAddressOf());
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    blob = cs5::BC7Encode_TryMode137CS;
+    blobSize = sizeof(cs5::BC7Encode_TryMode137CS);
+#else
+    blob = (fl >= D3D_FEATURE_LEVEL_11_0) ? cs5::BC7Encode_TryMode137CS : cs4::BC7Encode_TryMode137CS;
+    blobSize = (fl >= D3D_FEATURE_LEVEL_11_0) ? sizeof(cs5::BC7Encode_TryMode137CS) : sizeof(cs4::BC7Encode_TryMode137CS);
+#endif
+    hr = pDevice->CreateComputeShader(blob, blobSize, nullptr, m_BC7_tryMode137CS.ReleaseAndGetAddressOf());
     if (FAILED(hr))
         return hr;
 
     // Modes 0, 2
-    hr = pDevice->CreateComputeShader(BC7Encode_TryMode02CS, sizeof(BC7Encode_TryMode02CS), nullptr, m_BC7_tryMode02CS.ReleaseAndGetAddressOf());
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    blob = cs5::BC7Encode_TryMode02CS;
+    blobSize = sizeof(cs5::BC7Encode_TryMode02CS);
+#else
+    blob = (fl >= D3D_FEATURE_LEVEL_11_0) ? cs5::BC7Encode_TryMode02CS : cs4::BC7Encode_TryMode02CS;
+    blobSize = (fl >= D3D_FEATURE_LEVEL_11_0) ? sizeof(cs5::BC7Encode_TryMode02CS) : sizeof(cs4::BC7Encode_TryMode02CS);
+#endif
+    hr = pDevice->CreateComputeShader(blob, blobSize, nullptr, m_BC7_tryMode02CS.ReleaseAndGetAddressOf());
     if (FAILED(hr))
         return hr;
 
     // Encode
-    hr = pDevice->CreateComputeShader(BC7Encode_EncodeBlockCS, sizeof(BC7Encode_EncodeBlockCS), nullptr, m_BC7_encodeBlockCS.ReleaseAndGetAddressOf());
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    blob = cs5::BC7Encode_EncodeBlockCS;
+    blobSize = sizeof(cs5::BC7Encode_EncodeBlockCS);
+#else
+    blob = (fl >= D3D_FEATURE_LEVEL_11_0) ? cs5::BC7Encode_EncodeBlockCS : cs4::BC7Encode_EncodeBlockCS;
+    blobSize = (fl >= D3D_FEATURE_LEVEL_11_0) ? sizeof(cs5::BC7Encode_EncodeBlockCS) : sizeof(cs4::BC7Encode_EncodeBlockCS);
+#endif
+    hr = pDevice->CreateComputeShader(blob, blobSize, nullptr, m_BC7_encodeBlockCS.ReleaseAndGetAddressOf());
     if (FAILED(hr))
         return hr;
 
