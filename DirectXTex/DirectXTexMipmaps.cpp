@@ -348,6 +348,14 @@ namespace
 
 namespace DirectX
 {
+    bool _CalculateMipLevels(_In_ size_t width, _In_ size_t height, _Inout_ size_t& mipLevels);
+    bool _CalculateMipLevels3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth, _Inout_ size_t& mipLevels);
+        // Also used by Compress
+
+    HRESULT _ResizeSeparateColorAndAlpha(_In_ IWICImagingFactory* pWIC, _In_ bool iswic2, _In_ IWICBitmap* original,
+        _In_ size_t newWidth, _In_ size_t newHeight, _In_ DWORD filter, _Inout_ const Image* img);
+        // Also used by Resize
+
     bool _CalculateMipLevels(_In_ size_t width, _In_ size_t height, _Inout_ size_t& mipLevels)
     {
         if (mipLevels > 1)
@@ -387,14 +395,15 @@ namespace DirectX
     }
 
     //--- Resizing color and alpha channels separately using WIC ---
+    _Use_decl_annotations_
     HRESULT _ResizeSeparateColorAndAlpha(
-        _In_ IWICImagingFactory* pWIC,
-        _In_ bool iswic2,
-        _In_ IWICBitmap* original,
-        _In_ size_t newWidth,
-        _In_ size_t newHeight,
-        _In_ DWORD filter,
-        _Inout_ const Image* img)
+        IWICImagingFactory* pWIC,
+        bool iswic2,
+        IWICBitmap* original,
+        size_t newWidth,
+        size_t newHeight,
+        DWORD filter,
+        const Image* img)
     {
         if (!pWIC || !original || !img)
             return E_POINTER;

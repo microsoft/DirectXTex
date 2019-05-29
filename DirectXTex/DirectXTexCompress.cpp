@@ -493,6 +493,9 @@ namespace
 //-------------------------------------------------------------------------------------
 namespace DirectX
 {
+    bool _IsAlphaAllOpaqueBC(_In_ const Image& cImage);
+        // Also used by Image
+
     bool _IsAlphaAllOpaqueBC(_In_ const Image& cImage)
     {
         if (!cImage.pixels)
