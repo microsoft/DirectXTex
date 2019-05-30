@@ -627,7 +627,7 @@ if_nz r1.z
     add r4.w, r4.w, r5.w
     iadd r5.y, r5.y, l(1)
   endloop 
-  movc r5.x, r3.x, l(100000002004087730000.000000), r4.w
+  movc r5.x, r3.x, l(100000002004087734272.000000), r4.w
   store_structured g0.xy, vThreadIDInGroupFlattened.x, l(40), r5.xzxx
 endif 
 sync_g_t
