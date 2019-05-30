@@ -29,7 +29,7 @@
 
 #include <OCIdl.h>
 
-#define DIRECTX_TEX_VERSION 161
+#define DIRECTX_TEX_VERSION 162
 
 struct IWICImagingFactory;
 struct IWICMetadataQueryReader;
