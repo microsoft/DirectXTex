@@ -13,7 +13,7 @@ DirectXTex, a shared source library for reading and writing .DDS files, and perf
         <releaseNotes>Matches the May 30, 2019 release on GitHub.</releaseNotes>
         <projectUrl>http://go.microsoft.com/fwlink/?LinkId=248926</projectUrl>
         <iconUrl>https://github.com/Microsoft/DirectXTex/wiki/X_jpg.jpg</iconUrl>
-        <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
+        <license type="expression">MIT</license>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <copyright>© Microsoft Corporation. All rights reserved.</copyright>
         <tags>DirectX  DirectXTex  native nativepackage</tags>
