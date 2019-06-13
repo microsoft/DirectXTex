@@ -68,9 +68,12 @@
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #endif
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #pragma warning(push)
 #pragma warning(disable : 4005)
-#define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #define NODRAWTEXT
 #define NOGDI
