@@ -1776,6 +1776,11 @@ HRESULT DirectX::CreateDDSTextureFromMemoryEx(
         return E_INVALIDARG;
     }
 
+    if (textureView && !(bindFlags & D3D11_BIND_SHADER_RESOURCE))
+    {
+        return E_INVALIDARG;
+    }
+
     // Validate DDS file in memory
     const DDS_HEADER* header = nullptr;
     const uint8_t* bitData = nullptr;
@@ -1902,6 +1907,11 @@ HRESULT DirectX::CreateDDSTextureFromFileEx(
     }
 
     if (!d3dDevice || !fileName || (!texture && !textureView))
+    {
+        return E_INVALIDARG;
+    }
+
+    if (textureView && !(bindFlags & D3D11_BIND_SHADER_RESOURCE))
     {
         return E_INVALIDARG;
     }
