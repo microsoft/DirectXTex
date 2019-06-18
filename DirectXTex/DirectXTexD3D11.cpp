@@ -638,6 +638,9 @@ HRESULT DirectX::CreateShaderResourceViewEx(
 
     *ppSRV = nullptr;
 
+    if (!(bindFlags & D3D11_BIND_SHADER_RESOURCE))
+        return E_INVALIDARG;
+
     ComPtr<ID3D11Resource> resource;
     HRESULT hr = CreateTextureEx(pDevice, srcImages, nimages, metadata,
         usage, bindFlags, cpuAccessFlags, miscFlags, forceSRGB,
