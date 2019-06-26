@@ -20,7 +20,7 @@
     <ClInclude Include="DDS.h" />
     <ClInclude Include="DirectXTex.h" />
     <ClInclude Include="DirectXTexP.h" />
-    <ClInclude Include="Filters.h" />
+    <ClInclude Include="filters.h" />
     <ClInclude Include="scoped.h" />
   </ItemGroup>
   <ItemGroup>

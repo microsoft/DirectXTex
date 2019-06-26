@@ -115,7 +115,7 @@
     <ClInclude Include="DirectXTexP.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="Filters.h">
+    <ClInclude Include="filters.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="scoped.h">
