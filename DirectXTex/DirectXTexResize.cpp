@@ -352,7 +352,7 @@ namespace
             {
                 size_t x2 = x << 1;
 
-                AVERAGE4(target[x], urow0[x2], urow1[x2], urow2[x2], urow3[x2]);
+                AVERAGE4(target[x], urow0[x2], urow1[x2], urow2[x2], urow3[x2])
             }
 
             if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter))
@@ -438,7 +438,7 @@ namespace
             {
                 auto& toX = lfX[x];
 
-                BILINEAR_INTERPOLATE(target[x], toX, toY, row0, row1);
+                BILINEAR_INTERPOLATE(target[x], toX, toY, row0, row1)
             }
 
             if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter))
@@ -593,12 +593,12 @@ namespace
 
                 XMVECTOR C0, C1, C2, C3;
 
-                CUBIC_INTERPOLATE(C0, toX.x, row0[toX.u0], row0[toX.u1], row0[toX.u2], row0[toX.u3]);
-                CUBIC_INTERPOLATE(C1, toX.x, row1[toX.u0], row1[toX.u1], row1[toX.u2], row1[toX.u3]);
-                CUBIC_INTERPOLATE(C2, toX.x, row2[toX.u0], row2[toX.u1], row2[toX.u2], row2[toX.u3]);
-                CUBIC_INTERPOLATE(C3, toX.x, row3[toX.u0], row3[toX.u1], row3[toX.u2], row3[toX.u3]);
+                CUBIC_INTERPOLATE(C0, toX.x, row0[toX.u0], row0[toX.u1], row0[toX.u2], row0[toX.u3])
+                CUBIC_INTERPOLATE(C1, toX.x, row1[toX.u0], row1[toX.u1], row1[toX.u2], row1[toX.u3])
+                CUBIC_INTERPOLATE(C2, toX.x, row2[toX.u0], row2[toX.u1], row2[toX.u2], row2[toX.u3])
+                CUBIC_INTERPOLATE(C3, toX.x, row3[toX.u0], row3[toX.u1], row3[toX.u2], row3[toX.u3])
 
-                CUBIC_INTERPOLATE(target[x], toY.x, C0, C1, C2, C3);
+                CUBIC_INTERPOLATE(target[x], toY.x, C0, C1, C2, C3)
             }
 
             if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter))

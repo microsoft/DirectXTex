@@ -874,16 +874,16 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
     return false;
 
     case DXGI_FORMAT_R10G10B10A2_UNORM:
-        LOAD_SCANLINE(XMUDECN4, XMLoadUDecN4);
+        LOAD_SCANLINE(XMUDECN4, XMLoadUDecN4)
 
     case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
-        LOAD_SCANLINE(XMUDECN4, XMLoadUDecN4_XR);
+        LOAD_SCANLINE(XMUDECN4, XMLoadUDecN4_XR)
 
     case DXGI_FORMAT_R10G10B10A2_UINT:
-        LOAD_SCANLINE(XMUDEC4, XMLoadUDec4);
+        LOAD_SCANLINE(XMUDEC4, XMLoadUDec4)
 
     case DXGI_FORMAT_R11G11B10_FLOAT:
-        LOAD_SCANLINE3(XMFLOAT3PK, XMLoadFloat3PK, g_XMIdentityR3);
+        LOAD_SCANLINE3(XMFLOAT3PK, XMLoadFloat3PK, g_XMIdentityR3)
 
     case DXGI_FORMAT_R8G8B8A8_UNORM:
     case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
@@ -1553,7 +1553,7 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
 
     case XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM:
         // Xbox One specific format
-        LOAD_SCANLINE(XMXDECN4, XMLoadXDecN4);
+        LOAD_SCANLINE(XMXDECN4, XMLoadXDecN4)
 
     case XBOX_DXGI_FORMAT_R4G4_UNORM:
         // Xbox One specific format
@@ -1700,16 +1700,16 @@ bool DirectX::_StoreScanline(
         return false;
 
     case DXGI_FORMAT_R10G10B10A2_UNORM:
-        STORE_SCANLINE(XMUDECN4, XMStoreUDecN4);
+        STORE_SCANLINE(XMUDECN4, XMStoreUDecN4)
 
     case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
-        STORE_SCANLINE(XMUDECN4, XMStoreUDecN4_XR);
+        STORE_SCANLINE(XMUDECN4, XMStoreUDecN4_XR)
 
     case DXGI_FORMAT_R10G10B10A2_UINT:
-        STORE_SCANLINE(XMUDEC4, XMStoreUDec4);
+        STORE_SCANLINE(XMUDEC4, XMStoreUDec4)
 
     case DXGI_FORMAT_R11G11B10_FLOAT:
-        STORE_SCANLINE(XMFLOAT3PK, XMStoreFloat3PK);
+        STORE_SCANLINE(XMFLOAT3PK, XMStoreFloat3PK)
 
     case DXGI_FORMAT_R8G8B8A8_UNORM:
     case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
@@ -2426,7 +2426,7 @@ bool DirectX::_StoreScanline(
 
     case XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM:
         // Xbox One specific format
-        STORE_SCANLINE(XMXDECN4, XMStoreXDecN4);
+        STORE_SCANLINE(XMXDECN4, XMStoreXDecN4)
 
     case XBOX_DXGI_FORMAT_R4G4_UNORM:
         // Xbox One specific format
@@ -4749,7 +4749,7 @@ namespace
         {
         case DXGI_FORMAT_NV12:
             assert(destImage.format == DXGI_FORMAT_YUY2);
-            CONVERT_420_TO_422(uint8_t, XMUBYTEN4);
+            CONVERT_420_TO_422(uint8_t, XMUBYTEN4)
             return S_OK;
 
         case DXGI_FORMAT_P010:
@@ -4759,7 +4759,7 @@ namespace
 
         case DXGI_FORMAT_P016:
             assert(destImage.format == DXGI_FORMAT_Y216);
-            CONVERT_420_TO_422(uint16_t, XMUSHORTN4);
+            CONVERT_420_TO_422(uint16_t, XMUSHORTN4)
             return S_OK;
 
         case DXGI_FORMAT_NV11:
