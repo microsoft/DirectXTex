@@ -33,7 +33,7 @@
     <CLInclude Include="DDS.h">
       <Filter>Source Files</Filter>
     </CLInclude>
-    <CLInclude Include="DirectXTexp.h">
+    <CLInclude Include="DirectXTexP.h">
       <Filter>Source Files</Filter>
     </CLInclude>
     <ClInclude Include="filters.h">

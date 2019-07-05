@@ -333,7 +333,7 @@
     <ClInclude Include="filters.h" />
     <CLInclude Include="scoped.h" />
     <CLInclude Include="DirectXTex.h" />
-    <CLInclude Include="DirectXTexp.h" />
+    <CLInclude Include="DirectXTexP.h" />
     <CLInclude Include="DirectXTex.inl" />
     <ClCompile Include="BCDirectCompute.cpp" />
     <ClCompile Include="DirectXTexCompress.cpp" />
