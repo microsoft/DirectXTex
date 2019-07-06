@@ -390,7 +390,10 @@ const SValue g_pRotateColor[] =
 #define CODEC_HDP 0xFFFF0003
 #define CODEC_JXR 0xFFFF0004
 #define CODEC_HDR 0xFFFF0005
+
+#ifdef USE_OPENEXR
 #define CODEC_EXR 0xFFFF0006
+#endif
 
 const SValue g_pSaveFileTypes[] =   // valid formats to write to
 {
@@ -449,7 +452,9 @@ namespace
         return ((x != 0) && !(x & (x - 1)));
     }
 
+#ifdef _PREFAST_
 #pragma prefast(disable : 26018, "Only used with static internal arrays")
+#endif
 
     DWORD LookupByName(const wchar_t *pName, const SValue *pArray)
     {
@@ -558,7 +563,7 @@ namespace
     {
         for (const SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
         {
-            if ((DXGI_FORMAT)pFormat->dwValue == Format)
+            if (static_cast<DXGI_FORMAT>(pFormat->dwValue) == Format)
             {
                 wprintf(pFormat->pName);
                 return;
@@ -567,7 +572,7 @@ namespace
 
         for (const SValue *pFormat = g_pReadOnlyFormats; pFormat->pName; pFormat++)
         {
-            if ((DXGI_FORMAT)pFormat->dwValue == Format)
+            if (static_cast<DXGI_FORMAT>(pFormat->dwValue) == Format)
             {
                 wprintf(pFormat->pName);
                 return;
@@ -626,6 +631,11 @@ namespace
             break;
         case TEX_ALPHA_MODE_STRAIGHT:
             wprintf(L" \x0e0:NonPM");
+            break;
+        case TEX_ALPHA_MODE_CUSTOM:
+            wprintf(L" \x0e0:Custom");
+            break;
+        case TEX_ALPHA_MODE_UNKNOWN:
             break;
         }
 
@@ -831,7 +841,7 @@ namespace
             ComPtr<IDXGIFactory1> dxgiFactory;
             if (GetDXGIFactory(dxgiFactory.GetAddressOf()))
             {
-                if (FAILED(dxgiFactory->EnumAdapters(adapter, pAdapter.GetAddressOf())))
+                if (FAILED(dxgiFactory->EnumAdapters(static_cast<UINT>(adapter), pAdapter.GetAddressOf())))
                 {
                     wprintf(L"\nERROR: Invalid GPU adapter index (%d)!\n", adapter);
                     return false;
@@ -930,30 +940,30 @@ namespace
         }
     }
 
-    const XMVECTORF32 c_MaxNitsFor2084 = {{{ 10000.0f, 10000.0f, 10000.0f, 1.f }}};
+    const XMVECTORF32 c_MaxNitsFor2084 = { { { 10000.0f, 10000.0f, 10000.0f, 1.f } } };
 
     const XMMATRIX c_from709to2020 =
     {
-        0.6274040f, 0.0690970f, 0.0163916f, 0.f,
-        0.3292820f, 0.9195400f, 0.0880132f, 0.f,
-        0.0433136f, 0.0113612f, 0.8955950f, 0.f,
-        0.f,        0.f,        0.f,        1.f
+        XMVECTOR { 0.6274040f, 0.0690970f, 0.0163916f, 0.f },
+        XMVECTOR { 0.3292820f, 0.9195400f, 0.0880132f, 0.f },
+        XMVECTOR { 0.0433136f, 0.0113612f, 0.8955950f, 0.f },
+        XMVECTOR { 0.f,        0.f,        0.f,        1.f }
     };
 
     const XMMATRIX c_from2020to709 =
     {
-        1.6604910f,  -0.1245505f, -0.0181508f, 0.f,
-        -0.5876411f,  1.1328999f, -0.1005789f, 0.f,
-        -0.0728499f, -0.0083494f,  1.1187297f, 0.f,
-        0.f,          0.f,         0.f,        1.f
+        XMVECTOR { 1.6604910f,  -0.1245505f, -0.0181508f, 0.f },
+        XMVECTOR { -0.5876411f,  1.1328999f, -0.1005789f, 0.f },
+        XMVECTOR { -0.0728499f, -0.0083494f,  1.1187297f, 0.f },
+        XMVECTOR { 0.f,          0.f,         0.f,        1.f }
     };
 
     const XMMATRIX c_fromP3to2020 =
     {
-        0.753845f, 0.0457456f, -0.00121055f, 0.f,
-        0.198593f, 0.941777f,   0.0176041f,  0.f,
-        0.047562f, 0.0124772f,  0.983607f,   0.f,
-        0.f,       0.f,         0.f,         1.f
+        XMVECTOR { 0.753845f, 0.0457456f, -0.00121055f, 0.f },
+        XMVECTOR { 0.198593f, 0.941777f,   0.0176041f,  0.f },
+        XMVECTOR { 0.047562f, 0.0124772f,  0.983607f,   0.f },
+        XMVECTOR { 0.f,       0.f,         0.f,         1.f }
     };
 
     inline float LinearToST2084(float normalizedLinearValue)
@@ -1064,7 +1074,7 @@ namespace
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
         }
 
-        HRESULT hr = image.Initialize2D(format, header->biWidth, header->biHeight, 1, 1);
+        HRESULT hr = image.Initialize2D(format, size_t(header->biWidth), size_t(header->biHeight), 1, 1);
         if (FAILED(hr))
             return hr;
 
@@ -1095,7 +1105,9 @@ namespace
 //--------------------------------------------------------------------------------------
 // Entry-point
 //--------------------------------------------------------------------------------------
+#ifdef _PREFAST_
 #pragma prefast(disable : 28198, "Command-line tool, frees all memory on exit")
+#endif
 
 int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 {
@@ -1788,12 +1800,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         else
         {
             // WIC shares the same filter values for mode and dither
-            static_assert(WIC_FLAGS_DITHER == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_DITHER), "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_DITHER_DIFFUSION == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_DITHER_DIFFUSION), "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_POINT == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_POINT), "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_LINEAR == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_LINEAR), "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_CUBIC == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_CUBIC), "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_FANT == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_FANT), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_DITHER) == static_cast<int>(TEX_FILTER_DITHER), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_DITHER_DIFFUSION) == static_cast<int>(TEX_FILTER_DITHER_DIFFUSION), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_POINT) == static_cast<int>(TEX_FILTER_POINT), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_LINEAR) == static_cast<int>(TEX_FILTER_LINEAR), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_CUBIC) == static_cast<int>(TEX_FILTER_CUBIC), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_FANT) == static_cast<int>(TEX_FILTER_FANT), "WIC_FLAGS_* & TEX_FILTER_* should match");
 
             DWORD wicFlags = dwFilter;
             if (FileType == CODEC_DDS)
@@ -2077,8 +2089,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
+                #ifndef NDEBUG
                 auto& tinfo = timage->GetMetadata();
-                (void)tinfo;
+                #endif
 
                 assert(tinfo.format == DXGI_FORMAT_R16G16B16A16_FLOAT);
                 info.format = DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -2106,13 +2119,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
             case ROTATE_709_TO_HDR10:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                 {
                     UNREFERENCED_PARAMETER(y);
 
                     XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
 
-                    for (size_t j = 0; j < width; ++j)
+                    for (size_t j = 0; j < w; ++j)
                     {
                         XMVECTOR value = inPixels[j];
 
@@ -2139,11 +2152,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case ROTATE_709_TO_2020:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                 {
                     UNREFERENCED_PARAMETER(y);
 
-                    for (size_t j = 0; j < width; ++j)
+                    for (size_t j = 0; j < w; ++j)
                     {
                         XMVECTOR value = inPixels[j];
 
@@ -2158,13 +2171,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case ROTATE_HDR10_TO_709:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                 {
                     UNREFERENCED_PARAMETER(y);
 
                     XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
 
-                    for (size_t j = 0; j < width; ++j)
+                    for (size_t j = 0; j < w; ++j)
                     {
                         XMVECTOR value = inPixels[j];
 
@@ -2191,11 +2204,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case ROTATE_2020_TO_709:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                 {
                     UNREFERENCED_PARAMETER(y);
 
-                    for (size_t j = 0; j < width; ++j)
+                    for (size_t j = 0; j < w; ++j)
                     {
                         XMVECTOR value = inPixels[j];
 
@@ -2210,13 +2223,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case ROTATE_P3_TO_HDR10:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                 {
                     UNREFERENCED_PARAMETER(y);
 
                     XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
 
-                    for (size_t j = 0; j < width; ++j)
+                    for (size_t j = 0; j < w; ++j)
                     {
                         XMVECTOR value = inPixels[j];
 
@@ -2243,11 +2256,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case ROTATE_P3_TO_2020:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                 {
                     UNREFERENCED_PARAMETER(y);
 
-                    for (size_t j = 0; j < width; ++j)
+                    for (size_t j = 0; j < w; ++j)
                     {
                         XMVECTOR value = inPixels[j];
 
@@ -2270,8 +2283,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
+            #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            (void)tinfo;
+            #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2299,13 +2313,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             // Compute max luminosity across all images
             XMVECTOR maxLum = XMVectorZero();
             hr = EvaluateImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [&](const XMVECTOR* pixels, size_t width, size_t y)
+                [&](const XMVECTOR* pixels, size_t w, size_t y)
             {
                 UNREFERENCED_PARAMETER(y);
 
-                for (size_t j = 0; j < width; ++j)
+                for (size_t j = 0; j < w; ++j)
                 {
-                    static const XMVECTORF32 s_luminance = {{{ 0.3f, 0.59f, 0.11f, 0.f }}};
+                    static const XMVECTORF32 s_luminance = { { { 0.3f, 0.59f, 0.11f, 0.f } } };
 
                     XMVECTOR v = *pixels++;
 
@@ -2325,11 +2339,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             maxLum = XMVectorMultiply(maxLum, maxLum);
 
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
             {
                 UNREFERENCED_PARAMETER(y);
 
-                for (size_t j = 0; j < width; ++j)
+                for (size_t j = 0; j < w; ++j)
                 {
                     XMVECTOR value = inPixels[j];
 
@@ -2349,8 +2363,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
+            #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            (void)tinfo;
+            #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2452,13 +2467,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             XMVECTOR colorKeyValue = XMLoadColor(reinterpret_cast<const XMCOLOR*>(&colorKey));
 
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
             {
-                static const XMVECTORF32 s_tolerance = {{{ 0.2f, 0.2f, 0.2f, 0.f }}};
+                static const XMVECTORF32 s_tolerance = { { { 0.2f, 0.2f, 0.2f, 0.f } } };
 
                 UNREFERENCED_PARAMETER(y);
 
-                for (size_t j = 0; j < width; ++j)
+                for (size_t j = 0; j < w; ++j)
                 {
                     XMVECTOR value = inPixels[j];
 
@@ -2480,8 +2495,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
+            #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            (void)tinfo;
+            #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2507,13 +2523,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
             {
                 static const XMVECTORU32 s_selecty = { { { XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_0 } } };
 
                 UNREFERENCED_PARAMETER(y);
 
-                for (size_t j = 0; j < width; ++j)
+                for (size_t j = 0; j < w; ++j)
                 {
                     XMVECTOR value = inPixels[j];
 
@@ -2528,8 +2544,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
+            #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            (void)tinfo;
+            #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2727,8 +2744,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
             }
 
+            #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            (void)tinfo;
+            #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2856,6 +2874,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         }
                     }
                     break;
+
+                default:
+                    break;
                 }
 
                 DWORD cflags = dwCompress;
@@ -2945,7 +2966,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             wcscpy_s(pConv->szDest, MAX_PATH, szPrefix);
 
             pchSlash = wcsrchr(pConv->szSrc, L'\\');
-            if (pchSlash != 0)
+            if (pchSlash)
                 wcscat_s(pConv->szDest, MAX_PATH, pchSlash + 1);
             else
                 wcscat_s(pConv->szDest, MAX_PATH, pConv->szSrc);

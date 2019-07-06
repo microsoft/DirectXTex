@@ -15,7 +15,6 @@
 #define NOMINMAX
 #define NODRAWTEXT
 #define NOGDI
-#define NOBITMAP
 #define NOMCX
 #define NOSERVICE
 #define NOHELP
@@ -310,7 +309,10 @@ const SValue g_pFilters[] =
 #define CODEC_DDS 0xFFFF0001 
 #define CODEC_TGA 0xFFFF0002
 #define CODEC_HDR 0xFFFF0005
+
+#ifdef USE_OPENEXR
 #define CODEC_EXR 0xFFFF0006
+#endif
 
 const SValue g_pDumpFileTypes[] =
 {
@@ -361,7 +363,9 @@ namespace
 
     typedef std::unique_ptr<void, find_closer> ScopedFindHandle;
 
+#ifdef _PREFAST_
 #pragma prefast(disable : 26018, "Only used with static internal arrays")
+#endif
 
     DWORD LookupByName(const wchar_t *pName, const SValue *pArray)
     {
@@ -470,7 +474,7 @@ namespace
     {
         for (const SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
         {
-            if ((DXGI_FORMAT)pFormat->dwValue == Format)
+            if (static_cast<DXGI_FORMAT>(pFormat->dwValue) == Format)
             {
                 wprintf(pFormat->pName);
                 return;
@@ -479,7 +483,7 @@ namespace
 
         for (const SValue *pFormat = g_pReadOnlyFormats; pFormat->pName; pFormat++)
         {
-            if ((DXGI_FORMAT)pFormat->dwValue == Format)
+            if (static_cast<DXGI_FORMAT>(pFormat->dwValue) == Format)
             {
                 wprintf(pFormat->pName);
                 return;
@@ -626,12 +630,12 @@ namespace
         else
         {
             // WIC shares the same filter values for mode and dither
-            static_assert(WIC_FLAGS_DITHER == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_DITHER), "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_DITHER_DIFFUSION == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_DITHER_DIFFUSION), "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_POINT == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_POINT), "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_LINEAR == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_LINEAR), "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_CUBIC == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_CUBIC), "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_FANT == static_cast<DirectX::WIC_FLAGS>(TEX_FILTER_FANT), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_DITHER) == static_cast<int>(TEX_FILTER_DITHER), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_DITHER_DIFFUSION) == static_cast<int>(TEX_FILTER_DITHER_DIFFUSION), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_POINT) == static_cast<int>(TEX_FILTER_POINT), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_LINEAR) == static_cast<int>(TEX_FILTER_LINEAR), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_CUBIC) == static_cast<int>(TEX_FILTER_CUBIC), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_FANT) == static_cast<int>(TEX_FILTER_FANT), "WIC_FLAGS_* & TEX_FILTER_* should match");
 
             return LoadFromWICFile(fileName, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image);
         }
@@ -705,7 +709,7 @@ namespace
 
         HRESULT hr = EvaluateImage(image, [&](const XMVECTOR * pixels, size_t width, size_t y)
         {
-            static const XMVECTORF32 s_luminance = {{{ 0.3f, 0.59f, 0.11f, 0.f }}};
+            static const XMVECTORF32 s_luminance = { { {  0.3f, 0.59f, 0.11f, 0.f } } };
 
             UNREFERENCED_PARAMETER(y);
 
@@ -720,22 +724,22 @@ namespace
 
                 XMFLOAT4 f;
                 XMStoreFloat4(&f, v);
-                if (!_finite(f.x))
+                if (!isfinite(f.x))
                 {
                     ++result.specials_x;
                 }
 
-                if (!_finite(f.y))
+                if (!isfinite(f.y))
                 {
                     ++result.specials_y;
                 }
 
-                if (!_finite(f.z))
+                if (!isfinite(f.z))
                 {
                     ++result.specials_z;
                 }
 
-                if (!_finite(f.w))
+                if (!isfinite(f.w))
                 {
                     ++result.specials_w;
                 }
@@ -845,6 +849,9 @@ namespace
                 }
                 if (blockHist[8] > 0)
                     wprintf(L"\tReserved mode blcks - %zu\n", blockHist[8]);
+                break;
+
+            default:
                 break;
             }
         }
@@ -1204,6 +1211,9 @@ namespace
                         ++result.blockHist[8];
                     }
                     break;
+
+                default:
+                    break;
                 }
 
                 sptr += sbpp;
@@ -1374,9 +1384,9 @@ namespace
 
     void Print565(uint16_t rgb)
     {
-        float r = (float)((rgb >> 11) & 31) * (1.0f / 31.0f);
-        float g = (float)((rgb >> 5) & 63) * (1.0f / 63.0f);
-        float b = (float)((rgb >> 0) & 31) * (1.0f / 31.0f);
+        auto r = float(((rgb >> 11) & 31) * (1.0f / 31.0f));
+        auto g = float(((rgb >> 5) & 63) * (1.0f / 63.0f));
+        auto b = float(((rgb >> 0) & 31) * (1.0f / 31.0f));
 
         wprintf(L"(R: %.3f, G: %.3f, B: %.3f)", r, g, b);
     }
@@ -1442,7 +1452,7 @@ namespace
 
     void PrintIndex3bpp(const uint8_t data[6])
     {
-        uint32_t bitmap = data[0] | (data[1] << 8) | (data[2] << 16);
+        uint32_t bitmap = uint32_t(data[0]) | (uint32_t(data[1]) << 8) | (uint32_t(data[2]) << 16);
 
         size_t j = 0;
         for (; j < (NUM_PIXELS_PER_BLOCK / 2); ++j, bitmap >>= 3)
@@ -1450,7 +1460,7 @@ namespace
             wprintf(L"%u%ls", bitmap & 0x7, ((j % 4) == 3) ? L" | " : L" ");
         }
 
-        bitmap = data[3] | (data[4] << 8) | (data[5] << 16);
+        bitmap = uint32_t(data[3]) | (uint32_t(data[4]) << 8) | (uint32_t(data[5]) << 16);
 
         for (; j < NUM_PIXELS_PER_BLOCK; ++j, bitmap >>= 3)
         {
@@ -1595,8 +1605,8 @@ namespace
                     wprintf(L"\n");
 
                     wprintf(L"\tAlpha - E0: %0.3f  E1: %0.3f (%u)\n\t     Index: ",
-                        float((float)block->alpha[0] / 255.f),
-                        float((float)block->alpha[1] / 255.f), (block->alpha[0] > block->alpha[1]) ? 8 : 6);
+                        (float(block->alpha[0]) / 255.f),
+                        (float(block->alpha[1]) / 255.f), (block->alpha[0] > block->alpha[1]) ? 8 : 6);
 
                     PrintIndex3bpp(block->bitmap);
 
@@ -1609,8 +1619,8 @@ namespace
                     auto block = reinterpret_cast<const BC4UBlock*>(sptr);
 
                     wprintf(L"\t   E0: %0.3f  E1: %0.3f (%u)\n\tIndex: ",
-                        float((float)block->red_0 / 255.f),
-                        float((float)block->red_1 / 255.f), (block->red_0 > block->red_1) ? 8 : 6);
+                        (float(block->red_0) / 255.f),
+                        (float(block->red_1) / 255.f), (block->red_0 > block->red_1) ? 8 : 6);
 
                     PrintIndex3bpp(block->indices);
 
@@ -1623,8 +1633,8 @@ namespace
                     auto block = reinterpret_cast<const BC4SBlock*>(sptr);
 
                     wprintf(L"\t   E0: %0.3f  E1: %0.3f (%u)\n\tIndex: ",
-                        float((float)block->red_0 / 127.f),
-                        float((float)block->red_1 / 127.f), (block->red_0 > block->red_1) ? 8 : 6);
+                        (float(block->red_0) / 127.f),
+                        (float(block->red_1) / 127.f), (block->red_0 > block->red_1) ? 8 : 6);
 
                     PrintIndex3bpp(block->indices);
 
@@ -1637,16 +1647,16 @@ namespace
                     auto block = reinterpret_cast<const BC5UBlock*>(sptr);
 
                     wprintf(L"\tU -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
-                        float((float)block->u.red_0 / 255.f),
-                        float((float)block->u.red_1 / 255.f), (block->u.red_0 > block->u.red_1) ? 8 : 6);
+                        (float(block->u.red_0) / 255.f),
+                        (float(block->u.red_1) / 255.f), (block->u.red_0 > block->u.red_1) ? 8 : 6);
 
                     PrintIndex3bpp(block->u.indices);
 
                     wprintf(L"\n");
 
                     wprintf(L"\tV -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
-                        float((float)block->v.red_0 / 255.f),
-                        float((float)block->v.red_1 / 255.f), (block->v.red_0 > block->v.red_1) ? 8 : 6);
+                        (float(block->v.red_0) / 255.f),
+                        (float(block->v.red_1) / 255.f), (block->v.red_0 > block->v.red_1) ? 8 : 6);
 
                     PrintIndex3bpp(block->v.indices);
 
@@ -1659,16 +1669,16 @@ namespace
                     auto block = reinterpret_cast<const BC5SBlock*>(sptr);
 
                     wprintf(L"\tU -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
-                        float((float)block->u.red_0 / 127.f),
-                        float((float)block->u.red_1 / 127.f), (block->u.red_0 > block->u.red_1) ? 8 : 6);
+                        (float(block->u.red_0) / 127.f),
+                        (float(block->u.red_1) / 127.f), (block->u.red_0 > block->u.red_1) ? 8 : 6);
 
                     PrintIndex3bpp(block->u.indices);
 
                     wprintf(L"\n");
 
                     wprintf(L"\tV -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
-                        float((float)block->v.red_0 / 127.f),
-                        float((float)block->v.red_1 / 127.f), (block->v.red_0 > block->v.red_1) ? 8 : 6);
+                        (float(block->v.red_0) / 127.f),
+                        (float(block->v.red_1) / 127.f), (block->v.red_0 > block->v.red_1) ? 8 : 6);
 
                     PrintIndex3bpp(block->v.indices);
 
@@ -2659,6 +2669,9 @@ namespace
                         case 0x1F: // Reserved mode (5 bits, 11111)
                             wprintf(L"\tERROR - Reserved mode 11111\n");
                             break;
+
+                        default:
+                            break;
                         }
                         break;
                     }
@@ -2866,7 +2879,7 @@ namespace
                         wprintf(L"\t         A1:(%0.3f)\n", float(m->a1) / 63.f);
                         wprintf(L"\t    Colors: ");
 
-                        uint64_t color_index = m->color_index | (m->color_indexn << 14);
+                        uint64_t color_index = uint64_t(m->color_index) | uint64_t(m->color_indexn << 14);
                         if (m->idx)
                             PrintIndex3bpp(color_index, 0, 0);
                         else
@@ -3008,7 +3021,9 @@ namespace
 //--------------------------------------------------------------------------------------
 // Entry-point
 //--------------------------------------------------------------------------------------
+#ifdef _PREFAST_
 #pragma prefast(disable : 28198, "Command-line tool, frees all memory on exit")
+#endif
 
 int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 {
@@ -3099,6 +3114,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     iArg++;
                     pValue = argv[iArg];
                 }
+                break;
+
+            default:
                 break;
             }
 
@@ -3236,6 +3254,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }
                     inFile.close();
                 }
+                break;
+
+            default:
                 break;
             }
         }
@@ -3432,13 +3453,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                                 min_mse = std::min(min_mse, mse);
                                 max_mse = std::max(max_mse, mse);
-                                sum_mse += mse;
+                                sum_mse += double(mse);
 
                                 for (size_t j = 0; j < 4; ++j)
                                 {
                                     min_mseV[j] = std::min(min_mseV[j], mseV[j]);
                                     max_mseV[j] = std::max(max_mseV[j], mseV[j]);
-                                    sum_mseV[j] += mseV[j];
+                                    sum_mseV[j] += double(mseV[j]);
                                 }
 
                                 ++total_images;
@@ -3483,13 +3504,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                                 min_mse = std::min(min_mse, mse);
                                 max_mse = std::max(max_mse, mse);
-                                sum_mse += mse;
+                                sum_mse += double(mse);
 
                                 for (size_t j = 0; j < 4; ++j)
                                 {
                                     min_mseV[j] = std::min(min_mseV[j], mseV[j]);
                                     max_mseV[j] = std::max(max_mseV[j], mseV[j]);
-                                    sum_mseV[j] += mseV[j];
+                                    sum_mseV[j] += double(mseV[j]);
                                 }
 
                                 ++total_images;
@@ -3508,7 +3529,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         10.0 * log10(3.0 / (double(min_mseV[0]) + double(min_mseV[1]) + double(min_mseV[2]))));
                     double total_mseV0 = sum_mseV[0] / double(total_images);
                     double total_mseV1 = sum_mseV[1] / double(total_images);
-                    double total_mseV2 = max_mseV[2] / double(total_images);
+                    double total_mseV2 = sum_mseV[2] / double(total_images);
                     wprintf(L"    Average MSE: %f (%f %f %f %f) PSNR %f dB\n", sum_mse / double(total_images),
                         total_mseV0,
                         total_mseV1,
@@ -3589,7 +3610,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 case TEX_ALPHA_MODE_STRAIGHT:
                     wprintf(L"Straight");
                     break;
-                default:
+                case TEX_ALPHA_MODE_CUSTOM:
+                    wprintf(L"Custom");
+                    break;
+                case TEX_ALPHA_MODE_UNKNOWN:
                     wprintf(L"Unknown");
                     break;
                 }
@@ -3710,8 +3734,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                if (pixelx >= (int)info.width
-                    || pixely >= (int)info.height)
+                if (pixelx >= int(info.width)
+                    || pixely >= int(info.height))
                 {
                     wprintf(L"WARNING: Specified pixel location (%d x %d) is out of range for image (%zu x %zu)\n", pixelx, pixely, info.width, info.height);
                     continue;
