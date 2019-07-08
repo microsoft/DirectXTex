@@ -4754,7 +4754,7 @@ namespace
 
         case DXGI_FORMAT_P010:
             assert(destImage.format == DXGI_FORMAT_Y210);
-            CONVERT_420_TO_422(uint16_t, XMUSHORTN4);
+            CONVERT_420_TO_422(uint16_t, XMUSHORTN4)
             return S_OK;
 
         case DXGI_FORMAT_P016:
