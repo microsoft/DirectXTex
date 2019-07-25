@@ -907,7 +907,7 @@ namespace
         if (origx > origy)
         {
             size_t x;
-            for (x = maxsize; x > 1; x >>= 1) { if (x <= targetx) break; };
+            for (x = maxsize; x > 1; x >>= 1) { if (x <= targetx) break; }
             targetx = x;
 
             float bestScore = FLT_MAX;
@@ -924,7 +924,7 @@ namespace
         else
         {
             size_t y;
-            for (y = maxsize; y > 1; y >>= 1) { if (y <= targety) break; };
+            for (y = maxsize; y > 1; y >>= 1) { if (y <= targety) break; }
             targety = y;
 
             float bestScore = FLT_MAX;
