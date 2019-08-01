@@ -30,6 +30,14 @@
 
 #include <wrl\client.h>
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wtautological-type-limit-compare"
+#pragma clang diagnostic ignored "-Wcovered-switch-default"
+#pragma clang diagnostic ignored "-Wswitch"
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#endif
+
+#define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"
 
 using namespace DirectX;
@@ -143,21 +151,25 @@ namespace
         // We don't support n-channel formats
     };
 
+    BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID* ifactory) noexcept
+    {
+        return SUCCEEDED(CoCreateInstance(
+            CLSID_WICImagingFactory2,
+            nullptr,
+            CLSCTX_INPROC_SERVER,
+            __uuidof(IWICImagingFactory2),
+            ifactory)) ? TRUE : FALSE;
+    }
+
     IWICImagingFactory2* _GetWIC()
     {
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
         IWICImagingFactory2* factory = nullptr;
         (void)InitOnceExecuteOnce(&s_initOnce,
-            [](PINIT_ONCE, PVOID, PVOID *ifactory) -> BOOL
-            {
-                return SUCCEEDED( CoCreateInstance(
-                    CLSID_WICImagingFactory2,
-                    nullptr,
-                    CLSCTX_INPROC_SERVER,
-                    __uuidof(IWICImagingFactory2),
-                    ifactory) ) ? TRUE : FALSE;
-            }, nullptr, reinterpret_cast<LPVOID*>(&factory));
+            InitializeWICFactory,
+            nullptr,
+            reinterpret_cast<LPVOID*>(&factory));
 
         return factory;
     }
@@ -513,7 +525,8 @@ namespace
             &desc,
             D3D12_RESOURCE_STATE_COPY_DEST,
             nullptr,
-            IID_PPV_ARGS(&tex));
+            IID_ID3D12Resource,
+            reinterpret_cast<void**>(&tex));
 
         if (FAILED(hr))
         {
@@ -523,8 +536,8 @@ namespace
         _Analysis_assume_(tex != nullptr);
 
         subresource.pData = decodedData.get();
-        subresource.RowPitch = rowPitch;
-        subresource.SlicePitch = imageSize;
+        subresource.RowPitch = static_cast<LONG>(rowPitch);
+        subresource.SlicePitch = static_cast<LONG>(imageSize);
 
         *texture = tex;
         return hr;

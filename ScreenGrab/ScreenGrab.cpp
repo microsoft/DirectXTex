@@ -80,9 +80,6 @@ namespace
     #define DDS_HEADER_FLAGS_PITCH          0x00000008  // DDSD_PITCH
     #define DDS_HEADER_FLAGS_LINEARSIZE     0x00080000  // DDSD_LINEARSIZE
 
-    #define DDS_HEIGHT 0x00000002 // DDSD_HEIGHT
-    #define DDS_WIDTH  0x00000004 // DDSD_WIDTH
-
     #define DDS_SURFACE_FLAGS_TEXTURE 0x00001000 // DDSCAPS_TEXTURE
 
     typedef struct
@@ -213,7 +210,7 @@ namespace
             }
         }
 
-        void clear() { m_handle = 0; }
+        void clear() { m_handle = nullptr; }
 
     private:
         HANDLE m_handle;
@@ -225,7 +222,7 @@ namespace
     class auto_delete_file_wic
     {
     public:
-        auto_delete_file_wic(ComPtr<IWICStream>& hFile, const wchar_t* szFile) : m_handle(hFile), m_filename(szFile) {}
+        auto_delete_file_wic(ComPtr<IWICStream>& hFile, const wchar_t* szFile) : m_filename(szFile), m_handle(hFile) {}
         ~auto_delete_file_wic()
         {
             if (m_filename)
@@ -235,7 +232,7 @@ namespace
             }
         }
 
-        void clear() { m_filename = 0; }
+        void clear() { m_filename = nullptr; }
 
     private:
         const wchar_t* m_filename;
@@ -627,7 +624,7 @@ namespace
             return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
         ComPtr<ID3D11Texture2D> pTexture;
-        HRESULT hr = pSource->QueryInterface(IID_PPV_ARGS(pTexture.GetAddressOf()));
+        HRESULT hr = pSource->QueryInterface(IID_ID3D11Texture2D, reinterpret_cast<void**>(pTexture.GetAddressOf()));
         if ( FAILED(hr) )
             return hr;
 
@@ -711,49 +708,53 @@ namespace
     //--------------------------------------------------------------------------------------
     bool g_WIC2 = false;
 
+    BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID* ifactory) noexcept
+    {
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+        HRESULT hr = CoCreateInstance(
+            CLSID_WICImagingFactory2,
+            nullptr,
+            CLSCTX_INPROC_SERVER,
+            __uuidof(IWICImagingFactory2),
+            ifactory
+        );
+
+        if (SUCCEEDED(hr))
+        {
+            // WIC2 is available on Windows 10, Windows 8.x, and Windows 7 SP1 with KB 2670838 installed
+            g_WIC2 = true;
+            return TRUE;
+        }
+        else
+        {
+            hr = CoCreateInstance(
+                CLSID_WICImagingFactory1,
+                nullptr,
+                CLSCTX_INPROC_SERVER,
+                __uuidof(IWICImagingFactory),
+                ifactory
+            );
+            return SUCCEEDED(hr) ? TRUE : FALSE;
+        }
+#else
+        return SUCCEEDED(CoCreateInstance(
+            CLSID_WICImagingFactory,
+            nullptr,
+            CLSCTX_INPROC_SERVER,
+            __uuidof(IWICImagingFactory),
+            ifactory)) ? TRUE : FALSE;
+#endif
+    }
+
     IWICImagingFactory* _GetWIC()
     {
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
         IWICImagingFactory* factory = nullptr;
         InitOnceExecuteOnce(&s_initOnce,
-            [](PINIT_ONCE, PVOID, LPVOID *ifactory) -> BOOL
-            {
-            #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
-                HRESULT hr = CoCreateInstance(
-                    CLSID_WICImagingFactory2,
-                    nullptr,
-                    CLSCTX_INPROC_SERVER,
-                    __uuidof(IWICImagingFactory2),
-                    ifactory
-                    );
-
-                if ( SUCCEEDED(hr) )
-                {
-                    // WIC2 is available on Windows 10, Windows 8.x, and Windows 7 SP1 with KB 2670838 installed
-                    g_WIC2 = true;
-                    return TRUE;
-                }
-                else
-                {
-                    hr = CoCreateInstance(
-                        CLSID_WICImagingFactory1,
-                        nullptr,
-                        CLSCTX_INPROC_SERVER,
-                        __uuidof(IWICImagingFactory),
-                        ifactory
-                        );
-                    return SUCCEEDED(hr) ? TRUE : FALSE;
-                }
-            #else
-                return SUCCEEDED( CoCreateInstance(
-                    CLSID_WICImagingFactory,
-                    nullptr,
-                    CLSCTX_INPROC_SERVER,
-                    __uuidof(IWICImagingFactory),
-                    ifactory) ) ? TRUE : FALSE;
-            #endif
-            }, nullptr, reinterpret_cast<LPVOID*>(&factory));
+            InitializeWICFactory,
+            nullptr,
+            reinterpret_cast<LPVOID*>(&factory));
 
         return factory;
     }

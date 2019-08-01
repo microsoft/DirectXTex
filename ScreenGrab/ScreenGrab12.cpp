@@ -31,6 +31,14 @@
 
 #include <wrl\client.h>
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wtautological-type-limit-compare"
+#pragma clang diagnostic ignored "-Wcovered-switch-default"
+#pragma clang diagnostic ignored "-Wswitch"
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#endif
+
+#define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"
 
 using Microsoft::WRL::ComPtr;
@@ -79,9 +87,6 @@ namespace
     #define DDS_HEADER_FLAGS_MIPMAP         0x00020000  // DDSD_MIPMAPCOUNT
     #define DDS_HEADER_FLAGS_PITCH          0x00000008  // DDSD_PITCH
     #define DDS_HEADER_FLAGS_LINEARSIZE     0x00080000  // DDSD_LINEARSIZE
-
-    #define DDS_HEIGHT 0x00000002 // DDSD_HEIGHT
-    #define DDS_WIDTH  0x00000004 // DDSD_WIDTH
 
     #define DDS_SURFACE_FLAGS_TEXTURE 0x00001000 // DDSCAPS_TEXTURE
 
@@ -213,7 +218,7 @@ namespace
             }
         }
 
-        void clear() { m_handle = 0; }
+        void clear() { m_handle = nullptr; }
 
     private:
         HANDLE m_handle;
@@ -225,7 +230,7 @@ namespace
     class auto_delete_file_wic
     {
     public:
-        auto_delete_file_wic(ComPtr<IWICStream>& hFile, LPCWSTR szFile) : m_handle(hFile), m_filename(szFile) {}
+        auto_delete_file_wic(ComPtr<IWICStream>& hFile, LPCWSTR szFile) : m_filename(szFile), m_handle(hFile) {}
         ~auto_delete_file_wic()
         {
             if (m_filename)
@@ -235,7 +240,7 @@ namespace
             }
         }
 
-        void clear() { m_filename = 0; }
+        void clear() { m_filename = nullptr; }
 
     private:
         LPCWSTR m_filename;
@@ -676,19 +681,19 @@ namespace
 
         // Create a command allocator
         ComPtr<ID3D12CommandAllocator> commandAlloc;
-        hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(commandAlloc.GetAddressOf()));
+        hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_ID3D12CommandAllocator, reinterpret_cast<void**>(commandAlloc.GetAddressOf()));
         if (FAILED(hr))
             return hr;
 
         // Spin up a new command list
         ComPtr<ID3D12GraphicsCommandList> commandList;
-        hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAlloc.Get(), nullptr, IID_PPV_ARGS(commandList.GetAddressOf()));
+        hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAlloc.Get(), nullptr, IID_ID3D12GraphicsCommandList, reinterpret_cast<void**>(commandList.GetAddressOf()));
         if (FAILED(hr))
             return hr;
 
         // Create a fence
         ComPtr<ID3D12Fence> fence;
-        hr = device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
+        hr = device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_ID3D12Fence, reinterpret_cast<void**>(fence.GetAddressOf()));
         if (FAILED(hr))
             return hr;
 
@@ -726,7 +731,8 @@ namespace
                 &descCopy,
                 D3D12_RESOURCE_STATE_COPY_DEST,
                 nullptr,
-                IID_PPV_ARGS(pTemp.GetAddressOf()));
+                IID_ID3D12Resource,
+                reinterpret_cast<void**>(pTemp.GetAddressOf()));
             if (FAILED(hr))
                 return hr;
 
@@ -761,7 +767,8 @@ namespace
             &bufferDesc,
             D3D12_RESOURCE_STATE_COPY_DEST,
             nullptr,
-            IID_PPV_ARGS(pStaging.ReleaseAndGetAddressOf()));
+            IID_ID3D12Resource,
+            reinterpret_cast<void**>(pStaging.ReleaseAndGetAddressOf()));
         if (FAILED(hr))
             return hr;
 
@@ -806,21 +813,25 @@ namespace
         return S_OK;
     }
 
+    BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID* ifactory) noexcept
+    {
+        return SUCCEEDED(CoCreateInstance(
+            CLSID_WICImagingFactory2,
+            nullptr,
+            CLSCTX_INPROC_SERVER,
+            __uuidof(IWICImagingFactory2),
+            ifactory)) ? TRUE : FALSE;
+    }
+
     IWICImagingFactory2* _GetWIC()
     {
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
         IWICImagingFactory2* factory = nullptr;
         (void)InitOnceExecuteOnce(&s_initOnce,
-            [](PINIT_ONCE, PVOID, PVOID *ifactory) -> BOOL
-            {
-                return SUCCEEDED( CoCreateInstance(
-                    CLSID_WICImagingFactory2,
-                    nullptr,
-                    CLSCTX_INPROC_SERVER,
-                    __uuidof(IWICImagingFactory2),
-                    ifactory) ) ? TRUE : FALSE;
-            }, nullptr, reinterpret_cast<LPVOID*>(&factory));
+            InitializeWICFactory,
+            nullptr,
+            reinterpret_cast<LPVOID*>(&factory));
 
         return factory;
     }
@@ -840,7 +851,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
         return E_INVALIDARG;
 
     ComPtr<ID3D12Device> device;
-    pCommandQ->GetDevice(IID_PPV_ARGS(device.GetAddressOf()));
+    pCommandQ->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(device.GetAddressOf()));
 
     // Get the size of the image
     const auto desc = pSource->GetDesc();
@@ -863,7 +874,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
         &totalResourceSize);
 
     // Round up the srcPitch to multiples of 256
-    UINT64 dstRowPitch = (fpRowPitch + 255) & ~0xFF;
+    UINT64 dstRowPitch = (fpRowPitch + 255) & ~0xFFu;
 
     if (dstRowPitch > UINT32_MAX)
         return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
@@ -1045,7 +1056,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         return E_INVALIDARG;
 
     ComPtr<ID3D12Device> device;
-    pCommandQ->GetDevice(IID_PPV_ARGS(device.GetAddressOf()));
+    pCommandQ->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(device.GetAddressOf()));
 
     // Get the size of the image
     const auto desc = pSource->GetDesc();
@@ -1068,7 +1079,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         &totalResourceSize);
 
     // Round up the srcPitch to multiples of 256
-    UINT64 dstRowPitch = (fpRowPitch + 255) & ~0xFF;
+    UINT64 dstRowPitch = (fpRowPitch + 255) & ~0xFFu;
 
     if (dstRowPitch > UINT32_MAX)
         return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);

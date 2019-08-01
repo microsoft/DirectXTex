@@ -19,7 +19,7 @@
 
 #include <d3d11_1.h>
 
-#include <ocidl.h>
+#include <OCIdl.h>
 #include <stdint.h>
 #include <functional>
 
