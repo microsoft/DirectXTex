@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-June 30, 2019
+August 21, 2019
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -146,6 +146,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+August 21, 2019
+    Updated D3DX12 internal copy to latest version
+    Added texassemble, texconv, and texdiag to CMake project
+    Code cleanup
 
 June 30, 2019
     Additional validation for Direct3D 11 texture loaders
