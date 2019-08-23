@@ -299,6 +299,9 @@ const SValue g_pFormatAliases[] =
     { L"FP16", DXGI_FORMAT_R16G16B16A16_FLOAT },
     { L"FP32", DXGI_FORMAT_R32G32B32A32_FLOAT },
 
+    { L"BPTC", DXGI_FORMAT_BC7_UNORM },
+    { L"BPTC_FLOAT", DXGI_FORMAT_BC6H_UF16 },
+
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
 
