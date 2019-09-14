@@ -133,7 +133,6 @@ struct SValue
     DWORD dwValue;
 };
 
-
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -388,7 +387,7 @@ const SValue g_pRotateColor[] =
     { nullptr, 0 },
 };
 
-#define CODEC_DDS 0xFFFF0001 
+#define CODEC_DDS 0xFFFF0001
 #define CODEC_TGA 0xFFFF0002
 #define CODEC_HDP 0xFFFF0003
 #define CODEC_JXR 0xFFFF0004
@@ -472,7 +471,6 @@ namespace
         return 0;
     }
 
-
     const wchar_t* LookupByValue(DWORD pValue, const SValue *pArray)
     {
         while (pArray->pName)
@@ -485,7 +483,6 @@ namespace
 
         return L"";
     }
-
 
     void SearchForFiles(const wchar_t* path, std::list<SConversion>& files, bool recursive)
     {
@@ -561,7 +558,6 @@ namespace
         }
     }
 
-
     void PrintFormat(DXGI_FORMAT Format)
     {
         for (const SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
@@ -584,7 +580,6 @@ namespace
 
         wprintf(L"*UNKNOWN*");
     }
-
 
     void PrintInfo(const TexMetadata& info)
     {
@@ -645,7 +640,6 @@ namespace
         wprintf(L")");
     }
 
-
     void PrintList(size_t cch, const SValue *pValue)
     {
         while (pValue->pName)
@@ -666,7 +660,6 @@ namespace
         wprintf(L"\n");
     }
 
-
     void PrintLogo()
     {
         wprintf(L"Microsoft (R) DirectX Texture Converter (DirectXTex version)\n");
@@ -676,7 +669,6 @@ namespace
 #endif
         wprintf(L"\n");
     }
-
 
     _Success_(return != false)
         bool GetDXGIFactory(_Outptr_ IDXGIFactory1** pFactory)
@@ -703,7 +695,6 @@ namespace
 
         return SUCCEEDED(s_CreateDXGIFactory1(IID_PPV_ARGS(pFactory)));
     }
-
 
     void PrintUsage()
     {
@@ -804,7 +795,6 @@ namespace
         }
     }
 
-
     _Success_(return != false)
         bool CreateDevice(int adapter, _Outptr_ ID3D11Device** pDevice)
     {
@@ -902,7 +892,6 @@ namespace
             return false;
     }
 
-
     void FitPowerOf2(size_t origx, size_t origy, size_t& targetx, size_t& targety, size_t maxsize)
     {
         float origAR = float(origx) / float(origy);
@@ -981,8 +970,7 @@ namespace
         return normalizedLinear;
     }
 
-
-    HRESULT ReadData(_In_z_ const wchar_t* szFile, std::unique_ptr<uint8_t []>& blob, size_t& bmpSize)
+    HRESULT ReadData(_In_z_ const wchar_t* szFile, std::unique_ptr<uint8_t[]>& blob, size_t& bmpSize)
     {
         blob.reset();
 
@@ -1104,7 +1092,6 @@ namespace
     }
 }
 
-
 //--------------------------------------------------------------------------------------
 // Entry-point
 //--------------------------------------------------------------------------------------
@@ -1148,7 +1135,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr))
     {
-        wprintf(L"Failed to initialize COM (%08X)\n", hr);
+        wprintf(L"Failed to initialize COM (%08X)\n", static_cast<unsigned int>(hr));
         return 1;
     }
 
@@ -1545,46 +1532,46 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_FILELIST:
+            {
+                std::wifstream inFile(pValue);
+                if (!inFile)
                 {
-                    std::wifstream inFile(pValue);
+                    wprintf(L"Error opening -flist file %ls\n", pValue);
+                    return 1;
+                }
+                wchar_t fname[1024] = {};
+                for (;;)
+                {
+                    inFile >> fname;
                     if (!inFile)
+                        break;
+
+                    if (*fname == L'#')
                     {
-                        wprintf(L"Error opening -flist file %ls\n", pValue);
+                        // Comment
+                    }
+                    else if (*fname == L'-')
+                    {
+                        wprintf(L"Command-line arguments not supported in -flist file\n");
                         return 1;
                     }
-                    wchar_t fname[1024] = {};
-                    for (;;)
+                    else if (wcspbrk(fname, L"?*") != nullptr)
                     {
-                        inFile >> fname;
-                        if (!inFile)
-                            break;
-
-                        if (*fname == L'#')
-                        {
-                            // Comment
-                        }
-                        else if (*fname == L'-')
-                        {
-                            wprintf(L"Command-line arguments not supported in -flist file\n");
-                            return 1;
-                        }
-                        else if (wcspbrk(fname, L"?*") != nullptr)
-                        {
-                            wprintf(L"Wildcards not supported in -flist file\n");
-                            return 1;
-                        }
-                        else
-                        {
-                            SConversion conv;
-                            wcscpy_s(conv.szSrc, MAX_PATH, fname);
-                            conversion.push_back(conv);
-                        }
-
-                        inFile.ignore(1000, '\n');
+                        wprintf(L"Wildcards not supported in -flist file\n");
+                        return 1;
                     }
-                    inFile.close();
+                    else
+                    {
+                        SConversion conv;
+                        wcscpy_s(conv.szSrc, MAX_PATH, fname);
+                        conversion.push_back(conv);
+                    }
+
+                    inFile.ignore(1000, '\n');
                 }
-                break;
+                inFile.close();
+            }
+            break;
 
             case OPT_PAPER_WHITE_NITS:
                 if (swscanf_s(pValue, L"%f", &paperWhiteNits) != 1)
@@ -1677,7 +1664,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         qpcFreq.QuadPart = 0;
     }
 
-
     LARGE_INTEGER qpcStart;
     if (!QueryPerformanceCounter(&qpcStart))
     {
@@ -1725,7 +1711,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = LoadFromDDSFile(pConv->szSrc, ddsFlags, &info, *image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
                 continue;
             }
 
@@ -1751,7 +1737,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else if (_wcsicmp(ext, L".bmp") == 0)
         {
-            std::unique_ptr<uint8_t []> bmpData;
+            std::unique_ptr<uint8_t[]> bmpData;
             size_t bmpSize;
             hr = ReadData(pConv->szSrc, bmpData, bmpSize);
             if (SUCCEEDED(hr))
@@ -1767,7 +1753,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
                 continue;
             }
         }
@@ -1776,7 +1762,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = LoadFromTGAFile(pConv->szSrc, &info, *image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
                 continue;
             }
         }
@@ -1785,7 +1771,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = LoadFromHDRFile(pConv->szSrc, &info, *image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
                 continue;
             }
         }
@@ -1795,7 +1781,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = LoadFromEXRFile(pConv->szSrc, &info, *image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
                 continue;
             }
         }
@@ -1817,7 +1803,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = LoadFromWICFile(pConv->szSrc, wicFlags, &info, *image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
                 continue;
             }
         }
@@ -1877,7 +1863,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = ConvertToSinglePlane(img, nimg, info, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [converttosingleplane] (%x)\n", hr);
+                wprintf(L" FAILED [converttosingleplane] (%x)\n", static_cast<unsigned int>(hr));
                 continue;
             }
 
@@ -1916,7 +1902,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = Decompress(img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [decompress] (%x)\n", hr);
+                wprintf(L" FAILED [decompress] (%x)\n", static_cast<unsigned int>(hr));
                 continue;
             }
 
@@ -1973,7 +1959,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = PremultiplyAlpha(img, nimg, info, TEX_PMALPHA_REVERSE | dwSRGB, *timage);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [demultiply alpha] (%x)\n", hr);
+                    wprintf(L" FAILED [demultiply alpha] (%x)\n", static_cast<unsigned int>(hr));
                     continue;
                 }
 
@@ -2016,7 +2002,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = FlipRotate(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFlags, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [fliprotate] (%x)\n", hr);
+                wprintf(L" FAILED [fliprotate] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
 
@@ -2051,7 +2037,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = Resize(image->GetImages(), image->GetImageCount(), image->GetMetadata(), twidth, theight, dwFilter | dwFilterOpts, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [resize] (%x)\n", hr);
+                wprintf(L" FAILED [resize] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
 
@@ -2085,16 +2071,16 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
 
                 hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), DXGI_FORMAT_R16G16B16A16_FLOAT,
-                             dwFilter | dwFilterOpts | dwSRGB | dwConvert, TEX_THRESHOLD_DEFAULT, *timage);
+                    dwFilter | dwFilterOpts | dwSRGB | dwConvert, TEX_THRESHOLD_DEFAULT, *timage);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [convert] (%x)\n", hr);
+                    wprintf(L" FAILED [convert] (%x)\n", static_cast<unsigned int>(hr));
                     return 1;
                 }
 
-                #ifndef NDEBUG
+#ifndef NDEBUG
                 auto& tinfo = timage->GetMetadata();
-                #endif
+#endif
 
                 assert(tinfo.format == DXGI_FORMAT_R16G16B16A16_FLOAT);
                 info.format = DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -2123,157 +2109,157 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case ROTATE_709_TO_HDR10:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                     [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
-
-                    for (size_t j = 0; j < w; ++j)
                     {
-                        XMVECTOR value = inPixels[j];
+                        UNREFERENCED_PARAMETER(y);
 
-                        XMVECTOR nvalue = XMVector3Transform(value, c_from709to2020);
+                        XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
 
-                        // Convert to ST.2084
-                        nvalue = XMVectorDivide(XMVectorMultiply(nvalue, paperWhite), c_MaxNitsFor2084);
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
 
-                        XMFLOAT4A tmp;
-                        XMStoreFloat4A(&tmp, nvalue);
+                            XMVECTOR nvalue = XMVector3Transform(value, c_from709to2020);
 
-                        tmp.x = LinearToST2084(tmp.x);
-                        tmp.y = LinearToST2084(tmp.y);
-                        tmp.z = LinearToST2084(tmp.z);
+                            // Convert to ST.2084
+                            nvalue = XMVectorDivide(XMVectorMultiply(nvalue, paperWhite), c_MaxNitsFor2084);
 
-                        nvalue = XMLoadFloat4A(&tmp);
+                            XMFLOAT4A tmp;
+                            XMStoreFloat4A(&tmp, nvalue);
 
-                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                            tmp.x = LinearToST2084(tmp.x);
+                            tmp.y = LinearToST2084(tmp.y);
+                            tmp.z = LinearToST2084(tmp.z);
 
-                        outPixels[j] = value;
-                    }
-                }, *timage);
+                            nvalue = XMLoadFloat4A(&tmp);
+
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
                 break;
 
             case ROTATE_709_TO_2020:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                     [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    for (size_t j = 0; j < w; ++j)
                     {
-                        XMVECTOR value = inPixels[j];
+                        UNREFERENCED_PARAMETER(y);
 
-                        XMVECTOR nvalue = XMVector3Transform(value, c_from709to2020);
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
 
-                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                            XMVECTOR nvalue = XMVector3Transform(value, c_from709to2020);
 
-                        outPixels[j] = value;
-                    }
-                }, *timage);
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
                 break;
 
             case ROTATE_HDR10_TO_709:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                     [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
-
-                    for (size_t j = 0; j < w; ++j)
                     {
-                        XMVECTOR value = inPixels[j];
+                        UNREFERENCED_PARAMETER(y);
 
-                        // Convert from ST.2084
-                        XMFLOAT4A tmp;
-                        XMStoreFloat4A(&tmp, value);
+                        XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
 
-                        tmp.x = ST2084ToLinear(tmp.x);
-                        tmp.y = ST2084ToLinear(tmp.y);
-                        tmp.z = ST2084ToLinear(tmp.z);
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
 
-                        XMVECTOR nvalue = XMLoadFloat4A(&tmp);
+                            // Convert from ST.2084
+                            XMFLOAT4A tmp;
+                            XMStoreFloat4A(&tmp, value);
 
-                        nvalue = XMVectorDivide(XMVectorMultiply(nvalue, c_MaxNitsFor2084), paperWhite);
+                            tmp.x = ST2084ToLinear(tmp.x);
+                            tmp.y = ST2084ToLinear(tmp.y);
+                            tmp.z = ST2084ToLinear(tmp.z);
 
-                        nvalue = XMVector3Transform(nvalue, c_from2020to709);
+                            XMVECTOR nvalue = XMLoadFloat4A(&tmp);
 
-                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                            nvalue = XMVectorDivide(XMVectorMultiply(nvalue, c_MaxNitsFor2084), paperWhite);
 
-                        outPixels[j] = value;
-                    }
-                }, *timage);
+                            nvalue = XMVector3Transform(nvalue, c_from2020to709);
+
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
                 break;
 
             case ROTATE_2020_TO_709:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                     [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    for (size_t j = 0; j < w; ++j)
                     {
-                        XMVECTOR value = inPixels[j];
+                        UNREFERENCED_PARAMETER(y);
 
-                        XMVECTOR nvalue = XMVector3Transform(value, c_from2020to709);
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
 
-                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                            XMVECTOR nvalue = XMVector3Transform(value, c_from2020to709);
 
-                        outPixels[j] = value;
-                    }
-                }, *timage);
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
                 break;
 
             case ROTATE_P3_TO_HDR10:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                     [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
-
-                    for (size_t j = 0; j < w; ++j)
                     {
-                        XMVECTOR value = inPixels[j];
+                        UNREFERENCED_PARAMETER(y);
 
-                        XMVECTOR nvalue = XMVector3Transform(value, c_fromP3to2020);
+                        XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
 
-                        // Convert to ST.2084
-                        nvalue = XMVectorDivide(XMVectorMultiply(nvalue, paperWhite), c_MaxNitsFor2084);
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
 
-                        XMFLOAT4A tmp;
-                        XMStoreFloat4A(&tmp, nvalue);
+                            XMVECTOR nvalue = XMVector3Transform(value, c_fromP3to2020);
 
-                        tmp.x = LinearToST2084(tmp.x);
-                        tmp.y = LinearToST2084(tmp.y);
-                        tmp.z = LinearToST2084(tmp.z);
+                            // Convert to ST.2084
+                            nvalue = XMVectorDivide(XMVectorMultiply(nvalue, paperWhite), c_MaxNitsFor2084);
 
-                        nvalue = XMLoadFloat4A(&tmp);
+                            XMFLOAT4A tmp;
+                            XMStoreFloat4A(&tmp, nvalue);
 
-                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                            tmp.x = LinearToST2084(tmp.x);
+                            tmp.y = LinearToST2084(tmp.y);
+                            tmp.z = LinearToST2084(tmp.z);
 
-                        outPixels[j] = value;
-                    }
-                }, *timage);
+                            nvalue = XMLoadFloat4A(&tmp);
+
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
                 break;
 
             case ROTATE_P3_TO_2020:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                     [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    for (size_t j = 0; j < w; ++j)
                     {
-                        XMVECTOR value = inPixels[j];
+                        UNREFERENCED_PARAMETER(y);
 
-                        XMVECTOR nvalue = XMVector3Transform(value, c_fromP3to2020);
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
 
-                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                            XMVECTOR nvalue = XMVector3Transform(value, c_fromP3to2020);
 
-                        outPixels[j] = value;
-                    }
-                }, *timage);
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
                 break;
 
             default:
@@ -2282,13 +2268,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [rotate color apply] (%x)\n", hr);
+                wprintf(L" FAILED [rotate color apply] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
 
-            #ifndef NDEBUG
+#ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            #endif
+#endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2317,58 +2303,58 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             XMVECTOR maxLum = XMVectorZero();
             hr = EvaluateImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                 [&](const XMVECTOR* pixels, size_t w, size_t y)
-            {
-                UNREFERENCED_PARAMETER(y);
-
-                for (size_t j = 0; j < w; ++j)
                 {
-                    static const XMVECTORF32 s_luminance = { { { 0.3f, 0.59f, 0.11f, 0.f } } };
+                    UNREFERENCED_PARAMETER(y);
 
-                    XMVECTOR v = *pixels++;
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        static const XMVECTORF32 s_luminance = { { { 0.3f, 0.59f, 0.11f, 0.f } } };
 
-                    v = XMVector3Dot(v, s_luminance);
+                        XMVECTOR v = *pixels++;
 
-                    maxLum = XMVectorMax(v, maxLum);
-                }
-            });
+                        v = XMVector3Dot(v, s_luminance);
+
+                        maxLum = XMVectorMax(v, maxLum);
+                    }
+                });
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [tonemap maxlum] (%x)\n", hr);
+                wprintf(L" FAILED [tonemap maxlum] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
 
-            // Reinhard et al, "Photographic Tone Reproduction for Digital Images" 
+            // Reinhard et al, "Photographic Tone Reproduction for Digital Images"
             // http://www.cs.utah.edu/~reinhard/cdrom/
             maxLum = XMVectorMultiply(maxLum, maxLum);
 
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                 [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
-            {
-                UNREFERENCED_PARAMETER(y);
-
-                for (size_t j = 0; j < w; ++j)
                 {
-                    XMVECTOR value = inPixels[j];
+                    UNREFERENCED_PARAMETER(y);
 
-                    XMVECTOR scale = XMVectorDivide(
-                        XMVectorAdd(g_XMOne, XMVectorDivide(value, maxLum)),
-                        XMVectorAdd(g_XMOne, value));
-                    XMVECTOR nvalue = XMVectorMultiply(value, scale);
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        XMVECTOR value = inPixels[j];
 
-                    value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                        XMVECTOR scale = XMVectorDivide(
+                            XMVectorAdd(g_XMOne, XMVectorDivide(value, maxLum)),
+                            XMVectorAdd(g_XMOne, value));
+                        XMVECTOR nvalue = XMVectorMultiply(value, scale);
 
-                    outPixels[j] = value;
-                }
-            }, *timage);
+                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                        outPixels[j] = value;
+                    }
+                }, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [tonemap apply] (%x)\n", hr);
+                wprintf(L" FAILED [tonemap apply] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
 
-            #ifndef NDEBUG
+#ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            #endif
+#endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2402,7 +2388,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = ComputeNormalMap(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwNormalMap, nmapAmplitude, nmfmt, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [normalmap] (%x)\n", hr);
+                wprintf(L" FAILED [normalmap] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
 
@@ -2435,7 +2421,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 dwFilter | dwFilterOpts | dwSRGB | dwConvert, TEX_THRESHOLD_DEFAULT, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [convert] (%x)\n", hr);
+                wprintf(L" FAILED [convert] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
 
@@ -2471,36 +2457,36 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                 [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
-            {
-                static const XMVECTORF32 s_tolerance = { { { 0.2f, 0.2f, 0.2f, 0.f } } };
-
-                UNREFERENCED_PARAMETER(y);
-
-                for (size_t j = 0; j < w; ++j)
                 {
-                    XMVECTOR value = inPixels[j];
+                    static const XMVECTORF32 s_tolerance = { { { 0.2f, 0.2f, 0.2f, 0.f } } };
 
-                    if (XMVector3NearEqual(value, colorKeyValue, s_tolerance))
-                    {
-                        value = g_XMZero;
-                    }
-                    else
-                    {
-                        value = XMVectorSelect(g_XMOne, value, g_XMSelect1110);
-                    }
+                    UNREFERENCED_PARAMETER(y);
 
-                    outPixels[j] = value;
-                }
-            }, *timage);
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        XMVECTOR value = inPixels[j];
+
+                        if (XMVector3NearEqual(value, colorKeyValue, s_tolerance))
+                        {
+                            value = g_XMZero;
+                        }
+                        else
+                        {
+                            value = XMVectorSelect(g_XMOne, value, g_XMSelect1110);
+                        }
+
+                        outPixels[j] = value;
+                    }
+                }, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [colorkey] (%x)\n", hr);
+                wprintf(L" FAILED [colorkey] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
 
-            #ifndef NDEBUG
+#ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            #endif
+#endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2527,29 +2513,29 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                 [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
-            {
-                static const XMVECTORU32 s_selecty = { { { XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_0 } } };
-
-                UNREFERENCED_PARAMETER(y);
-
-                for (size_t j = 0; j < w; ++j)
                 {
-                    XMVECTOR value = inPixels[j];
+                    static const XMVECTORU32 s_selecty = { { { XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_0 } } };
 
-                    XMVECTOR inverty = XMVectorSubtract(g_XMOne, value);
+                    UNREFERENCED_PARAMETER(y);
 
-                    outPixels[j] = XMVectorSelect(value, inverty, s_selecty);
-                }
-            }, *timage);
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        XMVECTOR value = inPixels[j];
+
+                        XMVECTOR inverty = XMVectorSubtract(g_XMOne, value);
+
+                        outPixels[j] = XMVectorSelect(value, inverty, s_selecty);
+                    }
+                }, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [inverty] (%x)\n", hr);
+                wprintf(L" FAILED [inverty] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
 
-            #ifndef NDEBUG
+#ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            #endif
+#endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2569,7 +2555,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             preserveAlphaCoverage = true;
         }
-      
+
         // --- Generate mips -----------------------------------------------------------
         DWORD dwFilter3D = dwFilter;
         if (!ispow2(info.width) || !ispow2(info.height) || !ispow2(info.depth))
@@ -2603,7 +2589,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = timage->Initialize(mdata);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [copy to single level] (%x)\n", hr);
+                wprintf(L" FAILED [copy to single level] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
 
@@ -2615,7 +2601,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         *timage->GetImage(0, 0, d), TEX_FILTER_DEFAULT, 0, 0);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED [copy to single level] (%x)\n", hr);
+                        wprintf(L" FAILED [copy to single level] (%x)\n", static_cast<unsigned int>(hr));
                         return 1;
                     }
                 }
@@ -2628,7 +2614,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         *timage->GetImage(0, i, 0), TEX_FILTER_DEFAULT, 0, 0);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED [copy to single level] (%x)\n", hr);
+                        wprintf(L" FAILED [copy to single level] (%x)\n", static_cast<unsigned int>(hr));
                         return 1;
                     }
                 }
@@ -2645,7 +2631,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = timage->Initialize(mdata);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [copy compressed to single level] (%x)\n", hr);
+                    wprintf(L" FAILED [copy compressed to single level] (%x)\n", static_cast<unsigned int>(hr));
                     return 1;
                 }
 
@@ -2697,7 +2683,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [mipmaps] (%x)\n", hr);
+                wprintf(L" FAILED [mipmaps] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
 
@@ -2729,10 +2715,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = timage->Initialize(image->GetMetadata());
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [keepcoverage] (%x)\n", hr);
+                wprintf(L" FAILED [keepcoverage] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
-            
+
             const size_t items = image->GetMetadata().arraySize;
             for (size_t item = 0; item < items; ++item)
             {
@@ -2742,14 +2728,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = ScaleMipMapsAlphaForCoverage(img, info.mipLevels, info, item, preserveAlphaCoverageRef, *timage);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [keepcoverage] (%x)\n", hr);
+                    wprintf(L" FAILED [keepcoverage] (%x)\n", static_cast<unsigned int>(hr));
                     return 1;
                 }
             }
 
-            #ifndef NDEBUG
+#ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            #endif
+#endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2788,7 +2774,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = PremultiplyAlpha(img, nimg, info, dwSRGB, *timage);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [premultiply alpha] (%x)\n", hr);
+                    wprintf(L" FAILED [premultiply alpha] (%x)\n", static_cast<unsigned int>(hr));
                     continue;
                 }
 
@@ -2905,7 +2891,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [compress] (%x)\n", hr);
+                    wprintf(L" FAILED [compress] (%x)\n", static_cast<unsigned int>(hr));
                     continue;
                 }
 
@@ -3023,73 +3009,73 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 size_t nimages = (dwOptions & (DWORD64(1) << OPT_WIC_MULTIFRAME)) ? nimg : 1;
                 hr = SaveToWICFile(img, nimages, WIC_FLAGS_NONE, GetWICCodec(codec), pConv->szDest, nullptr,
                     [&](IPropertyBag2* props)
-                {
-                    bool wicLossless = (dwOptions & (DWORD64(1) << OPT_WIC_LOSSLESS)) != 0;
-
-                    switch (FileType)
                     {
-                    case WIC_CODEC_JPEG:
-                        if (wicLossless || wicQuality >= 0.f)
+                        bool wicLossless = (dwOptions & (DWORD64(1) << OPT_WIC_LOSSLESS)) != 0;
+
+                        switch (FileType)
+                        {
+                        case WIC_CODEC_JPEG:
+                            if (wicLossless || wicQuality >= 0.f)
+                            {
+                                PROPBAG2 options = {};
+                                VARIANT varValues = {};
+                                options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
+                                varValues.vt = VT_R4;
+                                varValues.fltVal = (wicLossless) ? 1.f : wicQuality;
+                                (void)props->Write(1, &options, &varValues);
+                            }
+                            break;
+
+                        case WIC_CODEC_TIFF:
                         {
                             PROPBAG2 options = {};
                             VARIANT varValues = {};
-                            options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
-                            varValues.vt = VT_R4;
-                            varValues.fltVal = (wicLossless) ? 1.f : wicQuality;
+                            if (wicLossless)
+                            {
+                                options.pstrName = const_cast<wchar_t*>(L"TiffCompressionMethod");
+                                varValues.vt = VT_UI1;
+                                varValues.bVal = WICTiffCompressionNone;
+                            }
+                            else if (wicQuality >= 0.f)
+                            {
+                                options.pstrName = const_cast<wchar_t*>(L"CompressionQuality");
+                                varValues.vt = VT_R4;
+                                varValues.fltVal = wicQuality;
+                            }
                             (void)props->Write(1, &options, &varValues);
                         }
                         break;
 
-                    case WIC_CODEC_TIFF:
-                    {
-                        PROPBAG2 options = {};
-                        VARIANT varValues = {};
-                        if (wicLossless)
+                        case WIC_CODEC_WMP:
+                        case CODEC_HDP:
+                        case CODEC_JXR:
                         {
-                            options.pstrName = const_cast<wchar_t*>(L"TiffCompressionMethod");
-                            varValues.vt = VT_UI1;
-                            varValues.bVal = WICTiffCompressionNone;
+                            PROPBAG2 options = {};
+                            VARIANT varValues = {};
+                            if (wicLossless)
+                            {
+                                options.pstrName = const_cast<wchar_t*>(L"Lossless");
+                                varValues.vt = VT_BOOL;
+                                varValues.bVal = TRUE;
+                            }
+                            else if (wicQuality >= 0.f)
+                            {
+                                options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
+                                varValues.vt = VT_R4;
+                                varValues.fltVal = wicQuality;
+                            }
+                            (void)props->Write(1, &options, &varValues);
                         }
-                        else if (wicQuality >= 0.f)
-                        {
-                            options.pstrName = const_cast<wchar_t*>(L"CompressionQuality");
-                            varValues.vt = VT_R4;
-                            varValues.fltVal = wicQuality;
+                        break;
                         }
-                        (void)props->Write(1, &options, &varValues);
-                    }
-                    break;
-
-                    case WIC_CODEC_WMP:
-                    case CODEC_HDP:
-                    case CODEC_JXR:
-                    {
-                        PROPBAG2 options = {};
-                        VARIANT varValues = {};
-                        if (wicLossless)
-                        {
-                            options.pstrName = const_cast<wchar_t*>(L"Lossless");
-                            varValues.vt = VT_BOOL;
-                            varValues.bVal = TRUE;
-                        }
-                        else if (wicQuality >= 0.f)
-                        {
-                            options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
-                            varValues.vt = VT_R4;
-                            varValues.fltVal = wicQuality;
-                        }
-                        (void)props->Write(1, &options, &varValues);
-                    }
-                    break;
-                    }
-                });
+                    });
             }
             break;
             }
 
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
                 continue;
             }
             wprintf(L"\n");
