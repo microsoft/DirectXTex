@@ -51,6 +51,11 @@ add_library (directxtex STATIC
     DirectXTex/DirectXTexWIC.cpp
 )
 
+source_group(DirectXTex REGULAR_EXPRESSION DirectXTex/*.*)
+source_group(texassemble REGULAR_EXPRESSION texassemble/*.*)
+source_group(texconv REGULAR_EXPRESSION texconv/*.*)
+source_group(texdiag REGULAR_EXPRESSION texdiag/*.*)
+
 target_include_directories( directxtex PUBLIC DirectXTex )
 
 target_compile_options( directxtex PRIVATE /fp:fast )
