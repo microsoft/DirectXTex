@@ -282,6 +282,7 @@ namespace
         metadata.depth = metadata.arraySize = metadata.mipLevels = 1;
         metadata.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
         metadata.dimension = TEX_DIMENSION_TEXTURE2D;
+        metadata.SetAlphaMode(TEX_ALPHA_MODE_OPAQUE);
 
         return S_OK;
     }
