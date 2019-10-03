@@ -59,12 +59,16 @@ namespace
         uint8_t     bDescriptor;
     };
 
+    static_assert(sizeof(TGA_HEADER) == 18, "TGA 2.0 size mismatch");
+
     struct TGA_FOOTER
     {
-        uint16_t    dwExtensionOffset;
-        uint16_t    dwDeveloperOffset;
+        uint32_t    dwExtensionOffset;
+        uint32_t    dwDeveloperOffset;
         char        Signature[18];
     };
+
+    static_assert(sizeof(TGA_FOOTER) == 26, "TGA 2.0 size mismatch");
 
     struct TGA_EXTENSION
     {
@@ -94,6 +98,9 @@ namespace
         uint32_t    dwScanOffset;
         uint8_t     bAttributesType;
     };
+
+    static_assert(sizeof(TGA_EXTENSION) == 495, "TGA 2.0 size mismatch");
+
 #pragma pack(pop)
 
     enum CONVERSION_FLAGS
