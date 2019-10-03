@@ -159,6 +159,7 @@ namespace
 
             case 24:
                 metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                metadata.SetAlphaMode(TEX_ALPHA_MODE_OPAQUE);
                 if (convFlags)
                     *convFlags |= CONV_FLAGS_EXPAND;
                 // We could use DXGI_FORMAT_B8G8R8X8_UNORM, but we prefer DXGI 1.0 formats
@@ -280,6 +281,8 @@ namespace
         auto sPtr = static_cast<const uint8_t*>(pSource);
         const uint8_t* endPtr = sPtr + size;
 
+        bool opaquealpha = false;
+
         switch (image->format)
         {
         //--------------------------------------------------------------------------- 8-bit
@@ -349,7 +352,9 @@ namespace
         //-------------------------------------------------------------------------- 16-bit
         case DXGI_FORMAT_B5G5R5A1_UNORM:
         {
-            bool nonzeroa = false;
+            uint32_t minalpha = 255;
+            uint32_t maxalpha = 0;
+
             for (size_t y = 0; y < image->height; ++y)
             {
                 size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
@@ -374,8 +379,11 @@ namespace
                             return E_FAIL;
 
                         auto t = static_cast<uint16_t>(uint32_t(*sPtr) | uint32_t(*(sPtr + 1u) << 8));
-                        if (t & 0x8000)
-                            nonzeroa = true;
+
+                        uint32_t alpha = (t & 0x8000) ? 255 : 0;
+                        minalpha = std::min(minalpha, alpha);
+                        maxalpha = std::max(maxalpha, alpha);
+
                         sPtr += 2;
 
                         for (; j > 0; --j, ++x)
@@ -406,8 +414,11 @@ namespace
                                 return E_FAIL;
 
                             auto t = static_cast<uint16_t>(uint32_t(*sPtr) | uint32_t(*(sPtr + 1u) << 8));
-                            if (t & 0x8000)
-                                nonzeroa = true;
+
+                            uint32_t alpha = (t & 0x8000) ? 255 : 0;
+                            minalpha = std::min(minalpha, alpha);
+                            maxalpha = std::max(maxalpha, alpha);
+
                             sPtr += 2;
                             *dPtr = t;
 
@@ -421,11 +432,16 @@ namespace
             }
 
             // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (!nonzeroa)
+            if (maxalpha == 0)
             {
+                opaquealpha = true;
                 HRESULT hr = SetAlphaChannelToOpaque(image);
                 if (FAILED(hr))
                     return hr;
+            }
+            else if (minalpha == 255)
+            {
+                opaquealpha = true;
             }
         }
         break;
@@ -433,7 +449,9 @@ namespace
         //----------------------------------------------------------------------- 24/32-bit
         case DXGI_FORMAT_R8G8B8A8_UNORM:
         {
-            bool nonzeroa = false;
+            uint32_t minalpha = 255;
+            uint32_t maxalpha = 0;
+
             for (size_t y = 0; y < image->height; ++y)
             {
                 size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
@@ -465,7 +483,7 @@ namespace
                             t = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | 0xFF000000;
                             sPtr += 3;
 
-                            nonzeroa = true;
+                            minalpha = maxalpha = 255;
                         }
                         else
                         {
@@ -475,10 +493,11 @@ namespace
                                 return E_FAIL;
 
                             // BGRA -> RGBA
-                            t = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(*(sPtr + 3) << 24);
+                            uint32_t alpha = *(sPtr + 3);
+                            t = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(alpha << 24);
 
-                            if (*(sPtr + 3) > 0)
-                                nonzeroa = true;
+                            minalpha = std::min(minalpha, alpha);
+                            maxalpha = std::max(maxalpha, alpha);
 
                             sPtr += 4;
                         }
@@ -529,7 +548,7 @@ namespace
                                 *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | 0xFF000000;
                                 sPtr += 3;
 
-                                nonzeroa = true;
+                                minalpha = maxalpha = 255;
                             }
                             else
                             {
@@ -539,10 +558,11 @@ namespace
                                     return E_FAIL;
 
                                 // BGRA -> RGBA
-                                *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(*(sPtr + 3) << 24);
+                                uint32_t alpha = *(sPtr + 3);
+                                *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(alpha << 24);
 
-                                if (*(sPtr + 3) > 0)
-                                    nonzeroa = true;
+                                minalpha = std::min(minalpha, alpha);
+                                maxalpha = std::max(maxalpha, alpha);
 
                                 sPtr += 4;
                             }
@@ -557,11 +577,16 @@ namespace
             }
 
             // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (!nonzeroa)
+            if (maxalpha == 0)
             {
+                opaquealpha = true;
                 HRESULT hr = SetAlphaChannelToOpaque(image);
                 if (FAILED(hr))
                     return hr;
+            }
+            else if (minalpha == 255)
+            {
+                opaquealpha = true;
             }
         }
         break;
@@ -571,7 +596,7 @@ namespace
             return E_FAIL;
         }
 
-        return S_OK;
+        return opaquealpha ? S_FALSE : S_OK;
     }
 
 
@@ -606,6 +631,8 @@ namespace
         auto sPtr = static_cast<const uint8_t*>(pSource);
         const uint8_t* endPtr = sPtr + size;
 
+        bool opaquealpha = false;
+
         switch (image->format)
         {
         //--------------------------------------------------------------------------- 8-bit
@@ -637,7 +664,9 @@ namespace
         //-------------------------------------------------------------------------- 16-bit
         case DXGI_FORMAT_B5G5R5A1_UNORM:
         {
-            bool nonzeroa = false;
+            uint32_t minalpha = 255;
+            uint32_t maxalpha = 0;
+
             for (size_t y = 0; y < image->height; ++y)
             {
                 size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
@@ -656,8 +685,9 @@ namespace
                     sPtr += 2;
                     *dPtr = t;
 
-                    if (t & 0x8000)
-                        nonzeroa = true;
+                    uint32_t alpha = (t & 0x8000) ? 255 : 0;
+                    minalpha = std::min(minalpha, alpha);
+                    maxalpha = std::max(maxalpha, alpha);
 
                     if (convFlags & CONV_FLAGS_INVERTX)
                         --dPtr;
@@ -667,11 +697,16 @@ namespace
             }
 
             // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (!nonzeroa)
+            if (maxalpha == 0)
             {
+                opaquealpha = true;
                 HRESULT hr = SetAlphaChannelToOpaque(image);
                 if (FAILED(hr))
                     return hr;
+            }
+            else if (minalpha == 255)
+            {
+                opaquealpha = true;
             }
         }
         break;
@@ -679,7 +714,9 @@ namespace
         //----------------------------------------------------------------------- 24/32-bit
         case DXGI_FORMAT_R8G8B8A8_UNORM:
         {
-            bool nonzeroa = false;
+            uint32_t minalpha = 255;
+            uint32_t maxalpha = 0;
+
             for (size_t y = 0; y < image->height; ++y)
             {
                 size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
@@ -701,7 +738,7 @@ namespace
                         *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | 0xFF000000;
                         sPtr += 3;
 
-                        nonzeroa = true;
+                        minalpha = maxalpha = 255;
                     }
                     else
                     {
@@ -711,10 +748,11 @@ namespace
                             return E_FAIL;
 
                         // BGRA -> RGBA
-                        *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(*(sPtr + 3) << 24);
+                        uint32_t alpha = *(sPtr + 3);
+                        *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(alpha << 24);
 
-                        if (*(sPtr + 3) > 0)
-                            nonzeroa = true;
+                        minalpha = std::min(minalpha, alpha);
+                        maxalpha = std::max(maxalpha, alpha);
 
                         sPtr += 4;
                     }
@@ -727,11 +765,16 @@ namespace
             }
 
             // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (!nonzeroa)
+            if (maxalpha == 0)
             {
+                opaquealpha = true;
                 HRESULT hr = SetAlphaChannelToOpaque(image);
                 if (FAILED(hr))
                     return hr;
+            }
+            else if (minalpha == 255)
+            {
+                opaquealpha = true;
             }
         }
         break;
@@ -741,7 +784,7 @@ namespace
             return E_FAIL;
         }
 
-        return S_OK;
+        return opaquealpha ? S_FALSE : S_OK;
     }
 
 
@@ -965,7 +1008,13 @@ HRESULT DirectX::LoadFromTGAMemory(
     }
 
     if (metadata)
+    {
         memcpy(metadata, &mdata, sizeof(TexMetadata));
+        if (hr == S_FALSE)
+        {
+            metadata->SetAlphaMode(TEX_ALPHA_MODE_OPAQUE);
+        }
+    }
 
     return S_OK;
 }
@@ -1051,6 +1100,8 @@ HRESULT DirectX::LoadFromTGAFile(
 
     assert(image.GetPixels());
 
+    bool opaquealpha = false;
+
     if (!(convFlags & (CONV_FLAGS_RLE | CONV_FLAGS_EXPAND | CONV_FLAGS_INVERTX)) && (convFlags & CONV_FLAGS_INVERTY))
     {
         // This case we can read directly into the image buffer in place
@@ -1101,7 +1152,8 @@ HRESULT DirectX::LoadFromTGAFile(
             size_t rowPitch = img->rowPitch;
 
             // Scan for non-zero alpha channel
-            bool nonzeroa = false;
+            uint32_t minalpha = 255;
+            uint32_t maxalpha = 0;
 
             for (size_t h = 0; h < img->height; ++h)
             {
@@ -1109,22 +1161,27 @@ HRESULT DirectX::LoadFromTGAFile(
 
                 for (size_t x = 0; x < img->width; ++x)
                 {
-                    if ((*sPtr) & 0xff000000)
-                    {
-                        nonzeroa = true;
-                        break;
-                    }
+                    uint32_t alpha = ((*sPtr & 0xFF000000) >> 24);
+
+                    minalpha = std::min(minalpha, alpha);
+                    maxalpha = std::max(maxalpha, alpha);
 
                     ++sPtr;
                 }
 
-                if (nonzeroa)
-                    break;
-
                 pPixels += rowPitch;
             }
 
-            DWORD tflags = (!nonzeroa) ? TEXP_SCANLINE_SETALPHA : TEXP_SCANLINE_NONE;
+            DWORD tflags = TEXP_SCANLINE_NONE;
+            if (maxalpha == 0)
+            {
+                opaquealpha = true;
+                tflags = TEXP_SCANLINE_SETALPHA;
+            }
+            else if (minalpha == 255)
+            {
+                opaquealpha = true;
+            }
 
             // Swizzle scanlines
             pPixels = img->pixels;
@@ -1150,7 +1207,8 @@ HRESULT DirectX::LoadFromTGAFile(
             }
 
             // Scan for non-zero alpha channel
-            bool nonzeroa = false;
+            uint32_t minalpha = 255;
+            uint32_t maxalpha = 0;
 
             const uint8_t *pPixels = img->pixels;
             if (!pPixels)
@@ -1167,30 +1225,31 @@ HRESULT DirectX::LoadFromTGAFile(
 
                 for (size_t x = 0; x < img->width; ++x)
                 {
-                    if (*sPtr & 0x8000)
-                    {
-                        nonzeroa = true;
-                        break;
-                    }
+                    uint32_t alpha = (*sPtr & 0x8000) ? 255 : 0;
+
+                    minalpha = std::min(minalpha, alpha);
+                    maxalpha = std::max(maxalpha, alpha);
 
                     ++sPtr;
                 }
-
-                if (nonzeroa)
-                    break;
 
                 pPixels += rowPitch;
             }
 
             // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (!nonzeroa)
+            if (maxalpha == 0)
             {
+                opaquealpha = true;
                 hr = SetAlphaChannelToOpaque(img);
                 if (FAILED(hr))
                 {
                     image.Release();
                     return hr;
                 }
+            }
+            else if (minalpha == 255)
+            {
+                opaquealpha = true;
             }
         }
         break;
@@ -1234,10 +1293,19 @@ HRESULT DirectX::LoadFromTGAFile(
             image.Release();
             return hr;
         }
+
+        if (hr == S_FALSE)
+            opaquealpha = true;
     }
 
     if (metadata)
+    {
         memcpy(metadata, &mdata, sizeof(TexMetadata));
+        if (opaquealpha)
+        {
+            metadata->SetAlphaMode(TEX_ALPHA_MODE_OPAQUE);
+        }
+    }
 
     return S_OK;
 }

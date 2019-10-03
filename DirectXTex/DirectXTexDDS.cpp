@@ -427,9 +427,6 @@ namespace
             if (metadata.format == DXGI_FORMAT_UNKNOWN)
                 return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
 
-            if (convFlags & CONV_FLAGS_PMALPHA)
-                metadata.miscFlags2 |= TEX_ALPHA_MODE_PREMULTIPLIED;
-
             // Special flag for handling LUMINANCE legacy formats
             if (flags & DDS_FLAGS_EXPAND_LUMINANCE)
             {
@@ -513,6 +510,16 @@ namespace
             default:
                 break;
             }
+        }
+
+        // Implicit alpha mode
+        if (convFlags & CONV_FLAGS_NOALPHA)
+        {
+            metadata.SetAlphaMode(TEX_ALPHA_MODE_OPAQUE);
+        }
+        else if (convFlags & CONV_FLAGS_PMALPHA)
+        {
+            metadata.SetAlphaMode(TEX_ALPHA_MODE_PREMULTIPLIED);
         }
 
         return S_OK;
