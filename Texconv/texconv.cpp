@@ -54,6 +54,7 @@ using Microsoft::WRL::ComPtr;
 enum OPTIONS
 {
     OPT_RECURSIVE = 1,
+    OPT_FILELIST,
     OPT_WIDTH,
     OPT_HEIGHT,
     OPT_MIPLEVELS,
@@ -72,6 +73,10 @@ enum OPTIONS
     OPT_DDS_DWORD_ALIGN,
     OPT_DDS_BAD_DXTN_TAILS,
     OPT_USE_DX10,
+    OPT_TGA20,
+    OPT_WIC_QUALITY,
+    OPT_WIC_LOSSLESS,
+    OPT_WIC_MULTIFRAME,
     OPT_NOLOGO,
     OPT_TIMING,
     OPT_SEPALPHA,
@@ -95,15 +100,11 @@ enum OPTIONS
     OPT_COMPRESS_MAX,
     OPT_COMPRESS_QUICK,
     OPT_COMPRESS_DITHER,
-    OPT_WIC_QUALITY,
-    OPT_WIC_LOSSLESS,
-    OPT_WIC_MULTIFRAME,
     OPT_COLORKEY,
     OPT_TONEMAP,
     OPT_X2_BIAS,
     OPT_PRESERVE_ALPHA_COVERAGE,
     OPT_INVERT_Y,
-    OPT_FILELIST,
     OPT_ROTATE_COLOR,
     OPT_PAPER_WHITE_NITS,
     OPT_MAX
@@ -140,6 +141,7 @@ struct SValue
 const SValue g_pOptions[] =
 {
     { L"r",             OPT_RECURSIVE },
+    { L"flist",         OPT_FILELIST },
     { L"w",             OPT_WIDTH },
     { L"h",             OPT_HEIGHT },
     { L"m",             OPT_MIPLEVELS },
@@ -158,9 +160,14 @@ const SValue g_pOptions[] =
     { L"dword",         OPT_DDS_DWORD_ALIGN },
     { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
     { L"dx10",          OPT_USE_DX10 },
+    { L"tga20",         OPT_TGA20 },
+    { L"wicq",          OPT_WIC_QUALITY },
+    { L"wiclossless",   OPT_WIC_LOSSLESS },
+    { L"wicmulti",      OPT_WIC_MULTIFRAME },
     { L"nologo",        OPT_NOLOGO },
     { L"timing",        OPT_TIMING },
     { L"sepalpha",      OPT_SEPALPHA },
+    { L"keepcoverage",  OPT_PRESERVE_ALPHA_COVERAGE },
     { L"nowic",         OPT_NO_WIC },
     { L"tu",            OPT_TYPELESS_UNORM },
     { L"tf",            OPT_TYPELESS_FLOAT },
@@ -181,15 +188,10 @@ const SValue g_pOptions[] =
     { L"bcmax",         OPT_COMPRESS_MAX },
     { L"bcquick",       OPT_COMPRESS_QUICK },
     { L"bcdither",      OPT_COMPRESS_DITHER },
-    { L"wicq",          OPT_WIC_QUALITY },
-    { L"wiclossless",   OPT_WIC_LOSSLESS },
-    { L"wicmulti",      OPT_WIC_MULTIFRAME },
     { L"c",             OPT_COLORKEY },
     { L"tonemap",       OPT_TONEMAP },
     { L"x2bias",        OPT_X2_BIAS },
-    { L"keepcoverage",  OPT_PRESERVE_ALPHA_COVERAGE },
     { L"inverty",       OPT_INVERT_Y },
-    { L"flist",         OPT_FILELIST },
     { L"rotatecolor",   OPT_ROTATE_COLOR },
     { L"nits",          OPT_PAPER_WHITE_NITS },
     { nullptr,          0 }
@@ -702,32 +704,34 @@ namespace
 
         wprintf(L"Usage: texconv <options> <files>\n\n");
         wprintf(L"   -r                  wildcard filename search is recursive\n");
-        wprintf(L"   -w <n>              width\n");
+        wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
+        wprintf(L"\n   -w <n>              width\n");
         wprintf(L"   -h <n>              height\n");
         wprintf(L"   -m <n>              miplevels\n");
         wprintf(L"   -f <format>         format\n");
-        wprintf(L"   -if <filter>        image filtering\n");
+        wprintf(L"\n   -if <filter>        image filtering\n");
         wprintf(L"   -srgb{i|o}          sRGB {input, output}\n");
-        wprintf(L"   -px <string>        name prefix\n");
+        wprintf(L"\n   -px <string>        name prefix\n");
         wprintf(L"   -sx <string>        name suffix\n");
         wprintf(L"   -o <directory>      output directory\n");
         wprintf(L"   -y                  overwrite existing output file (if any)\n");
         wprintf(L"   -ft <filetype>      output file type\n");
-        wprintf(L"   -hflip              horizonal flip of source image\n");
+        wprintf(L"\n   -hflip              horizonal flip of source image\n");
         wprintf(L"   -vflip              vertical flip of source image\n");
-        wprintf(L"   -sepalpha           resize/generate mips alpha channel separately\n");
+        wprintf(L"\n   -sepalpha           resize/generate mips alpha channel separately\n");
         wprintf(L"                       from color channels\n");
-        wprintf(L"   -nowic              Force non-WIC filtering\n");
+        wprintf(L"   -keepcoverage <ref> Preserve alpha coverage in mips for alpha test ref\n");
+        wprintf(L"\n   -nowic              Force non-WIC filtering\n");
         wprintf(L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
         wprintf(L"   -pmalpha            convert final texture to use premultiplied alpha\n");
         wprintf(L"   -alpha              convert premultiplied alpha to straight alpha\n");
+        wprintf(L"\n   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n");
         wprintf(L"   -pow2               resize to fit a power-of-2, respecting aspect ratio\n");
         wprintf(
-            L"   -nmap <options>     converts height-map to normal-map\n"
+            L"\n   -nmap <options>     converts height-map to normal-map\n"
             L"                       options must be one or more of\n"
             L"                          r, g, b, a, l, m, u, v, i, o\n");
         wprintf(L"   -nmapamp <weight>   normal map amplitude (defaults to 1.0)\n");
-        wprintf(L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n");
         wprintf(L"\n                       (DDS input only)\n");
         wprintf(L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
         wprintf(L"   -dword              Use DWORD instead of BYTE alignment\n");
@@ -735,6 +739,12 @@ namespace
         wprintf(L"   -xlum               expand legacy L8, L16, and A8P8 formats\n");
         wprintf(L"\n                       (DDS output only)\n");
         wprintf(L"   -dx10               Force use of 'DX10' extended header\n");
+        wprintf(L"\n                       (TGA output only)\n");
+        wprintf(L"   -tga20              Write file including TGA 2.0 extension area\n");
+        wprintf(L"\n                       (BMP, PNG, JPG, TIF, WDP output only)\n");
+        wprintf(L"   -wicq <quality>     When writing images with WIC use quality (0.0 to 1.0)\n");
+        wprintf(L"   -wiclossless        When writing images with WIC use lossless mode\n");
+        wprintf(L"   -wicmulti           When writing images with WIC encode multiframe images\n");
         wprintf(L"\n   -nologo             suppress copyright message\n");
         wprintf(L"   -timing             Display elapsed processing time\n\n");
 #ifdef _OPENMP
@@ -746,20 +756,15 @@ namespace
         wprintf(L"   -bcdither           Use dithering for BC1-3\n");
         wprintf(L"   -bcmax              Use exhaustive compression (BC7 only)\n");
         wprintf(L"   -bcquick            Use quick compression (BC7 only)\n");
-        wprintf(L"   -wicq <quality>     When writing images with WIC use quality (0.0 to 1.0)\n");
-        wprintf(L"   -wiclossless        When writing images with WIC use lossless mode\n");
-        wprintf(L"   -wicmulti           When writing images with WIC encode multiframe images\n");
         wprintf(
             L"   -aw <weight>        BC7 GPU compressor weighting for alpha error metric\n"
             L"                       (defaults to 1.0)\n");
-        wprintf(L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n");
+        wprintf(L"\n   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n");
         wprintf(L"   -rotatecolor <rot>  rotates color primaries and/or applies a curve\n");
         wprintf(L"   -nits <value>       paper-white value in nits to use for HDR10 (def: 200.0)\n");
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
         wprintf(L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n");
-        wprintf(L"   -keepcoverage <ref> Preserve alpha coverage in generated mips for alpha test ref\n");
         wprintf(L"   -inverty            Invert Y (i.e. green) channel values\n");
-        wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -2990,7 +2995,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case CODEC_TGA:
-                hr = SaveToTGAFile(img[0], pConv->szDest);
+                hr = SaveToTGAFile(img[0], pConv->szDest, (dwOptions & (DWORD64(1) << OPT_TGA20)) ? &info : nullptr);
                 break;
 
             case CODEC_HDR:

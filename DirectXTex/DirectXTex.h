@@ -382,8 +382,8 @@ namespace DirectX
         _In_z_ const wchar_t* szFile,
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image);
 
-    HRESULT __cdecl SaveToTGAMemory(_In_ const Image& image, _Out_ Blob& blob);
-    HRESULT __cdecl SaveToTGAFile(_In_ const Image& image, _In_z_ const wchar_t* szFile);
+    HRESULT __cdecl SaveToTGAMemory(_In_ const Image& image, _Out_ Blob& blob, _In_opt_ const TexMetadata* metadata = nullptr);
+    HRESULT __cdecl SaveToTGAFile(_In_ const Image& image, _In_z_ const wchar_t* szFile, _In_opt_ const TexMetadata* metadata = nullptr);
 
     // WIC operations
     HRESULT __cdecl LoadFromWICMemory(
