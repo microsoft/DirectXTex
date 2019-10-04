@@ -918,6 +918,12 @@ namespace
         ext->wVersionNumber = DIRECTX_TEX_VERSION;
         ext->bVersionLetter = ' ';
 
+        if (IsSRGB(metadata.format))
+        {
+            ext->wGammaNumerator = 10;
+            ext->wGammaDenominator = 22;
+        }
+
         switch (metadata.GetAlphaMode())
         {
         case TEX_ALPHA_MODE_UNKNOWN:
@@ -939,6 +945,23 @@ namespace
         case TEX_ALPHA_MODE_CUSTOM:
             ext->bAttributesType = TGA_ATTRIBUTE_UNDEFINED;
             break;
+        }
+
+        // Set file time stamp
+        {
+            time_t now = {};
+            time(&now);
+
+            tm info;
+            if (!gmtime_s(&info, &now))
+            {
+                ext->wStampMonth = static_cast<uint16_t>(info.tm_mon + 1);
+                ext->wStampDay = static_cast<uint16_t>(info.tm_mday);
+                ext->wStampYear = static_cast<uint16_t>(info.tm_year + 1900);
+                ext->wStampHour = static_cast<uint16_t>(info.tm_hour);
+                ext->wStampMinute = static_cast<uint16_t>(info.tm_min);
+                ext->wStampSecond = static_cast<uint16_t>(info.tm_sec);
+            }
         }
     }
 
@@ -1469,11 +1492,9 @@ HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob, const TexMetada
             return hr;
     }
 
-    bool tga20extension = (metadata && metadata->GetAlphaMode() != TEX_ALPHA_MODE_UNKNOWN) ? true : false;
-
     hr = blob.Initialize(sizeof(TGA_HEADER)
         + slicePitch
-        + (tga20extension ? sizeof(TGA_EXTENSION) : 0)
+        + (metadata ? sizeof(TGA_EXTENSION) : 0)
         + sizeof(TGA_FOOTER));
     if (FAILED(hr))
         return hr;
@@ -1510,8 +1531,10 @@ HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob, const TexMetada
     }
 
     uint32_t extOffset = 0;
-    if (tga20extension)
+    if (metadata)
     {
+        // metadata is only used for writing the TGA 2.0 extension header
+
         auto ext = reinterpret_cast<TGA_EXTENSION*>(dPtr);
         SetExtension(ext, *metadata);
 
@@ -1657,11 +1680,10 @@ HRESULT DirectX::SaveToTGAFile(const Image& image, const wchar_t* szFile, const 
                 return E_FAIL;
         }
 
-        bool tga20extension = (metadata && metadata->GetAlphaMode() != TEX_ALPHA_MODE_UNKNOWN) ? true : false;
-
         uint32_t extOffset = 0;
-        if (tga20extension)
+        if (metadata)
         {
+            // metadata is only used for writing the TGA 2.0 extension header
             TGA_EXTENSION ext = {};
             SetExtension(&ext, *metadata);
 
