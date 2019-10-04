@@ -72,6 +72,7 @@ enum OPTIONS
     OPT_DDS_DWORD_ALIGN,
     OPT_DDS_BAD_DXTN_TAILS,
     OPT_USE_DX10,
+    OPT_TGA20,
     OPT_NOLOGO,
     OPT_TIMING,
     OPT_SEPALPHA,
@@ -158,6 +159,7 @@ const SValue g_pOptions[] =
     { L"dword",         OPT_DDS_DWORD_ALIGN },
     { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
     { L"dx10",          OPT_USE_DX10 },
+    { L"tga20",         OPT_TGA20 },
     { L"nologo",        OPT_NOLOGO },
     { L"timing",        OPT_TIMING },
     { L"sepalpha",      OPT_SEPALPHA },
@@ -734,7 +736,8 @@ namespace
         wprintf(L"   -badtails           Fix for older DXTn with bad mipchain tails\n");
         wprintf(L"   -xlum               expand legacy L8, L16, and A8P8 formats\n");
         wprintf(L"\n                       (DDS output only)\n");
-        wprintf(L"   -dx10               Force use of 'DX10' extended header\n");
+        wprintf(L"   -dx10               Force use of 'DX10' extended header for DDS\n");
+        wprintf(L"   -tga20              Write TGA file including TGA 2.0 extension area\n");
         wprintf(L"\n   -nologo             suppress copyright message\n");
         wprintf(L"   -timing             Display elapsed processing time\n\n");
 #ifdef _OPENMP
@@ -2990,7 +2993,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case CODEC_TGA:
-                hr = SaveToTGAFile(img[0], pConv->szDest);
+                hr = SaveToTGAFile(img[0], pConv->szDest, (dwOptions & (DWORD64(1) << OPT_TGA20)) ? &info : nullptr);
                 break;
 
             case CODEC_HDR:
