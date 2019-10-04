@@ -1671,7 +1671,7 @@ HRESULT DirectX::SaveToTGAFile(const Image& image, const wchar_t* szFile, const 
                 return HRESULT_FROM_WIN32(GetLastError());
             }
 
-            if (!WriteFile(hFile.get(), temp.get(), sizeof(TGA_EXTENSION), &bytesWritten, nullptr))
+            if (!WriteFile(hFile.get(), &ext, sizeof(TGA_EXTENSION), &bytesWritten, nullptr))
             {
                 return HRESULT_FROM_WIN32(GetLastError());
             }
