@@ -49,7 +49,7 @@ namespace
     {
         TGA_ATTRIBUTE_NONE = 0,             // 0: no alpha data included
         TGA_ATTRIBUTE_IGNORED = 1,          // 1: undefined data, can be ignored
-        TGA_ATTRIBUTE_UNDEFINED = 2,        // 2: uefined data, should be retained
+        TGA_ATTRIBUTE_UNDEFINED = 2,        // 2: uedefined data, should be retained
         TGA_ATTRIBUTE_ALPHA = 3,            // 3: useful alpha channel data
         TGA_ATTRIBUTE_PREMULTIPLIED = 4,    // 4: pre-multiplied alpha
     };
@@ -920,8 +920,8 @@ namespace
 
         if (IsSRGB(metadata.format))
         {
-            ext->wGammaNumerator = 10;
-            ext->wGammaDenominator = 22;
+            ext->wGammaNumerator = 22;
+            ext->wGammaDenominator = 10;
         }
 
         switch (metadata.GetAlphaMode())
@@ -1538,7 +1538,7 @@ HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob, const TexMetada
         auto ext = reinterpret_cast<TGA_EXTENSION*>(dPtr);
         SetExtension(ext, *metadata);
 
-        extOffset = dPtr - destPtr;
+        extOffset = static_cast<uint32_t>(dPtr - destPtr);
         dPtr += sizeof(TGA_EXTENSION);
     }
 
