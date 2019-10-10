@@ -107,6 +107,7 @@ enum OPTIONS
     OPT_INVERT_Y,
     OPT_ROTATE_COLOR,
     OPT_PAPER_WHITE_NITS,
+    OPT_BCNONMULT4FIX,
     OPT_MAX
 };
 
@@ -194,6 +195,7 @@ const SValue g_pOptions[] =
     { L"inverty",       OPT_INVERT_Y },
     { L"rotatecolor",   OPT_ROTATE_COLOR },
     { L"nits",          OPT_PAPER_WHITE_NITS },
+    { L"fixbc4x4",      OPT_BCNONMULT4FIX},
     { nullptr,          0 }
 };
 
@@ -736,6 +738,7 @@ namespace
         wprintf(L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
         wprintf(L"   -dword              Use DWORD instead of BYTE alignment\n");
         wprintf(L"   -badtails           Fix for older DXTn with bad mipchain tails\n");
+        wprintf(L"   -fixbc4x4           Fix for odd-sized BC files that Direct3D can't load\n");
         wprintf(L"   -xlum               expand legacy L8, L16, and A8P8 formats\n");
         wprintf(L"\n                       (DDS output only)\n");
         wprintf(L"   -dx10               Force use of 'DX10' extended header\n");
@@ -1128,13 +1131,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float paperWhiteNits = 200.f;
     float preserveAlphaCoverageRef = 0.0f;
 
-    wchar_t szPrefix[MAX_PATH];
-    wchar_t szSuffix[MAX_PATH];
-    wchar_t szOutputDir[MAX_PATH];
-
-    szPrefix[0] = 0;
-    szSuffix[0] = 0;
-    szOutputDir[0] = 0;
+    wchar_t szPrefix[MAX_PATH] = {};
+    wchar_t szSuffix[MAX_PATH] = {};
+    wchar_t szOutputDir[MAX_PATH] = {};
 
     // Initialize COM (needed for WIC)
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
@@ -1646,7 +1645,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     wcscpy_s(szPrefix, MAX_PATH, szOutputDir);
 
-    const wchar_t* fileTypeName = LookupByValue(FileType, g_pSaveFileTypes);
+    auto fileTypeName = LookupByValue(FileType, g_pSaveFileTypes);
 
     if (fileTypeName)
     {
@@ -1676,6 +1675,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     }
 
     // Convert images
+    bool sizewarn = false;
     bool nonpow2warn = false;
     bool non4bc = false;
     bool preserveAlphaCoverage = false;
@@ -1686,7 +1686,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         if (pConv != conversion.begin())
             wprintf(L"\n");
 
-        // Load source image
+        // --- Load source image -------------------------------------------------------
         wprintf(L"reading %ls", pConv->szSrc);
         fflush(stdout);
 
@@ -1817,36 +1817,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
         size_t tMips = (!mipLevels && info.mipLevels > 1) ? info.mipLevels : mipLevels;
 
-        bool sizewarn = false;
-
-        size_t twidth = (!width) ? info.width : width;
-        if (twidth > maxSize)
-        {
-            if (!width)
-                twidth = maxSize;
-            else
-                sizewarn = true;
-        }
-
-        size_t theight = (!height) ? info.height : height;
-        if (theight > maxSize)
-        {
-            if (!height)
-                theight = maxSize;
-            else
-                sizewarn = true;
-        }
-
-        if (sizewarn)
-        {
-            wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (%u)\n", maxSize);
-        }
-
-        if (dwOptions & (DWORD64(1) << OPT_FIT_POWEROF2))
-        {
-            FitPowerOf2(info.width, info.height, twidth, theight, maxSize);
-        }
-
         // Convert texture
         wprintf(L" as");
         fflush(stdout);
@@ -1887,12 +1857,74 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             image.swap(timage);
         }
 
+        // --- Decompress --------------------------------------------------------------
         DXGI_FORMAT tformat = (format == DXGI_FORMAT_UNKNOWN) ? info.format : format;
 
-        // --- Decompress --------------------------------------------------------------
         std::unique_ptr<ScratchImage> cimage;
         if (IsCompressed(info.format))
         {
+            // Direct3D can only create BC resources with multiple-of-4 top levels
+            if ((info.width % 4) != 0 || (info.height % 4) != 0)
+            {
+                if (dwOptions & (DWORD64(1) << OPT_BCNONMULT4FIX))
+                {
+                    std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                    if (!timage)
+                    {
+                        wprintf(L"\nERROR: Memory allocation failed\n");
+                        return 1;
+                    }
+
+                    // If we started with < 4x4 then no need to generate mips
+                    if (info.width < 4 && info.height < 4)
+                    {
+                        tMips = 1;
+                    }
+
+                    // Fix by changing size but also have to trim any mip-levels which can be invalid
+                    TexMetadata mdata = image->GetMetadata();
+                    mdata.width = (info.width + 3u) & ~0x3u;
+                    mdata.height = (info.height + 3u) & ~0x3u;
+                    mdata.mipLevels = 1;
+                    hr = timage->Initialize(mdata);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED [BC non-multiple-of-4 fixup] (%x)\n", static_cast<unsigned int>(hr));
+                        return 1;
+                    }
+
+                    if (mdata.dimension == TEX_DIMENSION_TEXTURE3D)
+                    {
+                        for (size_t d = 0; d < mdata.depth; ++d)
+                        {
+                            auto simg = image->GetImage(0, 0, d);
+                            auto dimg = timage->GetImage(0, 0, d);
+
+                            memcpy_s(dimg->pixels, dimg->slicePitch, simg->pixels, simg->slicePitch);
+                        }
+                    }
+                    else
+                    {
+                        for (size_t i = 0; i < mdata.arraySize; ++i)
+                        {
+                            auto simg = image->GetImage(0, i, 0);
+                            auto dimg = timage->GetImage(0, i, 0);
+
+                            memcpy_s(dimg->pixels, dimg->slicePitch, simg->pixels, simg->slicePitch);
+                        }
+                    }
+
+                    info.width = mdata.width;
+                    info.height = mdata.height;
+                    info.mipLevels = mdata.mipLevels;
+                    image.swap(timage);
+                }
+                else
+                {
+                    non4bc = true;
+                }
+            }
+
             auto img = image->GetImage(0, 0, 0);
             assert(img);
             size_t nimg = image->GetImageCount();
@@ -2013,8 +2045,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             auto& tinfo = timage->GetMetadata();
 
-            assert(tinfo.width == twidth && tinfo.height == theight);
-
             info.width = tinfo.width;
             info.height = tinfo.height;
 
@@ -2030,6 +2060,29 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Resize ------------------------------------------------------------------
+        size_t twidth = (!width) ? info.width : width;
+        if (twidth > maxSize)
+        {
+            if (!width)
+                twidth = maxSize;
+            else
+                sizewarn = true;
+        }
+
+        size_t theight = (!height) ? info.height : height;
+        if (theight > maxSize)
+        {
+            if (!height)
+                theight = maxSize;
+            else
+                sizewarn = true;
+        }
+
+        if (dwOptions & (DWORD64(1) << OPT_FIT_POWEROF2))
+        {
+            FitPowerOf2(info.width, info.height, twidth, theight, maxSize);
+        }
+
         if (info.width != twidth || info.height != theight)
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
@@ -3085,6 +3138,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             wprintf(L"\n");
         }
+    }
+
+    if (sizewarn)
+    {
+        wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (%u)\n", maxSize);
     }
 
     if (nonpow2warn && maxSize <= 4096)
