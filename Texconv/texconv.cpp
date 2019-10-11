@@ -1857,9 +1857,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             image.swap(timage);
         }
 
-        // --- Decompress --------------------------------------------------------------
         DXGI_FORMAT tformat = (format == DXGI_FORMAT_UNKNOWN) ? info.format : format;
 
+        // --- Decompress --------------------------------------------------------------
         std::unique_ptr<ScratchImage> cimage;
         if (IsCompressed(info.format))
         {
