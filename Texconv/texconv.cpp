@@ -1919,7 +1919,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     info.mipLevels = mdata.mipLevels;
                     image.swap(timage);
                 }
-                else
+                else if (IsCompressed(tformat))
                 {
                     non4bc = true;
                 }
