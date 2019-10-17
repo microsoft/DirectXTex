@@ -1420,7 +1420,7 @@ HRESULT DirectX::LoadFromTGAFile(
             // Handle optional TGA 2.0 footer
             TGA_FOOTER footer = {};
 
-            if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), 0, FILE_END) == INVALID_SET_FILE_POINTER)
+            if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) == INVALID_SET_FILE_POINTER)
             {
                 return HRESULT_FROM_WIN32(GetLastError());
             }
