@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-August 21, 2019
+October 17, 2019
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -146,6 +146,14 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+October 17, 2019
+    Codec readers updated to return TEX_ALPHA_MODE_OPAQUE if reader returned an alpha channnel due to conversion
+    Added DDS reader support for 'non-standard' BC6H/BC7 FourCC codes used by nVidia texture tools
+    TGA codec updated for TGA 2.0
+    Minor code review
+    Updated ScreenGrab module
+    texconv: Added -fixbc4x4switch
 
 August 21, 2019
     Updated D3DX12 internal copy to latest version
