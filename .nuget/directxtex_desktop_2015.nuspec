@@ -41,5 +41,6 @@ DirectXTex, a shared source library for reading and writing .DDS files, and perf
         <file src=".nuget/directxtex_desktop_2015.targets" target="build\native" />
       
         <file src=".nuget/icon.jpg" target="images\" />
+
     </files>
 </package>
