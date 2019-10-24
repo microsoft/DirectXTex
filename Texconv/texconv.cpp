@@ -35,6 +35,8 @@
 
 #include <wincodec.h>
 
+#pragma warning(disable : 4619 4616 26812)
+
 #include "DirectXTex.h"
 
 #include "DirectXPackedVector.h"

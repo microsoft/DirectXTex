@@ -31,6 +31,8 @@
 
 #include <dxgiformat.h>
 
+#pragma warning(disable : 4619 4616 26812)
+
 #include "DirectXTex.h"
 
 //Uncomment to add support for OpenEXR (.exr)

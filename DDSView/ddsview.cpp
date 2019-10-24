@@ -20,6 +20,8 @@
 
 #include <directxmath.h>
 
+#pragma warning(disable : 4619 4616 26812)
+
 #include "DirectXTex.h"
 
 using namespace DirectX;

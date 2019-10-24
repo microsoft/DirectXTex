@@ -3235,7 +3235,10 @@ void D3DX_BC7::EmitBlock(const EncodeParams* pEP, size_t uShape, size_t uRotatio
 _Use_decl_annotations_
 void D3DX_BC7::FixEndpointPBits(const EncodeParams* pEP, const LDREndPntPair *pOrigEndpoints, LDREndPntPair *pFixedEndpoints)
 {
+    assert(pEP);
     const size_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
+    assert(uPartitions < BC7_MAX_REGIONS);
+    _Analysis_assume_(uPartitions < BC7_MAX_REGIONS);
 
     pFixedEndpoints[0] = pOrigEndpoints[0];
     pFixedEndpoints[1] = pOrigEndpoints[1];
