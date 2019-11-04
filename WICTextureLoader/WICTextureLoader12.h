@@ -27,6 +27,8 @@
 
 namespace DirectX
 {
+#ifndef WIC_LOADER_FLAGS_DEFINED
+#define WIC_LOADER_FLAGS_DEFINED
     enum WIC_LOADER_FLAGS
     {
         WIC_LOADER_DEFAULT = 0,
@@ -35,6 +37,7 @@ namespace DirectX
         WIC_LOADER_MIP_AUTOGEN = 0x4,
         WIC_LOADER_MIP_RESERVE = 0x8,
     };
+#endif
 
     // Standard version
     HRESULT __cdecl LoadWICTextureFromMemory(
