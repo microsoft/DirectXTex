@@ -570,7 +570,7 @@ namespace
         {
             if (static_cast<DXGI_FORMAT>(pFormat->dwValue) == Format)
             {
-                wprintf(pFormat->pName);
+                wprintf(L"%ls", pFormat->pName);
                 return;
             }
         }
@@ -579,7 +579,7 @@ namespace
         {
             if (static_cast<DXGI_FORMAT>(pFormat->dwValue) == Format)
             {
-                wprintf(pFormat->pName);
+                wprintf(L"%ls", pFormat->pName);
                 return;
             }
         }
@@ -606,17 +606,17 @@ namespace
         switch (info.dimension)
         {
         case TEX_DIMENSION_TEXTURE1D:
-            wprintf((info.arraySize > 1) ? L" 1DArray" : L" 1D");
+            wprintf(L"%ls", (info.arraySize > 1) ? L" 1DArray" : L" 1D");
             break;
 
         case TEX_DIMENSION_TEXTURE2D:
             if (info.IsCubemap())
             {
-                wprintf((info.arraySize > 6) ? L" CubeArray" : L" Cube");
+                wprintf(L"%ls", (info.arraySize > 6) ? L" CubeArray" : L" Cube");
             }
             else
             {
-                wprintf((info.arraySize > 1) ? L" 2DArray" : L" 2D");
+                wprintf(L"%ls", (info.arraySize > 1) ? L" 2DArray" : L" 2D");
             }
             break;
 
@@ -1523,7 +1523,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_COLORKEY:
-                if (swscanf_s(pValue, L"%x", &colorKey) != 1)
+                if (swscanf_s(pValue, L"%lx", &colorKey) != 1)
                 {
                     printf("Invalid value specified with -c (%ls)\n", pValue);
                     printf("\n");
@@ -3144,7 +3144,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     if (sizewarn)
     {
-        wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (%u)\n", maxSize);
+        wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (%lu)\n", maxSize);
     }
 
     if (nonpow2warn && maxSize <= 4096)
