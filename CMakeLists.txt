@@ -5,8 +5,9 @@
 #
 # http://go.microsoft.com/fwlink/?LinkId=248926
 
-cmake_minimum_required (VERSION 3.8)
-project (DirectXTex_CMake LANGUAGES CXX)
+cmake_minimum_required (VERSION 3.11)
+
+project (DirectXTex LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,10 +17,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/CMake")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/CMake")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/CMake")
 
-set(WarningsLib "-Wall" "-Wpedantic" "-Wextra")
-set(WarningsEXE ${WarningsLib} "-Wno-c++98-compat" "-Wno-c++98-compat-pedantic" "-Wno-switch" "-Wno-switch-enum" "-Wno-language-extension-token" "-Wno-missing-prototypes")
-
-add_library (directxtex STATIC
+add_library (${PROJECT_NAME} STATIC
     DirectXTex/BC.h
     DirectXTex/BCDirectCompute.h
     DirectXTex/d3dx12.h
@@ -51,41 +49,58 @@ add_library (directxtex STATIC
     DirectXTex/DirectXTexWIC.cpp
 )
 
-source_group(DirectXTex REGULAR_EXPRESSION DirectXTex/*.*)
-source_group(texassemble REGULAR_EXPRESSION texassemble/*.*)
-source_group(texconv REGULAR_EXPRESSION texconv/*.*)
-source_group(texdiag REGULAR_EXPRESSION texdiag/*.*)
+source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 
-target_include_directories( directxtex PUBLIC DirectXTex )
+target_include_directories(${PROJECT_NAME} PUBLIC DirectXTex)
 
-target_compile_options( directxtex PRIVATE /fp:fast )
+# Use max Warning Level 
+string(REPLACE "/W3" "/Wall" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+string(REPLACE "/W3" "/Wall" CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
+string(REPLACE "/W3" "/Wall" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
 
 add_executable(texassemble texassemble/texassemble.cpp)
-target_link_libraries(texassemble directxtex)
+target_link_libraries(texassemble ${PROJECT_NAME})
+source_group(texassemble REGULAR_EXPRESSION texassemble/*.*)
 
 add_executable(texconv texconv/texconv.cpp)
-target_link_libraries(texconv directxtex)
+target_link_libraries(texconv ${PROJECT_NAME})
+source_group(texconv REGULAR_EXPRESSION texconv/*.*)
 
 add_executable(texdiag texdiag/texdiag.cpp)
-target_link_libraries(texdiag directxtex)
+target_link_libraries(texdiag ${PROJECT_NAME})
+source_group(texdiag REGULAR_EXPRESSION texdiag/*.*)
+
+target_compile_options(${PROJECT_NAME} PRIVATE /fp:fast)
+target_compile_options(texassemble PRIVATE /fp:fast)
+target_compile_options(texconv PRIVATE /fp:fast)
+target_compile_options(texdiag PRIVATE /fp:fast)
+
+if (${CMAKE_SIZEOF_VOID_P} EQUAL "4")
+    target_compile_options(${PROJECT_NAME} PRIVATE /arch:SSE2)
+    target_compile_options(texassemble PRIVATE /arch:SSE2)
+    target_compile_options(texconv PRIVATE /arch:SSE2)
+    target_compile_options(texdiag PRIVATE /arch:SSE2)
+endif()
 
 if ( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
-    target_compile_options( directxtex PRIVATE ${WarningsLib} )
-    target_compile_options( texassemble PRIVATE ${WarningsEXE}  )
-    target_compile_options( texconv PRIVATE ${WarningsEXE}  )
-    target_compile_options( texdiag PRIVATE ${WarningsEXE} "-Wno-double-promotion" )
-    if (${CMAKE_SIZEOF_VOID_P} EQUAL "4")
-        target_compile_options( directxtex PRIVATE /arch:SSE2 )
-        target_compile_options( texassemble PRIVATE /arch:SSE2 )
-        target_compile_options( texconv PRIVATE /arch:SSE2 )
-        target_compile_options( texdiag PRIVATE /arch:SSE2 )
-    endif()
+    set(WarningsLib "-Wpedantic" "-Wextra")
+    target_compile_options(${PROJECT_NAME} PRIVATE ${WarningsLib})
+
+    set(WarningsEXE ${WarningsLib} "-Wno-c++98-compat" "-Wno-c++98-compat-pedantic" "-Wno-switch" "-Wno-switch-enum" "-Wno-language-extension-token" "-Wno-missing-prototypes")
+    target_compile_options(texassemble PRIVATE ${WarningsEXE})
+    target_compile_options(texconv PRIVATE ${WarningsEXE})
+    target_compile_options(texdiag PRIVATE ${WarningsEXE} "-Wno-double-promotion" )
 endif()
 if ( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
-    target_compile_options( directxtex PRIVATE /Wall /permissive- /Zc:__cplusplus )
-    target_compile_options( texassemble PRIVATE /Wall /permissive- /Zc:__cplusplus )
-    target_compile_options( texconv PRIVATE /Wall /permissive- /Zc:__cplusplus )
-    target_compile_options( texdiag PRIVATE /Wall /permissive- /Zc:__cplusplus )
+    target_compile_options(${PROJECT_NAME} PRIVATE /permissive- /JMC- /Zc:__cplusplus)
+    target_compile_options(texassemble PRIVATE /permissive- /Zc:__cplusplus)
+    target_compile_options(texconv PRIVATE /permissive- /Zc:__cplusplus)
+    target_compile_options(texdiag PRIVATE /permissive- /Zc:__cplusplus)
+
+    set(WarningsEXE "/wd4061" "/wd4062" "/wd4365" "/wd4668" "/wd4710" "/wd4820" "/wd5039" "/wd5045")
+    target_compile_options(texassemble PRIVATE ${WarningsEXE})
+    target_compile_options(texconv PRIVATE ${WarningsEXE})
+    target_compile_options(texdiag PRIVATE ${WarningsEXE})
 endif()
 
 # Windows 10 is used here to build the DirectX 12 code paths as well as 11
