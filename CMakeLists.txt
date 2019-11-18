@@ -58,6 +58,11 @@ string(REPLACE "/W3" "/Wall" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 string(REPLACE "/W3" "/Wall" CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
 string(REPLACE "/W3" "/Wall" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
 
+# Not using typeid or dynamic_cast, so disable RTTI to save binary size
+string(REPLACE "/GR" "/GR-" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+string(REPLACE "/GR" "/GR-" CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
+string(REPLACE "/GR" "/GR-" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+
 add_executable(texassemble texassemble/texassemble.cpp)
 target_link_libraries(texassemble ${PROJECT_NAME})
 source_group(texassemble REGULAR_EXPRESSION texassemble/*.*)
