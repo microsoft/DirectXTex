@@ -53,15 +53,17 @@ source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 
 target_include_directories(${PROJECT_NAME} PUBLIC DirectXTex)
 
-# Use max Warning Level 
-string(REPLACE "/W3 " "/Wall " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-string(REPLACE "/W3 " "/Wall " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
-string(REPLACE "/W3 " "/Wall " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+if(MSVC)
+    # Use max Warning Level 
+    string(REPLACE "/W3 " "/Wall " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    string(REPLACE "/W3 " "/Wall " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
+    string(REPLACE "/W3 " "/Wall " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
 
-# Not using typeid or dynamic_cast, so disable RTTI to save binary size
-string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
-string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+    # Not using typeid or dynamic_cast, so disable RTTI to save binary size
+    string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
+    string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+endif()
 
 add_executable(texassemble texassemble/texassemble.cpp)
 target_link_libraries(texassemble ${PROJECT_NAME})
@@ -75,16 +77,18 @@ add_executable(texdiag texdiag/texdiag.cpp)
 target_link_libraries(texdiag ${PROJECT_NAME})
 source_group(texdiag REGULAR_EXPRESSION texdiag/*.*)
 
-target_compile_options(${PROJECT_NAME} PRIVATE /fp:fast)
-target_compile_options(texassemble PRIVATE /fp:fast)
-target_compile_options(texconv PRIVATE /fp:fast)
-target_compile_options(texdiag PRIVATE /fp:fast)
+if(MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /fp:fast)
+    target_compile_options(texassemble PRIVATE /fp:fast)
+    target_compile_options(texconv PRIVATE /fp:fast)
+    target_compile_options(texdiag PRIVATE /fp:fast)
 
-if (${CMAKE_SIZEOF_VOID_P} EQUAL "4")
-    target_compile_options(${PROJECT_NAME} PRIVATE /arch:SSE2)
-    target_compile_options(texassemble PRIVATE /arch:SSE2)
-    target_compile_options(texconv PRIVATE /arch:SSE2)
-    target_compile_options(texdiag PRIVATE /arch:SSE2)
+    if (${CMAKE_SIZEOF_VOID_P} EQUAL "4")
+        target_compile_options(${PROJECT_NAME} PRIVATE /arch:SSE2)
+        target_compile_options(texassemble PRIVATE /arch:SSE2)
+        target_compile_options(texconv PRIVATE /arch:SSE2)
+        target_compile_options(texdiag PRIVATE /arch:SSE2)
+    endif()
 endif()
 
 if ( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
