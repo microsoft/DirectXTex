@@ -65,17 +65,17 @@ if(MSVC)
     string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
 endif()
 
-add_executable(texassemble texassemble/texassemble.cpp)
+add_executable(texassemble Texassemble/texassemble.cpp)
 target_link_libraries(texassemble ${PROJECT_NAME})
-source_group(texassemble REGULAR_EXPRESSION texassemble/*.*)
+source_group(texassemble REGULAR_EXPRESSION Texassemble/*.*)
 
-add_executable(texconv texconv/texconv.cpp)
+add_executable(texconv Texconv/texconv.cpp)
 target_link_libraries(texconv ${PROJECT_NAME})
-source_group(texconv REGULAR_EXPRESSION texconv/*.*)
+source_group(texconv REGULAR_EXPRESSION Texconv/*.*)
 
-add_executable(texdiag texdiag/texdiag.cpp)
+add_executable(texdiag Texdiag/texdiag.cpp)
 target_link_libraries(texdiag ${PROJECT_NAME})
-source_group(texdiag REGULAR_EXPRESSION texdiag/*.*)
+source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
 
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /fp:fast)
