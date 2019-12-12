@@ -314,7 +314,7 @@ namespace
 _Use_decl_annotations_
 bool DirectX::IsSupportedTexture(
     ID3D12Device* pDevice,
-    const TexMetadata& metadata)
+    const TexMetadata& metadata) noexcept
 {
     if (!pDevice)
         return false;
@@ -426,7 +426,7 @@ _Use_decl_annotations_
 HRESULT DirectX::CreateTexture(
     ID3D12Device* pDevice,
     const TexMetadata& metadata,
-    ID3D12Resource** ppResource)
+    ID3D12Resource** ppResource) noexcept
 {
     return CreateTextureEx(
         pDevice, metadata,
@@ -440,7 +440,7 @@ HRESULT DirectX::CreateTextureEx(
     const TexMetadata& metadata,
     D3D12_RESOURCE_FLAGS resFlags,
     bool forceSRGB,
-    ID3D12Resource** ppResource)
+    ID3D12Resource** ppResource) noexcept
 {
     if (!pDevice || !ppResource)
         return E_INVALIDARG;

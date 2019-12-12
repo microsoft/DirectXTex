@@ -677,7 +677,7 @@ HRESULT ScratchImage::Initialize3DFromImages(const Image* images, size_t depth, 
     return S_OK;
 }
 
-void ScratchImage::Release()
+void ScratchImage::Release() noexcept
 {
     m_nimages = 0;
     m_size = 0;
@@ -768,7 +768,7 @@ const Image* ScratchImage::GetImage(size_t mip, size_t item, size_t slice) const
     return &m_image[index];
 }
 
-bool ScratchImage::IsAlphaAllOpaque() const
+bool ScratchImage::IsAlphaAllOpaque() const noexcept
 {
     if (!m_image)
         return false;

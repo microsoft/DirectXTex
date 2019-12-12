@@ -29,7 +29,7 @@
 
 #include <OCIdl.h>
 
-#define DIRECTX_TEX_VERSION 162
+#define DIRECTX_TEX_VERSION 170
 
 struct IWICImagingFactory;
 struct IWICMetadataQueryReader;
@@ -40,21 +40,21 @@ namespace DirectX
 
     //---------------------------------------------------------------------------------
     // DXGI Format Utilities
-    bool __cdecl IsValid(_In_ DXGI_FORMAT fmt);
-    bool __cdecl IsCompressed(_In_ DXGI_FORMAT fmt);
-    bool __cdecl IsPacked(_In_ DXGI_FORMAT fmt);
-    bool __cdecl IsVideo(_In_ DXGI_FORMAT fmt);
-    bool __cdecl IsPlanar(_In_ DXGI_FORMAT fmt);
-    bool __cdecl IsPalettized(_In_ DXGI_FORMAT fmt);
-    bool __cdecl IsDepthStencil(_In_ DXGI_FORMAT fmt);
-    bool __cdecl IsSRGB(_In_ DXGI_FORMAT fmt);
-    bool __cdecl IsTypeless(_In_ DXGI_FORMAT fmt, _In_ bool partialTypeless = true);
+    bool __cdecl IsValid(_In_ DXGI_FORMAT fmt) noexcept;
+    bool __cdecl IsCompressed(_In_ DXGI_FORMAT fmt) noexcept;
+    bool __cdecl IsPacked(_In_ DXGI_FORMAT fmt) noexcept;
+    bool __cdecl IsVideo(_In_ DXGI_FORMAT fmt) noexcept;
+    bool __cdecl IsPlanar(_In_ DXGI_FORMAT fmt) noexcept;
+    bool __cdecl IsPalettized(_In_ DXGI_FORMAT fmt) noexcept;
+    bool __cdecl IsDepthStencil(_In_ DXGI_FORMAT fmt) noexcept;
+    bool __cdecl IsSRGB(_In_ DXGI_FORMAT fmt) noexcept;
+    bool __cdecl IsTypeless(_In_ DXGI_FORMAT fmt, _In_ bool partialTypeless = true) noexcept;
 
-    bool __cdecl HasAlpha(_In_ DXGI_FORMAT fmt);
+    bool __cdecl HasAlpha(_In_ DXGI_FORMAT fmt) noexcept;
 
-    size_t __cdecl BitsPerPixel(_In_ DXGI_FORMAT fmt);
+    size_t __cdecl BitsPerPixel(_In_ DXGI_FORMAT fmt) noexcept;
 
-    size_t __cdecl BitsPerColor(_In_ DXGI_FORMAT fmt);
+    size_t __cdecl BitsPerColor(_In_ DXGI_FORMAT fmt) noexcept;
 
     enum CP_FLAGS
     {
@@ -72,14 +72,14 @@ namespace DirectX
 
     HRESULT __cdecl ComputePitch(
         _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height,
-        _Out_ size_t& rowPitch, _Out_ size_t& slicePitch, _In_ DWORD flags = CP_FLAGS_NONE);
+        _Out_ size_t& rowPitch, _Out_ size_t& slicePitch, _In_ DWORD flags = CP_FLAGS_NONE) noexcept;
 
-    size_t __cdecl ComputeScanlines(_In_ DXGI_FORMAT fmt, _In_ size_t height);
+    size_t __cdecl ComputeScanlines(_In_ DXGI_FORMAT fmt, _In_ size_t height) noexcept;
 
-    DXGI_FORMAT __cdecl MakeSRGB(_In_ DXGI_FORMAT fmt);
-    DXGI_FORMAT __cdecl MakeTypeless(_In_ DXGI_FORMAT fmt);
-    DXGI_FORMAT __cdecl MakeTypelessUNORM(_In_ DXGI_FORMAT fmt);
-    DXGI_FORMAT __cdecl MakeTypelessFLOAT(_In_ DXGI_FORMAT fmt);
+    DXGI_FORMAT __cdecl MakeSRGB(_In_ DXGI_FORMAT fmt) noexcept;
+    DXGI_FORMAT __cdecl MakeTypeless(_In_ DXGI_FORMAT fmt) noexcept;
+    DXGI_FORMAT __cdecl MakeTypelessUNORM(_In_ DXGI_FORMAT fmt) noexcept;
+    DXGI_FORMAT __cdecl MakeTypelessFLOAT(_In_ DXGI_FORMAT fmt) noexcept;
 
     //---------------------------------------------------------------------------------
     // Texture metadata
@@ -124,18 +124,18 @@ namespace DirectX
         DXGI_FORMAT     format;
         TEX_DIMENSION   dimension;
 
-        size_t __cdecl ComputeIndex(_In_ size_t mip, _In_ size_t item, _In_ size_t slice) const;
+        size_t __cdecl ComputeIndex(_In_ size_t mip, _In_ size_t item, _In_ size_t slice) const noexcept;
             // Returns size_t(-1) to indicate an out-of-range error
 
-        bool __cdecl IsCubemap() const { return (miscFlags & TEX_MISC_TEXTURECUBE) != 0; }
+        bool __cdecl IsCubemap() const noexcept { return (miscFlags & TEX_MISC_TEXTURECUBE) != 0; }
             // Helper for miscFlags
 
-        bool __cdecl IsPMAlpha() const { return ((miscFlags2 & TEX_MISC2_ALPHA_MODE_MASK) == TEX_ALPHA_MODE_PREMULTIPLIED) != 0; }
-        void __cdecl SetAlphaMode(TEX_ALPHA_MODE mode) { miscFlags2 = (miscFlags2 & ~static_cast<uint32_t>(TEX_MISC2_ALPHA_MODE_MASK)) | static_cast<uint32_t>(mode); }
-        TEX_ALPHA_MODE __cdecl GetAlphaMode() const { return static_cast<TEX_ALPHA_MODE>(miscFlags2 & TEX_MISC2_ALPHA_MODE_MASK); }
+        bool __cdecl IsPMAlpha() const noexcept { return ((miscFlags2 & TEX_MISC2_ALPHA_MODE_MASK) == TEX_ALPHA_MODE_PREMULTIPLIED) != 0; }
+        void __cdecl SetAlphaMode(TEX_ALPHA_MODE mode) noexcept { miscFlags2 = (miscFlags2 & ~static_cast<uint32_t>(TEX_MISC2_ALPHA_MODE_MASK)) | static_cast<uint32_t>(mode); }
+        TEX_ALPHA_MODE __cdecl GetAlphaMode() const noexcept { return static_cast<TEX_ALPHA_MODE>(miscFlags2 & TEX_MISC2_ALPHA_MODE_MASK); }
             // Helpers for miscFlags2
 
-        bool __cdecl IsVolumemap() const { return (dimension == TEX_DIMENSION_TEXTURE3D); }
+        bool __cdecl IsVolumemap() const noexcept { return (dimension == TEX_DIMENSION_TEXTURE3D); }
             // Helper for dimension
     };
 
@@ -285,20 +285,20 @@ namespace DirectX
         HRESULT __cdecl InitializeCubeFromImages(_In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ DWORD flags = CP_FLAGS_NONE);
         HRESULT __cdecl Initialize3DFromImages(_In_reads_(depth) const Image* images, _In_ size_t depth, _In_ DWORD flags = CP_FLAGS_NONE);
 
-        void __cdecl Release();
+        void __cdecl Release() noexcept;
 
         bool __cdecl OverrideFormat(_In_ DXGI_FORMAT f);
 
-        const TexMetadata& __cdecl GetMetadata() const { return m_metadata; }
+        const TexMetadata& __cdecl GetMetadata() const noexcept { return m_metadata; }
         const Image* __cdecl GetImage(_In_ size_t mip, _In_ size_t item, _In_ size_t slice) const;
 
-        const Image* __cdecl GetImages() const { return m_image; }
-        size_t __cdecl GetImageCount() const { return m_nimages; }
+        const Image* __cdecl GetImages() const noexcept { return m_image; }
+        size_t __cdecl GetImageCount() const noexcept { return m_nimages; }
 
-        uint8_t* __cdecl GetPixels() const { return m_memory; }
-        size_t __cdecl GetPixelsSize() const { return m_size; }
+        uint8_t* __cdecl GetPixels() const noexcept { return m_memory; }
+        size_t __cdecl GetPixelsSize() const noexcept { return m_size; }
 
-        bool __cdecl IsAlphaAllOpaque() const;
+        bool __cdecl IsAlphaAllOpaque() const noexcept;
 
     private:
         size_t      m_nimages;
@@ -322,14 +322,14 @@ namespace DirectX
         Blob(const Blob&) = delete;
         Blob& operator=(const Blob&) = delete;
 
-        HRESULT __cdecl Initialize(_In_ size_t size);
+        HRESULT __cdecl Initialize(_In_ size_t size) noexcept;
 
-        void __cdecl Release();
+        void __cdecl Release() noexcept;
 
-        void *__cdecl GetBufferPointer() const { return m_buffer; }
-        size_t __cdecl GetBufferSize() const { return m_size; }
+        void *__cdecl GetBufferPointer() const noexcept { return m_buffer; }
+        size_t __cdecl GetBufferSize() const noexcept { return m_size; }
 
-        HRESULT __cdecl Trim(size_t size);
+        HRESULT __cdecl Trim(size_t size) noexcept;
 
     private:
         void*   m_buffer;
@@ -721,33 +721,33 @@ namespace DirectX
         WIC_CODEC_ICO,              // Windows Icon (.ico)
     };
 
-    REFGUID __cdecl GetWICCodec(_In_ WICCodecs codec);
+    REFGUID __cdecl GetWICCodec(_In_ WICCodecs codec) noexcept;
 
-    IWICImagingFactory* __cdecl GetWICFactory(bool& iswic2);
-    void __cdecl SetWICFactory(_In_opt_ IWICImagingFactory* pWIC);
+    IWICImagingFactory* __cdecl GetWICFactory(bool& iswic2) noexcept;
+    void __cdecl SetWICFactory(_In_opt_ IWICImagingFactory* pWIC) noexcept;
 
     //---------------------------------------------------------------------------------
     // Direct3D 11 functions
 #if defined(__d3d11_h__) || defined(__d3d11_x_h__)
-    bool __cdecl IsSupportedTexture(_In_ ID3D11Device* pDevice, _In_ const TexMetadata& metadata);
+    bool __cdecl IsSupportedTexture(_In_ ID3D11Device* pDevice, _In_ const TexMetadata& metadata) noexcept;
 
     HRESULT __cdecl CreateTexture(
         _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _Outptr_ ID3D11Resource** ppResource);
+        _Outptr_ ID3D11Resource** ppResource) noexcept;
 
     HRESULT __cdecl CreateShaderResourceView(
         _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _Outptr_ ID3D11ShaderResourceView** ppSRV);
+        _Outptr_ ID3D11ShaderResourceView** ppSRV) noexcept;
 
     HRESULT __cdecl CreateTextureEx(
         _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
         _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ bool forceSRGB,
-        _Outptr_ ID3D11Resource** ppResource);
+        _Outptr_ ID3D11Resource** ppResource) noexcept;
 
     HRESULT __cdecl CreateShaderResourceViewEx(
         _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
         _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ bool forceSRGB,
-        _Outptr_ ID3D11ShaderResourceView** ppSRV);
+        _Outptr_ ID3D11ShaderResourceView** ppSRV) noexcept;
 
     HRESULT __cdecl CaptureTexture(_In_ ID3D11Device* pDevice, _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource* pSource, _Out_ ScratchImage& result);
 #endif
@@ -755,16 +755,16 @@ namespace DirectX
     //---------------------------------------------------------------------------------
     // Direct3D 12 functions
 #if defined(__d3d12_h__) || defined(__d3d12_x_h__) || defined(__XBOX_D3D12_X__)
-    bool __cdecl IsSupportedTexture(_In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata);
+    bool __cdecl IsSupportedTexture(_In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata) noexcept;
 
     HRESULT __cdecl CreateTexture(
         _In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata,
-        _Outptr_ ID3D12Resource** ppResource);
+        _Outptr_ ID3D12Resource** ppResource) noexcept;
 
     HRESULT __cdecl CreateTextureEx(
         _In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata,
         _In_ D3D12_RESOURCE_FLAGS resFlags, _In_ bool forceSRGB,
-        _Outptr_ ID3D12Resource** ppResource);
+        _Outptr_ ID3D12Resource** ppResource) noexcept;
 
     HRESULT __cdecl PrepareUpload(
         _In_ ID3D12Device* pDevice,

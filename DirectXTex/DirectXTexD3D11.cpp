@@ -202,7 +202,7 @@ namespace
 _Use_decl_annotations_
 bool DirectX::IsSupportedTexture(
     ID3D11Device* pDevice,
-    const TexMetadata& metadata)
+    const TexMetadata& metadata) noexcept
 {
     if (!pDevice)
         return false;
@@ -403,7 +403,7 @@ HRESULT DirectX::CreateTexture(
     const Image* srcImages,
     size_t nimages,
     const TexMetadata& metadata,
-    ID3D11Resource** ppResource)
+    ID3D11Resource** ppResource) noexcept
 {
     return CreateTextureEx(
         pDevice, srcImages, nimages, metadata,
@@ -422,7 +422,7 @@ HRESULT DirectX::CreateTextureEx(
     unsigned int cpuAccessFlags,
     unsigned int miscFlags,
     bool forceSRGB,
-    ID3D11Resource** ppResource)
+    ID3D11Resource** ppResource) noexcept
 {
     if (!pDevice || !srcImages || !nimages || !ppResource)
         return E_INVALIDARG;
@@ -612,7 +612,7 @@ HRESULT DirectX::CreateShaderResourceView(
     const Image* srcImages,
     size_t nimages,
     const TexMetadata& metadata,
-    ID3D11ShaderResourceView** ppSRV)
+    ID3D11ShaderResourceView** ppSRV) noexcept
 {
     return CreateShaderResourceViewEx(
         pDevice, srcImages, nimages, metadata,
@@ -631,7 +631,7 @@ HRESULT DirectX::CreateShaderResourceViewEx(
     unsigned int cpuAccessFlags,
     unsigned int miscFlags,
     bool forceSRGB,
-    ID3D11ShaderResourceView** ppSRV)
+    ID3D11ShaderResourceView** ppSRV) noexcept
 {
     if (!ppSRV)
         return E_INVALIDARG;

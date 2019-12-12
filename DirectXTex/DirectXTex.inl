@@ -16,13 +16,13 @@
 //=====================================================================================
 
 _Use_decl_annotations_
-inline bool __cdecl IsValid(DXGI_FORMAT fmt)
+inline bool __cdecl IsValid(DXGI_FORMAT fmt) noexcept
 {
     return (static_cast<size_t>(fmt) >= 1 && static_cast<size_t>(fmt) <= 190);
 }
 
 _Use_decl_annotations_
-inline bool __cdecl IsCompressed(DXGI_FORMAT fmt)
+inline bool __cdecl IsCompressed(DXGI_FORMAT fmt) noexcept
 {
     switch (fmt)
     {
@@ -55,7 +55,7 @@ inline bool __cdecl IsCompressed(DXGI_FORMAT fmt)
 }
 
 _Use_decl_annotations_
-inline bool __cdecl IsPalettized(DXGI_FORMAT fmt)
+inline bool __cdecl IsPalettized(DXGI_FORMAT fmt) noexcept
 {
     switch (fmt)
     {
@@ -71,7 +71,7 @@ inline bool __cdecl IsPalettized(DXGI_FORMAT fmt)
 }
 
 _Use_decl_annotations_
-inline bool __cdecl IsSRGB(DXGI_FORMAT fmt)
+inline bool __cdecl IsSRGB(DXGI_FORMAT fmt) noexcept
 {
     switch (fmt)
     {
