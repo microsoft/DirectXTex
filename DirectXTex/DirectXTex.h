@@ -17,7 +17,7 @@
 #include <functional>
 #include <vector>
 
-#if !defined(__d3d11_h__) && !defined(__d3d11_x_h__) && !defined(__d3d12_h__) && !defined(__d3d12_x_h__)
+#if !defined(__d3d11_h__) && !defined(__d3d11_x_h__) && !defined(__d3d12_h__) && !defined(__d3d12_x_h__) && !defined(__XBOX_D3D12_X__)
 #if defined(_XBOX_ONE) && defined(_TITLE)
 #include <d3d11_x.h>
 #else
@@ -754,7 +754,7 @@ namespace DirectX
 
     //---------------------------------------------------------------------------------
     // Direct3D 12 functions
-#if defined(__d3d12_h__) || defined(__d3d12_x_h__)
+#if defined(__d3d12_h__) || defined(__d3d12_x_h__) || defined(__XBOX_D3D12_X__)
     bool __cdecl IsSupportedTexture(_In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata);
 
     HRESULT __cdecl CreateTexture(
