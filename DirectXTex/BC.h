@@ -50,38 +50,38 @@ public:
 
 public:
     HDRColorA() = default;
-    HDRColorA(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a) {}
-    HDRColorA(const HDRColorA& c) : r(c.r), g(c.g), b(c.b), a(c.a) {}
+    HDRColorA(float _r, float _g, float _b, float _a) noexcept : r(_r), g(_g), b(_b), a(_a) {}
+    HDRColorA(const HDRColorA& c) noexcept : r(c.r), g(c.g), b(c.b), a(c.a) {}
 
     // binary operators
-    HDRColorA operator + (const HDRColorA& c) const
+    HDRColorA operator + (const HDRColorA& c) const noexcept
     {
         return HDRColorA(r + c.r, g + c.g, b + c.b, a + c.a);
     }
 
-    HDRColorA operator - (const HDRColorA& c) const
+    HDRColorA operator - (const HDRColorA& c) const noexcept
     {
         return HDRColorA(r - c.r, g - c.g, b - c.b, a - c.a);
     }
 
-    HDRColorA operator * (float f) const
+    HDRColorA operator * (float f) const noexcept
     {
         return HDRColorA(r * f, g * f, b * f, a * f);
     }
 
-    HDRColorA operator / (float f) const
+    HDRColorA operator / (float f) const noexcept
     {
         float fInv = 1.0f / f;
         return HDRColorA(r * fInv, g * fInv, b * fInv, a * fInv);
     }
 
-    float operator * (const HDRColorA& c) const
+    float operator * (const HDRColorA& c) const noexcept
     {
         return r * c.r + g * c.g + b * c.b + a * c.a;
     }
 
     // assignment operators
-    HDRColorA& operator += (const HDRColorA& c)
+    HDRColorA& operator += (const HDRColorA& c) noexcept
     {
         r += c.r;
         g += c.g;
@@ -90,7 +90,7 @@ public:
         return *this;
     }
 
-    HDRColorA& operator -= (const HDRColorA& c)
+    HDRColorA& operator -= (const HDRColorA& c) noexcept
     {
         r -= c.r;
         g -= c.g;
@@ -99,7 +99,7 @@ public:
         return *this;
     }
 
-    HDRColorA& operator *= (float f)
+    HDRColorA& operator *= (float f) noexcept
     {
         r *= f;
         g *= f;
@@ -108,7 +108,7 @@ public:
         return *this;
     }
 
-    HDRColorA& operator /= (float f)
+    HDRColorA& operator /= (float f) noexcept
     {
         float fInv = 1.0f / f;
         r *= fInv;
@@ -118,7 +118,7 @@ public:
         return *this;
     }
 
-    HDRColorA& Clamp(_In_ float fMin, _In_ float fMax)
+    HDRColorA& Clamp(_In_ float fMin, _In_ float fMax) noexcept
     {
         r = std::min<float>(fMax, std::max<float>(fMin, r));
         g = std::min<float>(fMax, std::max<float>(fMin, g));
@@ -127,12 +127,12 @@ public:
         return *this;
     }
 
-    HDRColorA(const LDRColorA& c);
-    HDRColorA& operator = (const LDRColorA& c);
-    LDRColorA ToLDRColorA() const;
+    HDRColorA(const LDRColorA& c) noexcept;
+    HDRColorA& operator = (const LDRColorA& c) noexcept;
+    LDRColorA ToLDRColorA() const noexcept;
 };
 
-inline HDRColorA* HDRColorALerp(_Out_ HDRColorA *pOut, _In_ const HDRColorA *pC1, _In_ const HDRColorA *pC2, _In_ float s)
+inline HDRColorA* HDRColorALerp(_Out_ HDRColorA *pOut, _In_ const HDRColorA *pC1, _In_ const HDRColorA *pC2, _In_ float s) noexcept
 {
     pOut->r = pC1->r + s * (pC2->r - pC1->r);
     pOut->g = pC1->g + s * (pC2->g - pC1->g);
@@ -170,7 +170,7 @@ struct D3DX_BC3
 //-------------------------------------------------------------------------------------
 #pragma warning(push)
 #pragma warning(disable : 4127)
-template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPoints, uint32_t cSteps)
+template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPoints, uint32_t cSteps) noexcept
 {
     static const float pC6[] = { 5.0f / 5.0f, 4.0f / 5.0f, 3.0f / 5.0f, 2.0f / 5.0f, 1.0f / 5.0f, 0.0f / 5.0f };
     static const float pD6[] = { 0.0f / 5.0f, 1.0f / 5.0f, 2.0f / 5.0f, 3.0f / 5.0f, 4.0f / 5.0f, 5.0f / 5.0f };
@@ -298,28 +298,28 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
 typedef void (*BC_DECODE)(XMVECTOR *pColor, const uint8_t *pBC);
 typedef void (*BC_ENCODE)(uint8_t *pDXT, const XMVECTOR *pColor, DWORD flags);
 
-void D3DXDecodeBC1(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(8) const uint8_t *pBC);
-void D3DXDecodeBC2(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC);
-void D3DXDecodeBC3(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC);
-void D3DXDecodeBC4U(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(8) const uint8_t *pBC);
-void D3DXDecodeBC4S(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(8) const uint8_t *pBC);
-void D3DXDecodeBC5U(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC);
-void D3DXDecodeBC5S(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC);
-void D3DXDecodeBC6HU(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC);
-void D3DXDecodeBC6HS(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC);
-void D3DXDecodeBC7(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC);
+void D3DXDecodeBC1(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(8) const uint8_t *pBC) noexcept;
+void D3DXDecodeBC2(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
+void D3DXDecodeBC3(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
+void D3DXDecodeBC4U(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(8) const uint8_t *pBC) noexcept;
+void D3DXDecodeBC4S(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(8) const uint8_t *pBC) noexcept;
+void D3DXDecodeBC5U(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
+void D3DXDecodeBC5S(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
+void D3DXDecodeBC6HU(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
+void D3DXDecodeBC6HS(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
+void D3DXDecodeBC7(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
 
-void D3DXEncodeBC1(_Out_writes_(8) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ float threshold, _In_ DWORD flags);
+void D3DXEncodeBC1(_Out_writes_(8) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ float threshold, _In_ DWORD flags) noexcept;
     // BC1 requires one additional parameter, so it doesn't match signature of BC_ENCODE above
 
-void D3DXEncodeBC2(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags);
-void D3DXEncodeBC3(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags);
-void D3DXEncodeBC4U(_Out_writes_(8) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags);
-void D3DXEncodeBC4S(_Out_writes_(8) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags);
-void D3DXEncodeBC5U(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags);
-void D3DXEncodeBC5S(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags);
-void D3DXEncodeBC6HU(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags);
-void D3DXEncodeBC6HS(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags);
-void D3DXEncodeBC7(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags);
+void D3DXEncodeBC2(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags) noexcept;
+void D3DXEncodeBC3(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags) noexcept;
+void D3DXEncodeBC4U(_Out_writes_(8) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags) noexcept;
+void D3DXEncodeBC4S(_Out_writes_(8) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags) noexcept;
+void D3DXEncodeBC5U(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags) noexcept;
+void D3DXEncodeBC5S(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags) noexcept;
+void D3DXEncodeBC6HU(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags) noexcept;
+void D3DXEncodeBC6HS(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags) noexcept;
+void D3DXEncodeBC7(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ DWORD flags) noexcept;
 
 } // namespace

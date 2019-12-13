@@ -147,12 +147,12 @@ namespace DirectX
 {
     //---------------------------------------------------------------------------------
     // WIC helper functions
-    DXGI_FORMAT __cdecl _WICToDXGI(_In_ const GUID& guid);
-    bool __cdecl _DXGIToWIC(_In_ DXGI_FORMAT format, _Out_ GUID& guid, _In_ bool ignoreRGBvsBGR = false);
+    DXGI_FORMAT __cdecl _WICToDXGI(_In_ const GUID& guid) noexcept;
+    bool __cdecl _DXGIToWIC(_In_ DXGI_FORMAT format, _Out_ GUID& guid, _In_ bool ignoreRGBvsBGR = false) noexcept;
 
-    DWORD __cdecl _CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID& targetGUID);
+    DWORD __cdecl _CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID& targetGUID) noexcept;
 
-    inline WICBitmapDitherType __cdecl _GetWICDither(_In_ DWORD flags)
+    inline WICBitmapDitherType __cdecl _GetWICDither(_In_ DWORD flags) noexcept
     {
         static_assert(TEX_FILTER_DITHER == 0x10000, "TEX_FILTER_DITHER* flag values don't match mask");
 
@@ -172,7 +172,7 @@ namespace DirectX
         }
     }
 
-    inline WICBitmapInterpolationMode __cdecl _GetWICInterp(_In_ DWORD flags)
+    inline WICBitmapInterpolationMode __cdecl _GetWICInterp(_In_ DWORD flags) noexcept
     {
         static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
@@ -202,12 +202,12 @@ namespace DirectX
     // Image helper functions
     _Success_(return != false) bool __cdecl _DetermineImageArray(
         _In_ const TexMetadata& metadata, _In_ DWORD cpFlags,
-        _Out_ size_t& nImages, _Out_ size_t& pixelSize);
+        _Out_ size_t& nImages, _Out_ size_t& pixelSize) noexcept;
 
     _Success_(return != false) bool __cdecl _SetupImageArray(
         _In_reads_bytes_(pixelSize) uint8_t *pMemory, _In_ size_t pixelSize,
         _In_ const TexMetadata& metadata, _In_ DWORD cpFlags,
-        _Out_writes_(nImages) Image* images, _In_ size_t nImages);
+        _Out_writes_(nImages) Image* images, _In_ size_t nImages) noexcept;
 
     //---------------------------------------------------------------------------------
     // Conversion helper functions
@@ -243,60 +243,60 @@ namespace DirectX
         CONVF_RGBA_MASK = 0xF0000,
     };
 
-    DWORD __cdecl _GetConvertFlags(_In_ DXGI_FORMAT format);
+    DWORD __cdecl _GetConvertFlags(_In_ DXGI_FORMAT format) noexcept;
 
     void __cdecl _CopyScanline(
         _When_(pDestination == pSource, _Inout_updates_bytes_(outSize))
         _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
         void* pDestination, _In_ size_t outSize,
         _In_reads_bytes_(inSize) const void* pSource, _In_ size_t inSize,
-        _In_ DXGI_FORMAT format, _In_ DWORD flags);
+        _In_ DXGI_FORMAT format, _In_ DWORD flags) noexcept;
 
     void __cdecl _SwizzleScanline(
         _When_(pDestination == pSource, _In_)
         _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
         void* pDestination, _In_ size_t outSize,
         _In_reads_bytes_(inSize) const void* pSource, _In_ size_t inSize,
-        _In_ DXGI_FORMAT format, _In_ DWORD flags);
+        _In_ DXGI_FORMAT format, _In_ DWORD flags) noexcept;
  
     _Success_(return != false) bool __cdecl _ExpandScanline(
         _Out_writes_bytes_(outSize) void* pDestination, _In_ size_t outSize,
         _In_ DXGI_FORMAT outFormat,
         _In_reads_bytes_(inSize) const void* pSource, _In_ size_t inSize,
-        _In_ DXGI_FORMAT inFormat, _In_ DWORD flags);
+        _In_ DXGI_FORMAT inFormat, _In_ DWORD flags) noexcept;
 
     _Success_(return != false) bool __cdecl _LoadScanline(
         _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DXGI_FORMAT format);
+        _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DXGI_FORMAT format) noexcept;
 
     _Success_(return != false) bool __cdecl _LoadScanlineLinear(
         _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DXGI_FORMAT format, _In_ DWORD flags);
+        _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DXGI_FORMAT format, _In_ DWORD flags) noexcept;
 
     _Success_(return != false) bool __cdecl _StoreScanline(
         _Out_writes_bytes_(size) void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
-        _In_reads_(count) const XMVECTOR* pSource, _In_ size_t count, _In_ float threshold = 0);
+        _In_reads_(count) const XMVECTOR* pSource, _In_ size_t count, _In_ float threshold = 0) noexcept;
 
     _Success_(return != false) bool __cdecl _StoreScanlineLinear(
         _Out_writes_bytes_(size) void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
-        _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ DWORD flags, _In_ float threshold = 0);
+        _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ DWORD flags, _In_ float threshold = 0) noexcept;
 
     _Success_(return != false) bool __cdecl _StoreScanlineDither(
         _Out_writes_bytes_(size) void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
         _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ float threshold, size_t y, size_t z,
-        _Inout_updates_all_opt_(count + 2) XMVECTOR* pDiffusionErrors);
+        _Inout_updates_all_opt_(count + 2) XMVECTOR* pDiffusionErrors) noexcept;
 
-    HRESULT __cdecl _ConvertToR32G32B32A32(_In_ const Image& srcImage, _Inout_ ScratchImage& image);
+    HRESULT __cdecl _ConvertToR32G32B32A32(_In_ const Image& srcImage, _Inout_ ScratchImage& image) noexcept;
 
-    HRESULT __cdecl _ConvertFromR32G32B32A32(_In_ const Image& srcImage, _In_ const Image& destImage);
-    HRESULT __cdecl _ConvertFromR32G32B32A32(_In_ const Image& srcImage, _In_ DXGI_FORMAT format, _Inout_ ScratchImage& image);
+    HRESULT __cdecl _ConvertFromR32G32B32A32(_In_ const Image& srcImage, _In_ const Image& destImage) noexcept;
+    HRESULT __cdecl _ConvertFromR32G32B32A32(_In_ const Image& srcImage, _In_ DXGI_FORMAT format, _Inout_ ScratchImage& image) noexcept;
     HRESULT __cdecl _ConvertFromR32G32B32A32(
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _Out_ ScratchImage& result);
+        _In_ DXGI_FORMAT format, _Out_ ScratchImage& result) noexcept;
 
-    HRESULT __cdecl _ConvertToR16G16B16A16(_In_ const Image& srcImage, _Inout_ ScratchImage& image);
+    HRESULT __cdecl _ConvertToR16G16B16A16(_In_ const Image& srcImage, _Inout_ ScratchImage& image) noexcept;
 
-    HRESULT __cdecl _ConvertFromR16G16B16A16(_In_ const Image& srcImage, _In_ const Image& destImage);
+    HRESULT __cdecl _ConvertFromR16G16B16A16(_In_ const Image& srcImage, _In_ const Image& destImage) noexcept;
 
     void __cdecl _ConvertScanline(
         _Inout_updates_all_(count) XMVECTOR* pBuffer, _In_ size_t count,
@@ -306,6 +306,6 @@ namespace DirectX
     // DDS helper functions
     HRESULT __cdecl _EncodeDDSHeader(
         _In_ const TexMetadata& metadata, DWORD flags,
-        _Out_writes_bytes_to_opt_(maxsize, required) void* pDestination, _In_ size_t maxsize, _Out_ size_t& required);
+        _Out_writes_bytes_to_opt_(maxsize, required) void* pDestination, _In_ size_t maxsize, _Out_ size_t& required) noexcept;
 
 } // namespace

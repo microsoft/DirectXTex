@@ -94,7 +94,7 @@ inline bool __cdecl IsSRGB(DXGI_FORMAT fmt) noexcept
 // Image I/O
 //=====================================================================================
 _Use_decl_annotations_
-inline HRESULT __cdecl SaveToDDSMemory(const Image& image, DWORD flags, Blob& blob)
+inline HRESULT __cdecl SaveToDDSMemory(const Image& image, DWORD flags, Blob& blob) noexcept
 {
     TexMetadata mdata = {};
     mdata.width = image.width;
@@ -109,7 +109,7 @@ inline HRESULT __cdecl SaveToDDSMemory(const Image& image, DWORD flags, Blob& bl
 }
 
 _Use_decl_annotations_
-inline HRESULT __cdecl SaveToDDSFile(const Image& image, DWORD flags, const wchar_t* szFile)
+inline HRESULT __cdecl SaveToDDSFile(const Image& image, DWORD flags, const wchar_t* szFile) noexcept
 {
     TexMetadata mdata = {};
     mdata.width = image.width;

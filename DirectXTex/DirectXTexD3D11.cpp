@@ -32,7 +32,7 @@ namespace
         _In_ ID3D11DeviceContext* pContext,
         _In_ ID3D11Resource* pSource,
         const TexMetadata& metadata,
-        const ScratchImage& result)
+        const ScratchImage& result) noexcept
     {
         if (!pContext || !pSource || !result.GetPixels())
             return E_POINTER;
@@ -729,7 +729,7 @@ HRESULT DirectX::CaptureTexture(
     ID3D11Device* pDevice,
     ID3D11DeviceContext* pContext,
     ID3D11Resource* pSource,
-    ScratchImage& result)
+    ScratchImage& result) noexcept
 {
     if (!pDevice || !pContext || !pSource)
         return E_INVALIDARG;

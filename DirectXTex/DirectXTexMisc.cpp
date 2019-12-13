@@ -23,7 +23,7 @@ namespace
         const Image& image2,
         float& mse,
         _Out_writes_opt_(4) float* mseV,
-        DWORD flags)
+        DWORD flags) noexcept
     {
         if (!image1.pixels || !image2.pixels)
             return E_POINTER;
@@ -384,7 +384,7 @@ HRESULT DirectX::ComputeMSE(
     const Image& image2,
     float& mse,
     float* mseV,
-    DWORD flags)
+    DWORD flags) noexcept
 {
     if (!image1.pixels || !image2.pixels)
         return E_POINTER;

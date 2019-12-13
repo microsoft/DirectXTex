@@ -17,7 +17,7 @@ namespace
 {
 
 #pragma prefast(suppress : 25000, "FXMVECTOR is 16 bytes")
-    inline float EvaluateColor(_In_ FXMVECTOR val, _In_ DWORD flags)
+    inline float EvaluateColor(_In_ FXMVECTOR val, _In_ DWORD flags) noexcept
     {
         XMFLOAT4A f;
 
@@ -49,7 +49,7 @@ namespace
         _In_reads_(width) const XMVECTOR* pSource,
         _Out_writes_(width + 2) float* pDest,
         size_t width,
-        DWORD flags)
+        DWORD flags) noexcept
     {
         assert(pSource && pDest);
         assert(width > 0);
@@ -74,7 +74,7 @@ namespace
     }
 
     HRESULT ComputeNMap(_In_ const Image& srcImage, _In_ DWORD flags, _In_ float amplitude,
-        _In_ DXGI_FORMAT format, _In_ const Image& normalMap)
+        _In_ DXGI_FORMAT format, _In_ const Image& normalMap) noexcept
     {
         if (!srcImage.pixels || !normalMap.pixels)
             return E_INVALIDARG;
@@ -258,7 +258,7 @@ HRESULT DirectX::ComputeNormalMap(
     DWORD flags,
     float amplitude,
     DXGI_FORMAT format,
-    ScratchImage& normalMap)
+    ScratchImage& normalMap) noexcept
 {
     if (!srcImage.pixels || !IsValid(format))
         return E_INVALIDARG;
@@ -316,7 +316,7 @@ HRESULT DirectX::ComputeNormalMap(
     DWORD flags,
     float amplitude,
     DXGI_FORMAT format,
-    ScratchImage& normalMaps)
+    ScratchImage& normalMaps) noexcept
 {
     if (!srcImages || !nimages || !IsValid(format))
         return E_INVALIDARG;

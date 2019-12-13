@@ -23,7 +23,7 @@ namespace DirectX
 
         HRESULT Compress(const Image& srcImage, const Image& destImage);
 
-        DXGI_FORMAT GetSourceFormat() const { return m_srcformat; }
+        DXGI_FORMAT GetSourceFormat() const noexcept { return m_srcformat; }
 
     private:
         DXGI_FORMAT                                         m_bcformat;

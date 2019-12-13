@@ -136,7 +136,7 @@ namespace
         size_t size,
         _Out_ TexMetadata& metadata,
         size_t& offset,
-        _Inout_opt_ DWORD* convFlags)
+        _Inout_opt_ DWORD* convFlags) noexcept
     {
         if (!pSource)
             return E_INVALIDARG;
@@ -251,7 +251,7 @@ namespace
     //-------------------------------------------------------------------------------------
     // Set alpha for images with all 0 alpha channel
     //-------------------------------------------------------------------------------------
-    HRESULT SetAlphaChannelToOpaque(_In_ const Image* image)
+    HRESULT SetAlphaChannelToOpaque(_In_ const Image* image) noexcept
     {
         assert(image);
 
@@ -276,7 +276,7 @@ namespace
         _In_reads_bytes_(size) const void* pSource,
         size_t size,
         _In_ const Image* image,
-        _In_ DWORD convFlags)
+        _In_ DWORD convFlags) noexcept
     {
         assert(pSource && size > 0);
 
@@ -626,7 +626,7 @@ namespace
         _In_reads_bytes_(size) const void* pSource,
         size_t size,
         _In_ const Image* image,
-        _In_ DWORD convFlags)
+        _In_ DWORD convFlags) noexcept
     {
         assert(pSource && size > 0);
 
@@ -810,7 +810,7 @@ namespace
     //-------------------------------------------------------------------------------------
     // Encodes TGA file header
     //-------------------------------------------------------------------------------------
-    HRESULT EncodeTGAHeader(_In_ const Image& image, _Out_ TGA_HEADER& header, _Inout_ DWORD& convFlags)
+    HRESULT EncodeTGAHeader(_In_ const Image& image, _Out_ TGA_HEADER& header, _Inout_ DWORD& convFlags) noexcept
     {
         memset(&header, 0, sizeof(TGA_HEADER));
 
@@ -877,7 +877,7 @@ namespace
         _Out_writes_bytes_(outSize) void* pDestination,
         _In_ size_t outSize,
         _In_reads_bytes_(inSize) const void* pSource,
-        _In_ size_t inSize)
+        _In_ size_t inSize) noexcept
     {
         assert(pDestination && outSize > 0);
         assert(pSource && inSize > 0);
@@ -908,7 +908,7 @@ namespace
     //-------------------------------------------------------------------------------------
     // TGA 2.0 Extension helpers
     //-------------------------------------------------------------------------------------
-    void SetExtension(TGA_EXTENSION *ext, const TexMetadata& metadata)
+    void SetExtension(TGA_EXTENSION *ext, const TexMetadata& metadata) noexcept
     {
         memset(ext, 0, sizeof(TGA_EXTENSION));
 
@@ -965,7 +965,7 @@ namespace
         }
     }
 
-    TEX_ALPHA_MODE GetAlphaModeFromExtension(const TGA_EXTENSION *ext)
+    TEX_ALPHA_MODE GetAlphaModeFromExtension(const TGA_EXTENSION *ext) noexcept
     {
         if (ext && ext->wSize == sizeof(TGA_EXTENSION))
         {
@@ -994,7 +994,7 @@ _Use_decl_annotations_
 HRESULT DirectX::GetMetadataFromTGAMemory(
     const void* pSource,
     size_t size,
-    TexMetadata& metadata)
+    TexMetadata& metadata) noexcept
 {
     if (!pSource || size == 0)
         return E_INVALIDARG;
@@ -1004,7 +1004,7 @@ HRESULT DirectX::GetMetadataFromTGAMemory(
 }
 
 _Use_decl_annotations_
-HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TexMetadata& metadata)
+HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TexMetadata& metadata) noexcept
 {
     if (!szFile)
         return E_INVALIDARG;
@@ -1060,7 +1060,7 @@ HRESULT DirectX::LoadFromTGAMemory(
     const void* pSource,
     size_t size,
     TexMetadata* metadata,
-    ScratchImage& image)
+    ScratchImage& image) noexcept
 {
     if (!pSource || size == 0)
         return E_INVALIDARG;
@@ -1137,7 +1137,7 @@ _Use_decl_annotations_
 HRESULT DirectX::LoadFromTGAFile(
     const wchar_t* szFile,
     TexMetadata* metadata,
-    ScratchImage& image)
+    ScratchImage& image) noexcept
 {
     if (!szFile)
         return E_INVALIDARG;
@@ -1465,7 +1465,7 @@ HRESULT DirectX::LoadFromTGAFile(
 // Save a TGA file to memory
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob, const TexMetadata* metadata)
+HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob, const TexMetadata* metadata) noexcept
 {
     if (!image.pixels)
         return E_POINTER;
@@ -1556,7 +1556,7 @@ HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob, const TexMetada
 // Save a TGA file to disk
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::SaveToTGAFile(const Image& image, const wchar_t* szFile, const TexMetadata* metadata)
+HRESULT DirectX::SaveToTGAFile(const Image& image, const wchar_t* szFile, const TexMetadata* metadata) noexcept
 {
     if (!szFile)
         return E_INVALIDARG;

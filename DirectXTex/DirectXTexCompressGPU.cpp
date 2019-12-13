@@ -17,7 +17,7 @@ using namespace DirectX;
 
 namespace
 {
-    inline DWORD GetSRGBFlags(_In_ DWORD compress)
+    inline DWORD GetSRGBFlags(_In_ DWORD compress) noexcept
     {
         static_assert(static_cast<int>(TEX_COMPRESS_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN), "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*");
         static_assert(static_cast<int>(TEX_COMPRESS_SRGB_OUT) == static_cast<int>(TEX_FILTER_SRGB_OUT), "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*");

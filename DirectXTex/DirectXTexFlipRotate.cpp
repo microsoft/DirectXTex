@@ -23,7 +23,7 @@ namespace
         const Image& srcImage,
         DWORD flags,
         const WICPixelFormatGUID& pfGUID,
-        const Image& destImage)
+        const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -91,7 +91,7 @@ namespace
     HRESULT PerformFlipRotateViaF16(
         const Image& srcImage,
         DWORD flags,
-        const Image& destImage)
+        const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -133,7 +133,7 @@ namespace
     HRESULT PerformFlipRotateViaF32(
         const Image& srcImage,
         DWORD flags,
-        const Image& destImage)
+        const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -185,7 +185,7 @@ _Use_decl_annotations_
 HRESULT DirectX::FlipRotate(
     const Image& srcImage,
     DWORD flags,
-    ScratchImage& image)
+    ScratchImage& image) noexcept
 {
     if (!srcImage.pixels)
         return E_POINTER;
@@ -284,7 +284,7 @@ HRESULT DirectX::FlipRotate(
     size_t nimages,
     const TexMetadata& metadata,
     DWORD flags,
-    ScratchImage& result)
+    ScratchImage& result) noexcept
 {
     if (!srcImages || !nimages)
         return E_INVALIDARG;

@@ -121,7 +121,7 @@ namespace
 //=====================================================================================
 
 _Use_decl_annotations_
-DXGI_FORMAT DirectX::_WICToDXGI(const GUID& guid)
+DXGI_FORMAT DirectX::_WICToDXGI(const GUID& guid) noexcept
 {
     for (size_t i = 0; i < _countof(g_WICFormats); ++i)
     {
@@ -141,7 +141,7 @@ DXGI_FORMAT DirectX::_WICToDXGI(const GUID& guid)
 }
 
 _Use_decl_annotations_
-bool DirectX::_DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR)
+bool DirectX::_DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR) noexcept
 {
     switch (format)
     {
@@ -201,7 +201,7 @@ bool DirectX::_DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR)
     return false;
 }
 
-DWORD DirectX::_CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID& targetGUID)
+DWORD DirectX::_CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID& targetGUID) noexcept
 {
     DWORD srgb = 0;
 

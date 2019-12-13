@@ -19,7 +19,7 @@ using Microsoft::WRL::ComPtr;
 namespace DirectX
 {
     extern HRESULT _ResizeSeparateColorAndAlpha(_In_ IWICImagingFactory* pWIC, _In_ bool iswic2, _In_ IWICBitmap* original,
-        _In_ size_t newWidth, _In_ size_t newHeight, _In_ DWORD filter, _Inout_ const Image* img);
+        _In_ size_t newWidth, _In_ size_t newHeight, _In_ DWORD filter, _Inout_ const Image* img) noexcept;
 }
 
 namespace
@@ -29,7 +29,7 @@ namespace
         const Image& srcImage,
         DWORD filter,
         const WICPixelFormatGUID& pfGUID,
-        const Image& destImage)
+        const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -129,7 +129,7 @@ namespace
     HRESULT PerformResizeViaF32(
         const Image& srcImage,
         DWORD filter,
-        const Image& destImage)
+        const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -170,7 +170,7 @@ namespace
 
 
     //--- determine when to use WIC vs. non-WIC paths ---
-    bool UseWICFiltering(_In_ DXGI_FORMAT format, _In_ DWORD filter)
+    bool UseWICFiltering(_In_ DXGI_FORMAT format, _In_ DWORD filter) noexcept
     {
         if (filter & TEX_FILTER_FORCE_NON_WIC)
         {
@@ -245,7 +245,7 @@ namespace
     //-------------------------------------------------------------------------------------
 
     //--- Point Filter ---
-    HRESULT ResizePointFilter(const Image& srcImage, const Image& destImage)
+    HRESULT ResizePointFilter(const Image& srcImage, const Image& destImage) noexcept
     {
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
@@ -303,7 +303,7 @@ namespace
 
 
     //--- Box Filter ---
-    HRESULT ResizeBoxFilter(const Image& srcImage, DWORD filter, const Image& destImage)
+    HRESULT ResizeBoxFilter(const Image& srcImage, DWORD filter, const Image& destImage) noexcept
     {
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
@@ -365,7 +365,7 @@ namespace
 
 
     //--- Linear Filter ---
-    HRESULT ResizeLinearFilter(const Image& srcImage, DWORD filter, const Image& destImage)
+    HRESULT ResizeLinearFilter(const Image& srcImage, DWORD filter, const Image& destImage) noexcept
     {
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
@@ -451,7 +451,7 @@ namespace
 
 
     //--- Cubic Filter ---
-    HRESULT ResizeCubicFilter(const Image& srcImage, DWORD filter, const Image& destImage)
+    HRESULT ResizeCubicFilter(const Image& srcImage, DWORD filter, const Image& destImage) noexcept
     {
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
@@ -611,7 +611,7 @@ namespace
 
 
     //--- Triangle Filter ---
-    HRESULT ResizeTriangleFilter(const Image& srcImage, DWORD filter, const Image& destImage)
+    HRESULT ResizeTriangleFilter(const Image& srcImage, DWORD filter, const Image& destImage) noexcept
     {
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
@@ -790,7 +790,7 @@ namespace
 
 
     //--- Custom filter resize ---
-    HRESULT PerformResizeUsingCustomFilters(const Image& srcImage, DWORD filter, const Image& destImage)
+    HRESULT PerformResizeUsingCustomFilters(const Image& srcImage, DWORD filter, const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -842,7 +842,7 @@ HRESULT DirectX::Resize(
     size_t width,
     size_t height,
     DWORD filter,
-    ScratchImage& image)
+    ScratchImage& image) noexcept
 {
     if (width == 0 || height == 0)
         return E_INVALIDARG;
@@ -929,7 +929,7 @@ HRESULT DirectX::Resize(
     size_t width,
     size_t height,
     DWORD filter,
-    ScratchImage& result)
+    ScratchImage& result) noexcept
 {
     if (!srcImages || !nimages || width == 0 || height == 0)
         return E_INVALIDARG;

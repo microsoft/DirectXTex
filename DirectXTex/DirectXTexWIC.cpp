@@ -60,7 +60,7 @@
 #else
 
     #pragma prefast(suppress:6387 28196, "a simple wrapper around an existing annotated function" );
-    static inline HRESULT CreateMemoryStream(_Outptr_ IStream** stream)
+    static inline HRESULT CreateMemoryStream(_Outptr_ IStream** stream) noexcept
     {
         return CreateStreamOnHGlobal(nullptr, TRUE, stream);
     }
@@ -150,7 +150,7 @@ namespace
         DWORD flags,
         bool iswic2,
         _Out_opt_ WICPixelFormatGUID* pConvert,
-        _Out_ TEX_ALPHA_MODE* alphaMode)
+        _Out_ TEX_ALPHA_MODE* alphaMode) noexcept
     {
         if (pConvert)
             memset(pConvert, 0, sizeof(WICPixelFormatGUID));

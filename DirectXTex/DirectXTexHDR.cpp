@@ -55,7 +55,7 @@ namespace
         "\n"\
         "-Y %u +X %u\n";
 
-    inline size_t FindEOL(const char* str, size_t maxlen)
+    inline size_t FindEOL(const char* str, size_t maxlen) noexcept
     {
         size_t pos = 0;
 
@@ -79,7 +79,7 @@ namespace
         size_t size,
         _Out_ TexMetadata& metadata,
         size_t& offset,
-        float& exposure)
+        float& exposure) noexcept
     {
         if (!pSource)
             return E_INVALIDARG;
@@ -290,7 +290,7 @@ namespace
     //-------------------------------------------------------------------------------------
     // FloatToRGBE
     //-------------------------------------------------------------------------------------
-    inline void FloatToRGBE(_Out_writes_(width*4) uint8_t* pDestination, _In_reads_(width*fpp) const float* pSource, size_t width, _In_range_(3, 4) int fpp)
+    inline void FloatToRGBE(_Out_writes_(width*4) uint8_t* pDestination, _In_reads_(width*fpp) const float* pSource, size_t width, _In_range_(3, 4) int fpp) noexcept
     {
         auto ePtr = pSource + width * size_t(fpp);
 
@@ -333,7 +333,7 @@ namespace
     // Encode using Adapative RLE
     //-------------------------------------------------------------------------------------
     _Success_(return > 0)
-        size_t EncodeRLE(_Out_writes_(width * 4) uint8_t* enc, _In_reads_(width * 4) const uint8_t* rgbe, size_t rowPitch, size_t width)
+        size_t EncodeRLE(_Out_writes_(width * 4) uint8_t* enc, _In_reads_(width * 4) const uint8_t* rgbe, size_t rowPitch, size_t width) noexcept
     {
         if (width < 8 || width > INT16_MAX)
         {
@@ -523,7 +523,7 @@ namespace
 // Obtain metadata from HDR file in memory/on disk
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::GetMetadataFromHDRMemory(const void* pSource, size_t size, TexMetadata& metadata)
+HRESULT DirectX::GetMetadataFromHDRMemory(const void* pSource, size_t size, TexMetadata& metadata) noexcept
 {
     if (!pSource || size == 0)
         return E_INVALIDARG;
@@ -534,7 +534,7 @@ HRESULT DirectX::GetMetadataFromHDRMemory(const void* pSource, size_t size, TexM
 }
 
 _Use_decl_annotations_
-HRESULT DirectX::GetMetadataFromHDRFile(const wchar_t* szFile, TexMetadata& metadata)
+HRESULT DirectX::GetMetadataFromHDRFile(const wchar_t* szFile, TexMetadata& metadata) noexcept
 {
     if (!szFile)
         return E_INVALIDARG;
@@ -587,7 +587,7 @@ HRESULT DirectX::GetMetadataFromHDRFile(const wchar_t* szFile, TexMetadata& meta
 // Load a HDR file in memory
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata* metadata, ScratchImage& image)
+HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata* metadata, ScratchImage& image) noexcept
 {
     if (!pSource || size == 0)
         return E_INVALIDARG;
@@ -804,7 +804,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
 // Load a HDR file from disk
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::LoadFromHDRFile(const wchar_t* szFile, TexMetadata* metadata, ScratchImage& image)
+HRESULT DirectX::LoadFromHDRFile(const wchar_t* szFile, TexMetadata* metadata, ScratchImage& image) noexcept
 {
     if (!szFile)
         return E_INVALIDARG;
@@ -867,7 +867,7 @@ HRESULT DirectX::LoadFromHDRFile(const wchar_t* szFile, TexMetadata* metadata, S
 // Save a HDR file to memory
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
+HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob) noexcept
 {
     if (!image.pixels)
         return E_POINTER;
@@ -969,7 +969,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob)
 // Save a HDR file to disk
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile)
+HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexcept
 {
     if (!szFile)
         return E_INVALIDARG;
