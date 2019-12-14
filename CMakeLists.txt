@@ -15,6 +15,9 @@ option(BUILD_DX11 "Build with DirectX11 Runtime support" ON)
 # Includes the functions for creating Direct3D 12 resources at runtime
 option(BUILD_DX12 "Build with DirectX12 Runtime support" ON)
 
+# Enable the use of OpenMP for software BC6H/BC7 compression
+option(BC_USE_OPENMP "Build with OpenMP support" ON)
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -107,6 +110,8 @@ if ( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
     set(WarningsLib "-Wpedantic" "-Wextra")
     target_compile_options(${PROJECT_NAME} PRIVATE ${WarningsLib})
 
+    # OpenMP is not supported for clang for Windows by default
+
     set(WarningsEXE ${WarningsLib} "-Wno-c++98-compat" "-Wno-c++98-compat-pedantic" "-Wno-switch" "-Wno-switch-enum" "-Wno-language-extension-token" "-Wno-missing-prototypes")
     target_compile_options(texassemble PRIVATE ${WarningsEXE})
     target_compile_options(texconv PRIVATE ${WarningsEXE})
@@ -117,6 +122,11 @@ if ( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
     target_compile_options(texassemble PRIVATE /permissive- /Zc:__cplusplus)
     target_compile_options(texconv PRIVATE /permissive- /Zc:__cplusplus)
     target_compile_options(texdiag PRIVATE /permissive- /Zc:__cplusplus)
+
+    if(BC_USE_OPENMP MATCHES ON)
+        target_compile_options(${PROJECT_NAME} PRIVATE /openmp /Zc:twoPhase-)
+        target_compile_options(texconv PRIVATE /openmp /Zc:twoPhase-)
+    endif()
 
     set(WarningsEXE "/wd4061" "/wd4062" "/wd4365" "/wd4668" "/wd4710" "/wd4820" "/wd5039" "/wd5045")
     target_compile_options(texassemble PRIVATE ${WarningsEXE})
