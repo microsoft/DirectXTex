@@ -9,6 +9,12 @@ cmake_minimum_required (VERSION 3.11)
 
 project (DirectXTex LANGUAGES CXX)
 
+# Includes the functions for creating Direct3D 11 resources at runtime
+option(BUILD_DX11 "Build with DirectX11 Runtime support" ON)
+
+# Includes the functions for creating Direct3D 12 resources at runtime
+option(BUILD_DX12 "Build with DirectX12 Runtime support" ON)
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -17,7 +23,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/CMake")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/CMake")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/CMake")
 
-add_library (${PROJECT_NAME} STATIC
+set(LIBRARY_SOURCES
     DirectXTex/BC.h
     DirectXTex/BCDirectCompute.h
     DirectXTex/d3dx12.h
@@ -33,8 +39,6 @@ add_library (${PROJECT_NAME} STATIC
     DirectXTex/DirectXTexCompress.cpp
     DirectXTex/DirectXTexCompressGPU.cpp
     DirectXTex/DirectXTexConvert.cpp
-    DirectXTex/DirectXTexD3D11.cpp
-    DirectXTex/DirectXTexD3D12.cpp
     DirectXTex/DirectXTexDDS.cpp
     DirectXTex/DirectXTexFlipRotate.cpp
     DirectXTex/DirectXTexHDR.cpp
@@ -46,8 +50,16 @@ add_library (${PROJECT_NAME} STATIC
     DirectXTex/DirectXTexResize.cpp
     DirectXTex/DirectXTexTGA.cpp
     DirectXTex/DirectXTexUtil.cpp
-    DirectXTex/DirectXTexWIC.cpp
-)
+    DirectXTex/DirectXTexWIC.cpp)
+
+if(BUILD_DX11 MATCHES ON)
+   set(LIBRARY_SOURCES ${LIBRARY_SOURCES} DirectXTex/DirectXTexD3D11.cpp)
+endif()
+if(BUILD_DX12 MATCHES ON)
+   set(LIBRARY_SOURCES ${LIBRARY_SOURCES} DirectXTex/DirectXTexD3D12.cpp)
+endif()
+
+add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES})
 
 source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 
@@ -113,9 +125,14 @@ if ( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 endif()
 
 if(WIN32)
-    # Windows 10 is used here to build the DirectX 12 code paths as well as 11
-    target_compile_definitions(${PROJECT_NAME} PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0A00)
-    target_compile_definitions(texassemble PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0A00)
-    target_compile_definitions(texconv PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0A00)
-    target_compile_definitions(texdiag PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0A00)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE _UNICODE UNICODE)
+    target_compile_definitions(texassemble PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0601)
+    target_compile_definitions(texconv PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0601)
+    target_compile_definitions(texdiag PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0601)
+
+    if(BUILD_DX12 MATCHES ON)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0A00)
+    else()
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0601)
+    endif()
 endif()
