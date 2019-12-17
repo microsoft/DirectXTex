@@ -55,6 +55,10 @@ set(LIBRARY_SOURCES
     DirectXTex/DirectXTexUtil.cpp
     DirectXTex/DirectXTexWIC.cpp)
 
+set(SHADER_SOURCES
+    DirectXTex/Shaders/BC6HEncode.hlsl
+    DirectXTex/Shaders/BC7Encode.hlsl)
+
 if(BUILD_DX11 MATCHES ON)
    set(LIBRARY_SOURCES ${LIBRARY_SOURCES} DirectXTex/DirectXTexD3D11.cpp)
 endif()
@@ -62,7 +66,16 @@ if(BUILD_DX12 MATCHES ON)
    set(LIBRARY_SOURCES ${LIBRARY_SOURCES} DirectXTex/DirectXTexD3D12.cpp)
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES})
+add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc)
+
+add_custom_command(
+    OUTPUT "${CMAKE_SOURCE_DIR}/DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc"
+    MAIN_DEPENDENCY "${CMAKE_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
+    DEPENDS ${SHADER_SOURCES}
+    COMMENT "Generating HLSL shaders..."
+    COMMAND "CompileShaders.cmd"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/DirectXTex/Shaders"
+    USES_TERMINAL)
 
 source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 
