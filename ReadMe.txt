@@ -3,7 +3,7 @@ DIRECTX TEXTURE LIBRARY (DirectXTex)
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-October 17, 2019
+December 17, 2019
 
 This package contains DirectXTex, a shared source library for reading and writing DDS
 files, and performing various texture content processing operations including
@@ -146,6 +146,11 @@ RELEASE NOTES
 
 ------------------------------------
 RELEASE HISTORY
+
+December 17, 2019
+    Added ARM64 platform to VS 2019 Win32 desktop Win10 project
+    Updated CMake project
+    Code cleaup
 
 October 17, 2019
     Codec readers updated to return TEX_ALPHA_MODE_OPAQUE if reader returned an alpha channnel due to conversion
