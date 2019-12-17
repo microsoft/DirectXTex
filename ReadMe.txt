@@ -16,7 +16,7 @@ processing pipelines, but are not currently supported by a built-in WIC codec.
 This code is designed to build with Visual Studio 2015 Update 3, Visual Studio 2017,
 or Visual Studio 2019. It is recommended that you make use of VS 2015 Update 3,
 Windows Tools 1.4.1, and the Windows 10 Anniversary Update SDK (14393) -or-
-VS 2017 (15.9 update) / VS 2019 with the Windows 10 October 2018 Update SDK (17763).
+VS 2017 (15.9 update) / VS 2019 with the Windows 10 May 2019 Update SDK (18362).
 
 These components are designed to work without requiring any content from the
 legacy DirectX SDK. For details, see "Where is the DirectX SDK?"
