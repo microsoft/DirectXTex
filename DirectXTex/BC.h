@@ -249,12 +249,18 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
 
             uint32_t iStep;
             if (fDot <= 0.0f)
-                iStep = ((6 == cSteps) && (pPoints[iPoint] <= fX * 0.5f)) ? 6u : 0u;
+            {
+                // D3DX10 / D3DX11 didn't take into account the proper minimum value for the bRange (BC4S/BC5S) case
+                iStep = ((6 == cSteps) && (pPoints[iPoint] <= (fX + MIN_VALUE) * 0.5f)) ? 6u : 0u;
+            }
             else if (fDot >= fSteps)
-                iStep = ((6 == cSteps) && (pPoints[iPoint] >= (fY + 1.0f) * 0.5f)) ? 7u : (cSteps - 1);
+            {
+                iStep = ((6 == cSteps) && (pPoints[iPoint] >= (fY + MAX_VALUE) * 0.5f)) ? 7u : (cSteps - 1);
+            }
             else
+            {
                 iStep = uint32_t(fDot + 0.5f);
-
+            }
 
             if (iStep < cSteps)
             {
