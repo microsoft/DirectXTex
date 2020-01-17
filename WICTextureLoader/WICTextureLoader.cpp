@@ -208,10 +208,13 @@ namespace
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
         IWICImagingFactory* factory = nullptr;
-        (void)InitOnceExecuteOnce(&s_initOnce,
+        if (!InitOnceExecuteOnce(&s_initOnce,
             InitializeWICFactory,
             nullptr,
-            reinterpret_cast<LPVOID*>(&factory));
+            reinterpret_cast<LPVOID*>(&factory)))
+        {
+            return nullptr;
+        }
 
         return factory;
     }

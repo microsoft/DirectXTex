@@ -277,10 +277,13 @@ IWICImagingFactory* DirectX::GetWICFactory(bool& iswic2) noexcept
 
     static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
-    InitOnceExecuteOnce(&s_initOnce,
+    if (!InitOnceExecuteOnce(&s_initOnce,
         InitializeWICFactory,
         nullptr,
-        reinterpret_cast<LPVOID*>(&g_Factory));
+        reinterpret_cast<LPVOID*>(&g_Factory)))
+    {
+        return nullptr;
+    }
 
     iswic2 = g_WIC2;
     return g_Factory;
