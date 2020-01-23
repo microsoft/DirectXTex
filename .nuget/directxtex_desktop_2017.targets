@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <directxtex-LibPath>$(MSBuildThisFileDirectory)..\..\lib\$(Platform)\$(NuGetConfiguration)</directxtex-LibPath>
+    <directxtex-LibPath>$(MSBuildThisFileDirectory)..\..\native\lib\$(Platform)\$(NuGetConfiguration)</directxtex-LibPath>
   </PropertyGroup>
 
   <ItemDefinitionGroup>

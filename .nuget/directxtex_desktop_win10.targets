@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <directxtex-LibPath>$(MSBuildThisFileDirectory)..\..\lib\$(_NuGetPlatform)\$(_NuGetConfiguration)</directxtex-LibPath>
+    <directxtex-LibPath>$(MSBuildThisFileDirectory)..\..\native\lib\$(_NuGetPlatform)\$(_NuGetConfiguration)</directxtex-LibPath>
   </PropertyGroup>
 
   <ItemDefinitionGroup>

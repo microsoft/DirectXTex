@@ -26,23 +26,23 @@ DirectXTex, a shared source library for reading and writing .DDS files, and perf
         <file target="include" src="DirectXTex\DirectXTex.h" />
         <file target="include" src="DirectXTex\DirectXTex.inl" />
 
-        <file target="lib\Win32\Debug" src="DirectXTex\Bin\Desktop_2017_Win10\Win32\Debug\*.lib" />
-        <file target="lib\Win32\Debug" src="DirectXTex\Bin\Desktop_2017_Win10\Win32\Debug\*.pdb" />
+        <file target="native\lib\Win32\Debug" src="DirectXTex\Bin\Desktop_2017_Win10\Win32\Debug\*.lib" />
+        <file target="native\lib\Win32\Debug" src="DirectXTex\Bin\Desktop_2017_Win10\Win32\Debug\*.pdb" />
 
-        <file target="lib\Win32\Release" src="DirectXTex\Bin\Desktop_2017_Win10\Win32\Release\*.lib" />
-        <file target="lib\Win32\Release" src="DirectXTex\Bin\Desktop_2017_Win10\Win32\Release\*.pdb" />
+        <file target="native\lib\Win32\Release" src="DirectXTex\Bin\Desktop_2017_Win10\Win32\Release\*.lib" />
+        <file target="native\lib\Win32\Release" src="DirectXTex\Bin\Desktop_2017_Win10\Win32\Release\*.pdb" />
 
-        <file target="lib\x64\Debug" src="DirectXTex\Bin\Desktop_2017_Win10\x64\Debug\*.lib" />
-        <file target="lib\x64\Debug" src="DirectXTex\Bin\Desktop_2017_Win10\x64\Debug\*.pdb" />
+        <file target="native\lib\x64\Debug" src="DirectXTex\Bin\Desktop_2017_Win10\x64\Debug\*.lib" />
+        <file target="native\lib\x64\Debug" src="DirectXTex\Bin\Desktop_2017_Win10\x64\Debug\*.pdb" />
 
-        <file target="lib\x64\Release" src="DirectXTex\Bin\Desktop_2017_Win10\x64\Release\*.lib" />
-        <file target="lib\x64\Release" src="DirectXTex\Bin\Desktop_2017_Win10\x64\Release\*.pdb" />
+        <file target="native\lib\x64\Release" src="DirectXTex\Bin\Desktop_2017_Win10\x64\Release\*.lib" />
+        <file target="native\lib\x64\Release" src="DirectXTex\Bin\Desktop_2017_Win10\x64\Release\*.pdb" />
 
-        <file target="lib\ARM64\Debug" src="DirectXTex\Bin\Desktop_2019_Win10\ARM64\Debug\*.lib" />
-        <file target="lib\ARM64\Debug" src="DirectXTex\Bin\Desktop_2019_Win10\ARM64\Debug\*.pdb" />
+        <file target="native\lib\ARM64\Debug" src="DirectXTex\Bin\Desktop_2017_Win10\ARM64\Debug\*.lib" />
+        <file target="native\lib\ARM64\Debug" src="DirectXTex\Bin\Desktop_2017_Win10\ARM64\Debug\*.pdb" />
 
-        <file target="lib\ARM64\Release" src="DirectXTex\Bin\Desktop_2019_Win10\ARM64\Release\*.lib" />
-        <file target="lib\ARM64\Release" src="DirectXTex\Bin\Desktop_2019_Win10\ARM64\Release\*.pdb" />
+        <file target="native\lib\ARM64\Release" src="DirectXTex\Bin\Desktop_2017_Win10\ARM64\Release\*.lib" />
+        <file target="native\lib\ARM64\Release" src="DirectXTex\Bin\Desktop_2017_Win10\ARM64\Release\*.pdb" />
 
         <file src=".nuget/directxtex_desktop_win10.targets" target="build\native" />
       
