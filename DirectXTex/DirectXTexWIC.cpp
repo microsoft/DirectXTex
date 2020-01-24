@@ -395,7 +395,7 @@ namespace
             return E_POINTER;
 
         bool iswic2 = false;
-        IWICImagingFactory* pWIC = GetWICFactory(iswic2);
+        auto pWIC = GetWICFactory(iswic2);
         if (!pWIC)
             return E_NOINTERFACE;
 
@@ -457,7 +457,7 @@ namespace
             return hr;
 
         bool iswic2 = false;
-        IWICImagingFactory* pWIC = GetWICFactory(iswic2);
+        auto pWIC = GetWICFactory(iswic2);
         if (!pWIC)
             return E_NOINTERFACE;
 
@@ -733,7 +733,7 @@ namespace
         {
             // Conversion required to write
             bool iswic2 = false;
-            IWICImagingFactory* pWIC = GetWICFactory(iswic2);
+            auto pWIC = GetWICFactory(iswic2);
             if (!pWIC)
                 return E_NOINTERFACE;
 
@@ -794,7 +794,7 @@ namespace
 
         // Initialize WIC
         bool iswic2 = false;
-        IWICImagingFactory* pWIC = GetWICFactory(iswic2);
+        auto pWIC = GetWICFactory(iswic2);
         if (!pWIC)
             return E_NOINTERFACE;
 
@@ -862,7 +862,7 @@ namespace
 
         // Initialize WIC
         bool iswic2 = false;
-        IWICImagingFactory* pWIC = GetWICFactory(iswic2);
+        auto pWIC = GetWICFactory(iswic2);
         if (!pWIC)
             return E_NOINTERFACE;
 
@@ -937,7 +937,7 @@ HRESULT DirectX::GetMetadataFromWICMemory(
         return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
 
     bool iswic2 = false;
-    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
+    auto pWIC = GetWICFactory(iswic2);
     if (!pWIC)
         return E_NOINTERFACE;
 
@@ -986,7 +986,7 @@ HRESULT DirectX::GetMetadataFromWICFile(
         return E_INVALIDARG;
 
     bool iswic2 = false;
-    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
+    auto pWIC = GetWICFactory(iswic2);
     if (!pWIC)
         return E_NOINTERFACE;
 
@@ -1029,7 +1029,7 @@ HRESULT DirectX::LoadFromWICMemory(
         return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
 
     bool iswic2 = false;
-    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
+    auto pWIC = GetWICFactory(iswic2);
     if (!pWIC)
         return E_NOINTERFACE;
 
@@ -1100,7 +1100,7 @@ HRESULT DirectX::LoadFromWICFile(
         return E_INVALIDARG;
 
     bool iswic2 = false;
-    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
+    auto pWIC = GetWICFactory(iswic2);
     if (!pWIC)
         return E_NOINTERFACE;
 
@@ -1278,7 +1278,7 @@ HRESULT DirectX::SaveToWICFile(
         return E_POINTER;
 
     bool iswic2 = false;
-    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
+    auto pWIC = GetWICFactory(iswic2);
     if (!pWIC)
         return E_NOINTERFACE;
 
@@ -1316,7 +1316,7 @@ HRESULT DirectX::SaveToWICFile(
         return E_INVALIDARG;
 
     bool iswic2 = false;
-    IWICImagingFactory* pWIC = GetWICFactory(iswic2);
+    auto pWIC = GetWICFactory(iswic2);
     if (!pWIC)
         return E_NOINTERFACE;
 
