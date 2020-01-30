@@ -95,6 +95,7 @@ enum OPTIONS
     OPT_NOGPU,
     OPT_FEATURE_LEVEL,
     OPT_FIT_POWEROF2,
+    OPT_ALPHA_THRESHOLD,
     OPT_ALPHA_WEIGHT,
     OPT_NORMAL_MAP,
     OPT_NORMAL_MAP_AMPLITUDE,
@@ -184,6 +185,7 @@ const SValue g_pOptions[] =
     { L"nogpu",         OPT_NOGPU },
     { L"fl",            OPT_FEATURE_LEVEL },
     { L"pow2",          OPT_FIT_POWEROF2 },
+    { L"at",            OPT_ALPHA_THRESHOLD },
     { L"aw",            OPT_ALPHA_WEIGHT },
     { L"nmap",          OPT_NORMAL_MAP },
     { L"nmapamp",       OPT_NORMAL_MAP_AMPLITUDE },
@@ -729,6 +731,9 @@ namespace
         wprintf(L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
         wprintf(L"   -pmalpha            convert final texture to use premultiplied alpha\n");
         wprintf(L"   -alpha              convert premultiplied alpha to straight alpha\n");
+        wprintf(
+            L"   -at <threshold>     Alpha threshold used for BC1, RGBA5551, and WIC\n"
+            L"                       (defaults to 0.5)\n");
         wprintf(L"\n   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n");
         wprintf(L"   -pow2               resize to fit a power-of-2, respecting aspect ratio\n");
         wprintf(
@@ -1124,6 +1129,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     DWORD FileType = CODEC_DDS;
     DWORD maxSize = 16384;
     int adapter = -1;
+    float alphaThreshold = TEX_THRESHOLD_DEFAULT;
     float alphaWeight = 1.f;
     DWORD dwNormalMap = 0;
     float nmapAmplitude = 1.f;
@@ -1187,6 +1193,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_FILETYPE:
             case OPT_GPU:
             case OPT_FEATURE_LEVEL:
+            case OPT_ALPHA_THRESHOLD:
             case OPT_ALPHA_WEIGHT:
             case OPT_NORMAL_MAP:
             case OPT_NORMAL_MAP_AMPLITUDE:
@@ -1462,6 +1469,22 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     wprintf(L"Invalid value specified with -fl (%ls)\n", pValue);
                     wprintf(L"\n");
                     PrintUsage();
+                    return 1;
+                }
+                break;
+
+            case OPT_ALPHA_THRESHOLD:
+                if (swscanf_s(pValue, L"%f", &alphaThreshold) != 1)
+                {
+                    wprintf(L"Invalid value specified with -at (%ls)\n", pValue);
+                    wprintf(L"\n");
+                    PrintUsage();
+                    return 1;
+                }
+                else if (alphaThreshold < 0.f)
+                {
+                    wprintf(L"-at (%ls) parameter must be positive\n", pValue);
+                    wprintf(L"\n");
                     return 1;
                 }
                 break;
@@ -2131,7 +2154,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
 
                 hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), DXGI_FORMAT_R16G16B16A16_FLOAT,
-                    dwFilter | dwFilterOpts | dwSRGB | dwConvert, TEX_THRESHOLD_DEFAULT, *timage);
+                    dwFilter | dwFilterOpts | dwSRGB | dwConvert, alphaThreshold, *timage);
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [convert] (%x)\n", static_cast<unsigned int>(hr));
@@ -2478,7 +2501,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), tformat,
-                dwFilter | dwFilterOpts | dwSRGB | dwConvert, TEX_THRESHOLD_DEFAULT, *timage);
+                dwFilter | dwFilterOpts | dwSRGB | dwConvert, alphaThreshold, *timage);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED [convert] (%x)\n", static_cast<unsigned int>(hr));
@@ -2947,7 +2970,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else
                 {
-                    hr = Compress(img, nimg, info, tformat, cflags | dwSRGB, TEX_THRESHOLD_DEFAULT, *timage);
+                    hr = Compress(img, nimg, info, tformat, cflags | dwSRGB, alphaThreshold, *timage);
                 }
                 if (FAILED(hr))
                 {
