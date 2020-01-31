@@ -37,7 +37,7 @@
 #pragma warning(pop)
 
 #pragma warning(push)
-#pragma warning(disable : 4471)
+#pragma warning(disable : 4471 5204)
     #include <windows.storage.streams.h>
 #pragma warning(pop)
 
