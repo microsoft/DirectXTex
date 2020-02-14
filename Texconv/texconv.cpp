@@ -2465,7 +2465,22 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             DXGI_FORMAT nmfmt = tformat;
             if (IsCompressed(tformat))
             {
-                nmfmt = (dwNormalMap & CNMAP_COMPUTE_OCCLUSION) ? DXGI_FORMAT_R32G32B32A32_FLOAT : DXGI_FORMAT_R32G32B32_FLOAT;
+                switch (tformat)
+                {
+                case DXGI_FORMAT_BC4_SNORM:
+                case DXGI_FORMAT_BC5_SNORM:
+                    nmfmt = DXGI_FORMAT_R8G8B8A8_SNORM;
+                    break;
+
+                case DXGI_FORMAT_BC6H_SF16:
+                case DXGI_FORMAT_BC6H_UF16:
+                    nmfmt = DXGI_FORMAT_R32G32B32_FLOAT;
+                    break;
+
+                default:
+                    nmfmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+                    break;
+                }
             }
 
             hr = ComputeNormalMap(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwNormalMap, nmapAmplitude, nmfmt, *timage);
