@@ -124,7 +124,10 @@ namespace
             {
                 XMVECTOR v = *ptr;
                 XMVECTOR alpha = XMVectorSplatW(*ptr);
-                alpha = XMVectorDivide(v, alpha);
+                if (XMVectorGetX(alpha) > 0)
+                {
+                    alpha = XMVectorDivide(v, alpha);
+                }
                 *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
             }
 
@@ -143,9 +146,9 @@ namespace
         assert(srcImage.width == destImage.width);
         assert(srcImage.height == destImage.height);
 
-        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN), "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
-        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_OUT) == static_cast<int>(TEX_FILTER_SRGB_OUT), "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
-        static_assert(static_cast<int>(TEX_PMALPHA_SRGB) == static_cast<int>(TEX_FILTER_SRGB), "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_OUT) == static_cast<int>(TEX_FILTER_SRGB_OUT), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB) == static_cast<int>(TEX_FILTER_SRGB), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
         flags &= TEX_PMALPHA_SRGB;
 
         ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
@@ -167,7 +170,10 @@ namespace
             {
                 XMVECTOR v = *ptr;
                 XMVECTOR alpha = XMVectorSplatW(*ptr);
-                alpha = XMVectorDivide(v, alpha);
+                if (XMVectorGetX(alpha) > 0)
+                {
+                    alpha = XMVectorDivide(v, alpha);
+                }
                 *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
             }
 
