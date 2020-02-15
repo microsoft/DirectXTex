@@ -6,6 +6,13 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### February 14, 2020
+* Fixed quality bug in BC4S/BC5S compressor
+* Guard for divide-by-zero case in PremultiplyAlpha
+* texconv: added -at switch for alpha threshold value with BC1 compression
+* texconv: Fixed -nmap when outputing compressed UNORM formats
+* Code and project cleaup
+
 ### December 17, 2019
 * Added ARM64 platform to VS 2019 Win32 desktop Win10 project
 * Updated CMake project
