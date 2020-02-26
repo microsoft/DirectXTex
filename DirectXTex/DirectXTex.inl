@@ -16,7 +16,7 @@
 //=====================================================================================
 
 _Use_decl_annotations_
-inline bool __cdecl IsValid(DXGI_FORMAT fmt) noexcept
+constexpr inline bool __cdecl IsValid(DXGI_FORMAT fmt) noexcept
 {
     return (static_cast<size_t>(fmt) >= 1 && static_cast<size_t>(fmt) <= 190);
 }

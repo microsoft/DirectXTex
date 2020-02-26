@@ -40,7 +40,7 @@ namespace DirectX
 
     //---------------------------------------------------------------------------------
     // DXGI Format Utilities
-    bool __cdecl IsValid(_In_ DXGI_FORMAT fmt) noexcept;
+    constexpr bool __cdecl IsValid(_In_ DXGI_FORMAT fmt) noexcept;
     bool __cdecl IsCompressed(_In_ DXGI_FORMAT fmt) noexcept;
     bool __cdecl IsPacked(_In_ DXGI_FORMAT fmt) noexcept;
     bool __cdecl IsVideo(_In_ DXGI_FORMAT fmt) noexcept;
