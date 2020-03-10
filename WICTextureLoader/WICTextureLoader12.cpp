@@ -161,7 +161,7 @@ namespace
             ifactory)) ? TRUE : FALSE;
     }
 
-    IWICImagingFactory2* _GetWIC()
+    IWICImagingFactory2* _GetWIC() noexcept
     {
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
@@ -179,7 +179,7 @@ namespace
 
     //---------------------------------------------------------------------------------
     template<UINT TNameLength>
-    inline void SetDebugObjectName(_In_ ID3D12DeviceChild* resource, _In_z_ const wchar_t(&name)[TNameLength])
+    inline void SetDebugObjectName(_In_ ID3D12DeviceChild* resource, _In_z_ const wchar_t(&name)[TNameLength]) noexcept
     {
         #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
             resource->SetName(name);
@@ -189,7 +189,7 @@ namespace
         #endif
     }
 
-    inline uint32_t CountMips(uint32_t width, uint32_t height)
+    inline uint32_t CountMips(uint32_t width, uint32_t height) noexcept
     {
         if (width == 0 || height == 0)
             return 0;
@@ -205,7 +205,7 @@ namespace
     }
 
     //--------------------------------------------------------------------------------------
-    DXGI_FORMAT MakeSRGB(_In_ DXGI_FORMAT format)
+    DXGI_FORMAT MakeSRGB(_In_ DXGI_FORMAT format) noexcept
     {
         switch (format)
         {
@@ -236,7 +236,7 @@ namespace
     }
 
     //---------------------------------------------------------------------------------
-    DXGI_FORMAT _WICToDXGI(const GUID& guid)
+    DXGI_FORMAT _WICToDXGI(const GUID& guid) noexcept
     {
         for (size_t i = 0; i < _countof(g_WICFormats); ++i)
         {
@@ -248,7 +248,7 @@ namespace
     }
 
     //---------------------------------------------------------------------------------
-    size_t _WICBitsPerPixel(REFGUID targetGuid)
+    size_t _WICBitsPerPixel(REFGUID targetGuid) noexcept
     {
         auto pWIC = _GetWIC();
         if (!pWIC)
@@ -284,7 +284,7 @@ namespace
         unsigned int loadFlags,
         _Outptr_ ID3D12Resource** texture,
         std::unique_ptr<uint8_t[]>& decodedData,
-        D3D12_SUBRESOURCE_DATA& subresource)
+        D3D12_SUBRESOURCE_DATA& subresource) noexcept
     {
         UINT width, height;
         HRESULT hr = frame->GetSize(&width, &height);
@@ -549,7 +549,7 @@ namespace
     //--------------------------------------------------------------------------------------
     void SetDebugTextureInfo(
         _In_z_ const wchar_t* fileName,
-        _In_ ID3D12Resource** texture)
+        _In_ ID3D12Resource** texture) noexcept
     {
 #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
         if (texture)
@@ -586,7 +586,7 @@ HRESULT DirectX::LoadWICTextureFromMemory(
     ID3D12Resource** texture,
     std::unique_ptr<uint8_t[]>& decodedData,
     D3D12_SUBRESOURCE_DATA& subresource,
-    size_t maxsize)
+    size_t maxsize) noexcept
 {
     return LoadWICTextureFromMemoryEx(
         d3dDevice,
@@ -612,7 +612,7 @@ HRESULT DirectX::LoadWICTextureFromMemoryEx(
     unsigned int loadFlags,
     ID3D12Resource** texture,
     std::unique_ptr<uint8_t[]>& decodedData,
-    D3D12_SUBRESOURCE_DATA& subresource)
+    D3D12_SUBRESOURCE_DATA& subresource) noexcept
 {
     if (texture)
     {
@@ -675,7 +675,7 @@ HRESULT DirectX::LoadWICTextureFromFile(
     ID3D12Resource** texture,
     std::unique_ptr<uint8_t[]>& wicData,
     D3D12_SUBRESOURCE_DATA& subresource,
-    size_t maxsize)
+    size_t maxsize) noexcept
 {
     return LoadWICTextureFromFileEx(
         d3dDevice,
@@ -699,7 +699,7 @@ HRESULT DirectX::LoadWICTextureFromFileEx(
     unsigned int loadFlags,
     ID3D12Resource** texture,
     std::unique_ptr<uint8_t[]>& decodedData,
-    D3D12_SUBRESOURCE_DATA& subresource)
+    D3D12_SUBRESOURCE_DATA& subresource) noexcept
 {
     if (texture)
     {

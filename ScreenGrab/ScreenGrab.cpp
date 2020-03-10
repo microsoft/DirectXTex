@@ -82,7 +82,7 @@ namespace
 
     #define DDS_SURFACE_FLAGS_TEXTURE 0x00001000 // DDSCAPS_TEXTURE
 
-    typedef struct
+    struct DDS_HEADER
     {
         uint32_t        size;
         uint32_t        flags;
@@ -98,16 +98,16 @@ namespace
         uint32_t        caps3;
         uint32_t        caps4;
         uint32_t        reserved2;
-    } DDS_HEADER;
+    };
 
-    typedef struct
+    struct DDS_HEADER_DXT10
     {
         DXGI_FORMAT     dxgiFormat;
         uint32_t        resourceDimension;
         uint32_t        miscFlag; // see D3D11_RESOURCE_MISC_FLAG
         uint32_t        arraySize;
         uint32_t        reserved;
-    } DDS_HEADER_DXT10;
+    };
 
     #pragma pack(pop)
 
@@ -192,7 +192,7 @@ namespace
     //-----------------------------------------------------------------------------
     struct handle_closer { void operator()(HANDLE h) { if (h) CloseHandle(h); } };
 
-    typedef std::unique_ptr<void, handle_closer> ScopedHandle;
+    using ScopedHandle = std::unique_ptr<void, handle_closer>;
 
     inline HANDLE safe_handle( HANDLE h ) { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
@@ -245,7 +245,7 @@ namespace
     //--------------------------------------------------------------------------------------
     // Return the BPP for a particular format
     //--------------------------------------------------------------------------------------
-    size_t BitsPerPixel( _In_ DXGI_FORMAT fmt )
+    size_t BitsPerPixel( _In_ DXGI_FORMAT fmt ) noexcept
     {
         switch( fmt )
         {
@@ -395,7 +395,7 @@ namespace
     //--------------------------------------------------------------------------------------
     // Determines if the format is block compressed
     //--------------------------------------------------------------------------------------
-    bool IsCompressed( _In_ DXGI_FORMAT fmt )
+    bool IsCompressed( _In_ DXGI_FORMAT fmt ) noexcept
     {
         switch ( fmt )
         {
@@ -437,7 +437,7 @@ namespace
         _In_ DXGI_FORMAT fmt,
         _Out_opt_ size_t* outNumBytes,
         _Out_opt_ size_t* outRowBytes,
-        _Out_opt_ size_t* outNumRows)
+        _Out_opt_ size_t* outNumRows) noexcept
     {
         uint64_t numBytes = 0;
         uint64_t rowBytes = 0;
@@ -578,7 +578,7 @@ namespace
 
 
     //--------------------------------------------------------------------------------------
-    DXGI_FORMAT EnsureNotTypeless( DXGI_FORMAT fmt )
+    DXGI_FORMAT EnsureNotTypeless( DXGI_FORMAT fmt ) noexcept
     {
         // Assumes UNORM or FLOAT; doesn't use UINT or SINT
         switch( fmt )
@@ -612,7 +612,7 @@ namespace
         _In_ ID3D11DeviceContext* pContext,
         _In_ ID3D11Resource* pSource,
         D3D11_TEXTURE2D_DESC& desc,
-        ComPtr<ID3D11Texture2D>& pStaging )
+        ComPtr<ID3D11Texture2D>& pStaging ) noexcept
     {
         if ( !pContext || !pSource )
             return E_INVALIDARG;
@@ -769,7 +769,7 @@ _Use_decl_annotations_
 HRESULT DirectX::SaveDDSTextureToFile(
     ID3D11DeviceContext* pContext,
     ID3D11Resource* pSource,
-    const wchar_t* fileName )
+    const wchar_t* fileName ) noexcept
 {
     if ( !fileName )
         return E_INVALIDARG;
@@ -940,7 +940,7 @@ HRESULT DirectX::SaveWICTextureToFile(
     const wchar_t* fileName,
     const GUID* targetFormat,
     std::function<void(IPropertyBag2*)> setCustomProps,
-    bool forceSRGB)
+    bool forceSRGB) noexcept
 {
     if ( !fileName )
         return E_INVALIDARG;
@@ -1030,16 +1030,16 @@ HRESULT DirectX::SaveWICTextureToFile(
     if ( FAILED(hr) )
         return hr;
 
-    if ( targetFormat && memcmp( &guidContainerFormat, &GUID_ContainerFormatBmp, sizeof(WICPixelFormatGUID) ) == 0 && g_WIC2 )
+    if (targetFormat && memcmp(&guidContainerFormat, &GUID_ContainerFormatBmp, sizeof(WICPixelFormatGUID)) == 0 && g_WIC2)
     {
         // Opt-in to the WIC2 support for writing 32-bit Windows BMP files with an alpha channel
         PROPBAG2 option = {};
         option.pstrName = const_cast<wchar_t*>(L"EnableV5Header32bppBGRA");
 
-        VARIANT varValue;    
+        VARIANT varValue;
         varValue.vt = VT_BOOL;
-        varValue.boolVal = VARIANT_TRUE;      
-        (void)props->Write( 1, &option, &varValue ); 
+        varValue.boolVal = VARIANT_TRUE;
+        (void)props->Write(1, &option, &varValue);
     }
 
     if ( setCustomProps )
@@ -1073,7 +1073,7 @@ HRESULT DirectX::SaveWICTextureToFile(
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         case DXGI_FORMAT_R32G32B32A32_FLOAT:            
         case DXGI_FORMAT_R16G16B16A16_FLOAT:
-            if ( g_WIC2 )
+            if (g_WIC2)
             {
                 targetGuid = GUID_WICPixelFormat96bppRGBFloat;
             }

@@ -124,7 +124,7 @@ namespace
 {
     struct handle_closer { void operator()(HANDLE h) { if (h) CloseHandle(h); } };
 
-    typedef std::unique_ptr<void, handle_closer> ScopedHandle;
+    using ScopedHandle = std::unique_ptr<void, handle_closer>;
 
     inline HANDLE safe_handle(HANDLE h) { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
@@ -139,7 +139,7 @@ namespace
         #endif
     }
 
-    inline uint32_t CountMips(uint32_t width, uint32_t height)
+    inline uint32_t CountMips(uint32_t width, uint32_t height) noexcept
     {
         if (width == 0 || height == 0)
             return 0;
@@ -161,7 +161,7 @@ namespace
         size_t ddsDataSize,
         const DDS_HEADER** header,
         const uint8_t** bitData,
-        size_t* bitSize)
+        size_t* bitSize) noexcept
     {
         if (!header || !bitData || !bitSize)
         {
@@ -226,7 +226,7 @@ namespace
         std::unique_ptr<uint8_t[]>& ddsData,
         const DDS_HEADER** header,
         const uint8_t** bitData,
-        size_t* bitSize)
+        size_t* bitSize) noexcept
     {
         if (!header || !bitData || !bitSize)
         {
@@ -332,7 +332,7 @@ namespace
     //--------------------------------------------------------------------------------------
     // Return the BPP for a particular format
     //--------------------------------------------------------------------------------------
-    size_t BitsPerPixel( _In_ DXGI_FORMAT fmt )
+    size_t BitsPerPixel( _In_ DXGI_FORMAT fmt ) noexcept
     {
         switch( fmt )
         {
@@ -491,7 +491,7 @@ namespace
         _In_ DXGI_FORMAT fmt,
         size_t* outNumBytes,
         _Out_opt_ size_t* outRowBytes,
-        _Out_opt_ size_t* outNumRows)
+        _Out_opt_ size_t* outNumRows) noexcept
     {
         uint64_t numBytes = 0;
         uint64_t rowBytes = 0;
@@ -635,7 +635,7 @@ namespace
     //--------------------------------------------------------------------------------------
     #define ISBITMASK( r,g,b,a ) ( ddpf.RBitMask == r && ddpf.GBitMask == g && ddpf.BBitMask == b && ddpf.ABitMask == a )
 
-    DXGI_FORMAT GetDXGIFormat( const DDS_PIXELFORMAT& ddpf )
+    DXGI_FORMAT GetDXGIFormat( const DDS_PIXELFORMAT& ddpf ) noexcept
     {
         if (ddpf.flags & DDS_RGB)
         {
@@ -876,7 +876,7 @@ namespace
 
 
     //--------------------------------------------------------------------------------------
-    DXGI_FORMAT MakeSRGB( _In_ DXGI_FORMAT format )
+    DXGI_FORMAT MakeSRGB( _In_ DXGI_FORMAT format ) noexcept
     {
         switch( format )
         {
@@ -908,7 +908,7 @@ namespace
 
 
     //--------------------------------------------------------------------------------------
-    inline bool IsDepthStencil(DXGI_FORMAT fmt)
+    inline bool IsDepthStencil(DXGI_FORMAT fmt) noexcept
     {
         switch (fmt)
         {
@@ -935,7 +935,7 @@ namespace
         _In_ DXGI_FORMAT fmt,
         _In_ size_t height,
         _In_ size_t slicePlane,
-        _Inout_ D3D12_SUBRESOURCE_DATA& res)
+        _Inout_ D3D12_SUBRESOURCE_DATA& res) noexcept
     {
         switch (fmt)
         {
@@ -1092,7 +1092,7 @@ namespace
         DXGI_FORMAT format,
         D3D12_RESOURCE_FLAGS resFlags,
         unsigned int loadFlags,
-        _Outptr_ ID3D12Resource** texture)
+        _Outptr_ ID3D12Resource** texture) noexcept
     {
         if (!d3dDevice)
             return E_POINTER;
@@ -1144,7 +1144,7 @@ namespace
         unsigned int loadFlags,
         _Outptr_ ID3D12Resource** texture,
         std::vector<D3D12_SUBRESOURCE_DATA>& subresources,
-        _Out_opt_ bool* outIsCubeMap)
+        _Out_opt_ bool* outIsCubeMap) noexcept(false)
     {
         HRESULT hr = S_OK;
 
@@ -1364,9 +1364,10 @@ namespace
             {
                 subresources.clear();
 
-                maxsize = (resDim == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+                maxsize = static_cast<size_t>(
+                    (resDim == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
                     ? D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
-                    : D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+                    : D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION);
 
                 hr = FillInitData(width, height, depth, mipCount, arraySize,
                     numberOfPlanes, format,
@@ -1389,7 +1390,7 @@ namespace
     }
 
     //--------------------------------------------------------------------------------------
-    DDS_ALPHA_MODE GetAlphaMode( _In_ const DDS_HEADER* header )
+    DDS_ALPHA_MODE GetAlphaMode( _In_ const DDS_HEADER* header ) noexcept
     {
         if ( header->ddspf.flags & DDS_FOURCC )
         {
@@ -1423,7 +1424,7 @@ namespace
     //--------------------------------------------------------------------------------------
     void SetDebugTextureInfo(
         _In_z_ const wchar_t* fileName,
-        _In_ ID3D12Resource** texture)
+        _In_ ID3D12Resource** texture) noexcept
     {
 #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
         if (texture)
@@ -1513,7 +1514,8 @@ HRESULT DirectX::LoadDDSTextureFromMemoryEx(
     const uint8_t* bitData = nullptr;
     size_t bitSize = 0;
 
-    HRESULT hr = LoadTextureDataFromMemory(ddsData, ddsDataSize,
+    HRESULT hr = LoadTextureDataFromMemory(ddsData,
+        ddsDataSize,
         &header,
         &bitData,
         &bitSize

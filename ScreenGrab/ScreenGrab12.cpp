@@ -90,7 +90,7 @@ namespace
 
     #define DDS_SURFACE_FLAGS_TEXTURE 0x00001000 // DDSCAPS_TEXTURE
 
-    typedef struct
+    struct DDS_HEADER
     {
         uint32_t        size;
         uint32_t        flags;
@@ -106,16 +106,16 @@ namespace
         uint32_t        caps3;
         uint32_t        caps4;
         uint32_t        reserved2;
-    } DDS_HEADER;
+    };
 
-    typedef struct
+    struct DDS_HEADER_DXT10
     {
         DXGI_FORMAT     dxgiFormat;
         uint32_t        resourceDimension;
         uint32_t        miscFlag; // see D3D11_RESOURCE_MISC_FLAG
         uint32_t        arraySize;
         uint32_t        reserved;
-    } DDS_HEADER_DXT10;
+    };
 
     #pragma pack(pop)
 
@@ -200,7 +200,7 @@ namespace
     //-----------------------------------------------------------------------------
     struct handle_closer { void operator()(HANDLE h) { if (h) CloseHandle(h); } };
 
-    typedef std::unique_ptr<void, handle_closer> ScopedHandle;
+    using ScopedHandle = std::unique_ptr<void, handle_closer>;
 
     inline HANDLE safe_handle( HANDLE h ) { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
@@ -253,7 +253,7 @@ namespace
     //--------------------------------------------------------------------------------------
     // Return the BPP for a particular format
     //--------------------------------------------------------------------------------------
-    size_t BitsPerPixel( _In_ DXGI_FORMAT fmt )
+    size_t BitsPerPixel( _In_ DXGI_FORMAT fmt ) noexcept
     {
         switch( fmt )
         {
@@ -406,7 +406,7 @@ namespace
     //--------------------------------------------------------------------------------------
     // Determines if the format is block compressed
     //--------------------------------------------------------------------------------------
-    bool IsCompressed( _In_ DXGI_FORMAT fmt )
+    bool IsCompressed( _In_ DXGI_FORMAT fmt ) noexcept
     {
         switch ( fmt )
         {
@@ -448,7 +448,7 @@ namespace
         _In_ DXGI_FORMAT fmt,
         _Out_opt_ size_t* outNumBytes,
         _Out_opt_ size_t* outRowBytes,
-        _Out_opt_ size_t* outNumRows)
+        _Out_opt_ size_t* outNumRows) noexcept
     {
         uint64_t numBytes = 0;
         uint64_t rowBytes = 0;
@@ -590,7 +590,7 @@ namespace
 
 
     //--------------------------------------------------------------------------------------
-    DXGI_FORMAT EnsureNotTypeless( DXGI_FORMAT fmt )
+    DXGI_FORMAT EnsureNotTypeless( DXGI_FORMAT fmt ) noexcept
     {
         // Assumes UNORM or FLOAT; doesn't use UINT or SINT
         switch( fmt )
@@ -624,7 +624,7 @@ namespace
         _In_ ID3D12GraphicsCommandList* commandList,
         _In_ ID3D12Resource* resource,
         _In_ D3D12_RESOURCE_STATES stateBefore,
-        _In_ D3D12_RESOURCE_STATES stateAfter)
+        _In_ D3D12_RESOURCE_STATES stateAfter) noexcept
     {
         assert(commandList != nullptr);
         assert(resource != nullptr);
@@ -651,7 +651,7 @@ namespace
         const D3D12_RESOURCE_DESC& desc,
         ComPtr<ID3D12Resource>& pStaging,
         D3D12_RESOURCE_STATES beforeState,
-        D3D12_RESOURCE_STATES afterState)
+        D3D12_RESOURCE_STATES afterState) noexcept
     {
         if (!pCommandQ || !pSource)
             return E_INVALIDARG;
@@ -823,7 +823,7 @@ namespace
             ifactory)) ? TRUE : FALSE;
     }
 
-    IWICImagingFactory2* _GetWIC()
+    IWICImagingFactory2* _GetWIC() noexcept
     {
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
@@ -848,7 +848,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
     ID3D12Resource* pSource,
     const wchar_t* fileName,
     D3D12_RESOURCE_STATES beforeState,
-    D3D12_RESOURCE_STATES afterState)
+    D3D12_RESOURCE_STATES afterState) noexcept
 {
     if ( !fileName )
         return E_INVALIDARG;
@@ -1054,7 +1054,7 @@ HRESULT DirectX::SaveWICTextureToFile(
     D3D12_RESOURCE_STATES afterState,
     const GUID* targetFormat,
     std::function<void(IPropertyBag2*)> setCustomProps,
-    bool forceSRGB)
+    bool forceSRGB) noexcept
 {
     if ( !fileName )
         return E_INVALIDARG;

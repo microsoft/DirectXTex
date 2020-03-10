@@ -18,9 +18,9 @@
 
 #include <d3d12.h>
 
+#include <cstdint>
 #include <memory>
 #include <vector>
-#include <stdint.h>
 
 
 namespace DirectX
