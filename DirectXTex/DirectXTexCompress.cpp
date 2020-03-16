@@ -377,7 +377,7 @@ namespace
 
 
     //-------------------------------------------------------------------------------------
-    HRESULT DecompressBC(_In_ const Image& cImage, _In_ const Image& result)
+    HRESULT DecompressBC(_In_ const Image& cImage, _In_ const Image& result) noexcept
     {
         if (!cImage.pixels || !result.pixels)
             return E_POINTER;

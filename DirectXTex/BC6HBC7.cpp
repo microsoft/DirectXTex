@@ -34,25 +34,25 @@ namespace
     // Constants
     //-------------------------------------------------------------------------------------
 
-    const uint16_t F16S_MASK = 0x8000;   // f16 sign mask
-    const uint16_t F16EM_MASK = 0x7fff;   // f16 exp & mantissa mask
-    const uint16_t F16MAX = 0x7bff;   // MAXFLT bit pattern for XMHALF
+    constexpr uint16_t F16S_MASK = 0x8000;   // f16 sign mask
+    constexpr uint16_t F16EM_MASK = 0x7fff;   // f16 exp & mantissa mask
+    constexpr uint16_t F16MAX = 0x7bff;   // MAXFLT bit pattern for XMHALF
 
-    const size_t BC6H_NUM_CHANNELS = 3;
-    const size_t BC6H_MAX_SHAPES = 32;
+    constexpr size_t BC6H_NUM_CHANNELS = 3;
+    constexpr size_t BC6H_MAX_SHAPES = 32;
 
-    const size_t BC7_NUM_CHANNELS = 4;
-    const size_t BC7_MAX_SHAPES = 64;
+    constexpr size_t BC7_NUM_CHANNELS = 4;
+    constexpr size_t BC7_MAX_SHAPES = 64;
 
-    const int32_t BC67_WEIGHT_MAX = 64;
-    const uint32_t BC67_WEIGHT_SHIFT = 6;
-    const int32_t BC67_WEIGHT_ROUND = 32;
+    constexpr int32_t BC67_WEIGHT_MAX = 64;
+    constexpr uint32_t BC67_WEIGHT_SHIFT = 6;
+    constexpr int32_t BC67_WEIGHT_ROUND = 32;
 
-    const float fEpsilon = (0.25f / 64.0f) * (0.25f / 64.0f);
-    const float pC3[] = { 2.0f / 2.0f, 1.0f / 2.0f, 0.0f / 2.0f };
-    const float pD3[] = { 0.0f / 2.0f, 1.0f / 2.0f, 2.0f / 2.0f };
-    const float pC4[] = { 3.0f / 3.0f, 2.0f / 3.0f, 1.0f / 3.0f, 0.0f / 3.0f };
-    const float pD4[] = { 0.0f / 3.0f, 1.0f / 3.0f, 2.0f / 3.0f, 3.0f / 3.0f };
+    constexpr float fEpsilon = (0.25f / 64.0f) * (0.25f / 64.0f);
+    constexpr float pC3[] = { 2.0f / 2.0f, 1.0f / 2.0f, 0.0f / 2.0f };
+    constexpr float pD3[] = { 0.0f / 2.0f, 1.0f / 2.0f, 2.0f / 2.0f };
+    constexpr float pC4[] = { 3.0f / 3.0f, 2.0f / 3.0f, 1.0f / 3.0f, 0.0f / 3.0f };
+    constexpr float pD4[] = { 0.0f / 3.0f, 1.0f / 3.0f, 2.0f / 3.0f, 3.0f / 3.0f };
 
     // Partition, Shape, Pixel (index into 4x4 block)
     const uint8_t g_aPartitionTable[3][64][16] =
