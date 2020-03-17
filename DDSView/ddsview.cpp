@@ -119,7 +119,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     if ( FAILED(hr) )
     {
         wchar_t buff[2048] = {};
-        swprintf_s( buff, L"Failed to open texture file\n\nFilename = %ls\nHRESULT %08X", lpCmdLine, hr );
+        swprintf_s( buff, L"Failed to open texture file\n\nFilename = %ls\nHRESULT %08X", lpCmdLine, static_cast<unsigned int>(hr) );
         MessageBoxW( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
         return 0;
     }
@@ -176,7 +176,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
             if ( FAILED(hr) || !(flags & (D3D11_FORMAT_SUPPORT_TEXTURE1D|D3D11_FORMAT_SUPPORT_TEXTURE2D|D3D11_FORMAT_SUPPORT_TEXTURE3D)) )
             {
                 wchar_t buff[2048] = {};
-                swprintf_s( buff, L"Format not supported by DirectX hardware\n\nFilename = %ls\nDXGI Format %d\nFeature Level %d\nHRESULT = %08X", lpCmdLine, mdata.format, g_featureLevel, hr );
+                swprintf_s( buff, L"Format not supported by DirectX hardware\n\nFilename = %ls\nDXGI Format %d\nFeature Level %d\nHRESULT = %08X", lpCmdLine, mdata.format, g_featureLevel, static_cast<unsigned int>(hr) );
                 MessageBoxW( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
                 return 0;
             }
@@ -189,7 +189,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     if ( FAILED(hr) )
     {
         wchar_t buff[2048] = {};
-        swprintf_s( buff, L"Failed to load texture file\n\nFilename = %ls\nHRESULT %08X", lpCmdLine, hr );
+        swprintf_s( buff, L"Failed to load texture file\n\nFilename = %ls\nHRESULT %08X", lpCmdLine, static_cast<unsigned int>(hr) );
         MessageBoxW( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
         return 0;
     }
@@ -201,7 +201,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     if ( FAILED(hr) )
     {
         wchar_t buff[2048] = {};
-        swprintf_s( buff, L"Failed creating texture from file\n\nFilename = %ls\nHRESULT = %08X", lpCmdLine, hr );
+        swprintf_s( buff, L"Failed creating texture from file\n\nFilename = %ls\nHRESULT = %08X", lpCmdLine, static_cast<unsigned int>(hr) );
         MessageBoxW( nullptr, buff, L"DDSView", MB_OK | MB_ICONEXCLAMATION );
         return 0;
     }
