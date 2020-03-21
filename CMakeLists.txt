@@ -1,4 +1,4 @@
-﻿# DirectX Texture Library
+# DirectX Texture Library
 #
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
