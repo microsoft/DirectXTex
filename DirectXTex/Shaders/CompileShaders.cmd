@@ -7,11 +7,11 @@ set error=0
 
 set FXCOPTS=/nologo /WX /Ges /Zi /Zpc /Qstrip_reflect /Qstrip_debug
 
+set PCDXC="%WindowsSdkVerBinPath%\x86\fxc.exe"
+if exist %PCFXC% goto continue
 set PCFXC="%WindowsSdkBinPath%%WindowsSDKVersion%\x86\fxc.exe"
 if exist %PCFXC% goto continue
 set PCFXC="%WindowsSdkDir%bin\%WindowsSDKVersion%\x86\fxc.exe"
-if exist %PCFXC% goto continue
-set PCFXC="%WindowsSdkDir%bin\x86\fxc.exe"
 if exist %PCFXC% goto continue
 
 set PCFXC=fxc.exe
