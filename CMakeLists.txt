@@ -5,7 +5,7 @@
 #
 # http://go.microsoft.com/fwlink/?LinkId=248926
 
-cmake_minimum_required (VERSION 3.16)
+cmake_minimum_required (VERSION 3.11)
 
 project (DirectXTex LANGUAGES CXX)
 
@@ -81,7 +81,9 @@ source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 
 target_include_directories(${PROJECT_NAME} PUBLIC DirectXTex)
 
-target_precompile_headers(${PROJECT_NAME} PRIVATE DirectXTex/DirectXTexP.h)
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.16")
+    target_precompile_headers(${PROJECT_NAME} PRIVATE DirectXTex/DirectXTexP.h)
+endif()
 
 if(MSVC)
     # Use max Warning Level 
