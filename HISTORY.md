@@ -6,6 +6,12 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### April 3, 2020
+* Updated D3DX12 internal copy to latest version
+* DDS loader updated for another BC7 FourCC variant
+* Code review (constexpr / noexcept usage)
+* CMake updated for PCH usage with 3.16 or later
+
 ### February 14, 2020
 * Fixed quality bug in BC4S/BC5S compressor
 * Guard for divide-by-zero case in PremultiplyAlpha
