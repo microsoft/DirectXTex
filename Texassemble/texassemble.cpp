@@ -78,6 +78,7 @@ enum OPTIONS
     OPT_SRGBO,
     OPT_SRGB,
     OPT_OUTPUTFILE,
+    OPT_TOLOWER,
     OPT_OVERWRITE,
     OPT_USE_DX10,
     OPT_NOLOGO,
@@ -136,6 +137,7 @@ const SValue g_pOptions[] =
     { L"srgbo",     OPT_SRGBO },
     { L"srgb",      OPT_SRGB },
     { L"o",         OPT_OUTPUTFILE },
+    { L"l",         OPT_TOLOWER },
     { L"y",         OPT_OVERWRITE },
     { L"dx10",      OPT_USE_DX10 },
     { L"nologo",    OPT_NOLOGO },
@@ -519,6 +521,7 @@ namespace
         wprintf(L"   -if <filter>        image filtering\n");
         wprintf(L"   -srgb{i|o}          sRGB {input, output}\n");
         wprintf(L"   -o <filename>       output filename\n");
+        wprintf(L"   -l                  force output filename to lower case\n");
         wprintf(L"   -y                  overwrite existing output file (if any)\n");
         wprintf(L"   -sepalpha           resize alpha channel separately from color channels\n");
         wprintf(L"   -nowic              Force non-WIC filtering\n");
@@ -1885,6 +1888,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         wprintf(L"\n");
         fflush(stdout);
 
+        if (dwOptions & (1 << OPT_TOLOWER))
+        {
+            (void)_wcslwr_s(szOutputFile);
+        }
+
         if (~dwOptions & (1 << OPT_OVERWRITE))
         {
             if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
@@ -1967,6 +1975,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         wprintf(L"\n");
         fflush(stdout);
 
+        if (dwOptions & (1 << OPT_TOLOWER))
+        {
+            (void)_wcslwr_s(szOutputFile);
+        }
+
         if (~dwOptions & (1 << OPT_OVERWRITE))
         {
             if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
@@ -2032,6 +2045,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         PrintInfo(result.GetMetadata());
         wprintf(L"\n");
         fflush(stdout);
+
+        if (dwOptions & (1 << OPT_TOLOWER))
+        {
+            (void)_wcslwr_s(szOutputFile);
+        }
 
         if (~dwOptions & (1 << OPT_OVERWRITE))
         {
@@ -2099,6 +2117,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         PrintInfo(result.GetMetadata());
         wprintf(L"\n");
         fflush(stdout);
+
+        if (dwOptions & (1 << OPT_TOLOWER))
+        {
+            (void)_wcslwr_s(szOutputFile);
+        }
 
         if (~dwOptions & (1 << OPT_OVERWRITE))
         {

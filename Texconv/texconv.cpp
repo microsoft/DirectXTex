@@ -68,6 +68,7 @@ enum OPTIONS
     OPT_PREFIX,
     OPT_SUFFIX,
     OPT_OUTPUTDIR,
+    OPT_TOLOWER,
     OPT_OVERWRITE,
     OPT_FILETYPE,
     OPT_HFLIP,
@@ -157,6 +158,7 @@ const SValue g_pOptions[] =
     { L"px",            OPT_PREFIX },
     { L"sx",            OPT_SUFFIX },
     { L"o",             OPT_OUTPUTDIR },
+    { L"l",             OPT_TOLOWER },
     { L"y",             OPT_OVERWRITE },
     { L"ft",            OPT_FILETYPE },
     { L"hflip",         OPT_HFLIP },
@@ -720,6 +722,7 @@ namespace
         wprintf(L"\n   -px <string>        name prefix\n");
         wprintf(L"   -sx <string>        name suffix\n");
         wprintf(L"   -o <directory>      output directory\n");
+        wprintf(L"   -l                  force output filename to lower case\n");
         wprintf(L"   -y                  overwrite existing output file (if any)\n");
         wprintf(L"   -ft <filetype>      output file type\n");
         wprintf(L"\n   -hflip              horizonal flip of source image\n");
@@ -3065,6 +3068,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 *pchDot = 0;
 
             wcscat_s(pConv->szDest, MAX_PATH, szSuffix);
+
+            if (dwOptions & (DWORD64(1) << OPT_TOLOWER))
+            {
+                (void)_wcslwr_s(pConv->szDest);
+            }
 
             // Write texture
             wprintf(L"writing %ls", pConv->szDest);

@@ -64,6 +64,7 @@ enum OPTIONS
     OPT_DDS_DWORD_ALIGN,
     OPT_DDS_BAD_DXTN_TAILS,
     OPT_OUTPUTFILE,
+    OPT_TOLOWER,
     OPT_OVERWRITE,
     OPT_FILETYPE,
     OPT_NOLOGO,
@@ -113,6 +114,7 @@ const SValue g_pOptions[] =
     { L"badtails",  OPT_DDS_BAD_DXTN_TAILS },
     { L"nologo",    OPT_NOLOGO },
     { L"o",         OPT_OUTPUTFILE },
+    { L"l",         OPT_TOLOWER },
     { L"y",         OPT_OVERWRITE },
     { L"ft",        OPT_FILETYPE },
     { L"tu",        OPT_TYPELESS_UNORM },
@@ -549,6 +551,7 @@ namespace
         wprintf(L"\n                       (diff only)\n");
         wprintf(L"   -f <format>         format\n");
         wprintf(L"   -o <filename>       output filename\n");
+        wprintf(L"   -l                  force output filename to lower case\n");
         wprintf(L"   -y                  overwrite existing output file (if any)\n");
         wprintf(L"\n                       (dumpbc only)\n");
         wprintf(L"   -targetx <num>      dump pixels at location x (defaults to all)\n");
@@ -3366,6 +3369,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     wprintf(L"Failed diffing images (%08X)\n", static_cast<unsigned int>(hr));
                     return 1;
+                }
+
+                if (dwOptions & (1 << OPT_TOLOWER))
+                {
+                    (void)_wcslwr_s(szOutputFile);
                 }
 
                 if (~dwOptions & (1 << OPT_OVERWRITE))
