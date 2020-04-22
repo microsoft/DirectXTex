@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------
-// File: DDSTextureLoader.cpp
+// File: DDSTextureLoader11.cpp
 //
 // Functions for loading a DDS texture and creating a Direct3D runtime resource for it
 //
@@ -14,7 +14,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248929
 //--------------------------------------------------------------------------------------
 
-#include "DDSTextureLoader.h"
+#include "DDSTextureLoader11.h"
 
 #include <assert.h>
 #include <algorithm>

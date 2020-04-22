@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------
-// File: ScreenGrab.cpp
+// File: ScreenGrab11.cpp
 //
 // Function for capturing a 2D texture and saving it to a file (aka a 'screenshot'
 // when used on a Direct3D 11 Render Target).
@@ -21,7 +21,7 @@
 
 // For 2D array textures and cubemaps, it captures only the first image in the array
 
-#include "ScreenGrab.h"
+#include "ScreenGrab11.h"
 
 #include <dxgiformat.h>
 #include <assert.h>
