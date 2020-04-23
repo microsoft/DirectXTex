@@ -10,8 +10,6 @@
 //-------------------------------------------------------------------------------------
 
 #include "DirectXTexP.h"
-#include "DirectXMath.h"
-#include "DirectXPackedVector.h"
 //
 // In theory HDR (RGBE) Radiance files can have any of the following data orientations
 //
