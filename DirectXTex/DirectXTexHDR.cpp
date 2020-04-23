@@ -330,6 +330,127 @@ namespace
     }
 
     //-------------------------------------------------------------------------------------
+    // HalfToRGBE
+    // function to_float copied from here:
+    // https://github.com/castano/nvidia-texture-tools/blob/master/src/nvmath/Half.h
+    //-------------------------------------------------------------------------------------
+    uint32_t mantissa_table[2048] = { 0xDEADBEEF };
+    uint32_t exponent_table[64];
+    uint32_t offset_table[64];
+
+    void half_init_tables()
+    {
+        // Init mantissa table.
+        mantissa_table[0] = 0;
+
+        // denormals
+        for (int i = 1; i < 1024; i++) {
+            uint32_t m = i << 13;
+            uint32_t e = 0;
+
+            while ((m & 0x00800000) == 0) {
+                e -= 0x00800000;
+                m <<= 1;
+            }
+            m &= ~0x00800000;
+            e += 0x38800000;
+            mantissa_table[i] = m | e;
+        }
+
+        // normals
+        for (int i = 1024; i < 2048; i++) {
+            mantissa_table[i] = (i - 1024) << 13;
+        }
+
+
+        // Init exponent table.
+        exponent_table[0] = 0;
+
+        for (int i = 1; i < 31; i++) {
+            exponent_table[i] = 0x38000000 + (i << 23);
+        }
+
+        exponent_table[31] = 0x7f800000;
+        exponent_table[32] = 0x80000000;
+
+        for (int i = 33; i < 63; i++) {
+            exponent_table[i] = 0xb8000000 + ((i - 32) << 23);
+        }
+
+        exponent_table[63] = 0xff800000;
+
+
+        // Init offset table.
+        offset_table[0] = 0;
+
+        for (int i = 1; i < 32; i++) {
+            offset_table[i] = 1024;
+        }
+
+        offset_table[32] = 0;
+
+        for (int i = 33; i < 64; i++) {
+            offset_table[i] = 1024;
+        }
+    }
+
+    // Fast half to float conversion based on:
+    // http://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
+    inline uint32_t fast_half_to_float(uint16_t h)
+    {
+        // Initialize table if necessary.
+        if (mantissa_table[0] != 0)
+            half_init_tables();
+        uint32_t exp = h >> 10;
+        return mantissa_table[offset_table[exp] + (h & 0x3ff)] + exponent_table[exp];
+    }
+
+    inline float to_float(uint16_t c) {
+        union { float f; uint32_t u; } f;
+        f.u = fast_half_to_float(c);
+        return f.f;
+    }
+
+    inline void HalfToRGBE(_Out_writes_(width * 4) uint8_t* pDestination, _In_reads_(width* fpp) const uint16_t* pSource, size_t width, _In_range_(3, 4) int fpp) noexcept
+    {
+        auto ePtr = pSource + width * size_t(fpp);
+
+        for (size_t j = 0; j < width; ++j)
+        {
+            if (pSource + 2 >= ePtr) break;
+            float r = to_float(pSource[0]) >= 0.f ? to_float(pSource[0]) : 0.f;
+            float g = to_float(pSource[1]) >= 0.f ? to_float(pSource[1]) : 0.f;
+            float b = to_float(pSource[2]) >= 0.f ? to_float(pSource[2]) : 0.f;
+            pSource += fpp;
+
+            const float max_xy = (r > g) ? r : g;
+            float max_xyz = (max_xy > b) ? max_xy : b;
+
+            if (max_xyz > 1e-32f)
+            {
+                int e;
+                max_xyz = frexpf(max_xyz, &e) * 256.f / max_xyz;
+                e += 128;
+
+                uint8_t red = uint8_t(r * max_xyz);
+                uint8_t green = uint8_t(g * max_xyz);
+                uint8_t blue = uint8_t(b * max_xyz);
+
+                pDestination[0] = red;
+                pDestination[1] = green;
+                pDestination[2] = blue;
+                pDestination[3] = (red || green || blue) ? uint8_t(e & 0xff) : 0u;
+            }
+            else
+            {
+                pDestination[0] = pDestination[1] = pDestination[2] = pDestination[3] = 0;
+            }
+
+            pDestination += 4;
+        }
+    }
+
+    //-------------------------------------------------------------------------------------
     // Encode using Adapative RLE
     //-------------------------------------------------------------------------------------
     _Success_(return > 0)
@@ -885,7 +1006,9 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob) noexcept
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
         fpp = 4;
         break;
-
+    case DXGI_FORMAT_R16G16B16A16_FLOAT:
+        fpp = 4;
+        break;
     case DXGI_FORMAT_R32G32B32_FLOAT:
         fpp = 3;
         break;
@@ -937,7 +1060,14 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob) noexcept
     const uint8_t* sPtr = image.pixels;
     for (size_t scan = 0; scan < image.height; ++scan)
     {
-        FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
+        if (image.format == DXGI_FORMAT_R32G32B32A32_FLOAT || image.format == DXGI_FORMAT_R32G32B32_FLOAT)
+        {
+            FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
+        }
+        else if (image.format == DXGI_FORMAT_R16G16B16A16_FLOAT)
+        {
+            HalfToRGBE(rgbe, reinterpret_cast<const uint16_t*>(sPtr), image.width, fpp);
+        }
         sPtr += image.rowPitch;
 
         size_t encSize = EncodeRLE(enc, rgbe, rowPitch, image.width);
@@ -990,7 +1120,9 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
         fpp = 4;
         break;
-
+    case DXGI_FORMAT_R16G16B16A16_FLOAT:
+        fpp = 4;
+        break;
     case DXGI_FORMAT_R32G32B32_FLOAT:
         fpp = 3;
         break;
@@ -1088,7 +1220,14 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
         const uint8_t* sPtr = image.pixels;
         for (size_t scan = 0; scan < image.height; ++scan)
         {
-            FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
+             if (image.format == DXGI_FORMAT_R32G32B32A32_FLOAT || image.format == DXGI_FORMAT_R32G32B32_FLOAT)
+            {
+                FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
+            }
+            else if (image.format == DXGI_FORMAT_R16G16B16A16_FLOAT)
+            {
+                HalfToRGBE(rgbe, reinterpret_cast<const uint16_t*>(sPtr), image.width, fpp);
+            }
             sPtr += image.rowPitch;
 
             size_t encSize = EncodeRLE(enc, rgbe, rowPitch, image.width);
