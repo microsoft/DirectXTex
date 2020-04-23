@@ -418,9 +418,9 @@ namespace
         for (size_t j = 0; j < width; ++j)
         {
             if (pSource + 2 >= ePtr) break;
-            float r = to_float(pSource[0]) >= 0.f ? to_float(pSource[0]) : 0.f;
-            float g = to_float(pSource[1]) >= 0.f ? to_float(pSource[1]) : 0.f;
-            float b = to_float(pSource[2]) >= 0.f ? to_float(pSource[2]) : 0.f;
+            float r = to_float(pSource[0]); r = (r >= 0.f) ? r : 0.f;
+            float g = to_float(pSource[1]); g = (g >= 0.f) ? g : 0.f;
+            float b = to_float(pSource[2]); b = (b >= 0.f) ? b : 0.f;
             pSource += fpp;
 
             const float max_xy = (r > g) ? r : g;
