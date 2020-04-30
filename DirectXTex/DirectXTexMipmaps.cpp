@@ -191,12 +191,12 @@ namespace
     {
         for (size_t sy = 0; sy < N; ++sy)
         {
-            const float fy = (sy + 0.5f) / N;
+            const float fy = (float(sy) + 0.5f) / float(N);
             const float ify = 1.0f - fy;
 
             for (size_t sx = 0; sx < N; ++sx)
             {
-                const float fx = (sx + 0.5f) / N;
+                const float fx = (float(sx) + 0.5f) / float(N);
                 const float ifx = 1.0f - fx;
 
                 // [0]=(x+0, y+0), [1]=(x+0, y+1), [2]=(x+1, y+0), [3]=(x+1, y+1)
@@ -303,7 +303,6 @@ namespace
     {
         float minAlphaScale = 0.0f;
         float maxAlphaScale = 4.0f;
-        float bestAlphaScale = 1.0f;
         float bestError = FLT_MAX;
 
         // Determine desired scale using a binary search. Hardcoded to 10 steps max.
@@ -322,7 +321,6 @@ namespace
             if (error < bestError)
             {
                 bestError = error;
-                bestAlphaScale = alphaScale;
             }
 
             if (currentCoverage < targetCoverage)

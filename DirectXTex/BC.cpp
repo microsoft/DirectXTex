@@ -430,9 +430,9 @@ namespace
                 Clr.b += Error[i].b;
             }
 
-            Color[i].r = static_cast<float>(static_cast<int32_t>(Clr.r * 31.0f + 0.5f) * (1.0f / 31.0f));
-            Color[i].g = static_cast<float>(static_cast<int32_t>(Clr.g * 63.0f + 0.5f) * (1.0f / 63.0f));
-            Color[i].b = static_cast<float>(static_cast<int32_t>(Clr.b * 31.0f + 0.5f) * (1.0f / 31.0f));
+            Color[i].r = static_cast<float>(static_cast<int32_t>(Clr.r * 31.0f + 0.5f)) * (1.0f / 31.0f);
+            Color[i].g = static_cast<float>(static_cast<int32_t>(Clr.g * 63.0f + 0.5f)) * (1.0f / 63.0f);
+            Color[i].b = static_cast<float>(static_cast<int32_t>(Clr.b * 31.0f + 0.5f)) * (1.0f / 31.0f);
 
 #ifdef COLOR_WEIGHTS
             Color[i].a = pColor[i].a;
@@ -918,12 +918,12 @@ void DirectX::D3DXDecodeBC3(XMVECTOR *pColor, const uint8_t *pBC) noexcept
     if (pBC3->alpha[0] > pBC3->alpha[1])
     {
         for (size_t i = 1; i < 7; ++i)
-            fAlpha[i + 1] = (fAlpha[0] * (7 - i) + fAlpha[1] * i) * (1.0f / 7.0f);
+            fAlpha[i + 1] = (fAlpha[0] * float(7u - i) + fAlpha[1] * float(i)) * (1.0f / 7.0f);
     }
     else
     {
         for (size_t i = 1; i < 5; ++i)
-            fAlpha[i + 1] = (fAlpha[0] * (5 - i) + fAlpha[1] * i) * (1.0f / 5.0f);
+            fAlpha[i + 1] = (fAlpha[0] * float(5u - i) + fAlpha[1] * float(i)) * (1.0f / 5.0f);
 
         fAlpha[6] = 0.0f;
         fAlpha[7] = 1.0f;
@@ -969,7 +969,7 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags) n
         if (flags & BC_FLAGS_DITHER_A)
             fAlph += fError[i];
 
-        fAlpha[i] = static_cast<int32_t>(fAlph * 255.0f + 0.5f) * (1.0f / 255.0f);
+        fAlpha[i] = static_cast<float>(static_cast<int32_t>(fAlph * 255.0f + 0.5f)) * (1.0f / 255.0f);
 
         if (fAlpha[i] < fMinAlpha)
             fMinAlpha = fAlpha[i];
@@ -1062,7 +1062,7 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags) n
         fStep[1] = fAlphaB;
 
         for (size_t i = 1; i < 5; ++i)
-            fStep[i + 1] = (fStep[0] * (5 - i) + fStep[1] * i) * (1.0f / 5.0f);
+            fStep[i + 1] = (fStep[0] * float(5u - i) + fStep[1] * float(i)) * (1.0f / 5.0f);
 
         fStep[6] = 0.0f;
         fStep[7] = 1.0f;
@@ -1078,7 +1078,7 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags) n
         fStep[1] = fAlphaA;
 
         for (size_t i = 1; i < 7; ++i)
-            fStep[i + 1] = (fStep[0] * (7 - i) + fStep[1] * i) * (1.0f / 7.0f);
+            fStep[i + 1] = (fStep[0] * float(7u - i) + fStep[1] * float(i)) * (1.0f / 7.0f);
 
         pSteps = pSteps8;
     }
