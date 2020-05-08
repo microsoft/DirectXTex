@@ -952,7 +952,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         return hr;
 
     // Determine source format's WIC equivalent
-    WICPixelFormatGUID pfGuid;
+    WICPixelFormatGUID pfGuid = {};
     bool sRGB = forceSRGB;
     switch ( desc.Format )
     {
@@ -1060,7 +1060,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         return hr;
 
     // Pick a target format
-    WICPixelFormatGUID targetGuid;
+    WICPixelFormatGUID targetGuid = {};
     if ( targetFormat )
     {
         targetGuid = *targetFormat;

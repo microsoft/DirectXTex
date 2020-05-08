@@ -1035,7 +1035,7 @@ namespace
 
                         D3D12_SUBRESOURCE_DATA res =
                         {
-                            reinterpret_cast<const void*>(pSrcBits),
+                            pSrcBits,
                             static_cast<LONG_PTR>(RowBytes),
                             static_cast<LONG_PTR>(NumBytes)
                         };
@@ -1126,7 +1126,8 @@ namespace
             IID_ID3D12Resource, reinterpret_cast<void**>(texture));
         if (SUCCEEDED(hr))
         {
-            _Analysis_assume_(*texture != nullptr);
+            assert(texture != nullptr && *texture != nullptr);
+            _Analysis_assume_(texture != nullptr && *texture != nullptr);
 
             SetDebugObjectName(*texture, L"DDSTextureLoader");
         }
@@ -1166,7 +1167,7 @@ namespace
         if ((header->ddspf.flags & DDS_FOURCC) &&
             (MAKEFOURCC('D', 'X', '1', '0') == header->ddspf.fourCC))
         {
-            auto d3d10ext = reinterpret_cast<const DDS_HEADER_DXT10*>(reinterpret_cast<const uint8_t*>(header) + sizeof(DDS_HEADER));
+            auto d3d10ext = reinterpret_cast<const DDS_HEADER_DXT10*>(reinterpret_cast<const char*>(header) + sizeof(DDS_HEADER));
 
             arraySize = d3d10ext->arraySize;
             if (arraySize == 0)
@@ -1427,7 +1428,7 @@ namespace
         _In_ ID3D12Resource** texture) noexcept
     {
 #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
-        if (texture)
+        if (texture && *texture)
         {
             const wchar_t* pstrName = wcsrchr(fileName, '\\');
             if (!pstrName)
@@ -1439,10 +1440,7 @@ namespace
                 pstrName++;
             }
 
-            if (texture && *texture)
-            {
-                (*texture)->SetName(pstrName);
-            }
+            (*texture)->SetName(pstrName);
         }
 #else
         UNREFERENCED_PARAMETER(fileName);
