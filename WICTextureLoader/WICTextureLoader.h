@@ -36,7 +36,7 @@ namespace DirectX
         WIC_LOADER_DEFAULT      = 0,
         WIC_LOADER_FORCE_SRGB   = 0x1,
         WIC_LOADER_IGNORE_SRGB  = 0x2,
-        WIC_LOADER_FORCE_RGBA32 = 0x4,
+        WIC_LOADER_FORCE_RGBA32 = 0x10,
     };
 #endif
 
