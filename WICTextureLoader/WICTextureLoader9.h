@@ -19,7 +19,9 @@
 
 #pragma once
 
+#ifndef DIRECT3D_VERSION
 #define DIRECT3D_VERSION 0x900
+#endif
 #include <d3d9.h>
 
 #include <cstdint>
@@ -31,7 +33,6 @@ namespace DirectX
     enum WIC_LOADER_FLAGS : uint32_t
     {
         WIC_LOADER_DEFAULT = 0,
-        WIC_LOADER_MIP_AUTOGEN = 0x4,
         WIC_LOADER_FORCE_RGBA32 = 0x10,
     };
 #endif

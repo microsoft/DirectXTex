@@ -15,7 +15,10 @@
 
 #pragma once
 
+#ifndef DIRECT3D_VERSION
 #define DIRECT3D_VERSION 0x900
+#endif
+
 #include <d3d9.h>
 
 #include <cstdint>
