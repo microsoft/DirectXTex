@@ -731,6 +731,288 @@ namespace
 
         return D3DFMT_UNKNOWN;
     }
+
+
+    //--------------------------------------------------------------------------------------
+    HRESULT CreateTextureFromDDS(
+        _In_ LPDIRECT3DDEVICE9 device,
+        _In_ const DDS_HEADER* header,
+        _In_reads_bytes_(bitSize) const uint8_t* bitData,
+        _In_ size_t bitSize,
+        _Outptr_ LPDIRECT3DBASETEXTURE9* texture,
+        bool generateMipsIfMissing) noexcept
+    {
+        HRESULT hr = S_OK;
+
+        UINT iWidth = header->width;
+        UINT iHeight = header->height;
+
+        UINT iMipCount = header->mipMapCount;
+        if (0 == iMipCount)
+        {
+            iMipCount = 1;
+        }
+
+        // Bound sizes (for security purposes we don't trust DDS file metadata larger than the D3D 10 hardware requirements)
+        if (iMipCount > 14u /*D3D10_REQ_MIP_LEVELS*/)
+        {
+            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        }
+
+        // We could support a subset of 'DX10' extended header DDS files, but we'll assume here we are only
+        // supporting legacy DDS files for a Direct3D9 device
+
+        D3DFORMAT fmt = GetD3D9Format(header->ddspf);
+        if (fmt == D3DFMT_UNKNOWN || BitsPerPixel(fmt) == 0)
+        {
+            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        }
+
+        if (header->flags & DDS_HEADER_FLAGS_VOLUME)
+        {
+            UINT iDepth = header->depth;
+
+            if ((iWidth > 2048u /*D3D10_REQ_TEXTURE3D_U_V_OR_W_DIMENSION*/)
+                || (iHeight > 2048u /*D3D10_REQ_TEXTURE3D_U_V_OR_W_DIMENSION*/)
+                || (iDepth > 2048u /*D3D10_REQ_TEXTURE3D_U_V_OR_W_DIMENSION*/))
+            {
+                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            }
+
+            // Create the volume texture (let the runtime do the validation)
+            ComPtr<IDirect3DVolumeTexture9> pTexture;
+            hr = device->CreateVolumeTexture(iWidth, iHeight, iDepth, iMipCount,
+                0, fmt, D3DPOOL_DEFAULT, pTexture.GetAddressOf(), nullptr);
+            if (FAILED(hr))
+                return hr;
+
+            ComPtr<IDirect3DVolumeTexture9> pStagingTexture;
+            hr = device->CreateVolumeTexture(iWidth, iHeight, iDepth, iMipCount,
+                0, fmt, D3DPOOL_SYSTEMMEM, pStagingTexture.GetAddressOf(), nullptr);
+            if (FAILED(hr))
+                return hr;
+
+            // Lock, fill, unlock
+            size_t NumBytes = 0;
+            size_t RowBytes = 0;
+            size_t NumRows = 0;
+            const uint8_t* pSrcBits = bitData;
+            const uint8_t* pEndBits = bitData + bitSize;
+            D3DLOCKED_BOX LockedBox = {};
+
+            for (UINT i = 0; i < iMipCount; ++i)
+            {
+                GetSurfaceInfo(iWidth, iHeight, fmt, &NumBytes, &RowBytes, &NumRows);
+
+                if (NumBytes > UINT32_MAX || RowBytes > UINT32_MAX)
+                    return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+                if ((pSrcBits + (NumBytes*iDepth)) > pEndBits)
+                {
+                    return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+                }
+
+                if (SUCCEEDED(pStagingTexture->LockBox(i, &LockedBox, nullptr, 0)))
+                {
+                    auto pDestBits = static_cast<uint8_t*>(LockedBox.pBits);
+
+                    for (UINT j = 0; j < iDepth; ++j)
+                    {
+                        uint8_t *dptr = pDestBits;
+                        const uint8_t *sptr = pSrcBits;
+
+                        // Copy stride line by line
+                        for (size_t h = 0; h < NumRows; h++)
+                        {
+                            memcpy_s(dptr, LockedBox.RowPitch, sptr, RowBytes);
+                            dptr += LockedBox.RowPitch;
+                            sptr += RowBytes;
+                        }
+
+                        pDestBits += LockedBox.SlicePitch;
+                        pSrcBits += NumBytes;
+                    }
+
+                    pStagingTexture->UnlockBox(i);
+                }
+
+                iWidth = iWidth >> 1;
+                iHeight = iHeight >> 1;
+                iDepth = iDepth >> 1;
+                if (iWidth == 0)
+                    iWidth = 1;
+                if (iHeight == 0)
+                    iHeight = 1;
+                if (iDepth == 0)
+                    iDepth = 1;
+            }
+
+            hr = device->UpdateTexture(pStagingTexture.Get(), pTexture.Get());
+            if (FAILED(hr))
+                return hr;
+
+            *texture = pTexture.Detach();
+        }
+        else if (header->caps2 & DDS_CUBEMAP)
+        {
+            if ((iWidth > 8192u /*D3D10_REQ_TEXTURECUBE_DIMENSION*/)
+                || (iHeight > 8192u /*D3D10_REQ_TEXTURECUBE_DIMENSION*/))
+            {
+                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            }
+
+            // We require at least one face to be defined, and the faces must be square
+            if ((header->caps2 & DDS_CUBEMAP_ALLFACES) == 0 || iHeight != iWidth)
+            {
+                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            }
+
+            // Create the cubemap (let the runtime do the validation)
+            ComPtr<IDirect3DCubeTexture9> pTexture;
+            hr = device->CreateCubeTexture(iWidth, iMipCount,
+                0, fmt, D3DPOOL_DEFAULT, pTexture.GetAddressOf(), nullptr);
+            if (FAILED(hr))
+                return hr;
+
+            ComPtr<IDirect3DCubeTexture9> pStagingTexture;
+            hr = device->CreateCubeTexture(iWidth, iMipCount,
+                0, fmt, D3DPOOL_SYSTEMMEM, pStagingTexture.GetAddressOf(), nullptr);
+            if (FAILED(hr))
+                return hr;
+
+            // Lock, fill, unlock
+            size_t NumBytes = 0;
+            size_t RowBytes = 0;
+            size_t NumRows = 0;
+            const uint8_t* pSrcBits = bitData;
+            const uint8_t* pEndBits = bitData + bitSize;
+            D3DLOCKED_RECT LockedRect = {};
+
+            UINT mask = DDS_CUBEMAP_POSITIVEX & ~DDS_CUBEMAP;
+            for (UINT f = 0; f < 6; ++f, mask <<= 1)
+            {
+                if (!(header->caps2 & mask))
+                    continue;
+
+                UINT w = iWidth;
+                UINT h = iHeight;
+                for (UINT i = 0; i < iMipCount; ++i)
+                {
+                    GetSurfaceInfo(w, h, fmt, &NumBytes, &RowBytes, &NumRows);
+
+                    if (NumBytes > UINT32_MAX || RowBytes > UINT32_MAX)
+                        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+                    if ((pSrcBits + NumBytes) > pEndBits)
+                    {
+                        return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+                    }
+
+                    if (SUCCEEDED(pStagingTexture->LockRect(static_cast<D3DCUBEMAP_FACES>(f), i, &LockedRect, nullptr, 0)))
+                    {
+                        auto pDestBits = static_cast<uint8_t*>(LockedRect.pBits);
+
+                        // Copy stride line by line
+                        for (size_t r = 0; r < NumRows; r++)
+                        {
+                            memcpy_s(pDestBits, LockedRect.Pitch, pSrcBits, RowBytes);
+                            pDestBits += LockedRect.Pitch;
+                            pSrcBits += RowBytes;
+                        }
+
+                        pStagingTexture->UnlockRect(static_cast<D3DCUBEMAP_FACES>(f), i);
+                    }
+
+                    w = w >> 1;
+                    h = h >> 1;
+                    if (w == 0)
+                        w = 1;
+                    if (h == 0)
+                        h = 1;
+                }
+            }
+
+            hr = device->UpdateTexture(pStagingTexture.Get(), pTexture.Get());
+            if (FAILED(hr))
+                return hr;
+
+            *texture = pTexture.Detach();
+        }
+        else
+        {
+            if ((iWidth > 8192u /*D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION*/)
+                || (iHeight > 8192u /*D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION*/))
+            {
+                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            }
+
+            // Create the texture (let the runtime do the validation)
+            ComPtr<IDirect3DTexture9> pTexture;
+            hr = device->CreateTexture(iWidth, iHeight, iMipCount,
+                generateMipsIfMissing ? D3DUSAGE_AUTOGENMIPMAP : 0u,
+                fmt, D3DPOOL_DEFAULT,
+                pTexture.GetAddressOf(), nullptr);
+            if (FAILED(hr))
+                return hr;
+
+            ComPtr<IDirect3DTexture9> pStagingTexture;
+            hr = device->CreateTexture(iWidth, iHeight, iMipCount,
+                0u, fmt, D3DPOOL_SYSTEMMEM, pStagingTexture.GetAddressOf(), nullptr);
+            if (FAILED(hr))
+                return hr;
+
+            // Lock, fill, unlock
+            size_t NumBytes = 0;
+            size_t RowBytes = 0;
+            size_t NumRows = 0;
+            const uint8_t* pSrcBits = bitData;
+            const uint8_t* pEndBits = bitData + bitSize;
+            D3DLOCKED_RECT LockedRect = {};
+
+            for (UINT i = 0; i < iMipCount; ++i)
+            {
+                GetSurfaceInfo(iWidth, iHeight, fmt, &NumBytes, &RowBytes, &NumRows);
+
+                if (NumBytes > UINT32_MAX || RowBytes > UINT32_MAX)
+                    return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+
+                if ((pSrcBits + NumBytes) > pEndBits)
+                {
+                    return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+                }
+
+                if (SUCCEEDED(pStagingTexture->LockRect(i, &LockedRect, nullptr, 0)))
+                {
+                    auto pDestBits = static_cast<uint8_t*>(LockedRect.pBits);
+
+                    // Copy stride line by line
+                    for (UINT h = 0; h < NumRows; h++)
+                    {
+                        memcpy_s(pDestBits, LockedRect.Pitch, pSrcBits, RowBytes);
+                        pDestBits += LockedRect.Pitch;
+                        pSrcBits += RowBytes;
+                    }
+
+                    pStagingTexture->UnlockRect(i);
+                }
+
+                iWidth = iWidth >> 1;
+                iHeight = iHeight >> 1;
+                if (iWidth == 0)
+                    iWidth = 1;
+                if (iHeight == 0)
+                    iHeight = 1;
+            }
+
+            hr = device->UpdateTexture(pStagingTexture.Get(), pTexture.Get());
+            if (FAILED(hr))
+                return hr;
+
+            *texture = pTexture.Detach();
+        }
+
+        return hr;
+    }
 } // anonymous namespace
 
 //--------------------------------------------------------------------------------------
@@ -739,7 +1021,8 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
     LPDIRECT3DDEVICE9 d3dDevice,
     const uint8_t* ddsData,
     size_t ddsDataSize,
-    LPDIRECT3DBASETEXTURE9* texture) noexcept
+    LPDIRECT3DBASETEXTURE9* texture,
+    bool generateMipsIfMissing) noexcept
 {
     if (texture)
     {
@@ -762,12 +1045,15 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
         &bitSize
     );
     if (FAILED(hr))
-    {
         return hr;
-    }
 
-    // TODO -
-    return E_NOTIMPL;
+    return CreateTextureFromDDS(
+        d3dDevice,
+        header,
+        bitData,
+        bitSize,
+        texture,
+        generateMipsIfMissing);
 }
 
 // Type-specific versions
@@ -776,7 +1062,8 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
     LPDIRECT3DDEVICE9 d3dDevice,
     const uint8_t* ddsData,
     size_t ddsDataSize,
-    LPDIRECT3DTEXTURE9* texture) noexcept
+    LPDIRECT3DTEXTURE9* texture,
+    bool generateMipsIfMissing) noexcept
 {
     if (texture)
     {
@@ -787,7 +1074,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
         return E_INVALIDARG;
 
     ComPtr<IDirect3DBaseTexture9> tex;
-    HRESULT hr = CreateDDSTextureFromMemory(d3dDevice, ddsData, ddsDataSize, tex.GetAddressOf());
+    HRESULT hr = CreateDDSTextureFromMemory(d3dDevice, ddsData, ddsDataSize, tex.GetAddressOf(), generateMipsIfMissing);
     if (SUCCEEDED(hr))
     {
         hr = E_FAIL;
@@ -817,7 +1104,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
         return E_INVALIDARG;
 
     ComPtr<IDirect3DBaseTexture9> tex;
-    HRESULT hr = CreateDDSTextureFromMemory(d3dDevice, ddsData, ddsDataSize, tex.GetAddressOf());
+    HRESULT hr = CreateDDSTextureFromMemory(d3dDevice, ddsData, ddsDataSize, tex.GetAddressOf(), false);
     if (SUCCEEDED(hr))
     {
         hr = E_FAIL;
@@ -847,7 +1134,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
         return E_INVALIDARG;
 
     ComPtr<IDirect3DBaseTexture9> tex;
-    HRESULT hr = CreateDDSTextureFromMemory(d3dDevice, ddsData, ddsDataSize, tex.GetAddressOf());
+    HRESULT hr = CreateDDSTextureFromMemory(d3dDevice, ddsData, ddsDataSize, tex.GetAddressOf(), false);
     if (SUCCEEDED(hr))
     {
         hr = E_FAIL;
@@ -866,38 +1153,61 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
 _Use_decl_annotations_
 HRESULT DirectX::CreateDDSTextureFromFile(
     LPDIRECT3DDEVICE9 d3dDevice,
-    const wchar_t* szFileName,
-    LPDIRECT3DBASETEXTURE9* texture) noexcept
+    const wchar_t* fileName,
+    LPDIRECT3DBASETEXTURE9* texture,
+    bool generateMipsIfMissing) noexcept
 {
     if (texture)
     {
         *texture = nullptr;
     }
 
-    if (!d3dDevice || !szFileName || !texture)
+    if (!d3dDevice || !fileName || !texture)
         return E_INVALIDARG;
 
-    // TODO -
-    return E_NOTIMPL;
+    const DDS_HEADER* header = nullptr;
+    const uint8_t* bitData = nullptr;
+    size_t bitSize = 0;
+
+    std::unique_ptr<uint8_t[]> ddsData;
+    HRESULT hr = LoadTextureDataFromFile(fileName,
+        ddsData,
+        &header,
+        &bitData,
+        &bitSize
+    );
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    return CreateTextureFromDDS(
+        d3dDevice,
+        header,
+        bitData,
+        bitSize,
+        texture,
+        generateMipsIfMissing);
 }
 
 // Type-specific versions
 _Use_decl_annotations_
 HRESULT DirectX::CreateDDSTextureFromFile(
     LPDIRECT3DDEVICE9 d3dDevice,
-    const wchar_t* szFileName,
-    LPDIRECT3DTEXTURE9* texture) noexcept
+    const wchar_t* fileName,
+    LPDIRECT3DTEXTURE9* texture,
+    bool generateMipsIfMissing) noexcept
 {
     if (texture)
     {
         *texture = nullptr;
     }
 
-    if (!d3dDevice || !szFileName || !texture)
+    if (!d3dDevice || !fileName || !texture)
         return E_INVALIDARG;
 
     ComPtr<IDirect3DBaseTexture9> tex;
-    HRESULT hr = CreateDDSTextureFromFile(d3dDevice, szFileName, tex.GetAddressOf());
+    HRESULT hr = CreateDDSTextureFromFile(d3dDevice, fileName, tex.GetAddressOf(), generateMipsIfMissing);
     if (SUCCEEDED(hr))
     {
         hr = E_FAIL;
@@ -914,7 +1224,7 @@ HRESULT DirectX::CreateDDSTextureFromFile(
 _Use_decl_annotations_
 HRESULT DirectX::CreateDDSTextureFromFile(
     LPDIRECT3DDEVICE9 d3dDevice,
-    const wchar_t* szFileName,
+    const wchar_t* fileName,
     LPDIRECT3DCUBETEXTURE9* texture) noexcept
 {
     if (texture)
@@ -922,11 +1232,11 @@ HRESULT DirectX::CreateDDSTextureFromFile(
         *texture = nullptr;
     }
 
-    if (!d3dDevice || !szFileName || !texture)
+    if (!d3dDevice || !fileName || !texture)
         return E_INVALIDARG;
 
     ComPtr<IDirect3DBaseTexture9> tex;
-    HRESULT hr = CreateDDSTextureFromFile(d3dDevice, szFileName, tex.GetAddressOf());
+    HRESULT hr = CreateDDSTextureFromFile(d3dDevice, fileName, tex.GetAddressOf(), false);
     if (SUCCEEDED(hr))
     {
         hr = E_FAIL;
@@ -955,7 +1265,7 @@ HRESULT DirectX::CreateDDSTextureFromFile(
         return E_INVALIDARG;
 
     ComPtr<IDirect3DBaseTexture9> tex;
-    HRESULT hr = CreateDDSTextureFromFile(d3dDevice, szFileName, tex.GetAddressOf());
+    HRESULT hr = CreateDDSTextureFromFile(d3dDevice, szFileName, tex.GetAddressOf(), false);
     if (SUCCEEDED(hr))
     {
         hr = E_FAIL;

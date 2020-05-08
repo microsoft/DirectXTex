@@ -31,24 +31,28 @@ namespace DirectX
         _In_ LPDIRECT3DDEVICE9 d3dDevice,
         _In_reads_bytes_(ddsDataSize) const uint8_t* ddsData,
         _In_ size_t ddsDataSize,
-        _Outptr_ LPDIRECT3DBASETEXTURE9* texture) noexcept;
+        _Outptr_ LPDIRECT3DBASETEXTURE9* texture,
+        bool generateMipsIfMissing = false) noexcept;
 
     HRESULT CreateDDSTextureFromFile(
         _In_ LPDIRECT3DDEVICE9 d3dDevice,
-        _In_z_ const wchar_t* szFileName,
-        _Outptr_ LPDIRECT3DBASETEXTURE9* texture) noexcept;
+        _In_z_ const wchar_t* fileName,
+        _Outptr_ LPDIRECT3DBASETEXTURE9* texture,
+        bool generateMipsIfMissing = false) noexcept;
 
     // Type-specific versions
     HRESULT CreateDDSTextureFromMemory(
         _In_ LPDIRECT3DDEVICE9 d3dDevice,
         _In_reads_bytes_(ddsDataSize) const uint8_t* ddsData,
         _In_ size_t ddsDataSize,
-        _Outptr_ LPDIRECT3DTEXTURE9* texture) noexcept;
+        _Outptr_ LPDIRECT3DTEXTURE9* texture,
+        bool generateMipsIfMissing = false) noexcept;
 
     HRESULT CreateDDSTextureFromFile(
         _In_ LPDIRECT3DDEVICE9 d3dDevice,
-        _In_z_ const wchar_t* szFileName,
-        _Outptr_ LPDIRECT3DTEXTURE9* texture) noexcept;
+        _In_z_ const wchar_t* fileName,
+        _Outptr_ LPDIRECT3DTEXTURE9* texture,
+        bool generateMipsIfMissing = false) noexcept;
 
     HRESULT CreateDDSTextureFromMemory(
         _In_ LPDIRECT3DDEVICE9 d3dDevice,
@@ -58,7 +62,7 @@ namespace DirectX
 
     HRESULT CreateDDSTextureFromFile(
         _In_ LPDIRECT3DDEVICE9 d3dDevice,
-        _In_z_ const wchar_t* szFileName,
+        _In_z_ const wchar_t* fileName,
         _Outptr_ LPDIRECT3DCUBETEXTURE9* texture) noexcept;
 
     HRESULT CreateDDSTextureFromMemory(
@@ -69,6 +73,6 @@ namespace DirectX
 
     HRESULT CreateDDSTextureFromFile(
         _In_ LPDIRECT3DDEVICE9 d3dDevice,
-        _In_z_ const wchar_t* szFileName,
+        _In_z_ const wchar_t* fileName,
         _Outptr_ LPDIRECT3DVOLUMETEXTURE9* texture) noexcept;
 }

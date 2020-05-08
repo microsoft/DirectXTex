@@ -33,6 +33,7 @@ namespace DirectX
     enum WIC_LOADER_FLAGS : uint32_t
     {
         WIC_LOADER_DEFAULT = 0,
+        WIC_LOADER_MIP_AUTOGEN = 0x4,
         WIC_LOADER_FORCE_RGBA32 = 0x10,
     };
 #endif
@@ -43,11 +44,13 @@ namespace DirectX
         _In_reads_bytes_(wicDataSize) const uint8_t* wicData,
         _In_ size_t wicDataSize,
         _Outptr_ LPDIRECT3DTEXTURE9* texture,
+        _In_ size_t maxsize = 0,
         _In_ unsigned int loadFlags = 0) noexcept;
 
     HRESULT CreateWICTextureFromFile(
         _In_ LPDIRECT3DDEVICE9 d3dDevice,
-        _In_z_ const wchar_t* szFileName,
+        _In_z_ const wchar_t* fileName,
         _Outptr_ LPDIRECT3DTEXTURE9* texture,
+        _In_ size_t maxsize = 0,
         _In_ unsigned int loadFlags = 0) noexcept;
 }
