@@ -64,6 +64,7 @@ namespace
         { GUID_WICPixelFormat32bppRGBA1010102,      D3DFMT_A2B10G10R10 },
 
         { GUID_WICPixelFormat16bppBGRA5551,         D3DFMT_A1R5G5B5 },
+        { GUID_WICPixelFormat16bppBGR555,           D3DFMT_X1R5G5B5 },
         { GUID_WICPixelFormat16bppBGR565,           D3DFMT_R5G6B5 },
 
         { GUID_WICPixelFormat32bppGrayFloat,        D3DFMT_R32F },
@@ -100,8 +101,6 @@ namespace
 
         { GUID_WICPixelFormat16bppGrayFixedPoint,   GUID_WICPixelFormat16bppGrayHalf }, // D3DFMT_R16F 
         { GUID_WICPixelFormat32bppGrayFixedPoint,   GUID_WICPixelFormat32bppGrayFloat }, // D3DFMT_R32F 
-
-        { GUID_WICPixelFormat16bppBGR555,           GUID_WICPixelFormat16bppBGRA5551 }, // D3DFMT_A1R5G5B5
 
         { GUID_WICPixelFormat32bppBGR101010,        GUID_WICPixelFormat32bppRGBA1010102 }, // D3DFMT_A2B10G10R10
 
