@@ -55,7 +55,7 @@ namespace
             if (red_0 > red_1)
             {
                 uIndex -= 1;
-                return (fred_0 * (7 - uIndex) + fred_1 * uIndex) / 7.0f;
+                return (fred_0 * float(7u - uIndex) + fred_1 * float(uIndex)) / 7.0f;
             }
             else
             {
@@ -64,7 +64,7 @@ namespace
                 if (uIndex == 7)
                     return 1.0f;
                 uIndex -= 1;
-                return (fred_0 * (5 - uIndex) + fred_1 * uIndex) / 5.0f;
+                return (fred_0 * float(5u - uIndex) + fred_1 * float(uIndex)) / 5.0f;
             }
         }
 
@@ -114,7 +114,7 @@ namespace
             if (red_0 > red_1)
             {
                 uIndex -= 1;
-                return (fred_0 * (7 - uIndex) + fred_1 * uIndex) / 7.0f;
+                return (fred_0 * float(7u - uIndex) + fred_1 * float(uIndex)) / 7.0f;
             }
             else
             {
@@ -123,7 +123,7 @@ namespace
                 if (uIndex == 7)
                     return 1.0f;
                 uIndex -= 1;
-                return (fred_0 * (5 - uIndex) + fred_1 * uIndex) / 5.0f;
+                return (fred_0 * float(5u - uIndex) + fred_1 * float(uIndex)) / 5.0f;
             }
         }
 

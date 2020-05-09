@@ -1297,7 +1297,7 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
                 *(dPtr++) = XMVectorSet(float(std::min<int>(std::max<int>(r, 0), 255)) / 255.f,
                     float(std::min<int>(std::max<int>(g, 0), 255)) / 255.f,
                     float(std::min<int>(std::max<int>(b, 0), 255)) / 255.f,
-                    float(a / 255.f));
+                    float(a) / 255.f);
             }
             return true;
         }
@@ -1333,7 +1333,7 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
                 *(dPtr++) = XMVectorSet(float(std::min<int>(std::max<int>(r, 0), 1023)) / 1023.f,
                     float(std::min<int>(std::max<int>(g, 0), 1023)) / 1023.f,
                     float(std::min<int>(std::max<int>(b, 0), 1023)) / 1023.f,
-                    float(a / 3.f));
+                    float(a) / 3.f);
             }
             return true;
         }

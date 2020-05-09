@@ -88,21 +88,21 @@ struct CD3DX12_VIEWPORT : public D3D12_VIEWPORT
         case D3D12_RESOURCE_DIMENSION_BUFFER:
             TopLeftX = topLeftX;
             TopLeftY = 0.0f;
-            Width = Desc.Width - topLeftX;
+            Width = float(Desc.Width) - topLeftX;
             Height = 1.0f;
             break;
         case D3D12_RESOURCE_DIMENSION_TEXTURE1D:
             TopLeftX = topLeftX;
             TopLeftY = 0.0f;
-            Width = (SubresourceWidth ? SubresourceWidth : 1.0f) - topLeftX;
+            Width = (SubresourceWidth ? float(SubresourceWidth) : 1.0f) - topLeftX;
             Height = 1.0f;
             break;
         case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
         case D3D12_RESOURCE_DIMENSION_TEXTURE3D:
             TopLeftX = topLeftX;
             TopLeftY = topLeftY;
-            Width = (SubresourceWidth ? SubresourceWidth : 1.0f) - topLeftX;
-            Height = (SubresourceHeight ? SubresourceHeight: 1.0f) - topLeftY;
+            Width = (SubresourceWidth ? float(SubresourceWidth) : 1.0f) - topLeftX;
+            Height = (SubresourceHeight ? float(SubresourceHeight) : 1.0f) - topLeftY;
             break;
         default: break;
         }
@@ -2414,7 +2414,6 @@ struct D3DX12_MESH_SHADER_PIPELINE_STATE_DESC
     UINT                          SampleMask;
     D3D12_RASTERIZER_DESC         RasterizerState;
     D3D12_DEPTH_STENCIL_DESC      DepthStencilState;
-    D3D12_INDEX_BUFFER_STRIP_CUT_VALUE IBStripCutValue;
     D3D12_PRIMITIVE_TOPOLOGY_TYPE PrimitiveTopologyType;
     UINT                          NumRenderTargets;
     DXGI_FORMAT                   RTVFormats[ D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT ];
@@ -2459,7 +2458,6 @@ struct CD3DX12_PIPELINE_STATE_STREAM2
         : Flags(Desc.Flags)
         , NodeMask(Desc.NodeMask)
         , pRootSignature(Desc.pRootSignature)
-        , IBStripCutValue(Desc.IBStripCutValue)
         , PrimitiveTopologyType(Desc.PrimitiveTopologyType)
         , PS(Desc.PS)
         , AS(Desc.AS)
@@ -2581,7 +2579,6 @@ struct CD3DX12_PIPELINE_STATE_STREAM1
         : Flags(Desc.Flags)
         , NodeMask(Desc.NodeMask)
         , pRootSignature(Desc.pRootSignature)
-        , IBStripCutValue(Desc.IBStripCutValue)
         , PrimitiveTopologyType(Desc.PrimitiveTopologyType)
         , PS(Desc.PS)
         , BlendState(CD3DX12_BLEND_DESC(Desc.BlendState))
@@ -3092,7 +3089,6 @@ inline HRESULT D3DX12ParsePipelineStream(const D3D12_PIPELINE_STATE_STREAM_DESC&
         default:
             pCallbacks->ErrorUnknownSubobject(SubobjectType);
             return E_INVALIDARG;
-            break;
         }
     }
 
