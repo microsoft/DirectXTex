@@ -58,9 +58,6 @@ namespace
         { GUID_WICPixelFormat64bppRGBAHalf,         D3DFMT_A16B16G16R16F },
         { GUID_WICPixelFormat64bppRGBA,             D3DFMT_A16B16G16R16 },
 
-        { GUID_WICPixelFormat24bppBGR,              D3DFMT_R8G8B8 },
-
-        { GUID_WICPixelFormat32bppRGBA,             D3DFMT_A8B8G8R8 },
         { GUID_WICPixelFormat32bppBGRA,             D3DFMT_A8R8G8B8 },
         { GUID_WICPixelFormat32bppBGR,              D3DFMT_X8R8G8B8 },
 
@@ -93,10 +90,10 @@ namespace
 
         { GUID_WICPixelFormatBlackWhite,            GUID_WICPixelFormat8bppGray }, // D3DFMT_L8
 
-        { GUID_WICPixelFormat1bppIndexed,           GUID_WICPixelFormat32bppRGBA }, // D3DFMT_A8B8G8R8 
-        { GUID_WICPixelFormat2bppIndexed,           GUID_WICPixelFormat32bppRGBA }, // D3DFMT_A8B8G8R8 
-        { GUID_WICPixelFormat4bppIndexed,           GUID_WICPixelFormat32bppRGBA }, // D3DFMT_A8B8G8R8 
-        { GUID_WICPixelFormat8bppIndexed,           GUID_WICPixelFormat32bppRGBA }, // D3DFMT_A8B8G8R8 
+        { GUID_WICPixelFormat1bppIndexed,           GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
+        { GUID_WICPixelFormat2bppIndexed,           GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
+        { GUID_WICPixelFormat4bppIndexed,           GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
+        { GUID_WICPixelFormat8bppIndexed,           GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
 
         { GUID_WICPixelFormat2bppGray,              GUID_WICPixelFormat8bppGray }, // D3DFMT_L8 
         { GUID_WICPixelFormat4bppGray,              GUID_WICPixelFormat8bppGray }, // D3DFMT_L8 
@@ -108,10 +105,13 @@ namespace
 
         { GUID_WICPixelFormat32bppBGR101010,        GUID_WICPixelFormat32bppRGBA1010102 }, // D3DFMT_A2B10G10R10
 
-        { GUID_WICPixelFormat24bppRGB,              GUID_WICPixelFormat24bppBGR }, // D3DFMT_R8G8B8
+        { GUID_WICPixelFormat24bppBGR,              GUID_WICPixelFormat32bppBGR }, // D3DFMT_X8R8G8B8
+        { GUID_WICPixelFormat24bppRGB,              GUID_WICPixelFormat32bppBGR }, // D3DFMT_X8R8G8B8
 
-        { GUID_WICPixelFormat32bppPBGRA,            GUID_WICPixelFormat32bppRGBA }, // D3DFMT_A8B8G8R8 
-        { GUID_WICPixelFormat32bppPRGBA,            GUID_WICPixelFormat32bppRGBA }, // D3DFMT_A8B8G8R8 
+        { GUID_WICPixelFormat32bppRGBA,             GUID_WICPixelFormat32bppBGRA }, // D3DFMT_X8R8G8B8
+
+        { GUID_WICPixelFormat32bppPBGRA,            GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
+        { GUID_WICPixelFormat32bppPRGBA,            GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
 
         { GUID_WICPixelFormat48bppRGB,              GUID_WICPixelFormat64bppRGBA }, // D3DFMT_A16B16G16R16
         { GUID_WICPixelFormat48bppBGR,              GUID_WICPixelFormat64bppRGBA }, // D3DFMT_A16B16G16R16
@@ -133,13 +133,13 @@ namespace
         { GUID_WICPixelFormat128bppRGBFixedPoint,   GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F 
         { GUID_WICPixelFormat32bppRGBE,             GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F
 
-        { GUID_WICPixelFormat32bppCMYK,             GUID_WICPixelFormat32bppRGBA }, // D3DFMT_A8B8G8R8
+        { GUID_WICPixelFormat32bppCMYK,             GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
         { GUID_WICPixelFormat64bppCMYK,             GUID_WICPixelFormat64bppRGBA }, // D3DFMT_A16B16G16R16
-        { GUID_WICPixelFormat40bppCMYKAlpha,        GUID_WICPixelFormat32bppRGBA }, // D3DFMT_A8B8G8R8
+        { GUID_WICPixelFormat40bppCMYKAlpha,        GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
         { GUID_WICPixelFormat80bppCMYKAlpha,        GUID_WICPixelFormat64bppRGBA }, // D3DFMT_A16B16G16R16
 
     #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
-        { GUID_WICPixelFormat32bppRGB,              GUID_WICPixelFormat32bppRGBA }, // D3DFMT_A8B8G8R8
+        { GUID_WICPixelFormat32bppRGB,              GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
         { GUID_WICPixelFormat64bppRGB,              GUID_WICPixelFormat64bppRGBA }, // D3DFMT_A16B16G16R16
         { GUID_WICPixelFormat64bppPRGBAHalf,        GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F 
         { GUID_WICPixelFormat96bppRGBFloat,         GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F 
@@ -342,8 +342,8 @@ namespace
 
         if (loadFlags & WIC_LOADER_FORCE_RGBA32)
         {
-            memcpy_s(&convertGUID, sizeof(WICPixelFormatGUID), &GUID_WICPixelFormat32bppRGBA, sizeof(GUID));
-            format = D3DFMT_A8B8G8R8;
+            memcpy_s(&convertGUID, sizeof(WICPixelFormatGUID), &GUID_WICPixelFormat32bppBGRA, sizeof(GUID));
+            format = D3DFMT_A8R8G8B8;
         }
 
         // Create texture
