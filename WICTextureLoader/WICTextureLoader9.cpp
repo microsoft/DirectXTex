@@ -219,6 +219,47 @@ namespace
     }
 
     //---------------------------------------------------------------------------------
+    void FitPowerOf2(UINT origx, UINT origy, UINT& targetx, UINT& targety, size_t maxsize)
+    {
+        float origAR = float(origx) / float(origy);
+
+        if (origx > origy)
+        {
+            size_t x;
+            for (x = maxsize; x > 1; x >>= 1) { if (x <= targetx) break; }
+            targetx = UINT(x);
+
+            float bestScore = FLT_MAX;
+            for (size_t y = maxsize; y > 0; y >>= 1)
+            {
+                float score = fabsf((float(x) / float(y)) - origAR);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    targety = UINT(y);
+                }
+            }
+        }
+        else
+        {
+            size_t y;
+            for (y = maxsize; y > 1; y >>= 1) { if (y <= targety) break; }
+            targety = UINT(y);
+
+            float bestScore = FLT_MAX;
+            for (size_t x = maxsize; x > 0; x >>= 1)
+            {
+                float score = fabsf((float(x) / float(y)) - origAR);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    targetx = UINT(x);
+                }
+            }
+        }
+    }
+
+    //---------------------------------------------------------------------------------
     HRESULT CreateTextureFromWIC(
         _In_ LPDIRECT3DDEVICE9 device,
         _In_ IWICBitmapFrameDecode *frame,
@@ -243,8 +284,13 @@ namespace
 
         assert(maxsize > 0);
 
-        UINT twidth, theight;
-        if (width > maxsize || height > maxsize)
+        UINT twidth = width;
+        UINT theight = height;
+        if (loadFlags & WIC_LOADER_FIT_POW2)
+        {
+            FitPowerOf2(width, height, twidth, theight, maxsize);
+        }
+        else if (width > maxsize || height > maxsize)
         {
             float ar = static_cast<float>(height) / static_cast<float>(width);
             if (width > height)
@@ -259,10 +305,11 @@ namespace
             }
             assert(twidth <= maxsize && theight <= maxsize);
         }
-        else
+
+        if (loadFlags & WIC_LOADER_MAKE_SQUARE)
         {
-            twidth = width;
-            theight = height;
+            twidth = std::max<UINT>(twidth, theight);
+            theight = twidth;
         }
 
         // Determine format
@@ -299,10 +346,20 @@ namespace
             format = D3DFMT_A8B8G8R8;
         }
 
+        // Create texture
+        ComPtr<IDirect3DTexture9> pTexture;
+        hr = device->CreateTexture(twidth, theight, 1u,
+            (loadFlags & WIC_LOADER_MIP_AUTOGEN) ? D3DUSAGE_AUTOGENMIPMAP : 0u,
+            format, D3DPOOL_DEFAULT,
+            pTexture.GetAddressOf(), nullptr);
+        if (FAILED(hr))
+            return hr;
+
         // Create staging texture memory
         ComPtr<IDirect3DTexture9> pStagingTexture;
         hr = device->CreateTexture(twidth, theight, 1u,
-            0, format, D3DPOOL_SYSTEMMEM, pStagingTexture.GetAddressOf(), nullptr);
+            0u, format, D3DPOOL_SYSTEMMEM,
+            pStagingTexture.GetAddressOf(), nullptr);
         if (FAILED(hr))
             return hr;
 
@@ -440,15 +497,6 @@ namespace
             if (FAILED(hr))
                 return hr;
         }
-
-        // Create texture
-        ComPtr<IDirect3DTexture9> pTexture;
-        hr = device->CreateTexture(twidth, theight, 1u,
-            (loadFlags & WIC_LOADER_MIP_AUTOGEN) ? D3DUSAGE_AUTOGENMIPMAP : 0u,
-            format, D3DPOOL_DEFAULT,
-            pTexture.GetAddressOf(), nullptr);
-        if (FAILED(hr))
-            return hr;
 
         hr = device->UpdateTexture(pStagingTexture.Get(), pTexture.Get());
         if (FAILED(hr))
