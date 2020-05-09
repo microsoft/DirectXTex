@@ -1,8 +1,8 @@
 //--------------------------------------------------------------------------------------
-// File: ScreenGrab11.cpp
+// File: ScreenGrab9.cpp
 //
-// Function for capturing a 2D texture and saving it to a file (aka a 'screenshot'
-// when used on a Direct3D 11 Render Target).
+// Function for saving 2D surface to a file (aka a 'screenshot'
+// when used on a Direct3D 9's GetFrontBufferData).
 //
 // Note these functions are useful as a light-weight runtime screen grabber. For
 // full-featured texture capture, DDS writer, and texture processing pipeline,
@@ -15,15 +15,8 @@
 // http://go.microsoft.com/fwlink/?LinkId=248929
 //--------------------------------------------------------------------------------------
 
-// Does not capture 1D textures or 3D textures (volume maps)
+#include "ScreenGrab9.h"
 
-// Does not capture mipmap chains, only the top-most texture level is saved
-
-// For 2D array textures and cubemaps, it captures only the first image in the array
-
-#include "ScreenGrab11.h"
-
-#include <dxgiformat.h>
 #include <assert.h>
 
 #include <wincodec.h>
@@ -32,11 +25,6 @@
 
 #include <algorithm>
 #include <memory>
-
-#ifdef __clang__
-#pragma clang diagnostic ignored "-Wcovered-switch-default"
-#pragma clang diagnostic ignored "-Wswitch-enum"
-#endif
 
 using Microsoft::WRL::ComPtr;
 
@@ -253,149 +241,109 @@ namespace
         ComPtr<IWICStream>& m_handle;
     };
 
+
     //--------------------------------------------------------------------------------------
     // Return the BPP for a particular format
     //--------------------------------------------------------------------------------------
-    size_t BitsPerPixel( _In_ DXGI_FORMAT fmt ) noexcept
+    size_t BitsPerPixel(_In_ D3DFORMAT fmt) noexcept
     {
-        switch( fmt )
+        switch (static_cast<int>(fmt))
         {
-        case DXGI_FORMAT_R32G32B32A32_TYPELESS:
-        case DXGI_FORMAT_R32G32B32A32_FLOAT:
-        case DXGI_FORMAT_R32G32B32A32_UINT:
-        case DXGI_FORMAT_R32G32B32A32_SINT:
+        case D3DFMT_A32B32G32R32F:
             return 128;
 
-        case DXGI_FORMAT_R32G32B32_TYPELESS:
-        case DXGI_FORMAT_R32G32B32_FLOAT:
-        case DXGI_FORMAT_R32G32B32_UINT:
-        case DXGI_FORMAT_R32G32B32_SINT:
-            return 96;
-
-        case DXGI_FORMAT_R16G16B16A16_TYPELESS:
-        case DXGI_FORMAT_R16G16B16A16_FLOAT:
-        case DXGI_FORMAT_R16G16B16A16_UNORM:
-        case DXGI_FORMAT_R16G16B16A16_UINT:
-        case DXGI_FORMAT_R16G16B16A16_SNORM:
-        case DXGI_FORMAT_R16G16B16A16_SINT:
-        case DXGI_FORMAT_R32G32_TYPELESS:
-        case DXGI_FORMAT_R32G32_FLOAT:
-        case DXGI_FORMAT_R32G32_UINT:
-        case DXGI_FORMAT_R32G32_SINT:
-        case DXGI_FORMAT_R32G8X24_TYPELESS:
-        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
-        case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
-        case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
-        case DXGI_FORMAT_Y416:
-        case DXGI_FORMAT_Y210:
-        case DXGI_FORMAT_Y216:
+        case D3DFMT_A16B16G16R16:
+        case D3DFMT_Q16W16V16U16:
+        case D3DFMT_A16B16G16R16F:
+        case D3DFMT_G32R32F:
             return 64;
 
-        case DXGI_FORMAT_R10G10B10A2_TYPELESS:
-        case DXGI_FORMAT_R10G10B10A2_UNORM:
-        case DXGI_FORMAT_R10G10B10A2_UINT:
-        case DXGI_FORMAT_R11G11B10_FLOAT:
-        case DXGI_FORMAT_R8G8B8A8_TYPELESS:
-        case DXGI_FORMAT_R8G8B8A8_UNORM:
-        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-        case DXGI_FORMAT_R8G8B8A8_UINT:
-        case DXGI_FORMAT_R8G8B8A8_SNORM:
-        case DXGI_FORMAT_R8G8B8A8_SINT:
-        case DXGI_FORMAT_R16G16_TYPELESS:
-        case DXGI_FORMAT_R16G16_FLOAT:
-        case DXGI_FORMAT_R16G16_UNORM:
-        case DXGI_FORMAT_R16G16_UINT:
-        case DXGI_FORMAT_R16G16_SNORM:
-        case DXGI_FORMAT_R16G16_SINT:
-        case DXGI_FORMAT_R32_TYPELESS:
-        case DXGI_FORMAT_D32_FLOAT:
-        case DXGI_FORMAT_R32_FLOAT:
-        case DXGI_FORMAT_R32_UINT:
-        case DXGI_FORMAT_R32_SINT:
-        case DXGI_FORMAT_R24G8_TYPELESS:
-        case DXGI_FORMAT_D24_UNORM_S8_UINT:
-        case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
-        case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
-        case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
-        case DXGI_FORMAT_R8G8_B8G8_UNORM:
-        case DXGI_FORMAT_G8R8_G8B8_UNORM:
-        case DXGI_FORMAT_B8G8R8A8_UNORM:
-        case DXGI_FORMAT_B8G8R8X8_UNORM:
-        case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
-        case DXGI_FORMAT_B8G8R8A8_TYPELESS:
-        case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-        case DXGI_FORMAT_B8G8R8X8_TYPELESS:
-        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-        case DXGI_FORMAT_AYUV:
-        case DXGI_FORMAT_Y410:
-        case DXGI_FORMAT_YUY2:
+        case D3DFMT_A8R8G8B8:
+        case D3DFMT_X8R8G8B8:
+        case D3DFMT_A2B10G10R10:
+        case D3DFMT_A8B8G8R8:
+        case D3DFMT_X8B8G8R8:
+        case D3DFMT_G16R16:
+        case D3DFMT_A2R10G10B10:
+        case D3DFMT_Q8W8V8U8:
+        case D3DFMT_V16U16:
+        case D3DFMT_X8L8V8U8:
+        case D3DFMT_A2W10V10U10:
+        case D3DFMT_D32:
+        case D3DFMT_D24S8:
+        case D3DFMT_D24X8:
+        case D3DFMT_D24X4S4:
+        case D3DFMT_D32F_LOCKABLE:
+        case D3DFMT_D24FS8:
+        case D3DFMT_INDEX32:
+        case D3DFMT_G16R16F:
+        case D3DFMT_R32F:
             return 32;
 
-        case DXGI_FORMAT_P010:
-        case DXGI_FORMAT_P016:
+        case D3DFMT_R8G8B8:
             return 24;
 
-        case DXGI_FORMAT_R8G8_TYPELESS:
-        case DXGI_FORMAT_R8G8_UNORM:
-        case DXGI_FORMAT_R8G8_UINT:
-        case DXGI_FORMAT_R8G8_SNORM:
-        case DXGI_FORMAT_R8G8_SINT:
-        case DXGI_FORMAT_R16_TYPELESS:
-        case DXGI_FORMAT_R16_FLOAT:
-        case DXGI_FORMAT_D16_UNORM:
-        case DXGI_FORMAT_R16_UNORM:
-        case DXGI_FORMAT_R16_UINT:
-        case DXGI_FORMAT_R16_SNORM:
-        case DXGI_FORMAT_R16_SINT:
-        case DXGI_FORMAT_B5G6R5_UNORM:
-        case DXGI_FORMAT_B5G5R5A1_UNORM:
-        case DXGI_FORMAT_A8P8:
-        case DXGI_FORMAT_B4G4R4A4_UNORM:
+        case D3DFMT_A4R4G4B4:
+        case D3DFMT_X4R4G4B4:
+        case D3DFMT_R5G6B5:
+        case D3DFMT_L16:
+        case D3DFMT_A8L8:
+        case D3DFMT_X1R5G5B5:
+        case D3DFMT_A1R5G5B5:
+        case D3DFMT_A8R3G3B2:
+        case D3DFMT_V8U8:
+        case D3DFMT_CxV8U8:
+        case D3DFMT_L6V5U5:
+        case D3DFMT_G8R8_G8B8:
+        case D3DFMT_R8G8_B8G8:
+        case D3DFMT_D16_LOCKABLE:
+        case D3DFMT_D15S1:
+        case D3DFMT_D16:
+        case D3DFMT_INDEX16:
+        case D3DFMT_R16F:
+        case D3DFMT_YUY2:
             return 16;
 
-        case DXGI_FORMAT_NV12:
-        case DXGI_FORMAT_420_OPAQUE:
-        case DXGI_FORMAT_NV11:
-            return 12;
-
-        case DXGI_FORMAT_R8_TYPELESS:
-        case DXGI_FORMAT_R8_UNORM:
-        case DXGI_FORMAT_R8_UINT:
-        case DXGI_FORMAT_R8_SNORM:
-        case DXGI_FORMAT_R8_SINT:
-        case DXGI_FORMAT_A8_UNORM:
-        case DXGI_FORMAT_AI44:
-        case DXGI_FORMAT_IA44:
-        case DXGI_FORMAT_P8:
+        case D3DFMT_R3G3B2:
+        case D3DFMT_A8:
+        case D3DFMT_A8P8:
+        case D3DFMT_P8:
+        case D3DFMT_L8:
+        case D3DFMT_A4L4:
             return 8;
 
-        case DXGI_FORMAT_R1_UNORM:
-            return 1;
-
-        case DXGI_FORMAT_BC1_TYPELESS:
-        case DXGI_FORMAT_BC1_UNORM:
-        case DXGI_FORMAT_BC1_UNORM_SRGB:
-        case DXGI_FORMAT_BC4_TYPELESS:
-        case DXGI_FORMAT_BC4_UNORM:
-        case DXGI_FORMAT_BC4_SNORM:
+        case D3DFMT_DXT1:
             return 4;
 
-        case DXGI_FORMAT_BC2_TYPELESS:
-        case DXGI_FORMAT_BC2_UNORM:
-        case DXGI_FORMAT_BC2_UNORM_SRGB:
-        case DXGI_FORMAT_BC3_TYPELESS:
-        case DXGI_FORMAT_BC3_UNORM:
-        case DXGI_FORMAT_BC3_UNORM_SRGB:
-        case DXGI_FORMAT_BC5_TYPELESS:
-        case DXGI_FORMAT_BC5_UNORM:
-        case DXGI_FORMAT_BC5_SNORM:
-        case DXGI_FORMAT_BC6H_TYPELESS:
-        case DXGI_FORMAT_BC6H_UF16:
-        case DXGI_FORMAT_BC6H_SF16:
-        case DXGI_FORMAT_BC7_TYPELESS:
-        case DXGI_FORMAT_BC7_UNORM:
-        case DXGI_FORMAT_BC7_UNORM_SRGB:
+        case D3DFMT_DXT2:
+        case D3DFMT_DXT3:
+        case D3DFMT_DXT4:
+        case D3DFMT_DXT5:
+            return  8;
+
+            // From DX docs, reference/d3d/enums/d3dformat.asp
+            // (note how it says that D3DFMT_R8G8_B8G8 is "A 16-bit packed RGB format analogous to UYVY (U0Y0, V0Y1, U2Y2, and so on)")
+        case D3DFMT_UYVY:
+            return 16;
+
+            // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directshow/htm/directxvideoaccelerationdxvavideosubtypes.asp
+        case MAKEFOURCC('A', 'I', '4', '4'):
+        case MAKEFOURCC('I', 'A', '4', '4'):
             return 8;
+
+        case MAKEFOURCC('Y', 'V', '1', '2'):
+            return 12;
+
+#if !defined(D3D_DISABLE_9EX)
+        case D3DFMT_D32_LOCKABLE:
+            return 32;
+
+        case D3DFMT_S8_LOCKABLE:
+            return 8;
+
+        case D3DFMT_A1:
+            return 1;
+#endif // !D3D_DISABLE_9EX
 
         default:
             return 0;
@@ -406,31 +354,15 @@ namespace
     //--------------------------------------------------------------------------------------
     // Determines if the format is block compressed
     //--------------------------------------------------------------------------------------
-    bool IsCompressed( _In_ DXGI_FORMAT fmt ) noexcept
+    bool IsCompressed(_In_ D3DFORMAT fmt) noexcept
     {
-        switch ( fmt )
+        switch (fmt)
         {
-        case DXGI_FORMAT_BC1_TYPELESS:
-        case DXGI_FORMAT_BC1_UNORM:
-        case DXGI_FORMAT_BC1_UNORM_SRGB:
-        case DXGI_FORMAT_BC2_TYPELESS:
-        case DXGI_FORMAT_BC2_UNORM:
-        case DXGI_FORMAT_BC2_UNORM_SRGB:
-        case DXGI_FORMAT_BC3_TYPELESS:
-        case DXGI_FORMAT_BC3_UNORM:
-        case DXGI_FORMAT_BC3_UNORM_SRGB:
-        case DXGI_FORMAT_BC4_TYPELESS:
-        case DXGI_FORMAT_BC4_UNORM:
-        case DXGI_FORMAT_BC4_SNORM:
-        case DXGI_FORMAT_BC5_TYPELESS:
-        case DXGI_FORMAT_BC5_UNORM:
-        case DXGI_FORMAT_BC5_SNORM:
-        case DXGI_FORMAT_BC6H_TYPELESS:
-        case DXGI_FORMAT_BC6H_UF16:
-        case DXGI_FORMAT_BC6H_SF16:
-        case DXGI_FORMAT_BC7_TYPELESS:
-        case DXGI_FORMAT_BC7_UNORM:
-        case DXGI_FORMAT_BC7_UNORM_SRGB:
+        case D3DFMT_DXT1:
+        case D3DFMT_DXT2:
+        case D3DFMT_DXT3:
+        case D3DFMT_DXT4:
+        case D3DFMT_DXT5:
             return true;
 
         default:
@@ -445,8 +377,8 @@ namespace
     HRESULT GetSurfaceInfo(
         _In_ size_t width,
         _In_ size_t height,
-        _In_ DXGI_FORMAT fmt,
-        _Out_opt_ size_t* outNumBytes,
+        _In_ D3DFORMAT fmt,
+        size_t* outNumBytes,
         _Out_opt_ size_t* outRowBytes,
         _Out_opt_ size_t* outNumRows) noexcept
     {
@@ -456,61 +388,27 @@ namespace
 
         bool bc = false;
         bool packed = false;
-        bool planar = false;
         size_t bpe = 0;
-        switch (fmt)
+        switch (static_cast<int>(fmt))
         {
-        case DXGI_FORMAT_BC1_TYPELESS:
-        case DXGI_FORMAT_BC1_UNORM:
-        case DXGI_FORMAT_BC1_UNORM_SRGB:
-        case DXGI_FORMAT_BC4_TYPELESS:
-        case DXGI_FORMAT_BC4_UNORM:
-        case DXGI_FORMAT_BC4_SNORM:
+        case D3DFMT_DXT1:
             bc = true;
             bpe = 8;
             break;
 
-        case DXGI_FORMAT_BC2_TYPELESS:
-        case DXGI_FORMAT_BC2_UNORM:
-        case DXGI_FORMAT_BC2_UNORM_SRGB:
-        case DXGI_FORMAT_BC3_TYPELESS:
-        case DXGI_FORMAT_BC3_UNORM:
-        case DXGI_FORMAT_BC3_UNORM_SRGB:
-        case DXGI_FORMAT_BC5_TYPELESS:
-        case DXGI_FORMAT_BC5_UNORM:
-        case DXGI_FORMAT_BC5_SNORM:
-        case DXGI_FORMAT_BC6H_TYPELESS:
-        case DXGI_FORMAT_BC6H_UF16:
-        case DXGI_FORMAT_BC6H_SF16:
-        case DXGI_FORMAT_BC7_TYPELESS:
-        case DXGI_FORMAT_BC7_UNORM:
-        case DXGI_FORMAT_BC7_UNORM_SRGB:
+        case D3DFMT_DXT2:
+        case D3DFMT_DXT3:
+        case D3DFMT_DXT4:
+        case D3DFMT_DXT5:
             bc = true;
             bpe = 16;
             break;
 
-        case DXGI_FORMAT_R8G8_B8G8_UNORM:
-        case DXGI_FORMAT_G8R8_G8B8_UNORM:
-        case DXGI_FORMAT_YUY2:
+        case D3DFMT_R8G8_B8G8:
+        case D3DFMT_G8R8_G8B8:
+        case D3DFMT_UYVY:
+        case D3DFMT_YUY2:
             packed = true;
-            bpe = 4;
-            break;
-
-        case DXGI_FORMAT_Y210:
-        case DXGI_FORMAT_Y216:
-            packed = true;
-            bpe = 8;
-            break;
-
-        case DXGI_FORMAT_NV12:
-        case DXGI_FORMAT_420_OPAQUE:
-            planar = true;
-            bpe = 2;
-            break;
-
-        case DXGI_FORMAT_P010:
-        case DXGI_FORMAT_P016:
-            planar = true;
             bpe = 4;
             break;
 
@@ -539,18 +437,6 @@ namespace
             rowBytes = ((uint64_t(width) + 1u) >> 1) * bpe;
             numRows = uint64_t(height);
             numBytes = rowBytes * height;
-        }
-        else if (fmt == DXGI_FORMAT_NV11)
-        {
-            rowBytes = ((uint64_t(width) + 3u) >> 2) * 4u;
-            numRows = uint64_t(height) * 2u; // Direct3D makes this simplifying assumption, although it is larger than the 4:1:1 data
-            numBytes = rowBytes * numRows;
-        }
-        else if (planar)
-        {
-            rowBytes = ((uint64_t(width) + 1u) >> 1) * bpe;
-            numBytes = (rowBytes * uint64_t(height)) + ((rowBytes * uint64_t(height) + 1u) >> 1);
-            numRows = height + ((uint64_t(height) + 1u) >> 1);
         }
         else
         {
@@ -804,12 +690,13 @@ HRESULT DirectX::SaveDDSTextureToFile(
 
     // Setup header
     const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
-    uint8_t fileHeader[MAX_HEADER_SIZE] = {};
+    uint8_t fileHeader[ MAX_HEADER_SIZE ];
 
     *reinterpret_cast<uint32_t*>(&fileHeader[0]) = DDS_MAGIC;
 
-    auto header = reinterpret_cast<DDS_HEADER*>(&fileHeader[0] + sizeof(uint32_t));
+    auto header = reinterpret_cast<DDS_HEADER*>( &fileHeader[0] + sizeof(uint32_t) );
     size_t headerSize = sizeof(uint32_t) + sizeof(DDS_HEADER);
+    memset( header, 0, sizeof(DDS_HEADER) );
     header->size = sizeof( DDS_HEADER );
     header->flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_MIPMAP;
     header->height = desc.Height;
@@ -863,10 +750,11 @@ HRESULT DirectX::SaveDDSTextureToFile(
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     default:
-        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_DX10, sizeof(DDS_PIXELFORMAT));
+        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_DX10, sizeof(DDS_PIXELFORMAT) );
 
         headerSize += sizeof(DDS_HEADER_DXT10);
-        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>(fileHeader + sizeof(uint32_t) + sizeof(DDS_HEADER));
+        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>( fileHeader + sizeof(uint32_t) + sizeof(DDS_HEADER) );
+        memset( extHeader, 0, sizeof(DDS_HEADER_DXT10) );
         extHeader->dxgiFormat = desc.Format;
         extHeader->resourceDimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D;
         extHeader->arraySize = 1;
