@@ -733,8 +733,7 @@ HRESULT DirectX::SaveWICTextureToFile(
     REFGUID guidContainerFormat,
     const wchar_t* fileName,
     const GUID* targetFormat,
-    std::function<void(IPropertyBag2*)> setCustomProps,
-    bool forceSRGB) noexcept
+    std::function<void(IPropertyBag2*)> setCustomProps) noexcept
 {
     if (!pSource || !fileName)
         return E_INVALIDARG;
@@ -933,16 +932,23 @@ HRESULT DirectX::SaveWICTextureToFile(
     if (FAILED(hr))
         return hr;
 
+    uint64_t imageSize = uint64_t(lockedRect.Pitch) * uint64_t(desc.Height);
+    if (imageSize > UINT32_MAX)
+    {
+        pSource->UnlockRect();
+        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+    }
+
     if ( memcmp( &targetGuid, &pfGuid, sizeof(WICPixelFormatGUID) ) != 0 )
     {
         // Conversion required to write
         ComPtr<IWICBitmap> source;
         hr = pWIC->CreateBitmapFromMemory(desc.Width, desc.Height, pfGuid,
-            lockedRect.Pitch, mapped.RowPitch * desc.Height,
-            static_cast<BYTE*>(mapped.pData), source.GetAddressOf());
+            static_cast<UINT>(lockedRect.Pitch), static_cast<UINT>(imageSize),
+            static_cast<BYTE*>(lockedRect.pBits), source.GetAddressOf());
         if ( FAILED(hr) )
         {
-            pContext->Unmap( pStaging.Get(), 0 );
+            pSource->UnlockRect();
             return hr;
         }
 
@@ -950,7 +956,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
         if ( FAILED(hr) )
         {
-            pContext->Unmap( pStaging.Get(), 0 );
+            pSource->UnlockRect();
             return hr;
         }
 
@@ -958,33 +964,32 @@ HRESULT DirectX::SaveWICTextureToFile(
         hr = FC->CanConvert( pfGuid, targetGuid, &canConvert );
         if ( FAILED(hr) || !canConvert )
         {
+            pSource->UnlockRect();
             return E_UNEXPECTED;
         }
 
         hr = FC->Initialize( source.Get(), targetGuid, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut );
         if ( FAILED(hr) )
         {
-            pContext->Unmap( pStaging.Get(), 0 );
+            pSource->UnlockRect();
             return hr;
         }
 
         WICRect rect = { 0, 0, static_cast<INT>( desc.Width ), static_cast<INT>( desc.Height ) };
         hr = frame->WriteSource( FC.Get(), &rect );
-        if ( FAILED(hr) )
-        {
-            pContext->Unmap( pStaging.Get(), 0 );
-            return hr;
-        }
     }
     else
     {
         // No conversion required
-        hr = frame->WritePixels( desc.Height, mapped.RowPitch, mapped.RowPitch * desc.Height, static_cast<BYTE*>( mapped.pData ) );
-        if ( FAILED(hr) )
-            return hr;
+        hr = frame->WritePixels(desc.Height,
+            static_cast<UINT>(lockedRect.Pitch), static_cast<UINT>(imageSize),
+            static_cast<BYTE*>(lockedRect.pBits));
     }
 
-    pContext->Unmap( pStaging.Get(), 0 );
+    pSource->UnlockRect();
+
+    if (FAILED(hr))
+        return hr;
 
     hr = frame->Commit();
     if ( FAILED(hr) )
