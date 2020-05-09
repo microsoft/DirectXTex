@@ -1361,7 +1361,8 @@ namespace
             size_t reservedMips = mipCount;
             if (loadFlags & DDS_LOADER_MIP_RESERVE)
             {
-                reservedMips = std::min<size_t>(D3D12_REQ_MIP_LEVELS, CountMips(width, height));
+                reservedMips = std::min<size_t>(D3D12_REQ_MIP_LEVELS,
+                    CountMips(width, height));
             }
 
             hr = CreateTextureResource(d3dDevice, resDim, twidth, theight, tdepth, reservedMips - skipMip, arraySize,

@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: WICTextureLoader12.cpp
 //
-// Function for loading a WIC image and creating a Direct3D 12 runtime texture for it
+// Function for loading a WIC image and creating a Direct3D runtime texture for it
 // (auto-generating mipmaps if possible)
 //
 // Note: Assumes application has already called CoInitializeEx
@@ -166,7 +166,8 @@ namespace
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
         IWICImagingFactory2* factory = nullptr;
-        if (!InitOnceExecuteOnce(&s_initOnce,
+        if (!InitOnceExecuteOnce(
+            &s_initOnce,
             InitializeWICFactory,
             nullptr,
             reinterpret_cast<LPVOID*>(&factory)))
@@ -339,7 +340,7 @@ namespace
 
         if (!maxsize)
         {
-            maxsize = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+            maxsize = size_t(D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION);
         }
 
         UINT twidth = width;
@@ -559,7 +560,8 @@ namespace
         }
 
         // Count the number of mips
-        uint32_t mipCount = (loadFlags & (WIC_LOADER_MIP_AUTOGEN|WIC_LOADER_MIP_RESERVE)) ? CountMips(twidth, theight) : 1;
+        uint32_t mipCount = (loadFlags & (WIC_LOADER_MIP_AUTOGEN | WIC_LOADER_MIP_RESERVE))
+            ? CountMips(twidth, theight) : 1u;
 
         // Create texture
         D3D12_RESOURCE_DESC desc = {};
@@ -606,7 +608,7 @@ namespace
         _In_ ID3D12Resource** texture) noexcept
     {
 #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
-        if (texture)
+        if (texture && *texture)
         {
             const wchar_t* pstrName = wcsrchr(fileName, '\\');
             if (!pstrName)
@@ -618,10 +620,7 @@ namespace
                 pstrName++;
             }
 
-            if (texture && *texture)
-            {
-                (*texture)->SetName(pstrName);
-            }
+            (*texture)->SetName(pstrName);
         }
 #else
         UNREFERENCED_PARAMETER(fileName);
@@ -769,7 +768,11 @@ HRESULT DirectX::LoadWICTextureFromFileEx(
 
     // Initialize WIC
     ComPtr<IWICBitmapDecoder> decoder;
-    HRESULT hr = pWIC->CreateDecoderFromFilename(fileName, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
+    HRESULT hr = pWIC->CreateDecoderFromFilename(fileName,
+        nullptr,
+        GENERIC_READ,
+        WICDecodeMetadataCacheOnDemand,
+        decoder.GetAddressOf());
     if (FAILED(hr))
         return hr;
 
