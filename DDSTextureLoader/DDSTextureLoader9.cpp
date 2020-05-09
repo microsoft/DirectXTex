@@ -583,7 +583,7 @@ namespace
                 break;
 
             case 8:
-                if (ISBITMASK(0xe0, 0x1c, 0x03, 0x00))
+                if (ISBITMASK(0xe0, 0x1c, 0x03, 0))
                 {
                     return D3DFMT_R3G3B2;
                 }

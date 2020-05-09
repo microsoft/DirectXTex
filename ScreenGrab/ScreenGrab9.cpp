@@ -60,13 +60,14 @@ namespace
         uint32_t    ABitMask;
     };
 
-    #define DDS_FOURCC      0x00000004  // DDPF_FOURCC
-    #define DDS_RGB         0x00000040  // DDPF_RGB
-    #define DDS_RGBA        0x00000041  // DDPF_RGB | DDPF_ALPHAPIXELS
-    #define DDS_LUMINANCE   0x00020000  // DDPF_LUMINANCE
-    #define DDS_LUMINANCEA  0x00020001  // DDPF_LUMINANCE | DDPF_ALPHAPIXELS
-    #define DDS_ALPHA       0x00000002  // DDPF_ALPHA
-    #define DDS_BUMPDUDV    0x00080000  // DDPF_BUMPDUDV
+    #define DDS_FOURCC        0x00000004  // DDPF_FOURCC
+    #define DDS_RGB           0x00000040  // DDPF_RGB
+    #define DDS_RGBA          0x00000041  // DDPF_RGB | DDPF_ALPHAPIXELS
+    #define DDS_LUMINANCE     0x00020000  // DDPF_LUMINANCE
+    #define DDS_LUMINANCEA    0x00020001  // DDPF_LUMINANCE | DDPF_ALPHAPIXELS
+    #define DDS_ALPHA         0x00000002  // DDPF_ALPHA
+    #define DDS_BUMPDUDV      0x00080000  // DDPF_BUMPDUDV
+    #define DDS_BUMPLUMINANCE 0x00040000  // DDPF_BUMPLUMINANCE
 
     #define DDS_HEADER_FLAGS_TEXTURE        0x00001007  // DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT 
     #define DDS_HEADER_FLAGS_MIPMAP         0x00020000  // DDSD_MIPMAPCOUNT
@@ -93,37 +94,22 @@ namespace
         uint32_t        reserved2;
     };
 
-    struct DDS_HEADER_DXT10
-    {
-        DXGI_FORMAT     dxgiFormat;
-        uint32_t        resourceDimension;
-        uint32_t        miscFlag; // see D3D11_RESOURCE_MISC_FLAG
-        uint32_t        arraySize;
-        uint32_t        reserved;
-    };
-
     #pragma pack(pop)
 
     const DDS_PIXELFORMAT DDSPF_DXT1 =
         { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 };
 
+    const DDS_PIXELFORMAT DDSPF_DXT2 =
+        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','2'), 0, 0, 0, 0, 0 };
+
     const DDS_PIXELFORMAT DDSPF_DXT3 =
         { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','3'), 0, 0, 0, 0, 0 };
 
+    const DDS_PIXELFORMAT DDSPF_DXT4 =
+        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','4'), 0, 0, 0, 0, 0 };
+
     const DDS_PIXELFORMAT DDSPF_DXT5 =
         { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','5'), 0, 0, 0, 0, 0 };
-
-    const DDS_PIXELFORMAT DDSPF_BC4_UNORM =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B','C','4','U'), 0, 0, 0, 0, 0 };
-
-    const DDS_PIXELFORMAT DDSPF_BC4_SNORM =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B','C','4','S'), 0, 0, 0, 0, 0 };
-
-    const DDS_PIXELFORMAT DDSPF_BC5_UNORM =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B','C','5','U'), 0, 0, 0, 0, 0 };
-
-    const DDS_PIXELFORMAT DDSPF_BC5_SNORM =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B','C','5','S'), 0, 0, 0, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_R8G8_B8G8 =
         { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R','G','B','G'), 0, 0, 0, 0, 0 };
@@ -134,26 +120,50 @@ namespace
     const DDS_PIXELFORMAT DDSPF_YUY2 =
         { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('Y','U','Y','2'), 0, 0, 0, 0, 0 };
 
+     const DDS_PIXELFORMAT DDSPF_UYVY =
+        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('U','Y','V','Y'), 0, 0, 0, 0, 0 };
+
     const DDS_PIXELFORMAT DDSPF_A8R8G8B8 =
         { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 };
 
     const DDS_PIXELFORMAT DDSPF_X8R8G8B8 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 };
+        { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0 };
 
     const DDS_PIXELFORMAT DDSPF_A8B8G8R8 =
         { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
+
+    const DDS_PIXELFORMAT DDSPF_X8B8G8R8 =
+        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0 };
 
     const DDS_PIXELFORMAT DDSPF_G16R16 =
         { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
 
     const DDS_PIXELFORMAT DDSPF_R5G6B5 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0x0000f800, 0x000007e0, 0x0000001f, 0x00000000 };
+        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0xf800, 0x07e0, 0x001f, 0 };
 
     const DDS_PIXELFORMAT DDSPF_A1R5G5B5 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x00007c00, 0x000003e0, 0x0000001f, 0x00008000 };
+        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x7c00, 0x03e0, 0x001f, 0x8000 };
+
+    const DDS_PIXELFORMAT DDSPF_X1R5G5B5 =
+        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0x7c00, 0x03e0, 0x001f, 0 };
 
     const DDS_PIXELFORMAT DDSPF_A4R4G4B4 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x00000f00, 0x000000f0, 0x0000000f, 0x0000f000 };
+        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x0f00, 0x00f0, 0x0000f, 0xf000 };
+
+    const DDS_PIXELFORMAT DDSPF_X4R4G4B4 =
+        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0x0f00, 0x00f0, 0x000f, 0 };
+
+    const DDS_PIXELFORMAT DDSPF_R8G8B8 =
+        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0 };
+
+    const DDS_PIXELFORMAT DDSPF_A8R3G3B2 =
+        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0x00e0, 0x001c, 0x0003, 0xff00 };
+
+    const DDS_PIXELFORMAT DDSPF_R3G3B2 =
+        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 8, 0xe0, 0x1c, 0x03, 0 };
+
+    const DDS_PIXELFORMAT DDSPF_A4L4 =
+        { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCEA, 0, 8, 0x0f, 0, 0, 0xf0 };
 
     const DDS_PIXELFORMAT DDSPF_L8 =
         { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0,  8, 0xff, 0x00, 0x00, 0x00 };
@@ -176,11 +186,20 @@ namespace
     const DDS_PIXELFORMAT DDSPF_V16U16 = 
         { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
 
-    // DXGI_FORMAT_R10G10B10A2_UNORM should be written using DX10 extension to avoid D3DX 10:10:10:2 reversal issue
+    const DDS_PIXELFORMAT DDSPF_A2W10V10U10 =
+        { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000 };
 
-    // This indicates the DDS_HEADER_DXT10 extension is present (the format is in dxgiFormat)
-    const DDS_PIXELFORMAT DDSPF_DX10 =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','1','0'), 0, 0, 0, 0, 0 };
+    const DDS_PIXELFORMAT DDSPF_L6V5U5 =
+        { sizeof(DDS_PIXELFORMAT), DDS_BUMPLUMINANCE, 0, 16, 0x001f, 0x03e0, 0xfc00, 0 };
+
+    const DDS_PIXELFORMAT DDSPF_X8L8V8U8 =
+        { sizeof(DDS_PIXELFORMAT), DDS_BUMPLUMINANCE, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0 };
+
+    // Note these 10:10:10:2 format RGB masks are reversed to support a long-standing bug in D3DX
+    const DDS_PIXELFORMAT DDSPF_A2R10G10B10 =
+        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000 };
+    const DDS_PIXELFORMAT DDSPF_A2B10G10R10 =
+        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000 };
 
     //-----------------------------------------------------------------------------
     struct handle_closer { void operator()(HANDLE h) noexcept { if (h) CloseHandle(h); } };
@@ -475,134 +494,6 @@ namespace
 
 
     //--------------------------------------------------------------------------------------
-    DXGI_FORMAT EnsureNotTypeless( DXGI_FORMAT fmt ) noexcept
-    {
-        // Assumes UNORM or FLOAT; doesn't use UINT or SINT
-        switch( fmt )
-        {
-        case DXGI_FORMAT_R32G32B32A32_TYPELESS: return DXGI_FORMAT_R32G32B32A32_FLOAT;
-        case DXGI_FORMAT_R32G32B32_TYPELESS:    return DXGI_FORMAT_R32G32B32_FLOAT;
-        case DXGI_FORMAT_R16G16B16A16_TYPELESS: return DXGI_FORMAT_R16G16B16A16_UNORM;
-        case DXGI_FORMAT_R32G32_TYPELESS:       return DXGI_FORMAT_R32G32_FLOAT;
-        case DXGI_FORMAT_R10G10B10A2_TYPELESS:  return DXGI_FORMAT_R10G10B10A2_UNORM;
-        case DXGI_FORMAT_R8G8B8A8_TYPELESS:     return DXGI_FORMAT_R8G8B8A8_UNORM;
-        case DXGI_FORMAT_R16G16_TYPELESS:       return DXGI_FORMAT_R16G16_UNORM;
-        case DXGI_FORMAT_R32_TYPELESS:          return DXGI_FORMAT_R32_FLOAT;
-        case DXGI_FORMAT_R8G8_TYPELESS:         return DXGI_FORMAT_R8G8_UNORM;
-        case DXGI_FORMAT_R16_TYPELESS:          return DXGI_FORMAT_R16_UNORM;
-        case DXGI_FORMAT_R8_TYPELESS:           return DXGI_FORMAT_R8_UNORM;
-        case DXGI_FORMAT_BC1_TYPELESS:          return DXGI_FORMAT_BC1_UNORM;
-        case DXGI_FORMAT_BC2_TYPELESS:          return DXGI_FORMAT_BC2_UNORM;
-        case DXGI_FORMAT_BC3_TYPELESS:          return DXGI_FORMAT_BC3_UNORM;
-        case DXGI_FORMAT_BC4_TYPELESS:          return DXGI_FORMAT_BC4_UNORM;
-        case DXGI_FORMAT_BC5_TYPELESS:          return DXGI_FORMAT_BC5_UNORM;
-        case DXGI_FORMAT_B8G8R8A8_TYPELESS:     return DXGI_FORMAT_B8G8R8A8_UNORM;
-        case DXGI_FORMAT_B8G8R8X8_TYPELESS:     return DXGI_FORMAT_B8G8R8X8_UNORM;
-        case DXGI_FORMAT_BC7_TYPELESS:          return DXGI_FORMAT_BC7_UNORM;
-        default:                                return fmt;
-        }
-    }
-
-
-    //--------------------------------------------------------------------------------------
-    HRESULT CaptureTexture(
-        _In_ ID3D11DeviceContext* pContext,
-        _In_ ID3D11Resource* pSource,
-        D3D11_TEXTURE2D_DESC& desc,
-        ComPtr<ID3D11Texture2D>& pStaging ) noexcept
-    {
-        if ( !pContext || !pSource )
-            return E_INVALIDARG;
-
-        D3D11_RESOURCE_DIMENSION resType = D3D11_RESOURCE_DIMENSION_UNKNOWN;
-        pSource->GetType( &resType );
-
-        if ( resType != D3D11_RESOURCE_DIMENSION_TEXTURE2D )
-            return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
-
-        ComPtr<ID3D11Texture2D> pTexture;
-        HRESULT hr = pSource->QueryInterface(IID_ID3D11Texture2D, reinterpret_cast<void**>(pTexture.GetAddressOf()));
-        if ( FAILED(hr) )
-            return hr;
-
-        assert( pTexture );
-
-        pTexture->GetDesc( &desc );
-
-        ComPtr<ID3D11Device> d3dDevice;
-        pContext->GetDevice( d3dDevice.GetAddressOf() );
-
-        if ( desc.SampleDesc.Count > 1 )
-        {
-            // MSAA content must be resolved before being copied to a staging texture
-            desc.SampleDesc.Count = 1;
-            desc.SampleDesc.Quality = 0;
-
-            ComPtr<ID3D11Texture2D> pTemp;
-            hr = d3dDevice->CreateTexture2D( &desc, nullptr, pTemp.GetAddressOf() );
-            if ( FAILED(hr) )
-                return hr;
-
-            assert( pTemp );
-
-            DXGI_FORMAT fmt = EnsureNotTypeless( desc.Format );
-
-            UINT support = 0;
-            hr = d3dDevice->CheckFormatSupport( fmt, &support );
-            if ( FAILED(hr) )
-                return hr;
-
-            if ( !(support & D3D11_FORMAT_SUPPORT_MULTISAMPLE_RESOLVE) )
-                return E_FAIL;
-
-            for( UINT item = 0; item < desc.ArraySize; ++item )
-            {
-                for( UINT level = 0; level < desc.MipLevels; ++level )
-                {
-                    UINT index = D3D11CalcSubresource( level, item, desc.MipLevels );
-                    pContext->ResolveSubresource( pTemp.Get(), index, pSource, index, fmt );
-                }
-            }
-
-            desc.BindFlags = 0;
-            desc.MiscFlags &= D3D11_RESOURCE_MISC_TEXTURECUBE;
-            desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-            desc.Usage = D3D11_USAGE_STAGING;
-
-            hr = d3dDevice->CreateTexture2D(&desc, nullptr, pStaging.ReleaseAndGetAddressOf());
-            if ( FAILED(hr) )
-                return hr;
-
-            assert( pStaging );
-
-            pContext->CopyResource( pStaging.Get(), pTemp.Get() );
-        }
-        else if ( (desc.Usage == D3D11_USAGE_STAGING) && (desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ) )
-        {
-            // Handle case where the source is already a staging texture we can use directly
-            pStaging = pTexture;
-        }
-        else
-        {
-            // Otherwise, create a staging texture from the non-MSAA source
-            desc.BindFlags = 0;
-            desc.MiscFlags &= D3D11_RESOURCE_MISC_TEXTURECUBE;
-            desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-            desc.Usage = D3D11_USAGE_STAGING;
-
-            hr = d3dDevice->CreateTexture2D(&desc, nullptr, pStaging.ReleaseAndGetAddressOf());
-            if ( FAILED(hr) )
-                return hr;
-
-            assert( pStaging );
-
-            pContext->CopyResource( pStaging.Get(), pSource );
-        }
-
-        return S_OK;
-    }
-
-    //--------------------------------------------------------------------------------------
     bool g_WIC2 = false;
 
     BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID* ifactory) noexcept
@@ -664,17 +555,15 @@ namespace
 //--------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT DirectX::SaveDDSTextureToFile(
-    ID3D11DeviceContext* pContext,
-    ID3D11Resource* pSource,
+    LPDIRECT3DSURFACE9 pSource,
     const wchar_t* fileName ) noexcept
 {
-    if ( !fileName )
+    if ( !pSource|| !fileName )
         return E_INVALIDARG;
 
-    D3D11_TEXTURE2D_DESC desc = {};
-    ComPtr<ID3D11Texture2D> pStaging;
-    HRESULT hr = CaptureTexture( pContext, pSource, desc, pStaging );
-    if ( FAILED(hr) )
+    D3DSURFACE_DESC desc = {};
+    HRESULT hr = pSource->GetDesc(&desc);
+    if (FAILED(hr))
         return hr;
 
     // Create file
@@ -689,80 +578,80 @@ HRESULT DirectX::SaveDDSTextureToFile(
     auto_delete_file delonfail(hFile.get());
 
     // Setup header
-    const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
-    uint8_t fileHeader[ MAX_HEADER_SIZE ];
+    const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER);
+    uint8_t fileHeader[MAX_HEADER_SIZE] = {};
 
     *reinterpret_cast<uint32_t*>(&fileHeader[0]) = DDS_MAGIC;
 
-    auto header = reinterpret_cast<DDS_HEADER*>( &fileHeader[0] + sizeof(uint32_t) );
+    auto header = reinterpret_cast<DDS_HEADER*>(&fileHeader[0] + sizeof(uint32_t));
     size_t headerSize = sizeof(uint32_t) + sizeof(DDS_HEADER);
-    memset( header, 0, sizeof(DDS_HEADER) );
-    header->size = sizeof( DDS_HEADER );
+    header->size = sizeof(DDS_HEADER);
     header->flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_MIPMAP;
     header->height = desc.Height;
     header->width = desc.Width;
     header->mipMapCount = 1;
     header->caps = DDS_SURFACE_FLAGS_TEXTURE;
 
-    // Try to use a legacy .DDS pixel format for better tools support, otherwise fallback to 'DX10' header extension
-    DDS_HEADER_DXT10* extHeader = nullptr;
     switch( desc.Format )
+
+
     {
-    case DXGI_FORMAT_R8G8B8A8_UNORM:        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_A8B8G8R8, sizeof(DDS_PIXELFORMAT) );    break;
-    case DXGI_FORMAT_R16G16_UNORM:          memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_G16R16, sizeof(DDS_PIXELFORMAT) );      break;
-    case DXGI_FORMAT_R8G8_UNORM:            memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_A8L8, sizeof(DDS_PIXELFORMAT) );        break;
-    case DXGI_FORMAT_R16_UNORM:             memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_L16, sizeof(DDS_PIXELFORMAT) );         break;
-    case DXGI_FORMAT_R8_UNORM:              memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_L8, sizeof(DDS_PIXELFORMAT) );          break;
-    case DXGI_FORMAT_A8_UNORM:              memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_A8, sizeof(DDS_PIXELFORMAT) );          break;
-    case DXGI_FORMAT_R8G8_B8G8_UNORM:       memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_R8G8_B8G8, sizeof(DDS_PIXELFORMAT) );   break;
-    case DXGI_FORMAT_G8R8_G8B8_UNORM:       memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_G8R8_G8B8, sizeof(DDS_PIXELFORMAT) );   break;
-    case DXGI_FORMAT_BC1_UNORM:             memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_DXT1, sizeof(DDS_PIXELFORMAT) );        break;
-    case DXGI_FORMAT_BC2_UNORM:             memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_DXT3, sizeof(DDS_PIXELFORMAT) );        break;
-    case DXGI_FORMAT_BC3_UNORM:             memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_DXT5, sizeof(DDS_PIXELFORMAT) );        break;
-    case DXGI_FORMAT_BC4_UNORM:             memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_BC4_UNORM, sizeof(DDS_PIXELFORMAT) );   break;
-    case DXGI_FORMAT_BC4_SNORM:             memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_BC4_SNORM, sizeof(DDS_PIXELFORMAT) );   break;
-    case DXGI_FORMAT_BC5_UNORM:             memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_BC5_UNORM, sizeof(DDS_PIXELFORMAT) );   break;
-    case DXGI_FORMAT_BC5_SNORM:             memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_BC5_SNORM, sizeof(DDS_PIXELFORMAT) );   break;
-    case DXGI_FORMAT_B5G6R5_UNORM:          memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_R5G6B5, sizeof(DDS_PIXELFORMAT) );      break;
-    case DXGI_FORMAT_B5G5R5A1_UNORM:        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_A1R5G5B5, sizeof(DDS_PIXELFORMAT) );    break;
-    case DXGI_FORMAT_R8G8_SNORM:            memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_V8U8, sizeof(DDS_PIXELFORMAT) );        break;
-    case DXGI_FORMAT_R8G8B8A8_SNORM:        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_Q8W8V8U8, sizeof(DDS_PIXELFORMAT) );    break;
-    case DXGI_FORMAT_R16G16_SNORM:          memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_V16U16, sizeof(DDS_PIXELFORMAT) );      break;
-    case DXGI_FORMAT_B8G8R8A8_UNORM:        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT) );    break; // DXGI 1.1
-    case DXGI_FORMAT_B8G8R8X8_UNORM:        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT) );    break; // DXGI 1.1
-    case DXGI_FORMAT_YUY2:                  memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_YUY2, sizeof(DDS_PIXELFORMAT) );        break; // DXGI 1.2
-    case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT) );    break; // DXGI 1.2
+    case D3DFMT_R8G8B8:          memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_R8G8B8, sizeof(DDS_PIXELFORMAT));    break;
+    case D3DFMT_A8B8G8R8:        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A8B8G8R8, sizeof(DDS_PIXELFORMAT));    break;
+    case D3DFMT_X8B8G8R8:        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_X8B8G8R8, sizeof(DDS_PIXELFORMAT));    break;
+    case D3DFMT_G16R16:          memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_G16R16, sizeof(DDS_PIXELFORMAT));      break;
+    case D3DFMT_A8L8:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A8L8, sizeof(DDS_PIXELFORMAT));        break;
+    case D3DFMT_L16:             memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_L16, sizeof(DDS_PIXELFORMAT));         break;
+    case D3DFMT_L8:              memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_L8, sizeof(DDS_PIXELFORMAT));          break;
+    case D3DFMT_A8:              memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A8, sizeof(DDS_PIXELFORMAT));          break;
+    case D3DFMT_R8G8_B8G8:       memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_R8G8_B8G8, sizeof(DDS_PIXELFORMAT));   break;
+    case D3DFMT_G8R8_G8B8:       memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_G8R8_G8B8, sizeof(DDS_PIXELFORMAT));   break;
+    case D3DFMT_DXT1:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_DXT1, sizeof(DDS_PIXELFORMAT));        break;
+    case D3DFMT_DXT2:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_DXT2, sizeof(DDS_PIXELFORMAT));        break;
+    case D3DFMT_DXT3:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_DXT3, sizeof(DDS_PIXELFORMAT));        break;
+    case D3DFMT_DXT4:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_DXT4, sizeof(DDS_PIXELFORMAT));        break;
+    case D3DFMT_DXT5:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_DXT5, sizeof(DDS_PIXELFORMAT));        break;
+    case D3DFMT_R5G6B5:          memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_R5G6B5, sizeof(DDS_PIXELFORMAT));      break;
+    case D3DFMT_A1R5G5B5:        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A1R5G5B5, sizeof(DDS_PIXELFORMAT));    break;
+    case D3DFMT_X1R5G5B5:        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_X1R5G5B5, sizeof(DDS_PIXELFORMAT));    break;
+    case D3DFMT_V8U8:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_V8U8, sizeof(DDS_PIXELFORMAT));        break;
+    case D3DFMT_Q8W8V8U8:        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_Q8W8V8U8, sizeof(DDS_PIXELFORMAT));    break;
+    case D3DFMT_V16U16:          memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_V16U16, sizeof(DDS_PIXELFORMAT));      break;
+    case D3DFMT_A2W10V10U10:     memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A2W10V10U10, sizeof(DDS_PIXELFORMAT)); break;
+    case D3DFMT_L6V5U5:          memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_L6V5U5, sizeof(DDS_PIXELFORMAT)); break;
+    case D3DFMT_X8L8V8U8:        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_X8L8V8U8, sizeof(DDS_PIXELFORMAT)); break;
+    case D3DFMT_A8R8G8B8:        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT));    break;
+    case D3DFMT_X8R8G8B8:        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT));    break;
+    case D3DFMT_YUY2:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_YUY2, sizeof(DDS_PIXELFORMAT));        break;
+    case D3DFMT_UYVY:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_UYVY, sizeof(DDS_PIXELFORMAT));        break;
+
+    case D3DFMT_A4R4G4B4:        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT));    break;
+    case D3DFMT_X4R4G4B4:        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_X4R4G4B4, sizeof(DDS_PIXELFORMAT));    break;
+    case D3DFMT_A2R10G10B10:     memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A2R10G10B10, sizeof(DDS_PIXELFORMAT)); break;
+    case D3DFMT_A2B10G10R10:     memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A2B10G10R10, sizeof(DDS_PIXELFORMAT)); break;
+
+    case D3DFMT_A8R3G3B2:        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A8R3G3B2, sizeof(DDS_PIXELFORMAT)); break;
+    case D3DFMT_R3G3B2:          memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_R3G3B2, sizeof(DDS_PIXELFORMAT)); break;
+
+    case D3DFMT_A4L4:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A4L4, sizeof(DDS_PIXELFORMAT)); break;
 
     // Legacy D3DX formats using D3DFMT enum value as FourCC
-    case DXGI_FORMAT_R32G32B32A32_FLOAT:    header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 116; break; // D3DFMT_A32B32G32R32F
-    case DXGI_FORMAT_R16G16B16A16_FLOAT:    header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 113; break; // D3DFMT_A16B16G16R16F
-    case DXGI_FORMAT_R16G16B16A16_UNORM:    header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 36;  break; // D3DFMT_A16B16G16R16
-    case DXGI_FORMAT_R16G16B16A16_SNORM:    header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 110; break; // D3DFMT_Q16W16V16U16
-    case DXGI_FORMAT_R32G32_FLOAT:          header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 115; break; // D3DFMT_G32R32F
-    case DXGI_FORMAT_R16G16_FLOAT:          header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 112; break; // D3DFMT_G16R16F
-    case DXGI_FORMAT_R32_FLOAT:             header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 114; break; // D3DFMT_R32F
-    case DXGI_FORMAT_R16_FLOAT:             header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 111; break; // D3DFMT_R16F
-
-    case DXGI_FORMAT_AI44:
-    case DXGI_FORMAT_IA44:
-    case DXGI_FORMAT_P8:
-    case DXGI_FORMAT_A8P8:
-        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+    case D3DFMT_A32B32G32R32F:    header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 116; break;
+    case D3DFMT_A16B16G16R16F:    header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 113; break;
+    case D3DFMT_A16B16G16R16:     header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 36;  break;
+    case D3DFMT_Q16W16V16U16:     header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 110; break;
+    case D3DFMT_G32R32F:          header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 115; break;
+    case D3DFMT_G16R16F:          header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 112; break;
+    case D3DFMT_R32F:             header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 114; break;
+    case D3DFMT_R16F:             header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 111; break;
+    case D3DFMT_CxV8U8:           header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 117; break;
 
     default:
-        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_DX10, sizeof(DDS_PIXELFORMAT) );
-
-        headerSize += sizeof(DDS_HEADER_DXT10);
-        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>( fileHeader + sizeof(uint32_t) + sizeof(DDS_HEADER) );
-        memset( extHeader, 0, sizeof(DDS_HEADER_DXT10) );
-        extHeader->dxgiFormat = desc.Format;
-        extHeader->resourceDimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D;
-        extHeader->arraySize = 1;
-        break;
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
     size_t rowPitch, slicePitch, rowCount;
-    hr = GetSurfaceInfo( desc.Width, desc.Height, desc.Format, &slicePitch, &rowPitch, &rowCount );
+    hr = GetSurfaceInfo(desc.Width, desc.Height, desc.Format, &slicePitch, &rowPitch, &rowCount);
     if (FAILED(hr))
         return hr;
 
@@ -828,18 +717,18 @@ HRESULT DirectX::SaveDDSTextureToFile(
     return S_OK;
 }
 
+#if 0
 //--------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT DirectX::SaveWICTextureToFile(
-    ID3D11DeviceContext* pContext,
-    ID3D11Resource* pSource,
+    LPDIRECT3DSURFACE9 pSource,
     REFGUID guidContainerFormat,
     const wchar_t* fileName,
     const GUID* targetFormat,
     std::function<void(IPropertyBag2*)> setCustomProps,
     bool forceSRGB) noexcept
 {
-    if ( !fileName )
+    if ( !pSource|| !fileName )
         return E_INVALIDARG;
 
     D3D11_TEXTURE2D_DESC desc = {};
@@ -1127,3 +1016,4 @@ HRESULT DirectX::SaveWICTextureToFile(
 
     return S_OK;
 }
+#endif
