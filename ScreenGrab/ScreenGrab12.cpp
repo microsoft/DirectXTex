@@ -198,16 +198,16 @@ namespace
     { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','1','0'), 0, 0, 0, 0, 0 };
 
     //-----------------------------------------------------------------------------
-    struct handle_closer { void operator()(HANDLE h) { if (h) CloseHandle(h); } };
+    struct handle_closer { void operator()(HANDLE h) noexcept { if (h) CloseHandle(h); } };
 
     using ScopedHandle = std::unique_ptr<void, handle_closer>;
 
-    inline HANDLE safe_handle( HANDLE h ) { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
+    inline HANDLE safe_handle( HANDLE h ) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
     class auto_delete_file
     {
     public:
-        auto_delete_file(HANDLE hFile) : m_handle(hFile) {}
+        auto_delete_file(HANDLE hFile) noexcept : m_handle(hFile) {}
         ~auto_delete_file()
         {
             if (m_handle)
@@ -218,19 +218,22 @@ namespace
             }
         }
 
-        void clear() { m_handle = nullptr; }
+        auto_delete_file(const auto_delete_file&) = delete;
+        auto_delete_file& operator=(const auto_delete_file&) = delete;
+
+        auto_delete_file(const auto_delete_file&&) = delete;
+        auto_delete_file& operator=(const auto_delete_file&&) = delete;
+
+        void clear() noexcept { m_handle = nullptr; }
 
     private:
         HANDLE m_handle;
-
-        auto_delete_file(const auto_delete_file&) = delete;
-        auto_delete_file& operator=(const auto_delete_file&) = delete;
     };
 
     class auto_delete_file_wic
     {
     public:
-        auto_delete_file_wic(ComPtr<IWICStream>& hFile, LPCWSTR szFile) : m_filename(szFile), m_handle(hFile) {}
+        auto_delete_file_wic(ComPtr<IWICStream>& hFile, LPCWSTR szFile) noexcept : m_filename(szFile), m_handle(hFile) {}
         ~auto_delete_file_wic()
         {
             if (m_filename)
@@ -240,14 +243,17 @@ namespace
             }
         }
 
-        void clear() { m_filename = nullptr; }
+        auto_delete_file_wic(const auto_delete_file_wic&) = delete;
+        auto_delete_file_wic& operator=(const auto_delete_file_wic&) = delete;
+
+        auto_delete_file_wic(const auto_delete_file_wic&&) = delete;
+        auto_delete_file_wic& operator=(const auto_delete_file_wic&&) = delete;
+
+        void clear() noexcept { m_filename = nullptr; }
 
     private:
         LPCWSTR m_filename;
         ComPtr<IWICStream>& m_handle;
-
-        auto_delete_file_wic(const auto_delete_file_wic&) = delete;
-        auto_delete_file_wic& operator=(const auto_delete_file_wic&) = delete;
     };
 
     //--------------------------------------------------------------------------------------

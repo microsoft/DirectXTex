@@ -27,6 +27,8 @@
 #pragma clang diagnostic ignored "-Wswitch-enum"
 #endif
 
+#pragma warning(disable : 4062)
+
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"
 

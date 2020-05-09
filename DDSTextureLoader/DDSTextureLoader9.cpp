@@ -71,8 +71,6 @@ struct DDS_PIXELFORMAT
 
 #define DDS_HEADER_FLAGS_VOLUME         0x00800000  // DDSD_DEPTH
 
-#define DDS_HEIGHT 0x00000002 // DDSD_HEIGHT
-
 #define DDS_CUBEMAP_POSITIVEX 0x00000600 // DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEX
 #define DDS_CUBEMAP_NEGATIVEX 0x00000a00 // DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_NEGATIVEX
 #define DDS_CUBEMAP_POSITIVEY 0x00001200 // DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEY
@@ -824,7 +822,7 @@ namespace
                         // Copy stride line by line
                         for (size_t h = 0; h < NumRows; h++)
                         {
-                            memcpy_s(dptr, LockedBox.RowPitch, sptr, RowBytes);
+                            memcpy_s(dptr, static_cast<size_t>(LockedBox.RowPitch), sptr, RowBytes);
                             dptr += LockedBox.RowPitch;
                             sptr += RowBytes;
                         }
@@ -915,7 +913,7 @@ namespace
                         // Copy stride line by line
                         for (size_t r = 0; r < NumRows; r++)
                         {
-                            memcpy_s(pDestBits, LockedRect.Pitch, pSrcBits, RowBytes);
+                            memcpy_s(pDestBits, static_cast<size_t>(LockedRect.Pitch), pSrcBits, RowBytes);
                             pDestBits += LockedRect.Pitch;
                             pSrcBits += RowBytes;
                         }
@@ -988,7 +986,7 @@ namespace
                     // Copy stride line by line
                     for (UINT h = 0; h < NumRows; h++)
                     {
-                        memcpy_s(pDestBits, LockedRect.Pitch, pSrcBits, RowBytes);
+                        memcpy_s(pDestBits, static_cast<size_t>(LockedRect.Pitch), pSrcBits, RowBytes);
                         pDestBits += LockedRect.Pitch;
                         pSrcBits += RowBytes;
                     }
@@ -1080,7 +1078,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
         hr = E_FAIL;
         if (tex->GetType() == D3DRTYPE_TEXTURE)
         {
-            *texture = reinterpret_cast<LPDIRECT3DTEXTURE9>(tex.Detach());
+            *texture = static_cast<LPDIRECT3DTEXTURE9>(tex.Detach());
             return S_OK;
         }
     }
@@ -1110,7 +1108,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
         hr = E_FAIL;
         if (tex->GetType() == D3DRTYPE_CUBETEXTURE)
         {
-            *texture = reinterpret_cast<LPDIRECT3DCUBETEXTURE9>(tex.Detach());
+            *texture = static_cast<LPDIRECT3DCUBETEXTURE9>(tex.Detach());
             return S_OK;
         }
     }
@@ -1140,7 +1138,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
         hr = E_FAIL;
         if (tex->GetType() == D3DRTYPE_VOLUMETEXTURE)
         {
-            *texture = reinterpret_cast<LPDIRECT3DVOLUMETEXTURE9>(tex.Detach());
+            *texture = static_cast<LPDIRECT3DVOLUMETEXTURE9>(tex.Detach());
             return S_OK;
         }
     }
@@ -1213,7 +1211,7 @@ HRESULT DirectX::CreateDDSTextureFromFile(
         hr = E_FAIL;
         if (tex->GetType() == D3DRTYPE_TEXTURE)
         {
-            *texture = reinterpret_cast<LPDIRECT3DTEXTURE9>(tex.Detach());
+            *texture = static_cast<LPDIRECT3DTEXTURE9>(tex.Detach());
             return S_OK;
         }
     }
@@ -1242,7 +1240,7 @@ HRESULT DirectX::CreateDDSTextureFromFile(
         hr = E_FAIL;
         if (tex->GetType() == D3DRTYPE_CUBETEXTURE)
         {
-            *texture = reinterpret_cast<LPDIRECT3DCUBETEXTURE9>(tex.Detach());
+            *texture = static_cast<LPDIRECT3DCUBETEXTURE9>(tex.Detach());
             return S_OK;
         }
     }
@@ -1271,7 +1269,7 @@ HRESULT DirectX::CreateDDSTextureFromFile(
         hr = E_FAIL;
         if (tex->GetType() == D3DRTYPE_VOLUMETEXTURE)
         {
-            *texture = reinterpret_cast<LPDIRECT3DVOLUMETEXTURE9>(tex.Detach());
+            *texture = static_cast<LPDIRECT3DVOLUMETEXTURE9>(tex.Detach());
             return S_OK;
         }
     }
