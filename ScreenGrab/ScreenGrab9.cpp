@@ -26,6 +26,11 @@
 #include <algorithm>
 #include <memory>
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wcovered-switch-default"
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#endif
+
 using Microsoft::WRL::ComPtr;
 
 //--------------------------------------------------------------------------------------
