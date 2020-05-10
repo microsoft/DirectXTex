@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------
-// File: ScreenGrab.h
+// File: ScreenGrab11.h
 //
 // Function for capturing a 2D texture and saving it to a file (aka a 'screenshot'
 // when used on a Direct3D 11 Render Target).

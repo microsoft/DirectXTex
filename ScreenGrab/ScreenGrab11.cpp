@@ -1,8 +1,8 @@
 //--------------------------------------------------------------------------------------
-// File: ScreenGrab.cpp
+// File: ScreenGrab11.cpp
 //
 // Function for capturing a 2D texture and saving it to a file (aka a 'screenshot'
-// when used on a Direct3D 11 Render Target).
+// when used on a Direct3D Render Target).
 //
 // Note these functions are useful as a light-weight runtime screen grabber. For
 // full-featured texture capture, DDS writer, and texture processing pipeline,
@@ -21,7 +21,7 @@
 
 // For 2D array textures and cubemaps, it captures only the first image in the array
 
-#include "ScreenGrab.h"
+#include "ScreenGrab11.h"
 
 #include <dxgiformat.h>
 #include <assert.h>
@@ -32,6 +32,11 @@
 
 #include <algorithm>
 #include <memory>
+
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wcovered-switch-default"
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#endif
 
 using Microsoft::WRL::ComPtr;
 
@@ -190,16 +195,16 @@ namespace
         { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','1','0'), 0, 0, 0, 0, 0 };
 
     //-----------------------------------------------------------------------------
-    struct handle_closer { void operator()(HANDLE h) { if (h) CloseHandle(h); } };
+    struct handle_closer { void operator()(HANDLE h) noexcept { if (h) CloseHandle(h); } };
 
     using ScopedHandle = std::unique_ptr<void, handle_closer>;
 
-    inline HANDLE safe_handle( HANDLE h ) { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
+    inline HANDLE safe_handle( HANDLE h ) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
     class auto_delete_file
     {
     public:
-        auto_delete_file(HANDLE hFile) : m_handle(hFile) {}
+        auto_delete_file(HANDLE hFile) noexcept : m_handle(hFile) {}
         ~auto_delete_file()
         {
             if (m_handle)
@@ -210,19 +215,22 @@ namespace
             }
         }
 
-        void clear() { m_handle = nullptr; }
+        auto_delete_file(const auto_delete_file&) = delete;
+        auto_delete_file& operator=(const auto_delete_file&) = delete;
+
+        auto_delete_file(const auto_delete_file&&) = delete;
+        auto_delete_file& operator=(const auto_delete_file&&) = delete;
+
+        void clear() noexcept { m_handle = nullptr; }
 
     private:
         HANDLE m_handle;
-
-        auto_delete_file(const auto_delete_file&) = delete;
-        auto_delete_file& operator=(const auto_delete_file&) = delete;
     };
 
     class auto_delete_file_wic
     {
     public:
-        auto_delete_file_wic(ComPtr<IWICStream>& hFile, const wchar_t* szFile) : m_filename(szFile), m_handle(hFile) {}
+        auto_delete_file_wic(ComPtr<IWICStream>& hFile, const wchar_t* szFile) noexcept : m_filename(szFile), m_handle(hFile) {}
         ~auto_delete_file_wic()
         {
             if (m_filename)
@@ -232,14 +240,17 @@ namespace
             }
         }
 
-        void clear() { m_filename = nullptr; }
+        auto_delete_file_wic(const auto_delete_file_wic&) = delete;
+        auto_delete_file_wic& operator=(const auto_delete_file_wic&) = delete;
+
+        auto_delete_file_wic(const auto_delete_file_wic&&) = delete;
+        auto_delete_file_wic& operator=(const auto_delete_file_wic&&) = delete;
+
+        void clear() noexcept { m_filename = nullptr; }
 
     private:
         const wchar_t* m_filename;
         ComPtr<IWICStream>& m_handle;
-
-        auto_delete_file_wic(const auto_delete_file_wic&) = delete;
-        auto_delete_file_wic& operator=(const auto_delete_file_wic&) = delete;
     };
 
     //--------------------------------------------------------------------------------------
@@ -793,13 +804,12 @@ HRESULT DirectX::SaveDDSTextureToFile(
 
     // Setup header
     const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
-    uint8_t fileHeader[ MAX_HEADER_SIZE ];
+    uint8_t fileHeader[MAX_HEADER_SIZE] = {};
 
     *reinterpret_cast<uint32_t*>(&fileHeader[0]) = DDS_MAGIC;
 
-    auto header = reinterpret_cast<DDS_HEADER*>( &fileHeader[0] + sizeof(uint32_t) );
+    auto header = reinterpret_cast<DDS_HEADER*>(&fileHeader[0] + sizeof(uint32_t));
     size_t headerSize = sizeof(uint32_t) + sizeof(DDS_HEADER);
-    memset( header, 0, sizeof(DDS_HEADER) );
     header->size = sizeof( DDS_HEADER );
     header->flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_MIPMAP;
     header->height = desc.Height;
@@ -853,11 +863,10 @@ HRESULT DirectX::SaveDDSTextureToFile(
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     default:
-        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_DX10, sizeof(DDS_PIXELFORMAT) );
+        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_DX10, sizeof(DDS_PIXELFORMAT));
 
         headerSize += sizeof(DDS_HEADER_DXT10);
-        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>( fileHeader + sizeof(uint32_t) + sizeof(DDS_HEADER) );
-        memset( extHeader, 0, sizeof(DDS_HEADER_DXT10) );
+        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>(fileHeader + sizeof(uint32_t) + sizeof(DDS_HEADER));
         extHeader->dxgiFormat = desc.Format;
         extHeader->resourceDimension = D3D11_RESOURCE_DIMENSION_TEXTURE2D;
         extHeader->arraySize = 1;
@@ -1165,13 +1174,21 @@ HRESULT DirectX::SaveWICTextureToFile(
     if ( FAILED(hr) )
         return hr;
 
+    uint64_t imageSize = uint64_t(mapped.RowPitch) * uint64_t(desc.Height);
+    if (imageSize > UINT32_MAX)
+    {
+        pContext->Unmap(pStaging.Get(), 0);
+        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+    }
+
     if ( memcmp( &targetGuid, &pfGuid, sizeof(WICPixelFormatGUID) ) != 0 )
     {
         // Conversion required to write
         ComPtr<IWICBitmap> source;
-        hr = pWIC->CreateBitmapFromMemory( desc.Width, desc.Height, pfGuid,
-                                           mapped.RowPitch, mapped.RowPitch * desc.Height,
-                                           static_cast<BYTE*>( mapped.pData ), source.GetAddressOf() );
+        hr = pWIC->CreateBitmapFromMemory(desc.Width, desc.Height,
+            pfGuid,
+            mapped.RowPitch, static_cast<UINT>(imageSize),
+            static_cast<BYTE*>(mapped.pData), source.GetAddressOf());
         if ( FAILED(hr) )
         {
             pContext->Unmap( pStaging.Get(), 0 );
@@ -1190,6 +1207,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         hr = FC->CanConvert( pfGuid, targetGuid, &canConvert );
         if ( FAILED(hr) || !canConvert )
         {
+            pContext->Unmap( pStaging.Get(), 0 );
             return E_UNEXPECTED;
         }
 
@@ -1202,21 +1220,17 @@ HRESULT DirectX::SaveWICTextureToFile(
 
         WICRect rect = { 0, 0, static_cast<INT>( desc.Width ), static_cast<INT>( desc.Height ) };
         hr = frame->WriteSource( FC.Get(), &rect );
-        if ( FAILED(hr) )
-        {
-            pContext->Unmap( pStaging.Get(), 0 );
-            return hr;
-        }
     }
     else
     {
         // No conversion required
-        hr = frame->WritePixels( desc.Height, mapped.RowPitch, mapped.RowPitch * desc.Height, static_cast<BYTE*>( mapped.pData ) );
-        if ( FAILED(hr) )
-            return hr;
+        hr = frame->WritePixels( desc.Height, mapped.RowPitch, static_cast<UINT>(imageSize), static_cast<BYTE*>( mapped.pData ) );
     }
 
     pContext->Unmap( pStaging.Get(), 0 );
+
+    if (FAILED(hr))
+        return hr;
 
     hr = frame->Commit();
     if ( FAILED(hr) )

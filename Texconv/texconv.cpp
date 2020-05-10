@@ -923,7 +923,7 @@ namespace
             float bestScore = FLT_MAX;
             for (size_t y = maxsize; y > 0; y >>= 1)
             {
-                float score = fabs((float(x) / float(y)) - origAR);
+                float score = fabsf((float(x) / float(y)) - origAR);
                 if (score < bestScore)
                 {
                     bestScore = score;
@@ -940,7 +940,7 @@ namespace
             float bestScore = FLT_MAX;
             for (size_t x = maxsize; x > 0; x >>= 1)
             {
-                float score = fabs((float(x) / float(y)) - origAR);
+                float score = fabsf((float(x) / float(y)) - origAR);
                 if (score < bestScore)
                 {
                     bestScore = score;

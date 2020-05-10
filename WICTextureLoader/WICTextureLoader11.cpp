@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------
-// File: WICTextureLoader.cpp
+// File: WICTextureLoader11.cpp
 //
 // Function for loading a WIC image and creating a Direct3D runtime texture for it
 // (auto-generating mipmaps if possible)
@@ -24,7 +24,7 @@
 // We could load multi-frame images (TIFF/GIF) into a texture array.
 // For now, we just load the first frame (note: DirectXTex supports multi-frame images)
 
-#include "WICTextureLoader.h"
+#include "WICTextureLoader11.h"
 
 #include <dxgiformat.h>
 #include <assert.h>
@@ -164,7 +164,6 @@ namespace
 
     bool g_WIC2 = false;
 
-    //--------------------------------------------------------------------------------------
     BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID* ifactory) noexcept
     {
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
@@ -303,6 +302,48 @@ namespace
 
 
     //---------------------------------------------------------------------------------
+    void FitPowerOf2(UINT origx, UINT origy, UINT& targetx, UINT& targety, size_t maxsize)
+    {
+        float origAR = float(origx) / float(origy);
+
+        if (origx > origy)
+        {
+            size_t x;
+            for (x = maxsize; x > 1; x >>= 1) { if (x <= targetx) break; }
+            targetx = UINT(x);
+
+            float bestScore = FLT_MAX;
+            for (size_t y = maxsize; y > 0; y >>= 1)
+            {
+                float score = fabsf((float(x) / float(y)) - origAR);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    targety = UINT(y);
+                }
+            }
+        }
+        else
+        {
+            size_t y;
+            for (y = maxsize; y > 1; y >>= 1) { if (y <= targety) break; }
+            targety = UINT(y);
+
+            float bestScore = FLT_MAX;
+            for (size_t x = maxsize; x > 0; x >>= 1)
+            {
+                float score = fabsf((float(x) / float(y)) - origAR);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    targetx = UINT(x);
+                }
+            }
+        }
+    }
+
+
+    //---------------------------------------------------------------------------------
     HRESULT CreateTextureFromWIC(_In_ ID3D11Device* d3dDevice,
         _In_opt_ ID3D11DeviceContext* d3dContext,
         _In_ IWICBitmapFrameDecode *frame,
@@ -355,8 +396,13 @@ namespace
 
         assert(maxsize > 0);
 
-        UINT twidth, theight;
-        if (width > maxsize || height > maxsize)
+        UINT twidth = width;
+        UINT theight = height;
+        if (loadFlags & WIC_LOADER_FIT_POW2)
+        {
+            FitPowerOf2(width, height, twidth, theight, maxsize);
+        }
+        else if (width > maxsize || height > maxsize)
         {
             float ar = static_cast<float>(height) / static_cast<float>(width);
             if (width > height)
@@ -371,10 +417,11 @@ namespace
             }
             assert(twidth <= maxsize && theight <= maxsize);
         }
-        else
+
+        if (loadFlags & WIC_LOADER_MAKE_SQUARE)
         {
-            twidth = width;
-            theight = height;
+            twidth = std::max<UINT>(twidth, theight);
+            theight = twidth;
         }
 
         // Determine format

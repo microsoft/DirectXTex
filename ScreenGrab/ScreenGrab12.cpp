@@ -198,16 +198,16 @@ namespace
     { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','1','0'), 0, 0, 0, 0, 0 };
 
     //-----------------------------------------------------------------------------
-    struct handle_closer { void operator()(HANDLE h) { if (h) CloseHandle(h); } };
+    struct handle_closer { void operator()(HANDLE h) noexcept { if (h) CloseHandle(h); } };
 
     using ScopedHandle = std::unique_ptr<void, handle_closer>;
 
-    inline HANDLE safe_handle( HANDLE h ) { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
+    inline HANDLE safe_handle( HANDLE h ) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
     class auto_delete_file
     {
     public:
-        auto_delete_file(HANDLE hFile) : m_handle(hFile) {}
+        auto_delete_file(HANDLE hFile) noexcept : m_handle(hFile) {}
         ~auto_delete_file()
         {
             if (m_handle)
@@ -218,19 +218,22 @@ namespace
             }
         }
 
-        void clear() { m_handle = nullptr; }
+        auto_delete_file(const auto_delete_file&) = delete;
+        auto_delete_file& operator=(const auto_delete_file&) = delete;
+
+        auto_delete_file(const auto_delete_file&&) = delete;
+        auto_delete_file& operator=(const auto_delete_file&&) = delete;
+
+        void clear() noexcept { m_handle = nullptr; }
 
     private:
         HANDLE m_handle;
-
-        auto_delete_file(const auto_delete_file&) = delete;
-        auto_delete_file& operator=(const auto_delete_file&) = delete;
     };
 
     class auto_delete_file_wic
     {
     public:
-        auto_delete_file_wic(ComPtr<IWICStream>& hFile, LPCWSTR szFile) : m_filename(szFile), m_handle(hFile) {}
+        auto_delete_file_wic(ComPtr<IWICStream>& hFile, LPCWSTR szFile) noexcept : m_filename(szFile), m_handle(hFile) {}
         ~auto_delete_file_wic()
         {
             if (m_filename)
@@ -240,14 +243,17 @@ namespace
             }
         }
 
-        void clear() { m_filename = nullptr; }
+        auto_delete_file_wic(const auto_delete_file_wic&) = delete;
+        auto_delete_file_wic& operator=(const auto_delete_file_wic&) = delete;
+
+        auto_delete_file_wic(const auto_delete_file_wic&&) = delete;
+        auto_delete_file_wic& operator=(const auto_delete_file_wic&&) = delete;
+
+        void clear() noexcept { m_filename = nullptr; }
 
     private:
         LPCWSTR m_filename;
         ComPtr<IWICStream>& m_handle;
-
-        auto_delete_file_wic(const auto_delete_file_wic&) = delete;
-        auto_delete_file_wic& operator=(const auto_delete_file_wic&) = delete;
     };
 
     //--------------------------------------------------------------------------------------
@@ -896,13 +902,12 @@ HRESULT DirectX::SaveDDSTextureToFile(
 
     // Setup header
     const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
-    uint8_t fileHeader[ MAX_HEADER_SIZE ];
+    uint8_t fileHeader[MAX_HEADER_SIZE] = {};
 
     *reinterpret_cast<uint32_t*>(&fileHeader[0]) = DDS_MAGIC;
 
-    auto header = reinterpret_cast<DDS_HEADER*>( &fileHeader[0] + sizeof(uint32_t) );
+    auto header = reinterpret_cast<DDS_HEADER*>(&fileHeader[0] + sizeof(uint32_t));
     size_t headerSize = sizeof(uint32_t) + sizeof(DDS_HEADER);
-    memset( header, 0, sizeof(DDS_HEADER) );
     header->size = sizeof( DDS_HEADER );
     header->flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_MIPMAP;
     header->height = desc.Height;
@@ -956,11 +961,10 @@ HRESULT DirectX::SaveDDSTextureToFile(
         return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
 
     default:
-        memcpy_s( &header->ddspf, sizeof(header->ddspf), &DDSPF_DX10, sizeof(DDS_PIXELFORMAT) );
+        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_DX10, sizeof(DDS_PIXELFORMAT));
 
         headerSize += sizeof(DDS_HEADER_DXT10);
-        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>(fileHeader + sizeof(uint32_t) + sizeof(DDS_HEADER) );
-        memset( extHeader, 0, sizeof(DDS_HEADER_DXT10) );
+        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>(fileHeader + sizeof(uint32_t) + sizeof(DDS_HEADER));
         extHeader->dxgiFormat = desc.Format;
         extHeader->resourceDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         extHeader->arraySize = 1;
