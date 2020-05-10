@@ -102,116 +102,116 @@ namespace
     #pragma pack(pop)
 
     const DDS_PIXELFORMAT DDSPF_DXT1 =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_DXT2 =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','2'), 0, 0, 0, 0, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','2'), 0, 0, 0, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_DXT3 =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','3'), 0, 0, 0, 0, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','3'), 0, 0, 0, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_DXT4 =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','4'), 0, 0, 0, 0, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','4'), 0, 0, 0, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_DXT5 =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','5'), 0, 0, 0, 0, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','5'), 0, 0, 0, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_R8G8_B8G8 =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R','G','B','G'), 0, 0, 0, 0, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R','G','B','G'), 0, 0, 0, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_G8R8_G8B8 =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('G','R','G','B'), 0, 0, 0, 0, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('G','R','G','B'), 0, 0, 0, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_YUY2 =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('Y','U','Y','2'), 0, 0, 0, 0, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('Y','U','Y','2'), 0, 0, 0, 0, 0 };
 
-     const DDS_PIXELFORMAT DDSPF_UYVY =
-        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('U','Y','V','Y'), 0, 0, 0, 0, 0 };
+    const DDS_PIXELFORMAT DDSPF_UYVY =
+    { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('U','Y','V','Y'), 0, 0, 0, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_A8R8G8B8 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 };
 
     const DDS_PIXELFORMAT DDSPF_X8R8G8B8 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0 };
 
     const DDS_PIXELFORMAT DDSPF_A8B8G8R8 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 
     const DDS_PIXELFORMAT DDSPF_X8B8G8R8 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0 };
 
     const DDS_PIXELFORMAT DDSPF_G16R16 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
 
     const DDS_PIXELFORMAT DDSPF_R5G6B5 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0xf800, 0x07e0, 0x001f, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0xf800, 0x07e0, 0x001f, 0 };
 
     const DDS_PIXELFORMAT DDSPF_A1R5G5B5 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x7c00, 0x03e0, 0x001f, 0x8000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x7c00, 0x03e0, 0x001f, 0x8000 };
 
     const DDS_PIXELFORMAT DDSPF_X1R5G5B5 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0x7c00, 0x03e0, 0x001f, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0x7c00, 0x03e0, 0x001f, 0 };
 
     const DDS_PIXELFORMAT DDSPF_A4R4G4B4 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x0f00, 0x00f0, 0x0000f, 0xf000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x0f00, 0x00f0, 0x0000f, 0xf000 };
 
     const DDS_PIXELFORMAT DDSPF_X4R4G4B4 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0x0f00, 0x00f0, 0x000f, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0x0f00, 0x00f0, 0x000f, 0 };
 
     const DDS_PIXELFORMAT DDSPF_R8G8B8 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0 };
 
     const DDS_PIXELFORMAT DDSPF_A8R3G3B2 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x00e0, 0x001c, 0x0003, 0xff00 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x00e0, 0x001c, 0x0003, 0xff00 };
 
     const DDS_PIXELFORMAT DDSPF_R3G3B2 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 8, 0xe0, 0x1c, 0x03, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 8, 0xe0, 0x1c, 0x03, 0 };
 
     const DDS_PIXELFORMAT DDSPF_A4L4 =
-        { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCEA, 0, 8, 0x0f, 0, 0, 0xf0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCEA, 0, 8, 0x0f, 0, 0, 0xf0 };
 
     const DDS_PIXELFORMAT DDSPF_L8 =
-        { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0,  8, 0xff, 0x00, 0x00, 0x00 };
+    { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0,  8, 0xff, 0x00, 0x00, 0x00 };
 
     const DDS_PIXELFORMAT DDSPF_L16 =
-        { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0, 16, 0xffff, 0x0000, 0x0000, 0x0000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0, 16, 0xffff, 0x0000, 0x0000, 0x0000 };
 
     const DDS_PIXELFORMAT DDSPF_A8L8 =
-        { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCEA, 0, 16, 0x00ff, 0x0000, 0x0000, 0xff00 };
+    { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCEA, 0, 16, 0x00ff, 0x0000, 0x0000, 0xff00 };
 
     const DDS_PIXELFORMAT DDSPF_A8 =
-        { sizeof(DDS_PIXELFORMAT), DDS_ALPHA, 0, 8, 0x00, 0x00, 0x00, 0xff };
+    { sizeof(DDS_PIXELFORMAT), DDS_ALPHA, 0, 8, 0x00, 0x00, 0x00, 0xff };
 
-    const DDS_PIXELFORMAT DDSPF_V8U8 = 
-        { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 16, 0x00ff, 0xff00, 0x0000, 0x0000 };
+    const DDS_PIXELFORMAT DDSPF_V8U8 =
+    { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 16, 0x00ff, 0xff00, 0x0000, 0x0000 };
 
-    const DDS_PIXELFORMAT DDSPF_Q8W8V8U8 = 
-        { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
+    const DDS_PIXELFORMAT DDSPF_Q8W8V8U8 =
+    { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 
-    const DDS_PIXELFORMAT DDSPF_V16U16 = 
-        { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
+    const DDS_PIXELFORMAT DDSPF_V16U16 =
+    { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
 
     const DDS_PIXELFORMAT DDSPF_A2W10V10U10 =
-        { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000 };
 
     const DDS_PIXELFORMAT DDSPF_L6V5U5 =
-        { sizeof(DDS_PIXELFORMAT), DDS_BUMPLUMINANCE, 0, 16, 0x001f, 0x03e0, 0xfc00, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_BUMPLUMINANCE, 0, 16, 0x001f, 0x03e0, 0xfc00, 0 };
 
     const DDS_PIXELFORMAT DDSPF_X8L8V8U8 =
-        { sizeof(DDS_PIXELFORMAT), DDS_BUMPLUMINANCE, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0 };
+    { sizeof(DDS_PIXELFORMAT), DDS_BUMPLUMINANCE, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0 };
 
     // Note these 10:10:10:2 format RGB masks are reversed to support a long-standing bug in D3DX
     const DDS_PIXELFORMAT DDSPF_A2R10G10B10 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000 };
     const DDS_PIXELFORMAT DDSPF_A2B10G10R10 =
-        { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000 };
 
     //-----------------------------------------------------------------------------
     struct handle_closer { void operator()(HANDLE h) noexcept { if (h) CloseHandle(h); } };
 
     using ScopedHandle = std::unique_ptr<void, handle_closer>;
 
-    inline HANDLE safe_handle( HANDLE h ) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
+    inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
     class auto_delete_file
     {
@@ -561,9 +561,9 @@ namespace
 _Use_decl_annotations_
 HRESULT DirectX::SaveDDSTextureToFile(
     LPDIRECT3DSURFACE9 pSource,
-    const wchar_t* fileName ) noexcept
+    const wchar_t* fileName) noexcept
 {
-    if ( !pSource|| !fileName )
+    if (!pSource || !fileName)
         return E_INVALIDARG;
 
     D3DSURFACE_DESC desc = {};
@@ -583,12 +583,12 @@ HRESULT DirectX::SaveDDSTextureToFile(
 
     // Create file
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
-    ScopedHandle hFile( safe_handle( CreateFile2( fileName, GENERIC_WRITE | DELETE, 0, CREATE_ALWAYS, nullptr ) ) );
+    ScopedHandle hFile(safe_handle(CreateFile2(fileName, GENERIC_WRITE | DELETE, 0, CREATE_ALWAYS, nullptr)));
 #else
-    ScopedHandle hFile( safe_handle( CreateFileW( fileName, GENERIC_WRITE | DELETE, 0, nullptr, CREATE_ALWAYS, 0, nullptr ) ) );
+    ScopedHandle hFile(safe_handle(CreateFileW(fileName, GENERIC_WRITE | DELETE, 0, nullptr, CREATE_ALWAYS, 0, nullptr)));
 #endif
-    if ( !hFile )
-        return HRESULT_FROM_WIN32( GetLastError() );
+    if (!hFile)
+        return HRESULT_FROM_WIN32(GetLastError());
 
     auto_delete_file delonfail(hFile.get());
 
@@ -607,7 +607,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
     header->mipMapCount = 1;
     header->caps = DDS_SURFACE_FLAGS_TEXTURE;
 
-    switch( desc.Format )
+    switch (desc.Format)
     {
     case D3DFMT_R8G8B8:          memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_R8G8B8, sizeof(DDS_PIXELFORMAT));      break;
     case D3DFMT_A8R8G8B8:        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT));    break;
@@ -636,7 +636,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
     case D3DFMT_A2W10V10U10:     memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_A2W10V10U10, sizeof(DDS_PIXELFORMAT)); break;
     case D3DFMT_L16:             memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_L16, sizeof(DDS_PIXELFORMAT));         break;
 
-    // FourCC formats
+        // FourCC formats
     case D3DFMT_UYVY:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_UYVY, sizeof(DDS_PIXELFORMAT));      break;
     case D3DFMT_R8G8_B8G8:       memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_R8G8_B8G8, sizeof(DDS_PIXELFORMAT)); break;
     case D3DFMT_YUY2:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_YUY2, sizeof(DDS_PIXELFORMAT));      break;
@@ -647,7 +647,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
     case D3DFMT_DXT4:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_DXT4, sizeof(DDS_PIXELFORMAT));      break;
     case D3DFMT_DXT5:            memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_DXT5, sizeof(DDS_PIXELFORMAT));      break;
 
-    // Legacy D3DX formats using D3DFMT enum value as FourCC
+        // Legacy D3DX formats using D3DFMT enum value as FourCC
     case D3DFMT_A16B16G16R16:     header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 36;  break;
     case D3DFMT_Q16W16V16U16:     header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 110; break;
     case D3DFMT_R16F:             header->ddspf.size = sizeof(DDS_PIXELFORMAT); header->ddspf.flags = DDS_FOURCC; header->ddspf.fourCC = 111; break;
@@ -702,9 +702,9 @@ HRESULT DirectX::SaveDDSTextureToFile(
     uint8_t* dptr = pixels.get();
 
     size_t msize = std::min<size_t>(rowPitch, static_cast<size_t>(lockedRect.Pitch));
-    for( size_t h = 0; h < rowCount; ++h )
+    for (size_t h = 0; h < rowCount; ++h)
     {
-        memcpy_s( dptr, rowPitch, sptr, msize );
+        memcpy_s(dptr, rowPitch, sptr, msize);
         sptr += lockedRect.Pitch;
         dptr += rowPitch;
     }
@@ -713,16 +713,16 @@ HRESULT DirectX::SaveDDSTextureToFile(
 
     // Write header & pixels
     DWORD bytesWritten;
-    if ( !WriteFile( hFile.get(), fileHeader, static_cast<DWORD>( headerSize ), &bytesWritten, nullptr ) )
-        return HRESULT_FROM_WIN32( GetLastError() );
+    if (!WriteFile(hFile.get(), fileHeader, static_cast<DWORD>(headerSize), &bytesWritten, nullptr))
+        return HRESULT_FROM_WIN32(GetLastError());
 
-    if ( bytesWritten != headerSize )
+    if (bytesWritten != headerSize)
         return E_FAIL;
 
-    if ( !WriteFile( hFile.get(), pixels.get(), static_cast<DWORD>( slicePitch ), &bytesWritten, nullptr ) )
-        return HRESULT_FROM_WIN32( GetLastError() );
+    if (!WriteFile(hFile.get(), pixels.get(), static_cast<DWORD>(slicePitch), &bytesWritten, nullptr))
+        return HRESULT_FROM_WIN32(GetLastError());
 
-    if ( bytesWritten != slicePitch )
+    if (bytesWritten != slicePitch)
         return E_FAIL;
 
     delonfail.clear();
@@ -764,7 +764,7 @@ HRESULT DirectX::SaveWICTextureToFile(
 
     // Determine source format's WIC equivalent
     WICPixelFormatGUID pfGuid = {};
-    switch ( desc.Format )
+    switch (desc.Format)
     {
     case D3DFMT_R8G8B8:         pfGuid = GUID_WICPixelFormat24bppBGR; break;
     case D3DFMT_A8R8G8B8:       pfGuid = GUID_WICPixelFormat32bppBGRA; break;
@@ -793,33 +793,33 @@ HRESULT DirectX::SaveWICTextureToFile(
 #endif
 
     default:
-        return HRESULT_FROM_WIN32( ERROR_NOT_SUPPORTED );
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
     ComPtr<IWICStream> stream;
-    hr = pWIC->CreateStream( stream.GetAddressOf() );
-    if ( FAILED(hr) )
+    hr = pWIC->CreateStream(stream.GetAddressOf());
+    if (FAILED(hr))
         return hr;
 
-    hr = stream->InitializeFromFilename( fileName, GENERIC_WRITE );
-    if ( FAILED(hr) )
+    hr = stream->InitializeFromFilename(fileName, GENERIC_WRITE);
+    if (FAILED(hr))
         return hr;
 
     auto_delete_file_wic delonfail(stream, fileName);
 
     ComPtr<IWICBitmapEncoder> encoder;
-    hr = pWIC->CreateEncoder( guidContainerFormat, nullptr, encoder.GetAddressOf() );
-    if ( FAILED(hr) )
+    hr = pWIC->CreateEncoder(guidContainerFormat, nullptr, encoder.GetAddressOf());
+    if (FAILED(hr))
         return hr;
 
-    hr = encoder->Initialize( stream.Get(), WICBitmapEncoderNoCache );
-    if ( FAILED(hr) )
+    hr = encoder->Initialize(stream.Get(), WICBitmapEncoderNoCache);
+    if (FAILED(hr))
         return hr;
 
     ComPtr<IWICBitmapFrameEncode> frame;
     ComPtr<IPropertyBag2> props;
-    hr = encoder->CreateNewFrame( frame.GetAddressOf(), props.GetAddressOf() );
-    if ( FAILED(hr) )
+    hr = encoder->CreateNewFrame(frame.GetAddressOf(), props.GetAddressOf());
+    if (FAILED(hr))
         return hr;
 
     if (targetFormat && memcmp(&guidContainerFormat, &GUID_ContainerFormatBmp, sizeof(WICPixelFormatGUID)) == 0 && g_WIC2)
@@ -834,33 +834,33 @@ HRESULT DirectX::SaveWICTextureToFile(
         (void)props->Write(1, &option, &varValue);
     }
 
-    if ( setCustomProps )
+    if (setCustomProps)
     {
-        setCustomProps( props.Get() );
+        setCustomProps(props.Get());
     }
 
-    hr = frame->Initialize( props.Get() );
-    if ( FAILED(hr) )
+    hr = frame->Initialize(props.Get());
+    if (FAILED(hr))
         return hr;
 
-    hr = frame->SetSize( desc.Width , desc.Height );
-    if ( FAILED(hr) )
+    hr = frame->SetSize(desc.Width, desc.Height);
+    if (FAILED(hr))
         return hr;
 
-    hr = frame->SetResolution( 72, 72 );
-    if ( FAILED(hr) )
+    hr = frame->SetResolution(72, 72);
+    if (FAILED(hr))
         return hr;
 
     // Pick a target format
     WICPixelFormatGUID targetGuid = {};
-    if ( targetFormat )
+    if (targetFormat)
     {
         targetGuid = *targetFormat;
     }
     else
     {
         // Screenshots don't typically include the alpha channel of the render target
-        switch ( desc.Format )
+        switch (desc.Format)
         {
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         case D3DFMT_A32B32G32R32F:
@@ -900,11 +900,11 @@ HRESULT DirectX::SaveWICTextureToFile(
         }
     }
 
-    hr = frame->SetPixelFormat( &targetGuid );
-    if ( FAILED(hr) )
+    hr = frame->SetPixelFormat(&targetGuid);
+    if (FAILED(hr))
         return hr;
 
-    if ( targetFormat && memcmp( targetFormat, &targetGuid, sizeof(WICPixelFormatGUID) ) != 0 )
+    if (targetFormat && memcmp(targetFormat, &targetGuid, sizeof(WICPixelFormatGUID)) != 0)
     {
         // Requested output pixel format is not supported by the WIC codec
         return E_FAIL;
@@ -912,23 +912,23 @@ HRESULT DirectX::SaveWICTextureToFile(
 
     // Encode WIC metadata
     ComPtr<IWICMetadataQueryWriter> metawriter;
-    if ( SUCCEEDED( frame->GetMetadataQueryWriter( metawriter.GetAddressOf() ) ) )
+    if (SUCCEEDED(frame->GetMetadataQueryWriter(metawriter.GetAddressOf())))
     {
         PROPVARIANT value;
-        PropVariantInit( &value );
+        PropVariantInit(&value);
 
         value.vt = VT_LPSTR;
         value.pszVal = const_cast<char*>("DirectXTK");
 
-        if ( memcmp( &guidContainerFormat, &GUID_ContainerFormatPng, sizeof(GUID) ) == 0 )
+        if (memcmp(&guidContainerFormat, &GUID_ContainerFormatPng, sizeof(GUID)) == 0)
         {
             // Set Software name
-            (void)metawriter->SetMetadataByName( L"/tEXt/{str=Software}", &value );
+            (void)metawriter->SetMetadataByName(L"/tEXt/{str=Software}", &value);
         }
         else
         {
             // Set Software name
-            (void)metawriter->SetMetadataByName( L"System.ApplicationName", &value );
+            (void)metawriter->SetMetadataByName(L"System.ApplicationName", &value);
         }
     }
 
@@ -944,44 +944,44 @@ HRESULT DirectX::SaveWICTextureToFile(
         return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
     }
 
-    if ( memcmp( &targetGuid, &pfGuid, sizeof(WICPixelFormatGUID) ) != 0 )
+    if (memcmp(&targetGuid, &pfGuid, sizeof(WICPixelFormatGUID)) != 0)
     {
         // Conversion required to write
         ComPtr<IWICBitmap> source;
         hr = pWIC->CreateBitmapFromMemory(desc.Width, desc.Height, pfGuid,
             static_cast<UINT>(lockedRect.Pitch), static_cast<UINT>(imageSize),
             static_cast<BYTE*>(lockedRect.pBits), source.GetAddressOf());
-        if ( FAILED(hr) )
+        if (FAILED(hr))
         {
             pSource->UnlockRect();
             return hr;
         }
 
         ComPtr<IWICFormatConverter> FC;
-        hr = pWIC->CreateFormatConverter( FC.GetAddressOf() );
-        if ( FAILED(hr) )
+        hr = pWIC->CreateFormatConverter(FC.GetAddressOf());
+        if (FAILED(hr))
         {
             pSource->UnlockRect();
             return hr;
         }
 
         BOOL canConvert = FALSE;
-        hr = FC->CanConvert( pfGuid, targetGuid, &canConvert );
-        if ( FAILED(hr) || !canConvert )
+        hr = FC->CanConvert(pfGuid, targetGuid, &canConvert);
+        if (FAILED(hr) || !canConvert)
         {
             pSource->UnlockRect();
             return E_UNEXPECTED;
         }
 
-        hr = FC->Initialize( source.Get(), targetGuid, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut );
-        if ( FAILED(hr) )
+        hr = FC->Initialize(source.Get(), targetGuid, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut);
+        if (FAILED(hr))
         {
             pSource->UnlockRect();
             return hr;
         }
 
-        WICRect rect = { 0, 0, static_cast<INT>( desc.Width ), static_cast<INT>( desc.Height ) };
-        hr = frame->WriteSource( FC.Get(), &rect );
+        WICRect rect = { 0, 0, static_cast<INT>(desc.Width), static_cast<INT>(desc.Height) };
+        hr = frame->WriteSource(FC.Get(), &rect);
     }
     else
     {
@@ -997,11 +997,11 @@ HRESULT DirectX::SaveWICTextureToFile(
         return hr;
 
     hr = frame->Commit();
-    if ( FAILED(hr) )
+    if (FAILED(hr))
         return hr;
 
     hr = encoder->Commit();
-    if ( FAILED(hr) )
+    if (FAILED(hr))
         return hr;
 
     delonfail.clear();

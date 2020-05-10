@@ -880,6 +880,8 @@ namespace
         return DXGI_FORMAT_UNKNOWN;
     }
 
+    #undef ISBITMASK
+
 
     //--------------------------------------------------------------------------------------
     DXGI_FORMAT MakeSRGB( _In_ DXGI_FORMAT format ) noexcept

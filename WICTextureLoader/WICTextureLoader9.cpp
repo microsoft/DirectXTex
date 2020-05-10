@@ -259,7 +259,7 @@ namespace
     //---------------------------------------------------------------------------------
     HRESULT CreateTextureFromWIC(
         _In_ LPDIRECT3DDEVICE9 device,
-        _In_ IWICBitmapFrameDecode *frame,
+        _In_ IWICBitmapFrameDecode* frame,
         _In_ size_t maxsize,
         _In_ unsigned int loadFlags,
         _Outptr_ LPDIRECT3DTEXTURE9* texture) noexcept

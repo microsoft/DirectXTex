@@ -111,7 +111,7 @@ namespace
 
     using ScopedHandle = std::unique_ptr<void, handle_closer>;
 
-    inline HANDLE safe_handle( HANDLE h ) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
+    inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
     //--------------------------------------------------------------------------------------
     HRESULT LoadTextureDataFromMemory(
@@ -525,7 +525,7 @@ namespace
                 // the RED/BLUE masks for 10:10:10:2 formats. We assume
                 // below that the 'backwards' header mask is being used since it is most
                 // likely written by D3DX.
-                
+
                 // For 'correct' writers this should be 0x3ff00000,0x000ffc00,0x000003ff for BGR data
                 if (ISBITMASK(0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000))
                 {
@@ -730,6 +730,8 @@ namespace
         return D3DFMT_UNKNOWN;
     }
 
+    #undef ISBITMASK
+
 
     //--------------------------------------------------------------------------------------
     HRESULT CreateTextureFromDDS(
@@ -805,7 +807,7 @@ namespace
                 if (NumBytes > UINT32_MAX || RowBytes > UINT32_MAX)
                     return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
 
-                if ((pSrcBits + (NumBytes*iDepth)) > pEndBits)
+                if ((pSrcBits + (NumBytes * iDepth)) > pEndBits)
                 {
                     return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
                 }
@@ -816,8 +818,8 @@ namespace
 
                     for (UINT j = 0; j < iDepth; ++j)
                     {
-                        uint8_t *dptr = pDestBits;
-                        const uint8_t *sptr = pSrcBits;
+                        uint8_t* dptr = pDestBits;
+                        const uint8_t* sptr = pSrcBits;
 
                         // Copy stride line by line
                         for (size_t h = 0; h < NumRows; h++)
@@ -1026,7 +1028,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
     {
         *texture = nullptr;
     }
-    
+
     if (!d3dDevice || !ddsData || !texture)
     {
         return E_INVALIDARG;
