@@ -10,7 +10,6 @@
 //-------------------------------------------------------------------------------------
 
 #include "DirectXTexP.h"
-
 //
 // In theory HDR (RGBE) Radiance files can have any of the following data orientations
 //
@@ -300,6 +299,48 @@ namespace
             float r = pSource[0] >= 0.f ? pSource[0] : 0.f;
             float g = pSource[1] >= 0.f ? pSource[1] : 0.f;
             float b = pSource[2] >= 0.f ? pSource[2] : 0.f;
+            pSource += fpp;
+
+            const float max_xy = (r > g) ? r : g;
+            float max_xyz = (max_xy > b) ? max_xy : b;
+
+            if (max_xyz > 1e-32f)
+            {
+                int e;
+                max_xyz = frexpf(max_xyz, &e) * 256.f / max_xyz;
+                e += 128;
+
+                uint8_t red = uint8_t(r * max_xyz);
+                uint8_t green = uint8_t(g * max_xyz);
+                uint8_t blue = uint8_t(b * max_xyz);
+
+                pDestination[0] = red;
+                pDestination[1] = green;
+                pDestination[2] = blue;
+                pDestination[3] = (red || green || blue) ? uint8_t(e & 0xff) : 0u;
+            }
+            else
+            {
+                pDestination[0] = pDestination[1] = pDestination[2] = pDestination[3] = 0;
+            }
+
+            pDestination += 4;
+        }
+    }
+
+    //-------------------------------------------------------------------------------------
+    // HalfToRGBE
+    //-------------------------------------------------------------------------------------
+    inline void HalfToRGBE(_Out_writes_(width * 4) uint8_t* pDestination, _In_reads_(width* fpp) const uint16_t* pSource, size_t width, _In_range_(3, 4) int fpp) noexcept
+    {
+        auto ePtr = pSource + width * size_t(fpp);
+
+        for (size_t j = 0; j < width; ++j)
+        {
+            if (pSource + 2 >= ePtr) break;
+            float r = PackedVector::XMConvertHalfToFloat(pSource[0]); r = (r >= 0.f) ? r : 0.f;
+            float g = PackedVector::XMConvertHalfToFloat(pSource[1]); g = (g >= 0.f) ? g : 0.f;
+            float b = PackedVector::XMConvertHalfToFloat(pSource[2]); b = (b >= 0.f) ? b : 0.f;
             pSource += fpp;
 
             const float max_xy = (r > g) ? r : g;
@@ -883,9 +924,9 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob) noexcept
     switch (image.format)
     {
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
+    case DXGI_FORMAT_R16G16B16A16_FLOAT:
         fpp = 4;
         break;
-
     case DXGI_FORMAT_R32G32B32_FLOAT:
         fpp = 3;
         break;
@@ -937,7 +978,14 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob) noexcept
     const uint8_t* sPtr = image.pixels;
     for (size_t scan = 0; scan < image.height; ++scan)
     {
-        FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
+        if (image.format == DXGI_FORMAT_R32G32B32A32_FLOAT || image.format == DXGI_FORMAT_R32G32B32_FLOAT)
+        {
+            FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
+        }
+        else if (image.format == DXGI_FORMAT_R16G16B16A16_FLOAT)
+        {
+            HalfToRGBE(rgbe, reinterpret_cast<const uint16_t*>(sPtr), image.width, fpp);
+        }
         sPtr += image.rowPitch;
 
         size_t encSize = EncodeRLE(enc, rgbe, rowPitch, image.width);
@@ -988,9 +1036,9 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
     switch (image.format)
     {
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
+    case DXGI_FORMAT_R16G16B16A16_FLOAT:
         fpp = 4;
         break;
-
     case DXGI_FORMAT_R32G32B32_FLOAT:
         fpp = 3;
         break;
@@ -1088,7 +1136,14 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
         const uint8_t* sPtr = image.pixels;
         for (size_t scan = 0; scan < image.height; ++scan)
         {
-            FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
+             if (image.format == DXGI_FORMAT_R32G32B32A32_FLOAT || image.format == DXGI_FORMAT_R32G32B32_FLOAT)
+            {
+                FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
+            }
+            else if (image.format == DXGI_FORMAT_R16G16B16A16_FLOAT)
+            {
+                HalfToRGBE(rgbe, reinterpret_cast<const uint16_t*>(sPtr), image.width, fpp);
+            }
             sPtr += image.rowPitch;
 
             size_t encSize = EncodeRLE(enc, rgbe, rowPitch, image.width);
