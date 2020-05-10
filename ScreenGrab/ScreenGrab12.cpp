@@ -2,7 +2,7 @@
 // File: ScreenGrab12.cpp
 //
 // Function for capturing a 2D texture and saving it to a file (aka a 'screenshot'
-// when used on a Direct3D 12 Render Target).
+// when used on a Direct3D Render Target).
 //
 // Note these functions are useful as a light-weight runtime screen grabber. For
 // full-featured texture capture, DDS writer, and texture processing pipeline,
@@ -153,43 +153,43 @@ namespace
     { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 };
 
     const DDS_PIXELFORMAT DDSPF_X8R8G8B8 =
-    { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0 };
 
     const DDS_PIXELFORMAT DDSPF_A8B8G8R8 =
     { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 
     const DDS_PIXELFORMAT DDSPF_G16R16 =
-    { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x0000ffff, 0xffff0000, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_R5G6B5 =
-    { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0x0000f800, 0x000007e0, 0x0000001f, 0x00000000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0xf800, 0x07e0, 0x001f, 0 };
 
     const DDS_PIXELFORMAT DDSPF_A1R5G5B5 =
-    { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x00007c00, 0x000003e0, 0x0000001f, 0x00008000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x7c00, 0x03e0, 0x001f, 0x8000 };
 
     const DDS_PIXELFORMAT DDSPF_A4R4G4B4 =
-    { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x00000f00, 0x000000f0, 0x0000000f, 0x0000f000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x0f00, 0x00f0, 0x000f, 0xf000 };
 
     const DDS_PIXELFORMAT DDSPF_L8 =
-    { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0,  8, 0xff, 0x00, 0x00, 0x00 };
+    { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0,  8, 0xff, 0, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_L16 =
-    { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0, 16, 0xffff, 0x0000, 0x0000, 0x0000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0, 16, 0xffff, 0, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_A8L8 =
-    { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCEA, 0, 16, 0x00ff, 0x0000, 0x0000, 0xff00 };
+    { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCEA, 0, 16, 0x00ff, 0, 0, 0xff00 };
 
     const DDS_PIXELFORMAT DDSPF_A8 =
-    { sizeof(DDS_PIXELFORMAT), DDS_ALPHA, 0, 8, 0x00, 0x00, 0x00, 0xff };
+    { sizeof(DDS_PIXELFORMAT), DDS_ALPHA, 0, 8, 0, 0, 0, 0xff };
 
     const DDS_PIXELFORMAT DDSPF_V8U8 =
-    { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 16, 0x00ff, 0xff00, 0x0000, 0x0000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 16, 0x00ff, 0xff00, 0, 0 };
 
     const DDS_PIXELFORMAT DDSPF_Q8W8V8U8 =
     { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 
     const DDS_PIXELFORMAT DDSPF_V16U16 =
-    { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
+    { sizeof(DDS_PIXELFORMAT), DDS_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0, 0 };
 
     // DXGI_FORMAT_R10G10B10A2_UNORM should be written using DX10 extension to avoid D3DX 10:10:10:2 reversal issue
 
@@ -233,7 +233,7 @@ namespace
     class auto_delete_file_wic
     {
     public:
-        auto_delete_file_wic(ComPtr<IWICStream>& hFile, LPCWSTR szFile) noexcept : m_filename(szFile), m_handle(hFile) {}
+        auto_delete_file_wic(ComPtr<IWICStream>& hFile, const wchar_t* szFile) noexcept : m_filename(szFile), m_handle(hFile) {}
         ~auto_delete_file_wic()
         {
             if (m_filename)
@@ -252,7 +252,7 @@ namespace
         void clear() noexcept { m_filename = nullptr; }
 
     private:
-        LPCWSTR m_filename;
+        const wchar_t* m_filename;
         ComPtr<IWICStream>& m_handle;
     };
 
@@ -1312,7 +1312,8 @@ HRESULT DirectX::SaveWICTextureToFile(
     {
         // Conversion required to write
         ComPtr<IWICBitmap> source;
-        hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(desc.Width), desc.Height, pfGuid,
+        hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(desc.Width), desc.Height,
+            pfGuid,
             static_cast<UINT>(dstRowPitch), static_cast<UINT>(imageSize),
             static_cast<BYTE*>(pMappedMemory), source.GetAddressOf());
         if (FAILED(hr))
@@ -1333,6 +1334,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         hr = FC->CanConvert(pfGuid, targetGuid, &canConvert);
         if (FAILED(hr) || !canConvert)
         {
+            pStaging->Unmap(0, &writeRange);
             return E_UNEXPECTED;
         }
 
@@ -1345,21 +1347,17 @@ HRESULT DirectX::SaveWICTextureToFile(
 
         WICRect rect = { 0, 0, static_cast<INT>(desc.Width), static_cast<INT>(desc.Height) };
         hr = frame->WriteSource(FC.Get(), &rect);
-        if (FAILED(hr))
-        {
-            pStaging->Unmap(0, &writeRange);
-            return hr;
-        }
     }
     else
     {
         // No conversion required
         hr = frame->WritePixels(desc.Height, static_cast<UINT>(dstRowPitch), static_cast<UINT>(imageSize), static_cast<BYTE*>(pMappedMemory));
-        if (FAILED(hr))
-            return hr;
     }
 
     pStaging->Unmap(0, &writeRange);
+
+    if (FAILED(hr))
+        return hr;
 
     hr = frame->Commit();
     if (FAILED(hr))
