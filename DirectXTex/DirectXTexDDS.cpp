@@ -550,6 +550,9 @@ HRESULT DirectX::_EncodeDDSHeader(
         if ((metadata.arraySize != 6) || (metadata.dimension != TEX_DIMENSION_TEXTURE2D) || !(metadata.IsCubemap()))
         {
             // Texture1D arrays, Texture2D arrays, and Cubemap arrays must be stored using 'DX10' extended header
+            if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
+                return HRESULT_FROM_WIN32(ERROR_CANNOT_MAKE);
+
             flags |= DDS_FLAGS_FORCE_DX10_EXT;
         }
     }
@@ -575,9 +578,7 @@ HRESULT DirectX::_EncodeDDSHeader(
         case DXGI_FORMAT_BC1_UNORM:             memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_DXT1, sizeof(DDS_PIXELFORMAT)); break;
         case DXGI_FORMAT_BC2_UNORM:             memcpy_s(&ddpf, sizeof(ddpf), metadata.IsPMAlpha() ? (&DDSPF_DXT2) : (&DDSPF_DXT3), sizeof(DDS_PIXELFORMAT)); break;
         case DXGI_FORMAT_BC3_UNORM:             memcpy_s(&ddpf, sizeof(ddpf), metadata.IsPMAlpha() ? (&DDSPF_DXT4) : (&DDSPF_DXT5), sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_BC4_UNORM:             memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_BC4_UNORM, sizeof(DDS_PIXELFORMAT)); break;
         case DXGI_FORMAT_BC4_SNORM:             memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_BC4_SNORM, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_BC5_UNORM:             memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_BC5_UNORM, sizeof(DDS_PIXELFORMAT)); break;
         case DXGI_FORMAT_BC5_SNORM:             memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_BC5_SNORM, sizeof(DDS_PIXELFORMAT)); break;
         case DXGI_FORMAT_B5G6R5_UNORM:          memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_R5G6B5, sizeof(DDS_PIXELFORMAT)); break;
         case DXGI_FORMAT_B5G5R5A1_UNORM:        memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A1R5G5B5, sizeof(DDS_PIXELFORMAT)); break;
@@ -615,6 +616,73 @@ HRESULT DirectX::_EncodeDDSHeader(
             ddpf.size = sizeof(DDS_PIXELFORMAT); ddpf.flags = DDS_FOURCC; ddpf.fourCC = 111;  // D3DFMT_R16F
             break;
 
+        // DX9 legacy pixel formats
+        case DXGI_FORMAT_R10G10B10A2_UNORM:
+            if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
+            {
+                // Write using the 'incorrect' mask version to match D3DX bug
+                memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A2B10G10R10, sizeof(DDS_PIXELFORMAT));
+            }
+            break;
+
+        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+            if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
+            {
+                memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A8B8G8R8, sizeof(DDS_PIXELFORMAT));
+            }
+            break;
+
+        case DXGI_FORMAT_BC1_UNORM_SRGB:
+            if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
+            {
+                memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_DXT1, sizeof(DDS_PIXELFORMAT));
+            }
+            break;
+
+        case DXGI_FORMAT_BC2_UNORM_SRGB:
+            if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
+            {
+                memcpy_s(&ddpf, sizeof(ddpf), metadata.IsPMAlpha() ? (&DDSPF_DXT2) : (&DDSPF_DXT3), sizeof(DDS_PIXELFORMAT));
+            }
+            break;
+
+        case DXGI_FORMAT_BC3_UNORM_SRGB:
+            if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
+            {
+                memcpy_s(&ddpf, sizeof(ddpf), metadata.IsPMAlpha() ? (&DDSPF_DXT4) : (&DDSPF_DXT5), sizeof(DDS_PIXELFORMAT));
+            }
+            break;
+
+        case DXGI_FORMAT_BC4_UNORM:
+            memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_BC4_UNORM, sizeof(DDS_PIXELFORMAT));
+            if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
+            {
+                ddpf.fourCC = MAKEFOURCC('A', 'T', 'I', '1');
+            }
+            break;
+
+        case DXGI_FORMAT_BC5_UNORM:
+            memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_BC5_UNORM, sizeof(DDS_PIXELFORMAT));
+            if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
+            {
+                ddpf.fourCC = MAKEFOURCC('A', 'T', 'I', '2');
+            }
+            break;
+
+        case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+            if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
+            {
+                memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT));
+            }
+            break;
+
+        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+            if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
+            {
+                memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT));
+            }
+            break;
+
         default:
             break;
         }
@@ -623,7 +691,12 @@ HRESULT DirectX::_EncodeDDSHeader(
     required = sizeof(uint32_t) + sizeof(DDS_HEADER);
 
     if (ddpf.size == 0)
+    {
+        if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
+            return HRESULT_FROM_WIN32(ERROR_CANNOT_MAKE);
+
         required += sizeof(DDS_HEADER_DXT10);
+    }
 
     if (!pDestination)
         return S_OK;
