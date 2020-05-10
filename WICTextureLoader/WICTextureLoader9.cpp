@@ -59,7 +59,6 @@ namespace
         { GUID_WICPixelFormat64bppRGBA,             D3DFMT_A16B16G16R16 },
 
         { GUID_WICPixelFormat32bppBGRA,             D3DFMT_A8R8G8B8 },
-        { GUID_WICPixelFormat32bppBGR,              D3DFMT_X8R8G8B8 },
 
         { GUID_WICPixelFormat32bppRGBA1010102,      D3DFMT_A2B10G10R10 },
 
@@ -104,11 +103,10 @@ namespace
 
         { GUID_WICPixelFormat32bppBGR101010,        GUID_WICPixelFormat32bppRGBA1010102 }, // D3DFMT_A2B10G10R10
 
-        { GUID_WICPixelFormat24bppBGR,              GUID_WICPixelFormat32bppBGR }, // D3DFMT_X8R8G8B8
-        { GUID_WICPixelFormat24bppRGB,              GUID_WICPixelFormat32bppBGR }, // D3DFMT_X8R8G8B8
-
-        { GUID_WICPixelFormat32bppRGBA,             GUID_WICPixelFormat32bppBGRA }, // D3DFMT_X8R8G8B8
-
+        { GUID_WICPixelFormat24bppBGR,              GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
+        { GUID_WICPixelFormat24bppRGB,              GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
+        { GUID_WICPixelFormat32bppBGR,              GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
+        { GUID_WICPixelFormat32bppRGBA,             GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
         { GUID_WICPixelFormat32bppPBGRA,            GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
         { GUID_WICPixelFormat32bppPRGBA,            GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
 
