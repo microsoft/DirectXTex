@@ -6,6 +6,15 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### May 10, 2020
+* HDR (RGBE Radiance) file format writer updated to accept half16 input
+* Code cleanup
+* Updated D3DX12 internal copy to Windows 10 SDK (19041) version
+* texassemble, texconv, texdiag: Updated with ``-l`` switch for case-sensitive file systems
+* texconv: Added ``-dx9`` switch to force legacy compatible DDS files
+* texconv: Collapsed ``-bcuniform``, ``-bcdither``, ``-bcquick``, and ``-bcmax`` into one ``-bc`` switch
+* Updates to DDSTextureLoader, ScreenGrab, and WICTextureLoader including new DX9 version
+
 ### April 3, 2020
 * Updated D3DX12 internal copy to latest version
 * DDS loader updated for another BC7 FourCC variant

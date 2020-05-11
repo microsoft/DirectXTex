@@ -6,9 +6,9 @@ http://go.microsoft.com/fwlink/?LinkId=248926
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 
-**April 3, 2020**
+**May 10, 2020**
 
-This package contains DirectXTex, a shared source library for reading and writing DDS files, and performing various texture content processing operations including resizing, format conversion, mip-map generation, block compression for Direct3D runtime texture resources, and height-map to normal-map conversion. This library makes use of the Windows Image Component (WIC) APIs. It also includes simple .TGA and .HDR readers and writers since these image file formats are commonly used for texture content processing pipelines, but are not currently supported by a built-in WIC codec.
+This package contains DirectXTex, a shared source library for reading and writing DDS files, and performing various texture content processing operations including resizing, format conversion, mip-map generation, block compression for Direct3D runtime texture resources, and height-map to normal-map conversion. This library makes use of the Windows Image Component (WIC) APIs. It also includes ``.TGA`` and ``.HDR`` readers and writers since these image file formats are commonly used for texture content processing pipelines, but are not currently supported by a built-in WIC codec.
 
 This code is designed to build with Visual Studio 2017 ([15.9](https://walbourn.github.io/vs-2017-15-9-update/)), Visual Studio 2019, or clang for Windows v9. It is recommended that you make use of the Windows 10 May 2019 Update SDK ([18362](https://walbourn.github.io/windows-10-may-2019-update/)).
 
@@ -43,17 +43,19 @@ These components are designed to work without requiring any content from the leg
 
 * ``DDSTextureLoader\``
 
-  + This contains a streamlined version of the DirectX SDK sample DDSWithoutD3DX11 texture loading code for a simple light-weight runtime DDS loader. This version only supports Direct3D 11 or Direct3D 12 and performs no runtime pixel data conversions (i.e. 24bpp legacy DDS files always fail). This is ideal for runtime usage, and supports the fullcomplement of Direct3D texture  resources (1D, 2D, volume maps, cubemaps, mipmap levels, texture arrays, BC formats, etc.).
+  + This contains a streamlined version of the legacy DirectX SDK sample *DDSWithoutD3DX11* texture loading code for a simple light-weight runtime DDS loader. There are versions for Direct3D 9, Direct3D 11, and Direct3D 12. This performs no runtime pixel data conversions. This is ideal for runtime usage, and supports the full complement of Direct3D texture  resources (1D, 2D, volume maps, cubemaps, mipmap levels, texture arrays, BC formats, etc.).
 
 * ``ScreenGrab\``
 
-  + This contains screen grab modules for Direct3D 11 and Direct3D 12 primarily intended for creating screenshots. The images are written as a DDS or as an image file format using WIC.
+  + This contains texture writing modules for Direct3D 9, Direct3D 11, and Direct3D 12 primarily intended for creating screenshots. The images are written as a DDS or as an image file format using WIC.
 
 * ``WICTextureLoader\``
 
-  + This contains a Direct3D 11 and Direct3D 12 2D texture loader that uses WIC to load a bitmap (BMP, JPEG, PNG, HD Photo, or other WIC supported file container), resize if needed based on the current feature level (or by explicit parameter), format convert to a DXGI_FORMAT if required, and then create a 2D texture. Note this does not support 1D textures, volume textures, cubemaps, or texture arrays. DDSTextureLoader is recommended for fully "precooked" textures for maximum performance and image quality, but this loader can be useful for creating simple 2D texture from standard image files at runtime.
+  + This contains a Direct3D 9, Direct3D 11 and Direct3D 12 2D texture loader that uses WIC to load a bitmap (BMP, JPEG, PNG, HD Photo, or other WIC supported file container), resize if needed based on the current feature level (or by explicit parameter), format convert to a DXGI_FORMAT if required, and then create a 2D texture. Note this does not support 1D textures, volume textures, cubemaps, or texture arrays. DDSTextureLoader is recommended for fully "precooked" textures for maximum performance and image quality, but this loader can be useful for creating simple 2D texture from standard image files at runtime.
 
-> DDSTextureLoader, ScreenGrab, and WICTextureLoader are 'stand-alone' versions of the same modules provided in the DirectX Tool Kit for [DX11](https://github.com/Microsoft/DirectXTK) / [DX12](https://github.com/Microsoft/DirectXTK12).
+> DDSTextureLoader11, ScreenGrab11, and WICTextureLoader11 are 'stand-alone' versions of the same modules provided in the [DirectX Tool Kit for DX11](https://github.com/Microsoft/DirectXTK)
+
+> DDSTextureLoader12, ScreenGrab12, and WICTextureLoader12 are 'stand-alone' versions of the same modules provided in the [DirectX Tool Kit for DX12](https://github.com/Microsoft/DirectXTK12).
 
 # Documentation
 
@@ -69,13 +71,11 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 ## Release Notes
 
-* The alpha mode specification for DDS files was updated between the March 2013 and April 2013 releases. Any DDS files created using the ``DDS_FLAGS_FORCE_DX10_EXT_MISC2`` flag or the texconv ``-dx10`` switch using the March 2013 release should be refreshed.
-
 * Due to the underlying Windows BMP WIC codec, alpha channels are not supported for 16bpp or 32bpp BMP pixel format files. The Windows 8.x and Windows 10 version of the Windows BMP WIC codec does support 32bpp pixel formats with alpha when using the ``BITMAPV5HEADER`` file header. Note the updated WIC is available on Windows 7 SP1 with [KB 2670838](https://walbourn.github.io/directx-11-1-and-windows-7-update/) installed.
 
 * While DXGI 1.0 and DXGI 1.1 include 5:6:5 (``DXGI_FORMAT_B5G6R5_UNORM``) and 5:5:5:1 (``DXGI_FORMAT_B5G5R5A1_UNORM``) pixel format enumerations, the DirectX 10.x and 11.0 Runtimes do not support these formats for use with Direct3D. The DirectX 11.1 runtime, DXGI 1.2, and the WDDM 1.2 driver model fully support 16bpp formats (5:6:5, 5:5:5:1, and 4:4:4:4).
 
-* WICTextureLoader cannot load .TGA or .HDR files unless the system has a 3rd party WIC codec installed. You must use the DirectXTex library for TGA/HDR file format support without relying on an add-on WIC codec.
+* WICTextureLoader cannot load ``.TGA`` or ``.HDR`` files unless the system has a 3rd party WIC codec installed. You must use the DirectXTex library for TGA/HDR file format support without relying on an add-on WIC codec.
 
 * Loading of 96bpp floating-point TIFF files results in a corrupted image prior to Windows 8. This fix is available on Windows 7 SP1 with KB 2670838 installed.
 
@@ -86,3 +86,5 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 * The VS 2019 projects use a ``<WindowsTargetPlatformVersion>`` of ``10.0`` which indicates to use the latest installed version. This should be Windows 10 SDK (17763) or later.
 
 * The UWP projects and the VS 2019 Win10 classic desktop project include configurations for the ARM64 platform. These require VS 2017 (15.9 update) or VS 2019 to build, with the ARM64 toolset installed.
+
+* The ``CompileShaders.cmd`` script must have Windows-style (CRLF) line-endings. If it is changed to Linux-style (LF) line-endings, it can fail to build all the required shaders.
