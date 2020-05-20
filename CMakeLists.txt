@@ -140,6 +140,13 @@ if ( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
     target_compile_options(texconv PRIVATE /permissive- /Zc:__cplusplus)
     target_compile_options(texdiag PRIVATE /permissive- /Zc:__cplusplus)
 
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.26)
+        target_compile_options(${PROJECT_NAME} PRIVATE /Zc:preprocessor /wd5105)
+        target_compile_options(texassemble PRIVATE /Zc:preprocessor /wd5105)
+        target_compile_options(texconv PRIVATE /Zc:preprocessor /wd5105)
+        target_compile_options(texdiag PRIVATE /Zc:preprocessor /wd5105)
+    endif()
+
     if(BC_USE_OPENMP MATCHES ON)
         target_compile_options(${PROJECT_NAME} PRIVATE /openmp /Zc:twoPhase-)
         target_compile_options(texconv PRIVATE /openmp /Zc:twoPhase-)
