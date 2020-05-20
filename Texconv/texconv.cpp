@@ -201,7 +201,7 @@ const SValue g_pOptions[] =
     { nullptr,          0 }
 };
 
-#define DEFFMT(fmt) { L#fmt, DXGI_FORMAT_ ## fmt }
+#define DEFFMT(fmt) { L""#fmt, DXGI_FORMAT_ ## fmt }
 
 const SValue g_pFormats[] =
 {
