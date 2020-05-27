@@ -327,10 +327,7 @@ namespace
                     }
                     else if (SUCCEEDED(metareader->GetMetadataByName(L"/gAMA/ImageGamma", &value)) && value.vt == VT_UI4)
                     {
-                        if (value.uintVal == 45455)
-                        {
-                            sRGB = true;
-                        }
+                        sRGB = (value.uintVal == 45455);
                     }
                     else
                     {
@@ -342,10 +339,7 @@ namespace
                 {
                     if (SUCCEEDED(metareader->GetMetadataByName(L"/app1/ifd/exif/{ushort=40961}", &value)) && value.vt == VT_UI2)
                     {
-                        if (value.uiVal == 1)
-                        {
-                            sRGB = true;
-                        }
+                        sRGB = (value.uiVal == 1);
                     }
                     else
                     {
@@ -356,10 +350,7 @@ namespace
                 {
                     if (SUCCEEDED(metareader->GetMetadataByName(L"/ifd/exif/{ushort=40961}", &value)) && value.vt == VT_UI2)
                     {
-                        if (value.uiVal == 1)
-                        {
-                            sRGB = true;
-                        }
+                        sRGB = (value.uiVal == 1);
                     }
                     else
                     {
@@ -369,10 +360,7 @@ namespace
 #else
                 else if (SUCCEEDED(metareader->GetMetadataByName(L"System.Image.ColorSpace", &value)) && value.vt == VT_UI2)
                 {
-                    if (value.uiVal == 1)
-                    {
-                        sRGB = true;
-                    }
+                    sRGB = (value.uiVal == 1);
                 }
                 else
                 {

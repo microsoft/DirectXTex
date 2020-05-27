@@ -532,15 +532,12 @@ namespace
                         }
                         else if (SUCCEEDED(metareader->GetMetadataByName(L"/gAMA/ImageGamma", &value)) && value.vt == VT_UI4)
                         {
-                            if (value.uintVal == 45455)
-                            {
-                                sRGB = true;
-                            }
+                            sRGB = (value.uintVal == 45455);
                         }
                     }
-                    else if (SUCCEEDED(metareader->GetMetadataByName(L"System.Image.ColorSpace", &value)) && value.vt == VT_UI2 && value.uiVal == 1)
+                    else if (SUCCEEDED(metareader->GetMetadataByName(L"System.Image.ColorSpace", &value)) && value.vt == VT_UI2)
                     {
-                        sRGB = true;
+                        sRGB = (value.uiVal == 1);
                     }
 
                     (void)PropVariantClear(&value);
