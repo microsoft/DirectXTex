@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTex.h
-//  
+//
 // DirectX Texture Library
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -146,7 +146,7 @@ namespace DirectX
             // Assume pitch is DWORD aligned instead of BYTE aligned (used by some legacy DDS files)
 
         DDS_FLAGS_NO_LEGACY_EXPANSION   = 0x2,
-            // Do not implicitly convert legacy formats that result in larger pixel sizes (24 bpp, 3:3:2, A8L8, A4L4, P8, A8P8) 
+            // Do not implicitly convert legacy formats that result in larger pixel sizes (24 bpp, 3:3:2, A8L8, A4L4, P8, A8P8)
 
         DDS_FLAGS_NO_R10B10G10A2_FIXUP  = 0x4,
             // Do not use work-around for long-standing D3DX DDS file format issue which reversed the 10:10:10:2 color order masks
@@ -201,6 +201,9 @@ namespace DirectX
 
         WIC_FLAGS_FORCE_LINEAR          = 0x80,
             // Writes linear gamma metadata into the file reguardless of format
+
+        WIC_FLAGS_DEFAULT_SRGB          = 0x100,
+            // If no colorspace is specified, assume sRGB
 
         WIC_FLAGS_DITHER                = 0x10000,
             // Use ordered 4x4 dithering for any required conversions
