@@ -28,7 +28,7 @@ namespace DirectX
 // Constants
 //-------------------------------------------------------------------------------------
 
-enum BC_FLAGS
+enum BC_FLAGS : unsigned long
 {
     BC_FLAGS_NONE               = 0x0,
     BC_FLAGS_DITHER_RGB         = 0x10000,  // Enables dithering for RGB colors for BC1-3

@@ -26,7 +26,7 @@ using namespace DirectX;
 _Use_decl_annotations_
 bool DirectX::_DetermineImageArray(
     const TexMetadata& metadata,
-    DWORD cpFlags,
+    CP_FLAGS cpFlags,
     size_t& nImages,
     size_t& pixelSize) noexcept
 {
@@ -131,7 +131,7 @@ bool DirectX::_SetupImageArray(
     uint8_t *pMemory,
     size_t pixelSize,
     const TexMetadata& metadata,
-    DWORD cpFlags,
+    CP_FLAGS cpFlags,
     Image* images,
     size_t nImages) noexcept
 {
@@ -282,7 +282,7 @@ ScratchImage& ScratchImage::operator= (ScratchImage&& moveFrom) noexcept
 // Methods
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT ScratchImage::Initialize(const TexMetadata& mdata, DWORD flags) noexcept
+HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags) noexcept
 {
     if (!IsValid(mdata.format))
         return E_INVALIDARG;
@@ -368,7 +368,7 @@ HRESULT ScratchImage::Initialize(const TexMetadata& mdata, DWORD flags) noexcept
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::Initialize1D(DXGI_FORMAT fmt, size_t length, size_t arraySize, size_t mipLevels, DWORD flags) noexcept
+HRESULT ScratchImage::Initialize1D(DXGI_FORMAT fmt, size_t length, size_t arraySize, size_t mipLevels, CP_FLAGS flags) noexcept
 {
     if (!length || !arraySize)
         return E_INVALIDARG;
@@ -384,7 +384,7 @@ HRESULT ScratchImage::Initialize1D(DXGI_FORMAT fmt, size_t length, size_t arrayS
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::Initialize2D(DXGI_FORMAT fmt, size_t width, size_t height, size_t arraySize, size_t mipLevels, DWORD flags) noexcept
+HRESULT ScratchImage::Initialize2D(DXGI_FORMAT fmt, size_t width, size_t height, size_t arraySize, size_t mipLevels, CP_FLAGS flags) noexcept
 {
     if (!IsValid(fmt) || !width || !height || !arraySize)
         return E_INVALIDARG;
@@ -435,7 +435,7 @@ HRESULT ScratchImage::Initialize2D(DXGI_FORMAT fmt, size_t width, size_t height,
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::Initialize3D(DXGI_FORMAT fmt, size_t width, size_t height, size_t depth, size_t mipLevels, DWORD flags) noexcept
+HRESULT ScratchImage::Initialize3D(DXGI_FORMAT fmt, size_t width, size_t height, size_t depth, size_t mipLevels, CP_FLAGS flags) noexcept
 {
     if (!IsValid(fmt) || !width || !height || !depth)
         return E_INVALIDARG;
@@ -489,7 +489,7 @@ HRESULT ScratchImage::Initialize3D(DXGI_FORMAT fmt, size_t width, size_t height,
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::InitializeCube(DXGI_FORMAT fmt, size_t width, size_t height, size_t nCubes, size_t mipLevels, DWORD flags) noexcept
+HRESULT ScratchImage::InitializeCube(DXGI_FORMAT fmt, size_t width, size_t height, size_t nCubes, size_t mipLevels, CP_FLAGS flags) noexcept
 {
     if (!width || !height || !nCubes)
         return E_INVALIDARG;
@@ -505,7 +505,7 @@ HRESULT ScratchImage::InitializeCube(DXGI_FORMAT fmt, size_t width, size_t heigh
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::InitializeFromImage(const Image& srcImage, bool allow1D, DWORD flags) noexcept
+HRESULT ScratchImage::InitializeFromImage(const Image& srcImage, bool allow1D, CP_FLAGS flags) noexcept
 {
     HRESULT hr = (srcImage.height > 1 || !allow1D)
         ? Initialize2D(srcImage.format, srcImage.width, srcImage.height, 1, 1, flags)
@@ -542,7 +542,7 @@ HRESULT ScratchImage::InitializeFromImage(const Image& srcImage, bool allow1D, D
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::InitializeArrayFromImages(const Image* images, size_t nImages, bool allow1D, DWORD flags) noexcept
+HRESULT ScratchImage::InitializeArrayFromImages(const Image* images, size_t nImages, bool allow1D, CP_FLAGS flags) noexcept
 {
     if (!images || !nImages)
         return E_INVALIDARG;
@@ -602,7 +602,7 @@ HRESULT ScratchImage::InitializeArrayFromImages(const Image* images, size_t nIma
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::InitializeCubeFromImages(const Image* images, size_t nImages, DWORD flags) noexcept
+HRESULT ScratchImage::InitializeCubeFromImages(const Image* images, size_t nImages, CP_FLAGS flags) noexcept
 {
     if (!images || !nImages)
         return E_INVALIDARG;
@@ -621,7 +621,7 @@ HRESULT ScratchImage::InitializeCubeFromImages(const Image* images, size_t nImag
 }
 
 _Use_decl_annotations_
-HRESULT ScratchImage::Initialize3DFromImages(const Image* images, size_t depth, DWORD flags) noexcept
+HRESULT ScratchImage::Initialize3DFromImages(const Image* images, size_t depth, CP_FLAGS flags) noexcept
 {
     if (!images || !depth)
         return E_INVALIDARG;

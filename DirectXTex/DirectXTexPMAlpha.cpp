@@ -15,6 +15,15 @@ using namespace DirectX;
 
 namespace
 {
+    inline TEX_FILTER_FLAGS GetSRGBFlags(_In_ TEX_PMALPHA_FLAGS compress) noexcept
+    {
+        static_assert(TEX_FILTER_SRGB_IN == 0x1000000, "TEX_FILTER_SRGB flag values don't match TEX_FILTER_SRGB_MASK");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_OUT) == static_cast<int>(TEX_FILTER_SRGB_OUT), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB) == static_cast<int>(TEX_FILTER_SRGB), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
+        return static_cast<TEX_FILTER_FLAGS>(compress & TEX_FILTER_SRGB_MASK);
+    }
+
     //---------------------------------------------------------------------------------
     // NonPremultiplied alpha -> Premultiplied alpha
     HRESULT PremultiplyAlpha_(const Image& srcImage, const Image& destImage) noexcept
@@ -55,7 +64,7 @@ namespace
         return S_OK;
     }
 
-    HRESULT PremultiplyAlphaLinear(const Image& srcImage, DWORD flags, const Image& destImage) noexcept
+    HRESULT PremultiplyAlphaLinear(const Image& srcImage, TEX_PMALPHA_FLAGS flags, const Image& destImage) noexcept
     {
         assert(srcImage.width == destImage.width);
         assert(srcImage.height == destImage.height);
@@ -74,9 +83,11 @@ namespace
         if (!pSrc || !pDest)
             return E_POINTER;
 
+        TEX_FILTER_FLAGS filter = GetSRGBFlags(flags);
+
         for (size_t h = 0; h < srcImage.height; ++h)
         {
-            if (!_LoadScanlineLinear(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format, flags))
+            if (!_LoadScanlineLinear(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format, filter))
                 return E_FAIL;
 
             XMVECTOR* ptr = scanline.get();
@@ -88,7 +99,7 @@ namespace
                 *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
             }
 
-            if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width, flags))
+            if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width, filter))
                 return E_FAIL;
 
             pSrc += srcImage.rowPitch;
@@ -141,7 +152,7 @@ namespace
         return S_OK;
     }
 
-    HRESULT DemultiplyAlphaLinear(const Image& srcImage, DWORD flags, const Image& destImage) noexcept
+    HRESULT DemultiplyAlphaLinear(const Image& srcImage, TEX_PMALPHA_FLAGS flags, const Image& destImage) noexcept
     {
         assert(srcImage.width == destImage.width);
         assert(srcImage.height == destImage.height);
@@ -160,9 +171,11 @@ namespace
         if (!pSrc || !pDest)
             return E_POINTER;
 
+        TEX_FILTER_FLAGS filter = GetSRGBFlags(flags);
+
         for (size_t h = 0; h < srcImage.height; ++h)
         {
-            if (!_LoadScanlineLinear(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format, flags))
+            if (!_LoadScanlineLinear(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format, filter))
                 return E_FAIL;
 
             XMVECTOR* ptr = scanline.get();
@@ -177,7 +190,7 @@ namespace
                 *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
             }
 
-            if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width, flags))
+            if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width, filter))
                 return E_FAIL;
 
             pSrc += srcImage.rowPitch;
@@ -199,7 +212,7 @@ namespace
 _Use_decl_annotations_
 HRESULT DirectX::PremultiplyAlpha(
     const Image& srcImage,
-    DWORD flags,
+    TEX_PMALPHA_FLAGS flags,
     ScratchImage& image) noexcept
 {
     if (!srcImage.pixels)
@@ -252,7 +265,7 @@ HRESULT DirectX::PremultiplyAlpha(
     const Image* srcImages,
     size_t nimages,
     const TexMetadata& metadata,
-    DWORD flags,
+    TEX_PMALPHA_FLAGS flags,
     ScratchImage& result) noexcept
 {
     if (!srcImages || !nimages)

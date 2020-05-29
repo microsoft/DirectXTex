@@ -24,7 +24,7 @@ namespace
     //-------------------------------------------------------------------------------------
     // Legacy format mapping table (used for DDS files without 'DX10' extended header)
     //-------------------------------------------------------------------------------------
-    enum CONVERSION_FLAGS
+    enum CONVERSION_FLAGS : unsigned long
     {
         CONV_FLAGS_NONE = 0x0,
         CONV_FLAGS_EXPAND = 0x1,      // Conversion requires expanded pixel size
@@ -534,7 +534,7 @@ namespace
 _Use_decl_annotations_
 HRESULT DirectX::_EncodeDDSHeader(
     const TexMetadata& metadata,
-    DWORD flags,
+    DDS_FLAGS flags,
     void* pDestination,
     size_t maxsize,
     size_t& required) noexcept
@@ -900,7 +900,7 @@ namespace
             size_t inSize,
             _In_ TEXP_LEGACY_FORMAT inFormat,
             _In_reads_opt_(256) const uint32_t* pal8,
-            _In_ DWORD flags) noexcept
+            _In_ DWORD tflags) noexcept
     {
         assert(pDestination && outSize > 0);
         assert(pSource && inSize > 0);
@@ -998,7 +998,7 @@ namespace
                     uint32_t t1 = uint32_t((t & 0x00e0) | ((t & 0x00e0) >> 3) | ((t & 0x00c0) >> 6));
                     uint32_t t2 = uint32_t(((t & 0x001c) << 11) | ((t & 0x001c) << 8) | ((t & 0x0018) << 5));
                     uint32_t t3 = uint32_t(((t & 0x0003) << 22) | ((t & 0x0003) << 20) | ((t & 0x0003) << 18) | ((t & 0x0003) << 16));
-                    uint32_t ta = (flags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t((t & 0xff00) << 16);
+                    uint32_t ta = (tflags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t((t & 0xff00) << 16);
 
                     *(dPtr++) = t1 | t2 | t3 | ta;
                 }
@@ -1041,7 +1041,7 @@ namespace
                     uint16_t t = *(sPtr++);
 
                     uint32_t t1 = pal8[t & 0xff];
-                    uint32_t ta = (flags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t((t & 0xff00) << 16);
+                    uint32_t ta = (tflags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t((t & 0xff00) << 16);
 
                     *(dPtr++) = t1 | ta;
                 }
@@ -1064,7 +1064,7 @@ namespace
                         unsigned t = *(sPtr++);
 
                         unsigned t1 = (t & 0x0fu);
-                        unsigned ta = (flags & TEXP_SCANLINE_SETALPHA) ? 0xf000u : ((t & 0xf0u) << 8);
+                        unsigned ta = (tflags & TEXP_SCANLINE_SETALPHA) ? 0xf000u : ((t & 0xf0u) << 8);
 
                         *(dPtr++) = static_cast<uint16_t>(t1 | (t1 << 4) | (t1 << 8) | ta);
                     }
@@ -1084,7 +1084,7 @@ namespace
                         uint8_t t = *(sPtr++);
 
                         uint32_t t1 = uint32_t(((t & 0x0f) << 4) | (t & 0x0f));
-                        uint32_t ta = (flags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t(((t & 0xf0) << 24) | ((t & 0xf0) << 20));
+                        uint32_t ta = (tflags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t(((t & 0xf0) << 24) | ((t & 0xf0) << 20));
 
                         *(dPtr++) = t1 | (t1 << 8) | (t1 << 16) | ta;
                     }
@@ -1113,7 +1113,7 @@ namespace
                     uint32_t t1 = uint32_t((t & 0x0f00) >> 4) | ((t & 0x0f00) >> 8);
                     uint32_t t2 = uint32_t((t & 0x00f0) << 8) | ((t & 0x00f0) << 4);
                     uint32_t t3 = uint32_t((t & 0x000f) << 20) | ((t & 0x000f) << 16);
-                    uint32_t ta = uint32_t((flags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : (((t & 0xf000) << 16) | ((t & 0xf000) << 12)));
+                    uint32_t ta = uint32_t((tflags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : (((t & 0xf000) << 16) | ((t & 0xf000) << 12)));
 
                     *(dPtr++) = t1 | t2 | t3 | ta;
                 }
@@ -1184,7 +1184,7 @@ namespace
                     uint32_t t1 = uint32_t(t & 0xff);
                     uint32_t t2 = uint32_t(t1 << 8);
                     uint32_t t3 = uint32_t(t1 << 16);
-                    uint32_t ta = (flags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t((t & 0xff00) << 16);
+                    uint32_t ta = (tflags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t((t & 0xff00) << 16);
 
                     *(dPtr++) = t1 | t2 | t3 | ta;
                 }
@@ -1205,7 +1205,7 @@ namespace
         _In_reads_bytes_(size) const void* pPixels,
         _In_ size_t size,
         _In_ const TexMetadata& metadata,
-        _In_ DWORD cpFlags,
+        _In_ CP_FLAGS cpFlags,
         _In_ DWORD convFlags,
         _In_reads_opt_(256) const uint32_t *pal8,
         _In_ const ScratchImage& image) noexcept
@@ -1535,7 +1535,7 @@ _Use_decl_annotations_
 HRESULT DirectX::GetMetadataFromDDSMemory(
     const void* pSource,
     size_t size,
-    DWORD flags,
+    DDS_FLAGS flags,
     TexMetadata& metadata) noexcept
 {
     if (!pSource || size == 0)
@@ -1548,7 +1548,7 @@ HRESULT DirectX::GetMetadataFromDDSMemory(
 _Use_decl_annotations_
 HRESULT DirectX::GetMetadataFromDDSFile(
     const wchar_t* szFile,
-    DWORD flags,
+    DDS_FLAGS flags,
     TexMetadata& metadata) noexcept
 {
     if (!szFile)
@@ -1606,7 +1606,7 @@ _Use_decl_annotations_
 HRESULT DirectX::LoadFromDDSMemory(
     const void* pSource,
     size_t size,
-    DWORD flags,
+    DDS_FLAGS flags,
     TexMetadata* metadata,
     ScratchImage& image) noexcept
 {
@@ -1641,7 +1641,7 @@ HRESULT DirectX::LoadFromDDSMemory(
     if (FAILED(hr))
         return hr;
 
-    DWORD cflags = CP_FLAGS_NONE;
+    CP_FLAGS cflags = CP_FLAGS_NONE;
     if (flags & DDS_FLAGS_LEGACY_DWORD)
     {
         cflags |= CP_FLAGS_LEGACY_DWORD;
@@ -1678,7 +1678,7 @@ HRESULT DirectX::LoadFromDDSMemory(
 _Use_decl_annotations_
 HRESULT DirectX::LoadFromDDSFile(
     const wchar_t* szFile,
-    DWORD flags,
+    DDS_FLAGS flags,
     TexMetadata* metadata,
     ScratchImage& image) noexcept
 {
@@ -1799,7 +1799,7 @@ HRESULT DirectX::LoadFromDDSFile(
             return E_FAIL;
         }
 
-        DWORD cflags = CP_FLAGS_NONE;
+        CP_FLAGS cflags = CP_FLAGS_NONE;
         if (flags & DDS_FLAGS_LEGACY_DWORD)
         {
             cflags |= CP_FLAGS_LEGACY_DWORD;
@@ -1869,7 +1869,7 @@ HRESULT DirectX::SaveToDDSMemory(
     const Image* images,
     size_t nimages,
     const TexMetadata& metadata,
-    DWORD flags,
+    DDS_FLAGS flags,
     Blob& blob) noexcept
 {
     if (!images || (nimages == 0))
@@ -2097,7 +2097,7 @@ HRESULT DirectX::SaveToDDSFile(
     const Image* images,
     size_t nimages,
     const TexMetadata& metadata,
-    DWORD flags,
+    DDS_FLAGS flags,
     const wchar_t* szFile) noexcept
 {
     if (!szFile)

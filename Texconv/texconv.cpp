@@ -1121,17 +1121,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     size_t height = 0;
     size_t mipLevels = 0;
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
-    DWORD dwFilter = TEX_FILTER_DEFAULT;
-    DWORD dwSRGB = 0;
-    DWORD dwConvert = 0;
-    DWORD dwCompress = TEX_COMPRESS_DEFAULT;
-    DWORD dwFilterOpts = 0;
+    TEX_FILTER_FLAGS dwFilter = TEX_FILTER_DEFAULT;
+    TEX_FILTER_FLAGS dwSRGB = TEX_FILTER_DEFAULT;
+    TEX_FILTER_FLAGS dwConvert = TEX_FILTER_DEFAULT;
+    TEX_COMPRESS_FLAGS dwCompress = TEX_COMPRESS_DEFAULT;
+    TEX_FILTER_FLAGS dwFilterOpts = TEX_FILTER_DEFAULT;
     DWORD FileType = CODEC_DDS;
     DWORD maxSize = 16384;
     int adapter = -1;
     float alphaThreshold = TEX_THRESHOLD_DEFAULT;
     float alphaWeight = 1.f;
-    DWORD dwNormalMap = 0;
+    CNMAP_FLAGS dwNormalMap = CNMAP_DEFAULT;
     float nmapAmplitude = 1.f;
     float wicQuality = -1.f;
     DWORD colorKey = 0;
@@ -1266,7 +1266,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_FILTER:
-                dwFilter = LookupByName(pValue, g_pFilters);
+                dwFilter = static_cast<TEX_FILTER_FLAGS>(LookupByName(pValue, g_pFilters));
                 if (!dwFilter)
                 {
                     wprintf(L"Invalid value specified with -if (%ls)\n", pValue);
@@ -1370,7 +1370,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case OPT_NORMAL_MAP:
             {
-                dwNormalMap = 0;
+                dwNormalMap = CNMAP_DEFAULT;
 
                 if (wcschr(pValue, L'l'))
                 {
@@ -1766,7 +1766,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
         if (_wcsicmp(ext, L".dds") == 0)
         {
-            DWORD ddsFlags = DDS_FLAGS_NONE;
+            DDS_FLAGS ddsFlags = DDS_FLAGS_NONE;
             if (dwOptions & (DWORD64(1) << OPT_DDS_DWORD_ALIGN))
                 ddsFlags |= DDS_FLAGS_LEGACY_DWORD;
             if (dwOptions & (DWORD64(1) << OPT_EXPAND_LUMINANCE))
@@ -1808,7 +1808,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = ReadData(pConv->szSrc, bmpData, bmpSize);
             if (SUCCEEDED(hr))
             {
-                hr = LoadFromWICMemory(bmpData.get(), bmpSize, dwFilter, &info, *image);
+                hr = LoadFromWICMemory(bmpData.get(), bmpSize, WIC_FLAGS_NONE | dwFilter, &info, *image);
                 if (FAILED(hr))
                 {
                     if (SUCCEEDED(LoadFromExtendedBMPMemory(bmpData.get(), bmpSize, &info, *image)))
@@ -1862,7 +1862,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             static_assert(static_cast<int>(WIC_FLAGS_FILTER_CUBIC) == static_cast<int>(TEX_FILTER_CUBIC), "WIC_FLAGS_* & TEX_FILTER_* should match");
             static_assert(static_cast<int>(WIC_FLAGS_FILTER_FANT) == static_cast<int>(TEX_FILTER_FANT), "WIC_FLAGS_* & TEX_FILTER_* should match");
 
-            DWORD wicFlags = dwFilter;
+            WIC_FLAGS wicFlags = WIC_FLAGS_NONE | dwFilter;
             if (FileType == CODEC_DDS)
                 wicFlags |= WIC_FLAGS_ALL_FRAMES;
 
@@ -2087,7 +2087,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            DWORD dwFlags = 0;
+            TEX_FR_FLAGS dwFlags = TEX_FR_ROTATE0;
 
             if (dwOptions & (DWORD64(1) << OPT_HFLIP))
                 dwFlags |= TEX_FR_FLIP_HORIZONTAL;
@@ -2691,7 +2691,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Generate mips -----------------------------------------------------------
-        DWORD dwFilter3D = dwFilter;
+        TEX_FILTER_FLAGS dwFilter3D = dwFilter;
         if (!ispow2(info.width) || !ispow2(info.height) || !ispow2(info.depth))
         {
             if (!tMips || info.mipLevels != 1)
@@ -2905,7 +2905,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                hr = PremultiplyAlpha(img, nimg, info, dwSRGB, *timage);
+                hr = PremultiplyAlpha(img, nimg, info, TEX_PMALPHA_DEFAULT | dwSRGB, *timage);
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [premultiply alpha] (%x)\n", static_cast<unsigned int>(hr));
@@ -3002,7 +3002,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     break;
                 }
 
-                DWORD cflags = dwCompress;
+                TEX_COMPRESS_FLAGS cflags = dwCompress;
 #ifdef _OPENMP
                 if (!(dwOptions & (DWORD64(1) << OPT_FORCE_SINGLEPROC)))
                 {
@@ -3124,7 +3124,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
             case CODEC_DDS:
             {
-                DWORD ddsFlags = DDS_FLAGS_NONE;
+                DDS_FLAGS ddsFlags = DDS_FLAGS_NONE;
                 if (dwOptions & (DWORD64(1) << OPT_USE_DX10))
                 {
                     ddsFlags |= DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2;

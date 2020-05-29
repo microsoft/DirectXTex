@@ -21,7 +21,7 @@ namespace
     //-------------------------------------------------------------------------------------
     HRESULT PerformFlipRotateUsingWIC(
         const Image& srcImage,
-        DWORD flags,
+        TEX_FR_FLAGS flags,
         const WICPixelFormatGUID& pfGUID,
         const Image& destImage) noexcept
     {
@@ -90,7 +90,7 @@ namespace
     //-------------------------------------------------------------------------------------
     HRESULT PerformFlipRotateViaF16(
         const Image& srcImage,
-        DWORD flags,
+        TEX_FR_FLAGS flags,
         const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
@@ -132,7 +132,7 @@ namespace
 
     HRESULT PerformFlipRotateViaF32(
         const Image& srcImage,
-        DWORD flags,
+        TEX_FR_FLAGS flags,
         const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
@@ -184,7 +184,7 @@ namespace
 _Use_decl_annotations_
 HRESULT DirectX::FlipRotate(
     const Image& srcImage,
-    DWORD flags,
+    TEX_FR_FLAGS flags,
     ScratchImage& image) noexcept
 {
     if (!srcImage.pixels)
@@ -283,7 +283,7 @@ HRESULT DirectX::FlipRotate(
     const Image* srcImages,
     size_t nimages,
     const TexMetadata& metadata,
-    DWORD flags,
+    TEX_FR_FLAGS flags,
     ScratchImage& result) noexcept
 {
     if (!srcImages || !nimages)

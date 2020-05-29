@@ -490,7 +490,7 @@ namespace
                         size_t j = size_t(*sPtr & 0x7F) + 1;
                         ++sPtr;
 
-                        DWORD t;
+                        uint32_t t;
                         if (convFlags & CONV_FLAGS_EXPAND)
                         {
                             assert(offset * 3 < rowPitch);

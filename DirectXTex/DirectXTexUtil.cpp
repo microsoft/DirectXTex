@@ -201,9 +201,9 @@ bool DirectX::_DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR) no
     return false;
 }
 
-DWORD DirectX::_CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID& targetGUID) noexcept
+TEX_FILTER_FLAGS DirectX::_CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID& targetGUID) noexcept
 {
-    DWORD srgb = 0;
+    TEX_FILTER_FLAGS srgb = TEX_FILTER_DEFAULT;
 
     for (size_t i = 0; i < _countof(g_WICFormats); ++i)
     {
@@ -222,7 +222,7 @@ DWORD DirectX::_CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID&
 
     if ((srgb & (TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT)) == (TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT))
     {
-        srgb &= ~static_cast<uint32_t>(TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT);
+        srgb &= ~(TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT);
     }
 
     return srgb;
@@ -874,7 +874,7 @@ size_t DirectX::BitsPerColor(DXGI_FORMAT fmt) noexcept
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
-    size_t& rowPitch, size_t& slicePitch, DWORD flags) noexcept
+    size_t& rowPitch, size_t& slicePitch, CP_FLAGS flags) noexcept
 {
     uint64_t pitch = 0;
     uint64_t slice = 0;
