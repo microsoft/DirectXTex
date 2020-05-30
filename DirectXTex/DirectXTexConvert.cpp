@@ -3659,7 +3659,7 @@ void DirectX::_ConvertScanline(
                 // RGB format -> RG format
                 switch (static_cast<int>(flags & (TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE)))
                 {
-                case static_cast<int>(TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_BLUE):
+                case static_cast<int>(TEX_FILTER_RGB_COPY_RED) | static_cast<int>(TEX_FILTER_RGB_COPY_BLUE):
                 {
                     XMVECTOR* ptr = pBuffer;
                     for (size_t i = 0; i < count; ++i)
@@ -3671,7 +3671,7 @@ void DirectX::_ConvertScanline(
                 }
                 break;
 
-                case static_cast<int>(TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE):
+                case static_cast<int>(TEX_FILTER_RGB_COPY_GREEN) | static_cast<int>(TEX_FILTER_RGB_COPY_BLUE):
                 {
                     XMVECTOR* ptr = pBuffer;
                     for (size_t i = 0; i < count; ++i)
@@ -3683,7 +3683,7 @@ void DirectX::_ConvertScanline(
                 }
                 break;
 
-                case static_cast<int>(TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN):
+                case static_cast<int>(TEX_FILTER_RGB_COPY_RED) | static_cast<int>(TEX_FILTER_RGB_COPY_GREEN):
                 default:
                     // Leave data unchanged and the store will handle this...
                     break;
