@@ -318,7 +318,7 @@ namespace DirectX
 
     void __cdecl _ConvertScanline(
         _Inout_updates_all_(count) XMVECTOR* pBuffer, _In_ size_t count,
-        _In_ DXGI_FORMAT outFormat, _In_ DXGI_FORMAT inFormat, _In_ TEX_FILTER_FLAGS flags);
+        _In_ DXGI_FORMAT outFormat, _In_ DXGI_FORMAT inFormat, _In_ TEX_FILTER_FLAGS flags) noexcept;
 
     //---------------------------------------------------------------------------------
     // DDS helper functions

@@ -3009,7 +3009,7 @@ void DirectX::_ConvertScanline(
     size_t count,
     DXGI_FORMAT outFormat,
     DXGI_FORMAT inFormat,
-    TEX_FILTER_FLAGS flags)
+    TEX_FILTER_FLAGS flags) noexcept
 {
     assert(pBuffer && count > 0 && ((reinterpret_cast<uintptr_t>(pBuffer) & 0xF) == 0));
     assert(IsValid(outFormat) && !IsTypeless(outFormat) && !IsPlanar(outFormat) && !IsPalettized(outFormat));
@@ -4582,7 +4582,7 @@ namespace
         _In_ TEX_FILTER_FLAGS filter,
         _In_ const Image& destImage,
         _In_ float threshold,
-        size_t z)
+        size_t z) noexcept
     {
         assert(srcImage.width == destImage.width);
         assert(srcImage.height == destImage.height);
@@ -4828,7 +4828,7 @@ HRESULT DirectX::Convert(
     DXGI_FORMAT format,
     TEX_FILTER_FLAGS filter,
     float threshold,
-    ScratchImage& image)
+    ScratchImage& image) noexcept
 {
     if ((srcImage.format == format) || !IsValid(format))
         return E_INVALIDARG;
@@ -4887,7 +4887,7 @@ HRESULT DirectX::Convert(
     DXGI_FORMAT format,
     TEX_FILTER_FLAGS filter,
     float threshold,
-    ScratchImage& result)
+    ScratchImage& result) noexcept
 {
     if (!srcImages || !nimages || (metadata.format == format) || !IsValid(format))
         return E_INVALIDARG;

@@ -34,7 +34,7 @@ namespace
         const Image& srcImage,
         ScratchImage& image,
         bool srgb,
-        TEX_FILTER_FLAGS filter)
+        TEX_FILTER_FLAGS filter) noexcept
     {
         if (!srcImage.pixels)
             return E_POINTER;
@@ -97,7 +97,7 @@ namespace
     HRESULT ConvertToRGBAF32(
         const Image& srcImage,
         ScratchImage& image,
-        TEX_FILTER_FLAGS filter)
+        TEX_FILTER_FLAGS filter) noexcept
     {
         if (!srcImage.pixels)
             return E_POINTER;
@@ -212,7 +212,7 @@ HRESULT DirectX::Compress(
     DXGI_FORMAT format,
     TEX_COMPRESS_FLAGS compress,
     float alphaWeight,
-    ScratchImage& image)
+    ScratchImage& image) noexcept
 {
     if (!pDevice || IsCompressed(srcImage.format) || !IsCompressed(format))
         return E_INVALIDARG;
@@ -262,7 +262,7 @@ HRESULT DirectX::Compress(
     DXGI_FORMAT format,
     TEX_COMPRESS_FLAGS compress,
     float alphaWeight,
-    ScratchImage& cImages)
+    ScratchImage& cImages) noexcept
 {
     if (!pDevice || !srcImages || !nimages)
         return E_INVALIDARG;

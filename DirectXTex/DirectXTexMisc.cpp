@@ -272,7 +272,7 @@ HRESULT DirectX::CopyRectangle(
     const Image& dstImage,
     TEX_FILTER_FLAGS filter,
     size_t xOffset,
-    size_t yOffset)
+    size_t yOffset) noexcept
 {
     if (!srcImage.pixels || !dstImage.pixels)
         return E_POINTER;

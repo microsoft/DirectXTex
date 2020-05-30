@@ -73,7 +73,7 @@ namespace
         const Image& result,
         DWORD bcflags,
         TEX_FILTER_FLAGS srgb,
-        float threshold)
+        float threshold) noexcept
     {
         if (!image.pixels || !result.pixels)
             return E_POINTER;
@@ -202,7 +202,7 @@ namespace
         const Image& result,
         DWORD bcflags,
         TEX_FILTER_FLAGS srgb,
-        float threshold)
+        float threshold) noexcept
     {
         if (!image.pixels || !result.pixels)
             return E_POINTER;
@@ -596,7 +596,7 @@ HRESULT DirectX::Compress(
     DXGI_FORMAT format,
     TEX_COMPRESS_FLAGS compress,
     float threshold,
-    ScratchImage& image)
+    ScratchImage& image) noexcept
 {
     if (IsCompressed(srcImage.format) || !IsCompressed(format))
         return E_INVALIDARG;
@@ -645,7 +645,7 @@ HRESULT DirectX::Compress(
     DXGI_FORMAT format,
     TEX_COMPRESS_FLAGS compress,
     float threshold,
-    ScratchImage& cImages)
+    ScratchImage& cImages) noexcept
 {
     if (!srcImages || !nimages)
         return E_INVALIDARG;

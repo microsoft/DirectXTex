@@ -512,10 +512,10 @@ namespace DirectX
 
     HRESULT __cdecl Convert(
         _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold,
-        _Out_ ScratchImage& image);
+        _Out_ ScratchImage& image) noexcept;
     HRESULT __cdecl Convert(
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold, _Out_ ScratchImage& result);
+        _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold, _Out_ ScratchImage& result) noexcept;
         // Convert the image to a new format
 
     HRESULT __cdecl ConvertToSinglePlane(_In_ const Image& srcImage, _Out_ ScratchImage& image) noexcept;
@@ -604,19 +604,19 @@ namespace DirectX
 
     HRESULT __cdecl Compress(
         _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold,
-        _Out_ ScratchImage& cImage);
+        _Out_ ScratchImage& cImage) noexcept;
     HRESULT __cdecl Compress(
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold, _Out_ ScratchImage& cImages);
+        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold, _Out_ ScratchImage& cImages) noexcept;
         // Note that threshold is only used by BC1. TEX_THRESHOLD_DEFAULT is a typical value to use
 
 #if defined(__d3d11_h__) || defined(__d3d11_x_h__)
     HRESULT __cdecl Compress(
         _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress,
-        _In_ float alphaWeight, _Out_ ScratchImage& image);
+        _In_ float alphaWeight, _Out_ ScratchImage& image) noexcept;
     HRESULT __cdecl Compress(
         _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages);
+        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages) noexcept;
         // DirectCompute-based compression (alphaWeight is only used by BC7. 1.0 is the typical value to use)
 #endif
 
@@ -675,7 +675,7 @@ namespace DirectX
 
     HRESULT __cdecl CopyRectangle(
         _In_ const Image& srcImage, _In_ const Rect& srcRect, _In_ const Image& dstImage,
-        _In_ TEX_FILTER_FLAGS filter, _In_ size_t xOffset, _In_ size_t yOffset);
+        _In_ TEX_FILTER_FLAGS filter, _In_ size_t xOffset, _In_ size_t yOffset) noexcept;
 
     enum CMSE_FLAGS : unsigned long
     {
