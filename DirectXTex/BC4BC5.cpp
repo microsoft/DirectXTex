@@ -416,7 +416,7 @@ void DirectX::D3DXDecodeBC4S(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 }
 
 _Use_decl_annotations_
-void DirectX::D3DXEncodeBC4U(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags) noexcept
+void DirectX::D3DXEncodeBC4U(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
 {
     UNREFERENCED_PARAMETER(flags);
 
@@ -437,7 +437,7 @@ void DirectX::D3DXEncodeBC4U(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags) 
 }
 
 _Use_decl_annotations_
-void DirectX::D3DXEncodeBC4S(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags) noexcept
+void DirectX::D3DXEncodeBC4S(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
 {
     UNREFERENCED_PARAMETER(flags);
 
@@ -494,7 +494,7 @@ void DirectX::D3DXDecodeBC5S(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 }
 
 _Use_decl_annotations_
-void DirectX::D3DXEncodeBC5U(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags) noexcept
+void DirectX::D3DXEncodeBC5U(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
 {
     UNREFERENCED_PARAMETER(flags);
 
@@ -528,7 +528,7 @@ void DirectX::D3DXEncodeBC5U(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags) 
 }
 
 _Use_decl_annotations_
-void DirectX::D3DXEncodeBC5S(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags) noexcept
+void DirectX::D3DXEncodeBC5S(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
 {
     UNREFERENCED_PARAMETER(flags);
 

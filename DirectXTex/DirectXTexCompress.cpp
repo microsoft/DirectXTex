@@ -22,7 +22,7 @@ using namespace DirectX;
 
 namespace
 {
-    inline DWORD GetBCFlags(_In_ TEX_COMPRESS_FLAGS compress) noexcept
+    inline uint32_t GetBCFlags(_In_ TEX_COMPRESS_FLAGS compress) noexcept
     {
         static_assert(static_cast<int>(TEX_COMPRESS_RGB_DITHER) == static_cast<int>(BC_FLAGS_DITHER_RGB), "TEX_COMPRESS_* flags should match BC_FLAGS_*");
         static_assert(static_cast<int>(TEX_COMPRESS_A_DITHER) == static_cast<int>(BC_FLAGS_DITHER_A), "TEX_COMPRESS_* flags should match BC_FLAGS_*");
@@ -71,7 +71,7 @@ namespace
     HRESULT CompressBC(
         const Image& image,
         const Image& result,
-        DWORD bcflags,
+        uint32_t bcflags,
         TEX_FILTER_FLAGS srgb,
         float threshold) noexcept
     {
@@ -200,7 +200,7 @@ namespace
     HRESULT CompressBC_Parallel(
         const Image& image,
         const Image& result,
-        DWORD bcflags,
+        uint32_t bcflags,
         TEX_FILTER_FLAGS srgb,
         float threshold) noexcept
     {

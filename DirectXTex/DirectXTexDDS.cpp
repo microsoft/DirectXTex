@@ -24,7 +24,7 @@ namespace
     //-------------------------------------------------------------------------------------
     // Legacy format mapping table (used for DDS files without 'DX10' extended header)
     //-------------------------------------------------------------------------------------
-    enum CONVERSION_FLAGS : unsigned long
+    enum CONVERSION_FLAGS : uint32_t
     {
         CONV_FLAGS_NONE = 0x0,
         CONV_FLAGS_EXPAND = 0x1,      // Conversion requires expanded pixel size
@@ -49,7 +49,7 @@ namespace
     struct LegacyDDS
     {
         DXGI_FORMAT     format;
-        DWORD           convFlags;
+        uint32_t        convFlags;
         DDS_PIXELFORMAT ddpf;
     };
 
@@ -155,7 +155,9 @@ namespace
     //      FourCC CTX1 (Xbox 360 only)
     //      FourCC EAR, EARG, ET2, ET2A (Ericsson Texture Compression)
 
-    DXGI_FORMAT GetDXGIFormat(const DDS_HEADER& hdr, const DDS_PIXELFORMAT& ddpf, DWORD flags, _Inout_ DWORD& convFlags) noexcept
+    DXGI_FORMAT GetDXGIFormat(const DDS_HEADER& hdr, const DDS_PIXELFORMAT& ddpf,
+        DDS_FLAGS flags,
+        _Inout_ uint32_t& convFlags) noexcept
     {
         uint32_t ddpfFlags = ddpf.flags;
         if (hdr.reserved1[9] == MAKEFOURCC('N', 'V', 'T', 'T'))
@@ -242,7 +244,7 @@ namespace
         if (index >= MAP_SIZE)
             return DXGI_FORMAT_UNKNOWN;
 
-        DWORD cflags = g_LegacyDDSMap[index].convFlags;
+        uint32_t cflags = g_LegacyDDSMap[index].convFlags;
         DXGI_FORMAT format = g_LegacyDDSMap[index].format;
 
         if ((cflags & CONV_FLAGS_EXPAND) && (flags & DDS_FLAGS_NO_LEGACY_EXPANSION))
@@ -271,9 +273,9 @@ namespace
     HRESULT DecodeDDSHeader(
         _In_reads_bytes_(size) const void* pSource,
         size_t size,
-        DWORD flags,
+        DDS_FLAGS flags,
         _Out_ TexMetadata& metadata,
-        _Inout_ DWORD& convFlags) noexcept
+        _Inout_ uint32_t& convFlags) noexcept
     {
         if (!pSource)
             return E_INVALIDARG;
@@ -863,7 +865,7 @@ namespace
         TEXP_LEGACY_A8L8
     };
 
-    inline TEXP_LEGACY_FORMAT _FindLegacyFormat(DWORD flags) noexcept
+    inline TEXP_LEGACY_FORMAT _FindLegacyFormat(uint32_t flags) noexcept
     {
         TEXP_LEGACY_FORMAT lformat = TEXP_LEGACY_UNKNOWN;
 
@@ -900,7 +902,7 @@ namespace
             size_t inSize,
             _In_ TEXP_LEGACY_FORMAT inFormat,
             _In_reads_opt_(256) const uint32_t* pal8,
-            _In_ DWORD tflags) noexcept
+            _In_ uint32_t tflags) noexcept
     {
         assert(pDestination && outSize > 0);
         assert(pSource && inSize > 0);
@@ -1206,7 +1208,7 @@ namespace
         _In_ size_t size,
         _In_ const TexMetadata& metadata,
         _In_ CP_FLAGS cpFlags,
-        _In_ DWORD convFlags,
+        _In_ uint32_t convFlags,
         _In_reads_opt_(256) const uint32_t *pal8,
         _In_ const ScratchImage& image) noexcept
     {
@@ -1268,7 +1270,7 @@ namespace
             return E_FAIL;
         }
 
-        DWORD tflags = (convFlags & CONV_FLAGS_NOALPHA) ? TEXP_SCANLINE_SETALPHA : 0u;
+        uint32_t tflags = (convFlags & CONV_FLAGS_NOALPHA) ? TEXP_SCANLINE_SETALPHA : 0u;
         if (convFlags & CONV_FLAGS_SWIZZLE)
             tflags |= TEXP_SCANLINE_LEGACY;
 
@@ -1476,7 +1478,7 @@ namespace
         return S_OK;
     }
 
-    HRESULT CopyImageInPlace(DWORD convFlags, _In_ const ScratchImage& image) noexcept
+    HRESULT CopyImageInPlace(uint32_t convFlags, _In_ const ScratchImage& image) noexcept
     {
         if (!image.GetPixels())
             return E_FAIL;
@@ -1490,7 +1492,7 @@ namespace
         if (IsPlanar(metadata.format))
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
 
-        DWORD tflags = (convFlags & CONV_FLAGS_NOALPHA) ? TEXP_SCANLINE_SETALPHA : 0u;
+        uint32_t tflags = (convFlags & CONV_FLAGS_NOALPHA) ? TEXP_SCANLINE_SETALPHA : 0u;
         if (convFlags & CONV_FLAGS_SWIZZLE)
             tflags |= TEXP_SCANLINE_LEGACY;
 
@@ -1541,7 +1543,7 @@ HRESULT DirectX::GetMetadataFromDDSMemory(
     if (!pSource || size == 0)
         return E_INVALIDARG;
 
-    DWORD convFlags = 0;
+    uint32_t convFlags = 0;
     return DecodeDDSHeader(pSource, size, flags, metadata, convFlags);
 }
 
@@ -1594,7 +1596,7 @@ HRESULT DirectX::GetMetadataFromDDSFile(
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    DWORD convFlags = 0;
+    uint32_t convFlags = 0;
     return DecodeDDSHeader(header, bytesRead, flags, metadata, convFlags);
 }
 
@@ -1615,7 +1617,7 @@ HRESULT DirectX::LoadFromDDSMemory(
 
     image.Release();
 
-    DWORD convFlags = 0;
+    uint32_t convFlags = 0;
     TexMetadata mdata;
     HRESULT hr = DecodeDDSHeader(pSource, size, flags, mdata, convFlags);
     if (FAILED(hr))
@@ -1728,7 +1730,7 @@ HRESULT DirectX::LoadFromDDSFile(
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    DWORD convFlags = 0;
+    uint32_t convFlags = 0;
     TexMetadata mdata;
     HRESULT hr = DecodeDDSHeader(header, bytesRead, flags, mdata, convFlags);
     if (FAILED(hr))

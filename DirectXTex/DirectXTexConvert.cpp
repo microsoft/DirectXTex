@@ -205,7 +205,7 @@ void DirectX::_CopyScanline(
     const void* pSource,
     size_t inSize,
     DXGI_FORMAT format,
-    DWORD tflags) noexcept
+    uint32_t tflags) noexcept
 {
     assert(pDestination && outSize > 0);
     assert(pSource && inSize > 0);
@@ -450,7 +450,7 @@ void DirectX::_SwizzleScanline(
     const void* pSource,
     size_t inSize,
     DXGI_FORMAT format,
-    DWORD tflags) noexcept
+    uint32_t tflags) noexcept
 {
     assert(pDestination && outSize > 0);
     assert(pSource && inSize > 0);
@@ -621,7 +621,7 @@ bool DirectX::_ExpandScanline(
     const void* pSource,
     size_t inSize,
     DXGI_FORMAT inFormat,
-    DWORD tflags) noexcept
+    uint32_t tflags) noexcept
 {
     assert(pDestination && outSize > 0);
     assert(pSource && inSize > 0);
@@ -2880,8 +2880,8 @@ namespace
     struct ConvertData
     {
         DXGI_FORMAT format;
-        size_t datasize;
-        DWORD flags;
+        size_t      datasize;
+        uint32_t    flags;
     };
 
     const ConvertData g_ConvertTable[] =
@@ -2984,7 +2984,7 @@ namespace
 }
 
 _Use_decl_annotations_
-DWORD DirectX::_GetConvertFlags(DXGI_FORMAT format) noexcept
+uint32_t DirectX::_GetConvertFlags(DXGI_FORMAT format) noexcept
 {
 #ifdef _DEBUG
     // Ensure conversion table is in ascending order
@@ -3107,7 +3107,7 @@ void DirectX::_ConvertScanline(
     }
 
     // Handle conversion special cases
-    DWORD diffFlags = in->flags ^ out->flags;
+    uint32_t diffFlags = in->flags ^ out->flags;
     if (diffFlags != 0)
     {
         if (diffFlags & CONVF_DEPTH)
@@ -4505,7 +4505,7 @@ namespace
             filter &= ~(TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT);
         }
 
-        DWORD wicsrgb = _CheckWICColorSpace(pfGUID, targetGUID);
+        auto wicsrgb = _CheckWICColorSpace(pfGUID, targetGUID);
 
         if (wicsrgb != (filter & (TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT)))
         {

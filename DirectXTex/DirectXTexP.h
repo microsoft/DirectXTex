@@ -150,14 +150,14 @@ namespace DirectX
 
     TEX_FILTER_FLAGS __cdecl _CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID& targetGUID) noexcept;
 
-    inline WICBitmapDitherType __cdecl _GetWICDither(_In_ DWORD flags) noexcept
+    inline WICBitmapDitherType __cdecl _GetWICDither(_In_ TEX_FILTER_FLAGS flags) noexcept
     {
         static_assert(TEX_FILTER_DITHER == 0x10000, "TEX_FILTER_DITHER* flag values don't match mask");
 
         static_assert(static_cast<int>(TEX_FILTER_DITHER) == static_cast<int>(WIC_FLAGS_DITHER), "TEX_FILTER_DITHER* should match WIC_FLAGS_DITHER*");
         static_assert(static_cast<int>(TEX_FILTER_DITHER_DIFFUSION) == static_cast<int>(WIC_FLAGS_DITHER_DIFFUSION), "TEX_FILTER_DITHER* should match WIC_FLAGS_DITHER*");
 
-        switch (flags & 0xF0000)
+        switch (flags & TEX_FILTER_DITHER_MASK)
         {
             case TEX_FILTER_DITHER:
                 return WICBitmapDitherTypeOrdered4x4;
@@ -167,6 +167,21 @@ namespace DirectX
 
             default:
                 return WICBitmapDitherTypeNone;
+        }
+    }
+
+    inline WICBitmapDitherType __cdecl _GetWICDither(_In_ WIC_FLAGS flags) noexcept
+    {
+        switch (flags & TEX_FILTER_DITHER_MASK)
+        {
+        case WIC_FLAGS_DITHER:
+            return WICBitmapDitherTypeOrdered4x4;
+
+        case WIC_FLAGS_DITHER_DIFFUSION:
+            return WICBitmapDitherTypeErrorDiffusion;
+
+        default:
+            return WICBitmapDitherTypeNone;
         }
     }
 
@@ -230,14 +245,14 @@ namespace DirectX
     //---------------------------------------------------------------------------------
     // Conversion helper functions
 
-    enum TEXP_SCANLINE_FLAGS
+    enum TEXP_SCANLINE_FLAGS : uint32_t
     {
         TEXP_SCANLINE_NONE          = 0,
         TEXP_SCANLINE_SETALPHA      = 0x1,  // Set alpha channel to known opaque value
         TEXP_SCANLINE_LEGACY        = 0x2,  // Enables specific legacy format conversion cases
     };
 
-    enum CONVERT_FLAGS
+    enum CONVERT_FLAGS : uint32_t
     {
         CONVF_FLOAT     = 0x1,
         CONVF_UNORM     = 0x2,
@@ -261,27 +276,27 @@ namespace DirectX
         CONVF_RGBA_MASK = 0xF0000,
     };
 
-    DWORD __cdecl _GetConvertFlags(_In_ DXGI_FORMAT format) noexcept;
+    uint32_t __cdecl _GetConvertFlags(_In_ DXGI_FORMAT format) noexcept;
 
     void __cdecl _CopyScanline(
         _When_(pDestination == pSource, _Inout_updates_bytes_(outSize))
         _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
         void* pDestination, _In_ size_t outSize,
         _In_reads_bytes_(inSize) const void* pSource, _In_ size_t inSize,
-        _In_ DXGI_FORMAT format, _In_ DWORD tflags) noexcept;
+        _In_ DXGI_FORMAT format, _In_ uint32_t tflags) noexcept;
 
     void __cdecl _SwizzleScanline(
         _When_(pDestination == pSource, _In_)
         _When_(pDestination != pSource, _Out_writes_bytes_(outSize))
         void* pDestination, _In_ size_t outSize,
         _In_reads_bytes_(inSize) const void* pSource, _In_ size_t inSize,
-        _In_ DXGI_FORMAT format, _In_ DWORD tflags) noexcept;
+        _In_ DXGI_FORMAT format, _In_ uint32_t tflags) noexcept;
  
     _Success_(return != false) bool __cdecl _ExpandScanline(
         _Out_writes_bytes_(outSize) void* pDestination, _In_ size_t outSize,
         _In_ DXGI_FORMAT outFormat,
         _In_reads_bytes_(inSize) const void* pSource, _In_ size_t inSize,
-        _In_ DXGI_FORMAT inFormat, _In_ DWORD tflags) noexcept;
+        _In_ DXGI_FORMAT inFormat, _In_ uint32_t tflags) noexcept;
 
     _Success_(return != false) bool __cdecl _LoadScanline(
         _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,

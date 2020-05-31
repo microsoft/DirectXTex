@@ -2893,7 +2893,7 @@ HRESULT DirectX::GenerateMipMaps(
         mdata.mipLevels = levels;
         mdata.format = baseImage.format;
 
-        DWORD filter_select = (filter & TEX_FILTER_MODE_MASK);
+        unsigned long filter_select = (filter & TEX_FILTER_MODE_MASK);
         if (!filter_select)
         {
             // Default filter choice
@@ -3106,7 +3106,7 @@ HRESULT DirectX::GenerateMipMaps(
         TexMetadata mdata2 = metadata;
         mdata2.mipLevels = levels;
 
-        DWORD filter_select = (filter & TEX_FILTER_MODE_MASK);
+        unsigned long filter_select = (filter & TEX_FILTER_MODE_MASK);
         if (!filter_select)
         {
             // Default filter choice
@@ -3233,7 +3233,7 @@ HRESULT DirectX::GenerateMipMaps3D(
 
     HRESULT hr = E_UNEXPECTED;
 
-    DWORD filter_select = (filter & TEX_FILTER_MODE_MASK);
+    unsigned long filter_select = (filter & TEX_FILTER_MODE_MASK);
     if (!filter_select)
     {
         // Default filter choice
@@ -3349,7 +3349,7 @@ HRESULT DirectX::GenerateMipMaps3D(
 
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MODE_MASK");
 
-    DWORD filter_select = (filter & TEX_FILTER_MODE_MASK);
+    unsigned long filter_select = (filter & TEX_FILTER_MODE_MASK);
     if (!filter_select)
     {
         // Default filter choice

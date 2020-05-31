@@ -494,8 +494,9 @@ namespace DirectX
             // Forces use of the WIC path even when logic would have picked a non-WIC path when both are an option
     };
 
-    constexpr unsigned long TEX_FILTER_MODE_MASK = 0xF00000;
-    constexpr unsigned long TEX_FILTER_SRGB_MASK = 0xF000000;
+    constexpr unsigned long TEX_FILTER_DITHER_MASK  = 0xF0000;
+    constexpr unsigned long TEX_FILTER_MODE_MASK    = 0xF00000;
+    constexpr unsigned long TEX_FILTER_SRGB_MASK    = 0xF000000;
 
     HRESULT __cdecl Resize(
         _In_ const Image& srcImage, _In_ size_t width, _In_ size_t height,

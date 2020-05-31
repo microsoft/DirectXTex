@@ -79,7 +79,7 @@ namespace
         if (!srcImage.pixels || !normalMap.pixels)
             return E_INVALIDARG;
 
-        const DWORD convFlags = _GetConvertFlags(format);
+        const uint32_t convFlags = _GetConvertFlags(format);
         if (!convFlags)
             return E_FAIL;
 
