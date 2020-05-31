@@ -737,7 +737,7 @@ HRESULT DirectX::SaveWICTextureToFile(
     REFGUID guidContainerFormat,
     const wchar_t* fileName,
     const GUID* targetFormat,
-    std::function<void(IPropertyBag2*)> setCustomProps) noexcept
+    std::function<void(IPropertyBag2*)> setCustomProps)
 {
     if (!pSource || !fileName)
         return E_INVALIDARG;
