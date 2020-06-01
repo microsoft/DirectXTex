@@ -928,9 +928,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     size_t height = 0;
 
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
-    DWORD dwFilter = TEX_FILTER_DEFAULT;
-    DWORD dwSRGB = 0;
-    DWORD dwFilterOpts = 0;
+    TEX_FILTER_FLAGS dwFilter = TEX_FILTER_DEFAULT;
+    TEX_FILTER_FLAGS dwSRGB = TEX_FILTER_DEFAULT;
+    TEX_FILTER_FLAGS dwFilterOpts = TEX_FILTER_DEFAULT;
     DWORD fileType = WIC_CODEC_BMP;
 
     wchar_t szOutputFile[MAX_PATH] = {};
@@ -1056,7 +1056,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_FILTER:
-                dwFilter = LookupByName(pValue, g_pFilters);
+                dwFilter = static_cast<TEX_FILTER_FLAGS>(LookupByName(pValue, g_pFilters));
                 if (!dwFilter)
                 {
                     wprintf(L"Invalid value specified with -if (%ls)\n", pValue);

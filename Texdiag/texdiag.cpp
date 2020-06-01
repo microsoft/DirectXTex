@@ -573,7 +573,7 @@ namespace
         PrintList(15, g_pDumpFileTypes);
     }
 
-    HRESULT LoadImage(const wchar_t *fileName, DWORD dwOptions, DWORD dwFilter, TexMetadata& info, std::unique_ptr<ScratchImage>& image)
+    HRESULT LoadImage(const wchar_t *fileName, DWORD dwOptions, TEX_FILTER_FLAGS dwFilter, TexMetadata& info, std::unique_ptr<ScratchImage>& image)
     {
         if (!fileName)
             return E_INVALIDARG;
@@ -587,7 +587,7 @@ namespace
 
         if (_wcsicmp(ext, L".dds") == 0)
         {
-            DWORD ddsFlags = DDS_FLAGS_NONE;
+            DDS_FLAGS ddsFlags = DDS_FLAGS_NONE;
             if (dwOptions & (1 << OPT_DDS_DWORD_ALIGN))
                 ddsFlags |= DDS_FLAGS_LEGACY_DWORD;
             if (dwOptions & (1 << OPT_EXPAND_LUMINANCE))
@@ -1233,7 +1233,7 @@ namespace
 
 
     //--------------------------------------------------------------------------------------
-    HRESULT Difference(const Image& image1, const Image& image2, DWORD dwFilter, DXGI_FORMAT format, ScratchImage& result)
+    HRESULT Difference(const Image& image1, const Image& image2, TEX_FILTER_FLAGS dwFilter, DXGI_FORMAT format, ScratchImage& result)
     {
         if (!image1.pixels || !image2.pixels)
             return E_POINTER;
@@ -3033,7 +3033,7 @@ namespace
 int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 {
     // Parameters and defaults
-    DWORD dwFilter = TEX_FILTER_DEFAULT;
+    TEX_FILTER_FLAGS dwFilter = TEX_FILTER_DEFAULT;
     int pixelx = -1;
     int pixely = -1;
     DXGI_FORMAT diffFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -3149,7 +3149,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_FILTER:
-                dwFilter = LookupByName(pValue, g_pFilters);
+                dwFilter = static_cast<TEX_FILTER_FLAGS>(LookupByName(pValue, g_pFilters));
                 if (!dwFilter)
                 {
                     wprintf(L"Invalid value specified with -if (%ls)\n", pValue);

@@ -136,7 +136,7 @@ namespace
         size_t size,
         _Out_ TexMetadata& metadata,
         size_t& offset,
-        _Inout_opt_ DWORD* convFlags) noexcept
+        _Inout_opt_ uint32_t* convFlags) noexcept
     {
         if (!pSource)
             return E_INVALIDARG;
@@ -276,7 +276,7 @@ namespace
         _In_reads_bytes_(size) const void* pSource,
         size_t size,
         _In_ const Image* image,
-        _In_ DWORD convFlags) noexcept
+        _In_ uint32_t convFlags) noexcept
     {
         assert(pSource && size > 0);
 
@@ -490,7 +490,7 @@ namespace
                         size_t j = size_t(*sPtr & 0x7F) + 1;
                         ++sPtr;
 
-                        DWORD t;
+                        uint32_t t;
                         if (convFlags & CONV_FLAGS_EXPAND)
                         {
                             assert(offset * 3 < rowPitch);
@@ -626,7 +626,7 @@ namespace
         _In_reads_bytes_(size) const void* pSource,
         size_t size,
         _In_ const Image* image,
-        _In_ DWORD convFlags) noexcept
+        _In_ uint32_t convFlags) noexcept
     {
         assert(pSource && size > 0);
 
@@ -810,7 +810,7 @@ namespace
     //-------------------------------------------------------------------------------------
     // Encodes TGA file header
     //-------------------------------------------------------------------------------------
-    HRESULT EncodeTGAHeader(_In_ const Image& image, _Out_ TGA_HEADER& header, _Inout_ DWORD& convFlags) noexcept
+    HRESULT EncodeTGAHeader(_In_ const Image& image, _Out_ TGA_HEADER& header, _Inout_ uint32_t& convFlags) noexcept
     {
         memset(&header, 0, sizeof(TGA_HEADER));
 
@@ -1068,7 +1068,7 @@ HRESULT DirectX::LoadFromTGAMemory(
     image.Release();
 
     size_t offset;
-    DWORD convFlags = 0;
+    uint32_t convFlags = 0;
     TexMetadata mdata;
     HRESULT hr = DecodeTGAHeader(pSource, size, mdata, offset, &convFlags);
     if (FAILED(hr))
@@ -1183,7 +1183,7 @@ HRESULT DirectX::LoadFromTGAFile(
     }
 
     size_t offset;
-    DWORD convFlags = 0;
+    uint32_t convFlags = 0;
     TexMetadata mdata;
     HRESULT hr = DecodeTGAHeader(header, bytesRead, mdata, offset, &convFlags);
     if (FAILED(hr))
@@ -1282,7 +1282,7 @@ HRESULT DirectX::LoadFromTGAFile(
                 pPixels += rowPitch;
             }
 
-            DWORD tflags = TEXP_SCANLINE_NONE;
+            uint32_t tflags = TEXP_SCANLINE_NONE;
             if (maxalpha == 0)
             {
                 opaquealpha = true;
@@ -1471,7 +1471,7 @@ HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob, const TexMetada
         return E_POINTER;
 
     TGA_HEADER tga_header = {};
-    DWORD convFlags = 0;
+    uint32_t convFlags = 0;
     HRESULT hr = EncodeTGAHeader(image, tga_header, convFlags);
     if (FAILED(hr))
         return hr;
@@ -1565,7 +1565,7 @@ HRESULT DirectX::SaveToTGAFile(const Image& image, const wchar_t* szFile, const 
         return E_POINTER;
 
     TGA_HEADER tga_header = {};
-    DWORD convFlags = 0;
+    uint32_t convFlags = 0;
     HRESULT hr = EncodeTGAHeader(image, tga_header, convFlags);
     if (FAILED(hr))
         return hr;

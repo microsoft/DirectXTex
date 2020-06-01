@@ -147,7 +147,7 @@ namespace
     //-------------------------------------------------------------------------------------
     DXGI_FORMAT DetermineFormat(
         _In_ const WICPixelFormatGUID& pixelFormat,
-        DWORD flags,
+        WIC_FLAGS flags,
         bool iswic2,
         _Out_opt_ WICPixelFormatGUID* pConvert,
         _Out_ TEX_ALPHA_MODE* alphaMode) noexcept
@@ -253,7 +253,7 @@ namespace
     // Determines metadata for image
     //-------------------------------------------------------------------------------------
     HRESULT DecodeMetadata(
-        DWORD flags,
+        WIC_FLAGS flags,
         bool iswic2,
         _In_ IWICBitmapDecoder *decoder,
         _In_ IWICBitmapFrameDecode *frame,
@@ -397,7 +397,7 @@ namespace
     // Decodes a single frame
     //-------------------------------------------------------------------------------------
     HRESULT DecodeSingleFrame(
-        DWORD flags,
+        WIC_FLAGS flags,
         const TexMetadata& metadata,
         const WICPixelFormatGUID& convertGUID,
         _In_ IWICBitmapFrameDecode *frame,
@@ -464,7 +464,7 @@ namespace
     // Decodes an image array, resizing/format converting as needed
     //-------------------------------------------------------------------------------------
     HRESULT DecodeMultiframe(
-        DWORD flags,
+        WIC_FLAGS flags,
         const TexMetadata& metadata,
         _In_ IWICBitmapDecoder *decoder,
         _Inout_ ScratchImage& image)
@@ -599,7 +599,7 @@ namespace
     // Encodes image metadata
     //-------------------------------------------------------------------------------------
     HRESULT EncodeMetadata(
-        DWORD flags,
+        WIC_FLAGS flags,
         _In_ IWICBitmapFrameEncode* frame,
         const GUID& containerFormat,
         DXGI_FORMAT format)
@@ -700,7 +700,7 @@ namespace
     //-------------------------------------------------------------------------------------
     HRESULT EncodeImage(
         const Image& image,
-        DWORD flags,
+        WIC_FLAGS flags,
         _In_ REFGUID containerFormat,
         _In_ IWICBitmapFrameEncode* frame,
         _In_opt_ IPropertyBag2* props,
@@ -803,7 +803,7 @@ namespace
 
     HRESULT EncodeSingleFrame(
         const Image& image,
-        DWORD flags,
+        WIC_FLAGS flags,
         _In_ REFGUID containerFormat,
         _Inout_ IStream* stream,
         _In_opt_ const GUID* targetFormat,
@@ -868,7 +868,7 @@ namespace
     HRESULT EncodeMultiframe(
         _In_reads_(nimages) const Image* images,
         size_t nimages,
-        DWORD flags,
+        WIC_FLAGS flags,
         _In_ REFGUID containerFormat,
         _Inout_ IStream* stream,
         _In_opt_ const GUID* targetFormat,
@@ -946,7 +946,7 @@ _Use_decl_annotations_
 HRESULT DirectX::GetMetadataFromWICMemory(
     const void* pSource,
     size_t size,
-    DWORD flags,
+    WIC_FLAGS flags,
     TexMetadata& metadata,
     std::function<void(IWICMetadataQueryReader*)> getMQR)
 {
@@ -998,7 +998,7 @@ HRESULT DirectX::GetMetadataFromWICMemory(
 _Use_decl_annotations_
 HRESULT DirectX::GetMetadataFromWICFile(
     const wchar_t* szFile,
-    DWORD flags,
+    WIC_FLAGS flags,
     TexMetadata& metadata,
     std::function<void(IWICMetadataQueryReader*)> getMQR)
 {
@@ -1037,7 +1037,7 @@ _Use_decl_annotations_
 HRESULT DirectX::LoadFromWICMemory(
     const void* pSource,
     size_t size,
-    DWORD flags,
+    WIC_FLAGS flags,
     TexMetadata* metadata,
     ScratchImage& image,
     std::function<void(IWICMetadataQueryReader*)> getMQR)
@@ -1111,7 +1111,7 @@ HRESULT DirectX::LoadFromWICMemory(
 _Use_decl_annotations_
 HRESULT DirectX::LoadFromWICFile(
     const wchar_t* szFile,
-    DWORD flags,
+    WIC_FLAGS flags,
     TexMetadata* metadata,
     ScratchImage& image,
     std::function<void(IWICMetadataQueryReader*)> getMQR)
@@ -1172,7 +1172,7 @@ HRESULT DirectX::LoadFromWICFile(
 _Use_decl_annotations_
 HRESULT DirectX::SaveToWICMemory(
     const Image& image,
-    DWORD flags,
+    WIC_FLAGS flags,
     REFGUID containerFormat,
     Blob& blob,
     const GUID* targetFormat,
@@ -1225,7 +1225,7 @@ _Use_decl_annotations_
 HRESULT DirectX::SaveToWICMemory(
     const Image* images,
     size_t nimages,
-    DWORD flags,
+    WIC_FLAGS flags,
     REFGUID containerFormat,
     Blob& blob,
     const GUID* targetFormat,
@@ -1285,7 +1285,7 @@ HRESULT DirectX::SaveToWICMemory(
 _Use_decl_annotations_
 HRESULT DirectX::SaveToWICFile(
     const Image& image,
-    DWORD flags,
+    WIC_FLAGS flags,
     REFGUID containerFormat,
     const wchar_t* szFile,
     const GUID* targetFormat,
@@ -1326,7 +1326,7 @@ _Use_decl_annotations_
 HRESULT DirectX::SaveToWICFile(
     const Image* images,
     size_t nimages,
-    DWORD flags,
+    WIC_FLAGS flags,
     REFGUID containerFormat,
     const wchar_t* szFile,
     const GUID* targetFormat,

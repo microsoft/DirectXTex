@@ -67,7 +67,7 @@ namespace
         _Out_ HDRColorA *pY,
         _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA *pPoints,
         uint32_t cSteps,
-        DWORD flags) noexcept
+        uint32_t flags) noexcept
     {
         static const float fEpsilon = (0.25f / 64.0f) * (0.25f / 64.0f);
         static const float pC3[] = { 2.0f / 2.0f, 1.0f / 2.0f, 0.0f / 2.0f };
@@ -372,7 +372,7 @@ namespace
         _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA *pColor,
         bool bColorKey,
         float threshold,
-        DWORD flags) noexcept
+        uint32_t flags) noexcept
     {
         assert(pBC && pColor);
         static_assert(sizeof(D3DX_BC1) == 8, "D3DX_BC1 should be 8 bytes");
@@ -735,7 +735,7 @@ void DirectX::D3DXDecodeBC1(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 }
 
 _Use_decl_annotations_
-void DirectX::D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshold, DWORD flags) noexcept
+void DirectX::D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshold, uint32_t flags) noexcept
 {
     assert(pBC && pColor);
 
@@ -810,7 +810,7 @@ void DirectX::D3DXDecodeBC2(XMVECTOR *pColor, const uint8_t *pBC) noexcept
     DecodeBC1(pColor, &pBC2->bc1, false);
 
     // 4-bit alpha part
-    DWORD dw = pBC2->bitmap[0];
+    uint32_t dw = pBC2->bitmap[0];
 
     for (size_t i = 0; i < 8; ++i, dw >>= 4)
     {
@@ -825,7 +825,7 @@ void DirectX::D3DXDecodeBC2(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 }
 
 _Use_decl_annotations_
-void DirectX::D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags) noexcept
+void DirectX::D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
 {
     assert(pBC && pColor);
     static_assert(sizeof(D3DX_BC2) == 16, "D3DX_BC2 should be 16 bytes");
@@ -929,7 +929,7 @@ void DirectX::D3DXDecodeBC3(XMVECTOR *pColor, const uint8_t *pBC) noexcept
         fAlpha[7] = 1.0f;
     }
 
-    DWORD dw = uint32_t(pBC3->bitmap[0]) | uint32_t(pBC3->bitmap[1] << 8) | uint32_t(pBC3->bitmap[2] << 16);
+    uint32_t dw = uint32_t(pBC3->bitmap[0]) | uint32_t(pBC3->bitmap[1] << 8) | uint32_t(pBC3->bitmap[2] << 16);
 
     for (size_t i = 0; i < 8; ++i, dw >>= 3)
         pColor[i] = XMVectorSetW(pColor[i], fAlpha[dw & 0x7]);
@@ -941,7 +941,7 @@ void DirectX::D3DXDecodeBC3(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 }
 
 _Use_decl_annotations_
-void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags) noexcept
+void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
 {
     assert(pBC && pColor);
     static_assert(sizeof(D3DX_BC3) == 16, "D3DX_BC3 should be 16 bytes");

@@ -19,7 +19,7 @@ namespace DirectX
 
         HRESULT Initialize(_In_ ID3D11Device* pDevice);
 
-        HRESULT Prepare(size_t width, size_t height, DWORD flags, DXGI_FORMAT format, float alphaWeight);
+        HRESULT Prepare(size_t width, size_t height, uint32_t flags, DXGI_FORMAT format, float alphaWeight);
 
         HRESULT Compress(const Image& srcImage, const Image& destImage);
 

@@ -173,7 +173,7 @@ HRESULT GPUCompressBC::Initialize(ID3D11Device* pDevice)
 
 
 //-------------------------------------------------------------------------------------
-HRESULT GPUCompressBC::Prepare(size_t width, size_t height, DWORD flags, DXGI_FORMAT format, float alphaWeight)
+HRESULT GPUCompressBC::Prepare(size_t width, size_t height, uint32_t flags, DXGI_FORMAT format, float alphaWeight)
 {
     if (!width || !height || alphaWeight < 0.f)
         return E_INVALIDARG;

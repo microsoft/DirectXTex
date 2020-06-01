@@ -23,7 +23,7 @@ namespace
         const Image& image2,
         float& mse,
         _Out_writes_opt_(4) float* mseV,
-        DWORD flags) noexcept
+        CMSE_FLAGS flags) noexcept
     {
         if (!image1.pixels || !image2.pixels)
             return E_POINTER;
@@ -270,9 +270,9 @@ HRESULT DirectX::CopyRectangle(
     const Image& srcImage,
     const Rect& srcRect,
     const Image& dstImage,
-    DWORD filter,
+    TEX_FILTER_FLAGS filter,
     size_t xOffset,
-    size_t yOffset)
+    size_t yOffset) noexcept
 {
     if (!srcImage.pixels || !dstImage.pixels)
         return E_POINTER;
@@ -384,7 +384,7 @@ HRESULT DirectX::ComputeMSE(
     const Image& image2,
     float& mse,
     float* mseV,
-    DWORD flags) noexcept
+    CMSE_FLAGS flags) noexcept
 {
     if (!image1.pixels || !image2.pixels)
         return E_POINTER;

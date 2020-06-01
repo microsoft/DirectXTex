@@ -17,12 +17,13 @@ using namespace DirectX;
 
 namespace
 {
-    inline DWORD GetSRGBFlags(_In_ DWORD compress) noexcept
+    inline TEX_FILTER_FLAGS GetSRGBFlags(_In_ TEX_COMPRESS_FLAGS compress) noexcept
     {
+        static_assert(TEX_FILTER_SRGB_IN == 0x1000000, "TEX_FILTER_SRGB flag values don't match TEX_FILTER_SRGB_MASK");
         static_assert(static_cast<int>(TEX_COMPRESS_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN), "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*");
         static_assert(static_cast<int>(TEX_COMPRESS_SRGB_OUT) == static_cast<int>(TEX_FILTER_SRGB_OUT), "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*");
         static_assert(static_cast<int>(TEX_COMPRESS_SRGB) == static_cast<int>(TEX_FILTER_SRGB), "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*");
-        return (compress & TEX_COMPRESS_SRGB);
+        return static_cast<TEX_FILTER_FLAGS>(compress & TEX_FILTER_SRGB_MASK);
     }
 
 
@@ -33,7 +34,7 @@ namespace
         const Image& srcImage,
         ScratchImage& image,
         bool srgb,
-        DWORD filter)
+        TEX_FILTER_FLAGS filter) noexcept
     {
         if (!srcImage.pixels)
             return E_POINTER;
@@ -96,7 +97,7 @@ namespace
     HRESULT ConvertToRGBAF32(
         const Image& srcImage,
         ScratchImage& image,
-        DWORD filter)
+        TEX_FILTER_FLAGS filter) noexcept
     {
         if (!srcImage.pixels)
             return E_POINTER;
@@ -145,7 +146,7 @@ namespace
         _In_ GPUCompressBC* gpubc,
         const Image& srcImage,
         const Image& destImage,
-        DWORD compress)
+        TEX_COMPRESS_FLAGS compress)
     {
         if (!gpubc)
             return E_POINTER;
@@ -165,7 +166,7 @@ namespace
             ScratchImage image;
             HRESULT hr = E_UNEXPECTED;
 
-            DWORD srgb = GetSRGBFlags(compress);
+            auto srgb = GetSRGBFlags(compress);
 
             switch (format)
             {
@@ -209,9 +210,9 @@ HRESULT DirectX::Compress(
     ID3D11Device* pDevice,
     const Image& srcImage,
     DXGI_FORMAT format,
-    DWORD compress,
+    TEX_COMPRESS_FLAGS compress,
     float alphaWeight,
-    ScratchImage& image)
+    ScratchImage& image) noexcept
 {
     if (!pDevice || IsCompressed(srcImage.format) || !IsCompressed(format))
         return E_INVALIDARG;
@@ -259,9 +260,9 @@ HRESULT DirectX::Compress(
     size_t nimages,
     const TexMetadata& metadata,
     DXGI_FORMAT format,
-    DWORD compress,
+    TEX_COMPRESS_FLAGS compress,
     float alphaWeight,
-    ScratchImage& cImages)
+    ScratchImage& cImages) noexcept
 {
     if (!pDevice || !srcImages || !nimages)
         return E_INVALIDARG;

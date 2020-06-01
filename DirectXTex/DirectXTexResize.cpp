@@ -19,7 +19,7 @@ using Microsoft::WRL::ComPtr;
 namespace DirectX
 {
     extern HRESULT _ResizeSeparateColorAndAlpha(_In_ IWICImagingFactory* pWIC, _In_ bool iswic2, _In_ IWICBitmap* original,
-        _In_ size_t newWidth, _In_ size_t newHeight, _In_ DWORD filter, _Inout_ const Image* img) noexcept;
+        _In_ size_t newWidth, _In_ size_t newHeight, _In_ TEX_FILTER_FLAGS filter, _Inout_ const Image* img) noexcept;
 }
 
 namespace
@@ -27,7 +27,7 @@ namespace
     //--- Do image resize using WIC ---
     HRESULT PerformResizeUsingWIC(
         const Image& srcImage,
-        DWORD filter,
+        TEX_FILTER_FLAGS filter,
         const WICPixelFormatGUID& pfGUID,
         const Image& destImage) noexcept
     {
@@ -128,7 +128,7 @@ namespace
     //--- Do conversion, resize using WIC, conversion cycle ---
     HRESULT PerformResizeViaF32(
         const Image& srcImage,
-        DWORD filter,
+        TEX_FILTER_FLAGS filter,
         const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
@@ -170,7 +170,7 @@ namespace
 
 
     //--- determine when to use WIC vs. non-WIC paths ---
-    bool UseWICFiltering(_In_ DXGI_FORMAT format, _In_ DWORD filter) noexcept
+    bool UseWICFiltering(_In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter) noexcept
     {
         if (filter & TEX_FILTER_FORCE_NON_WIC)
         {
@@ -201,7 +201,7 @@ namespace
 
         static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
-        switch (filter & TEX_FILTER_MASK)
+        switch (filter & TEX_FILTER_MODE_MASK)
         {
         case TEX_FILTER_LINEAR:
             if (filter & TEX_FILTER_WRAP)
@@ -303,7 +303,7 @@ namespace
 
 
     //--- Box Filter ---
-    HRESULT ResizeBoxFilter(const Image& srcImage, DWORD filter, const Image& destImage) noexcept
+    HRESULT ResizeBoxFilter(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
@@ -365,7 +365,7 @@ namespace
 
 
     //--- Linear Filter ---
-    HRESULT ResizeLinearFilter(const Image& srcImage, DWORD filter, const Image& destImage) noexcept
+    HRESULT ResizeLinearFilter(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
@@ -451,7 +451,7 @@ namespace
 
 
     //--- Cubic Filter ---
-    HRESULT ResizeCubicFilter(const Image& srcImage, DWORD filter, const Image& destImage) noexcept
+    HRESULT ResizeCubicFilter(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
@@ -611,7 +611,7 @@ namespace
 
 
     //--- Triangle Filter ---
-    HRESULT ResizeTriangleFilter(const Image& srcImage, DWORD filter, const Image& destImage) noexcept
+    HRESULT ResizeTriangleFilter(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
@@ -790,14 +790,14 @@ namespace
 
 
     //--- Custom filter resize ---
-    HRESULT PerformResizeUsingCustomFilters(const Image& srcImage, DWORD filter, const Image& destImage) noexcept
+    HRESULT PerformResizeUsingCustomFilters(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
 
         static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
-        DWORD filter_select = (filter & TEX_FILTER_MASK);
+        unsigned long filter_select = filter & TEX_FILTER_MODE_MASK;
         if (!filter_select)
         {
             // Default filter choice
@@ -841,7 +841,7 @@ HRESULT DirectX::Resize(
     const Image& srcImage,
     size_t width,
     size_t height,
-    DWORD filter,
+    TEX_FILTER_FLAGS filter,
     ScratchImage& image) noexcept
 {
     if (width == 0 || height == 0)
@@ -928,7 +928,7 @@ HRESULT DirectX::Resize(
     const TexMetadata& metadata,
     size_t width,
     size_t height,
-    DWORD filter,
+    TEX_FILTER_FLAGS filter,
     ScratchImage& result) noexcept
 {
     if (!srcImages || !nimages || width == 0 || height == 0)
