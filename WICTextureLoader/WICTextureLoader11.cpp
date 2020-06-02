@@ -534,10 +534,18 @@ namespace
                         {
                             sRGB = (value.uintVal == 45455);
                         }
+                        else
+                        {
+                            sRGB = (loadFlags & WIC_LOADER_SRGB_DEFAULT) != 0;
+                        }
                     }
                     else if (SUCCEEDED(metareader->GetMetadataByName(L"System.Image.ColorSpace", &value)) && value.vt == VT_UI2)
                     {
                         sRGB = (value.uiVal == 1);
+                    }
+                    else
+                    {
+                        sRGB = (loadFlags & WIC_LOADER_SRGB_DEFAULT) != 0;
                     }
 
                     (void)PropVariantClear(&value);
