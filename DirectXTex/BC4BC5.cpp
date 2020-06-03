@@ -47,11 +47,11 @@ namespace
         float DecodeFromIndex(size_t uIndex) const noexcept
         {
             if (uIndex == 0)
-                return red_0 / 255.0f;
+                return float(red_0) / 255.0f;
             if (uIndex == 1)
-                return red_1 / 255.0f;
-            float fred_0 = red_0 / 255.0f;
-            float fred_1 = red_1 / 255.0f;
+                return float(red_1) / 255.0f;
+            float fred_0 = float(red_0) / 255.0f;
+            float fred_1 = float(red_1) / 255.0f;
             if (red_0 > red_1)
             {
                 uIndex -= 1;
@@ -106,11 +106,11 @@ namespace
             int8_t sred_1 = (red_1 == -128) ? -127 : red_1;
 
             if (uIndex == 0)
-                return sred_0 / 127.0f;
+                return float(sred_0) / 127.0f;
             if (uIndex == 1)
-                return sred_1 / 127.0f;
-            float fred_0 = sred_0 / 127.0f;
-            float fred_1 = sred_1 / 127.0f;
+                return float(sred_1) / 127.0f;
+            float fred_0 = float(sred_0) / 127.0f;
+            float fred_1 = float(sred_1) / 127.0f;
             if (red_0 > red_1)
             {
                 uIndex -= 1;
