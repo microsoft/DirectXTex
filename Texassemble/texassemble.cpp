@@ -296,9 +296,9 @@ const SValue g_pExtFileTypes[] =
 
 namespace
 {
-    inline HANDLE safe_handle(HANDLE h) { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
+    inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
-    struct find_closer { void operator()(HANDLE h) { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
+    struct find_closer { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
 
     using ScopedFindHandle = std::unique_ptr<void, find_closer>;
 
@@ -543,6 +543,7 @@ namespace
         PrintList(13, g_pFilters);
     }
 
+
     HRESULT SaveImageFile(const Image& img, DWORD fileType, const wchar_t* szOutputFile)
     {
         switch (fileType)
@@ -566,6 +567,7 @@ namespace
         }
     }
 
+
     enum
     {
         DM_UNDEFINED = 0,
@@ -573,6 +575,7 @@ namespace
         DM_BACKGROUND = 2,
         DM_PREVIOUS = 3
     };
+
 
     void FillRectangle(const Image& img, const RECT& destRect, uint32_t color)
     {
@@ -597,6 +600,7 @@ namespace
             ptr += img.rowPitch;
         }
     }
+
 
     void BlendRectangle(const Image& composed, const Image& raw, const RECT& destRect)
     {
@@ -635,6 +639,7 @@ namespace
             composedPtr += composed.rowPitch;
         }
     }
+
 
     HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<ScratchImage>>& loadedImages, bool usebgcolor)
     {

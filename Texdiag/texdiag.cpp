@@ -361,9 +361,9 @@ const SValue g_pExtFileTypes[] =
 
 namespace
 {
-    inline HANDLE safe_handle(HANDLE h) { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
+    inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
-    struct find_closer { void operator()(HANDLE h) { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
+    struct find_closer { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
 
     using ScopedFindHandle = std::unique_ptr<void, find_closer>;
 
@@ -573,7 +573,12 @@ namespace
         PrintList(15, g_pDumpFileTypes);
     }
 
-    HRESULT LoadImage(const wchar_t *fileName, DWORD dwOptions, TEX_FILTER_FLAGS dwFilter, TexMetadata& info, std::unique_ptr<ScratchImage>& image)
+    HRESULT LoadImage(
+        const wchar_t *fileName,
+        DWORD dwOptions,
+        TEX_FILTER_FLAGS dwFilter,
+        TexMetadata& info,
+        std::unique_ptr<ScratchImage>& image)
     {
         if (!fileName)
             return E_INVALIDARG;
@@ -1233,7 +1238,12 @@ namespace
 
 
     //--------------------------------------------------------------------------------------
-    HRESULT Difference(const Image& image1, const Image& image2, TEX_FILTER_FLAGS dwFilter, DXGI_FORMAT format, ScratchImage& result)
+    HRESULT Difference(
+        const Image& image1,
+        const Image& image2,
+        TEX_FILTER_FLAGS dwFilter,
+        DXGI_FORMAT format,
+        ScratchImage& result)
     {
         if (!image1.pixels || !image2.pixels)
             return E_POINTER;
@@ -1370,7 +1380,10 @@ namespace
         }
     };
 
-    inline static bool IsFixUpOffset(_In_range_(0, 2) size_t uPartitions, _In_range_(0, 63) uint64_t uShape, _In_range_(0, 15) size_t uOffset)
+    inline static bool IsFixUpOffset(
+        _In_range_(0, 2) size_t uPartitions,
+        _In_range_(0, 63) uint64_t uShape,
+        _In_range_(0, 15) size_t uOffset)
     {
         for (size_t p = 0; p <= uPartitions; p++)
         {
