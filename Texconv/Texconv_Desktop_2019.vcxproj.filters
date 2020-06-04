@@ -9,6 +9,7 @@
   <ItemGroup>
     <ClCompile Include="Texconv.cpp" />
     <ClCompile Include="PortablePixMap.cpp" />
+    <ClCompile Include="ExtendedBMP.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Texconv.rc">
