@@ -53,345 +53,343 @@ using namespace DirectX;
 using namespace DirectX::PackedVector;
 using Microsoft::WRL::ComPtr;
 
-enum OPTIONS
+namespace
 {
-    OPT_RECURSIVE = 1,
-    OPT_FILELIST,
-    OPT_WIDTH,
-    OPT_HEIGHT,
-    OPT_MIPLEVELS,
-    OPT_FORMAT,
-    OPT_FILTER,
-    OPT_SRGBI,
-    OPT_SRGBO,
-    OPT_SRGB,
-    OPT_PREFIX,
-    OPT_SUFFIX,
-    OPT_OUTPUTDIR,
-    OPT_TOLOWER,
-    OPT_OVERWRITE,
-    OPT_FILETYPE,
-    OPT_HFLIP,
-    OPT_VFLIP,
-    OPT_DDS_DWORD_ALIGN,
-    OPT_DDS_BAD_DXTN_TAILS,
-    OPT_USE_DX10,
-    OPT_USE_DX9,
-    OPT_TGA20,
-    OPT_WIC_QUALITY,
-    OPT_WIC_LOSSLESS,
-    OPT_WIC_MULTIFRAME,
-    OPT_NOLOGO,
-    OPT_TIMING,
-    OPT_SEPALPHA,
-    OPT_NO_WIC,
-    OPT_TYPELESS_UNORM,
-    OPT_TYPELESS_FLOAT,
-    OPT_PREMUL_ALPHA,
-    OPT_DEMUL_ALPHA,
-    OPT_EXPAND_LUMINANCE,
-    OPT_TA_WRAP,
-    OPT_TA_MIRROR,
-    OPT_FORCE_SINGLEPROC,
-    OPT_GPU,
-    OPT_NOGPU,
-    OPT_FEATURE_LEVEL,
-    OPT_FIT_POWEROF2,
-    OPT_ALPHA_THRESHOLD,
-    OPT_ALPHA_WEIGHT,
-    OPT_NORMAL_MAP,
-    OPT_NORMAL_MAP_AMPLITUDE,
-    OPT_BC_COMPRESS,
-    OPT_COLORKEY,
-    OPT_TONEMAP,
-    OPT_X2_BIAS,
-    OPT_PRESERVE_ALPHA_COVERAGE,
-    OPT_INVERT_Y,
-    OPT_ROTATE_COLOR,
-    OPT_PAPER_WHITE_NITS,
-    OPT_BCNONMULT4FIX,
-    OPT_MAX
-};
+    enum OPTIONS
+    {
+        OPT_RECURSIVE = 1,
+        OPT_FILELIST,
+        OPT_WIDTH,
+        OPT_HEIGHT,
+        OPT_MIPLEVELS,
+        OPT_FORMAT,
+        OPT_FILTER,
+        OPT_SRGBI,
+        OPT_SRGBO,
+        OPT_SRGB,
+        OPT_PREFIX,
+        OPT_SUFFIX,
+        OPT_OUTPUTDIR,
+        OPT_TOLOWER,
+        OPT_OVERWRITE,
+        OPT_FILETYPE,
+        OPT_HFLIP,
+        OPT_VFLIP,
+        OPT_DDS_DWORD_ALIGN,
+        OPT_DDS_BAD_DXTN_TAILS,
+        OPT_USE_DX10,
+        OPT_USE_DX9,
+        OPT_TGA20,
+        OPT_WIC_QUALITY,
+        OPT_WIC_LOSSLESS,
+        OPT_WIC_MULTIFRAME,
+        OPT_NOLOGO,
+        OPT_TIMING,
+        OPT_SEPALPHA,
+        OPT_NO_WIC,
+        OPT_TYPELESS_UNORM,
+        OPT_TYPELESS_FLOAT,
+        OPT_PREMUL_ALPHA,
+        OPT_DEMUL_ALPHA,
+        OPT_EXPAND_LUMINANCE,
+        OPT_TA_WRAP,
+        OPT_TA_MIRROR,
+        OPT_FORCE_SINGLEPROC,
+        OPT_GPU,
+        OPT_NOGPU,
+        OPT_FEATURE_LEVEL,
+        OPT_FIT_POWEROF2,
+        OPT_ALPHA_THRESHOLD,
+        OPT_ALPHA_WEIGHT,
+        OPT_NORMAL_MAP,
+        OPT_NORMAL_MAP_AMPLITUDE,
+        OPT_BC_COMPRESS,
+        OPT_COLORKEY,
+        OPT_TONEMAP,
+        OPT_X2_BIAS,
+        OPT_PRESERVE_ALPHA_COVERAGE,
+        OPT_INVERT_Y,
+        OPT_ROTATE_COLOR,
+        OPT_PAPER_WHITE_NITS,
+        OPT_BCNONMULT4FIX,
+        OPT_MAX
+    };
 
-enum
-{
-    ROTATE_709_TO_HDR10 = 1,
-    ROTATE_HDR10_TO_709,
-    ROTATE_709_TO_2020,
-    ROTATE_2020_TO_709,
-    ROTATE_P3_TO_HDR10,
-    ROTATE_P3_TO_2020,
-};
+    enum
+    {
+        ROTATE_709_TO_HDR10 = 1,
+        ROTATE_HDR10_TO_709,
+        ROTATE_709_TO_2020,
+        ROTATE_2020_TO_709,
+        ROTATE_P3_TO_HDR10,
+        ROTATE_P3_TO_2020,
+    };
 
-static_assert(OPT_MAX <= 64, "dwOptions is a DWORD64 bitfield");
+    static_assert(OPT_MAX <= 64, "dwOptions is a DWORD64 bitfield");
 
-struct SConversion
-{
-    wchar_t szSrc[MAX_PATH];
-    wchar_t szDest[MAX_PATH];
-};
+    struct SConversion
+    {
+        wchar_t szSrc[MAX_PATH];
+        wchar_t szDest[MAX_PATH];
+    };
 
-struct SValue
-{
-    LPCWSTR pName;
-    DWORD dwValue;
-};
+    struct SValue
+    {
+        LPCWSTR pName;
+        DWORD dwValue;
+    };
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-const SValue g_pOptions[] =
-{
-    { L"r",             OPT_RECURSIVE },
-    { L"flist",         OPT_FILELIST },
-    { L"w",             OPT_WIDTH },
-    { L"h",             OPT_HEIGHT },
-    { L"m",             OPT_MIPLEVELS },
-    { L"f",             OPT_FORMAT },
-    { L"if",            OPT_FILTER },
-    { L"srgbi",         OPT_SRGBI },
-    { L"srgbo",         OPT_SRGBO },
-    { L"srgb",          OPT_SRGB },
-    { L"px",            OPT_PREFIX },
-    { L"sx",            OPT_SUFFIX },
-    { L"o",             OPT_OUTPUTDIR },
-    { L"l",             OPT_TOLOWER },
-    { L"y",             OPT_OVERWRITE },
-    { L"ft",            OPT_FILETYPE },
-    { L"hflip",         OPT_HFLIP },
-    { L"vflip",         OPT_VFLIP },
-    { L"dword",         OPT_DDS_DWORD_ALIGN },
-    { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
-    { L"dx10",          OPT_USE_DX10 },
-    { L"dx9",           OPT_USE_DX9 },
-    { L"tga20",         OPT_TGA20 },
-    { L"wicq",          OPT_WIC_QUALITY },
-    { L"wiclossless",   OPT_WIC_LOSSLESS },
-    { L"wicmulti",      OPT_WIC_MULTIFRAME },
-    { L"nologo",        OPT_NOLOGO },
-    { L"timing",        OPT_TIMING },
-    { L"sepalpha",      OPT_SEPALPHA },
-    { L"keepcoverage",  OPT_PRESERVE_ALPHA_COVERAGE },
-    { L"nowic",         OPT_NO_WIC },
-    { L"tu",            OPT_TYPELESS_UNORM },
-    { L"tf",            OPT_TYPELESS_FLOAT },
-    { L"pmalpha",       OPT_PREMUL_ALPHA },
-    { L"alpha",         OPT_DEMUL_ALPHA },
-    { L"xlum",          OPT_EXPAND_LUMINANCE },
-    { L"wrap",          OPT_TA_WRAP },
-    { L"mirror",        OPT_TA_MIRROR },
-    { L"singleproc",    OPT_FORCE_SINGLEPROC },
-    { L"gpu",           OPT_GPU },
-    { L"nogpu",         OPT_NOGPU },
-    { L"fl",            OPT_FEATURE_LEVEL },
-    { L"pow2",          OPT_FIT_POWEROF2 },
-    { L"at",            OPT_ALPHA_THRESHOLD },
-    { L"aw",            OPT_ALPHA_WEIGHT },
-    { L"nmap",          OPT_NORMAL_MAP },
-    { L"nmapamp",       OPT_NORMAL_MAP_AMPLITUDE },
-    { L"bc",            OPT_BC_COMPRESS },
-    { L"c",             OPT_COLORKEY },
-    { L"tonemap",       OPT_TONEMAP },
-    { L"x2bias",        OPT_X2_BIAS },
-    { L"inverty",       OPT_INVERT_Y },
-    { L"rotatecolor",   OPT_ROTATE_COLOR },
-    { L"nits",          OPT_PAPER_WHITE_NITS },
-    { L"fixbc4x4",      OPT_BCNONMULT4FIX},
-    { nullptr,          0 }
-};
+    const SValue g_pOptions[] =
+    {
+        { L"r",             OPT_RECURSIVE },
+        { L"flist",         OPT_FILELIST },
+        { L"w",             OPT_WIDTH },
+        { L"h",             OPT_HEIGHT },
+        { L"m",             OPT_MIPLEVELS },
+        { L"f",             OPT_FORMAT },
+        { L"if",            OPT_FILTER },
+        { L"srgbi",         OPT_SRGBI },
+        { L"srgbo",         OPT_SRGBO },
+        { L"srgb",          OPT_SRGB },
+        { L"px",            OPT_PREFIX },
+        { L"sx",            OPT_SUFFIX },
+        { L"o",             OPT_OUTPUTDIR },
+        { L"l",             OPT_TOLOWER },
+        { L"y",             OPT_OVERWRITE },
+        { L"ft",            OPT_FILETYPE },
+        { L"hflip",         OPT_HFLIP },
+        { L"vflip",         OPT_VFLIP },
+        { L"dword",         OPT_DDS_DWORD_ALIGN },
+        { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
+        { L"dx10",          OPT_USE_DX10 },
+        { L"dx9",           OPT_USE_DX9 },
+        { L"tga20",         OPT_TGA20 },
+        { L"wicq",          OPT_WIC_QUALITY },
+        { L"wiclossless",   OPT_WIC_LOSSLESS },
+        { L"wicmulti",      OPT_WIC_MULTIFRAME },
+        { L"nologo",        OPT_NOLOGO },
+        { L"timing",        OPT_TIMING },
+        { L"sepalpha",      OPT_SEPALPHA },
+        { L"keepcoverage",  OPT_PRESERVE_ALPHA_COVERAGE },
+        { L"nowic",         OPT_NO_WIC },
+        { L"tu",            OPT_TYPELESS_UNORM },
+        { L"tf",            OPT_TYPELESS_FLOAT },
+        { L"pmalpha",       OPT_PREMUL_ALPHA },
+        { L"alpha",         OPT_DEMUL_ALPHA },
+        { L"xlum",          OPT_EXPAND_LUMINANCE },
+        { L"wrap",          OPT_TA_WRAP },
+        { L"mirror",        OPT_TA_MIRROR },
+        { L"singleproc",    OPT_FORCE_SINGLEPROC },
+        { L"gpu",           OPT_GPU },
+        { L"nogpu",         OPT_NOGPU },
+        { L"fl",            OPT_FEATURE_LEVEL },
+        { L"pow2",          OPT_FIT_POWEROF2 },
+        { L"at",            OPT_ALPHA_THRESHOLD },
+        { L"aw",            OPT_ALPHA_WEIGHT },
+        { L"nmap",          OPT_NORMAL_MAP },
+        { L"nmapamp",       OPT_NORMAL_MAP_AMPLITUDE },
+        { L"bc",            OPT_BC_COMPRESS },
+        { L"c",             OPT_COLORKEY },
+        { L"tonemap",       OPT_TONEMAP },
+        { L"x2bias",        OPT_X2_BIAS },
+        { L"inverty",       OPT_INVERT_Y },
+        { L"rotatecolor",   OPT_ROTATE_COLOR },
+        { L"nits",          OPT_PAPER_WHITE_NITS },
+        { L"fixbc4x4",      OPT_BCNONMULT4FIX},
+        { nullptr,          0 }
+    };
 
 #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
 
-const SValue g_pFormats[] =
-{
-    // List does not include _TYPELESS or depth/stencil formats
-    DEFFMT(R32G32B32A32_FLOAT),
-    DEFFMT(R32G32B32A32_UINT),
-    DEFFMT(R32G32B32A32_SINT),
-    DEFFMT(R32G32B32_FLOAT),
-    DEFFMT(R32G32B32_UINT),
-    DEFFMT(R32G32B32_SINT),
-    DEFFMT(R16G16B16A16_FLOAT),
-    DEFFMT(R16G16B16A16_UNORM),
-    DEFFMT(R16G16B16A16_UINT),
-    DEFFMT(R16G16B16A16_SNORM),
-    DEFFMT(R16G16B16A16_SINT),
-    DEFFMT(R32G32_FLOAT),
-    DEFFMT(R32G32_UINT),
-    DEFFMT(R32G32_SINT),
-    DEFFMT(R10G10B10A2_UNORM),
-    DEFFMT(R10G10B10A2_UINT),
-    DEFFMT(R11G11B10_FLOAT),
-    DEFFMT(R8G8B8A8_UNORM),
-    DEFFMT(R8G8B8A8_UNORM_SRGB),
-    DEFFMT(R8G8B8A8_UINT),
-    DEFFMT(R8G8B8A8_SNORM),
-    DEFFMT(R8G8B8A8_SINT),
-    DEFFMT(R16G16_FLOAT),
-    DEFFMT(R16G16_UNORM),
-    DEFFMT(R16G16_UINT),
-    DEFFMT(R16G16_SNORM),
-    DEFFMT(R16G16_SINT),
-    DEFFMT(R32_FLOAT),
-    DEFFMT(R32_UINT),
-    DEFFMT(R32_SINT),
-    DEFFMT(R8G8_UNORM),
-    DEFFMT(R8G8_UINT),
-    DEFFMT(R8G8_SNORM),
-    DEFFMT(R8G8_SINT),
-    DEFFMT(R16_FLOAT),
-    DEFFMT(R16_UNORM),
-    DEFFMT(R16_UINT),
-    DEFFMT(R16_SNORM),
-    DEFFMT(R16_SINT),
-    DEFFMT(R8_UNORM),
-    DEFFMT(R8_UINT),
-    DEFFMT(R8_SNORM),
-    DEFFMT(R8_SINT),
-    DEFFMT(A8_UNORM),
-    DEFFMT(R9G9B9E5_SHAREDEXP),
-    DEFFMT(R8G8_B8G8_UNORM),
-    DEFFMT(G8R8_G8B8_UNORM),
-    DEFFMT(BC1_UNORM),
-    DEFFMT(BC1_UNORM_SRGB),
-    DEFFMT(BC2_UNORM),
-    DEFFMT(BC2_UNORM_SRGB),
-    DEFFMT(BC3_UNORM),
-    DEFFMT(BC3_UNORM_SRGB),
-    DEFFMT(BC4_UNORM),
-    DEFFMT(BC4_SNORM),
-    DEFFMT(BC5_UNORM),
-    DEFFMT(BC5_SNORM),
-    DEFFMT(B5G6R5_UNORM),
-    DEFFMT(B5G5R5A1_UNORM),
+    const SValue g_pFormats[] =
+    {
+        // List does not include _TYPELESS or depth/stencil formats
+        DEFFMT(R32G32B32A32_FLOAT),
+        DEFFMT(R32G32B32A32_UINT),
+        DEFFMT(R32G32B32A32_SINT),
+        DEFFMT(R32G32B32_FLOAT),
+        DEFFMT(R32G32B32_UINT),
+        DEFFMT(R32G32B32_SINT),
+        DEFFMT(R16G16B16A16_FLOAT),
+        DEFFMT(R16G16B16A16_UNORM),
+        DEFFMT(R16G16B16A16_UINT),
+        DEFFMT(R16G16B16A16_SNORM),
+        DEFFMT(R16G16B16A16_SINT),
+        DEFFMT(R32G32_FLOAT),
+        DEFFMT(R32G32_UINT),
+        DEFFMT(R32G32_SINT),
+        DEFFMT(R10G10B10A2_UNORM),
+        DEFFMT(R10G10B10A2_UINT),
+        DEFFMT(R11G11B10_FLOAT),
+        DEFFMT(R8G8B8A8_UNORM),
+        DEFFMT(R8G8B8A8_UNORM_SRGB),
+        DEFFMT(R8G8B8A8_UINT),
+        DEFFMT(R8G8B8A8_SNORM),
+        DEFFMT(R8G8B8A8_SINT),
+        DEFFMT(R16G16_FLOAT),
+        DEFFMT(R16G16_UNORM),
+        DEFFMT(R16G16_UINT),
+        DEFFMT(R16G16_SNORM),
+        DEFFMT(R16G16_SINT),
+        DEFFMT(R32_FLOAT),
+        DEFFMT(R32_UINT),
+        DEFFMT(R32_SINT),
+        DEFFMT(R8G8_UNORM),
+        DEFFMT(R8G8_UINT),
+        DEFFMT(R8G8_SNORM),
+        DEFFMT(R8G8_SINT),
+        DEFFMT(R16_FLOAT),
+        DEFFMT(R16_UNORM),
+        DEFFMT(R16_UINT),
+        DEFFMT(R16_SNORM),
+        DEFFMT(R16_SINT),
+        DEFFMT(R8_UNORM),
+        DEFFMT(R8_UINT),
+        DEFFMT(R8_SNORM),
+        DEFFMT(R8_SINT),
+        DEFFMT(A8_UNORM),
+        DEFFMT(R9G9B9E5_SHAREDEXP),
+        DEFFMT(R8G8_B8G8_UNORM),
+        DEFFMT(G8R8_G8B8_UNORM),
+        DEFFMT(BC1_UNORM),
+        DEFFMT(BC1_UNORM_SRGB),
+        DEFFMT(BC2_UNORM),
+        DEFFMT(BC2_UNORM_SRGB),
+        DEFFMT(BC3_UNORM),
+        DEFFMT(BC3_UNORM_SRGB),
+        DEFFMT(BC4_UNORM),
+        DEFFMT(BC4_SNORM),
+        DEFFMT(BC5_UNORM),
+        DEFFMT(BC5_SNORM),
+        DEFFMT(B5G6R5_UNORM),
+        DEFFMT(B5G5R5A1_UNORM),
 
-    // DXGI 1.1 formats
-    DEFFMT(B8G8R8A8_UNORM),
-    DEFFMT(B8G8R8X8_UNORM),
-    DEFFMT(R10G10B10_XR_BIAS_A2_UNORM),
-    DEFFMT(B8G8R8A8_UNORM_SRGB),
-    DEFFMT(B8G8R8X8_UNORM_SRGB),
-    DEFFMT(BC6H_UF16),
-    DEFFMT(BC6H_SF16),
-    DEFFMT(BC7_UNORM),
-    DEFFMT(BC7_UNORM_SRGB),
+        // DXGI 1.1 formats
+        DEFFMT(B8G8R8A8_UNORM),
+        DEFFMT(B8G8R8X8_UNORM),
+        DEFFMT(R10G10B10_XR_BIAS_A2_UNORM),
+        DEFFMT(B8G8R8A8_UNORM_SRGB),
+        DEFFMT(B8G8R8X8_UNORM_SRGB),
+        DEFFMT(BC6H_UF16),
+        DEFFMT(BC6H_SF16),
+        DEFFMT(BC7_UNORM),
+        DEFFMT(BC7_UNORM_SRGB),
 
-    // DXGI 1.2 formats
-    DEFFMT(AYUV),
-    DEFFMT(Y410),
-    DEFFMT(Y416),
-    DEFFMT(YUY2),
-    DEFFMT(Y210),
-    DEFFMT(Y216),
-    // No support for legacy paletted video formats (AI44, IA44, P8, A8P8)
-    DEFFMT(B4G4R4A4_UNORM),
+        // DXGI 1.2 formats
+        DEFFMT(AYUV),
+        DEFFMT(Y410),
+        DEFFMT(Y416),
+        DEFFMT(YUY2),
+        DEFFMT(Y210),
+        DEFFMT(Y216),
+        // No support for legacy paletted video formats (AI44, IA44, P8, A8P8)
+        DEFFMT(B4G4R4A4_UNORM),
 
-    { nullptr, DXGI_FORMAT_UNKNOWN }
-};
+        { nullptr, DXGI_FORMAT_UNKNOWN }
+    };
 
-const SValue g_pFormatAliases[] =
-{
-    { L"DXT1", DXGI_FORMAT_BC1_UNORM },
-    { L"DXT2", DXGI_FORMAT_BC2_UNORM },
-    { L"DXT3", DXGI_FORMAT_BC2_UNORM },
-    { L"DXT4", DXGI_FORMAT_BC3_UNORM },
-    { L"DXT5", DXGI_FORMAT_BC3_UNORM },
+    const SValue g_pFormatAliases[] =
+    {
+        { L"DXT1", DXGI_FORMAT_BC1_UNORM },
+        { L"DXT2", DXGI_FORMAT_BC2_UNORM },
+        { L"DXT3", DXGI_FORMAT_BC2_UNORM },
+        { L"DXT4", DXGI_FORMAT_BC3_UNORM },
+        { L"DXT5", DXGI_FORMAT_BC3_UNORM },
 
-    { L"RGBA", DXGI_FORMAT_R8G8B8A8_UNORM },
-    { L"BGRA", DXGI_FORMAT_B8G8R8A8_UNORM },
+        { L"RGBA", DXGI_FORMAT_R8G8B8A8_UNORM },
+        { L"BGRA", DXGI_FORMAT_B8G8R8A8_UNORM },
 
-    { L"FP16", DXGI_FORMAT_R16G16B16A16_FLOAT },
-    { L"FP32", DXGI_FORMAT_R32G32B32A32_FLOAT },
+        { L"FP16", DXGI_FORMAT_R16G16B16A16_FLOAT },
+        { L"FP32", DXGI_FORMAT_R32G32B32A32_FLOAT },
 
-    { L"BPTC", DXGI_FORMAT_BC7_UNORM },
-    { L"BPTC_FLOAT", DXGI_FORMAT_BC6H_UF16 },
+        { L"BPTC", DXGI_FORMAT_BC7_UNORM },
+        { L"BPTC_FLOAT", DXGI_FORMAT_BC6H_UF16 },
 
-    { nullptr, DXGI_FORMAT_UNKNOWN }
-};
+        { nullptr, DXGI_FORMAT_UNKNOWN }
+    };
 
-const SValue g_pReadOnlyFormats[] =
-{
-    DEFFMT(R32G32B32A32_TYPELESS),
-    DEFFMT(R32G32B32_TYPELESS),
-    DEFFMT(R16G16B16A16_TYPELESS),
-    DEFFMT(R32G32_TYPELESS),
-    DEFFMT(R32G8X24_TYPELESS),
-    DEFFMT(D32_FLOAT_S8X24_UINT),
-    DEFFMT(R32_FLOAT_X8X24_TYPELESS),
-    DEFFMT(X32_TYPELESS_G8X24_UINT),
-    DEFFMT(R10G10B10A2_TYPELESS),
-    DEFFMT(R8G8B8A8_TYPELESS),
-    DEFFMT(R16G16_TYPELESS),
-    DEFFMT(R32_TYPELESS),
-    DEFFMT(D32_FLOAT),
-    DEFFMT(R24G8_TYPELESS),
-    DEFFMT(D24_UNORM_S8_UINT),
-    DEFFMT(R24_UNORM_X8_TYPELESS),
-    DEFFMT(X24_TYPELESS_G8_UINT),
-    DEFFMT(R8G8_TYPELESS),
-    DEFFMT(R16_TYPELESS),
-    DEFFMT(R8_TYPELESS),
-    DEFFMT(BC1_TYPELESS),
-    DEFFMT(BC2_TYPELESS),
-    DEFFMT(BC3_TYPELESS),
-    DEFFMT(BC4_TYPELESS),
-    DEFFMT(BC5_TYPELESS),
+    const SValue g_pReadOnlyFormats[] =
+    {
+        DEFFMT(R32G32B32A32_TYPELESS),
+        DEFFMT(R32G32B32_TYPELESS),
+        DEFFMT(R16G16B16A16_TYPELESS),
+        DEFFMT(R32G32_TYPELESS),
+        DEFFMT(R32G8X24_TYPELESS),
+        DEFFMT(D32_FLOAT_S8X24_UINT),
+        DEFFMT(R32_FLOAT_X8X24_TYPELESS),
+        DEFFMT(X32_TYPELESS_G8X24_UINT),
+        DEFFMT(R10G10B10A2_TYPELESS),
+        DEFFMT(R8G8B8A8_TYPELESS),
+        DEFFMT(R16G16_TYPELESS),
+        DEFFMT(R32_TYPELESS),
+        DEFFMT(D32_FLOAT),
+        DEFFMT(R24G8_TYPELESS),
+        DEFFMT(D24_UNORM_S8_UINT),
+        DEFFMT(R24_UNORM_X8_TYPELESS),
+        DEFFMT(X24_TYPELESS_G8_UINT),
+        DEFFMT(R8G8_TYPELESS),
+        DEFFMT(R16_TYPELESS),
+        DEFFMT(R8_TYPELESS),
+        DEFFMT(BC1_TYPELESS),
+        DEFFMT(BC2_TYPELESS),
+        DEFFMT(BC3_TYPELESS),
+        DEFFMT(BC4_TYPELESS),
+        DEFFMT(BC5_TYPELESS),
 
-    // DXGI 1.1 formats
-    DEFFMT(B8G8R8A8_TYPELESS),
-    DEFFMT(B8G8R8X8_TYPELESS),
-    DEFFMT(BC6H_TYPELESS),
-    DEFFMT(BC7_TYPELESS),
+        // DXGI 1.1 formats
+        DEFFMT(B8G8R8A8_TYPELESS),
+        DEFFMT(B8G8R8X8_TYPELESS),
+        DEFFMT(BC6H_TYPELESS),
+        DEFFMT(BC7_TYPELESS),
 
-    // DXGI 1.2 formats
-    DEFFMT(NV12),
-    DEFFMT(P010),
-    DEFFMT(P016),
-    DEFFMT(420_OPAQUE),
-    DEFFMT(NV11),
+        // DXGI 1.2 formats
+        DEFFMT(NV12),
+        DEFFMT(P010),
+        DEFFMT(P016),
+        DEFFMT(420_OPAQUE),
+        DEFFMT(NV11),
 
-    // DXGI 1.3 formats
-    { L"P208", DXGI_FORMAT(130) },
-    { L"V208", DXGI_FORMAT(131) },
-    { L"V408", DXGI_FORMAT(132) },
+        // DXGI 1.3 formats
+        { L"P208", DXGI_FORMAT(130) },
+        { L"V208", DXGI_FORMAT(131) },
+        { L"V408", DXGI_FORMAT(132) },
 
-    { nullptr, DXGI_FORMAT_UNKNOWN }
-};
+        { nullptr, DXGI_FORMAT_UNKNOWN }
+    };
 
-const SValue g_pFilters[] =
-{
-    { L"POINT",                     TEX_FILTER_POINT },
-    { L"LINEAR",                    TEX_FILTER_LINEAR },
-    { L"CUBIC",                     TEX_FILTER_CUBIC },
-    { L"FANT",                      TEX_FILTER_FANT },
-    { L"BOX",                       TEX_FILTER_BOX },
-    { L"TRIANGLE",                  TEX_FILTER_TRIANGLE },
-    { L"POINT_DITHER",              TEX_FILTER_POINT | TEX_FILTER_DITHER },
-    { L"LINEAR_DITHER",             TEX_FILTER_LINEAR | TEX_FILTER_DITHER },
-    { L"CUBIC_DITHER",              TEX_FILTER_CUBIC | TEX_FILTER_DITHER },
-    { L"FANT_DITHER",               TEX_FILTER_FANT | TEX_FILTER_DITHER },
-    { L"BOX_DITHER",                TEX_FILTER_BOX | TEX_FILTER_DITHER },
-    { L"TRIANGLE_DITHER",           TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER },
-    { L"POINT_DITHER_DIFFUSION",    TEX_FILTER_POINT | TEX_FILTER_DITHER_DIFFUSION },
-    { L"LINEAR_DITHER_DIFFUSION",   TEX_FILTER_LINEAR | TEX_FILTER_DITHER_DIFFUSION },
-    { L"CUBIC_DITHER_DIFFUSION",    TEX_FILTER_CUBIC | TEX_FILTER_DITHER_DIFFUSION },
-    { L"FANT_DITHER_DIFFUSION",     TEX_FILTER_FANT | TEX_FILTER_DITHER_DIFFUSION },
-    { L"BOX_DITHER_DIFFUSION",      TEX_FILTER_BOX | TEX_FILTER_DITHER_DIFFUSION },
-    { L"TRIANGLE_DITHER_DIFFUSION", TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER_DIFFUSION },
-    { nullptr,                      TEX_FILTER_DEFAULT                              }
-};
+    const SValue g_pFilters[] =
+    {
+        { L"POINT",                     TEX_FILTER_POINT },
+        { L"LINEAR",                    TEX_FILTER_LINEAR },
+        { L"CUBIC",                     TEX_FILTER_CUBIC },
+        { L"FANT",                      TEX_FILTER_FANT },
+        { L"BOX",                       TEX_FILTER_BOX },
+        { L"TRIANGLE",                  TEX_FILTER_TRIANGLE },
+        { L"POINT_DITHER",              TEX_FILTER_POINT | TEX_FILTER_DITHER },
+        { L"LINEAR_DITHER",             TEX_FILTER_LINEAR | TEX_FILTER_DITHER },
+        { L"CUBIC_DITHER",              TEX_FILTER_CUBIC | TEX_FILTER_DITHER },
+        { L"FANT_DITHER",               TEX_FILTER_FANT | TEX_FILTER_DITHER },
+        { L"BOX_DITHER",                TEX_FILTER_BOX | TEX_FILTER_DITHER },
+        { L"TRIANGLE_DITHER",           TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER },
+        { L"POINT_DITHER_DIFFUSION",    TEX_FILTER_POINT | TEX_FILTER_DITHER_DIFFUSION },
+        { L"LINEAR_DITHER_DIFFUSION",   TEX_FILTER_LINEAR | TEX_FILTER_DITHER_DIFFUSION },
+        { L"CUBIC_DITHER_DIFFUSION",    TEX_FILTER_CUBIC | TEX_FILTER_DITHER_DIFFUSION },
+        { L"FANT_DITHER_DIFFUSION",     TEX_FILTER_FANT | TEX_FILTER_DITHER_DIFFUSION },
+        { L"BOX_DITHER_DIFFUSION",      TEX_FILTER_BOX | TEX_FILTER_DITHER_DIFFUSION },
+        { L"TRIANGLE_DITHER_DIFFUSION", TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER_DIFFUSION },
+        { nullptr,                      TEX_FILTER_DEFAULT                              }
+    };
 
-const SValue g_pRotateColor[] =
-{
-    { L"709to2020", ROTATE_709_TO_2020 },
-    { L"2020to709", ROTATE_2020_TO_709 },
-    { L"709toHDR10", ROTATE_709_TO_HDR10 },
-    { L"HDR10to709", ROTATE_HDR10_TO_709 },
-    { L"P3to2020", ROTATE_P3_TO_2020 },
-    { L"P3toHDR10", ROTATE_P3_TO_HDR10 },
-    { nullptr, 0 },
-};
+    const SValue g_pRotateColor[] =
+    {
+        { L"709to2020", ROTATE_709_TO_2020 },
+        { L"2020to709", ROTATE_2020_TO_709 },
+        { L"709toHDR10", ROTATE_709_TO_HDR10 },
+        { L"HDR10to709", ROTATE_HDR10_TO_709 },
+        { L"P3to2020", ROTATE_P3_TO_2020 },
+        { L"P3toHDR10", ROTATE_P3_TO_HDR10 },
+        { nullptr, 0 },
+    };
 
 #define CODEC_DDS 0xFFFF0001
 #define CODEC_TGA 0xFFFF0002
@@ -405,41 +403,64 @@ const SValue g_pRotateColor[] =
 #define CODEC_EXR 0xFFFF0008
 #endif
 
-const SValue g_pSaveFileTypes[] =   // valid formats to write to
-{
-    { L"BMP",   WIC_CODEC_BMP  },
-    { L"JPG",   WIC_CODEC_JPEG },
-    { L"JPEG",  WIC_CODEC_JPEG },
-    { L"PNG",   WIC_CODEC_PNG  },
-    { L"DDS",   CODEC_DDS      },
-    { L"TGA",   CODEC_TGA      },
-    { L"HDR",   CODEC_HDR      },
-    { L"TIF",   WIC_CODEC_TIFF },
-    { L"TIFF",  WIC_CODEC_TIFF },
-    { L"WDP",   WIC_CODEC_WMP  },
-    { L"HDP",   CODEC_HDP      },
-    { L"JXR",   CODEC_JXR      },
-    { L"PPM",   CODEC_PPM      },
-    { L"PFM",   CODEC_PFM      },
-#ifdef USE_OPENEXR
-    { L"EXR",   CODEC_EXR      },
-#endif
-    { nullptr,  CODEC_DDS      }
-};
+    const SValue g_pSaveFileTypes[] =   // valid formats to write to
+    {
+        { L"BMP",   WIC_CODEC_BMP  },
+        { L"JPG",   WIC_CODEC_JPEG },
+        { L"JPEG",  WIC_CODEC_JPEG },
+        { L"PNG",   WIC_CODEC_PNG  },
+        { L"DDS",   CODEC_DDS      },
+        { L"TGA",   CODEC_TGA      },
+        { L"HDR",   CODEC_HDR      },
+        { L"TIF",   WIC_CODEC_TIFF },
+        { L"TIFF",  WIC_CODEC_TIFF },
+        { L"WDP",   WIC_CODEC_WMP  },
+        { L"HDP",   CODEC_HDP      },
+        { L"JXR",   CODEC_JXR      },
+        { L"PPM",   CODEC_PPM      },
+        { L"PFM",   CODEC_PFM      },
+    #ifdef USE_OPENEXR
+        { L"EXR",   CODEC_EXR      },
+    #endif
+        { nullptr,  CODEC_DDS      }
+    };
 
-const SValue g_pFeatureLevels[] =   // valid feature levels for -fl for maximimum size
-{
-    { L"9.1",  2048 },
-    { L"9.2",  2048 },
-    { L"9.3",  4096 },
-    { L"10.0", 8192 },
-    { L"10.1", 8192 },
-    { L"11.0", 16384 },
-    { L"11.1", 16384 },
-    { L"12.0", 16384 },
-    { L"12.1", 16384 },
-    { nullptr, 0 },
-};
+    const SValue g_pFeatureLevels[] =   // valid feature levels for -fl for maximimum size
+    {
+        { L"9.1",  2048 },
+        { L"9.2",  2048 },
+        { L"9.3",  4096 },
+        { L"10.0", 8192 },
+        { L"10.1", 8192 },
+        { L"11.0", 16384 },
+        { L"11.1", 16384 },
+        { L"12.0", 16384 },
+        { L"12.1", 16384 },
+        { nullptr, 0 },
+    };
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+HRESULT __cdecl LoadFromPortablePixMap(
+    _In_z_ const wchar_t* szFile,
+    _Out_opt_ TexMetadata* metadata,
+    _Out_ ScratchImage& image) noexcept;
+
+HRESULT __cdecl SaveToPortablePixMap(
+    _In_ const Image& image,
+    _In_z_ const wchar_t* szFile) noexcept;
+
+HRESULT __cdecl LoadFromPortablePixMapHDR(
+    _In_z_ const wchar_t* szFile,
+    _Out_opt_ TexMetadata* metadata,
+    _Out_ ScratchImage& image) noexcept;
+
+HRESULT __cdecl SaveToPortablePixMapHDR(
+    _In_ const Image& image,
+    _In_z_ const wchar_t* szFile) noexcept;
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -458,30 +479,6 @@ namespace
     struct find_closer { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
 
     using ScopedFindHandle = std::unique_ptr<void, find_closer>;
-
-    class auto_delete_file
-    {
-    public:
-        auto_delete_file(HANDLE hFile) noexcept : m_handle(hFile) {}
-
-        auto_delete_file(const auto_delete_file&) = delete;
-        auto_delete_file& operator=(const auto_delete_file&) = delete;
-
-        ~auto_delete_file()
-        {
-            if (m_handle)
-            {
-                FILE_DISPOSITION_INFO info = {};
-                info.DeleteFile = TRUE;
-                (void)SetFileInformationByHandle(m_handle, FileDispositionInfo, &info, sizeof(info));
-            }
-        }
-
-        void clear() noexcept { m_handle = nullptr; }
-
-    private:
-        HANDLE m_handle;
-    };
 
     inline static bool ispow2(size_t x)
     {
@@ -1013,7 +1010,7 @@ namespace
         return normalizedLinear;
     }
 
-    HRESULT ReadData(_In_z_ const wchar_t* szFile, std::unique_ptr<uint8_t[]>& blob, size_t& bmpSize)
+    HRESULT ReadData(_In_z_ const wchar_t* szFile, std::unique_ptr<uint8_t[]>& blob, size_t& blobSize)
     {
         blob.reset();
 
@@ -1061,24 +1058,9 @@ namespace
             return E_FAIL;
         }
 
-        bmpSize = fileInfo.EndOfFile.LowPart;
+        blobSize = fileInfo.EndOfFile.LowPart;
 
         return S_OK;
-    }
-
-    inline size_t FindEOL(_In_z_ const char* pString, size_t max)
-    {
-        size_t pos = 0;
-
-        //find endl
-        while (pos < max)
-        {
-            if (pString[pos] == '\n')
-                return pos;
-            pos++;
-        }
-
-        return 0;
     }
 
     // BMP variant containing DXT content used by Microsoft flight simluators
@@ -1150,446 +1132,6 @@ namespace
         {
             *metadata = image.GetMetadata();
         }
-
-        return S_OK;
-    }
-
-    // http://paulbourke.net/dataformats/ppm/
-    HRESULT __cdecl LoadFromPortablePixMap(
-        _In_z_ const wchar_t* szFile,
-        _Out_opt_ TexMetadata* metadata,
-        _Out_ ScratchImage& image) noexcept
-    {
-        std::unique_ptr<uint8_t[]> ppmData;
-        size_t ppmSize;
-        HRESULT hr = ReadData(szFile, ppmData, ppmSize);
-        if (FAILED(hr))
-            return hr;
-
-        if (ppmSize < 3)
-            return E_FAIL;
-
-        if (ppmData[0] != 'P' || (ppmData[1] != '3' && ppmData[1] != '6'))
-            return E_FAIL;
-
-        bool ascii = ppmData[1] == '3';
-
-        enum
-        {
-            PPM_WIDTH, PPM_HEIGHT, PPM_MAX, PPM_DATA_R, PPM_DATA_G, PPM_DATA_B
-        };
-
-        int mode = PPM_WIDTH;
-
-        auto pData = ppmData.get() + 2;
-        ppmSize -= 2;
-
-        size_t width = 0;
-        uint32_t max = 255;
-        uint32_t *pixels = nullptr;
-        uint32_t *pixelEnd = nullptr;
-
-        while (ppmSize > 0)
-        {
-            if (!ascii && mode == PPM_DATA_R)
-            {
-                // Binary data
-                if (max > 255 || !pixels || !pixelEnd)
-                    return E_UNEXPECTED;
-
-                if (ppmSize > 1 && '\r' == *pData)
-                {
-                    pData++;
-                    ppmSize--;
-                }
-
-                if (*pData != '\n')
-                    return E_FAIL;
-
-                pData++;
-                ppmSize--;
-
-                while (ppmSize > 0 && (pixels < pixelEnd))
-                {
-                    *pixels++ = (255 * pData[0] / max)
-                        | ((255 * pData[1] / max) << 8)
-                        | ((255 * pData[2] / max) << 16)
-                        | 0xff000000;
-
-                    pData += 3;
-                    ppmSize -= 3;
-                }
-
-                return (pixels != pixelEnd) ? E_FAIL : S_OK;
-            }
-
-            if (isspace(*pData))
-            {
-                // Whitespace
-                pData++;
-                ppmSize--;
-            }
-            else if (*pData == '#')
-            {
-                // Comment
-                while (ppmSize > 0 && *pData != '\n')
-                {
-                    pData++;
-                    ppmSize--;
-                }
-
-                if (ppmSize > 0)
-                {
-                    pData++;
-                    ppmSize--;
-                }
-            }
-            else
-            {
-                // ASCII number
-                uint32_t u = 0;
-
-                while (ppmSize > 0 && !isspace(*pData))
-                {
-                    if (!isdigit(*pData))
-                        return E_FAIL;
-
-                    u = u * 10 + (*pData - '0');
-
-                    pData++;
-                    ppmSize--;
-                }
-
-                switch (mode)
-                {
-                case PPM_WIDTH:
-                    if (u == 0)
-                        return E_FAIL;
-
-                    width = u;
-                    break;
-
-                case PPM_HEIGHT:
-                {
-                    if (u == 0)
-                        return E_FAIL;
-
-                    if (metadata)
-                    {
-                        *metadata = {};
-                        metadata->width = width;
-                        metadata->height = u;
-                        metadata->depth = metadata->arraySize = metadata->mipLevels = 1;
-                        metadata->format = DXGI_FORMAT_R8G8B8A8_UNORM;
-                        metadata->dimension = TEX_DIMENSION_TEXTURE2D;
-                    }
-                    
-                    hr = image.Initialize2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, u, 1, 1);
-                    if (FAILED(hr))
-                        return hr;
-
-                    auto img = image.GetImage(0, 0, 0);
-
-                    pixels = reinterpret_cast<uint32_t*>(img->pixels);
-                    pixelEnd = pixels + width * u;
-                }
-                break;
-
-                case PPM_MAX:
-                    if (u == 0)
-                        return E_FAIL;
-
-                    max = u;
-                    break;
-
-                case PPM_DATA_R:
-                    if (pixels >= pixelEnd)
-                        return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
-
-                    *pixels = ((u * 255) / max) | 0xff000000;
-                    break;
-
-                case PPM_DATA_G:
-                    if (pixels >= pixelEnd)
-                        return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
-
-                    *pixels |= ((u * 255) / max) << 8;
-                    break;
-
-                case PPM_DATA_B:
-                    if (pixels >= pixelEnd)
-                        return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
-
-                    *pixels |= ((u * 255) / max) << 16;
-
-                    if (++pixels == pixelEnd)
-                        return S_OK;
-
-                    mode = PPM_DATA_R - 1;
-                    break;
-                }
-
-                mode++;
-            }
-        }
-
-        return E_FAIL;
-    }
-
-    HRESULT __cdecl SaveToPortablePixMap(
-        _In_ const Image& image,
-        _In_z_ const wchar_t* szFile) noexcept
-    {
-        switch (image.format)
-        {
-        case DXGI_FORMAT_R8G8B8A8_UNORM:
-        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-        case DXGI_FORMAT_B8G8R8A8_UNORM:
-        case DXGI_FORMAT_B8G8R8X8_UNORM:
-        case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-            break;
-
-        default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
-        }
-
-        char header[256] = {};
-        int len = sprintf_s(header, "P6\n%zu %zu\n255\n", image.width, image.height);
-        if (len == -1)
-            return E_UNEXPECTED;
-
-        ScratchImage tmpImage;
-        if (image.format == DXGI_FORMAT_R8G8B8A8_UNORM || image.format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
-        {
-            tmpImage.InitializeFromImage(image);
-        }
-        else
-        {
-            HRESULT hr = Convert(image,
-                IsSRGB(image.format) ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM,
-                TEX_FILTER_DEFAULT, 0.f, tmpImage);
-            if (FAILED(hr))
-                return hr;
-        }
-
-        ScratchImage data;
-        data.Initialize2D(DXGI_FORMAT_R8G8B8A8_UNORM, image.width, image.height, 1, 1, CP_FLAGS_24BPP);
-
-        const auto& img = tmpImage.GetImage(0, 0, 0);
-        auto dptr = data.GetPixels();
-        for (size_t y = 0; y < image.height; ++y)
-        {
-            auto sptr = img->pixels + y * image.rowPitch;
-
-            for (size_t x = 0; x < image.width; ++x)
-            {
-                *(dptr++) = sptr[0];
-                *(dptr++) = sptr[1];
-                *(dptr++) = sptr[2];
-                sptr += 4;
-            }
-        }
-
-        ScopedHandle hFile(safe_handle(CreateFileW(szFile, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, 0, nullptr)));
-        if (!hFile)
-            return HRESULT_FROM_WIN32(GetLastError());
-
-        auto_delete_file delonfail(hFile.get());
-
-        DWORD bytesWritten;
-        if (!WriteFile(hFile.get(), header, static_cast<DWORD>(len), &bytesWritten, nullptr))
-            return HRESULT_FROM_WIN32(GetLastError());
-
-
-        if (!WriteFile(hFile.get(), data.GetPixels(), static_cast<DWORD>(data.GetPixelsSize()), &bytesWritten, nullptr))
-            return HRESULT_FROM_WIN32(GetLastError());
-
-        delonfail.clear();
-
-        return S_OK;
-    }
-
-    // http://paulbourke.net/dataformats/pbmhdr/
-    HRESULT __cdecl LoadFromPortablePixMapHDR(
-        _In_z_ const wchar_t* szFile,
-        _Out_opt_ TexMetadata* metadata,
-        _Out_ ScratchImage& image) noexcept
-    {
-        std::unique_ptr<uint8_t[]> pfmData;
-        size_t pfmSize;
-        HRESULT hr = ReadData(szFile, pfmData, pfmSize);
-        if (FAILED(hr))
-            return hr;
-
-        if (pfmSize < 3)
-            return E_FAIL;
-
-        if (pfmData[0] != 'P' || (pfmData[1] != 'f' && pfmData[1] != 'F') || pfmData[2] != '\n')
-            return E_FAIL;
-
-        bool monochrome = pfmData[1] == 'f';
-
-        auto pData = reinterpret_cast<const char*>(pfmData.get()) + 3;
-        pfmSize -= 3;
-
-        size_t len = FindEOL(pData, 256);
-        if (!len)
-            return E_FAIL;
-
-        char dataStr[256] = {};
-        char junkStr[256] = {};
-        strncpy_s(dataStr, pData, len + 1);
-
-        size_t width = 0, height = 0;
-        if (sscanf_s(dataStr, "%zu %zu%s", &width, &height, junkStr, 256) != 2)
-            return E_FAIL;
-
-        pData += len + 1;
-        pfmSize -= len + 1;
-        if (!pfmSize)
-            return E_FAIL;
-
-        len = FindEOL(pData, 256);
-        if (!len)
-            return E_FAIL;
-
-        strncpy_s(dataStr, pData, len + 1);
-
-        float aspectRatio = 0.f;
-        if (sscanf_s(dataStr, "%f%s", &aspectRatio, junkStr, 256) != 1)
-            return E_FAIL;
-
-        bool bigendian = (aspectRatio >= 0);
-
-        pData += len + 1;
-        pfmSize -= len + 1;
-        if (!pfmSize)
-            return E_FAIL;
-
-        size_t scanline = width * sizeof(float) * (monochrome ? 1 : 3);
-        if (pfmSize < scanline * height)
-            return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
-
-        if (metadata)
-        {
-            *metadata = {};
-            metadata->width = width;
-            metadata->height = height;
-            metadata->depth = metadata->arraySize = metadata->mipLevels = 1;
-            metadata->format = monochrome ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R32G32B32A32_FLOAT;
-            metadata->dimension = TEX_DIMENSION_TEXTURE2D;
-        }
-
-        hr = image.Initialize2D(monochrome ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R32G32B32A32_FLOAT,
-            width, height, 1, 1);
-        if (FAILED(hr))
-            return hr;
-
-        auto img = image.GetImage(0, 0, 0);
-
-        auto sptr = reinterpret_cast<const uint32_t*>(pData);
-
-        if (monochrome)
-        {
-            for (size_t y = 0; y < height; ++y)
-            {
-                auto dptr = reinterpret_cast<uint32_t*>(img->pixels + (height - y - 1) * img->rowPitch);
-
-                for (size_t x = 0; x < width; ++x)
-                {
-                    *dptr++ = (bigendian) ? _byteswap_ulong(*sptr++) : *sptr++;
-                }
-            }
-        }
-        else
-        {
-            for (size_t y = 0; y < height; ++y)
-            {
-                auto dptr = reinterpret_cast<uint32_t*>(img->pixels + (height - y - 1) * img->rowPitch);
-
-                for (size_t x = 0; x < width; ++x)
-                {
-                    if (bigendian)
-                    {
-                        dptr[0] = _byteswap_ulong(sptr[0]);
-                        dptr[1] = _byteswap_ulong(sptr[1]);
-                        dptr[2] = _byteswap_ulong(sptr[2]);
-                    }
-                    else
-                    {
-                        dptr[0] = sptr[0];
-                        dptr[1] = sptr[1];
-                        dptr[2] = sptr[2];
-                    }
-
-                    dptr[3] = 0x3f800000; // 1.f
-                    sptr += 3;
-                    dptr += 4;
-                }
-            }
-        }
-
-        return S_OK;
-    }
-
-    HRESULT __cdecl SaveToPortablePixMapHDR(
-        _In_ const Image& image,
-        _In_z_ const wchar_t* szFile) noexcept
-    {
-        switch (image.format)
-        {
-        case DXGI_FORMAT_R32G32B32A32_FLOAT:
-        case DXGI_FORMAT_R32G32B32_FLOAT:
-        case DXGI_FORMAT_R16G16B16A16_FLOAT:
-        case DXGI_FORMAT_R32_FLOAT:
-            break;
-
-        default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
-        }
-
-        char header[256] = {};
-        int len = sprintf_s(header, "P%c\n%zu %zu\n-1.000000\n",
-            (image.format == DXGI_FORMAT_R32_FLOAT) ? 'f' : 'F',
-            image.width, image.height);
-
-        if (len == -1)
-            return E_UNEXPECTED;
-
-        ScratchImage tmpImage;
-        if (image.format == DXGI_FORMAT_R32_FLOAT || image.format == DXGI_FORMAT_R32G32B32_FLOAT)
-        {
-            tmpImage.InitializeFromImage(image);
-        }
-        else
-        {
-            HRESULT hr = Convert(image, DXGI_FORMAT_R32G32B32_FLOAT, TEX_FILTER_DEFAULT, 0.f, tmpImage);
-            if (FAILED(hr))
-                return hr;
-        }
-
-        ScratchImage flipImage;
-        HRESULT hr = FlipRotate(*tmpImage.GetImage(0, 0, 0), TEX_FR_ROTATE180, flipImage);
-        if (FAILED(hr))
-            return hr;
-
-        tmpImage.Release();
-
-        ScopedHandle hFile(safe_handle(CreateFileW(szFile, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, 0, nullptr)));
-        if (!hFile)
-            return HRESULT_FROM_WIN32(GetLastError());
-
-        auto_delete_file delonfail(hFile.get());
-
-        DWORD bytesWritten;
-        if (!WriteFile(hFile.get(), header, static_cast<DWORD>(len), &bytesWritten, nullptr))
-            return HRESULT_FROM_WIN32(GetLastError());
-
-        if (!WriteFile(hFile.get(), flipImage.GetPixels(), static_cast<DWORD>(flipImage.GetPixelsSize()), &bytesWritten, nullptr))
-            return HRESULT_FROM_WIN32(GetLastError());
-        
-        delonfail.clear();
 
         return S_OK;
     }

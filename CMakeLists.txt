@@ -101,7 +101,7 @@ add_executable(texassemble Texassemble/texassemble.cpp)
 target_link_libraries(texassemble ${PROJECT_NAME})
 source_group(texassemble REGULAR_EXPRESSION Texassemble/*.*)
 
-add_executable(texconv Texconv/texconv.cpp)
+add_executable(texconv Texconv/texconv.cpp Texconv/PortablePixMap.cpp)
 target_link_libraries(texconv ${PROJECT_NAME})
 source_group(texconv REGULAR_EXPRESSION Texconv/*.*)
 
