@@ -1384,9 +1384,9 @@ namespace
 
             for (size_t x = 0; x < image.width; ++x)
             {
-                *(dptr++) = *sptr;
-                *(dptr++) = *(sptr+1);
-                *(dptr++) = *(sptr+2);
+                *(dptr++) = sptr[0];
+                *(dptr++) = sptr[1];
+                *(dptr++) = sptr[2];
                 sptr += 4;
             }
         }
@@ -1498,14 +1498,7 @@ namespace
 
                 for (size_t x = 0; x < width; ++x)
                 {
-                    if (bigendian)
-                    {
-                        *dptr++ = _byteswap_ulong(*sptr++);
-                    }
-                    else
-                    {
-                        *dptr++ = *sptr++;
-                    }
+                    *dptr++ = (bigendian) ? _byteswap_ulong(*sptr++) : *sptr++;
                 }
             }
         }
@@ -1519,22 +1512,20 @@ namespace
                 {
                     if (bigendian)
                     {
-                        dptr[0] = _byteswap_ulong(*sptr);
-                        dptr[1] = _byteswap_ulong(*(sptr+1));
-                        dptr[2] = _byteswap_ulong(*(sptr+2));
-                        dptr[3] = 0x3f800000; // 1.f
-                        sptr += 3;
-                        dptr += 4;
+                        dptr[0] = _byteswap_ulong(sptr[0]);
+                        dptr[1] = _byteswap_ulong(sptr[1]);
+                        dptr[2] = _byteswap_ulong(sptr[2]);
                     }
                     else
                     {
                         dptr[0] = sptr[0];
                         dptr[1] = sptr[1];
                         dptr[2] = sptr[2];
-                        dptr[3] = 0x3f800000; // 1.f
-                        sptr += 3;
-                        dptr += 4;
                     }
+
+                    dptr[3] = 0x3f800000; // 1.f
+                    sptr += 3;
+                    dptr += 4;
                 }
             }
         }
