@@ -565,7 +565,7 @@ HRESULT __cdecl SaveToPortablePixMapHDR(
     }
 
     ScratchImage flipImage;
-    HRESULT hr = FlipRotate(*tmpImage.GetImage(0, 0, 0), TEX_FR_ROTATE180, flipImage);
+    HRESULT hr = FlipRotate(*tmpImage.GetImage(0, 0, 0), TEX_FR_FLIP_VERTICAL, flipImage);
     if (FAILED(hr))
         return hr;
 
