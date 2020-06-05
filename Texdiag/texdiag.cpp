@@ -1624,7 +1624,7 @@ namespace
 
                     wprintf(L"\tAlpha - E0: %0.3f  E1: %0.3f (%u)\n\t     Index: ",
                         (float(block->alpha[0]) / 255.f),
-                        (float(block->alpha[1]) / 255.f), (block->alpha[0] > block->alpha[1]) ? 8 : 6);
+                        (float(block->alpha[1]) / 255.f), (block->alpha[0] > block->alpha[1]) ? 8u : 6u);
 
                     PrintIndex3bpp(block->bitmap);
 
@@ -1638,7 +1638,7 @@ namespace
 
                     wprintf(L"\t   E0: %0.3f  E1: %0.3f (%u)\n\tIndex: ",
                         (float(block->red_0) / 255.f),
-                        (float(block->red_1) / 255.f), (block->red_0 > block->red_1) ? 8 : 6);
+                        (float(block->red_1) / 255.f), (block->red_0 > block->red_1) ? 8u : 6u);
 
                     PrintIndex3bpp(block->indices);
 
@@ -1652,7 +1652,7 @@ namespace
 
                     wprintf(L"\t   E0: %0.3f  E1: %0.3f (%u)\n\tIndex: ",
                         (float(block->red_0) / 127.f),
-                        (float(block->red_1) / 127.f), (block->red_0 > block->red_1) ? 8 : 6);
+                        (float(block->red_1) / 127.f), (block->red_0 > block->red_1) ? 8u : 6u);
 
                     PrintIndex3bpp(block->indices);
 
@@ -1666,7 +1666,7 @@ namespace
 
                     wprintf(L"\tU -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
                         (float(block->u.red_0) / 255.f),
-                        (float(block->u.red_1) / 255.f), (block->u.red_0 > block->u.red_1) ? 8 : 6);
+                        (float(block->u.red_1) / 255.f), (block->u.red_0 > block->u.red_1) ? 8u : 6u);
 
                     PrintIndex3bpp(block->u.indices);
 
@@ -1674,7 +1674,7 @@ namespace
 
                     wprintf(L"\tV -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
                         (float(block->v.red_0) / 255.f),
-                        (float(block->v.red_1) / 255.f), (block->v.red_0 > block->v.red_1) ? 8 : 6);
+                        (float(block->v.red_1) / 255.f), (block->v.red_0 > block->v.red_1) ? 8u : 6u);
 
                     PrintIndex3bpp(block->v.indices);
 
@@ -1688,7 +1688,7 @@ namespace
 
                     wprintf(L"\tU -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
                         (float(block->u.red_0) / 127.f),
-                        (float(block->u.red_1) / 127.f), (block->u.red_0 > block->u.red_1) ? 8 : 6);
+                        (float(block->u.red_1) / 127.f), (block->u.red_0 > block->u.red_1) ? 8u : 6u);
 
                     PrintIndex3bpp(block->u.indices);
 
@@ -1696,7 +1696,7 @@ namespace
 
                     wprintf(L"\tV -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
                         (float(block->v.red_0) / 127.f),
-                        (float(block->v.red_1) / 127.f), (block->v.red_0 > block->v.red_1) ? 8 : 6);
+                        (float(block->v.red_1) / 127.f), (block->v.red_0 > block->v.red_1) ? 8u : 6u);
 
                     PrintIndex3bpp(block->v.indices);
 

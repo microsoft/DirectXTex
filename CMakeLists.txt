@@ -18,6 +18,8 @@ option(BUILD_DX12 "Build with DirectX12 Runtime support" ON)
 # Enable the use of OpenMP for software BC6H/BC7 compression
 option(BC_USE_OPENMP "Build with OpenMP support" ON)
 
+option(ENABLE_CODE_ANALYSIS "Use Static Code Analysis on build" OFF)
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -59,10 +61,10 @@ set(SHADER_SOURCES
     DirectXTex/Shaders/BC6HEncode.hlsl
     DirectXTex/Shaders/BC7Encode.hlsl)
 
-if(BUILD_DX11 MATCHES ON)
+if(BUILD_DX11)
    set(LIBRARY_SOURCES ${LIBRARY_SOURCES} DirectXTex/DirectXTexD3D11.cpp)
 endif()
-if(BUILD_DX12 MATCHES ON)
+if(BUILD_DX12)
    set(LIBRARY_SOURCES ${LIBRARY_SOURCES} DirectXTex/DirectXTexD3D12.cpp)
 endif()
 
@@ -143,6 +145,14 @@ if ( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
     target_compile_options(texconv PRIVATE /permissive- /Zc:__cplusplus)
     target_compile_options(texdiag PRIVATE /permissive- /Zc:__cplusplus)
 
+    if(ENABLE_CODE_ANALYSIS)
+      target_compile_options(${PROJECT_NAME} PRIVATE /analyze)
+      target_compile_options(texassemble PRIVATE /analyze)
+      target_compile_options(texconv PRIVATE /analyze)
+      target_compile_options(texdiag PRIVATE /analyze)
+   endif()
+
+
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.26)
         target_compile_options(${PROJECT_NAME} PRIVATE /Zc:preprocessor /wd5105)
         target_compile_options(texassemble PRIVATE /Zc:preprocessor /wd5105)
@@ -150,7 +160,7 @@ if ( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
         target_compile_options(texdiag PRIVATE /Zc:preprocessor /wd5105)
     endif()
 
-    if(BC_USE_OPENMP MATCHES ON)
+    if(BC_USE_OPENMP)
         target_compile_options(${PROJECT_NAME} PRIVATE /openmp /Zc:twoPhase-)
         target_compile_options(texconv PRIVATE /openmp /Zc:twoPhase-)
     endif()
@@ -167,7 +177,7 @@ if(WIN32)
     target_compile_definitions(texconv PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0601)
     target_compile_definitions(texdiag PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0601)
 
-    if(BUILD_DX12 MATCHES ON)
+    if(BUILD_DX12)
         target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0A00)
     else()
         target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0601)
