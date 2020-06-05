@@ -328,6 +328,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ExtendedBMP.cpp" />
+    <ClCompile Include="PortablePixMap.cpp" />
     <ClCompile Include="Texconv.cpp" />
   </ItemGroup>
   <ItemGroup>
