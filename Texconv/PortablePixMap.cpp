@@ -3,9 +3,6 @@
 //
 // Utilities for reading & writing Portable PixMap files (PPM/PFM)
 //
-// http://paulbourke.net/dataformats/ppm/
-// http://paulbourke.net/dataformats/pbmhdr/
-//
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 //
@@ -138,7 +135,8 @@ namespace
 
 
 //============================================================================
-// PPM
+// PPM (Portable PixMap)
+// http://paulbourke.net/dataformats/ppm/
 //============================================================================
 
 HRESULT __cdecl LoadFromPortablePixMap(
@@ -402,7 +400,9 @@ HRESULT __cdecl SaveToPortablePixMap(
 
 
 //============================================================================
-// PFM
+// PFM (Portable Float Map)
+// http://paulbourke.net/dataformats/pbmhdr/
+// https://oyranos.org/2015/03/portable-float-map-with-16-bit-half/index.html
 //============================================================================
 
 HRESULT __cdecl LoadFromPortablePixMapHDR(
@@ -419,17 +419,43 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
     if (pfmSize < 3)
         return E_FAIL;
 
-    if (pfmData[0] != 'P' || (pfmData[1] != 'f' && pfmData[1] != 'F') || pfmData[2] != '\n')
+    if (pfmData[0] != 'P' || pfmData[2] != '\n')
         return E_FAIL;
 
-    bool monochrome = pfmData[1] == 'f';
+    DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
+    bool monochrome = false;
+    bool half16 = false;
+    switch (pfmData[1])
+    {
+    case 'f': format = DXGI_FORMAT_R32_FLOAT; monochrome = true; break;
+    case 'F': format = DXGI_FORMAT_R32G32B32A32_FLOAT; break;
+    case 'h': format = DXGI_FORMAT_R16_FLOAT; monochrome = true; half16 = true; break;
+    case 'H': format = DXGI_FORMAT_R16G16B16A16_FLOAT; half16 = true; break;
+    default:
+        return E_FAIL;
+    }
 
     auto pData = reinterpret_cast<const char*>(pfmData.get()) + 3;
     pfmSize -= 3;
-
-    size_t len = FindEOL(pData, 256);
-    if (!len)
+    if (!pfmSize)
         return E_FAIL;
+
+    // Ignore any comment lines (some tools add them)
+    size_t len = 0;
+    while (pfmSize > 0)
+    {
+        len = FindEOL(pData, 256);
+        if (!len)
+            return E_FAIL;
+
+        if (*pData != '#')
+            break;
+
+        pData += len + 1;
+        pfmSize -= len + 1;
+        if (!pfmSize)
+            return E_FAIL;
+    }
 
     char dataStr[256] = {};
     char junkStr[256] = {};
@@ -444,9 +470,22 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
     if (!pfmSize)
         return E_FAIL;
 
-    len = FindEOL(pData, 256);
-    if (!len)
-        return E_FAIL;
+    // Ignore any comment lines (some tools add them)
+    len = 0;
+    while (pfmSize > 0)
+    {
+        len = FindEOL(pData, 256);
+        if (!len)
+            return E_FAIL;
+
+        if (*pData != '#')
+            break;
+
+        pData += len + 1;
+        pfmSize -= len + 1;
+        if (!pfmSize)
+            return E_FAIL;
+    }
 
     strncpy_s(dataStr, pData, len + 1);
 
@@ -461,7 +500,7 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
     if (!pfmSize)
         return E_FAIL;
 
-    size_t scanline = width * sizeof(float) * (monochrome ? 1 : 3);
+    size_t scanline = width * (half16 ? sizeof(uint16_t) : sizeof(float)) * (monochrome ? 1 : 3);
     if (pfmSize < scanline * height)
         return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
 
@@ -471,55 +510,101 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
         metadata->width = width;
         metadata->height = height;
         metadata->depth = metadata->arraySize = metadata->mipLevels = 1;
-        metadata->format = monochrome ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R32G32B32A32_FLOAT;
+        metadata->format = format;
         metadata->dimension = TEX_DIMENSION_TEXTURE2D;
     }
 
-    hr = image.Initialize2D(monochrome ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R32G32B32A32_FLOAT,
-        width, height, 1, 1);
+    hr = image.Initialize2D(format, width, height, 1, 1);
     if (FAILED(hr))
         return hr;
 
     auto img = image.GetImage(0, 0, 0);
 
-    auto sptr = reinterpret_cast<const uint32_t*>(pData);
 
-    if (monochrome)
+    if (half16)
     {
-        for (size_t y = 0; y < height; ++y)
+        auto sptr = reinterpret_cast<const uint16_t*>(pData);
+        if (monochrome)
         {
-            auto dptr = reinterpret_cast<uint32_t*>(img->pixels + (height - y - 1) * img->rowPitch);
-
-            for (size_t x = 0; x < width; ++x)
+            for (size_t y = 0; y < height; ++y)
             {
-                *dptr++ = (bigendian) ? _byteswap_ulong(*sptr++) : *sptr++;
+                auto dptr = reinterpret_cast<uint16_t*>(img->pixels + (height - y - 1) * img->rowPitch);
+
+                for (size_t x = 0; x < width; ++x)
+                {
+                    *dptr++ = (bigendian) ? _byteswap_ushort(*sptr++) : *sptr++;
+                }
+            }
+        }
+        else
+        {
+            for (size_t y = 0; y < height; ++y)
+            {
+                auto dptr = reinterpret_cast<uint16_t*>(img->pixels + (height - y - 1) * img->rowPitch);
+
+                for (size_t x = 0; x < width; ++x)
+                {
+                    if (bigendian)
+                    {
+                        dptr[0] = _byteswap_ushort(sptr[0]);
+                        dptr[1] = _byteswap_ushort(sptr[1]);
+                        dptr[2] = _byteswap_ushort(sptr[2]);
+                    }
+                    else
+                    {
+                        dptr[0] = sptr[0];
+                        dptr[1] = sptr[1];
+                        dptr[2] = sptr[2];
+                    }
+
+                    dptr[3] = 0x3c00; // 1.f
+                    sptr += 3;
+                    dptr += 4;
+                }
             }
         }
     }
     else
     {
-        for (size_t y = 0; y < height; ++y)
+        auto sptr = reinterpret_cast<const uint32_t*>(pData);
+
+        if (monochrome)
         {
-            auto dptr = reinterpret_cast<uint32_t*>(img->pixels + (height - y - 1) * img->rowPitch);
-
-            for (size_t x = 0; x < width; ++x)
+            for (size_t y = 0; y < height; ++y)
             {
-                if (bigendian)
-                {
-                    dptr[0] = _byteswap_ulong(sptr[0]);
-                    dptr[1] = _byteswap_ulong(sptr[1]);
-                    dptr[2] = _byteswap_ulong(sptr[2]);
-                }
-                else
-                {
-                    dptr[0] = sptr[0];
-                    dptr[1] = sptr[1];
-                    dptr[2] = sptr[2];
-                }
+                auto dptr = reinterpret_cast<uint32_t*>(img->pixels + (height - y - 1) * img->rowPitch);
 
-                dptr[3] = 0x3f800000; // 1.f
-                sptr += 3;
-                dptr += 4;
+                for (size_t x = 0; x < width; ++x)
+                {
+                    *dptr++ = (bigendian) ? _byteswap_ulong(*sptr++) : *sptr++;
+                }
+            }
+        }
+        else
+        {
+            for (size_t y = 0; y < height; ++y)
+            {
+                auto dptr = reinterpret_cast<uint32_t*>(img->pixels + (height - y - 1) * img->rowPitch);
+
+                for (size_t x = 0; x < width; ++x)
+                {
+                    if (bigendian)
+                    {
+                        dptr[0] = _byteswap_ulong(sptr[0]);
+                        dptr[1] = _byteswap_ulong(sptr[1]);
+                        dptr[2] = _byteswap_ulong(sptr[2]);
+                    }
+                    else
+                    {
+                        dptr[0] = sptr[0];
+                        dptr[1] = sptr[1];
+                        dptr[2] = sptr[2];
+                    }
+
+                    dptr[3] = 0x3f800000; // 1.f
+                    sptr += 3;
+                    dptr += 4;
+                }
             }
         }
     }
@@ -528,6 +613,7 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
 }
 
 
+// We always save as PF or Pf as that's the most common PFM implementation.
 HRESULT __cdecl SaveToPortablePixMapHDR(
     _In_ const Image& image,
     _In_z_ const wchar_t* szFile) noexcept
