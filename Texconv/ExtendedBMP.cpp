@@ -183,11 +183,9 @@ HRESULT __cdecl LoadFromBMPEx(
 
     hr = LoadFromWICMemory(bmpData.get(), bmpSize, flags, metadata, image);
     if (FAILED(hr))
-        return hr;
+    {
+        hr = LoadFromExtendedBMPMemory(bmpData.get(), bmpSize, metadata, image);
+    }
 
-    hr = LoadFromExtendedBMPMemory(bmpData.get(), bmpSize, metadata, image);
-    if (FAILED(hr))
-        return hr;
-
-    return S_OK;
+    return hr;
 }
