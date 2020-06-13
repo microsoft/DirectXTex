@@ -1018,7 +1018,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
 
     uint8_t* dptr = pixels.get();
 
-    size_t msize = std::min<size_t>(rowPitch, rowPitch);
+    size_t msize = std::min<size_t>(rowPitch, dstRowPitch);
     for (size_t h = 0; h < rowCount; ++h)
     {
         memcpy_s(dptr, rowPitch, sptr, msize);
