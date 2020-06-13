@@ -429,22 +429,6 @@ namespace
         case DXGI_FORMAT_R8_SNORM:
         case DXGI_FORMAT_R8_SINT:
         case DXGI_FORMAT_A8_UNORM:
-        case DXGI_FORMAT_AI44:
-        case DXGI_FORMAT_IA44:
-        case DXGI_FORMAT_P8:
-            return 8;
-
-        case DXGI_FORMAT_R1_UNORM:
-            return 1;
-
-        case DXGI_FORMAT_BC1_TYPELESS:
-        case DXGI_FORMAT_BC1_UNORM:
-        case DXGI_FORMAT_BC1_UNORM_SRGB:
-        case DXGI_FORMAT_BC4_TYPELESS:
-        case DXGI_FORMAT_BC4_UNORM:
-        case DXGI_FORMAT_BC4_SNORM:
-            return 4;
-
         case DXGI_FORMAT_BC2_TYPELESS:
         case DXGI_FORMAT_BC2_UNORM:
         case DXGI_FORMAT_BC2_UNORM_SRGB:
@@ -460,7 +444,21 @@ namespace
         case DXGI_FORMAT_BC7_TYPELESS:
         case DXGI_FORMAT_BC7_UNORM:
         case DXGI_FORMAT_BC7_UNORM_SRGB:
+        case DXGI_FORMAT_AI44:
+        case DXGI_FORMAT_IA44:
+        case DXGI_FORMAT_P8:
             return 8;
+
+        case DXGI_FORMAT_R1_UNORM:
+            return 1;
+
+        case DXGI_FORMAT_BC1_TYPELESS:
+        case DXGI_FORMAT_BC1_UNORM:
+        case DXGI_FORMAT_BC1_UNORM_SRGB:
+        case DXGI_FORMAT_BC4_TYPELESS:
+        case DXGI_FORMAT_BC4_UNORM:
+        case DXGI_FORMAT_BC4_SNORM:
+            return 4;
 
         default:
             return 0;

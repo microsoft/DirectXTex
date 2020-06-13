@@ -318,6 +318,9 @@ namespace
         case D3DFMT_INDEX32:
         case D3DFMT_G16R16F:
         case D3DFMT_R32F:
+#if !defined(D3D_DISABLE_9EX)
+        case D3DFMT_D32_LOCKABLE:
+#endif
             return 32;
 
         case D3DFMT_R8G8B8:
@@ -342,6 +345,9 @@ namespace
         case D3DFMT_INDEX16:
         case D3DFMT_R16F:
         case D3DFMT_YUY2:
+            // From DX docs, reference/d3d/enums/d3dformat.asp
+            // (note how it says that D3DFMT_R8G8_B8G8 is "A 16-bit packed RGB format analogous to UYVY (U0Y0, V0Y1, U2Y2, and so on)")
+        case D3DFMT_UYVY:
             return 16;
 
         case D3DFMT_R3G3B2:
@@ -350,40 +356,28 @@ namespace
         case D3DFMT_P8:
         case D3DFMT_L8:
         case D3DFMT_A4L4:
+        case D3DFMT_DXT2:
+        case D3DFMT_DXT3:
+        case D3DFMT_DXT4:
+        case D3DFMT_DXT5:
+            // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directshow/htm/directxvideoaccelerationdxvavideosubtypes.asp
+        case MAKEFOURCC('A', 'I', '4', '4'):
+        case MAKEFOURCC('I', 'A', '4', '4'):
+#if !defined(D3D_DISABLE_9EX)
+        case D3DFMT_S8_LOCKABLE:
+#endif
             return 8;
 
         case D3DFMT_DXT1:
             return 4;
 
-        case D3DFMT_DXT2:
-        case D3DFMT_DXT3:
-        case D3DFMT_DXT4:
-        case D3DFMT_DXT5:
-            return  8;
-
-            // From DX docs, reference/d3d/enums/d3dformat.asp
-            // (note how it says that D3DFMT_R8G8_B8G8 is "A 16-bit packed RGB format analogous to UYVY (U0Y0, V0Y1, U2Y2, and so on)")
-        case D3DFMT_UYVY:
-            return 16;
-
-            // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directshow/htm/directxvideoaccelerationdxvavideosubtypes.asp
-        case MAKEFOURCC('A', 'I', '4', '4'):
-        case MAKEFOURCC('I', 'A', '4', '4'):
-            return 8;
-
         case MAKEFOURCC('Y', 'V', '1', '2'):
             return 12;
 
 #if !defined(D3D_DISABLE_9EX)
-        case D3DFMT_D32_LOCKABLE:
-            return 32;
-
-        case D3DFMT_S8_LOCKABLE:
-            return 8;
-
         case D3DFMT_A1:
             return 1;
-#endif // !D3D_DISABLE_9EX
+#endif
 
         default:
             return 0;
