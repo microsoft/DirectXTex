@@ -6,6 +6,10 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### June 15, 2020
+* Code cleanup for some new VC++ 16.7 warnings and static code analysis
+* texconv: Updated with support for Portable Pix Map (ppm) & Portable Float Map (pfm) file formats
+
 ### June 1, 2020
 * Converted to typed enum bitmask flags (see release notes for details on this potential *breaking change*)
   + **ComputePitch**, **xxxDDSxxx**, **xxxWICxxx**, **FlipRotate**, **Resize**, **Convert**, **GenerateMipMaps**, **GenerateMipMaps3D**, **PremultiplyAlpha**, **Compress**, **ComputeNormalMap**, **CopyRectangle**, **ComputeMSE**
