@@ -71,12 +71,12 @@ endif()
 add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc)
 
 add_custom_command(
-    OUTPUT "${CMAKE_SOURCE_DIR}/DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc"
-    MAIN_DEPENDENCY "${CMAKE_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
+    OUTPUT "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc"
+    MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
     DEPENDS ${SHADER_SOURCES}
     COMMENT "Generating HLSL shaders..."
     COMMAND "CompileShaders.cmd"
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/DirectXTex/Shaders"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
     USES_TERMINAL)
 
 source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
