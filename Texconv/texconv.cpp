@@ -112,6 +112,7 @@ namespace
         OPT_ROTATE_COLOR,
         OPT_PAPER_WHITE_NITS,
         OPT_BCNONMULT4FIX,
+        OPT_INPLACE,
         OPT_MAX
     };
 
@@ -142,6 +143,7 @@ namespace
     const SValue g_pOptions[] =
     {
         { L"r",             OPT_RECURSIVE },
+        { L"ip",            OPT_INPLACE },
         { L"flist",         OPT_FILELIST },
         { L"w",             OPT_WIDTH },
         { L"h",             OPT_HEIGHT },
@@ -745,6 +747,7 @@ namespace
         wprintf(L"\n   -px <string>        name prefix\n");
         wprintf(L"   -sx <string>        name suffix\n");
         wprintf(L"   -o <directory>      output directory\n");
+        wprintf(L"   -ip                 output in place (same directory as original)\n");
         wprintf(L"   -l                  force output filename to lower case\n");
         wprintf(L"   -y                  overwrite existing output file (if any)\n");
         wprintf(L"   -ft <filetype>      output file type\n");
@@ -1057,7 +1060,46 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 1;
     }
 
+    // enable testing functionality in debugger with custom command line
+    std::vector<std::wstring> lArgs{ argv, argv + argc };
+#if _DEBUG
+    if (IsDebuggerPresent())
+    {
+        // basic way to test changes in debugger overriding the command line
+        lArgs.erase(lArgs.begin() + 1, lArgs.end());
+        // push_back custom arguments here
+        /*
+        lArgs.push_back(L"-fl");
+        lArgs.push_back(L"11.1");
+        lArgs.push_back(L"-nogpu");
+        lArgs.push_back(L"-f");
+        lArgs.push_back(L"DXT5");
+        lArgs.push_back(L"-ft");
+        lArgs.push_back(L"dds");
+        lArgs.push_back(L"-pow2");
+        lArgs.push_back(L"-fixbc4x4");
+        lArgs.push_back(L"-bc");
+        lArgs.push_back(L"q");
+        lArgs.push_back(L"-wrap");
+        lArgs.push_back(L"-l");
+        lArgs.push_back(L"-r");
+        lArgs.push_back(L"*.png");
+        lArgs.push_back(L"-y");
+        lArgs.push_back(L"-ip");
+        */
+    }
+#endif
+    // feed the new array into the argv/argc
+    std::vector<PWSTR> lArgp;
+    for (auto& lArg : lArgs)
+    {
+        lArgp.push_back(&lArg.front());
+    }
+    argv = lArgp.data();
+    argc = static_cast<int>(lArgp.size());
+
     // Process command line
+    bool inPlace = false;
     DWORD64 dwOptions = 0;
     std::list<SConversion> conversion;
 
@@ -1084,6 +1126,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             dwOptions |= (DWORD64(1) << dwOption);
+
+            // toggle the inPlace flag
+            if (dwOption == OPT_INPLACE)
+            {
+                inPlace = true;
+                continue;
+            }
 
             // Handle options with additional value parameter
             switch (dwOption)
@@ -1603,6 +1652,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     if (~dwOptions & (DWORD64(1) << OPT_NOLOGO))
         PrintLogo();
 
+
+
     // Work out out filename prefix and suffix
     if (szOutputDir[0] && (L'\\' != szOutputDir[wcslen(szOutputDir) - 1]))
         wcscat_s(szOutputDir, MAX_PATH, L"\\");
@@ -1657,9 +1708,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         wprintf(L"reading %ls", pConv->szSrc);
         fflush(stdout);
 
-        wchar_t ext[_MAX_EXT];
-        wchar_t fname[_MAX_FNAME];
-        _wsplitpath_s(pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT);
+        wchar_t fdir[_MAX_PATH]{};
+        wchar_t ext[_MAX_EXT]{};
+        wchar_t fname[_MAX_FNAME]{};
+        _wsplitpath_s(pConv->szSrc, nullptr, 0, fdir, _MAX_PATH, fname, _MAX_FNAME, ext, _MAX_EXT);
 
         TexMetadata info;
         std::unique_ptr<ScratchImage> image(new (std::nothrow) ScratchImage);
@@ -3012,6 +3064,20 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 *pchDot = 0;
 
             wcscat_s(pConv->szDest, MAX_PATH, szSuffix);
+
+            // if inPlace, we save new file in same folder as previous
+            if (inPlace)
+            {
+                pConv->szDest[0] = 0;
+                wcscat_s(pConv->szDest, fdir);
+                wcscat_s(pConv->szDest, fname);
+                // if extension collides (file does too), so we append a '_'
+                if (!_wcsicmp(szSuffix, ext))
+                {
+                    wcscat_s(pConv->szDest, L"_");
+                }
+                wcscat_s(pConv->szDest, szSuffix);
+            }
 
             if (dwOptions & (DWORD64(1) << OPT_TOLOWER))
             {
