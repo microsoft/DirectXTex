@@ -322,6 +322,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimatedGif.cpp" />
     <ClCompile Include="texassemble.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -8,6 +8,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="texassemble.cpp" />
+    <ClCompile Include="AnimatedGif.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="texassemble.rc">

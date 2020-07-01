@@ -51,216 +51,218 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
-enum COMMANDS
+namespace
 {
-    CMD_CUBE = 1,
-    CMD_VOLUME,
-    CMD_ARRAY,
-    CMD_CUBEARRAY,
-    CMD_H_CROSS,
-    CMD_V_CROSS,
-    CMD_H_STRIP,
-    CMD_V_STRIP,
-    CMD_MERGE,
-    CMD_GIF,
-    CMD_ARRAY_STRIP,
-    CMD_MAX
-};
+    enum COMMANDS
+    {
+        CMD_CUBE = 1,
+        CMD_VOLUME,
+        CMD_ARRAY,
+        CMD_CUBEARRAY,
+        CMD_H_CROSS,
+        CMD_V_CROSS,
+        CMD_H_STRIP,
+        CMD_V_STRIP,
+        CMD_MERGE,
+        CMD_GIF,
+        CMD_ARRAY_STRIP,
+        CMD_MAX
+    };
 
-enum OPTIONS
-{
-    OPT_RECURSIVE = 1,
-    OPT_WIDTH,
-    OPT_HEIGHT,
-    OPT_FORMAT,
-    OPT_FILTER,
-    OPT_SRGBI,
-    OPT_SRGBO,
-    OPT_SRGB,
-    OPT_OUTPUTFILE,
-    OPT_TOLOWER,
-    OPT_OVERWRITE,
-    OPT_USE_DX10,
-    OPT_NOLOGO,
-    OPT_SEPALPHA,
-    OPT_NO_WIC,
-    OPT_DEMUL_ALPHA,
-    OPT_TA_WRAP,
-    OPT_TA_MIRROR,
-    OPT_TONEMAP,
-    OPT_FILELIST,
-    OPT_GIF_BGCOLOR,
-    OPT_MAX
-};
+    enum OPTIONS
+    {
+        OPT_RECURSIVE = 1,
+        OPT_WIDTH,
+        OPT_HEIGHT,
+        OPT_FORMAT,
+        OPT_FILTER,
+        OPT_SRGBI,
+        OPT_SRGBO,
+        OPT_SRGB,
+        OPT_OUTPUTFILE,
+        OPT_TOLOWER,
+        OPT_OVERWRITE,
+        OPT_USE_DX10,
+        OPT_NOLOGO,
+        OPT_SEPALPHA,
+        OPT_NO_WIC,
+        OPT_DEMUL_ALPHA,
+        OPT_TA_WRAP,
+        OPT_TA_MIRROR,
+        OPT_TONEMAP,
+        OPT_FILELIST,
+        OPT_GIF_BGCOLOR,
+        OPT_MAX
+    };
 
-static_assert(OPT_MAX <= 32, "dwOptions is a DWORD bitfield");
+    static_assert(OPT_MAX <= 32, "dwOptions is a DWORD bitfield");
 
-struct SConversion
-{
-    wchar_t szSrc[MAX_PATH];
-};
+    struct SConversion
+    {
+        wchar_t szSrc[MAX_PATH];
+    };
 
-struct SValue
-{
-    LPCWSTR pName;
-    DWORD dwValue;
-};
+    struct SValue
+    {
+        LPCWSTR pName;
+        DWORD dwValue;
+    };
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
 
-const SValue g_pCommands[] =
-{
-    { L"cube",          CMD_CUBE },
-    { L"volume",        CMD_VOLUME },
-    { L"array",         CMD_ARRAY },
-    { L"cubearray",     CMD_CUBEARRAY },
-    { L"h-cross",       CMD_H_CROSS },
-    { L"v-cross",       CMD_V_CROSS },
-    { L"h-strip",       CMD_H_STRIP },
-    { L"v-strip",       CMD_V_STRIP },
-    { L"merge",         CMD_MERGE },
-    { L"gif",           CMD_GIF },
-    { L"array-strip",   CMD_ARRAY_STRIP },
-    { nullptr,          0 }
-};
+    const SValue g_pCommands[] =
+    {
+        { L"cube",          CMD_CUBE },
+        { L"volume",        CMD_VOLUME },
+        { L"array",         CMD_ARRAY },
+        { L"cubearray",     CMD_CUBEARRAY },
+        { L"h-cross",       CMD_H_CROSS },
+        { L"v-cross",       CMD_V_CROSS },
+        { L"h-strip",       CMD_H_STRIP },
+        { L"v-strip",       CMD_V_STRIP },
+        { L"merge",         CMD_MERGE },
+        { L"gif",           CMD_GIF },
+        { L"array-strip",   CMD_ARRAY_STRIP },
+        { nullptr,          0 }
+    };
 
-const SValue g_pOptions[] =
-{
-    { L"r",         OPT_RECURSIVE },
-    { L"w",         OPT_WIDTH },
-    { L"h",         OPT_HEIGHT },
-    { L"f",         OPT_FORMAT },
-    { L"if",        OPT_FILTER },
-    { L"srgbi",     OPT_SRGBI },
-    { L"srgbo",     OPT_SRGBO },
-    { L"srgb",      OPT_SRGB },
-    { L"o",         OPT_OUTPUTFILE },
-    { L"l",         OPT_TOLOWER },
-    { L"y",         OPT_OVERWRITE },
-    { L"dx10",      OPT_USE_DX10 },
-    { L"nologo",    OPT_NOLOGO },
-    { L"sepalpha",  OPT_SEPALPHA },
-    { L"nowic",     OPT_NO_WIC },
-    { L"alpha",     OPT_DEMUL_ALPHA },
-    { L"wrap",      OPT_TA_WRAP },
-    { L"mirror",    OPT_TA_MIRROR },
-    { L"tonemap",   OPT_TONEMAP },
-    { L"flist",     OPT_FILELIST },
-    { L"bgcolor",   OPT_GIF_BGCOLOR },
-    { nullptr,      0 }
-};
+    const SValue g_pOptions[] =
+    {
+        { L"r",         OPT_RECURSIVE },
+        { L"w",         OPT_WIDTH },
+        { L"h",         OPT_HEIGHT },
+        { L"f",         OPT_FORMAT },
+        { L"if",        OPT_FILTER },
+        { L"srgbi",     OPT_SRGBI },
+        { L"srgbo",     OPT_SRGBO },
+        { L"srgb",      OPT_SRGB },
+        { L"o",         OPT_OUTPUTFILE },
+        { L"l",         OPT_TOLOWER },
+        { L"y",         OPT_OVERWRITE },
+        { L"dx10",      OPT_USE_DX10 },
+        { L"nologo",    OPT_NOLOGO },
+        { L"sepalpha",  OPT_SEPALPHA },
+        { L"nowic",     OPT_NO_WIC },
+        { L"alpha",     OPT_DEMUL_ALPHA },
+        { L"wrap",      OPT_TA_WRAP },
+        { L"mirror",    OPT_TA_MIRROR },
+        { L"tonemap",   OPT_TONEMAP },
+        { L"flist",     OPT_FILELIST },
+        { L"bgcolor",   OPT_GIF_BGCOLOR },
+        { nullptr,      0 }
+    };
 
 #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
 
-const SValue g_pFormats[] =
-{
-    // List does not include _TYPELESS or depth/stencil formats
-    DEFFMT(R32G32B32A32_FLOAT),
-    DEFFMT(R32G32B32A32_UINT),
-    DEFFMT(R32G32B32A32_SINT),
-    DEFFMT(R32G32B32_FLOAT),
-    DEFFMT(R32G32B32_UINT),
-    DEFFMT(R32G32B32_SINT),
-    DEFFMT(R16G16B16A16_FLOAT),
-    DEFFMT(R16G16B16A16_UNORM),
-    DEFFMT(R16G16B16A16_UINT),
-    DEFFMT(R16G16B16A16_SNORM),
-    DEFFMT(R16G16B16A16_SINT),
-    DEFFMT(R32G32_FLOAT),
-    DEFFMT(R32G32_UINT),
-    DEFFMT(R32G32_SINT),
-    DEFFMT(R10G10B10A2_UNORM),
-    DEFFMT(R10G10B10A2_UINT),
-    DEFFMT(R11G11B10_FLOAT),
-    DEFFMT(R8G8B8A8_UNORM),
-    DEFFMT(R8G8B8A8_UNORM_SRGB),
-    DEFFMT(R8G8B8A8_UINT),
-    DEFFMT(R8G8B8A8_SNORM),
-    DEFFMT(R8G8B8A8_SINT),
-    DEFFMT(R16G16_FLOAT),
-    DEFFMT(R16G16_UNORM),
-    DEFFMT(R16G16_UINT),
-    DEFFMT(R16G16_SNORM),
-    DEFFMT(R16G16_SINT),
-    DEFFMT(R32_FLOAT),
-    DEFFMT(R32_UINT),
-    DEFFMT(R32_SINT),
-    DEFFMT(R8G8_UNORM),
-    DEFFMT(R8G8_UINT),
-    DEFFMT(R8G8_SNORM),
-    DEFFMT(R8G8_SINT),
-    DEFFMT(R16_FLOAT),
-    DEFFMT(R16_UNORM),
-    DEFFMT(R16_UINT),
-    DEFFMT(R16_SNORM),
-    DEFFMT(R16_SINT),
-    DEFFMT(R8_UNORM),
-    DEFFMT(R8_UINT),
-    DEFFMT(R8_SNORM),
-    DEFFMT(R8_SINT),
-    DEFFMT(A8_UNORM),
-    //DEFFMT(R1_UNORM)
-    DEFFMT(R9G9B9E5_SHAREDEXP),
-    DEFFMT(R8G8_B8G8_UNORM),
-    DEFFMT(G8R8_G8B8_UNORM),
-    DEFFMT(B5G6R5_UNORM),
-    DEFFMT(B5G5R5A1_UNORM),
+    const SValue g_pFormats[] =
+    {
+        // List does not include _TYPELESS or depth/stencil formats
+        DEFFMT(R32G32B32A32_FLOAT),
+        DEFFMT(R32G32B32A32_UINT),
+        DEFFMT(R32G32B32A32_SINT),
+        DEFFMT(R32G32B32_FLOAT),
+        DEFFMT(R32G32B32_UINT),
+        DEFFMT(R32G32B32_SINT),
+        DEFFMT(R16G16B16A16_FLOAT),
+        DEFFMT(R16G16B16A16_UNORM),
+        DEFFMT(R16G16B16A16_UINT),
+        DEFFMT(R16G16B16A16_SNORM),
+        DEFFMT(R16G16B16A16_SINT),
+        DEFFMT(R32G32_FLOAT),
+        DEFFMT(R32G32_UINT),
+        DEFFMT(R32G32_SINT),
+        DEFFMT(R10G10B10A2_UNORM),
+        DEFFMT(R10G10B10A2_UINT),
+        DEFFMT(R11G11B10_FLOAT),
+        DEFFMT(R8G8B8A8_UNORM),
+        DEFFMT(R8G8B8A8_UNORM_SRGB),
+        DEFFMT(R8G8B8A8_UINT),
+        DEFFMT(R8G8B8A8_SNORM),
+        DEFFMT(R8G8B8A8_SINT),
+        DEFFMT(R16G16_FLOAT),
+        DEFFMT(R16G16_UNORM),
+        DEFFMT(R16G16_UINT),
+        DEFFMT(R16G16_SNORM),
+        DEFFMT(R16G16_SINT),
+        DEFFMT(R32_FLOAT),
+        DEFFMT(R32_UINT),
+        DEFFMT(R32_SINT),
+        DEFFMT(R8G8_UNORM),
+        DEFFMT(R8G8_UINT),
+        DEFFMT(R8G8_SNORM),
+        DEFFMT(R8G8_SINT),
+        DEFFMT(R16_FLOAT),
+        DEFFMT(R16_UNORM),
+        DEFFMT(R16_UINT),
+        DEFFMT(R16_SNORM),
+        DEFFMT(R16_SINT),
+        DEFFMT(R8_UNORM),
+        DEFFMT(R8_UINT),
+        DEFFMT(R8_SNORM),
+        DEFFMT(R8_SINT),
+        DEFFMT(A8_UNORM),
+        //DEFFMT(R1_UNORM)
+        DEFFMT(R9G9B9E5_SHAREDEXP),
+        DEFFMT(R8G8_B8G8_UNORM),
+        DEFFMT(G8R8_G8B8_UNORM),
+        DEFFMT(B5G6R5_UNORM),
+        DEFFMT(B5G5R5A1_UNORM),
 
-    // DXGI 1.1 formats
-    DEFFMT(B8G8R8A8_UNORM),
-    DEFFMT(B8G8R8X8_UNORM),
-    DEFFMT(R10G10B10_XR_BIAS_A2_UNORM),
-    DEFFMT(B8G8R8A8_UNORM_SRGB),
-    DEFFMT(B8G8R8X8_UNORM_SRGB),
+        // DXGI 1.1 formats
+        DEFFMT(B8G8R8A8_UNORM),
+        DEFFMT(B8G8R8X8_UNORM),
+        DEFFMT(R10G10B10_XR_BIAS_A2_UNORM),
+        DEFFMT(B8G8R8A8_UNORM_SRGB),
+        DEFFMT(B8G8R8X8_UNORM_SRGB),
 
-    // DXGI 1.2 formats
-    DEFFMT(AYUV),
-    DEFFMT(Y410),
-    DEFFMT(Y416),
-    DEFFMT(YUY2),
-    DEFFMT(Y210),
-    DEFFMT(Y216),
-    // No support for legacy paletted video formats (AI44, IA44, P8, A8P8)
-    DEFFMT(B4G4R4A4_UNORM),
+        // DXGI 1.2 formats
+        DEFFMT(AYUV),
+        DEFFMT(Y410),
+        DEFFMT(Y416),
+        DEFFMT(YUY2),
+        DEFFMT(Y210),
+        DEFFMT(Y216),
+        // No support for legacy paletted video formats (AI44, IA44, P8, A8P8)
+        DEFFMT(B4G4R4A4_UNORM),
 
-    { nullptr, DXGI_FORMAT_UNKNOWN }
-};
+        { nullptr, DXGI_FORMAT_UNKNOWN }
+    };
 
-const SValue g_pFormatAliases[] =
-{
-    { L"RGBA", DXGI_FORMAT_R8G8B8A8_UNORM },
-    { L"BGRA", DXGI_FORMAT_B8G8R8A8_UNORM },
+    const SValue g_pFormatAliases[] =
+    {
+        { L"RGBA", DXGI_FORMAT_R8G8B8A8_UNORM },
+        { L"BGRA", DXGI_FORMAT_B8G8R8A8_UNORM },
 
-    { L"FP16", DXGI_FORMAT_R16G16B16A16_FLOAT },
-    { L"FP32", DXGI_FORMAT_R32G32B32A32_FLOAT },
+        { L"FP16", DXGI_FORMAT_R16G16B16A16_FLOAT },
+        { L"FP32", DXGI_FORMAT_R32G32B32A32_FLOAT },
 
-    { nullptr, DXGI_FORMAT_UNKNOWN }
-};
+        { nullptr, DXGI_FORMAT_UNKNOWN }
+    };
 
-const SValue g_pFilters[] =
-{
-    { L"POINT",                     TEX_FILTER_POINT },
-    { L"LINEAR",                    TEX_FILTER_LINEAR },
-    { L"CUBIC",                     TEX_FILTER_CUBIC },
-    { L"FANT",                      TEX_FILTER_FANT },
-    { L"BOX",                       TEX_FILTER_BOX },
-    { L"TRIANGLE",                  TEX_FILTER_TRIANGLE },
-    { L"POINT_DITHER",              TEX_FILTER_POINT | TEX_FILTER_DITHER },
-    { L"LINEAR_DITHER",             TEX_FILTER_LINEAR | TEX_FILTER_DITHER },
-    { L"CUBIC_DITHER",              TEX_FILTER_CUBIC | TEX_FILTER_DITHER },
-    { L"FANT_DITHER",               TEX_FILTER_FANT | TEX_FILTER_DITHER },
-    { L"BOX_DITHER",                TEX_FILTER_BOX | TEX_FILTER_DITHER },
-    { L"TRIANGLE_DITHER",           TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER },
-    { L"POINT_DITHER_DIFFUSION",    TEX_FILTER_POINT | TEX_FILTER_DITHER_DIFFUSION },
-    { L"LINEAR_DITHER_DIFFUSION",   TEX_FILTER_LINEAR | TEX_FILTER_DITHER_DIFFUSION },
-    { L"CUBIC_DITHER_DIFFUSION",    TEX_FILTER_CUBIC | TEX_FILTER_DITHER_DIFFUSION },
-    { L"FANT_DITHER_DIFFUSION",     TEX_FILTER_FANT | TEX_FILTER_DITHER_DIFFUSION },
-    { L"BOX_DITHER_DIFFUSION",      TEX_FILTER_BOX | TEX_FILTER_DITHER_DIFFUSION },
-    { L"TRIANGLE_DITHER_DIFFUSION", TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER_DIFFUSION },
-    { nullptr,                      TEX_FILTER_DEFAULT                              }
-};
+    const SValue g_pFilters[] =
+    {
+        { L"POINT",                     TEX_FILTER_POINT },
+        { L"LINEAR",                    TEX_FILTER_LINEAR },
+        { L"CUBIC",                     TEX_FILTER_CUBIC },
+        { L"FANT",                      TEX_FILTER_FANT },
+        { L"BOX",                       TEX_FILTER_BOX },
+        { L"TRIANGLE",                  TEX_FILTER_TRIANGLE },
+        { L"POINT_DITHER",              TEX_FILTER_POINT | TEX_FILTER_DITHER },
+        { L"LINEAR_DITHER",             TEX_FILTER_LINEAR | TEX_FILTER_DITHER },
+        { L"CUBIC_DITHER",              TEX_FILTER_CUBIC | TEX_FILTER_DITHER },
+        { L"FANT_DITHER",               TEX_FILTER_FANT | TEX_FILTER_DITHER },
+        { L"BOX_DITHER",                TEX_FILTER_BOX | TEX_FILTER_DITHER },
+        { L"TRIANGLE_DITHER",           TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER },
+        { L"POINT_DITHER_DIFFUSION",    TEX_FILTER_POINT | TEX_FILTER_DITHER_DIFFUSION },
+        { L"LINEAR_DITHER_DIFFUSION",   TEX_FILTER_LINEAR | TEX_FILTER_DITHER_DIFFUSION },
+        { L"CUBIC_DITHER_DIFFUSION",    TEX_FILTER_CUBIC | TEX_FILTER_DITHER_DIFFUSION },
+        { L"FANT_DITHER_DIFFUSION",     TEX_FILTER_FANT | TEX_FILTER_DITHER_DIFFUSION },
+        { L"BOX_DITHER_DIFFUSION",      TEX_FILTER_BOX | TEX_FILTER_DITHER_DIFFUSION },
+        { L"TRIANGLE_DITHER_DIFFUSION", TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER_DIFFUSION },
+        { nullptr,                      TEX_FILTER_DEFAULT                              }
+    };
 
 #define CODEC_DDS 0xFFFF0001
 #define CODEC_TGA 0xFFFF0002
@@ -270,25 +272,34 @@ const SValue g_pFilters[] =
 #define CODEC_EXR 0xFFFF0006
 #endif
 
-const SValue g_pExtFileTypes[] =
-{
-    { L".BMP",  WIC_CODEC_BMP },
-    { L".JPG",  WIC_CODEC_JPEG },
-    { L".JPEG", WIC_CODEC_JPEG },
-    { L".PNG",  WIC_CODEC_PNG },
-    { L".DDS",  CODEC_DDS },
-    { L".TGA",  CODEC_TGA },
-    { L".HDR",  CODEC_HDR },
-    { L".TIF",  WIC_CODEC_TIFF },
-    { L".TIFF", WIC_CODEC_TIFF },
-    { L".WDP",  WIC_CODEC_WMP },
-    { L".HDP",  WIC_CODEC_WMP },
-    { L".JXR",  WIC_CODEC_WMP },
-    #ifdef USE_OPENEXR
-    { L"EXR",   CODEC_EXR },
-    #endif
-    { nullptr,  CODEC_DDS }
-};
+    const SValue g_pExtFileTypes[] =
+    {
+        { L".BMP",  WIC_CODEC_BMP },
+        { L".JPG",  WIC_CODEC_JPEG },
+        { L".JPEG", WIC_CODEC_JPEG },
+        { L".PNG",  WIC_CODEC_PNG },
+        { L".DDS",  CODEC_DDS },
+        { L".TGA",  CODEC_TGA },
+        { L".HDR",  CODEC_HDR },
+        { L".TIF",  WIC_CODEC_TIFF },
+        { L".TIFF", WIC_CODEC_TIFF },
+        { L".WDP",  WIC_CODEC_WMP },
+        { L".HDP",  WIC_CODEC_WMP },
+        { L".JXR",  WIC_CODEC_WMP },
+        #ifdef USE_OPENEXR
+        { L"EXR",   CODEC_EXR },
+        #endif
+        { nullptr,  CODEC_DDS }
+    };
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+HRESULT LoadAnimatedGif(const wchar_t* szFile,
+    std::vector<std::unique_ptr<ScratchImage>>& loadedImages,
+    bool usebgcolor);
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -566,377 +577,7 @@ namespace
             return SaveToWICFile(img, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(fileType)), szOutputFile);
         }
     }
-
-
-    enum
-    {
-        DM_UNDEFINED = 0,
-        DM_NONE = 1,
-        DM_BACKGROUND = 2,
-        DM_PREVIOUS = 3
-    };
-
-
-    void FillRectangle(const Image& img, const RECT& destRect, uint32_t color)
-    {
-        RECT clipped =
-        {
-            (destRect.left < 0) ? 0 : destRect.left,
-            (destRect.top < 0) ? 0 : destRect.top,
-            (destRect.right > static_cast<long>(img.width)) ? static_cast<long>(img.width) : destRect.right,
-            (destRect.bottom > static_cast<long>(img.height)) ? static_cast<long>(img.height) : destRect.bottom
-        };
-
-        auto ptr = reinterpret_cast<uint8_t*>(img.pixels + size_t(clipped.top) * img.rowPitch + size_t(clipped.left) * sizeof(uint32_t));
-
-        for (long y = clipped.top; y < clipped.bottom; ++y)
-        {
-            auto pixelPtr = reinterpret_cast<uint32_t*>(ptr);
-            for (long x = clipped.left; x < clipped.right; ++x)
-            {
-                *pixelPtr++ = color;
-            }
-
-            ptr += img.rowPitch;
-        }
-    }
-
-
-    void BlendRectangle(const Image& composed, const Image& raw, const RECT& destRect, uint32_t transparent)
-    {
-        using namespace DirectX::PackedVector;
-
-        RECT clipped =
-        {
-            (destRect.left < 0) ? 0 : destRect.left,
-            (destRect.top < 0) ? 0 : destRect.top,
-            (destRect.right > static_cast<long>(composed.width)) ? static_cast<long>(composed.width) : destRect.right,
-            (destRect.bottom > static_cast<long>(composed.height)) ? static_cast<long>(composed.height) : destRect.bottom
-        };
-
-        auto rawPtr = reinterpret_cast<uint8_t*>(raw.pixels);
-        auto composedPtr = reinterpret_cast<uint8_t*>(composed.pixels + size_t(clipped.top) * composed.rowPitch + size_t(clipped.left) * sizeof(uint32_t));
-
-        for (long y = clipped.top; y < clipped.bottom; ++y)
-        {
-            auto srcPtr = reinterpret_cast<uint32_t*>(rawPtr);
-            auto destPtr = reinterpret_cast<uint32_t*>(composedPtr);
-            for (long x = clipped.left; x < clipped.right; ++x, ++srcPtr, ++destPtr)
-            {
-                if (transparent == *srcPtr)
-                    continue;
-
-                *destPtr = *srcPtr;
-            }
-
-            rawPtr += raw.rowPitch;
-            composedPtr += composed.rowPitch;
-        }
-    }
-
-
-    HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<ScratchImage>>& loadedImages, bool usebgcolor)
-    {
-        // https://code.msdn.microsoft.com/windowsapps/Windows-Imaging-Component-65abbc6a/
-        // http://www.imagemagick.org/Usage/anim_basics/#dispose
-
-        bool iswic2;
-        auto pWIC = GetWICFactory(iswic2);
-        if (!pWIC)
-            return E_NOINTERFACE;
-
-        ComPtr<IWICBitmapDecoder> decoder;
-        HRESULT hr = pWIC->CreateDecoderFromFilename(szFile, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
-        if (FAILED(hr))
-            return hr;
-
-        {
-            GUID containerFormat;
-            hr = decoder->GetContainerFormat(&containerFormat);
-            if (FAILED(hr))
-                return hr;
-
-            if (memcmp(&containerFormat, &GUID_ContainerFormatGif, sizeof(GUID)) != 0)
-            {
-                // This function only works for GIF
-                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
-            }
-        }
-
-        ComPtr<IWICMetadataQueryReader> metareader;
-        hr = decoder->GetMetadataQueryReader(metareader.GetAddressOf());
-        if (FAILED(hr))
-            return hr;
-
-        PROPVARIANT propValue;
-        PropVariantInit(&propValue);
-
-        // Get palette
-        WICColor rgbColors[256] = {};
-        UINT actualColors = 0;
-        {
-            ComPtr<IWICPalette> palette;
-            hr = pWIC->CreatePalette(palette.GetAddressOf());
-            if (FAILED(hr))
-                return hr;
-
-            hr = decoder->CopyPalette(palette.Get());
-            if (FAILED(hr))
-                return hr;
-
-            hr = palette->GetColors(_countof(rgbColors), rgbColors, &actualColors);
-            if (FAILED(hr))
-                return hr;
-        }
-
-        // Get background color
-        UINT bgColor = 0;
-        if (usebgcolor)
-        {
-            // Most browsers just ignore the background color metadata and always use transparency
-            hr = metareader->GetMetadataByName(L"/logscrdesc/GlobalColorTableFlag", &propValue);
-            if (SUCCEEDED(hr))
-            {
-                bool hasTable = (propValue.vt == VT_BOOL && propValue.boolVal);
-                PropVariantClear(&propValue);
-
-                if (hasTable)
-                {
-                    hr = metareader->GetMetadataByName(L"/logscrdesc/BackgroundColorIndex", &propValue);
-                    if (SUCCEEDED(hr))
-                    {
-                        if (propValue.vt == VT_UI1)
-                        {
-                            uint8_t index = propValue.bVal;
-
-                            if (index < actualColors)
-                            {
-                                bgColor = rgbColors[index];
-                            }
-                        }
-                        PropVariantClear(&propValue);
-                    }
-                }
-            }
-        }
-
-        // Get global frame size
-        UINT width = 0;
-        UINT height = 0;
-
-        hr = metareader->GetMetadataByName(L"/logscrdesc/Width", &propValue);
-        if (FAILED(hr))
-            return hr;
-
-        if (propValue.vt != VT_UI2)
-            return E_FAIL;
-
-        width = propValue.uiVal;
-        PropVariantClear(&propValue);
-
-        hr = metareader->GetMetadataByName(L"/logscrdesc/Height", &propValue);
-        if (FAILED(hr))
-            return hr;
-
-        if (propValue.vt != VT_UI2)
-            return E_FAIL;
-
-        height = propValue.uiVal;
-        PropVariantClear(&propValue);
-
-        UINT fcount;
-        hr = decoder->GetFrameCount(&fcount);
-        if (FAILED(hr))
-            return hr;
-
-        UINT disposal = DM_UNDEFINED;
-        RECT rct = {};
-
-        UINT previousFrame = 0;
-        for (UINT iframe = 0; iframe < fcount; ++iframe)
-        {
-            int transparentIndex = -1;
-
-            std::unique_ptr<ScratchImage> frameImage(new (std::nothrow) ScratchImage);
-            if (!frameImage)
-                return E_OUTOFMEMORY;
-
-            if (disposal == DM_PREVIOUS)
-            {
-                hr = frameImage->InitializeFromImage(*loadedImages[previousFrame]->GetImage(0, 0, 0));
-            }
-            else if (iframe > 0)
-            {
-                hr = frameImage->InitializeFromImage(*loadedImages[iframe - 1]->GetImage(0, 0, 0));
-            }
-            else
-            {
-                hr = frameImage->Initialize2D(DXGI_FORMAT_B8G8R8A8_UNORM, width, height, 1, 1);
-            }
-            if (FAILED(hr))
-                return hr;
-
-            auto composedImage = frameImage->GetImage(0, 0, 0);
-
-            if (!iframe)
-            {
-                RECT fullRct = { 0, 0, static_cast<long>(width), static_cast<long>(height) };
-                FillRectangle(*composedImage, fullRct, bgColor);
-            }
-            else if (disposal == DM_BACKGROUND)
-            {
-                FillRectangle(*composedImage, rct, bgColor);
-            }
-
-            ComPtr<IWICBitmapFrameDecode> frame;
-            hr = decoder->GetFrame(iframe, frame.GetAddressOf());
-            if (FAILED(hr))
-                return hr;
-
-            WICPixelFormatGUID pixelFormat;
-            hr = frame->GetPixelFormat(&pixelFormat);
-            if (FAILED(hr))
-                return hr;
-
-            if (memcmp(&pixelFormat, &GUID_WICPixelFormat8bppIndexed, sizeof(GUID)) != 0)
-            {
-                // GIF is always loaded as this format
-                return E_UNEXPECTED;
-            }
-
-            ComPtr<IWICMetadataQueryReader> frameMeta;
-            hr = frame->GetMetadataQueryReader(frameMeta.GetAddressOf());
-            if (SUCCEEDED(hr))
-            {
-                hr = frameMeta->GetMetadataByName(L"/imgdesc/Left", &propValue);
-                if (SUCCEEDED(hr))
-                {
-                    hr = (propValue.vt == VT_UI2 ? S_OK : E_FAIL);
-                    if (SUCCEEDED(hr))
-                    {
-                        rct.left = static_cast<long>(propValue.uiVal);
-                    }
-                    PropVariantClear(&propValue);
-                }
-
-                hr = frameMeta->GetMetadataByName(L"/imgdesc/Top", &propValue);
-                if (SUCCEEDED(hr))
-                {
-                    hr = (propValue.vt == VT_UI2 ? S_OK : E_FAIL);
-                    if (SUCCEEDED(hr))
-                    {
-                        rct.top = static_cast<long>(propValue.uiVal);
-                    }
-                    PropVariantClear(&propValue);
-                }
-
-                hr = frameMeta->GetMetadataByName(L"/imgdesc/Width", &propValue);
-                if (SUCCEEDED(hr))
-                {
-                    hr = (propValue.vt == VT_UI2 ? S_OK : E_FAIL);
-                    if (SUCCEEDED(hr))
-                    {
-                        rct.right = static_cast<long>(propValue.uiVal) + rct.left;
-                    }
-                    PropVariantClear(&propValue);
-                }
-
-                hr = frameMeta->GetMetadataByName(L"/imgdesc/Height", &propValue);
-                if (SUCCEEDED(hr))
-                {
-                    hr = (propValue.vt == VT_UI2 ? S_OK : E_FAIL);
-                    if (SUCCEEDED(hr))
-                    {
-                        rct.bottom = static_cast<long>(propValue.uiVal) + rct.top;
-                    }
-                    PropVariantClear(&propValue);
-                }
-
-                disposal = DM_UNDEFINED;
-                hr = frameMeta->GetMetadataByName(L"/grctlext/Disposal", &propValue);
-                if (SUCCEEDED(hr))
-                {
-                    hr = (propValue.vt == VT_UI1 ? S_OK : E_FAIL);
-                    if (SUCCEEDED(hr))
-                    {
-                        disposal = propValue.bVal;
-                    }
-                    PropVariantClear(&propValue);
-                }
-
-                hr = frameMeta->GetMetadataByName(L"/grctlext/TransparencyFlag", &propValue);
-                if (SUCCEEDED(hr))
-                {
-                    hr = (propValue.vt == VT_BOOL ? S_OK : E_FAIL);
-                    if (SUCCEEDED(hr) && propValue.boolVal)
-                    {
-                        PropVariantClear(&propValue);
-                        hr = frameMeta->GetMetadataByName(L"/grctlext/TransparentColorIndex", &propValue);
-                        if (SUCCEEDED(hr))
-                        {
-                            hr = (propValue.vt == VT_UI1 ? S_OK : E_FAIL);
-                            if (SUCCEEDED(hr) && propValue.uiVal < actualColors)
-                            {
-                                transparentIndex = static_cast<int>(propValue.uiVal);
-                            }
-                        }
-                    }
-                    PropVariantClear(&propValue);
-                }
-
-            }
-
-            UINT w, h;
-            hr = frame->GetSize(&w, &h);
-            if (FAILED(hr))
-                return hr;
-
-            ScratchImage rawFrame;
-            hr = rawFrame.Initialize2D(DXGI_FORMAT_B8G8R8A8_UNORM, w, h, 1, 1);
-            if (FAILED(hr))
-                return hr;
-
-            ComPtr<IWICFormatConverter> FC;
-            hr = pWIC->CreateFormatConverter(FC.GetAddressOf());
-            if (FAILED(hr))
-                return hr;
-
-            hr = FC->Initialize(frame.Get(), GUID_WICPixelFormat32bppBGRA, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut);
-            if (FAILED(hr))
-                return hr;
-
-            auto img = rawFrame.GetImage(0, 0, 0);
-
-            hr = FC->CopyPixels(nullptr, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch), img->pixels);
-            if (FAILED(hr))
-                return hr;
-
-            if (!iframe || transparentIndex == -1)
-            {
-                Rect fullRect(0, 0, img->width, img->height);
-                hr = CopyRectangle(*img, fullRect, *composedImage, TEX_FILTER_DEFAULT, size_t(rct.left), size_t(rct.top));
-                if (FAILED(hr))
-                    return hr;
-            }
-            else
-            {
-                BlendRectangle(*composedImage, *img, rct, rgbColors[transparentIndex]);
-            }
-
-            if (disposal == DM_UNDEFINED || disposal == DM_NONE)
-            {
-                previousFrame = iframe;
-            }
-
-            loadedImages.emplace_back(std::move(frameImage));
-        }
-
-        PropVariantClear(&propValue);
-
-        return S_OK;
-    }
 }
-
 
 //--------------------------------------------------------------------------------------
 // Entry-point
