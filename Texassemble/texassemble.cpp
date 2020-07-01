@@ -602,7 +602,7 @@ namespace
     }
 
 
-    void BlendRectangle(const Image& composed, const Image& raw, const RECT& destRect)
+    void BlendRectangle(const Image& composed, const Image& raw, const RECT& destRect, uint32_t transparent)
     {
         using namespace DirectX::PackedVector;
 
@@ -621,18 +621,12 @@ namespace
         {
             auto srcPtr = reinterpret_cast<uint32_t*>(rawPtr);
             auto destPtr = reinterpret_cast<uint32_t*>(composedPtr);
-            for (long x = clipped.left; x < clipped.right; ++x)
+            for (long x = clipped.left; x < clipped.right; ++x, ++srcPtr, ++destPtr)
             {
-                XMVECTOR a = XMLoadUByteN4(reinterpret_cast<const XMUBYTEN4*>(srcPtr++));
-                XMVECTOR b = XMLoadUByteN4(reinterpret_cast<const XMUBYTEN4*>(destPtr));
+                if (transparent == *srcPtr)
+                    continue;
 
-                XMVECTOR alpha = XMVectorSplatW(a);
-
-                XMVECTOR blended = XMVectorMultiply(a, alpha) + XMVectorMultiply(b, XMVectorSubtract(g_XMOne, alpha));
-
-                blended = XMVectorSelect(g_XMIdentityR3, blended, g_XMSelect1110);
-
-                XMStoreUByteN4(reinterpret_cast<XMUBYTEN4*>(destPtr++), blended);
+                *destPtr = *srcPtr;
             }
 
             rawPtr += raw.rowPitch;
@@ -677,6 +671,24 @@ namespace
         PROPVARIANT propValue;
         PropVariantInit(&propValue);
 
+        // Get palette
+        WICColor rgbColors[256] = {};
+        UINT actualColors = 0;
+        {
+            ComPtr<IWICPalette> palette;
+            hr = pWIC->CreatePalette(palette.GetAddressOf());
+            if (FAILED(hr))
+                return hr;
+
+            hr = decoder->CopyPalette(palette.Get());
+            if (FAILED(hr))
+                return hr;
+
+            hr = palette->GetColors(_countof(rgbColors), rgbColors, &actualColors);
+            if (FAILED(hr))
+                return hr;
+        }
+
         // Get background color
         UINT bgColor = 0;
         if (usebgcolor)
@@ -697,24 +709,9 @@ namespace
                         {
                             uint8_t index = propValue.bVal;
 
-                            ComPtr<IWICPalette> palette;
-                            hr = pWIC->CreatePalette(palette.GetAddressOf());
-                            if (FAILED(hr))
-                                return hr;
-
-                            hr = decoder->CopyPalette(palette.Get());
-                            if (FAILED(hr))
-                                return hr;
-
-                            WICColor rgColors[256];
-                            UINT actualColors = 0;
-                            hr = palette->GetColors(_countof(rgColors), rgColors, &actualColors);
-                            if (FAILED(hr))
-                                return hr;
-
                             if (index < actualColors)
                             {
-                                bgColor = rgColors[index];
+                                bgColor = rgbColors[index];
                             }
                         }
                         PropVariantClear(&propValue);
@@ -758,6 +755,8 @@ namespace
         UINT previousFrame = 0;
         for (UINT iframe = 0; iframe < fcount; ++iframe)
         {
+            int transparentIndex = -1;
+
             std::unique_ptr<ScratchImage> frameImage(new (std::nothrow) ScratchImage);
             if (!frameImage)
                 return E_OUTOFMEMORY;
@@ -864,6 +863,27 @@ namespace
                     }
                     PropVariantClear(&propValue);
                 }
+
+                hr = frameMeta->GetMetadataByName(L"/grctlext/TransparencyFlag", &propValue);
+                if (SUCCEEDED(hr))
+                {
+                    hr = (propValue.vt == VT_BOOL ? S_OK : E_FAIL);
+                    if (SUCCEEDED(hr) && propValue.boolVal)
+                    {
+                        PropVariantClear(&propValue);
+                        hr = frameMeta->GetMetadataByName(L"/grctlext/TransparentColorIndex", &propValue);
+                        if (SUCCEEDED(hr))
+                        {
+                            hr = (propValue.vt == VT_UI1 ? S_OK : E_FAIL);
+                            if (SUCCEEDED(hr) && propValue.uiVal < actualColors)
+                            {
+                                transparentIndex = static_cast<int>(propValue.uiVal);
+                            }
+                        }
+                    }
+                    PropVariantClear(&propValue);
+                }
+
             }
 
             UINT w, h;
@@ -891,17 +911,16 @@ namespace
             if (FAILED(hr))
                 return hr;
 
-            if (!iframe)
+            if (!iframe || transparentIndex == -1)
             {
                 Rect fullRect(0, 0, img->width, img->height);
-
                 hr = CopyRectangle(*img, fullRect, *composedImage, TEX_FILTER_DEFAULT, size_t(rct.left), size_t(rct.top));
                 if (FAILED(hr))
                     return hr;
             }
             else
             {
-                BlendRectangle(*composedImage, *img, rct);
+                BlendRectangle(*composedImage, *img, rct, rgbColors[transparentIndex]);
             }
 
             if (disposal == DM_UNDEFINED || disposal == DM_NONE)
