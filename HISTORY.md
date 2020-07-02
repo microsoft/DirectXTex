@@ -6,6 +6,11 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### July 2, 2020
+* Minor warning fixes for VS 2019 (16.7)
+* CMake updates
+* texassemble: Fixed animated gif handling with transparency
+
 ### June 15, 2020
 * Code cleanup for some new VC++ 16.7 warnings and static code analysis
 * texconv: Updated with support for Portable Pix Map (ppm) & Portable Float Map (pfm) file formats
