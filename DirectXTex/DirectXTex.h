@@ -172,6 +172,8 @@ namespace DirectX
         DDS_FLAGS_FORCE_DX9_LEGACY      = 0x40000,
             // Force use of legacy header for DDS writer (will fail if unable to write as such)
 
+        DDS_FLAGS_ALLOW_LARGE_FILES     = 0x1000000,
+            // Enables the loader to read large dimension .dds files (i.e. greater than known hardware requirements)
     };
 
     enum WIC_FLAGS : unsigned long
