@@ -117,14 +117,14 @@ namespace
 
     enum CONVERSION_FLAGS
     {
-        CONV_FLAGS_NONE = 0x0,
-        CONV_FLAGS_EXPAND = 0x1,      // Conversion requires expanded pixel size
-        CONV_FLAGS_INVERTX = 0x2,      // If set, scanlines are right-to-left
-        CONV_FLAGS_INVERTY = 0x4,      // If set, scanlines are top-to-bottom
-        CONV_FLAGS_RLE = 0x8,      // Source data is RLE compressed
+        CONV_FLAGS_NONE     = 0x0,
+        CONV_FLAGS_EXPAND   = 0x1,      // Conversion requires expanded pixel size
+        CONV_FLAGS_INVERTX  = 0x2,      // If set, scanlines are right-to-left
+        CONV_FLAGS_INVERTY  = 0x4,      // If set, scanlines are top-to-bottom
+        CONV_FLAGS_RLE      = 0x8,      // Source data is RLE compressed
 
-        CONV_FLAGS_SWIZZLE = 0x10000,  // Swizzle BGR<->RGB data
-        CONV_FLAGS_888 = 0x20000,  // 24bpp format
+        CONV_FLAGS_SWIZZLE  = 0x10000,  // Swizzle BGR<->RGB data
+        CONV_FLAGS_888      = 0x20000,  // 24bpp format
     };
 
 
@@ -284,18 +284,11 @@ namespace
             return E_POINTER;
 
         // Compute TGA image data pitch
-        size_t rowPitch;
-        if (convFlags & CONV_FLAGS_EXPAND)
-        {
-            rowPitch = image->width * 3;
-        }
-        else
-        {
-            size_t slicePitch;
-            HRESULT hr = ComputePitch(image->format, image->width, image->height, rowPitch, slicePitch, CP_FLAGS_NONE);
-            if (FAILED(hr))
-                return hr;
-        }
+        size_t rowPitch, slicePitch;
+        HRESULT hr = ComputePitch(image->format, image->width, image->height, rowPitch, slicePitch,
+            (convFlags & CONV_FLAGS_EXPAND) ? CP_FLAGS_24BPP : CP_FLAGS_NONE);
+        if (FAILED(hr))
+            return hr;
 
         auto sPtr = static_cast<const uint8_t*>(pSource);
         const uint8_t* endPtr = sPtr + size;
@@ -454,7 +447,7 @@ namespace
             if (maxalpha == 0)
             {
                 opaquealpha = true;
-                HRESULT hr = SetAlphaChannelToOpaque(image);
+                hr = SetAlphaChannelToOpaque(image);
                 if (FAILED(hr))
                     return hr;
             }
@@ -599,7 +592,7 @@ namespace
             if (maxalpha == 0)
             {
                 opaquealpha = true;
-                HRESULT hr = SetAlphaChannelToOpaque(image);
+                hr = SetAlphaChannelToOpaque(image);
                 if (FAILED(hr))
                     return hr;
             }
@@ -634,18 +627,11 @@ namespace
             return E_POINTER;
 
         // Compute TGA image data pitch
-        size_t rowPitch;
-        if (convFlags & CONV_FLAGS_EXPAND)
-        {
-            rowPitch = image->width * 3;
-        }
-        else
-        {
-            size_t slicePitch;
-            HRESULT hr = ComputePitch(image->format, image->width, image->height, rowPitch, slicePitch, CP_FLAGS_NONE);
-            if (FAILED(hr))
-                return hr;
-        }
+        size_t rowPitch, slicePitch;
+        HRESULT hr = ComputePitch(image->format, image->width, image->height, rowPitch, slicePitch,
+            (convFlags & CONV_FLAGS_EXPAND) ? CP_FLAGS_24BPP : CP_FLAGS_NONE);
+        if (FAILED(hr))
+            return hr;
 
         auto sPtr = static_cast<const uint8_t*>(pSource);
         const uint8_t* endPtr = sPtr + size;
@@ -719,7 +705,7 @@ namespace
             if (maxalpha == 0)
             {
                 opaquealpha = true;
-                HRESULT hr = SetAlphaChannelToOpaque(image);
+                hr = SetAlphaChannelToOpaque(image);
                 if (FAILED(hr))
                     return hr;
             }
@@ -787,7 +773,7 @@ namespace
             if (maxalpha == 0)
             {
                 opaquealpha = true;
-                HRESULT hr = SetAlphaChannelToOpaque(image);
+                hr = SetAlphaChannelToOpaque(image);
                 if (FAILED(hr))
                     return hr;
             }
@@ -1480,17 +1466,10 @@ HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob, const TexMetada
 
     // Determine memory required for image data
     size_t rowPitch, slicePitch;
-    if (convFlags & CONV_FLAGS_888)
-    {
-        rowPitch = image.width * 3;
-        slicePitch = image.height * rowPitch;
-    }
-    else
-    {
-        hr = ComputePitch(image.format, image.width, image.height, rowPitch, slicePitch, CP_FLAGS_NONE);
-        if (FAILED(hr))
-            return hr;
-    }
+    hr = ComputePitch(image.format, image.width, image.height, rowPitch, slicePitch,
+        (convFlags & CONV_FLAGS_888) ? CP_FLAGS_24BPP : CP_FLAGS_NONE);
+    if (FAILED(hr))
+        return hr;
 
     hr = blob.Initialize(sizeof(TGA_HEADER)
         + slicePitch
@@ -1585,28 +1564,10 @@ HRESULT DirectX::SaveToTGAFile(const Image& image, const wchar_t* szFile, const 
 
     // Determine size for TGA pixel data
     size_t rowPitch, slicePitch;
-    if (convFlags & CONV_FLAGS_888)
-    {
-        uint64_t pitch = uint64_t(image.width) * 3u;
-        uint64_t slice = uint64_t(image.height) * pitch;
-
-#if defined(_M_IX86) || defined(_M_ARM) || defined(_M_HYBRID_X86_ARM64)
-        static_assert(sizeof(size_t) == 4, "Not a 32-bit platform!");
-        if (pitch > UINT32_MAX || slice > UINT32_MAX)
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
-#else
-        static_assert(sizeof(size_t) == 8, "Not a 64-bit platform!");
-#endif
-
-        rowPitch = static_cast<size_t>(pitch);
-        slicePitch = static_cast<size_t>(slice);
-    }
-    else
-    {
-        hr = ComputePitch(image.format, image.width, image.height, rowPitch, slicePitch, CP_FLAGS_NONE);
-        if (FAILED(hr))
-            return hr;
-    }
+    hr = ComputePitch(image.format, image.width, image.height, rowPitch, slicePitch,
+        (convFlags & CONV_FLAGS_888) ? CP_FLAGS_24BPP : CP_FLAGS_NONE);
+    if (FAILED(hr))
+        return hr;
 
     if (slicePitch < 65535)
     {
