@@ -72,6 +72,7 @@ namespace
     enum OPTIONS
     {
         OPT_RECURSIVE = 1,
+        OPT_FILELIST,
         OPT_WIDTH,
         OPT_HEIGHT,
         OPT_FORMAT,
@@ -89,8 +90,8 @@ namespace
         OPT_DEMUL_ALPHA,
         OPT_TA_WRAP,
         OPT_TA_MIRROR,
+        OPT_FEATURE_LEVEL,
         OPT_TONEMAP,
-        OPT_FILELIST,
         OPT_GIF_BGCOLOR,
         OPT_MAX
     };
@@ -131,6 +132,7 @@ namespace
     const SValue g_pOptions[] =
     {
         { L"r",         OPT_RECURSIVE },
+        { L"flist",     OPT_FILELIST },
         { L"w",         OPT_WIDTH },
         { L"h",         OPT_HEIGHT },
         { L"f",         OPT_FORMAT },
@@ -148,8 +150,8 @@ namespace
         { L"alpha",     OPT_DEMUL_ALPHA },
         { L"wrap",      OPT_TA_WRAP },
         { L"mirror",    OPT_TA_MIRROR },
+        { L"fl",        OPT_FEATURE_LEVEL },
         { L"tonemap",   OPT_TONEMAP },
-        { L"flist",     OPT_FILELIST },
         { L"bgcolor",   OPT_GIF_BGCOLOR },
         { nullptr,      0 }
     };
@@ -290,6 +292,62 @@ namespace
         { L"EXR",   CODEC_EXR },
         #endif
         { nullptr,  CODEC_DDS }
+    };
+
+    const SValue g_pFeatureLevels[] =   // valid feature levels for -fl for maximimum size
+    {
+        { L"9.1",  2048 },
+        { L"9.2",  2048 },
+        { L"9.3",  4096 },
+        { L"10.0", 8192 },
+        { L"10.1", 8192 },
+        { L"11.0", 16384 },
+        { L"11.1", 16384 },
+        { L"12.0", 16384 },
+        { L"12.1", 16384 },
+        { nullptr, 0 },
+    };
+
+    const SValue g_pFeatureLevelsCube[] = // valid feature levels for -fl for maximum cubemap size
+    {
+        { L"9.1",  512 },
+        { L"9.2",  512 },
+        { L"9.3",  4096 },
+        { L"10.0", 8192 },
+        { L"10.1", 8192 },
+        { L"11.0", 16384 },
+        { L"11.1", 16384 },
+        { L"12.0", 16384 },
+        { L"12.1", 16384 },
+        { nullptr, 0 },
+    };
+
+    const SValue g_pFeatureLevelsArray[] = // valid feature levels for -fl for maximum array size
+    {
+        { L"9.1",  1 },
+        { L"9.2",  1 },
+        { L"9.3",  1 },
+        { L"10.0", 512 },
+        { L"10.1", 512 },
+        { L"11.0", 2048 },
+        { L"11.1", 2048 },
+        { L"12.0", 2048 },
+        { L"12.1", 2048 },
+        { nullptr, 0 },
+    };
+
+    const SValue g_pFeatureLevelsVolume[] = // valid feature levels for -fl for maximum depth size
+    {
+        { L"9.1",  256 },
+        { L"9.2",  256 },
+        { L"9.3",  256 },
+        { L"10.0", 2048 },
+        { L"10.1", 2048 },
+        { L"11.0", 2048 },
+        { L"11.1", 2048 },
+        { L"12.0", 2048 },
+        { L"12.1", 2048 },
+        { nullptr, 0 },
     };
 }
 
@@ -526,6 +584,7 @@ namespace
         wprintf(L"   merge               create texture from rgb image and alpha image\n");
         wprintf(L"   gif                 create array from animated gif\n\n");
         wprintf(L"   -r                  wildcard filename search is recursive\n");
+        wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
         wprintf(L"   -w <n>              width\n");
         wprintf(L"   -h <n>              height\n");
         wprintf(L"   -f <format>         format\n");
@@ -540,8 +599,8 @@ namespace
         wprintf(L"   -alpha              convert premultiplied alpha to straight alpha\n");
         wprintf(L"   -dx10               Force use of 'DX10' extended header\n");
         wprintf(L"   -nologo             suppress copyright message\n");
+        wprintf(L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n");
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
-        wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
         wprintf(L"\n                       (gif only)\n");
         wprintf(L"   -bgcolor            Use background color instead of transparency\n");
 
@@ -552,6 +611,9 @@ namespace
 
         wprintf(L"\n   <filter>: ");
         PrintList(13, g_pFilters);
+
+        wprintf(L"\n   <feature-level>: ");
+        PrintList(13, g_pFeatureLevels);
     }
 
 
@@ -597,6 +659,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     TEX_FILTER_FLAGS dwSRGB = TEX_FILTER_DEFAULT;
     TEX_FILTER_FLAGS dwFilterOpts = TEX_FILTER_DEFAULT;
     DWORD fileType = WIC_CODEC_BMP;
+    DWORD maxSize = 16384;
+    DWORD maxCube = 16384;
+    DWORD maxArray = 2048;
+    DWORD maxVolume = 2048;
 
     wchar_t szOutputFile[MAX_PATH] = {};
 
@@ -666,12 +732,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             // Handle options with additional value parameter
             switch (dwOption)
             {
+            case OPT_FILELIST:
             case OPT_WIDTH:
             case OPT_HEIGHT:
             case OPT_FORMAT:
             case OPT_FILTER:
             case OPT_OUTPUTFILE:
-            case OPT_FILELIST:
+            case OPT_FEATURE_LEVEL:
                 if (!*pValue)
                 {
                     if ((iArg + 1 >= argc))
@@ -839,6 +906,20 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 inFile.close();
             }
             break;
+
+            case OPT_FEATURE_LEVEL:
+                maxSize = LookupByName(pValue, g_pFeatureLevels);
+                maxCube = LookupByName(pValue, g_pFeatureLevelsCube);
+                maxArray = LookupByName(pValue, g_pFeatureLevelsArray);
+                maxVolume = LookupByName(pValue, g_pFeatureLevelsVolume);
+                if (!maxSize || !maxCube || !maxArray || !maxVolume)
+                {
+                    wprintf(L"Invalid value specified with -fl (%ls)\n", pValue);
+                    wprintf(L"\n");
+                    PrintUsage();
+                    return 1;
+                }
+                break;
 
             case OPT_GIF_BGCOLOR:
                 if (dwCommand != CMD_GIF)
@@ -1748,6 +1829,44 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 assert(img != nullptr);
                 imageArray.push_back(*img);
             }
+        }
+
+        switch (dwCommand)
+        {
+        case CMD_CUBE:
+            if (imageArray[0].width > maxCube || imageArray[0].height > maxCube)
+            {
+                wprintf(L"\nWARNING: Target size exceeds maximum cube dimensions for feature level (%lu)\n", maxCube);
+            }
+            break;
+
+        case CMD_VOLUME:
+            if (imageArray[0].width > maxVolume || imageArray[0].height > maxVolume || imageArray.size() > maxVolume)
+            {
+                wprintf(L"\nWARNING: Target size exceeds volume extent for feature level (%lu)\n", maxVolume);
+            }
+            break;
+
+        case CMD_ARRAY:
+            if (imageArray[0].width > maxSize || imageArray[0].height > maxSize || imageArray.size() > maxArray)
+            {
+                wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (size %lu, array %lu)\n", maxSize, maxArray);
+            }
+            break;
+
+        case CMD_CUBEARRAY:
+            if (imageArray[0].width > maxCube || imageArray[0].height > maxCube || imageArray.size() > maxArray)
+            {
+                wprintf(L"\nWARNING: Target size exceeds maximum cube dimensions for feature level (size %lu, array %lu)\n", maxCube, maxArray);
+            }
+            break;
+
+        default:
+            if (imageArray[0].width > maxSize || imageArray[0].height > maxSize)
+            {
+                wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (%lu)\n", maxSize);
+            }
+            break;
         }
 
         ScratchImage result;
