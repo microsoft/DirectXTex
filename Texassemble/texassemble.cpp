@@ -1068,7 +1068,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case CMD_V_STRIP:
                 if (_wcsicmp(ext, L".dds") == 0)
                 {
-                    hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image);
+                    hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_ALLOW_LARGE_FILES, &info, *image);
                     if (FAILED(hr))
                     {
                         wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
@@ -1095,7 +1095,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case CMD_ARRAY_STRIP:
                 if (_wcsicmp(ext, L".dds") == 0)
                 {
-                    hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image);
+                    hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_ALLOW_LARGE_FILES, &info, *image);
                     if (FAILED(hr))
                     {
                         wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
@@ -1118,7 +1118,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             default:
                 if (_wcsicmp(ext, L".dds") == 0)
                 {
-                    hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_NONE, &info, *image);
+                    hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_ALLOW_LARGE_FILES, &info, *image);
                     if (FAILED(hr))
                     {
                         wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));

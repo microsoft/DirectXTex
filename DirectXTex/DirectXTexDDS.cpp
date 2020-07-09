@@ -525,6 +525,25 @@ namespace
             metadata.SetAlphaMode(TEX_ALPHA_MODE_PREMULTIPLIED);
         }
 
+        // Check for .dds files that exceed known hardware support
+        if (!(flags & DDS_FLAGS_ALLOW_LARGE_FILES))
+        {
+            // 16k is the maximum required resource size supported by Direct3D
+            if (metadata.width > 16384u /* D3D12_REQ_TEXTURE1D_U_DIMENSION, D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION */
+                || metadata.height > 16384u /* D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION */
+                || metadata.mipLevels > 15u /* D3D12_REQ_MIP_LEVELS */)
+            {
+                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            }
+
+            // 2048 is the maximum required depth/array size supported by Direct3D
+            if (metadata.arraySize > 2048u /* D3D12_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION, D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION */
+                || metadata.depth > 2048u /* D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION */)
+            {
+                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            }
+        }
+
         return S_OK;
     }
 }
