@@ -587,7 +587,7 @@ namespace
         if (!image)
             return E_OUTOFMEMORY;
 
-        wchar_t ext[_MAX_EXT];
+        wchar_t ext[_MAX_EXT] = {};
         _wsplitpath_s(fileName, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
 
         if (_wcsicmp(ext, L".dds") == 0)
@@ -3180,7 +3180,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     wcscpy_s(szOutputFile, MAX_PATH, pValue);
 
-                    wchar_t ext[_MAX_EXT];
+                    wchar_t ext[_MAX_EXT] = {};
                     _wsplitpath_s(szOutputFile, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
 
                     fileType = LookupByName(ext, g_pExtFileTypes);
@@ -3361,8 +3361,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 if (!*szOutputFile)
                 {
-                    wchar_t ext[_MAX_EXT];
-                    wchar_t fname[_MAX_FNAME];
+                    wchar_t ext[_MAX_EXT] = {};
+                    wchar_t fname[_MAX_FNAME] = {};
                     _wsplitpath_s(pImage1->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT);
                     if (_wcsicmp(ext, L".bmp") == 0)
                     {
@@ -3656,8 +3656,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                wchar_t ext[_MAX_EXT];
-                wchar_t fname[_MAX_FNAME];
+                wchar_t ext[_MAX_EXT] = {};
+                wchar_t fname[_MAX_FNAME] = {};
                 _wsplitpath_s(pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, nullptr, 0);
 
                 wcscpy_s(ext, LookupByValue(fileType, g_pDumpFileTypes));
@@ -3680,7 +3680,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                             }
                             else
                             {
-                                wchar_t subFname[_MAX_FNAME];
+                                wchar_t subFname[_MAX_FNAME] = {};
                                 if (info.mipLevels > 1)
                                 {
                                     swprintf_s(subFname, L"%ls_slice%03zu_mip%03zu", fname, slice, mip);
