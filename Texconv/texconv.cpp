@@ -826,7 +826,9 @@ namespace
             wprintf(L"\n   <adapter>:\n");
 
             ComPtr<IDXGIAdapter> adapter;
-            for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != dxgiFactory->EnumAdapters(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
+            for (UINT adapterIndex = 0;
+                SUCCEEDED(dxgiFactory->EnumAdapters(adapterIndex, adapter.ReleaseAndGetAddressOf()));
+                ++adapterIndex)
             {
                 DXGI_ADAPTER_DESC desc;
                 if (SUCCEEDED(adapter->GetDesc(&desc)))
