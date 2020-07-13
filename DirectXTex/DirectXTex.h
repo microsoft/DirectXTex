@@ -55,6 +55,18 @@ namespace DirectX
 
     size_t __cdecl BitsPerColor(_In_ DXGI_FORMAT fmt) noexcept;
 
+    enum FORMAT_TYPE
+    {
+        FORMAT_TYPE_TYPELESS,
+        FORMAT_TYPE_FLOAT,
+        FORMAT_TYPE_UNORM,
+        FORMAT_TYPE_SNORM,
+        FORMAT_TYPE_UINT,
+        FORMAT_TYPE_SINT,
+    };
+
+    FORMAT_TYPE __cdecl FormatDataType(_In_ DXGI_FORMAT fmt) noexcept;
+
     enum CP_FLAGS : unsigned long
     {
         CP_FLAGS_NONE               = 0x0,      // Normal operation

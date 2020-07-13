@@ -2904,11 +2904,11 @@ namespace
         { DXGI_FORMAT_R10G10B10A2_UNORM,            10, CONVF_UNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { DXGI_FORMAT_R10G10B10A2_UINT,             10, CONVF_UINT | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { DXGI_FORMAT_R11G11B10_FLOAT,              10, CONVF_FLOAT | CONVF_POS_ONLY | CONVF_R | CONVF_G | CONVF_B },
-        { DXGI_FORMAT_R8G8B8A8_UNORM,               8, CONVF_UNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,          8, CONVF_UNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_R8G8B8A8_UINT,                8, CONVF_UINT | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_R8G8B8A8_SNORM,               8, CONVF_SNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_R8G8B8A8_SINT,                8, CONVF_SINT | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_R8G8B8A8_UNORM,                8, CONVF_UNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,           8, CONVF_UNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_R8G8B8A8_UINT,                 8, CONVF_UINT | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_R8G8B8A8_SNORM,                8, CONVF_SNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_R8G8B8A8_SINT,                 8, CONVF_SINT | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { DXGI_FORMAT_R16G16_FLOAT,                 16, CONVF_FLOAT | CONVF_R | CONVF_G },
         { DXGI_FORMAT_R16G16_UNORM,                 16, CONVF_UNORM | CONVF_R | CONVF_G },
         { DXGI_FORMAT_R16G16_UINT,                  16, CONVF_UINT | CONVF_R | CONVF_G },
@@ -2919,53 +2919,53 @@ namespace
         { DXGI_FORMAT_R32_UINT,                     32, CONVF_UINT | CONVF_R },
         { DXGI_FORMAT_R32_SINT,                     32, CONVF_SINT | CONVF_R },
         { DXGI_FORMAT_D24_UNORM_S8_UINT,            32, CONVF_UNORM | CONVF_DEPTH | CONVF_STENCIL },
-        { DXGI_FORMAT_R8G8_UNORM,                   8, CONVF_UNORM | CONVF_R | CONVF_G },
-        { DXGI_FORMAT_R8G8_UINT,                    8, CONVF_UINT | CONVF_R | CONVF_G },
-        { DXGI_FORMAT_R8G8_SNORM,                   8, CONVF_SNORM | CONVF_R | CONVF_G },
-        { DXGI_FORMAT_R8G8_SINT,                    8, CONVF_SINT | CONVF_R | CONVF_G },
+        { DXGI_FORMAT_R8G8_UNORM,                    8, CONVF_UNORM | CONVF_R | CONVF_G },
+        { DXGI_FORMAT_R8G8_UINT,                     8, CONVF_UINT | CONVF_R | CONVF_G },
+        { DXGI_FORMAT_R8G8_SNORM,                    8, CONVF_SNORM | CONVF_R | CONVF_G },
+        { DXGI_FORMAT_R8G8_SINT,                     8, CONVF_SINT | CONVF_R | CONVF_G },
         { DXGI_FORMAT_R16_FLOAT,                    16, CONVF_FLOAT | CONVF_R },
         { DXGI_FORMAT_D16_UNORM,                    16, CONVF_UNORM | CONVF_DEPTH },
         { DXGI_FORMAT_R16_UNORM,                    16, CONVF_UNORM | CONVF_R },
         { DXGI_FORMAT_R16_UINT,                     16, CONVF_UINT | CONVF_R },
         { DXGI_FORMAT_R16_SNORM,                    16, CONVF_SNORM | CONVF_R },
         { DXGI_FORMAT_R16_SINT,                     16, CONVF_SINT | CONVF_R },
-        { DXGI_FORMAT_R8_UNORM,                     8, CONVF_UNORM | CONVF_R },
-        { DXGI_FORMAT_R8_UINT,                      8, CONVF_UINT | CONVF_R },
-        { DXGI_FORMAT_R8_SNORM,                     8, CONVF_SNORM | CONVF_R },
-        { DXGI_FORMAT_R8_SINT,                      8, CONVF_SINT | CONVF_R },
-        { DXGI_FORMAT_A8_UNORM,                     8, CONVF_UNORM | CONVF_A },
-        { DXGI_FORMAT_R1_UNORM,                     1, CONVF_UNORM | CONVF_R },
-        { DXGI_FORMAT_R9G9B9E5_SHAREDEXP,           9, CONVF_FLOAT | CONVF_SHAREDEXP | CONVF_POS_ONLY | CONVF_R | CONVF_G | CONVF_B },
-        { DXGI_FORMAT_R8G8_B8G8_UNORM,              8, CONVF_UNORM | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
-        { DXGI_FORMAT_G8R8_G8B8_UNORM,              8, CONVF_UNORM | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
-        { DXGI_FORMAT_BC1_UNORM,                    8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_BC1_UNORM_SRGB,               8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_BC2_UNORM,                    8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_BC2_UNORM_SRGB,               8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_BC3_UNORM,                    8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_BC3_UNORM_SRGB,               8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_BC4_UNORM,                    8, CONVF_UNORM | CONVF_BC | CONVF_R },
-        { DXGI_FORMAT_BC4_SNORM,                    8, CONVF_SNORM | CONVF_BC | CONVF_R },
-        { DXGI_FORMAT_BC5_UNORM,                    8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G },
-        { DXGI_FORMAT_BC5_SNORM,                    8, CONVF_SNORM | CONVF_BC | CONVF_R | CONVF_G },
-        { DXGI_FORMAT_B5G6R5_UNORM,                 5, CONVF_UNORM | CONVF_R | CONVF_G | CONVF_B },
-        { DXGI_FORMAT_B5G5R5A1_UNORM,               5, CONVF_UNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_B8G8R8A8_UNORM,               8, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_B8G8R8X8_UNORM,               8, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B },
+        { DXGI_FORMAT_R8_UNORM,                      8, CONVF_UNORM | CONVF_R },
+        { DXGI_FORMAT_R8_UINT,                       8, CONVF_UINT | CONVF_R },
+        { DXGI_FORMAT_R8_SNORM,                      8, CONVF_SNORM | CONVF_R },
+        { DXGI_FORMAT_R8_SINT,                       8, CONVF_SINT | CONVF_R },
+        { DXGI_FORMAT_A8_UNORM,                      8, CONVF_UNORM | CONVF_A },
+        { DXGI_FORMAT_R1_UNORM,                      1, CONVF_UNORM | CONVF_R },
+        { DXGI_FORMAT_R9G9B9E5_SHAREDEXP,            9, CONVF_FLOAT | CONVF_SHAREDEXP | CONVF_POS_ONLY | CONVF_R | CONVF_G | CONVF_B },
+        { DXGI_FORMAT_R8G8_B8G8_UNORM,               8, CONVF_UNORM | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
+        { DXGI_FORMAT_G8R8_G8B8_UNORM,               8, CONVF_UNORM | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
+        { DXGI_FORMAT_BC1_UNORM,                     8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_BC1_UNORM_SRGB,                8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_BC2_UNORM,                     8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_BC2_UNORM_SRGB,                8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_BC3_UNORM,                     8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_BC3_UNORM_SRGB,                8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_BC4_UNORM,                     8, CONVF_UNORM | CONVF_BC | CONVF_R },
+        { DXGI_FORMAT_BC4_SNORM,                     8, CONVF_SNORM | CONVF_BC | CONVF_R },
+        { DXGI_FORMAT_BC5_UNORM,                     8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G },
+        { DXGI_FORMAT_BC5_SNORM,                     8, CONVF_SNORM | CONVF_BC | CONVF_R | CONVF_G },
+        { DXGI_FORMAT_B5G6R5_UNORM,                  5, CONVF_UNORM | CONVF_R | CONVF_G | CONVF_B },
+        { DXGI_FORMAT_B5G5R5A1_UNORM,                5, CONVF_UNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_B8G8R8A8_UNORM,                8, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_B8G8R8X8_UNORM,                8, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B },
         { DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM,   10, CONVF_UNORM | CONVF_XR | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,          8, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_B8G8R8X8_UNORM_SRGB,          8, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B },
+        { DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,           8, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_B8G8R8X8_UNORM_SRGB,           8, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B },
         { DXGI_FORMAT_BC6H_UF16,                    16, CONVF_FLOAT | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { DXGI_FORMAT_BC6H_SF16,                    16, CONVF_FLOAT | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_BC7_UNORM,                    8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_BC7_UNORM_SRGB,               8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_AYUV,                         8, CONVF_UNORM | CONVF_YUV | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_BC7_UNORM,                     8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_BC7_UNORM_SRGB,                8, CONVF_UNORM | CONVF_BC | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_AYUV,                          8, CONVF_UNORM | CONVF_YUV | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { DXGI_FORMAT_Y410,                         10, CONVF_UNORM | CONVF_YUV | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { DXGI_FORMAT_Y416,                         16, CONVF_UNORM | CONVF_YUV | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
-        { DXGI_FORMAT_YUY2,                         8, CONVF_UNORM | CONVF_YUV | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
+        { DXGI_FORMAT_YUY2,                          8, CONVF_UNORM | CONVF_YUV | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
         { DXGI_FORMAT_Y210,                         10, CONVF_UNORM | CONVF_YUV | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
         { DXGI_FORMAT_Y216,                         16, CONVF_UNORM | CONVF_YUV | CONVF_PACKED | CONVF_R | CONVF_G | CONVF_B },
-        { DXGI_FORMAT_B4G4R4A4_UNORM,               4, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
+        { DXGI_FORMAT_B4G4R4A4_UNORM,                4, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT,  10, CONVF_FLOAT | CONVF_POS_ONLY | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT,  10, CONVF_FLOAT | CONVF_POS_ONLY | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM,10, CONVF_SNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
@@ -5151,4 +5151,34 @@ HRESULT DirectX::ConvertToSinglePlane(
     }
 
     return S_OK;
+}
+
+
+//-------------------------------------------------------------------------------------
+// Returns the data type of a DXGI_FORMAT
+//-------------------------------------------------------------------------------------
+DirectX::FORMAT_TYPE DirectX::FormatDataType(_In_ DXGI_FORMAT fmt) noexcept
+{
+    auto cflags = _GetConvertFlags(fmt);
+
+    switch (cflags & (CONVF_FLOAT | CONVF_UNORM | CONVF_UINT | CONVF_SNORM | CONVF_SINT))
+    {
+    case CONVF_FLOAT:
+        return FORMAT_TYPE_FLOAT;
+
+    case CONVF_UNORM:
+        return FORMAT_TYPE_UNORM;
+
+    case CONVF_UINT:
+        return FORMAT_TYPE_UINT;
+
+    case CONVF_SNORM:
+        return FORMAT_TYPE_SNORM;
+
+    case CONVF_SINT:
+        return FORMAT_TYPE_SINT;
+
+    default:
+        return FORMAT_TYPE_TYPELESS;
+    }
 }
