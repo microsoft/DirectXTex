@@ -109,6 +109,7 @@ namespace
         OPT_X2_BIAS,
         OPT_PRESERVE_ALPHA_COVERAGE,
         OPT_INVERT_Y,
+        OPT_RECONSTRUCT_Z,
         OPT_ROTATE_COLOR,
         OPT_PAPER_WHITE_NITS,
         OPT_BCNONMULT4FIX,
@@ -193,9 +194,10 @@ namespace
         { L"tonemap",       OPT_TONEMAP },
         { L"x2bias",        OPT_X2_BIAS },
         { L"inverty",       OPT_INVERT_Y },
+        { L"reconstructz",  OPT_RECONSTRUCT_Z },
         { L"rotatecolor",   OPT_ROTATE_COLOR },
         { L"nits",          OPT_PAPER_WHITE_NITS },
-        { L"fixbc4x4",      OPT_BCNONMULT4FIX},
+        { L"fixbc4x4",      OPT_BCNONMULT4FIX },
         { nullptr,          0 }
     };
 
@@ -802,6 +804,7 @@ namespace
         wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
         wprintf(L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n");
         wprintf(L"   -inverty            Invert Y (i.e. green) channel values\n");
+        wprintf(L"   -reconstructz       Rebuild Z (blue) channel assuming X/Y are normals\n");
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -2577,6 +2580,55 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED [inverty] (%x)\n", static_cast<unsigned int>(hr));
+                return 1;
+            }
+
+#ifndef NDEBUG
+            auto& tinfo = timage->GetMetadata();
+#endif
+
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.format == tinfo.format);
+            assert(info.dimension == tinfo.dimension);
+
+            image.swap(timage);
+            cimage.reset();
+        }
+
+        // --- Reconstruct Z Channel ---------------------------------------------------
+        if (dwOptions & (DWORD64(1) << OPT_RECONSTRUCT_Z))
+        {
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
+            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+            {
+                static const XMVECTORU32 s_selectz = { { { XM_SELECT_0, XM_SELECT_0, XM_SELECT_1, XM_SELECT_0 } } };
+
+                UNREFERENCED_PARAMETER(y);
+
+                for (size_t j = 0; j < w; ++j)
+                {
+                    XMVECTOR value = inPixels[j];
+
+                    XMVECTOR z = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(value, value)));
+
+                    outPixels[j] = XMVectorSelect(value, z, s_selectz);
+                }
+            }, *timage);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [reconstructz] (%x)\n", static_cast<unsigned int>(hr));
                 return 1;
             }
 
