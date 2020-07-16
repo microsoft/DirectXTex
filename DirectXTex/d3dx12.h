@@ -2424,9 +2424,9 @@ struct D3DX12_MESH_SHADER_PIPELINE_STATE_DESC
     D3D12_PIPELINE_STATE_FLAGS    Flags;
 };
 
-// CD3DX12_PIPELINE_STATE_STREAM2 Works on Vibranium+ (where there is a new mesh shader pipeline).
-// Use CD3DX12_PIPELINE_STATE_STREAM1 for RS3+ (where there is a new view instancing subobject).
-// Use CD3DX12_PIPELINE_STATE_STREAM for RS2+ support.
+// CD3DX12_PIPELINE_STATE_STREAM2 Works on OS Build 19041+ (where there is a new mesh shader pipeline).
+// Use CD3DX12_PIPELINE_STATE_STREAM1 for OS Build 16299+ (where there is a new view instancing subobject).
+// Use CD3DX12_PIPELINE_STATE_STREAM for OS Build 15063+ support.
 struct CD3DX12_PIPELINE_STATE_STREAM2
 {
     CD3DX12_PIPELINE_STATE_STREAM2() = default;
@@ -2545,8 +2545,8 @@ struct CD3DX12_PIPELINE_STATE_STREAM2
 #endif // NTDDI_WIN10_VB
 
 #if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
-// CD3DX12_PIPELINE_STATE_STREAM1 Works on RS3+ (where there is a new view instancing subobject).
-// Use CD3DX12_PIPELINE_STATE_STREAM for RS2+ support.
+// CD3DX12_PIPELINE_STATE_STREAM1 Works on OS Build 16299+ (where there is a new view instancing subobject).
+// Use CD3DX12_PIPELINE_STATE_STREAM for OS Build 15063+ support.
 struct CD3DX12_PIPELINE_STATE_STREAM1
 {
     CD3DX12_PIPELINE_STATE_STREAM1() = default;
@@ -2721,7 +2721,7 @@ struct CD3DX12_PIPELINE_MESH_STATE_STREAM
 };
 #endif // NTDDI_WIN10_VB
 
-// CD3DX12_PIPELINE_STATE_STREAM works on RS2+ but does not support new subobject(s) added in RS3+.
+// CD3DX12_PIPELINE_STATE_STREAM works on OS Build 15063+ but does not support new subobject(s) added in OS Build 16299+.
 // See CD3DX12_PIPELINE_STATE_STREAM1 for instance.
 struct CD3DX12_PIPELINE_STATE_STREAM
 {
