@@ -19,6 +19,9 @@
 *.nupkg
 .vs
 Bin
+packages
+/DirectXTex/Shaders/Compiled/*.inc
+/DirectXTex/Shaders/Compiled/*.pdb
 /ipch
 Debug
 Profile
