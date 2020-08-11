@@ -185,3 +185,5 @@ if(WIN32)
         target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0601)
     endif()
 endif()
+
+set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT texconv)
