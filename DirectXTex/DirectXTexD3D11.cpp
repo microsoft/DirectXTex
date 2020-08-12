@@ -11,7 +11,9 @@
 
 #include "DirectXTexP.h"
 
-#if !defined(_XBOX_ONE) || !defined(_TITLE)
+#ifdef _GAMING_XBOX
+#error This module is not supported for GDK
+#elif !defined(_XBOX_ONE) || !defined(_TITLE)
 #include <d3d10.h>
 #endif
 

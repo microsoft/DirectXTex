@@ -190,11 +190,11 @@ namespace
             return false;
         }
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
         if (format == DXGI_FORMAT_R16G16B16A16_FLOAT
             || format == DXGI_FORMAT_R16_FLOAT)
         {
-            // Use non-WIC code paths as these conversions are not supported by Xbox One XDK
+            // Use non-WIC code paths as these conversions are not supported by Xbox version of WIC
             return false;
         }
 #endif

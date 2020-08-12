@@ -11,14 +11,14 @@
 
 #include "DirectXTexP.h"
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
-static_assert(XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT == DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT, "Xbox One XDK mismatch detected");
-static_assert(XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT == DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT, "Xbox One XDK mismatch detected");
-static_assert(XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT == DXGI_FORMAT_D16_UNORM_S8_UINT, "Xbox One XDK mismatch detected");
-static_assert(XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS == DXGI_FORMAT_R16_UNORM_X8_TYPELESS, "Xbox One XDK mismatch detected");
-static_assert(XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT == DXGI_FORMAT_X16_TYPELESS_G8_UINT, "Xbox One XDK mismatch detected");
-static_assert(XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM == DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM, "Xbox One XDK mismatch detected");
-static_assert(XBOX_DXGI_FORMAT_R4G4_UNORM == DXGI_FORMAT_R4G4_UNORM, "Xbox One XDK mismatch detected");
+#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+static_assert(XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT == DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT, "Xbox mismatch detected");
+static_assert(XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT == DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT, "Xbox mismatch detected");
+static_assert(XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT == DXGI_FORMAT_D16_UNORM_S8_UINT, "Xbox mismatch detected");
+static_assert(XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS == DXGI_FORMAT_R16_UNORM_X8_TYPELESS, "Xbox mismatch detected");
+static_assert(XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT == DXGI_FORMAT_X16_TYPELESS_G8_UINT, "Xbox mismatch detected");
+static_assert(XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM == DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM, "Xbox mismatch detected");
+static_assert(XBOX_DXGI_FORMAT_R4G4_UNORM == DXGI_FORMAT_R4G4_UNORM, "Xbox mismatch detected");
 #endif
 
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN10)

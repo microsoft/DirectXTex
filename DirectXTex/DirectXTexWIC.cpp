@@ -334,7 +334,7 @@ namespace
                         sRGB = (flags & WIC_FLAGS_DEFAULT_SRGB) != 0;
                     }
                 }
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
                 else if (memcmp(&containerFormat, &GUID_ContainerFormatJpeg, sizeof(GUID)) == 0)
                 {
                     if (SUCCEEDED(metareader->GetMetadataByName(L"/app1/ifd/exif/{ushort=40961}", &value)) && value.vt == VT_UI2)
@@ -642,7 +642,7 @@ namespace
                     (void)metawriter->RemoveMetadataByName(L"/sRGB/RenderingIntent");
                 }
             }
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
             else if (memcmp(&containerFormat, &GUID_ContainerFormatJpeg, sizeof(GUID)) == 0)
             {
                 // Set Software name

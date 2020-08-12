@@ -91,7 +91,9 @@
 
 #include <Windows.h>
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef _GAMING_XBOX
+#include <d3d12_x.h>
+#elif defined(_XBOX_ONE) && defined(_TITLE)
 #include <d3d12_x.h>
 #include <d3d11_x.h>
 #elif (_WIN32_WINNT >= _WIN32_WINNT_WIN10)
