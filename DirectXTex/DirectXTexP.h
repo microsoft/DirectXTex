@@ -91,7 +91,9 @@
 
 #include <Windows.h>
 
-#ifdef _GAMING_XBOX
+#ifdef _GAMING_XBOX_SCARLETT
+#include <d3d12_xs.h>
+#elif defined(_GAMING_XBOX)
 #include <d3d12_x.h>
 #elif defined(_XBOX_ONE) && defined(_TITLE)
 #include <d3d12_x.h>

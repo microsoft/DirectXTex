@@ -16,7 +16,9 @@
 #pragma clang diagnostic ignored "-Wsign-conversion"
 #endif
 
-#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+#ifdef _GAMING_XBOX_SCARLETT
+#include <d3dx12_xs.h>
+#elif (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
 #include "d3dx12_x.h"
 #else
 #define D3DX12_NO_STATE_OBJECT_HELPERS
