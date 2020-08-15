@@ -6,6 +6,15 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### August 15, 2020
+* Added ``DDS_FLAGS_ALLOW_LARGE_FILES`` flag for DDS loader to allow textures with dimensions that are too big for Direct3D
+* Added ``FormatDataType`` function
+* Fixed bug with DX12 ``Capture`` with 'small alignment' textures
+* Code review and project updates
+* Added GDK projects
+* texassemble: updated with ``-fl`` switch for feature level based warning
+* texconv: updated with ``-reconstructz`` switch for BC5 compressed normal map view conversion
+
 ### July 2, 2020
 * Minor warning fixes for VS 2019 (16.7)
 * CMake updates
