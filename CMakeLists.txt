@@ -102,18 +102,18 @@ endif()
 add_executable(texassemble
     Texassemble/texassemble.cpp
     Texassemble/AnimatedGif.cpp)
-target_link_libraries(texassemble ${PROJECT_NAME})
+target_link_libraries(texassemble ${PROJECT_NAME} version.lib)
 source_group(texassemble REGULAR_EXPRESSION Texassemble/*.*)
 
 add_executable(texconv
     Texconv/texconv.cpp
     Texconv/ExtendedBMP.cpp
     Texconv/PortablePixMap.cpp)
-target_link_libraries(texconv ${PROJECT_NAME})
+target_link_libraries(texconv ${PROJECT_NAME} version.lib)
 source_group(texconv REGULAR_EXPRESSION Texconv/*.*)
 
 add_executable(texdiag Texdiag/texdiag.cpp)
-target_link_libraries(texdiag ${PROJECT_NAME})
+target_link_libraries(texdiag ${PROJECT_NAME} version.lib)
 source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
 
 if(MSVC)
