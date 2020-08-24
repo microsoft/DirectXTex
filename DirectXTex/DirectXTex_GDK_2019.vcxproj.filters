@@ -20,9 +20,6 @@
     <ClInclude Include="BC.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="BCDirectCompute.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="DDS.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -33,6 +30,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="scoped.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="d3dx12.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -61,13 +61,7 @@
     <ClCompile Include="BC6HBC7.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BCDirectCompute.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DirectXTexCompress.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DirectXTexCompressGPU.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DirectXTexConvert.cpp">
