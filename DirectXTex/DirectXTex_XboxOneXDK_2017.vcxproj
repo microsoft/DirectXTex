@@ -20,6 +20,7 @@
     <ClInclude Include="DDS.h" />
     <ClInclude Include="DirectXTex.h" />
     <ClInclude Include="DirectXTexP.h" />
+    <ClInclude Include="DirectXTexXbox.h" />
     <ClInclude Include="filters.h" />
     <ClInclude Include="scoped.h" />
   </ItemGroup>
@@ -53,6 +54,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="DirectXTexWIC.cpp" />
+    <ClCompile Include="DirectXTexXboxD3D11X.cpp" />
+    <ClCompile Include="DirectXTexXboxD3D12X.cpp" />
+    <ClCompile Include="DirectXTexXboxDDS.cpp" />
+    <ClCompile Include="DirectXTexXboxDetile.cpp" />
+    <ClCompile Include="DirectXTexXboxImage.cpp" />
+    <ClCompile Include="DirectXTexXboxTile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\BC6HEncode.hlsl">
