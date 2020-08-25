@@ -12,7 +12,7 @@
 #include "DirectXTexXbox.h"
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
-#error This module only supports Xbox One exclusive apps
+#error This module only supports Xbox exclusive apps
 #endif
 
 using namespace Xbox;

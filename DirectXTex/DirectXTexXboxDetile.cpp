@@ -28,10 +28,8 @@ namespace
         size_t w,
         bool packed)
     {
-        auto& mip = layout.Plane[0].MipLayout[level];
-
-        const uint8_t* sptr = xbox.GetPointer() + mip.OffsetBytes;
-        const uint8_t* endPtr = sptr + mip.SizeBytes;
+        const uint8_t* sptr = xbox.GetPointer();
+        const uint8_t* endPtr = sptr + layout.SizeBytes;
 
         for (uint32_t item = 0; item < nimages; ++item)
         {
@@ -52,7 +50,7 @@ namespace
                 if (offset == size_t(-1))
                     return E_FAIL;
 
-                const uint8_t* src = sptr + offset - mip.OffsetBytes;
+                const uint8_t* src = sptr + offset;
 
                 if ((src + bpp) > endPtr)
                     return E_FAIL;
@@ -81,10 +79,8 @@ namespace
         size_t h,
         bool packed)
     {
-        auto& mip = layout.Plane[0].MipLayout[level];
-
-        const uint8_t* sptr = xbox.GetPointer() + mip.OffsetBytes;
-        const uint8_t* endPtr = sptr + mip.SizeBytes;
+        const uint8_t* sptr = xbox.GetPointer();
+        const uint8_t* endPtr = sptr + layout.SizeBytes;
 
         for (uint32_t item = 0; item < nimages; ++item)
         {
@@ -109,7 +105,7 @@ namespace
                     if (offset == size_t(-1))
                         return E_FAIL;
 
-                    const uint8_t* src = sptr + offset - mip.OffsetBytes;
+                    const uint8_t* src = sptr + offset;
 
                     if ((src + bpp) > endPtr)
                         return E_FAIL;
@@ -141,10 +137,8 @@ namespace
         size_t h,
         bool packed)
     {
-        auto& mip = layout.Plane[0].MipLayout[level];
-
-        const uint8_t* sptr = xbox.GetPointer() + mip.OffsetBytes;
-        const uint8_t* endPtr = sptr + mip.SizeBytes;
+        const uint8_t* sptr = xbox.GetPointer();
+        const uint8_t* endPtr = sptr + layout.SizeBytes;
 
         uint8_t* dptr = result.pixels;
 
@@ -162,7 +156,7 @@ namespace
                     if (offset == size_t(-1))
                         return E_FAIL;
 
-                    const uint8_t* src = sptr + offset - mip.OffsetBytes;
+                    const uint8_t* src = sptr + offset;
 
                     if ((src + bpp) > endPtr)
                         return E_FAIL;
@@ -208,18 +202,20 @@ namespace
 
         assert(!IsCompressed(format));
 
+        bool byelement = IsTypeless(format);
+
         if (IsPacked(format))
         {
             size_t bpp = (BitsPerPixel(format) + 7) / 8;
 
-            // XG incorrectly returns 2 instead of 4 here for layout.Plane[0].BytesPerElement
+            // XG (XboxOne) incorrectly returns 2 instead of 4 here for layout.Plane[0].BytesPerElement
 
             size_t w = result[0]->width;
             assert(((w + 1) / 2) == layout.Plane[0].MipLayout[level].WidthElements);
 
             return DetileByElement1D(xbox, level, computer, layout, result, nimages, bpp, w, true);
         }
-        else if (IsTypeless(format))
+        else if (byelement)
         {
             //--- Typeless is done with per-element copy ----------------------------------
             size_t bpp = (BitsPerPixel(format) + 7) / 8;
@@ -315,6 +311,8 @@ namespace
 
         assert(format == xbox.GetMetadata().format);
 
+        bool byelement = IsTypeless(format);
+
         if (IsCompressed(format))
         {
             //--- BC formats use per-block copy -------------------------------------------
@@ -338,7 +336,7 @@ namespace
         {
             size_t bpp = (BitsPerPixel(format) + 7) / 8;
 
-            // XG incorrectly returns 2 instead of 4 here for layout.Plane[0].BytesPerElement
+            // XG (XboxOne) incorrectly returns 2 instead of 4 here for layout.Plane[0].BytesPerElement
 
             size_t w = result[0]->width;
             size_t h = result[0]->height;
@@ -347,7 +345,7 @@ namespace
 
             return DetileByElement2D(xbox, level, computer, layout, result, nimages, bpp, w, h, true);
         }
-        else if (IsTypeless(format))
+        else if (byelement)
         {
             //--- Typeless is done with per-element copy ----------------------------------
             size_t bpp = (BitsPerPixel(format) + 7) / 8;
@@ -355,6 +353,7 @@ namespace
 
             size_t w = result[0]->width;
             size_t h = result[0]->height;
+
             assert(w == layout.Plane[0].MipLayout[level].WidthElements);
             assert(h == layout.Plane[0].MipLayout[level].HeightElements);
 
@@ -446,6 +445,8 @@ namespace
 
         assert(layout.Planes == 1);
 
+        bool byelement = IsTypeless(result.format);
+
         if (IsCompressed(result.format))
         {
             //--- BC formats use per-block copy -------------------------------------------
@@ -469,14 +470,14 @@ namespace
         {
             size_t bpp = (BitsPerPixel(result.format) + 7) / 8;
 
-            // XG incorrectly returns 2 instead of 4 here for layout.Plane[0].BytesPerElement
+            // XG (XboxOne) incorrectly returns 2 instead of 4 here for layout.Plane[0].BytesPerElement
 
             assert(((result.width + 1) / 2) == layout.Plane[0].MipLayout[level].WidthElements);
             assert(result.height == layout.Plane[0].MipLayout[level].HeightElements);
 
             return DetileByElement3D(xbox, level, slices, computer, layout, result, bpp, result.width, result.height, true);
         }
-        else if (IsTypeless(result.format))
+        else if (byelement)
         {
             //--- Typeless is done with per-element copy ----------------------------------
             size_t bpp = (BitsPerPixel(result.format) + 7) / 8;
