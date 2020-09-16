@@ -47,7 +47,7 @@ namespace
     //-------------------------------------------------------------------------------------
     struct WICTranslate
     {
-        GUID                wic;
+        const GUID&         wic;
         D3DFORMAT           format;
     };
 
@@ -80,8 +80,8 @@ namespace
 
     struct WICConvert
     {
-        GUID        source;
-        GUID        target;
+        const GUID&        source;
+        const GUID&        target;
     };
 
     const WICConvert g_WICConvert[] =
