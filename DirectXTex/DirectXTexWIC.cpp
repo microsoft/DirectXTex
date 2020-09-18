@@ -79,12 +79,12 @@ namespace
 
     struct WICConvert
     {
-        GUID            source;
-        GUID            target;
+        const GUID&     source;
+        const GUID&     target;
         TEX_ALPHA_MODE  alphaMode;
     };
 
-    const WICConvert g_WICConvert[] =
+    constexpr WICConvert g_WICConvert[] =
     {
         // Directly support the formats listed in XnaTexUtil::g_WICFormats, so no conversion required
         // Note target GUID in this conversion table must be one of those directly supported formats.

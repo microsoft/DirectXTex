@@ -37,12 +37,12 @@ namespace
     //-------------------------------------------------------------------------------------
     struct WICTranslate
     {
-        GUID        wic;
+        const GUID& wic;
         DXGI_FORMAT format;
         bool        srgb;
     };
 
-    const WICTranslate g_WICFormats[] =
+    constexpr WICTranslate g_WICFormats[] =
     {
         { GUID_WICPixelFormat128bppRGBAFloat,       DXGI_FORMAT_R32G32B32A32_FLOAT,         false },
 
