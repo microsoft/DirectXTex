@@ -196,7 +196,10 @@ namespace DirectX
     {
         TGA_FLAGS_NONE                 = 0x0,
 
-        TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA = 0x1,
+        TGA_FLAGS_BGR                  = 0x1,
+            // 24bpp files are returned as BGRX; 32bpp files are returned as BGRA
+
+        TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA = 0x2,
             // If the loaded image has an all zero alpha channel, normally we assume it should be opaque. This flag leaves it alone.
     };
 
