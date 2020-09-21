@@ -192,6 +192,14 @@ namespace DirectX
             // Enables the loader to read large dimension .dds files (i.e. greater than known hardware requirements)
     };
 
+    enum TGA_FLAGS : unsigned long
+    {
+        TGA_FLAGS_NONE                 = 0x0,
+
+        TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA = 0x1,
+            // If the loaded image has an all zero alpha channel, normally we assume it should be opaque. This flag leaves it alone.
+    };
+
     enum WIC_FLAGS : unsigned long
     {
         WIC_FLAGS_NONE                  = 0x0,
@@ -254,9 +262,11 @@ namespace DirectX
 
     HRESULT __cdecl GetMetadataFromTGAMemory(
         _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_ TGA_FLAGS flags,
         _Out_ TexMetadata& metadata) noexcept;
     HRESULT __cdecl GetMetadataFromTGAFile(
         _In_z_ const wchar_t* szFile,
+        _In_ TGA_FLAGS flags,
         _Out_ TexMetadata& metadata) noexcept;
 
     HRESULT __cdecl GetMetadataFromWICMemory(
@@ -270,6 +280,14 @@ namespace DirectX
         _In_ WIC_FLAGS flags,
         _Out_ TexMetadata& metadata,
         _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
+
+    // Compatability helpers
+    HRESULT __cdecl GetMetadataFromTGAMemory(
+        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _Out_ TexMetadata& metadata) noexcept;
+    HRESULT __cdecl GetMetadataFromTGAFile(
+        _In_z_ const wchar_t* szFile,
+        _Out_ TexMetadata& metadata) noexcept;
 
     //---------------------------------------------------------------------------------
     // Bitmap image container
@@ -401,13 +419,19 @@ namespace DirectX
     // TGA operations
     HRESULT __cdecl LoadFromTGAMemory(
         _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_ TGA_FLAGS flags,
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
     HRESULT __cdecl LoadFromTGAFile(
         _In_z_ const wchar_t* szFile,
+        _In_ TGA_FLAGS flags,
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
 
-    HRESULT __cdecl SaveToTGAMemory(_In_ const Image& image, _Out_ Blob& blob, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
-    HRESULT __cdecl SaveToTGAFile(_In_ const Image& image, _In_z_ const wchar_t* szFile, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
+    HRESULT __cdecl SaveToTGAMemory(_In_ const Image& image,
+        _In_ TGA_FLAGS flags,
+        _Out_ Blob& blob, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
+    HRESULT __cdecl SaveToTGAFile(_In_ const Image& image,
+        _In_ TGA_FLAGS flags,
+        _In_z_ const wchar_t* szFile, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
 
     // WIC operations
     HRESULT __cdecl LoadFromWICMemory(
@@ -439,6 +463,17 @@ namespace DirectX
         _In_ WIC_FLAGS flags, _In_ REFGUID guidContainerFormat,
         _In_z_ const wchar_t* szFile, _In_opt_ const GUID* targetFormat = nullptr,
         _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
+
+    // Compatability helpers
+    HRESULT __cdecl LoadFromTGAMemory(
+        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
+    HRESULT __cdecl LoadFromTGAFile(
+        _In_z_ const wchar_t* szFile,
+        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
+
+    HRESULT __cdecl SaveToTGAMemory(_In_ const Image& image, _Out_ Blob& blob, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
+    HRESULT __cdecl SaveToTGAFile(_In_ const Image& image, _In_z_ const wchar_t* szFile, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
 
     //---------------------------------------------------------------------------------
     // Texture conversion, resizing, mipmap generation, and block compression

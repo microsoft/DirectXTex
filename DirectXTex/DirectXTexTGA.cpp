@@ -275,6 +275,7 @@ namespace
     HRESULT UncompressPixels(
         _In_reads_bytes_(size) const void* pSource,
         size_t size,
+        TGA_FLAGS flags,
         _In_ const Image* image,
         _In_ uint32_t convFlags) noexcept
     {
@@ -444,7 +445,7 @@ namespace
             }
 
             // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0)
+            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
             {
                 opaquealpha = true;
                 hr = SetAlphaChannelToOpaque(image);
@@ -589,7 +590,7 @@ namespace
             }
 
             // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0)
+            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
             {
                 opaquealpha = true;
                 hr = SetAlphaChannelToOpaque(image);
@@ -618,6 +619,7 @@ namespace
     HRESULT CopyPixels(
         _In_reads_bytes_(size) const void* pSource,
         size_t size,
+        TGA_FLAGS flags,
         _In_ const Image* image,
         _In_ uint32_t convFlags) noexcept
     {
@@ -702,7 +704,7 @@ namespace
             }
 
             // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0)
+            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
             {
                 opaquealpha = true;
                 hr = SetAlphaChannelToOpaque(image);
@@ -770,7 +772,7 @@ namespace
             }
 
             // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0)
+            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
             {
                 opaquealpha = true;
                 hr = SetAlphaChannelToOpaque(image);
@@ -980,6 +982,7 @@ _Use_decl_annotations_
 HRESULT DirectX::GetMetadataFromTGAMemory(
     const void* pSource,
     size_t size,
+    TGA_FLAGS /*flags*/,
     TexMetadata& metadata) noexcept
 {
     if (!pSource || size == 0)
@@ -990,7 +993,7 @@ HRESULT DirectX::GetMetadataFromTGAMemory(
 }
 
 _Use_decl_annotations_
-HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TexMetadata& metadata) noexcept
+HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS /*flags*/, TexMetadata& metadata) noexcept
 {
     if (!szFile)
         return E_INVALIDARG;
@@ -1045,6 +1048,7 @@ _Use_decl_annotations_
 HRESULT DirectX::LoadFromTGAMemory(
     const void* pSource,
     size_t size,
+    TGA_FLAGS flags,
     TexMetadata* metadata,
     ScratchImage& image) noexcept
 {
@@ -1075,11 +1079,11 @@ HRESULT DirectX::LoadFromTGAMemory(
 
     if (convFlags & CONV_FLAGS_RLE)
     {
-        hr = UncompressPixels(pPixels, remaining, image.GetImage(0, 0, 0), convFlags);
+        hr = UncompressPixels(pPixels, remaining, flags, image.GetImage(0, 0, 0), convFlags);
     }
     else
     {
-        hr = CopyPixels(pPixels, remaining, image.GetImage(0, 0, 0), convFlags);
+        hr = CopyPixels(pPixels, remaining, flags, image.GetImage(0, 0, 0), convFlags);
     }
 
     if (FAILED(hr))
@@ -1122,6 +1126,7 @@ HRESULT DirectX::LoadFromTGAMemory(
 _Use_decl_annotations_
 HRESULT DirectX::LoadFromTGAFile(
     const wchar_t* szFile,
+    TGA_FLAGS flags,
     TexMetadata* metadata,
     ScratchImage& image) noexcept
 {
@@ -1333,7 +1338,7 @@ HRESULT DirectX::LoadFromTGAFile(
             }
 
             // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0)
+            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
             {
                 opaquealpha = true;
                 hr = SetAlphaChannelToOpaque(img);
@@ -1377,11 +1382,11 @@ HRESULT DirectX::LoadFromTGAFile(
 
         if (convFlags & CONV_FLAGS_RLE)
         {
-            hr = UncompressPixels(temp.get(), remaining, image.GetImage(0, 0, 0), convFlags);
+            hr = UncompressPixels(temp.get(), remaining, flags, image.GetImage(0, 0, 0), convFlags);
         }
         else
         {
-            hr = CopyPixels(temp.get(), remaining, image.GetImage(0, 0, 0), convFlags);
+            hr = CopyPixels(temp.get(), remaining, flags, image.GetImage(0, 0, 0), convFlags);
         }
 
         if (FAILED(hr))
@@ -1451,7 +1456,11 @@ HRESULT DirectX::LoadFromTGAFile(
 // Save a TGA file to memory
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob, const TexMetadata* metadata) noexcept
+HRESULT DirectX::SaveToTGAMemory(
+    const Image& image,
+    TGA_FLAGS /*flags*/,
+    Blob& blob,
+    const TexMetadata* metadata) noexcept
 {
     if (!image.pixels)
         return E_POINTER;
@@ -1535,7 +1544,11 @@ HRESULT DirectX::SaveToTGAMemory(const Image& image, Blob& blob, const TexMetada
 // Save a TGA file to disk
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::SaveToTGAFile(const Image& image, const wchar_t* szFile, const TexMetadata* metadata) noexcept
+HRESULT DirectX::SaveToTGAFile(
+    const Image& image,
+    TGA_FLAGS /*flags*/,
+    const wchar_t* szFile,
+    const TexMetadata* metadata) noexcept
 {
     if (!szFile)
         return E_INVALIDARG;
