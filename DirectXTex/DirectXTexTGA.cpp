@@ -1274,7 +1274,7 @@ HRESULT DirectX::LoadFromTGAFile(
             }
 
             uint32_t tflags = TEXP_SCANLINE_NONE;
-            if (maxalpha == 0)
+            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
             {
                 opaquealpha = true;
                 tflags = TEXP_SCANLINE_SETALPHA;
