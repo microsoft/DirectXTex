@@ -55,4 +55,24 @@ namespace DirectX
         _Outptr_ LPDIRECT3DTEXTURE9* texture,
         _In_ size_t maxsize = 0,
         _In_ unsigned int loadFlags = 0) noexcept;
+
+    // Extended version
+    HRESULT CreateWICTextureFromMemoryEx(
+        _In_ LPDIRECT3DDEVICE9 d3dDevice,
+        _In_reads_bytes_(wicDataSize) const uint8_t* wicData,
+        _In_ size_t wicDataSize,
+        _In_ size_t maxsize,
+        _In_ DWORD usage,
+        _In_ D3DPOOL pool,
+        _In_ unsigned int loadFlags,
+        _Outptr_ LPDIRECT3DTEXTURE9* texture) noexcept;
+
+    HRESULT CreateWICTextureFromFileEx(
+        _In_ LPDIRECT3DDEVICE9 d3dDevice,
+        _In_z_ const wchar_t* fileName,
+        _In_ size_t maxsize,
+        _In_ DWORD usage,
+        _In_ D3DPOOL pool,
+        _In_ unsigned int loadFlags,
+        _Outptr_ LPDIRECT3DTEXTURE9* texture) noexcept;
 }
