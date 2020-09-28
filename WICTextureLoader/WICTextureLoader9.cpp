@@ -515,6 +515,21 @@ HRESULT DirectX::CreateWICTextureFromMemory(
     size_t maxsize,
     unsigned int loadFlags) noexcept
 {
+    return CreateWICTextureFromMemoryEx(d3dDevice, wicData, wicDataSize, maxsize, 0, D3DPOOL_DEFAULT, loadFlags, texture);
+}
+
+
+_Use_decl_annotations_
+HRESULT DirectX::CreateWICTextureFromMemoryEx(
+    LPDIRECT3DDEVICE9 d3dDevice,
+    const uint8_t* wicData,
+    size_t wicDataSize,
+    _In_ size_t maxsize,
+    _In_ DWORD usage,
+    _In_ D3DPOOL pool,
+    _In_ unsigned int loadFlags,
+    LPDIRECT3DTEXTURE9* texture) noexcept
+{
     if (texture)
     {
         *texture = nullptr;
@@ -565,6 +580,19 @@ HRESULT DirectX::CreateWICTextureFromFile(
     LPDIRECT3DTEXTURE9* texture,
     size_t maxsize,
     unsigned int loadFlags) noexcept
+{
+    return CreateWICTextureFromFileEx(d3dDevice, fileName, maxsize, 0, D3DPOOL_DEFAULT, loadFlags, texture);
+}
+
+_Use_decl_annotations_
+HRESULT DirectX::CreateWICTextureFromFileEx(
+    LPDIRECT3DDEVICE9 d3dDevice,
+    const wchar_t* fileName,
+    size_t maxsize,
+    DWORD usage,
+    D3DPOOL pool,
+    unsigned int loadFlags,
+    LPDIRECT3DTEXTURE9* texture) noexcept
 {
     if (texture)
     {
