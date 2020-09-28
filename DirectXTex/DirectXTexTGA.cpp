@@ -1976,7 +1976,7 @@ HRESULT DirectX::SaveToTGAFile(
         // For small images, it is better to create an in-memory file and write it out
         Blob blob;
 
-        hr = SaveToTGAMemory(image, blob);
+        hr = SaveToTGAMemory(image, flags, blob, metadata);
         if (FAILED(hr))
             return hr;
 
