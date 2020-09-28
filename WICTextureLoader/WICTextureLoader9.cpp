@@ -261,6 +261,8 @@ namespace
         _In_ LPDIRECT3DDEVICE9 device,
         _In_ IWICBitmapFrameDecode* frame,
         _In_ size_t maxsize,
+        _In_ DWORD usage,
+        _In_ D3DPOOL pool,
         _In_ unsigned int loadFlags,
         _Outptr_ LPDIRECT3DTEXTURE9* texture) noexcept
     {
@@ -344,21 +346,30 @@ namespace
         }
 
         // Create texture
+        if (loadFlags & WIC_LOADER_MIP_AUTOGEN)
+            usage |= D3DUSAGE_AUTOGENMIPMAP;
+
         ComPtr<IDirect3DTexture9> pTexture;
         hr = device->CreateTexture(twidth, theight, 1u,
-            (loadFlags & WIC_LOADER_MIP_AUTOGEN) ? D3DUSAGE_AUTOGENMIPMAP : 0u,
-            format, D3DPOOL_DEFAULT,
+            usage, format, pool,
             pTexture.GetAddressOf(), nullptr);
         if (FAILED(hr))
             return hr;
 
         // Create staging texture memory
         ComPtr<IDirect3DTexture9> pStagingTexture;
-        hr = device->CreateTexture(twidth, theight, 1u,
-            0u, format, D3DPOOL_SYSTEMMEM,
-            pStagingTexture.GetAddressOf(), nullptr);
-        if (FAILED(hr))
-            return hr;
+        if (pool == D3DPOOL_DEFAULT)
+        {
+            hr = device->CreateTexture(twidth, theight, 1u,
+                0u, format, D3DPOOL_SYSTEMMEM,
+                pStagingTexture.GetAddressOf(), nullptr);
+            if (FAILED(hr))
+                return hr;
+        }
+        else
+        {
+            pStagingTexture = pTexture;
+        }
 
         D3DLOCKED_RECT LockedRect = {};
         hr = pStagingTexture->LockRect(0, &LockedRect, nullptr, 0);
@@ -495,9 +506,12 @@ namespace
                 return hr;
         }
 
-        hr = device->UpdateTexture(pStagingTexture.Get(), pTexture.Get());
-        if (FAILED(hr))
-            return hr;
+        if (pool == D3DPOOL_DEFAULT)
+        {
+            hr = device->UpdateTexture(pStagingTexture.Get(), pTexture.Get());
+            if (FAILED(hr))
+                return hr;
+        }
 
         *texture = pTexture.Detach();
 
@@ -515,7 +529,7 @@ HRESULT DirectX::CreateWICTextureFromMemory(
     size_t maxsize,
     unsigned int loadFlags) noexcept
 {
-    return CreateWICTextureFromMemoryEx(d3dDevice, wicData, wicDataSize, maxsize, 0, D3DPOOL_DEFAULT, loadFlags, texture);
+    return CreateWICTextureFromMemoryEx(d3dDevice, wicData, wicDataSize, maxsize, 0u, D3DPOOL_DEFAULT, loadFlags, texture);
 }
 
 
@@ -569,7 +583,7 @@ HRESULT DirectX::CreateWICTextureFromMemoryEx(
     if (FAILED(hr))
         return hr;
 
-    return CreateTextureFromWIC(d3dDevice, frame.Get(), maxsize, loadFlags, texture);
+    return CreateTextureFromWIC(d3dDevice, frame.Get(), maxsize, usage, pool, loadFlags, texture);
 }
 
 //--------------------------------------------------------------------------------------
@@ -581,7 +595,7 @@ HRESULT DirectX::CreateWICTextureFromFile(
     size_t maxsize,
     unsigned int loadFlags) noexcept
 {
-    return CreateWICTextureFromFileEx(d3dDevice, fileName, maxsize, 0, D3DPOOL_DEFAULT, loadFlags, texture);
+    return CreateWICTextureFromFileEx(d3dDevice, fileName, maxsize, 0u, D3DPOOL_DEFAULT, loadFlags, texture);
 }
 
 _Use_decl_annotations_
@@ -621,5 +635,5 @@ HRESULT DirectX::CreateWICTextureFromFileEx(
     if (FAILED(hr))
         return hr;
 
-    return CreateTextureFromWIC(d3dDevice, frame.Get(), maxsize, loadFlags, texture);
+    return CreateTextureFromWIC(d3dDevice, frame.Get(), maxsize, usage, pool, loadFlags, texture);
 }

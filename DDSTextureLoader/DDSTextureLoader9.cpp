@@ -733,6 +733,8 @@ namespace
         _In_ const DDS_HEADER* header,
         _In_reads_bytes_(bitSize) const uint8_t* bitData,
         _In_ size_t bitSize,
+        _In_ DWORD usage,
+        _In_ D3DPOOL pool,
         _Outptr_ LPDIRECT3DBASETEXTURE9* texture,
         bool generateMipsIfMissing) noexcept
     {
@@ -776,15 +778,22 @@ namespace
             // Create the volume texture (let the runtime do the validation)
             ComPtr<IDirect3DVolumeTexture9> pTexture;
             hr = device->CreateVolumeTexture(iWidth, iHeight, iDepth, iMipCount,
-                0, fmt, D3DPOOL_DEFAULT, pTexture.GetAddressOf(), nullptr);
+                usage, fmt, pool, pTexture.GetAddressOf(), nullptr);
             if (FAILED(hr))
                 return hr;
 
             ComPtr<IDirect3DVolumeTexture9> pStagingTexture;
-            hr = device->CreateVolumeTexture(iWidth, iHeight, iDepth, iMipCount,
-                0, fmt, D3DPOOL_SYSTEMMEM, pStagingTexture.GetAddressOf(), nullptr);
-            if (FAILED(hr))
-                return hr;
+            if (pool == D3DPOOL_DEFAULT)
+            {
+                hr = device->CreateVolumeTexture(iWidth, iHeight, iDepth, iMipCount,
+                    0u, fmt, D3DPOOL_SYSTEMMEM, pStagingTexture.GetAddressOf(), nullptr);
+                if (FAILED(hr))
+                    return hr;
+            }
+            else
+            {
+                pStagingTexture = pTexture;
+            }
 
             // Lock, fill, unlock
             size_t NumBytes = 0;
@@ -841,9 +850,12 @@ namespace
                     iDepth = 1;
             }
 
-            hr = device->UpdateTexture(pStagingTexture.Get(), pTexture.Get());
-            if (FAILED(hr))
-                return hr;
+            if (pool == D3DPOOL_DEFAULT)
+            {
+                hr = device->UpdateTexture(pStagingTexture.Get(), pTexture.Get());
+                if (FAILED(hr))
+                    return hr;
+            }
 
             *texture = pTexture.Detach();
         }
@@ -864,15 +876,22 @@ namespace
             // Create the cubemap (let the runtime do the validation)
             ComPtr<IDirect3DCubeTexture9> pTexture;
             hr = device->CreateCubeTexture(iWidth, iMipCount,
-                0, fmt, D3DPOOL_DEFAULT, pTexture.GetAddressOf(), nullptr);
+                usage, fmt, pool, pTexture.GetAddressOf(), nullptr);
             if (FAILED(hr))
                 return hr;
 
             ComPtr<IDirect3DCubeTexture9> pStagingTexture;
-            hr = device->CreateCubeTexture(iWidth, iMipCount,
-                0, fmt, D3DPOOL_SYSTEMMEM, pStagingTexture.GetAddressOf(), nullptr);
-            if (FAILED(hr))
-                return hr;
+            if (pool == D3DPOOL_DEFAULT)
+            {
+                hr = device->CreateCubeTexture(iWidth, iMipCount,
+                    0u, fmt, D3DPOOL_SYSTEMMEM, pStagingTexture.GetAddressOf(), nullptr);
+                if (FAILED(hr))
+                    return hr;
+            }
+            else
+            {
+                pStagingTexture = pTexture;
+            }
 
             // Lock, fill, unlock
             size_t NumBytes = 0;
@@ -926,9 +945,12 @@ namespace
                 }
             }
 
-            hr = device->UpdateTexture(pStagingTexture.Get(), pTexture.Get());
-            if (FAILED(hr))
-                return hr;
+            if (pool == D3DPOOL_DEFAULT)
+            {
+                hr = device->UpdateTexture(pStagingTexture.Get(), pTexture.Get());
+                if (FAILED(hr))
+                    return hr;
+            }
 
             *texture = pTexture.Detach();
         }
@@ -941,19 +963,28 @@ namespace
             }
 
             // Create the texture (let the runtime do the validation)
+            if (generateMipsIfMissing)
+                usage |= D3DUSAGE_AUTOGENMIPMAP;
+
             ComPtr<IDirect3DTexture9> pTexture;
             hr = device->CreateTexture(iWidth, iHeight, iMipCount,
-                generateMipsIfMissing ? D3DUSAGE_AUTOGENMIPMAP : 0u,
-                fmt, D3DPOOL_DEFAULT,
+                usage, fmt, pool,
                 pTexture.GetAddressOf(), nullptr);
             if (FAILED(hr))
                 return hr;
 
             ComPtr<IDirect3DTexture9> pStagingTexture;
-            hr = device->CreateTexture(iWidth, iHeight, iMipCount,
-                0u, fmt, D3DPOOL_SYSTEMMEM, pStagingTexture.GetAddressOf(), nullptr);
-            if (FAILED(hr))
-                return hr;
+            if (pool == D3DPOOL_DEFAULT)
+            {
+                hr = device->CreateTexture(iWidth, iHeight, iMipCount,
+                    0u, fmt, D3DPOOL_SYSTEMMEM, pStagingTexture.GetAddressOf(), nullptr);
+                if (FAILED(hr))
+                    return hr;
+            }
+            else
+            {
+                pStagingTexture = pTexture;
+            }
 
             // Lock, fill, unlock
             size_t NumBytes = 0;
@@ -998,9 +1029,12 @@ namespace
                     iHeight = 1;
             }
 
-            hr = device->UpdateTexture(pStagingTexture.Get(), pTexture.Get());
-            if (FAILED(hr))
-                return hr;
+            if (pool == D3DPOOL_DEFAULT)
+            {
+                hr = device->UpdateTexture(pStagingTexture.Get(), pTexture.Get());
+                if (FAILED(hr))
+                    return hr;
+            }
 
             *texture = pTexture.Detach();
         }
@@ -1018,7 +1052,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
     LPDIRECT3DBASETEXTURE9* texture,
     bool generateMipsIfMissing) noexcept
 {
-    return CreateDDSTextureFromMemoryEx(d3dDevice, ddsData, ddsDataSize, 0, D3DPOOL_DEFAULT, generateMipsIfMissing, texture);
+    return CreateDDSTextureFromMemoryEx(d3dDevice, ddsData, ddsDataSize, 0u, D3DPOOL_DEFAULT, generateMipsIfMissing, texture);
 }
 
 _Use_decl_annotations_
@@ -1059,6 +1093,8 @@ HRESULT DirectX::CreateDDSTextureFromMemoryEx(
         header,
         bitData,
         bitSize,
+        usage,
+        pool,
         texture,
         generateMipsIfMissing);
 }
@@ -1081,7 +1117,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
         return E_INVALIDARG;
 
     ComPtr<IDirect3DBaseTexture9> tex;
-    HRESULT hr = CreateDDSTextureFromMemoryEx(d3dDevice, ddsData, ddsDataSize, 0, D3DPOOL_DEFAULT, generateMipsIfMissing, tex.GetAddressOf());
+    HRESULT hr = CreateDDSTextureFromMemoryEx(d3dDevice, ddsData, ddsDataSize, 0u, D3DPOOL_DEFAULT, generateMipsIfMissing, tex.GetAddressOf());
     if (SUCCEEDED(hr))
     {
         hr = E_FAIL;
@@ -1111,7 +1147,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
         return E_INVALIDARG;
 
     ComPtr<IDirect3DBaseTexture9> tex;
-    HRESULT hr = CreateDDSTextureFromMemoryEx(d3dDevice, ddsData, ddsDataSize, 0, D3DPOOL_DEFAULT, false, tex.GetAddressOf());
+    HRESULT hr = CreateDDSTextureFromMemoryEx(d3dDevice, ddsData, ddsDataSize, 0u, D3DPOOL_DEFAULT, false, tex.GetAddressOf());
     if (SUCCEEDED(hr))
     {
         hr = E_FAIL;
@@ -1141,7 +1177,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
         return E_INVALIDARG;
 
     ComPtr<IDirect3DBaseTexture9> tex;
-    HRESULT hr = CreateDDSTextureFromMemoryEx(d3dDevice, ddsData, ddsDataSize, 0, D3DPOOL_DEFAULT, false, tex.GetAddressOf());
+    HRESULT hr = CreateDDSTextureFromMemoryEx(d3dDevice, ddsData, ddsDataSize, 0u, D3DPOOL_DEFAULT, false, tex.GetAddressOf());
     if (SUCCEEDED(hr))
     {
         hr = E_FAIL;
@@ -1262,7 +1298,7 @@ HRESULT DirectX::CreateDDSTextureFromFile(
     LPDIRECT3DBASETEXTURE9* texture,
     bool generateMipsIfMissing) noexcept
 {
-    return CreateDDSTextureFromFileEx(d3dDevice, fileName, 0, D3DPOOL_DEFAULT, generateMipsIfMissing, texture);
+    return CreateDDSTextureFromFileEx(d3dDevice, fileName, 0u, D3DPOOL_DEFAULT, generateMipsIfMissing, texture);
 }
 
 _Use_decl_annotations_
@@ -1303,6 +1339,8 @@ HRESULT DirectX::CreateDDSTextureFromFileEx(
         header,
         bitData,
         bitSize,
+        usage,
+        pool,
         texture,
         generateMipsIfMissing);
 }
@@ -1324,7 +1362,7 @@ HRESULT DirectX::CreateDDSTextureFromFile(
         return E_INVALIDARG;
 
     ComPtr<IDirect3DBaseTexture9> tex;
-    HRESULT hr = CreateDDSTextureFromFileEx(d3dDevice, fileName, 0, D3DPOOL_DEFAULT, generateMipsIfMissing, tex.GetAddressOf());
+    HRESULT hr = CreateDDSTextureFromFileEx(d3dDevice, fileName, 0u, D3DPOOL_DEFAULT, generateMipsIfMissing, tex.GetAddressOf());
     if (SUCCEEDED(hr))
     {
         hr = E_FAIL;
@@ -1353,7 +1391,7 @@ HRESULT DirectX::CreateDDSTextureFromFile(
         return E_INVALIDARG;
 
     ComPtr<IDirect3DBaseTexture9> tex;
-    HRESULT hr = CreateDDSTextureFromFileEx(d3dDevice, fileName, 0, D3DPOOL_DEFAULT, false, tex.GetAddressOf());
+    HRESULT hr = CreateDDSTextureFromFileEx(d3dDevice, fileName, 0u, D3DPOOL_DEFAULT, false, tex.GetAddressOf());
     if (SUCCEEDED(hr))
     {
         hr = E_FAIL;
@@ -1382,7 +1420,7 @@ HRESULT DirectX::CreateDDSTextureFromFile(
         return E_INVALIDARG;
 
     ComPtr<IDirect3DBaseTexture9> tex;
-    HRESULT hr = CreateDDSTextureFromFileEx(d3dDevice, szFileName, 0, D3DPOOL_DEFAULT, false, tex.GetAddressOf());
+    HRESULT hr = CreateDDSTextureFromFileEx(d3dDevice, szFileName, 0u, D3DPOOL_DEFAULT, false, tex.GetAddressOf());
     if (SUCCEEDED(hr))
     {
         hr = E_FAIL;
