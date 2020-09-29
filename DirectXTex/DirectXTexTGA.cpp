@@ -1881,7 +1881,7 @@ HRESULT DirectX::SaveToTGAMemory(
 _Use_decl_annotations_
 HRESULT DirectX::SaveToTGAFile(
     const Image& image,
-    TGA_FLAGS /*flags*/,
+    TGA_FLAGS flags,
     const wchar_t* szFile,
     const TexMetadata* metadata) noexcept
 {
@@ -1922,7 +1922,7 @@ HRESULT DirectX::SaveToTGAFile(
         // For small images, it is better to create an in-memory file and write it out
         Blob blob;
 
-        hr = SaveToTGAMemory(image, blob);
+        hr = SaveToTGAMemory(image, flags, blob, metadata);
         if (FAILED(hr))
             return hr;
 
