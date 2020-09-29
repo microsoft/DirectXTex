@@ -23,6 +23,8 @@ using namespace DirectX;
 
 namespace
 {
+    constexpr float GAMMA_EPSILON = 0.01f;
+
     const char g_Signature[] = "TRUEVISION-XFILE.";
         // This is the official footer signature for the TGA 2.0 file format.
 
@@ -1171,7 +1173,7 @@ namespace
     //-------------------------------------------------------------------------------------
     // TGA 2.0 Extension helpers
     //-------------------------------------------------------------------------------------
-    void SetExtension(TGA_EXTENSION *ext, const TexMetadata& metadata) noexcept
+    void SetExtension(_In_ TGA_EXTENSION *ext, TGA_FLAGS flags, const TexMetadata& metadata) noexcept
     {
         memset(ext, 0, sizeof(TGA_EXTENSION));
 
@@ -1181,10 +1183,16 @@ namespace
         ext->wVersionNumber = DIRECTX_TEX_VERSION;
         ext->bVersionLetter = ' ';
 
-        if (IsSRGB(metadata.format))
+        bool sRGB = ((flags & TGA_FLAGS_FORCE_LINEAR) == 0) && ((flags & TGA_FLAGS_FORCE_SRGB) != 0 || IsSRGB(metadata.format));
+        if (sRGB)
         {
             ext->wGammaNumerator = 22;
             ext->wGammaDenominator = 10;
+        }
+        else if (flags & TGA_FLAGS_FORCE_LINEAR)
+        {
+            ext->wGammaNumerator = 1;
+            ext->wGammaDenominator = 1;
         }
 
         switch (metadata.GetAlphaMode())
@@ -1228,7 +1236,7 @@ namespace
         }
     }
 
-    TEX_ALPHA_MODE GetAlphaModeFromExtension(const TGA_EXTENSION *ext) noexcept
+    TEX_ALPHA_MODE GetAlphaModeFromExtension(_In_opt_ const TGA_EXTENSION *ext) noexcept
     {
         if (ext && ext->wSize == sizeof(TGA_EXTENSION))
         {
@@ -1242,6 +1250,35 @@ namespace
         }
 
         return TEX_ALPHA_MODE_UNKNOWN;
+    }
+
+    DXGI_FORMAT GetSRGBFromExtension(_In_opt_ const TGA_EXTENSION* ext, DXGI_FORMAT format, TGA_FLAGS flags, _In_opt_ ScratchImage* image) noexcept
+    {
+        bool sRGB = false;
+
+        if (ext && ext->wSize == sizeof(TGA_EXTENSION) && ext->wGammaDenominator != 0)
+        {
+            float gamma = static_cast<float>(ext->wGammaNumerator) / static_cast<float>(ext->wGammaDenominator);
+            if (fabsf(gamma - 2.2f) < GAMMA_EPSILON || fabsf(gamma - 2.4f) < GAMMA_EPSILON)
+            {
+                sRGB = true;
+            }
+        }
+        else
+        {
+            sRGB = (flags & TGA_FLAGS_DEFAULT_SRGB) != 0;
+        }
+
+        if (sRGB)
+        {
+            format = MakeSRGB(format);
+            if (image)
+            {
+                image->OverrideFormat(format);
+            }
+        }
+
+        return format;
     }
 }
 
@@ -1264,7 +1301,33 @@ HRESULT DirectX::GetMetadataFromTGAMemory(
         return E_INVALIDARG;
 
     size_t offset;
-    return DecodeTGAHeader(pSource, size, flags, metadata, offset, nullptr);
+    HRESULT hr = DecodeTGAHeader(pSource, size, flags, metadata, offset, nullptr);
+    if (FAILED(hr))
+        return hr;
+
+    // Optional TGA 2.0 footer & extension area
+    const TGA_EXTENSION* ext = nullptr;
+    if (size >= sizeof(TGA_FOOTER))
+    {
+        auto footer = reinterpret_cast<const TGA_FOOTER*>(static_cast<const uint8_t*>(pSource) + size - sizeof(TGA_FOOTER));
+
+        if (memcmp(footer->Signature, g_Signature, sizeof(g_Signature)) == 0)
+        {
+            if (footer->dwExtensionOffset != 0
+                && ((footer->dwExtensionOffset + sizeof(TGA_EXTENSION)) <= size))
+            {
+                ext = reinterpret_cast<const TGA_EXTENSION*>(static_cast<const uint8_t*>(pSource) + footer->dwExtensionOffset);
+                metadata.SetAlphaMode(GetAlphaModeFromExtension(ext));
+            }
+        }
+    }
+
+    if (!(flags & TGA_FLAGS_IGNORE_SRGB))
+    {
+        metadata.format = GetSRGBFromExtension(ext, metadata.format, flags, nullptr);
+    }
+
+    return S_OK;
 }
 
 _Use_decl_annotations_
@@ -1312,7 +1375,55 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
     }
 
     size_t offset;
-    return DecodeTGAHeader(header, bytesRead, flags, metadata, offset, nullptr);
+    HRESULT hr = DecodeTGAHeader(header, bytesRead, flags, metadata, offset, nullptr);
+    if (FAILED(hr))
+        return hr;
+
+    // Optional TGA 2.0 footer & extension area
+    const TGA_EXTENSION* ext = nullptr;
+    TGA_EXTENSION extData = {};
+    {
+        if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) == INVALID_SET_FILE_POINTER)
+        {
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+
+        TGA_FOOTER footer = {};
+        if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
+        {
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+
+        if (bytesRead != sizeof(TGA_FOOTER))
+        {
+            return E_FAIL;
+        }
+
+        if (memcmp(footer.Signature, g_Signature, sizeof(g_Signature)) == 0)
+        {
+            if (footer.dwExtensionOffset != 0
+                && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= fileInfo.EndOfFile.LowPart))
+            {
+                LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
+                if (SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
+                {
+                    if (ReadFile(hFile.get(), &extData, sizeof(TGA_EXTENSION), &bytesRead, nullptr)
+                        && bytesRead == sizeof(TGA_EXTENSION))
+                    {
+                        ext = &extData;
+                        metadata.SetAlphaMode(GetAlphaModeFromExtension(ext));
+                    }
+                }
+            }
+        }
+    }
+
+    if (!(flags & TGA_FLAGS_IGNORE_SRGB))
+    {
+        metadata.format = GetSRGBFromExtension(ext, metadata.format, flags, nullptr);
+    }
+
+    return S_OK;
 }
 
 
@@ -1367,6 +1478,27 @@ HRESULT DirectX::LoadFromTGAMemory(
         return hr;
     }
 
+    // Optional TGA 2.0 footer & extension area
+    const TGA_EXTENSION* ext = nullptr;
+    if (size >= sizeof(TGA_FOOTER))
+    {
+        auto footer = reinterpret_cast<const TGA_FOOTER*>(static_cast<const uint8_t*>(pSource) + size - sizeof(TGA_FOOTER));
+
+        if (memcmp(footer->Signature, g_Signature, sizeof(g_Signature)) == 0)
+        {
+            if (footer->dwExtensionOffset != 0
+                && ((footer->dwExtensionOffset + sizeof(TGA_EXTENSION)) <= size))
+            {
+                ext = reinterpret_cast<const TGA_EXTENSION*>(static_cast<const uint8_t*>(pSource) + footer->dwExtensionOffset);
+            }
+        }
+    }
+
+    if (!(flags & TGA_FLAGS_IGNORE_SRGB))
+    {
+        mdata.format = GetSRGBFromExtension(ext, mdata.format, flags, &image);
+    }
+
     if (metadata)
     {
         memcpy(metadata, &mdata, sizeof(TexMetadata));
@@ -1374,20 +1506,9 @@ HRESULT DirectX::LoadFromTGAMemory(
         {
             metadata->SetAlphaMode(TEX_ALPHA_MODE_OPAQUE);
         }
-        else if (size >= sizeof(TGA_FOOTER))
+        else if (ext)
         {
-            // Handle optional TGA 2.0 footer
-            auto footer = reinterpret_cast<const TGA_FOOTER*>(static_cast<const uint8_t*>(pSource) + size - sizeof(TGA_FOOTER));
-
-            if (memcmp(footer->Signature, g_Signature, sizeof(g_Signature)) == 0)
-            {
-                if (footer->dwExtensionOffset != 0
-                    && ((footer->dwExtensionOffset + sizeof(TGA_EXTENSION)) <= size))
-                {
-                    auto ext = reinterpret_cast<const TGA_EXTENSION*>(static_cast<const uint8_t*>(pSource) + footer->dwExtensionOffset);
-                    metadata->SetAlphaMode(GetAlphaModeFromExtension(ext));
-                }
-            }
+            metadata->SetAlphaMode(GetAlphaModeFromExtension(ext));
         }
     }
 
@@ -1734,6 +1855,51 @@ HRESULT DirectX::LoadFromTGAFile(
             opaquealpha = true;
     }
 
+    // Optional TGA 2.0 footer & extension area
+    const TGA_EXTENSION* ext = nullptr;
+    TGA_EXTENSION extData = {};
+    {
+        if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) == INVALID_SET_FILE_POINTER)
+        {
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+
+        TGA_FOOTER footer = {};
+        if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
+        {
+            image.Release();
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+
+        if (bytesRead != sizeof(TGA_FOOTER))
+        {
+            image.Release();
+            return E_FAIL;
+        }
+
+        if (memcmp(footer.Signature, g_Signature, sizeof(g_Signature)) == 0)
+        {
+            if (footer.dwExtensionOffset != 0
+                && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= fileInfo.EndOfFile.LowPart))
+            {
+                LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
+                if (SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
+                {
+                    if (ReadFile(hFile.get(), &extData, sizeof(TGA_EXTENSION), &bytesRead, nullptr)
+                        && bytesRead == sizeof(TGA_EXTENSION))
+                    {
+                        ext = &extData;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!(flags & TGA_FLAGS_IGNORE_SRGB))
+    {
+        mdata.format = GetSRGBFromExtension(ext, mdata.format, flags, &image);
+    }
+
     if (metadata)
     {
         memcpy(metadata, &mdata, sizeof(TexMetadata));
@@ -1741,45 +1907,9 @@ HRESULT DirectX::LoadFromTGAFile(
         {
             metadata->SetAlphaMode(TEX_ALPHA_MODE_OPAQUE);
         }
-        else
+        else if (ext)
         {
-            // Handle optional TGA 2.0 footer
-            TGA_FOOTER footer = {};
-
-            if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) == INVALID_SET_FILE_POINTER)
-            {
-                return HRESULT_FROM_WIN32(GetLastError());
-            }
-
-            if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
-            {
-                image.Release();
-                return HRESULT_FROM_WIN32(GetLastError());
-            }
-
-            if (bytesRead != sizeof(TGA_FOOTER))
-            {
-                image.Release();
-                return E_FAIL;
-            }
-
-            if (memcmp(footer.Signature, g_Signature, sizeof(g_Signature)) == 0)
-            {
-                if (footer.dwExtensionOffset != 0
-                    && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= fileInfo.EndOfFile.LowPart))
-                {
-                    LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
-                    if (SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
-                    {
-                        TGA_EXTENSION ext = {};
-                        if (ReadFile(hFile.get(), &ext, sizeof(TGA_EXTENSION), &bytesRead, nullptr)
-                            && bytesRead == sizeof(TGA_EXTENSION))
-                        {
-                            metadata->SetAlphaMode(GetAlphaModeFromExtension(&ext));
-                        }
-                    }
-                }
-            }
+            metadata->SetAlphaMode(GetAlphaModeFromExtension(ext));
         }
     }
 
@@ -1793,10 +1923,13 @@ HRESULT DirectX::LoadFromTGAFile(
 _Use_decl_annotations_
 HRESULT DirectX::SaveToTGAMemory(
     const Image& image,
-    TGA_FLAGS /*flags*/,
+    TGA_FLAGS flags,
     Blob& blob,
     const TexMetadata* metadata) noexcept
 {
+    if ((flags & (TGA_FLAGS_FORCE_LINEAR | TGA_FLAGS_FORCE_SRGB)) != 0 && !metadata)
+        return E_INVALIDARG;
+
     if (!image.pixels)
         return E_POINTER;
 
@@ -1857,9 +1990,8 @@ HRESULT DirectX::SaveToTGAMemory(
     if (metadata)
     {
         // metadata is only used for writing the TGA 2.0 extension header
-
         auto ext = reinterpret_cast<TGA_EXTENSION*>(dPtr);
-        SetExtension(ext, *metadata);
+        SetExtension(ext, flags, *metadata);
 
         extOffset = static_cast<uint32_t>(dPtr - destPtr);
         dPtr += sizeof(TGA_EXTENSION);
@@ -1886,6 +2018,9 @@ HRESULT DirectX::SaveToTGAFile(
     const TexMetadata* metadata) noexcept
 {
     if (!szFile)
+        return E_INVALIDARG;
+
+    if ((flags & (TGA_FLAGS_FORCE_LINEAR | TGA_FLAGS_FORCE_SRGB)) != 0 && !metadata)
         return E_INVALIDARG;
 
     if (!image.pixels)
@@ -1994,7 +2129,7 @@ HRESULT DirectX::SaveToTGAFile(
         {
             // metadata is only used for writing the TGA 2.0 extension header
             TGA_EXTENSION ext = {};
-            SetExtension(&ext, *metadata);
+            SetExtension(&ext, flags, *metadata);
 
             extOffset = SetFilePointer(hFile.get(), 0, nullptr, FILE_CURRENT);
             if (extOffset == INVALID_SET_FILE_POINTER)
