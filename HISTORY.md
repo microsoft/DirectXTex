@@ -6,6 +6,15 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### September 30, 2020
+* Added ``TGA_FLAGS`` [flags](https://github.com/microsoft/DirectXTex/wiki/TGA-I-O-Functions#related-flags) to TGA reader/writer to control RGB vs. BGR, handling for all zero alpha channels, and TGA 2.0 colorspace metadata
+  * TGA reader will now return a ``DXGI_FORMAT_*_SRGB`` format if TGA 2.0 colorspace metadata contains 2.2 or 2.4 gamma
+  * Added forwarders for existing non-flags TGA functions, so there are no breaking changes
+* ``R16_SNORM`` and ``R8_SNORM`` pixel write code updated to round instead of truncate to better match DirectXMath behavior
+* Fixed bug in standalone WICTextureLoader for DX11/DX12 that resulted in ``WINCODEC_ERR_INSUFFICIENTBUFFER`` for some resize requests
+* Added ``Ex`` variants for DDSTextureLoader/WICTextureLoader for DX9 to support loading resources for non-DEFAULT pools
+* Minor code and project cleanup
+
 ### August 15, 2020
 * Added ``DDS_FLAGS_ALLOW_LARGE_FILES`` flag for DDS loader to allow textures with dimensions that are too big for Direct3D
 * Added ``FormatDataType`` function
