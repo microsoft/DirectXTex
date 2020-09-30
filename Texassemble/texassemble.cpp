@@ -651,7 +651,7 @@ namespace
             return SaveToDDSFile(img, DDS_FLAGS_NONE, szOutputFile);
 
         case CODEC_TGA:
-            return SaveToTGAFile(img, szOutputFile);
+            return SaveToTGAFile(img, TGA_FLAGS_NONE, szOutputFile);
 
         case CODEC_HDR:
             return SaveToHDRFile(img, szOutputFile);
@@ -1161,7 +1161,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else if (_wcsicmp(ext, L".tga") == 0)
                 {
-                    hr = LoadFromTGAFile(pConv->szSrc, &info, *image);
+                    hr = LoadFromTGAFile(pConv->szSrc, TGA_FLAGS_NONE, &info, *image);
                     if (FAILED(hr))
                     {
                         wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
