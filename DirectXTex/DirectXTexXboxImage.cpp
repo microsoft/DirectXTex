@@ -189,7 +189,11 @@ HRESULT XboxImage::Initialize(const XG_TEXTURE1D_DESC& desc, const XG_RESOURCE_L
 
     dataSize = static_cast<uint32_t>(layout.SizeBytes);
     baseAlignment = static_cast<uint32_t>(layout.BaseAlignmentBytes);
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    tilemode = desc.SwizzleMode;
+#else
     tilemode = desc.TileMode;
+#endif
 
     return S_OK;
 }
@@ -224,7 +228,11 @@ HRESULT XboxImage::Initialize(const XG_TEXTURE2D_DESC& desc, const XG_RESOURCE_L
 
     dataSize = static_cast<uint32_t>(layout.SizeBytes);
     baseAlignment = static_cast<uint32_t>(layout.BaseAlignmentBytes);
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    tilemode = desc.SwizzleMode;
+#else
     tilemode = desc.TileMode;
+#endif
 
     return S_OK;
 }
@@ -258,7 +266,11 @@ HRESULT XboxImage::Initialize(const XG_TEXTURE3D_DESC& desc, const XG_RESOURCE_L
 
     dataSize = static_cast<uint32_t>(layout.SizeBytes);
     baseAlignment = static_cast<uint32_t>(layout.BaseAlignmentBytes);
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    tilemode = desc.SwizzleMode;
+#else
     tilemode = desc.TileMode;
+#endif
 
     return S_OK;
 }

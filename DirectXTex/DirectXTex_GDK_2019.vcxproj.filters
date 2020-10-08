@@ -35,6 +35,9 @@
     <ClInclude Include="d3dx12.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="DirectXTexXbox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="DirectXTex.inl">
@@ -104,6 +107,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DirectXTexD3D12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexXboxD3D12X.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexXboxDDS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexXboxDetile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexXboxImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXTexXboxTile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

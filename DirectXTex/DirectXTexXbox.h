@@ -15,21 +15,35 @@
 
 #include "DirectXTex.h"
 
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+#include <xg_xs.h>
+#else
 #include <xg.h>
+#endif
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef _GAMING_XBOX_SCARLETT
+#include <d3d12_xs.h>
+#elif defined(_GAMING_XBOX)
+#include <d3d12_x.h>
+#elif defined(_XBOX_ONE) && defined(_TITLE)
 #include <d3d11_x.h>
 #else
 #include <d3d11_1.h>
 #endif
 
-#define DIRECTX_TEX_XBOX_VERSION 102
+#define DIRECTX_TEX_XBOX_VERSION 150
 
 namespace Xbox
 {
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    using XboxTileMode = XG_SWIZZLE_MODE;
+    const XboxTileMode c_XboxTileModeInvalid = XG_SWIZZLE_MODE_INVALID;
+    const XboxTileMode c_XboxTileModeLinear = XG_SWIZZLE_MODE_LINEAR;
+#else
     using XboxTileMode = XG_TILE_MODE;
     constexpr XboxTileMode c_XboxTileModeInvalid = XG_TILE_MODE_INVALID;
     const XboxTileMode c_XboxTileModeLinear = XG_TILE_MODE_LINEAR;
+#endif
 
     class XboxImage
     {
@@ -116,9 +130,7 @@ namespace Xbox
     //---------------------------------------------------------------------------------
     // Direct3D 12.X functions
 
-#if defined(_XBOX_ONE) && defined(_TITLE) && (defined(__d3d12_x_h__) || defined(__XBOX_D3D12_X__))
-
-
+#if ((defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)) && (defined(__d3d12_x_h__) || defined(__XBOX_D3D12_X__))
 
     HRESULT CreateTexture(
         _In_ ID3D12Device* d3dDevice,

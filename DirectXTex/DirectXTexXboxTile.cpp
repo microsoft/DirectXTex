@@ -49,7 +49,12 @@ namespace
 
             for (size_t x = 0; x < w; ++x)
             {
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+                UINT64 element = (packed) ? (x >> 1) : x;
+                size_t offset = computer->GetTexelElementOffsetBytes(0, level, element, 0, item, 0, nullptr);
+#else
                 size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, item, 0);
+#endif
                 if (offset == size_t(-1))
                     return E_FAIL;
 
@@ -104,7 +109,12 @@ namespace
 
                 for (size_t x = 0; x < w; ++x)
                 {
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+                    UINT64 element = (packed) ? (x >> 1) : x;
+                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, element, y, item, 0, nullptr);
+#else
                     size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, item, 0);
+#endif
                     if (offset == size_t(-1))
                         return E_FAIL;
 
@@ -154,7 +164,12 @@ namespace
 
                 for (size_t x = 0; x < w; ++x)
                 {
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+                    UINT64 element = (packed) ? (x >> 1) : x;
+                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, element, y, z, 0, nullptr);
+#else
                     size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, z, 0);
+#endif
                     if (offset == size_t(-1))
                         return E_FAIL;
 
@@ -186,7 +201,11 @@ namespace
         wchar_t buff[2048] = {};
         swprintf_s(buff, L"XG_TEXTURE1D_DESC = { %u, %u, %u, %u, %u, %u, %u, %u, %u, %u }\n",
             desc.Width, desc.MipLevels, desc.ArraySize, desc.Format, desc.Usage, desc.BindFlags, desc.CPUAccessFlags, desc.MiscFlags,
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+            desc.SwizzleMode,
+#else
             desc.TileMode,
+#endif
             desc.Pitch);
         OutputDebugStringW(buff);
     }
@@ -196,7 +215,11 @@ namespace
         wchar_t buff[2048] = {};
         swprintf_s(buff, L"XG_TEXTURE2D_DESC = { %u, %u, %u, %u, %u, { %u, %u }, %u, %u, %u, %u, %u, %u }\n",
             desc.Width, desc.Height, desc.MipLevels, desc.ArraySize, desc.Format, desc.SampleDesc.Count, desc.SampleDesc.Quality, desc.Usage, desc.BindFlags, desc.CPUAccessFlags, desc.MiscFlags,
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+            desc.SwizzleMode,
+#else
             desc.TileMode,
+#endif
             desc.Pitch);
         OutputDebugStringW(buff);
     }
@@ -206,7 +229,11 @@ namespace
         wchar_t buff[2048] = {};
         swprintf_s(buff, L"XG_TEXTURE3D_DESC = { %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u }\n",
             desc.Width, desc.Height, desc.Depth, desc.MipLevels, desc.Format, desc.Usage, desc.BindFlags, desc.CPUAccessFlags, desc.MiscFlags,
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+            desc.SwizzleMode,
+#else
             desc.TileMode,
+#endif
             desc.Pitch);
         OutputDebugStringW(buff);
     }
@@ -239,7 +266,11 @@ namespace
                 swprintf_s(buff, L"\t\tpitch %u pixels (%u bytes)\n", mip.PitchPixels, mip.PitchBytes);
                 OutputDebugStringW(buff);
 
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+                swprintf_s(buff, L"\t\t\t%u samples, %u swizzlemode\n", mip.SampleCount, mip.SwizzleMode);
+#else
                 swprintf_s(buff, L"\t\t\t%u samples, %u tilemode\n", mip.SampleCount, mip.TileMode);
+#endif
                 OutputDebugStringW(buff);
             }
         }
@@ -272,6 +303,10 @@ namespace
         assert(!IsCompressed(format));
 
         bool byelement = IsTypeless(format);
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        if (nimages > 1)
+            byelement = true;
+#endif
 
         if (IsPacked(format))
         {
@@ -332,7 +367,11 @@ namespace
 
                 for (size_t x = 0; x < img->width; ++x)
                 {
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, item, 0, nullptr);
+#else
                     size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, item, 0);
+#endif
                     if (offset == size_t(-1))
                         return E_FAIL;
 
@@ -380,6 +419,10 @@ namespace
         assert(format == xbox.GetMetadata().format);
 
         bool byelement = IsTypeless(format);
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        if (nimages > 1)
+            byelement = true;
+#endif
 
         if (IsCompressed(format))
         {
@@ -470,7 +513,11 @@ namespace
 
                     for (size_t x = 0; x < img->width; ++x)
                     {
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+                        size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, item, 0, nullptr);
+#else
                         size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, item, 0);
+#endif
                         if (offset == size_t(-1))
                             return E_FAIL;
 
@@ -516,6 +563,9 @@ namespace
         assert(image.format == xbox.GetMetadata().format);
 
         bool byelement = IsTypeless(image.format);
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        byelement = true;
+#endif
 
         if (IsCompressed(image.format))
         {
@@ -594,7 +644,11 @@ namespace
 
                     for (size_t x = 0; x < image.width; ++x)
                     {
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+                        size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, z, 0, nullptr);
+#else
                         size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, z, 0);
+#endif
                         if (offset == size_t(-1))
                             return E_FAIL;
 
@@ -671,9 +725,15 @@ HRESULT Xbox::Tile(
     if (mode == c_XboxTileModeInvalid)
     {
         // If no specific tile mode is given, assume the optimal default
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        mode = XGComputeOptimalSwizzleMode(XG_RESOURCE_DIMENSION_TEXTURE2D, static_cast<XG_FORMAT>(srcImage.format),
+            static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height),
+            1, 1, XG_BIND_SHADER_RESOURCE);
+#else
         mode = XGComputeOptimalTileMode(XG_RESOURCE_DIMENSION_TEXTURE2D, static_cast<XG_FORMAT>(srcImage.format),
             static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height),
             1, 1, XG_BIND_SHADER_RESOURCE);
+#endif
     }
 
     XG_TEXTURE2D_DESC desc = {};
@@ -685,7 +745,11 @@ HRESULT Xbox::Tile(
     desc.SampleDesc.Count = 1;
     desc.Usage = XG_USAGE_DEFAULT;
     desc.BindFlags = XG_BIND_SHADER_RESOURCE;
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    desc.SwizzleMode = mode;
+#else
     desc.TileMode = mode;
+#endif
 
     ComPtr<XGTextureAddressComputer> computer;
     HRESULT hr = XGCreateTexture2DComputer(&desc, computer.GetAddressOf());
@@ -758,11 +822,18 @@ HRESULT Xbox::Tile(
 
     if (mode == c_XboxTileModeInvalid)
     {
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        mode = XGComputeOptimalSwizzleMode(static_cast<XG_RESOURCE_DIMENSION>(metadata.dimension), static_cast<XG_FORMAT>(metadata.format),
+            static_cast<UINT>(metadata.width), static_cast<UINT>(metadata.height),
+            static_cast<UINT>((metadata.dimension == TEX_DIMENSION_TEXTURE3D) ? metadata.depth : metadata.arraySize),
+            1, XG_BIND_SHADER_RESOURCE);
+#else
         // If no specific tile mode is given, assume the optimal default
         mode = XGComputeOptimalTileMode(static_cast<XG_RESOURCE_DIMENSION>(metadata.dimension), static_cast<XG_FORMAT>(metadata.format),
             static_cast<UINT>(metadata.width), static_cast<UINT>(metadata.height),
             static_cast<UINT>((metadata.dimension == TEX_DIMENSION_TEXTURE3D) ? metadata.depth : metadata.arraySize),
             1, XG_BIND_SHADER_RESOURCE);
+#endif
     }
 
     XG_RESOURCE_LAYOUT layout = {};
@@ -779,7 +850,11 @@ HRESULT Xbox::Tile(
         desc.Usage = XG_USAGE_DEFAULT;
         desc.BindFlags = XG_BIND_SHADER_RESOURCE;
         desc.MiscFlags = (metadata.IsCubemap()) ? XG_RESOURCE_MISC_TEXTURECUBE : 0;
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        desc.SwizzleMode = mode;
+#else
         desc.TileMode = mode;
+#endif
 
 #ifdef VERBOSE
         DebugPrintDesc(desc);
@@ -859,7 +934,11 @@ HRESULT Xbox::Tile(
         desc.Usage = XG_USAGE_DEFAULT;
         desc.BindFlags = XG_BIND_SHADER_RESOURCE;
         desc.MiscFlags = (metadata.miscFlags & TEX_MISC_TEXTURECUBE) ? XG_RESOURCE_MISC_TEXTURECUBE : 0;
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        desc.SwizzleMode = mode;
+#else
         desc.TileMode = mode;
+#endif
 
 #ifdef VERBOSE
         DebugPrintDesc(desc);
@@ -937,7 +1016,11 @@ HRESULT Xbox::Tile(
         desc.Format = static_cast<XG_FORMAT>(metadata.format);
         desc.Usage = XG_USAGE_DEFAULT;
         desc.BindFlags = XG_BIND_SHADER_RESOURCE;
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        desc.SwizzleMode = mode;
+#else
         desc.TileMode = mode;
+#endif
 
 #ifdef VERBOSE
         DebugPrintDesc(desc);

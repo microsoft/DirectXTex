@@ -11,7 +11,12 @@
 #include "DirectXTexXbox.h"
 
 #include "DDS.h"
+
+#if defined(_GAMING_XBOX) || defined(_USE_GXDK)
+#include "gxdk.h"
+#else
 #include "xdk.h"
+#endif
 
 using namespace DirectX;
 using namespace Xbox;
@@ -31,13 +36,15 @@ namespace
         uint32_t    miscFlag; // see DDS_RESOURCE_MISC_FLAG
         uint32_t    arraySize;
         uint32_t    miscFlags2; // see DDS_MISC_FLAGS2
-        uint32_t    tileMode; // see XG_TILE_MODE
+        uint32_t    tileMode; // see XG_TILE_MODE / XG_SWIZZLE_MODE
         uint32_t    baseAlignment;
         uint32_t    dataSize;
-        uint32_t    xdkVer; // matching _XDK_VER
+        uint32_t    xdkVer; // matching _XDK_VER / _GXDK_VER
     };
 
 #pragma pack(pop)
+
+    static const uint32_t XBOX_TILEMODE_SCARLETT = 0x1000000;
 
     static_assert(sizeof(DDS_HEADER_XBOX) == 36, "DDS XBOX Header size mismatch");
     static_assert(sizeof(DDS_HEADER_XBOX) >= sizeof(DDS_HEADER_DXT10), "DDS XBOX Header should be larger than DX10 header");
@@ -109,10 +116,17 @@ namespace
         auto xboxext = reinterpret_cast<const DDS_HEADER_XBOX*>(
             reinterpret_cast<const uint8_t*>(pSource) + sizeof(uint32_t) + sizeof(DDS_HEADER));
 
+#ifdef _GXDK_VER
+        if (xboxext->xdkVer < _GXDK_VER)
+        {
+            OutputDebugStringA("WARNING: DDS XBOX file may be outdated and need regeneration\n");
+        }
+#elif defined(_XDK_VER)
         if (xboxext->xdkVer < _XDK_VER)
         {
             OutputDebugStringA("WARNING: DDS XBOX file may be outdated and need regeneration\n");
         }
+#endif
 
         metadata.arraySize = xboxext->arraySize;
         if (metadata.arraySize == 0)
@@ -182,6 +196,18 @@ namespace
             return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
         }
 
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        else if (!(xboxext->tileMode & XBOX_TILEMODE_SCARLETT))
+        {
+            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        }
+#else
+        else if (xboxext->tileMode & XBOX_TILEMODE_SCARLETT)
+        {
+            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        }
+#endif
+
         static_assert(static_cast<int>(TEX_MISC2_ALPHA_MODE_MASK) == static_cast<int>(DDS_MISC_FLAGS2_ALPHA_MODE_MASK), "DDS header mismatch");
 
         static_assert(static_cast<int>(TEX_ALPHA_MODE_UNKNOWN) == static_cast<int>(DDS_ALPHA_MODE_UNKNOWN), "DDS header mismatch");
@@ -193,7 +219,9 @@ namespace
         metadata.miscFlags2 = xboxext->miscFlags2;
 
         if (tmode)
-            *tmode = static_cast<XboxTileMode>(xboxext->tileMode);
+        {
+            *tmode = static_cast<XboxTileMode>(xboxext->tileMode & ~XBOX_TILEMODE_SCARLETT);
+        }
 
         if (baseAlignment)
             *baseAlignment = xboxext->baseAlignment;
@@ -340,10 +368,19 @@ namespace
 
         xboxext->miscFlags2 = metadata.miscFlags2;
 
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        xboxext->tileMode = static_cast<uint32_t>(xbox.GetTileMode()) | XBOX_TILEMODE_SCARLETT;
+#else
         xboxext->tileMode = static_cast<uint32_t>(xbox.GetTileMode());
+#endif
+
         xboxext->baseAlignment = xbox.GetAlignment();
         xboxext->dataSize = xbox.GetSize();
+#ifdef _GXDK_VER
+        xboxext->xdkVer = _GXDK_VER;
+#elif defined(_XDK_VER)
         xboxext->xdkVer = _XDK_VER;
+#endif
 
         return S_OK;
     }

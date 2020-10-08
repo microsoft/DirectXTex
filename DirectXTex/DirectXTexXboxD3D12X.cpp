@@ -11,8 +11,12 @@
 #include "DirectXTexP.h"
 #include "DirectXTexXbox.h"
 
-#if !defined(_XBOX_ONE) || !defined(_TITLE)
+#if !(defined(_XBOX_ONE) && defined(_TITLE)) && !defined(_GAMING_XBOX)
 #error This module only supports Xbox exclusive apps
+#endif
+
+#ifdef _GAMING_XBOX
+#include <xmem.h>
 #endif
 
 using namespace Xbox;
@@ -28,7 +32,11 @@ namespace
         0,
         XALLOC_MEMTYPE_GRAPHICS_WRITECOMBINE_GPU_READONLY,
         XALLOC_PAGESIZE_64KB,
-        XALLOC_ALIGNMENT_64K);
+        XALLOC_ALIGNMENT_64K
+#ifdef _GAMING_XBOX
+        , 0
+#endif
+        );
 }
 
 //=====================================================================================
