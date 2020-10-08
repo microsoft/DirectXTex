@@ -110,12 +110,6 @@
     <ClCompile Include="DirectXTexXboxTile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DirectXTexXboxD3D11X.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DirectXTexXboxD3D12X.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="BC.h">
