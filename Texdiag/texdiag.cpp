@@ -651,7 +651,7 @@ namespace
         }
         else if (_wcsicmp(ext, L".tga") == 0)
         {
-            return LoadFromTGAFile(fileName, &info, *image);
+            return LoadFromTGAFile(fileName, TGA_FLAGS_NONE, &info, *image);
         }
         else if (_wcsicmp(ext, L".hdr") == 0)
         {
@@ -685,7 +685,7 @@ namespace
             return SaveToDDSFile(*image, DDS_FLAGS_NONE, fileName);
 
         case CODEC_TGA:
-            return SaveToTGAFile(*image, fileName);
+            return SaveToTGAFile(*image, TGA_FLAGS_NONE, fileName);
 
         case CODEC_HDR:
             return SaveToHDRFile(*image, fileName);

@@ -1889,7 +1889,7 @@ bool DirectX::_StoreScanline(
                 if (sPtr >= ePtr) break;
                 float v = XMVectorGetX(*sPtr++);
                 v = std::max<float>(std::min<float>(v, 1.f), -1.f);
-                *(dPtr++) = static_cast<int16_t>(v * 32767.f);
+                *(dPtr++) = static_cast<int16_t>(lroundf(v * 32767.f));
             }
             return true;
         }
@@ -1949,7 +1949,7 @@ bool DirectX::_StoreScanline(
                 if (sPtr >= ePtr) break;
                 float v = XMVectorGetX(*sPtr++);
                 v = std::max<float>(std::min<float>(v, 1.f), -1.f);
-                *(dPtr++) = static_cast<int8_t>(v * 127.f);
+                *(dPtr++) = static_cast<int8_t>(lroundf(v * 127.f));
             }
             return true;
         }

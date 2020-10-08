@@ -1749,7 +1749,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else if (_wcsicmp(ext, L".tga") == 0)
         {
-            hr = LoadFromTGAFile(pConv->szSrc, &info, *image);
+            hr = LoadFromTGAFile(pConv->szSrc, TGA_FLAGS_NONE, &info, *image);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
@@ -3130,7 +3130,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             case CODEC_TGA:
-                hr = SaveToTGAFile(img[0], pConv->szDest, (dwOptions & (DWORD64(1) << OPT_TGA20)) ? &info : nullptr);
+                hr = SaveToTGAFile(img[0], TGA_FLAGS_NONE, pConv->szDest, (dwOptions & (DWORD64(1) << OPT_TGA20)) ? &info : nullptr);
                 break;
 
             case CODEC_HDR:

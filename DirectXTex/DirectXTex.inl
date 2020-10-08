@@ -16,6 +16,7 @@
 //=====================================================================================
 DEFINE_ENUM_FLAG_OPERATORS(CP_FLAGS);
 DEFINE_ENUM_FLAG_OPERATORS(DDS_FLAGS);
+DEFINE_ENUM_FLAG_OPERATORS(TGA_FLAGS);
 DEFINE_ENUM_FLAG_OPERATORS(WIC_FLAGS);
 DEFINE_ENUM_FLAG_OPERATORS(TEX_FR_FLAGS);
 DEFINE_ENUM_FLAG_OPERATORS(TEX_FILTER_FLAGS);
@@ -147,4 +148,44 @@ inline HRESULT __cdecl SaveToDDSFile(const Image& image, DDS_FLAGS flags, const 
     mdata.dimension = TEX_DIMENSION_TEXTURE2D;
 
     return SaveToDDSFile(&image, 1, mdata, flags, szFile);
+}
+
+
+//=====================================================================================
+// Compatability helpers
+//=====================================================================================
+_Use_decl_annotations_
+inline HRESULT __cdecl GetMetadataFromTGAMemory(const void* pSource, size_t size, TexMetadata& metadata) noexcept
+{
+    return GetMetadataFromTGAMemory(pSource, size, TGA_FLAGS_NONE, metadata);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl GetMetadataFromTGAFile(const wchar_t* szFile, TexMetadata& metadata) noexcept
+{
+    return GetMetadataFromTGAFile(szFile, TGA_FLAGS_NONE, metadata);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl LoadFromTGAMemory(const void* pSource, size_t size, TexMetadata* metadata, ScratchImage& image) noexcept
+{
+    return LoadFromTGAMemory(pSource, size, TGA_FLAGS_NONE, metadata, image);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl LoadFromTGAFile(const wchar_t* szFile, TexMetadata* metadata, ScratchImage& image) noexcept
+{
+    return LoadFromTGAFile(szFile, TGA_FLAGS_NONE, metadata, image);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl SaveToTGAMemory(const Image& image, Blob& blob, const TexMetadata* metadata) noexcept
+{
+    return SaveToTGAMemory(image, TGA_FLAGS_NONE, blob, metadata);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl SaveToTGAFile(const Image& image, const wchar_t* szFile, const TexMetadata* metadata) noexcept
+{
+    return SaveToTGAFile(image, TGA_FLAGS_NONE, szFile, metadata);
 }

@@ -50,11 +50,11 @@ namespace
     //-------------------------------------------------------------------------------------
     struct WICTranslate
     {
-        GUID                wic;
+        const GUID&         wic;
         DXGI_FORMAT         format;
     };
 
-    const WICTranslate g_WICFormats[] =
+    constexpr WICTranslate g_WICFormats[] =
     {
         { GUID_WICPixelFormat128bppRGBAFloat,       DXGI_FORMAT_R32G32B32A32_FLOAT },
 
@@ -87,11 +87,11 @@ namespace
 
     struct WICConvert
     {
-        GUID        source;
-        GUID        target;
+        const GUID&        source;
+        const GUID&        target;
     };
 
-    const WICConvert g_WICConvert[] =
+    constexpr WICConvert g_WICConvert[] =
     {
         // Note target GUID in this conversion table must be one of those directly supported formats (above).
 
@@ -469,7 +469,7 @@ namespace
 
         // Allocate memory for decoded image
         uint64_t rowBytes = (uint64_t(twidth) * uint64_t(bpp) + 7u) / 8u;
-        uint64_t numBytes = rowBytes * uint64_t(height);
+        uint64_t numBytes = rowBytes * uint64_t(theight);
 
         if (rowBytes > UINT32_MAX || numBytes > UINT32_MAX)
             return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
