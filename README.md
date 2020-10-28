@@ -1,6 +1,6 @@
 ![DirectX Logo](https://github.com/Microsoft/DirectXTex/wiki/X_jpg.jpg)
 
-# DirectXTex texture processing library
+# DirectXTex texture processing library (Xbox variant)
 
 http://go.microsoft.com/fwlink/?LinkId=248926
 
@@ -13,6 +13,8 @@ This package contains DirectXTex, a shared source library for reading and writin
 This code is designed to build with Visual Studio 2017 ([15.9](https://walbourn.github.io/vs-2017-15-9-update/)), Visual Studio 2019, or clang for Windows v9 or later. It is recommended that you make use of the Windows 10 May 2020 Update SDK ([19041](https://walbourn.github.io/windows-10-may-2020-update-sdk/)).
 
 These components are designed to work without requiring any content from the legacy DirectX SDK. For details, see [Where is the DirectX SDK?](https://aka.ms/dxsdk).
+
+> This Xbox variant contains DirectXTexXbox modules for tiling/detiling textures offline for use with Xbox One/Xbox One S, Xbox One X, or Xbox Series X/S. Building and running this code requires access to the Xbox One XDK or Microsoft GDK through the ID@Xbox developer program.
 
 ## Directory Layout
 
