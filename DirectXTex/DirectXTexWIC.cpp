@@ -57,6 +57,23 @@
 
 #endif // __cplusplus_winrt
 
+#elif (!defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)) && (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
+
+#include <shlwapi.h>
+#pragma comment(lib,"shlwapi.lib")
+
+    static inline HRESULT CreateMemoryStream(_Outptr_ IStream** stream) noexcept
+    {
+        if (!stream)
+            return E_INVALIDARG;
+
+        *stream = SHCreateMemStream(nullptr, 0u);
+        if (!*stream)
+            return E_OUTOFMEMORY;
+
+        return S_OK;
+    }
+
 #else
 
     #pragma prefast(suppress:6387 28196, "a simple wrapper around an existing annotated function" );
