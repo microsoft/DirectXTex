@@ -59,7 +59,7 @@
 
 #elif (!defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)) && (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
 
-#include <shlwapi.h>
+#include <Shlwapi.h>
 #pragma comment(lib,"shlwapi.lib")
 
     static inline HRESULT CreateMemoryStream(_Outptr_ IStream** stream) noexcept
