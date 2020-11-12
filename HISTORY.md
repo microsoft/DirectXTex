@@ -6,6 +6,11 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### November 11, 2020
+* Use ``SHCreateMemStream`` instead of ``CreateStreamOnHGlobal`` for Win32 on Windows 8.x or Windows 10
+* Updated D3DX12 internal copy with latest change from GitHub
+* Minor code and project cleanup
+
 ### September 30, 2020
 * Added ``TGA_FLAGS`` [flags](https://github.com/microsoft/DirectXTex/wiki/TGA-I-O-Functions#related-flags) to TGA reader/writer to control RGB vs. BGR, handling for all zero alpha channels, and TGA 2.0 colorspace metadata
   * TGA reader will now return a ``DXGI_FORMAT_*_SRGB`` format if TGA 2.0 colorspace metadata contains 2.2 or 2.4 gamma
