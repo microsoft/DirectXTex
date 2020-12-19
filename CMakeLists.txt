@@ -24,6 +24,10 @@ option(BC_USE_OPENMP "Build with OpenMP support" ON)
 
 option(ENABLE_CODE_ANALYSIS "Use Static Code Analysis on build" OFF)
 
+# Includes the functions for loading/saving OpenEXR files at runtime
+# NOTE requires adding DirectXTexEXR.h/.cpp source files (vcpkg does this automatically)
+option(ENABLE_OPENEXR_SUPPORT "Build with OpenEXR support" OFF)
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -76,6 +80,15 @@ if(BUILD_DX12)
    set(LIBRARY_SOURCES ${LIBRARY_SOURCES} ${LIBRARY_HEADERS} DirectXTex/DirectXTexD3D12.cpp)
 endif()
 
+if(ENABLE_OPENEXR_SUPPORT)
+   set(LIBRARY_HEADERS ${LIBRARY_HEADERS}
+       DirectXTex/DirectXTexEXR.h)
+
+   set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
+       DirectXTex/DirectXTexEXR.h
+       DirectXTex/DirectXTexEXR.cpp)
+endif()
+
 add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc)
 
 add_custom_command(
@@ -92,6 +105,11 @@ source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/DirectXTex>
   $<INSTALL_INTERFACE:include>)
+
+if(ENABLE_OPENEXR_SUPPORT)
+  find_package(openexr REQUIRED)
+  target_include_directories(${PROJECT_NAME} PRIVATE ${OPENEXR_INCLUDE_DIRS}/OpenEXR)
+endif()
 
 if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.16")
     target_precompile_headers(${PROJECT_NAME} PRIVATE DirectXTex/DirectXTexP.h)
@@ -159,6 +177,16 @@ if(BUILD_TOOLS)
   add_executable(texdiag Texdiag/texdiag.cpp)
   target_link_libraries(texdiag ${PROJECT_NAME} version.lib)
   source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
+
+  if(ENABLE_OPENEXR_SUPPORT)
+    target_link_libraries(texassemble ${OPENEXR_ILMIMF_LIBRARY})
+    target_link_libraries(texconv ${OPENEXR_ILMIMF_LIBRARY})
+    target_link_libraries(texdiag ${OPENEXR_ILMIMF_LIBRARY})
+
+    target_compile_options(texassemble PRIVATE -DUSE_OPENEXR)
+    target_compile_options(texconv PRIVATE -DUSE_OPENEXR)
+    target_compile_options(texdiag PRIVATE -DUSE_OPENEXR)
+  endif()
 endif()
 
 if(MSVC)
