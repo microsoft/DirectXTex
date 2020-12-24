@@ -269,7 +269,7 @@ if(WIN32)
       target_compile_definitions(texdiag PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0601)
     endif()
 
-    if(BUILD_DX12)
+    if(BUILD_DX12 OR WINDOWS_STORE)
         target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0A00)
     else()
         target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0601)
