@@ -130,8 +130,10 @@ endif()
 #--- Package
 include(CMakePackageConfigHelpers)
 
+string(TOLOWER ${PROJECT_NAME} PACKAGE_NAME)
+
 write_basic_package_version_file(
-  ${PROJECT_BINARY_DIR}/cmake/${PROJECT_NAME}-config-version.cmake
+  ${PROJECT_BINARY_DIR}/cmake/${PACKAGE_NAME}-config-version.cmake
   VERSION ${DIRECTXTEX_VERSION}
   COMPATIBILITY AnyNewerVersion)
 
@@ -142,7 +144,7 @@ install(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION bin)
 
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/.nuget/${PROJECT_NAME}-config.cmake.in
-  ${PROJECT_BINARY_DIR}/cmake/${PROJECT_NAME}-config.cmake
+  ${PROJECT_BINARY_DIR}/cmake/${PACKAGE_NAME}-config.cmake
   INSTALL_DESTINATION cmake/})
 
 install(EXPORT ${PROJECT_NAME}-targets
@@ -155,8 +157,8 @@ install(FILES ${LIBRARY_HEADERS}
 
 install(
   FILES
-    ${PROJECT_BINARY_DIR}/cmake/${PROJECT_NAME}-config.cmake
-    ${PROJECT_BINARY_DIR}/cmake/${PROJECT_NAME}-config-version.cmake
+    ${PROJECT_BINARY_DIR}/cmake/${PACKAGE_NAME}-config.cmake
+    ${PROJECT_BINARY_DIR}/cmake/${PACKAGE_NAME}-config-version.cmake
   DESTINATION cmake/)
 
 #--- Command-line tools
