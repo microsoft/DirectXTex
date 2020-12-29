@@ -9,16 +9,16 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
-#include <windows.h>
-
-#include <assert.h>
-#include <stdio.h>
-#include <dxgiformat.h>
-#include <d3d11.h>
+#include <Windows.h>
 
 #include <algorithm>
+#include <cassert>
+#include <cstdio>
 
-#include <directxmath.h>
+#include <dxgiformat.h>
+#include <d3d11_1.h>
+
+#include <DirectXMath.h>
 
 #pragma warning(disable : 4619 4616 26812)
 
