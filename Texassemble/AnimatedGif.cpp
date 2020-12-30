@@ -24,7 +24,9 @@
 #define NOHELP
 #pragma warning(pop)
 
+#include <cstddef>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include <wrl/client.h>

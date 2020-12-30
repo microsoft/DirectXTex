@@ -11,9 +11,10 @@
 
 #pragma once
 
-#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <utility>
 #include <vector>
 
 #if !defined(__d3d11_h__) && !defined(__d3d11_x_h__) && !defined(__d3d12_h__) && !defined(__d3d12_x_h__) && !defined(__XBOX_D3D12_X__)
@@ -32,10 +33,10 @@
 
 #include <OCIdl.h>
 
-#define DIRECTX_TEX_VERSION 191
-
 struct IWICImagingFactory;
 struct IWICMetadataQueryReader;
+
+#define DIRECTX_TEX_VERSION 191
 
 
 namespace DirectX
