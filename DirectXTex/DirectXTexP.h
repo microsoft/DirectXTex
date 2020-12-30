@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
-// DirectXTexp.h
-//  
+// DirectXTexP.h
+//
 // DirectX Texture Library - Private header
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -85,11 +85,11 @@
 #define NOHELP
 #pragma warning(pop)
 
+#include <Windows.h>
+
 #ifndef _WIN32_WINNT_WIN10
 #define _WIN32_WINNT_WIN10 0x0A00
 #endif
-
-#include <Windows.h>
 
 #ifdef _GAMING_XBOX_SCARLETT
 #include <d3d12_xs.h>
@@ -107,25 +107,21 @@
 
 #define _XM_NO_XMVECTOR_OVERLOADS_
 
-#include <DirectXMath.h>
-#include <DirectXPackedVector.h>
-#include <assert.h>
-
-#include <malloc.h>
-#include <memory>
-
-#include <vector>
-
-#include <time.h>
-#include <stdlib.h>
-#include <search.h>
-
-#include <Ole2.h>
-
 #include "DirectXTex.h"
 
-#include <wincodec.h>
+#include <algorithm>
+#include <cassert>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
+#include <memory>
 
+#include <DirectXPackedVector.h>
+
+#include <malloc.h>
+
+#include <Ole2.h>
+#include <wincodec.h>
 #include <wrl\client.h>
 
 #include "scoped.h"
@@ -262,7 +258,7 @@ namespace DirectX
         CONVF_FLOAT     = 0x1,
         CONVF_UNORM     = 0x2,
         CONVF_UINT      = 0x4,
-        CONVF_SNORM     = 0x8, 
+        CONVF_SNORM     = 0x8,
         CONVF_SINT      = 0x10,
         CONVF_DEPTH     = 0x20,
         CONVF_STENCIL   = 0x40,
@@ -296,7 +292,7 @@ namespace DirectX
         void* pDestination, _In_ size_t outSize,
         _In_reads_bytes_(inSize) const void* pSource, _In_ size_t inSize,
         _In_ DXGI_FORMAT format, _In_ uint32_t tflags) noexcept;
- 
+
     _Success_(return != false) bool __cdecl _ExpandScanline(
         _Out_writes_bytes_(outSize) void* pDestination, _In_ size_t outSize,
         _In_ DXGI_FORMAT outFormat,
