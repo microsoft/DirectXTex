@@ -18,8 +18,9 @@
 
 #include <d3d9types.h>
 
-#include <assert.h>
 #include <algorithm>
+#include <cassert>
+#include <cstring>
 #include <memory>
 
 #include <wrl/client.h>

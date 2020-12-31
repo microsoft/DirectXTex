@@ -23,8 +23,9 @@
 
 #include "WICTextureLoader12.h"
 
-#include <assert.h>
 #include <algorithm>
+#include <cassert>
+#include <cstring>
 
 #include <wincodec.h>
 
@@ -36,6 +37,13 @@
 #pragma clang diagnostic ignored "-Wswitch"
 #pragma clang diagnostic ignored "-Wswitch-enum"
 #endif
+
+// Off by default warnings
+#pragma warning(disable : 4619 4616 4623 4626 5027)
+// C4619/4616 #pragma warning warnings
+// C4623 default constructor was implicitly defined as deleted
+// C4626 assignment operator was implicitly defined as deleted
+// C5027 move assignment operator was implicitly defined as deleted
 
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"

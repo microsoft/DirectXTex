@@ -23,8 +23,10 @@
 
 #include "ScreenGrab12.h"
 
-#include <assert.h>
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstring>
 #include <memory>
 
 #include <wincodec.h>

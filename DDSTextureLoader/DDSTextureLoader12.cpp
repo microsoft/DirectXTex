@@ -16,8 +16,8 @@
 
 #include "DDSTextureLoader12.h"
 
-#include <assert.h>
 #include <algorithm>
+#include <cassert>
 #include <memory>
 
 #ifdef __clang__

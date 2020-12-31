@@ -24,6 +24,7 @@
 #endif
 #include <d3d9.h>
 
+#include <cstddef>
 #include <cstdint>
 
 namespace DirectX
