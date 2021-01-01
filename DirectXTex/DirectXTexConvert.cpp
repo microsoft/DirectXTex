@@ -1,7 +1,7 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexConvert.cpp
-//  
-// DirectX Texture Library - Image pixel format conversion 
+//
+// DirectX Texture Library - Image pixel format conversion
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -4553,7 +4553,7 @@ namespace
 
         if (srcImage.rowPitch > UINT32_MAX || srcImage.slicePitch > UINT32_MAX
             || destImage.rowPitch > UINT32_MAX || destImage.slicePitch > UINT32_MAX)
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         ComPtr<IWICBitmap> source;
         hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height), pfGUID,
@@ -4840,7 +4840,7 @@ HRESULT DirectX::Convert(
         || IsPlanar(srcImage.format) || IsPlanar(format)
         || IsPalettized(srcImage.format) || IsPalettized(format)
         || IsTypeless(srcImage.format) || IsTypeless(format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if ((srcImage.width > UINT32_MAX) || (srcImage.height > UINT32_MAX))
         return E_INVALIDARG;
@@ -4896,7 +4896,7 @@ HRESULT DirectX::Convert(
         || IsPlanar(metadata.format) || IsPlanar(format)
         || IsPalettized(metadata.format) || IsPalettized(format)
         || IsTypeless(metadata.format) || IsTypeless(format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if ((metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX))
         return E_INVALIDARG;
@@ -5049,7 +5049,7 @@ HRESULT DirectX::ConvertToSinglePlane(const Image& srcImage, ScratchImage& image
 
     DXGI_FORMAT format = _PlanarToSingle(srcImage.format);
     if (format == DXGI_FORMAT_UNKNOWN)
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if ((srcImage.width > UINT32_MAX) || (srcImage.height > UINT32_MAX))
         return E_INVALIDARG;
@@ -5092,12 +5092,12 @@ HRESULT DirectX::ConvertToSinglePlane(
     if (metadata.IsVolumemap())
     {
         // Direct3D does not support any planar formats for Texture3D
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     DXGI_FORMAT format = _PlanarToSingle(metadata.format);
     if (format == DXGI_FORMAT_UNKNOWN)
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if ((metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX))
         return E_INVALIDARG;

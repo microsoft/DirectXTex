@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexResize.cpp
-//  
+//
 // DirectX Texture Library - Image resizing operations
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -58,7 +58,7 @@ namespace
 
         if (srcImage.rowPitch > UINT32_MAX || srcImage.slicePitch > UINT32_MAX
             || destImage.rowPitch > UINT32_MAX || destImage.slicePitch > UINT32_MAX)
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         ComPtr<IWICBitmap> source;
         hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height), pfGUID,
@@ -823,7 +823,7 @@ namespace
             return ResizeTriangleFilter(srcImage, filter, destImage);
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
     }
 }
@@ -859,7 +859,7 @@ HRESULT DirectX::Resize(
     if (IsCompressed(srcImage.format))
     {
         // We don't support resizing compressed images
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     bool usewic = UseWICFiltering(srcImage.format, filter);
@@ -875,7 +875,7 @@ HRESULT DirectX::Resize(
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
             if (filter & TEX_FILTER_FORCE_WIC)
-                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                return HRESULT_E_ARITHMETIC_OVERFLOW;
 
             usewic = false;
         }
@@ -958,7 +958,7 @@ HRESULT DirectX::Resize(
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
             if (filter & TEX_FILTER_FORCE_WIC)
-                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                return HRESULT_E_ARITHMETIC_OVERFLOW;
 
             usewic = false;
         }

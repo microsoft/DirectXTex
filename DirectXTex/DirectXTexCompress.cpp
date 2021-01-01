@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexCompress.cpp
-//  
+//
 // DirectX Texture Library - Texture compression
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -89,7 +89,7 @@ namespace
         if (sbpp < 8)
         {
             // We don't support compressing from monochrome (DXGI_FORMAT_R1_UNORM)
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         // Round to bytes
@@ -102,7 +102,7 @@ namespace
         size_t blocksize;
         TEX_FILTER_FLAGS cflags;
         if (!DetermineEncoderSettings(result.format, pfEncode, blocksize, cflags))
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
 
         __declspec(align(16)) XMVECTOR temp[16];
         const uint8_t *pSrc = image.pixels;
@@ -218,7 +218,7 @@ namespace
         if (sbpp < 8)
         {
             // We don't support compressing from monochrome (DXGI_FORMAT_R1_UNORM)
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         // Round to bytes
@@ -231,7 +231,7 @@ namespace
         size_t blocksize;
         TEX_FILTER_FLAGS cflags;
         if (!DetermineEncoderSettings(result.format, pfEncode, blocksize, cflags))
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
 
         // Refactored version of loop to support parallel independance
         const size_t nBlocks = std::max<size_t>(1, (image.width + 3) / 4) * std::max<size_t>(1, (image.height + 3) / 4);
@@ -394,7 +394,7 @@ namespace
         if (dbpp < 8)
         {
             // We don't support decompressing to monochrome (DXGI_FORMAT_R1_UNORM)
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         // Round to bytes
@@ -438,7 +438,7 @@ namespace
         case DXGI_FORMAT_BC7_UNORM:
         case DXGI_FORMAT_BC7_UNORM_SRGB:    pfDecode = D3DXDecodeBC7;   sbpp = 16;  break;
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         __declspec(align(16)) XMVECTOR temp[16];
@@ -603,7 +603,7 @@ HRESULT DirectX::Compress(
 
     if (IsTypeless(format)
         || IsTypeless(srcImage.format) || IsPlanar(srcImage.format) || IsPalettized(srcImage.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     // Create compressed image
     HRESULT hr = image.Initialize2D(format, srcImage.width, srcImage.height, 1, 1);
@@ -655,7 +655,7 @@ HRESULT DirectX::Compress(
 
     if (IsTypeless(format)
         || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     cImages.Release();
 
@@ -749,7 +749,7 @@ HRESULT DirectX::Decompress(
             return E_INVALIDARG;
 
         if (IsTypeless(format) || IsPlanar(format) || IsPalettized(format))
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
     }
 
     // Create decompressed image
@@ -802,7 +802,7 @@ HRESULT DirectX::Decompress(
             return E_INVALIDARG;
 
         if (IsTypeless(format) || IsPlanar(format) || IsPalettized(format))
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
     }
 
     images.Release();

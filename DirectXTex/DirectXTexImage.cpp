@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexImage.cpp
-//  
+//
 // DirectX Texture Library - Image container
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -288,7 +288,7 @@ HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags) noexc
         return E_INVALIDARG;
 
     if (IsPalettized(mdata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     size_t mipLevels = mdata.mipLevels;
 
@@ -325,7 +325,7 @@ HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags) noexc
         break;
 
     default:
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     Release();
@@ -342,7 +342,7 @@ HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags) noexc
 
     size_t pixelSize, nimages;
     if (!_DetermineImageArray(m_metadata, flags, nimages, pixelSize))
-        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
 
     m_image = new (std::nothrow) Image[nimages];
     if (!m_image)
@@ -390,7 +390,7 @@ HRESULT ScratchImage::Initialize2D(DXGI_FORMAT fmt, size_t width, size_t height,
         return E_INVALIDARG;
 
     if (IsPalettized(fmt))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (!_CalculateMipLevels(width, height, mipLevels))
         return E_INVALIDARG;
@@ -409,7 +409,7 @@ HRESULT ScratchImage::Initialize2D(DXGI_FORMAT fmt, size_t width, size_t height,
 
     size_t pixelSize, nimages;
     if (!_DetermineImageArray(m_metadata, flags, nimages, pixelSize))
-        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
 
     m_image = new (std::nothrow) Image[nimages];
     if (!m_image)
@@ -441,7 +441,7 @@ HRESULT ScratchImage::Initialize3D(DXGI_FORMAT fmt, size_t width, size_t height,
         return E_INVALIDARG;
 
     if (IsPalettized(fmt))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (!_CalculateMipLevels3D(width, height, depth, mipLevels))
         return E_INVALIDARG;
@@ -460,7 +460,7 @@ HRESULT ScratchImage::Initialize3D(DXGI_FORMAT fmt, size_t width, size_t height,
 
     size_t pixelSize, nimages;
     if (!_DetermineImageArray(m_metadata, flags, nimages, pixelSize))
-        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
 
     m_image = new (std::nothrow) Image[nimages];
     if (!m_image)

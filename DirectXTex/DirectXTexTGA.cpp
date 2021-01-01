@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexTGA.cpp
-//  
+//
 // DirectX Texture Library - Targa Truevision (TGA) file format reader/writer
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -156,12 +156,12 @@ namespace
         if (pHeader->bColorMapType != 0
             || pHeader->wColorMapLength != 0)
         {
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         if (pHeader->bDescriptor & (TGA_FLAGS_INTERLEAVED_2WAY | TGA_FLAGS_INTERLEAVED_4WAY))
         {
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         if (!pHeader->wWidth || !pHeader->wHeight)
@@ -214,7 +214,7 @@ namespace
                 break;
 
             default:
-                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                return HRESULT_E_NOT_SUPPORTED;
             }
 
             if (convFlags && (pHeader->bImageType == TGA_BLACK_AND_WHITE_RLE))
@@ -226,7 +226,7 @@ namespace
         case TGA_NO_IMAGE:
         case TGA_COLOR_MAPPED:
         case TGA_COLOR_MAPPED_RLE:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
 
         default:
             return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
@@ -1082,7 +1082,7 @@ namespace
         if ((image.width > UINT16_MAX)
             || (image.height > UINT16_MAX))
         {
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         header.wWidth = static_cast<uint16_t>(image.width);
@@ -1127,7 +1127,7 @@ namespace
             break;
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         return S_OK;
@@ -1611,7 +1611,7 @@ HRESULT DirectX::LoadFromTGAFile(
         if (image.GetPixelsSize() > UINT32_MAX)
         {
             image.Release();
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
         }
 
         if (!ReadFile(hFile.get(), image.GetPixels(), static_cast<DWORD>(image.GetPixelsSize()), &bytesRead, nullptr))
@@ -2092,7 +2092,7 @@ HRESULT DirectX::SaveToTGAFile(
             return E_FAIL;
 
         if (rowPitch > UINT32_MAX)
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         // Write pixels
         const uint8_t* pPixels = image.pixels;

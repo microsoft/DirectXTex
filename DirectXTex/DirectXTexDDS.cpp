@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexDDS.cpp
-//  
+//
 // DirectX Texture Library - Microsoft DirectDraw Surface (DDS) file format reader/writer
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -41,9 +41,9 @@ namespace
         CONV_FLAGS_A8P8 = 0x800,    // Has an 8-bit palette with an alpha channel
         CONV_FLAGS_DX10 = 0x10000,  // Has the 'DX10' extension header
         CONV_FLAGS_PMALPHA = 0x20000,  // Contains premultiplied alpha data
-        CONV_FLAGS_L8 = 0x40000,  // Source is a 8 luminance format 
-        CONV_FLAGS_L16 = 0x80000,  // Source is a 16 luminance format 
-        CONV_FLAGS_A8L8 = 0x100000, // Source is a 8:8 luminance format 
+        CONV_FLAGS_L8 = 0x40000,  // Source is a 8 luminance format
+        CONV_FLAGS_L16 = 0x80000,  // Source is a 16 luminance format
+        CONV_FLAGS_A8L8 = 0x100000, // Source is a 8:8 luminance format
     };
 
     struct LegacyDDS
@@ -329,7 +329,7 @@ namespace
             metadata.format = d3d10ext->dxgiFormat;
             if (!IsValid(metadata.format) || IsPalettized(metadata.format))
             {
-                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                return HRESULT_E_NOT_SUPPORTED;
             }
 
             static_assert(static_cast<int>(TEX_MISC_TEXTURECUBE) == static_cast<int>(DDS_RESOURCE_MISC_TEXTURECUBE), "DDS header mismatch");
@@ -372,7 +372,7 @@ namespace
                 }
 
                 if (metadata.arraySize > 1)
-                    return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                    return HRESULT_E_NOT_SUPPORTED;
 
                 metadata.width = pHeader->width;
                 metadata.height = pHeader->height;
@@ -411,7 +411,7 @@ namespace
                 {
                     // We require all six faces to be defined
                     if ((pHeader->caps2 & DDS_CUBEMAP_ALLFACES) != DDS_CUBEMAP_ALLFACES)
-                        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                        return HRESULT_E_NOT_SUPPORTED;
 
                     metadata.arraySize = 6;
                     metadata.miscFlags |= TEX_MISC_TEXTURECUBE;
@@ -428,7 +428,7 @@ namespace
             metadata.format = GetDXGIFormat(*pHeader, pHeader->ddspf, flags, convFlags);
 
             if (metadata.format == DXGI_FORMAT_UNKNOWN)
-                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                return HRESULT_E_NOT_SUPPORTED;
 
             // Special flag for handling LUMINANCE legacy formats
             if (flags & DDS_FLAGS_EXPAND_LUMINANCE)
@@ -533,14 +533,14 @@ namespace
                 || metadata.height > 16384u /* D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION */
                 || metadata.mipLevels > 15u /* D3D12_REQ_MIP_LEVELS */)
             {
-                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                return HRESULT_E_NOT_SUPPORTED;
             }
 
             // 2048 is the maximum required depth/array size supported by Direct3D
             if (metadata.arraySize > 2048u /* D3D12_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION, D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION */
                 || metadata.depth > 2048u /* D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION */)
             {
-                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                return HRESULT_E_NOT_SUPPORTED;
             }
         }
 
@@ -564,7 +564,7 @@ HRESULT DirectX::_EncodeDDSHeader(
         return E_INVALIDARG;
 
     if (IsPalettized(metadata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (metadata.arraySize > 1)
     {
@@ -1074,7 +1074,7 @@ namespace
             switch (outFormat)
             {
             case DXGI_FORMAT_B4G4R4A4_UNORM:
-                // D3DFMT_A4L4 -> DXGI_FORMAT_B4G4R4A4_UNORM 
+                // D3DFMT_A4L4 -> DXGI_FORMAT_B4G4R4A4_UNORM
                 if (inSize >= 1 && outSize >= 2)
                 {
                     const uint8_t * __restrict sPtr = static_cast<const uint8_t*>(pSource);
@@ -1249,7 +1249,7 @@ namespace
 
         size_t pixelSize, nimages;
         if (!_DetermineImageArray(metadata, cpFlags, nimages, pixelSize))
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         if ((nimages == 0) || (nimages != image.GetImageCount()))
         {
@@ -1444,7 +1444,7 @@ namespace
                     else if (IsPlanar(metadata.format))
                     {
                         // Direct3D does not support any planar formats for Texture3D
-                        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                        return HRESULT_E_NOT_SUPPORTED;
                     }
                     else
                     {
@@ -1509,7 +1509,7 @@ namespace
         const TexMetadata& metadata = image.GetMetadata();
 
         if (IsPlanar(metadata.format))
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
 
         uint32_t tflags = (convFlags & CONV_FLAGS_NOALPHA) ? TEXP_SCANLINE_SETALPHA : 0u;
         if (convFlags & CONV_FLAGS_SWIZZLE)
@@ -1854,7 +1854,7 @@ HRESULT DirectX::LoadFromDDSFile(
         if (image.GetPixelsSize() > UINT32_MAX)
         {
             image.Release();
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
         }
 
         if (!ReadFile(hFile.get(), image.GetPixels(), static_cast<DWORD>(image.GetPixelsSize()), &bytesRead, nullptr))
@@ -2203,7 +2203,7 @@ HRESULT DirectX::SaveToDDSFile(
                     }
 
                     if (ddsRowPitch > UINT32_MAX)
-                        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                        return HRESULT_E_ARITHMETIC_OVERFLOW;
 
                     const uint8_t * __restrict sPtr = images[index].pixels;
 
@@ -2276,7 +2276,7 @@ HRESULT DirectX::SaveToDDSFile(
                     }
 
                     if (ddsRowPitch > UINT32_MAX)
-                        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                        return HRESULT_E_ARITHMETIC_OVERFLOW;
 
                     const uint8_t * __restrict sPtr = images[index].pixels;
 

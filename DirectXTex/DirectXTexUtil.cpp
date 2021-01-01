@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexUtil.cpp
-//  
+//
 // DirectX Texture Library - Utilities
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -1056,7 +1056,7 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
     if (pitch > UINT32_MAX || slice > UINT32_MAX)
     {
         rowPitch = slicePitch = 0;
-        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
     }
 #else
     static_assert(sizeof(size_t) == 8, "Not a 64-bit platform!");

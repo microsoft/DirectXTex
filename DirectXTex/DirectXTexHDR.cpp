@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexHDR.cpp
-//  
+//
 // DirectX Texture Library - Radiance HDR (RGBE) file format reader/writer
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -17,10 +17,10 @@
 //      +X width -Y height
 //      -X width +Y height
 //      -X width -Y height
-//      +Y height +X width 
-//      -Y height +X width 
-//      +Y height -X width 
-//      -Y height -X width 
+//      +Y height +X width
+//      -Y height +X width
+//      +Y height -X width
+//      -Y height -X width
 //
 // All HDR files we've encountered are always written as "-Y height +X width", so
 // we support only that one as that's what other Radiance parsing code does as well.
@@ -86,7 +86,7 @@ namespace
         memset(&metadata, 0, sizeof(TexMetadata));
 
         exposure = 1.f;
-        
+
         if (size < sizeof(g_Signature))
         {
             return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
@@ -137,7 +137,7 @@ namespace
 
                 if (memcmp(info, g_sRGBE, encodingLen) != 0 && memcmp(info, g_sXYZE, encodingLen) != 0)
                 {
-                    return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                    return HRESULT_E_NOT_SUPPORTED;
                 }
 
                 formatFound = true;
@@ -240,7 +240,7 @@ namespace
         else if (*ptr != '+')
         {
             // We only support the -Y +X orientation (see top of file)
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         ++ptr;
@@ -251,7 +251,7 @@ namespace
         else if (*ptr != 'X')
         {
             // We only support the -Y +X orientation (see top of file)
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         ++ptr;
@@ -685,7 +685,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
         pixelLen -= 4;
 
         auto scanLine = reinterpret_cast<float*>(destPtr);
-        
+
         if (inColor[0] == 2 && inColor[1] == 2 && inColor[2] < 128)
         {
             // Adaptive Run Length Encoding (RLE)
@@ -917,7 +917,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob) noexcept
     {
         // Images larger than this can't be RLE encoded. They are technically allowed as
         // uncompresssed, but we just don't support them.
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     int fpp;
@@ -932,7 +932,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob) noexcept
         break;
 
     default:
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     blob.Release();
@@ -1029,7 +1029,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
     {
         // Images larger than this can't be RLE encoded. They are technically allowed as
         // uncompresssed, but we just don't support them.
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     int fpp;
@@ -1044,7 +1044,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
         break;
 
     default:
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     // Create file and write header
@@ -1064,7 +1064,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
     uint64_t slicePitch = uint64_t(image.height) * pitch;
 
     if (pitch > UINT32_MAX)
-        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
 
     size_t rowPitch = static_cast<size_t>(pitch);
 
@@ -1150,7 +1150,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
             if (encSize > 0)
             {
                 if (encSize > UINT32_MAX)
-                    return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                    return HRESULT_E_ARITHMETIC_OVERFLOW;
 
                 if (!WriteFile(hFile.get(), enc, static_cast<DWORD>(encSize), &bytesWritten, nullptr))
                 {

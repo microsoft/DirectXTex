@@ -314,7 +314,7 @@ namespace
         TEX_ALPHA_MODE alphaMode;
         metadata.format = DetermineFormat(pixelFormat, flags, iswic2, pConvert, &alphaMode);
         if (metadata.format == DXGI_FORMAT_UNKNOWN)
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
 
         metadata.SetAlphaMode(alphaMode);
 
@@ -437,7 +437,7 @@ namespace
             return E_NOINTERFACE;
 
         if (img->rowPitch > UINT32_MAX || img->slicePitch > UINT32_MAX)
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         if (memcmp(&convertGUID, &GUID_NULL, sizeof(GUID)) == 0)
         {
@@ -509,7 +509,7 @@ namespace
                 return E_POINTER;
 
             if (img->rowPitch > UINT32_MAX || img->slicePitch > UINT32_MAX)
-                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                return HRESULT_E_ARITHMETIC_OVERFLOW;
 
             ComPtr<IWICBitmapFrameDecode> frame;
             hr = decoder->GetFrame(static_cast<UINT>(index), frame.GetAddressOf());
@@ -731,7 +731,7 @@ namespace
 
         WICPixelFormatGUID pfGuid;
         if (!_DXGIToWIC(image.format, pfGuid))
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
 
         HRESULT hr = frame->Initialize(props);
         if (FAILED(hr))
@@ -741,7 +741,7 @@ namespace
             return E_INVALIDARG;
 
         if (image.rowPitch > UINT32_MAX || image.slicePitch > UINT32_MAX)
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         hr = frame->SetSize(static_cast<UINT>(image.width), static_cast<UINT>(image.height));
         if (FAILED(hr))
@@ -919,7 +919,7 @@ namespace
             return hr;
 
         if (!mframe)
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
 
         hr = encoder->Initialize(stream, WICBitmapEncoderNoCache);
         if (FAILED(hr))

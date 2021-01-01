@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexMipMaps.cpp
-//  
+//
 // DirectX Texture Library - Mip-map generation
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -595,7 +595,7 @@ namespace DirectX
         if (SUCCEEDED(hr))
         {
             if (img->rowPitch > UINT32_MAX || img->slicePitch > UINT32_MAX)
-                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                return HRESULT_E_ARITHMETIC_OVERFLOW;
 
             ComPtr<IWICBitmap> wicBitmap;
             hr = EnsureWicBitmapPixelFormat(pWIC, resizedColorWithAlpha.Get(), filter, desiredPixelFormat, wicBitmap.GetAddressOf());
@@ -705,7 +705,7 @@ namespace
         size_t height = baseImage.height;
 
         if (baseImage.rowPitch > UINT32_MAX || baseImage.slicePitch > UINT32_MAX)
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         ComPtr<IWICBitmap> source;
         HRESULT hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(width), static_cast<UINT>(height), pfGUID,
@@ -776,7 +776,7 @@ namespace
                     return hr;
 
                 if (img->rowPitch > UINT32_MAX || img->slicePitch > UINT32_MAX)
-                    return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                    return HRESULT_E_ARITHMETIC_OVERFLOW;
 
                 hr = scaler->Initialize(source.Get(), static_cast<UINT>(width), static_cast<UINT>(height), _GetWICInterp(filter));
                 if (FAILED(hr))
@@ -2790,7 +2790,7 @@ HRESULT DirectX::GenerateMipMaps(
 
     if (IsCompressed(baseImage.format) || IsTypeless(baseImage.format) || IsPlanar(baseImage.format) || IsPalettized(baseImage.format))
     {
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     HRESULT hr = E_UNEXPECTED;
@@ -2810,7 +2810,7 @@ HRESULT DirectX::GenerateMipMaps(
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
             if (filter & TEX_FILTER_FORCE_WIC)
-                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                return HRESULT_E_ARITHMETIC_OVERFLOW;
 
             usewic = false;
         }
@@ -2871,7 +2871,7 @@ HRESULT DirectX::GenerateMipMaps(
         }
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
     }
     else
@@ -2953,7 +2953,7 @@ HRESULT DirectX::GenerateMipMaps(
             return hr;
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
     }
 }
@@ -2972,7 +2972,7 @@ HRESULT DirectX::GenerateMipMaps(
 
     if (metadata.IsVolumemap()
         || IsCompressed(metadata.format) || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (!_CalculateMipLevels(metadata.width, metadata.height, levels))
         return E_INVALIDARG;
@@ -3023,7 +3023,7 @@ HRESULT DirectX::GenerateMipMaps(
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
             if (filter & TEX_FILTER_FORCE_WIC)
-                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                return HRESULT_E_ARITHMETIC_OVERFLOW;
 
             usewic = false;
         }
@@ -3097,7 +3097,7 @@ HRESULT DirectX::GenerateMipMaps(
         }
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
     }
     else
@@ -3181,7 +3181,7 @@ HRESULT DirectX::GenerateMipMaps(
             return hr;
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
     }
 }
@@ -3202,7 +3202,7 @@ HRESULT DirectX::GenerateMipMaps3D(
         return E_INVALIDARG;
 
     if (filter & TEX_FILTER_FORCE_WIC)
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     DXGI_FORMAT format = baseImages[0].format;
     size_t width = baseImages[0].width;
@@ -3227,7 +3227,7 @@ HRESULT DirectX::GenerateMipMaps3D(
     }
 
     if (IsCompressed(format) || IsTypeless(format) || IsPlanar(format) || IsPalettized(format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MODE_MASK");
 
@@ -3293,7 +3293,7 @@ HRESULT DirectX::GenerateMipMaps3D(
         return hr;
 
     default:
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 }
 
@@ -3310,11 +3310,11 @@ HRESULT DirectX::GenerateMipMaps3D(
         return E_INVALIDARG;
 
     if (filter & TEX_FILTER_FORCE_WIC)
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (!metadata.IsVolumemap()
         || IsCompressed(metadata.format) || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (!_CalculateMipLevels3D(metadata.width, metadata.height, metadata.depth, levels))
         return E_INVALIDARG;
@@ -3409,7 +3409,7 @@ HRESULT DirectX::GenerateMipMaps3D(
         return hr;
 
     default:
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 }
 
@@ -3427,7 +3427,7 @@ HRESULT DirectX::ScaleMipMapsAlphaForCoverage(
 
     if (metadata.IsVolumemap()
         || IsCompressed(metadata.format) || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (srcImages[0].format != metadata.format || srcImages[0].width != metadata.width || srcImages[0].height != metadata.height)
     {
@@ -3481,6 +3481,6 @@ HRESULT DirectX::ScaleMipMapsAlphaForCoverage(
         if (FAILED(hr))
             return hr;
     }
-    
+
     return S_OK;
 }

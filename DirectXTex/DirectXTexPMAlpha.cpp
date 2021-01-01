@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexPMAlpha.cpp
-//  
+//
 // DirectX Texture Library - Premultiplied alpha operations
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -223,7 +223,7 @@ HRESULT DirectX::PremultiplyAlpha(
         || IsPalettized(srcImage.format)
         || IsTypeless(srcImage.format)
         || !HasAlpha(srcImage.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if ((srcImage.width > UINT32_MAX) || (srcImage.height > UINT32_MAX))
         return E_INVALIDARG;
@@ -276,7 +276,7 @@ HRESULT DirectX::PremultiplyAlpha(
         || IsPalettized(metadata.format)
         || IsTypeless(metadata.format)
         || !HasAlpha(metadata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if ((metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX))
         return E_INVALIDARG;

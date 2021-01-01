@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexCompressGPU.cpp
-//  
+//
 // DirectX Texture Library - DirectCompute-based texture compression
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -219,7 +219,7 @@ HRESULT DirectX::Compress(
 
     if (IsTypeless(format)
         || IsTypeless(srcImage.format) || IsPlanar(srcImage.format) || IsPalettized(srcImage.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     // Setup GPU compressor
     std::unique_ptr<GPUCompressBC> gpubc(new (std::nothrow) GPUCompressBC);
@@ -272,7 +272,7 @@ HRESULT DirectX::Compress(
 
     if (IsTypeless(format)
         || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     cImages.Release();
 
@@ -414,7 +414,7 @@ HRESULT DirectX::Compress(
     break;
 
     default:
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     return S_OK;
