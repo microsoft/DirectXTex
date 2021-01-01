@@ -70,6 +70,7 @@
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #endif
 
+#ifdef WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -104,10 +105,11 @@
 #else
 #include <d3d11_1.h>
 #endif
-
-#define _XM_NO_XMVECTOR_OVERLOADS_
-
-#include "DirectXTex.h"
+#else
+#include <wsl/winadapter.h>
+#include <wsl/wrladapter.h>
+#include <directx/d3d12.h>
+#endif
 
 #include <algorithm>
 #include <cassert>
@@ -116,15 +118,23 @@
 #include <cstring>
 #include <memory>
 
+#define _XM_NO_XMVECTOR_OVERLOADS_
+
 #include <DirectXPackedVector.h>
+
+#include "DirectXTex.h"
 
 #include <malloc.h>
 
+#if WIN32
 #include <Ole2.h>
 #include <wincodec.h>
 #include <wrl\client.h>
+#endif
 
+#ifdef WIN32 // TEMP
 #include "scoped.h"
+#endif
 
 #define XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT DXGI_FORMAT(116)
 #define XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT DXGI_FORMAT(117)

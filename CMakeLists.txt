@@ -13,7 +13,7 @@ project (DirectXTex
 
 option(BUILD_TOOLS "Build tex command-line tools" ON)
 
-# Includes the functions for creating Direct3D 11 resources at runtime
+# Includes the functions for Direct3D 11 resources and DirectCompute compression
 option(BUILD_DX11 "Build with DirectX11 Runtime support" ON)
 
 # Includes the functions for creating Direct3D 12 resources at runtime
@@ -43,8 +43,6 @@ set(LIBRARY_HEADERS
 
 set(LIBRARY_SOURCES
     DirectXTex/BC.h
-    DirectXTex/BCDirectCompute.h
-    DirectXTex/d3dx12.h
     DirectXTex/DDS.h
     DirectXTex/DirectXTexP.h
     DirectXTex/filters.h
@@ -52,12 +50,9 @@ set(LIBRARY_SOURCES
     DirectXTex/BC.cpp
     DirectXTex/BC4BC5.cpp
     DirectXTex/BC6HBC7.cpp
-    DirectXTex/BCDirectCompute.cpp
     DirectXTex/DirectXTexCompress.cpp
-    DirectXTex/DirectXTexCompressGPU.cpp
     DirectXTex/DirectXTexConvert.cpp
     DirectXTex/DirectXTexDDS.cpp
-    DirectXTex/DirectXTexFlipRotate.cpp
     DirectXTex/DirectXTexHDR.cpp
     DirectXTex/DirectXTexImage.cpp
     DirectXTex/DirectXTexMipmaps.cpp
@@ -66,18 +61,30 @@ set(LIBRARY_SOURCES
     DirectXTex/DirectXTexPMAlpha.cpp
     DirectXTex/DirectXTexResize.cpp
     DirectXTex/DirectXTexTGA.cpp
-    DirectXTex/DirectXTexUtil.cpp
-    DirectXTex/DirectXTexWIC.cpp)
+    DirectXTex/DirectXTexUtil.cpp)
+
+if(WIN32)
+   set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
+       DirectXTex/DirectXTexFlipRotate.cpp
+       DirectXTex/DirectXTexWIC.cpp)
+endif()
 
 set(SHADER_SOURCES
     DirectXTex/Shaders/BC6HEncode.hlsl
     DirectXTex/Shaders/BC7Encode.hlsl)
 
-if(BUILD_DX11)
-   set(LIBRARY_SOURCES ${LIBRARY_SOURCES} ${LIBRARY_HEADERS} DirectXTex/DirectXTexD3D11.cpp)
+if(BUILD_DX11 AND WIN32)
+   set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
+       DirectXTex/BCDirectCompute.h
+       DirectXTex/BCDirectCompute.cpp
+       DirectXTex/DirectXTexCompressGPU.cpp
+       DirectXTex/DirectXTexD3D11.cpp
+       DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc)
 endif()
 if(BUILD_DX12)
-   set(LIBRARY_SOURCES ${LIBRARY_SOURCES} ${LIBRARY_HEADERS} DirectXTex/DirectXTexD3D12.cpp)
+   set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
+       DirectXTex/d3dx12.h
+       DirectXTex/DirectXTexD3D12.cpp)
 endif()
 
 if(ENABLE_OPENEXR_SUPPORT)
@@ -89,16 +96,18 @@ if(ENABLE_OPENEXR_SUPPORT)
        DirectXTex/DirectXTexEXR.cpp)
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc)
+add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
 
-add_custom_command(
-    OUTPUT "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc"
-    MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
-    DEPENDS ${SHADER_SOURCES}
-    COMMENT "Generating HLSL shaders..."
-    COMMAND "CompileShaders.cmd"
-    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
-    USES_TERMINAL)
+if(BUILD_DX11 AND WIN32)
+   add_custom_command(
+      OUTPUT "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc"
+      MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
+      DEPENDS ${SHADER_SOURCES}
+      COMMENT "Generating HLSL shaders..."
+      COMMAND "CompileShaders.cmd"
+      WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
+      USES_TERMINAL)
+endif()
 
 source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 
@@ -125,6 +134,12 @@ if(MSVC)
     string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
     string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+endif()
+
+if (NOT WIN32)
+    find_package(directx-headers CONFIG REQUIRED)
+    find_package(directxmath CONFIG REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectX-Headers Microsoft::DirectXMath)
 endif()
 
 #--- Package
