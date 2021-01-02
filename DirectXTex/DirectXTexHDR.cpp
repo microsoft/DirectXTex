@@ -89,7 +89,7 @@ namespace
 
         if (size < sizeof(g_Signature))
         {
-            return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            return HRESULT_E_INVALID_DATA;
         }
 
         // Verify magic signature
@@ -266,7 +266,7 @@ namespace
 
         if (!width || !height)
         {
-            return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            return HRESULT_E_INVALID_DATA;
         }
 
         if (size == 0)
@@ -601,7 +601,7 @@ HRESULT DirectX::GetMetadataFromHDRFile(const wchar_t* szFile, TexMetadata& meta
     // File is too big for 32-bit allocation, so reject read (4 GB should be plenty large enough for a valid HDR file)
     if (fileInfo.EndOfFile.HighPart > 0)
     {
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_E_FILE_TOO_LARGE;
     }
 
     // Need at least enough data to fill the standard header to be a valid HDR
@@ -873,7 +873,7 @@ HRESULT DirectX::LoadFromHDRFile(const wchar_t* szFile, TexMetadata* metadata, S
     // File is too big for 32-bit allocation, so reject read (4 GB should be plenty large enough for a valid HDR file)
     if (fileInfo.EndOfFile.HighPart > 0)
     {
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_E_FILE_TOO_LARGE;
     }
 
     // Need at least enough data to fill the header to be a valid HDR

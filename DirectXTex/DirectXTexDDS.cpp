@@ -284,7 +284,7 @@ namespace
 
         if (size < (sizeof(DDS_HEADER) + sizeof(uint32_t)))
         {
-            return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            return HRESULT_E_INVALID_DATA;
         }
 
         // DDS files always start with the same magic number ("DDS ")
@@ -323,7 +323,7 @@ namespace
             metadata.arraySize = d3d10ext->arraySize;
             if (metadata.arraySize == 0)
             {
-                return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+                return HRESULT_E_INVALID_DATA;
             }
 
             metadata.format = d3d10ext->dxgiFormat;
@@ -343,7 +343,7 @@ namespace
                 // D3DX writes 1D textures with a fixed Height of 1
                 if ((pHeader->flags & DDS_HEIGHT) && pHeader->height != 1)
                 {
-                    return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+                    return HRESULT_E_INVALID_DATA;
                 }
 
                 metadata.width = pHeader->width;
@@ -368,7 +368,7 @@ namespace
             case DDS_DIMENSION_TEXTURE3D:
                 if (!(pHeader->flags & DDS_HEADER_FLAGS_VOLUME))
                 {
-                    return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+                    return HRESULT_E_INVALID_DATA;
                 }
 
                 if (metadata.arraySize > 1)
@@ -381,7 +381,7 @@ namespace
                 break;
 
             default:
-                return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+                return HRESULT_E_INVALID_DATA;
             }
 
             static_assert(static_cast<int>(TEX_MISC2_ALPHA_MODE_MASK) == static_cast<int>(DDS_MISC_FLAGS2_ALPHA_MODE_MASK), "DDS header mismatch");
@@ -1258,7 +1258,7 @@ namespace
 
         if (pixelSize > size)
         {
-            return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+            return HRESULT_E_HANDLE_EOF;
         }
 
         std::unique_ptr<Image[]> timages(new (std::nothrow) Image[nimages]);
@@ -1596,7 +1596,7 @@ HRESULT DirectX::GetMetadataFromDDSFile(
     // File is too big for 32-bit allocation, so reject read (4 GB should be plenty large enough for a valid DDS file)
     if (fileInfo.EndOfFile.HighPart > 0)
     {
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_E_FILE_TOO_LARGE;
     }
 
     // Need at least enough data to fill the standard header and magic number to be a valid DDS
@@ -1730,7 +1730,7 @@ HRESULT DirectX::LoadFromDDSFile(
     // File is too big for 32-bit allocation, so reject read (4 GB should be plenty large enough for a valid DDS file)
     if (fileInfo.EndOfFile.HighPart > 0)
     {
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_E_FILE_TOO_LARGE;
     }
 
     // Need at least enough data to fill the standard header and magic number to be a valid DDS
@@ -1848,7 +1848,7 @@ HRESULT DirectX::LoadFromDDSFile(
         if (remaining < image.GetPixelsSize())
         {
             image.Release();
-            return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+            return HRESULT_E_HANDLE_EOF;
         }
 
         if (image.GetPixelsSize() > UINT32_MAX)

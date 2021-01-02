@@ -148,7 +148,7 @@ namespace
 
         if (size < sizeof(TGA_HEADER))
         {
-            return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            return HRESULT_E_INVALID_DATA;
         }
 
         auto pHeader = static_cast<const TGA_HEADER*>(pSource);
@@ -166,7 +166,7 @@ namespace
 
         if (!pHeader->wWidth || !pHeader->wHeight)
         {
-            return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            return HRESULT_E_INVALID_DATA;
         }
 
         switch (pHeader->bImageType)
@@ -229,7 +229,7 @@ namespace
             return HRESULT_E_NOT_SUPPORTED;
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            return HRESULT_E_INVALID_DATA;
         }
 
         metadata.width = pHeader->wWidth;
@@ -1357,7 +1357,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
     // File is too big for 32-bit allocation, so reject read (4 GB should be plenty large enough for a valid TGA file)
     if (fileInfo.EndOfFile.HighPart > 0)
     {
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_E_FILE_TOO_LARGE;
     }
 
     // Need at least enough data to fill the standard header to be a valid TGA
@@ -1552,7 +1552,7 @@ HRESULT DirectX::LoadFromTGAFile(
     // File is too big for 32-bit allocation, so reject read (4 GB should be plenty large enough for a valid TGA file)
     if (fileInfo.EndOfFile.HighPart > 0)
     {
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_E_FILE_TOO_LARGE;
     }
 
     // Need at least enough data to fill the header to be a valid TGA
@@ -1605,7 +1605,7 @@ HRESULT DirectX::LoadFromTGAFile(
         if (remaining < image.GetPixelsSize())
         {
             image.Release();
-            return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+            return HRESULT_E_HANDLE_EOF;
         }
 
         if (image.GetPixelsSize() > UINT32_MAX)

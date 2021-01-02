@@ -971,7 +971,7 @@ HRESULT DirectX::GetMetadataFromWICMemory(
         return E_INVALIDARG;
 
     if (size > UINT32_MAX)
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_E_FILE_TOO_LARGE;
 
     bool iswic2 = false;
     auto pWIC = GetWICFactory(iswic2);
@@ -1063,7 +1063,7 @@ HRESULT DirectX::LoadFromWICMemory(
         return E_INVALIDARG;
 
     if (size > UINT32_MAX)
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_E_FILE_TOO_LARGE;
 
     bool iswic2 = false;
     auto pWIC = GetWICFactory(iswic2);
@@ -1216,7 +1216,7 @@ HRESULT DirectX::SaveToWICMemory(
         return hr;
 
     if (stat.cbSize.HighPart > 0)
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_E_FILE_TOO_LARGE;
 
     hr = blob.Initialize(stat.cbSize.LowPart);
     if (FAILED(hr))
@@ -1273,7 +1273,7 @@ HRESULT DirectX::SaveToWICMemory(
         return hr;
 
     if (stat.cbSize.HighPart > 0)
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_E_FILE_TOO_LARGE;
 
     hr = blob.Initialize(stat.cbSize.LowPart);
     if (FAILED(hr))

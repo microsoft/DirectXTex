@@ -16,7 +16,13 @@
 
 #pragma once
 
+#ifdef WIN32
 #include <d3d12.h>
+#else
+#include <wsl/winadapter.h>
+#include <wsl/wrladapter.h>
+#include <directx/d3d12.h>
+#endif
 
 #include <cstddef>
 #include <cstdint>
