@@ -11,7 +11,6 @@
 
 #pragma once
 
-#include <assert.h>
 #include <DirectXMath.h>
 #include <DirectXPackedVector.h>
 

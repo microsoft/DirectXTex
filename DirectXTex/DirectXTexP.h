@@ -116,6 +116,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cstring>
+#include <iterator>
 #include <memory>
 
 #define _XM_NO_XMVECTOR_OVERLOADS_

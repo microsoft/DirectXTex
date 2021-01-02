@@ -214,7 +214,7 @@ namespace
     //---------------------------------------------------------------------------------
     D3DFORMAT _WICToD3D9(const GUID& guid) noexcept
     {
-        for (size_t i = 0; i < _countof(g_WICFormats); ++i)
+        for (size_t i = 0; i < std::size(g_WICFormats); ++i)
         {
             if (memcmp(&g_WICFormats[i].wic, &guid, sizeof(GUID)) == 0)
                 return g_WICFormats[i].format;
@@ -331,7 +331,7 @@ namespace
         D3DFORMAT format = _WICToD3D9(pixelFormat);
         if (format == D3DFMT_UNKNOWN)
         {
-            for (size_t i = 0; i < _countof(g_WICConvert); ++i)
+            for (size_t i = 0; i < std::size(g_WICConvert); ++i)
             {
                 if (memcmp(&g_WICConvert[i].source, &pixelFormat, sizeof(WICPixelFormatGUID)) == 0)
                 {
