@@ -1660,12 +1660,12 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const noexcept
 
     if (ms_aModeToInfo[uMode] >= 0)
     {
-        assert(static_cast<unsigned int>(ms_aModeToInfo[uMode]) < _countof(ms_aInfo));
-        _Analysis_assume_(ms_aModeToInfo[uMode] < _countof(ms_aInfo));
+        assert(static_cast<unsigned int>(ms_aModeToInfo[uMode]) < std::size(ms_aInfo));
+        _Analysis_assume_(ms_aModeToInfo[uMode] < std::size(ms_aInfo));
         const ModeDescriptor* desc = ms_aDesc[ms_aModeToInfo[uMode]];
 
-        assert(static_cast<unsigned int>(ms_aModeToInfo[uMode]) < _countof(ms_aDesc));
-        _Analysis_assume_(ms_aModeToInfo[uMode] < _countof(ms_aDesc));
+        assert(static_cast<unsigned int>(ms_aModeToInfo[uMode]) < std::size(ms_aDesc));
+        _Analysis_assume_(ms_aModeToInfo[uMode] < std::size(ms_aDesc));
         const ModeInfo& info = ms_aInfo[ms_aModeToInfo[uMode]];
 
         INTEndPntPair aEndPts[BC6H_MAX_REGIONS] = {};
@@ -1811,7 +1811,7 @@ void D3DX_BC6H::Encode(bool bSigned, const HDRColorA* const pIn) noexcept
 
     EncodeParams EP(pIn, bSigned);
 
-    for (EP.uMode = 0; EP.uMode < ARRAYSIZE(ms_aInfo) && EP.fBestErr > 0; ++EP.uMode)
+    for (EP.uMode = 0; EP.uMode < std::size(ms_aInfo) && EP.fBestErr > 0; ++EP.uMode)
     {
         const uint8_t uShapes = ms_aInfo[EP.uMode].uPartitions ? 32u : 1u;
         // Number of rough cases to look at. reasonable values of this are 1, uShapes/4, and uShapes

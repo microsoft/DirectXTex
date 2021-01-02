@@ -114,6 +114,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cstring>
+#include <iterator>
 #include <memory>
 
 #include <DirectXPackedVector.h>

@@ -2988,9 +2988,9 @@ uint32_t DirectX::_GetConvertFlags(DXGI_FORMAT format) noexcept
 {
 #ifdef _DEBUG
     // Ensure conversion table is in ascending order
-    assert(_countof(g_ConvertTable) > 0);
+    assert(std::size(g_ConvertTable) > 0);
     DXGI_FORMAT lastvalue = g_ConvertTable[0].format;
-    for (size_t index = 1; index < _countof(g_ConvertTable); ++index)
+    for (size_t index = 1; index < std::size(g_ConvertTable); ++index)
     {
         assert(g_ConvertTable[index].format > lastvalue);
         lastvalue = g_ConvertTable[index].format;
@@ -2998,7 +2998,7 @@ uint32_t DirectX::_GetConvertFlags(DXGI_FORMAT format) noexcept
 #endif
 
     ConvertData key = { format, 0, 0 };
-    auto in = reinterpret_cast<const ConvertData*>(bsearch_s(&key, g_ConvertTable, _countof(g_ConvertTable), sizeof(ConvertData),
+    auto in = reinterpret_cast<const ConvertData*>(bsearch_s(&key, g_ConvertTable, std::size(g_ConvertTable), sizeof(ConvertData),
         ConvertCompare, nullptr));
     return (in) ? in->flags : 0;
 }
@@ -3020,9 +3020,9 @@ void DirectX::_ConvertScanline(
 
 #ifdef _DEBUG
     // Ensure conversion table is in ascending order
-    assert(_countof(g_ConvertTable) > 0);
+    assert(std::size(g_ConvertTable) > 0);
     DXGI_FORMAT lastvalue = g_ConvertTable[0].format;
-    for (size_t index = 1; index < _countof(g_ConvertTable); ++index)
+    for (size_t index = 1; index < std::size(g_ConvertTable); ++index)
     {
         assert(g_ConvertTable[index].format > lastvalue);
         lastvalue = g_ConvertTable[index].format;
@@ -3032,10 +3032,10 @@ void DirectX::_ConvertScanline(
     // Determine conversion details about source and dest formats
     ConvertData key = { inFormat, 0, 0 };
     auto in = reinterpret_cast<const ConvertData*>(
-        bsearch_s(&key, g_ConvertTable, _countof(g_ConvertTable), sizeof(ConvertData), ConvertCompare, nullptr));
+        bsearch_s(&key, g_ConvertTable, std::size(g_ConvertTable), sizeof(ConvertData), ConvertCompare, nullptr));
     key.format = outFormat;
     auto out = reinterpret_cast<const ConvertData*>(
-        bsearch_s(&key, g_ConvertTable, _countof(g_ConvertTable), sizeof(ConvertData), ConvertCompare, nullptr));
+        bsearch_s(&key, g_ConvertTable, std::size(g_ConvertTable), sizeof(ConvertData), ConvertCompare, nullptr));
     if (!in || !out)
     {
         assert(false);

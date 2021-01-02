@@ -347,7 +347,7 @@ HRESULT InitDevice( const TexMetadata& mdata )
         D3D_DRIVER_TYPE_WARP,
         D3D_DRIVER_TYPE_REFERENCE,
     };
-    UINT numDriverTypes = ARRAYSIZE( driverTypes );
+    constexpr UINT numDriverTypes = static_cast<UINT>(std::size(driverTypes));
 
     D3D_FEATURE_LEVEL featureLevels[] =
     {
@@ -355,7 +355,7 @@ HRESULT InitDevice( const TexMetadata& mdata )
         D3D_FEATURE_LEVEL_10_1,
         D3D_FEATURE_LEVEL_10_0,
     };
-	UINT numFeatureLevels = ARRAYSIZE( featureLevels );
+    constexpr UINT numFeatureLevels = static_cast<UINT>(std::size(featureLevels));
 
     DXGI_SWAP_CHAIN_DESC sd = {};
     sd.BufferCount = 1;
@@ -444,7 +444,7 @@ HRESULT InitDevice( const TexMetadata& mdata )
         { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, sizeof(XMFLOAT4), D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
-    UINT numElements = ARRAYSIZE( layout );
+    constexpr UINT numElements = static_cast<UINT>(std::size(layout));
 
     // Create the input layout
     hr = g_pd3dDevice->CreateInputLayout( layout, numElements, g_VS, sizeof(g_VS), &g_pVertexLayout );
@@ -574,17 +574,17 @@ HRESULT InitDevice( const TexMetadata& mdata )
 
     if ( isCubeMap )
     {
-        nverts = _countof(verticesCube);
+        nverts = static_cast<UINT>(std::size(verticesCube));
         InitData.pSysMem = verticesCube;
     }
     else if ( is1D )
     {
-        nverts = _countof(vertices1D);
+        nverts = static_cast<UINT>(std::size(vertices1D));
         InitData.pSysMem = vertices1D;
     }
     else
     {
-        nverts = _countof(vertices);
+        nverts = static_cast<UINT>(std::size(vertices));
         InitData.pSysMem = vertices;
     }
 
@@ -627,12 +627,12 @@ HRESULT InitDevice( const TexMetadata& mdata )
 
     if ( isCubeMap )
     {
-        g_iIndices = _countof(indicesCube);
+        g_iIndices = static_cast<UINT>(std::size(indicesCube));
         InitData.pSysMem = indicesCube;
     }
     else
     {
-        g_iIndices = _countof(indices);
+        g_iIndices = static_cast<UINT>(std::size(indices));
         InitData.pSysMem = indices;
     }
 
