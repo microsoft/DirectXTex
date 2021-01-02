@@ -801,7 +801,7 @@ namespace DirectX
 
     //---------------------------------------------------------------------------------
     // WIC utility code
-
+#ifdef WIN32
     enum WICCodecs
     {
         WIC_CODEC_BMP = 1,          // Windows Bitmap (.bmp)
@@ -817,6 +817,7 @@ namespace DirectX
 
     IWICImagingFactory* __cdecl GetWICFactory(bool& iswic2) noexcept;
     void __cdecl SetWICFactory(_In_opt_ IWICImagingFactory* pWIC) noexcept;
+#endif
 
     //---------------------------------------------------------------------------------
     // Direct3D 11 functions

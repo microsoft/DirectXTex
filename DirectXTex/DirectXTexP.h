@@ -171,6 +171,7 @@ namespace DirectX
 {
     //---------------------------------------------------------------------------------
     // WIC helper functions
+#ifdef WIN32
     DXGI_FORMAT __cdecl _WICToDXGI(_In_ const GUID& guid) noexcept;
     bool __cdecl _DXGIToWIC(_In_ DXGI_FORMAT format, _Out_ GUID& guid, _In_ bool ignoreRGBvsBGR = false) noexcept;
 
@@ -255,7 +256,7 @@ namespace DirectX
             return WICBitmapInterpolationModeFant;
         }
     }
-
+#endif // WIN32
 
     //---------------------------------------------------------------------------------
     // Image helper functions
