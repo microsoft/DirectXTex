@@ -435,7 +435,7 @@ void DirectX::_CopyScanline(
         return;
 
     size_t size = std::min<size_t>(outSize, inSize);
-    memcpy_s(pDestination, outSize, pSource, size);
+    memcpy(pDestination, pSource, size);
 }
 
 
@@ -605,7 +605,7 @@ void DirectX::_SwizzleScanline(
         return;
 
     size_t size = std::min<size_t>(outSize, inSize);
-    memcpy_s(pDestination, outSize, pSource, size);
+    memcpy(pDestination, pSource, size);
 }
 
 
@@ -777,7 +777,7 @@ _Use_decl_annotations_ bool DirectX::_LoadScanline(
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
     {
         size_t msize = (size > (sizeof(XMVECTOR)*count)) ? (sizeof(XMVECTOR)*count) : size;
-        memcpy_s(dPtr, sizeof(XMVECTOR)*count, pSource, msize);
+        memcpy(dPtr, pSource, msize);
     }
     return true;
 
@@ -2972,10 +2972,9 @@ namespace
         { XBOX_DXGI_FORMAT_R4G4_UNORM,               4, CONVF_UNORM | CONVF_R | CONVF_G },
     };
 
-#pragma prefast( suppress : 25004, "Signature must match bsearch_s" );
-    int __cdecl ConvertCompare(void *context, const void* ptr1, const void *ptr2) noexcept
+#pragma prefast( suppress : 25004, "Signature must match bsearch" );
+    int __cdecl ConvertCompare(const void* ptr1, const void *ptr2) noexcept
     {
-        UNREFERENCED_PARAMETER(context);
         auto p1 = static_cast<const ConvertData*>(ptr1);
         auto p2 = static_cast<const ConvertData*>(ptr2);
         if (p1->format == p2->format) return 0;
@@ -2998,8 +2997,8 @@ uint32_t DirectX::_GetConvertFlags(DXGI_FORMAT format) noexcept
 #endif
 
     ConvertData key = { format, 0, 0 };
-    auto in = reinterpret_cast<const ConvertData*>(bsearch_s(&key, g_ConvertTable, std::size(g_ConvertTable), sizeof(ConvertData),
-        ConvertCompare, nullptr));
+    auto in = reinterpret_cast<const ConvertData*>(bsearch(&key, g_ConvertTable, std::size(g_ConvertTable), sizeof(ConvertData),
+        ConvertCompare));
     return (in) ? in->flags : 0;
 }
 
@@ -3032,10 +3031,10 @@ void DirectX::_ConvertScanline(
     // Determine conversion details about source and dest formats
     ConvertData key = { inFormat, 0, 0 };
     auto in = reinterpret_cast<const ConvertData*>(
-        bsearch_s(&key, g_ConvertTable, std::size(g_ConvertTable), sizeof(ConvertData), ConvertCompare, nullptr));
+        bsearch(&key, g_ConvertTable, std::size(g_ConvertTable), sizeof(ConvertData), ConvertCompare));
     key.format = outFormat;
     auto out = reinterpret_cast<const ConvertData*>(
-        bsearch_s(&key, g_ConvertTable, std::size(g_ConvertTable), sizeof(ConvertData), ConvertCompare, nullptr));
+        bsearch(&key, g_ConvertTable, std::size(g_ConvertTable), sizeof(ConvertData), ConvertCompare));
     if (!in || !out)
     {
         assert(false);
@@ -4373,6 +4372,14 @@ namespace
         _Out_ WICPixelFormatGUID& pfGUID,
         _Out_ WICPixelFormatGUID& targetGUID) noexcept
     {
+#ifndef WIN32
+        UNREFERENCED_PARAMETER(filter);
+        UNREFERENCED_PARAMETER(sformat);
+        UNREFERENCED_PARAMETER(tformat);
+        UNREFERENCED_PARAMETER(pfGUID);
+        UNREFERENCED_PARAMETER(targetGUID);
+        return false;
+#else
         memset(&pfGUID, 0, sizeof(GUID));
         memset(&targetGUID, 0, sizeof(GUID));
 
@@ -4514,6 +4521,7 @@ namespace
         }
 
         return true;
+#endif // WIN32
     }
 
     //-------------------------------------------------------------------------------------
@@ -4527,6 +4535,15 @@ namespace
         _In_ float threshold,
         _In_ const Image& destImage)
     {
+#ifndef WIN32
+        UNREFERENCED_PARAMETER(srcImage);
+        UNREFERENCED_PARAMETER(pfGUID);
+        UNREFERENCED_PARAMETER(targetGUID);
+        UNREFERENCED_PARAMETER(filter);
+        UNREFERENCED_PARAMETER(threshold);
+        UNREFERENCED_PARAMETER(destImage);
+        return E_NOTIMPL;
+#else
         assert(srcImage.width == destImage.width);
         assert(srcImage.height == destImage.height);
 
@@ -4571,8 +4588,8 @@ namespace
             return hr;
 
         return S_OK;
+#endif // WIN32
     }
-
 
     //-------------------------------------------------------------------------------------
     // Convert the source image (not using WIC)

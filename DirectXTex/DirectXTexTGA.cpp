@@ -1960,7 +1960,7 @@ HRESULT DirectX::SaveToTGAMemory(
     assert(destPtr  != nullptr);
 
     uint8_t* dPtr = destPtr;
-    memcpy_s(dPtr, blob.GetBufferSize(), &tga_header, sizeof(TGA_HEADER));
+    memcpy(dPtr, &tga_header, sizeof(TGA_HEADER));
     dPtr += sizeof(TGA_HEADER);
 
     const uint8_t* pPixels = image.pixels;

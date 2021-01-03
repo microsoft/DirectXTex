@@ -533,7 +533,7 @@ HRESULT ScratchImage::InitializeFromImage(const Image& srcImage, bool allow1D, C
 
     for (size_t y = 0; y < rowCount; ++y)
     {
-        memcpy_s(dptr, dpitch, sptr, size);
+        memcpy(dptr, sptr, size);
         sptr += spitch;
         dptr += dpitch;
     }
@@ -592,7 +592,7 @@ HRESULT ScratchImage::InitializeArrayFromImages(const Image* images, size_t nIma
 
         for (size_t y = 0; y < rowCount; ++y)
         {
-            memcpy_s(dptr, dpitch, sptr, size);
+            memcpy(dptr, sptr, size);
             sptr += spitch;
             dptr += dpitch;
         }
@@ -668,7 +668,7 @@ HRESULT ScratchImage::Initialize3DFromImages(const Image* images, size_t depth, 
 
         for (size_t y = 0; y < rowCount; ++y)
         {
-            memcpy_s(dptr, dpitch, sptr, size);
+            memcpy(dptr, sptr, size);
             sptr += spitch;
             dptr += dpitch;
         }

@@ -952,7 +952,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob) noexcept
     // Copy header
     auto dPtr = static_cast<uint8_t*>(blob.GetBufferPointer());
     assert(dPtr != nullptr);
-    memcpy_s(dPtr, blob.GetBufferSize(), header, headerLen);
+    memcpy(dPtr, header, headerLen);
     dPtr += headerLen;
 
 #ifdef DISABLE_COMPRESS

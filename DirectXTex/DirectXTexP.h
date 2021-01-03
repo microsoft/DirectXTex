@@ -135,6 +135,8 @@
 #include <Ole2.h>
 #include <wincodec.h>
 #include <wrl\client.h>
+#else
+using WICPixelFormatGUID = GUID;
 #endif
 
 #ifdef WIN32 // TEMP

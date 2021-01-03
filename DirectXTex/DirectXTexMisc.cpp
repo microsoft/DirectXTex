@@ -322,7 +322,7 @@ HRESULT DirectX::CopyRectangle(
             if (((pSrc + copyW) > pEndSrc) || (pDest > pEndDest))
                 return E_FAIL;
 
-            memcpy_s(pDest, size_t(pEndDest - pDest), pSrc, copyW);
+            memcpy(pDest, pSrc, copyW);
 
             pSrc += srcImage.rowPitch;
             pDest += dstImage.rowPitch;

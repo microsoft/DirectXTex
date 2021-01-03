@@ -124,7 +124,7 @@ namespace
         if (flags & CNMAP_MIRROR_V)
         {
             // Mirror first row
-            memcpy_s(row0, rowPitch, row1, rowPitch);
+            memcpy(row0, row1, rowPitch);
         }
         else
         {

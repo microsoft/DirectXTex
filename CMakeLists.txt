@@ -28,7 +28,7 @@ option(ENABLE_CODE_ANALYSIS "Use Static Code Analysis on build" OFF)
 # NOTE requires adding DirectXTexEXR.h/.cpp source files (vcpkg does this automatically)
 option(ENABLE_OPENEXR_SUPPORT "Build with OpenEXR support" OFF)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 

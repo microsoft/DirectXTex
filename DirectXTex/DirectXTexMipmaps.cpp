@@ -873,7 +873,7 @@ namespace
             for (size_t h = 0; h < mdata.height; ++h)
             {
                 size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
-                memcpy_s(pDest, dest->rowPitch, pSrc, msize);
+                memcpy(pDest, pSrc, msize);
                 pSrc += rowPitch;
                 pDest += dest->rowPitch;
             }
@@ -1617,7 +1617,7 @@ namespace
             for (size_t h = 0; h < height; ++h)
             {
                 size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
-                memcpy_s(pDest, dest->rowPitch, pSrc, msize);
+                memcpy(pDest, pSrc, msize);
                 pSrc += rowPitch;
                 pDest += dest->rowPitch;
             }
@@ -3457,7 +3457,7 @@ HRESULT DirectX::ScaleMipMapsAlphaForCoverage(
         for (size_t h = 0; h < metadata.height; ++h)
         {
             size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
-            memcpy_s(pDest, dest->rowPitch, pSrc, msize);
+            memcpy(pDest, pSrc, msize);
             pSrc += rowPitch;
             pDest += dest->rowPitch;
         }

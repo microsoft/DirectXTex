@@ -117,7 +117,7 @@ namespace
                     for (size_t h = 0; h < lines; ++h)
                     {
                         size_t msize = std::min<size_t>(img->rowPitch, mapped.RowPitch);
-                        memcpy_s(dptr, img->rowPitch, sptr, msize);
+                        memcpy(dptr, sptr, msize);
                         sptr += mapped.RowPitch;
                         dptr += img->rowPitch;
                     }
@@ -176,7 +176,7 @@ namespace
                     for (size_t h = 0; h < lines; ++h)
                     {
                         size_t msize = std::min<size_t>(img->rowPitch, mapped.RowPitch);
-                        memcpy_s(dptr, img->rowPitch, sptr, msize);
+                        memcpy(dptr, sptr, msize);
                         sptr += mapped.RowPitch;
                         dptr += img->rowPitch;
                     }

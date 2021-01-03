@@ -588,28 +588,28 @@ HRESULT DirectX::_EncodeDDSHeader(
     {
         switch (metadata.format)
         {
-        case DXGI_FORMAT_R8G8B8A8_UNORM:        memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A8B8G8R8, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_R16G16_UNORM:          memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_G16R16, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_R8G8_UNORM:            memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A8L8, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_R16_UNORM:             memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_L16, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_R8_UNORM:              memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_L8, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_A8_UNORM:              memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A8, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_R8G8_B8G8_UNORM:       memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_R8G8_B8G8, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_G8R8_G8B8_UNORM:       memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_G8R8_G8B8, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_BC1_UNORM:             memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_DXT1, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_BC2_UNORM:             memcpy_s(&ddpf, sizeof(ddpf), metadata.IsPMAlpha() ? (&DDSPF_DXT2) : (&DDSPF_DXT3), sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_BC3_UNORM:             memcpy_s(&ddpf, sizeof(ddpf), metadata.IsPMAlpha() ? (&DDSPF_DXT4) : (&DDSPF_DXT5), sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_BC4_SNORM:             memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_BC4_SNORM, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_BC5_SNORM:             memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_BC5_SNORM, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_B5G6R5_UNORM:          memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_R5G6B5, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_B5G5R5A1_UNORM:        memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A1R5G5B5, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_R8G8_SNORM:            memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_V8U8, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_R8G8B8A8_SNORM:        memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_Q8W8V8U8, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_R16G16_SNORM:          memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_V16U16, sizeof(DDS_PIXELFORMAT)); break;
-        case DXGI_FORMAT_B8G8R8A8_UNORM:        memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.1
-        case DXGI_FORMAT_B8G8R8X8_UNORM:        memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.1
-        case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.2
-        case DXGI_FORMAT_YUY2:                  memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_YUY2, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.2
+        case DXGI_FORMAT_R8G8B8A8_UNORM:        memcpy(&ddpf, &DDSPF_A8B8G8R8, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_R16G16_UNORM:          memcpy(&ddpf, &DDSPF_G16R16, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_R8G8_UNORM:            memcpy(&ddpf, &DDSPF_A8L8, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_R16_UNORM:             memcpy(&ddpf, &DDSPF_L16, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_R8_UNORM:              memcpy(&ddpf, &DDSPF_L8, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_A8_UNORM:              memcpy(&ddpf, &DDSPF_A8, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_R8G8_B8G8_UNORM:       memcpy(&ddpf, &DDSPF_R8G8_B8G8, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_G8R8_G8B8_UNORM:       memcpy(&ddpf, &DDSPF_G8R8_G8B8, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_BC1_UNORM:             memcpy(&ddpf, &DDSPF_DXT1, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_BC2_UNORM:             memcpy(&ddpf, metadata.IsPMAlpha() ? (&DDSPF_DXT2) : (&DDSPF_DXT3), sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_BC3_UNORM:             memcpy(&ddpf, metadata.IsPMAlpha() ? (&DDSPF_DXT4) : (&DDSPF_DXT5), sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_BC4_SNORM:             memcpy(&ddpf, &DDSPF_BC4_SNORM, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_BC5_SNORM:             memcpy(&ddpf, &DDSPF_BC5_SNORM, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_B5G6R5_UNORM:          memcpy(&ddpf, &DDSPF_R5G6B5, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_B5G5R5A1_UNORM:        memcpy(&ddpf, &DDSPF_A1R5G5B5, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_R8G8_SNORM:            memcpy(&ddpf, &DDSPF_V8U8, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_R8G8B8A8_SNORM:        memcpy(&ddpf, &DDSPF_Q8W8V8U8, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_R16G16_SNORM:          memcpy(&ddpf, &DDSPF_V16U16, sizeof(DDS_PIXELFORMAT)); break;
+        case DXGI_FORMAT_B8G8R8A8_UNORM:        memcpy(&ddpf, &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.1
+        case DXGI_FORMAT_B8G8R8X8_UNORM:        memcpy(&ddpf, &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.1
+        case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy(&ddpf, &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.2
+        case DXGI_FORMAT_YUY2:                  memcpy(&ddpf, &DDSPF_YUY2, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.2
 
         // Legacy D3DX formats using D3DFMT enum value as FourCC
         case DXGI_FORMAT_R32G32B32A32_FLOAT:
@@ -642,40 +642,40 @@ HRESULT DirectX::_EncodeDDSHeader(
             if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
             {
                 // Write using the 'incorrect' mask version to match D3DX bug
-                memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A2B10G10R10, sizeof(DDS_PIXELFORMAT));
+                memcpy(&ddpf, &DDSPF_A2B10G10R10, sizeof(DDS_PIXELFORMAT));
             }
             break;
 
         case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
             if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
             {
-                memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A8B8G8R8, sizeof(DDS_PIXELFORMAT));
+                memcpy(&ddpf, &DDSPF_A8B8G8R8, sizeof(DDS_PIXELFORMAT));
             }
             break;
 
         case DXGI_FORMAT_BC1_UNORM_SRGB:
             if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
             {
-                memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_DXT1, sizeof(DDS_PIXELFORMAT));
+                memcpy(&ddpf, &DDSPF_DXT1, sizeof(DDS_PIXELFORMAT));
             }
             break;
 
         case DXGI_FORMAT_BC2_UNORM_SRGB:
             if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
             {
-                memcpy_s(&ddpf, sizeof(ddpf), metadata.IsPMAlpha() ? (&DDSPF_DXT2) : (&DDSPF_DXT3), sizeof(DDS_PIXELFORMAT));
+                memcpy(&ddpf, metadata.IsPMAlpha() ? (&DDSPF_DXT2) : (&DDSPF_DXT3), sizeof(DDS_PIXELFORMAT));
             }
             break;
 
         case DXGI_FORMAT_BC3_UNORM_SRGB:
             if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
             {
-                memcpy_s(&ddpf, sizeof(ddpf), metadata.IsPMAlpha() ? (&DDSPF_DXT4) : (&DDSPF_DXT5), sizeof(DDS_PIXELFORMAT));
+                memcpy(&ddpf, metadata.IsPMAlpha() ? (&DDSPF_DXT4) : (&DDSPF_DXT5), sizeof(DDS_PIXELFORMAT));
             }
             break;
 
         case DXGI_FORMAT_BC4_UNORM:
-            memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_BC4_UNORM, sizeof(DDS_PIXELFORMAT));
+            memcpy(&ddpf, &DDSPF_BC4_UNORM, sizeof(DDS_PIXELFORMAT));
             if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
             {
                 ddpf.fourCC = MAKEFOURCC('A', 'T', 'I', '1');
@@ -683,7 +683,7 @@ HRESULT DirectX::_EncodeDDSHeader(
             break;
 
         case DXGI_FORMAT_BC5_UNORM:
-            memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_BC5_UNORM, sizeof(DDS_PIXELFORMAT));
+            memcpy(&ddpf, &DDSPF_BC5_UNORM, sizeof(DDS_PIXELFORMAT));
             if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
             {
                 ddpf.fourCC = MAKEFOURCC('A', 'T', 'I', '2');
@@ -693,14 +693,14 @@ HRESULT DirectX::_EncodeDDSHeader(
         case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
             if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
             {
-                memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT));
+                memcpy(&ddpf, &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT));
             }
             break;
 
         case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
             if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
             {
-                memcpy_s(&ddpf, sizeof(ddpf), &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT));
+                memcpy(&ddpf, &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT));
             }
             break;
 
@@ -813,7 +813,7 @@ HRESULT DirectX::_EncodeDDSHeader(
 
     if (ddpf.size == 0)
     {
-        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_DX10, sizeof(DDS_PIXELFORMAT));
+        memcpy(&header->ddspf, &DDSPF_DX10, sizeof(DDS_PIXELFORMAT));
 
         auto ext = reinterpret_cast<DDS_HEADER_DXT10*>(reinterpret_cast<uint8_t*>(header) + sizeof(DDS_HEADER));
         assert(ext);
@@ -856,7 +856,7 @@ HRESULT DirectX::_EncodeDDSHeader(
     }
     else
     {
-        memcpy_s(&header->ddspf, sizeof(header->ddspf), &ddpf, sizeof(ddpf));
+        memcpy(&header->ddspf, &ddpf, sizeof(ddpf));
     }
 
     return S_OK;
@@ -1324,14 +1324,14 @@ namespace
                     if (IsCompressed(metadata.format))
                     {
                         size_t csize = std::min<size_t>(images[index].slicePitch, timages[index].slicePitch);
-                        memcpy_s(pDest, images[index].slicePitch, pSrc, csize);
+                        memcpy(pDest, pSrc, csize);
 
                         if (cpFlags & CP_FLAGS_BAD_DXTN_TAILS)
                         {
                             if (images[index].width < 4 || images[index].height < 4)
                             {
                                 csize = std::min<size_t>(images[index].slicePitch, timages[lastgood].slicePitch);
-                                memcpy_s(pDest, images[index].slicePitch, timages[lastgood].pixels, csize);
+                                memcpy(pDest, timages[lastgood].pixels, csize);
                             }
                             else
                             {
@@ -1348,7 +1348,7 @@ namespace
                         size_t csize = std::min<size_t>(dpitch, spitch);
                         for (size_t h = 0; h < count; ++h)
                         {
-                            memcpy_s(pDest, dpitch, pSrc, csize);
+                            memcpy(pDest, pSrc, csize);
                             pSrc += spitch;
                             pDest += dpitch;
                         }
@@ -1426,14 +1426,14 @@ namespace
                     if (IsCompressed(metadata.format))
                     {
                         size_t csize = std::min<size_t>(images[index].slicePitch, timages[index].slicePitch);
-                        memcpy_s(pDest, images[index].slicePitch, pSrc, csize);
+                        memcpy(pDest, pSrc, csize);
 
                         if (cpFlags & CP_FLAGS_BAD_DXTN_TAILS)
                         {
                             if (images[index].width < 4 || images[index].height < 4)
                             {
                                 csize = std::min<size_t>(images[index].slicePitch, timages[lastgood + slice].slicePitch);
-                                memcpy_s(pDest, images[index].slicePitch, timages[lastgood + slice].pixels, csize);
+                                memcpy(pDest, timages[lastgood + slice].pixels, csize);
                             }
                             else if (!slice)
                             {
@@ -1974,7 +1974,7 @@ HRESULT DirectX::SaveToDDSMemory(
                 if (fastpath)
                 {
                     size_t pixsize = images[index].slicePitch;
-                    if (memcpy_s(pDestination, remaining, images[index].pixels, pixsize))
+                    if (memcpy(pDestination, images[index].pixels, pixsize))
                     {
                         blob.Release();
                         return E_FAIL;
@@ -2003,7 +2003,7 @@ HRESULT DirectX::SaveToDDSMemory(
                     size_t tremaining = remaining;
                     for (size_t j = 0; j < lines; ++j)
                     {
-                        if (memcpy_s(dPtr, tremaining, sPtr, csize))
+                        if (memcpy(dPtr, sPtr, csize))
                         {
                             blob.Release();
                             return E_FAIL;
@@ -2048,7 +2048,7 @@ HRESULT DirectX::SaveToDDSMemory(
                 if (fastpath)
                 {
                     size_t pixsize = images[index].slicePitch;
-                    if (memcpy_s(pDestination, remaining, images[index].pixels, pixsize))
+                    if (memcpy(pDestination, images[index].pixels, pixsize))
                     {
                         blob.Release();
                         return E_FAIL;
@@ -2077,7 +2077,7 @@ HRESULT DirectX::SaveToDDSMemory(
                     size_t tremaining = remaining;
                     for (size_t j = 0; j < lines; ++j)
                     {
-                        if (memcpy_s(dPtr, tremaining, sPtr, csize))
+                        if (memcpy(dPtr, sPtr, csize))
                         {
                             blob.Release();
                             return E_FAIL;
