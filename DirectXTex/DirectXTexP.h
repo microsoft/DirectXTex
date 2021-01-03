@@ -123,6 +123,10 @@
 
 #include <DirectXPackedVector.h>
 
+#if (DIRECTX_MATH_VERSION < 315)
+#define XM_ALIGNED_DATA(x) __declspec(align(x))
+#endif
+
 #include "DirectXTex.h"
 
 #include <malloc.h>
