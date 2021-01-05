@@ -33,7 +33,7 @@ namespace
 
         const size_t width = image1.width;
 
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width) * 2, 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(width) * 2);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -184,7 +184,7 @@ namespace
 
         const size_t width = image.width;
 
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(width);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -222,7 +222,7 @@ namespace
 
         const size_t width = srcImage.width;
 
-        ScopedAlignedArrayXMVECTOR scanlines(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width*2), 16)));
+        auto scanlines = make_AlignedArrayXMVECTOR(uint64_t(width) * 2);
         if (!scanlines)
             return E_OUTOFMEMORY;
 
@@ -347,7 +347,7 @@ HRESULT DirectX::CopyRectangle(
 
     uint8_t* pDest = dstImage.pixels + (yOffset * dstImage.rowPitch) + (xOffset * dbpp);
 
-    ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcRect.w), 16)));
+    auto scanline = make_AlignedArrayXMVECTOR(srcRect.w);
     if (!scanline)
         return E_OUTOFMEMORY;
 

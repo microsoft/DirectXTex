@@ -142,7 +142,7 @@ namespace
         assert(srcImage.width == destImage.width);
         assert(srcImage.height == destImage.height);
 
-        ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(srcImage.width);
         if (!scanline)
         {
             return E_OUTOFMEMORY;
@@ -214,13 +214,13 @@ namespace
     {
         coverage = 0.0f;
 
-        ScopedAlignedArrayXMVECTOR row0(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
+        auto row0 = make_AlignedArrayXMVECTOR(srcImage.width);
         if (!row0)
         {
             return E_OUTOFMEMORY;
         }
 
-        ScopedAlignedArrayXMVECTOR row1(reinterpret_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*srcImage.width), 16)));
+        auto row1 = make_AlignedArrayXMVECTOR(srcImage.width);
         if (!row1)
         {
             return E_OUTOFMEMORY;
@@ -896,7 +896,7 @@ namespace
         size_t height = mipChain.GetMetadata().height;
 
         // Allocate temporary space (2 scanlines)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width * 2), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(width) * 2);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -983,7 +983,7 @@ namespace
             return E_FAIL;
 
         // Allocate temporary space (3 scanlines)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width * 3), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(width) * 3);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -1074,7 +1074,7 @@ namespace
         size_t height = mipChain.GetMetadata().height;
 
         // Allocate temporary space (3 scanlines, plus X and Y filters)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width * 3), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(width) * 3);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -1185,7 +1185,7 @@ namespace
         size_t height = mipChain.GetMetadata().height;
 
         // Allocate temporary space (5 scanlines, plus X and Y filters)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width * 5), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(width) * 5);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -1373,7 +1373,7 @@ namespace
         size_t height = mipChain.GetMetadata().height;
 
         // Allocate initial temporary space (1 scanline, accumulation rows, plus X and Y filters)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * width, 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(width);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -1462,9 +1462,10 @@ namespace
                         }
                         else
                         {
-                            rowAcc->scanline.reset(static_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * nwidth, 16)));
-                            if (!rowAcc->scanline)
+                            auto nscanline = make_AlignedArrayXMVECTOR(nwidth);
+                            if (!nscanline)
                                 return E_OUTOFMEMORY;
+                            rowAcc->scanline.swap(nscanline);
                         }
 
                         memset(rowAcc->scanline.get(), 0, sizeof(XMVECTOR) * nwidth);
@@ -1641,7 +1642,7 @@ namespace
         size_t height = mipChain.GetMetadata().height;
 
         // Allocate temporary space (2 scanlines)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width * 2), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(width) * 2);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -1790,7 +1791,7 @@ namespace
             return E_FAIL;
 
         // Allocate temporary space (5 scanlines)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width * 5), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(width) * 5);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -1959,7 +1960,7 @@ namespace
         size_t height = mipChain.GetMetadata().height;
 
         // Allocate temporary space (5 scanlines, plus X/Y/Z filters)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width * 5), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(width) * 5);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -2152,7 +2153,7 @@ namespace
         size_t height = mipChain.GetMetadata().height;
 
         // Allocate temporary space (17 scanlines, plus X/Y/Z filters)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width * 17), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(width) * 17);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -2533,7 +2534,7 @@ namespace
         size_t height = mipChain.GetMetadata().height;
 
         // Allocate initial temporary space (1 scanline, accumulation rows, plus X/Y/Z filters)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * width, 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(width);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -2616,10 +2617,10 @@ namespace
                         }
                         else
                         {
-                            size_t bytes = sizeof(XMVECTOR) * nwidth * nheight;
-                            sliceAcc->scanline.reset(static_cast<XMVECTOR*>(_aligned_malloc(bytes, 16)));
-                            if (!sliceAcc->scanline)
+                            auto nscanline = make_AlignedArrayXMVECTOR(uint64_t(nwidth) * uint64_t(nheight));
+                            if (!nscanline)
                                 return E_OUTOFMEMORY;
+                            sliceAcc->scanline.swap(nscanline);
                         }
 
                         memset(sliceAcc->scanline.get(), 0, sizeof(XMVECTOR) * nwidth * nheight);

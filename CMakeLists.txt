@@ -28,7 +28,7 @@ option(ENABLE_CODE_ANALYSIS "Use Static Code Analysis on build" OFF)
 # NOTE requires adding DirectXTexEXR.h/.cpp source files (vcpkg does this automatically)
 option(ENABLE_OPENEXR_SUPPORT "Build with OpenEXR support" OFF)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -74,8 +74,7 @@ if(BUILD_DX11)
        DirectXTex/BCDirectCompute.h
        DirectXTex/BCDirectCompute.cpp
        DirectXTex/DirectXTexCompressGPU.cpp
-       DirectXTex/DirectXTexD3D11.cpp
-       DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc)
+       DirectXTex/DirectXTexD3D11.cpp)
 endif()
 if(BUILD_DX12)
    set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
@@ -92,9 +91,10 @@ if(ENABLE_OPENEXR_SUPPORT)
        DirectXTex/DirectXTexEXR.cpp)
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
-
 if(BUILD_DX11)
+    set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
+        DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc)
+
    add_custom_command(
        OUTPUT "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc"
        MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
@@ -104,6 +104,8 @@ if(BUILD_DX11)
        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
        USES_TERMINAL)
 endif()
+
+add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
 
 source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 
@@ -160,8 +162,7 @@ install(EXPORT ${PROJECT_NAME}-targets
 install(FILES ${LIBRARY_HEADERS}
   DESTINATION include)
 
-install(
-  FILES
+install(FILES
     ${PROJECT_BINARY_DIR}/cmake/${PACKAGE_NAME}-config.cmake
     ${PROJECT_BINARY_DIR}/cmake/${PACKAGE_NAME}-config-version.cmake
   DESTINATION cmake/)

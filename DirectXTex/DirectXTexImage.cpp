@@ -786,7 +786,7 @@ bool ScratchImage::IsAlphaAllOpaque() const noexcept
     }
     else
     {
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*m_metadata.width), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(m_metadata.width);
         if (!scanline)
             return false;
 
