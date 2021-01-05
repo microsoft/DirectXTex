@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------
-// dds.h
+// DDS.h
 //
 // This header defines constants and structures that are useful when parsing
 // DDS files.  DDS files were originally designed to use several structures
@@ -57,7 +57,7 @@ struct DDS_PIXELFORMAT
                 | (static_cast<uint32_t>(static_cast<uint8_t>(ch1)) << 8) \
                 | (static_cast<uint32_t>(static_cast<uint8_t>(ch2)) << 16) \
                 | (static_cast<uint32_t>(static_cast<uint8_t>(ch3)) << 24))
-#endif /* defined(MAKEFOURCC) */
+#endif /* MAKEFOURCC */
 
 #ifndef DDSGLOBALCONST
     #if defined(__GNUC__) && !defined(__MINGW32__)
@@ -65,7 +65,7 @@ struct DDS_PIXELFORMAT
     #else
     #define DDSGLOBALCONST extern const __declspec(selectany)
     #endif
-#endif
+#endif /* DDSGLOBALCONST */
 
 DDSGLOBALCONST DDS_PIXELFORMAT DDSPF_DXT1 =
     { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 };
