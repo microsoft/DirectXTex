@@ -59,7 +59,7 @@ namespace
             return E_POINTER;
         }
 
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR) * srcImage.width), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(srcImage.width);
         if (!scanline)
         {
             image.Release();

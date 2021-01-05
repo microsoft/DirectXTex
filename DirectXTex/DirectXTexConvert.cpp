@@ -2640,7 +2640,7 @@ HRESULT DirectX::_ConvertToR16G16B16A16(const Image& srcImage, ScratchImage& ima
     if (FAILED(hr))
         return hr;
 
-    ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR) * srcImage.width), 16)));
+    auto scanline = make_AlignedArrayXMVECTOR(srcImage.width);
     if (!scanline)
     {
         image.Release();
@@ -2693,7 +2693,7 @@ HRESULT DirectX::_ConvertFromR16G16B16A16(const Image& srcImage, const Image& de
     if (srcImage.width != destImage.width || srcImage.height != destImage.height)
         return E_FAIL;
 
-    ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR) * srcImage.width), 16)));
+    auto scanline = make_AlignedArrayXMVECTOR(srcImage.width);
     if (!scanline)
         return E_OUTOFMEMORY;
 
@@ -4614,7 +4614,7 @@ namespace
         if (filter & TEX_FILTER_DITHER_DIFFUSION)
         {
             // Error diffusion dithering (aka Floyd-Steinberg dithering)
-            ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*(width * 2 + 2)), 16)));
+            auto scanline = make_AlignedArrayXMVECTOR(uint64_t(width) * 2 + 2);
             if (!scanline)
                 return E_OUTOFMEMORY;
 
@@ -4637,7 +4637,7 @@ namespace
         }
         else
         {
-            ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width), 16)));
+            auto scanline = make_AlignedArrayXMVECTOR(width);
             if (!scanline)
                 return E_OUTOFMEMORY;
 
