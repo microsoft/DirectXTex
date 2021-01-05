@@ -60,11 +60,11 @@ struct DDS_PIXELFORMAT
 #endif /* defined(MAKEFOURCC) */
 
 #ifndef DDSGLOBALCONST
-#if defined(__GNUC__) && !defined(__MINGW32__)
-#define DDSGLOBALCONST extern const __attribute__((weak))
-#else
-#define DDSGLOBALCONST extern const __declspec(selectany)
-#endif
+    #if defined(__GNUC__) && !defined(__MINGW32__)
+    #define DDSGLOBALCONST extern const __attribute__((weak))
+    #else
+    #define DDSGLOBALCONST extern const __declspec(selectany)
+    #endif
 #endif
 
 DDSGLOBALCONST DDS_PIXELFORMAT DDSPF_DXT1 =
