@@ -78,9 +78,9 @@ if(BUILD_DX11 AND WIN32)
        DirectXTex/BCDirectCompute.h
        DirectXTex/BCDirectCompute.cpp
        DirectXTex/DirectXTexCompressGPU.cpp
-       DirectXTex/DirectXTexD3D11.cpp
-       DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc)
+       DirectXTex/DirectXTexD3D11.cpp)
 endif()
+
 if(BUILD_DX12)
    set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
        DirectXTex/d3dx12.h
@@ -96,9 +96,10 @@ if(ENABLE_OPENEXR_SUPPORT)
        DirectXTex/DirectXTexEXR.cpp)
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
-
 if(BUILD_DX11 AND WIN32)
+    set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
+        DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc)
+
    add_custom_command(
        OUTPUT "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc"
        MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
@@ -108,6 +109,8 @@ if(BUILD_DX11 AND WIN32)
        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
        USES_TERMINAL)
 endif()
+
+add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
 
 source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 
@@ -170,8 +173,7 @@ install(EXPORT ${PROJECT_NAME}-targets
 install(FILES ${LIBRARY_HEADERS}
   DESTINATION include)
 
-install(
-  FILES
+install(FILES
     ${PROJECT_BINARY_DIR}/cmake/${PACKAGE_NAME}-config.cmake
     ${PROJECT_BINARY_DIR}/cmake/${PACKAGE_NAME}-config-version.cmake
   DESTINATION cmake/)
@@ -224,7 +226,7 @@ if(MSVC)
     endif()
 endif()
 
-if ( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(WarningsLib "-Wpedantic" "-Wextra")
     target_compile_options(${PROJECT_NAME} PRIVATE ${WarningsLib})
 
@@ -237,7 +239,7 @@ if ( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
       target_compile_options(texdiag PRIVATE ${WarningsEXE} "-Wno-double-promotion")
     endif()
 endif()
-if ( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
+if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     target_compile_options(${PROJECT_NAME} PRIVATE /permissive- /JMC- /Zc:__cplusplus)
     if(BUILD_TOOLS)
       target_compile_options(texassemble PRIVATE /permissive- /Zc:__cplusplus)

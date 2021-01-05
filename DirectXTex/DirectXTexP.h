@@ -105,7 +105,7 @@
 #else
 #include <d3d11_1.h>
 #endif
-#else
+#else // !WIN32
 #include <wsl/winadapter.h>
 #include <wsl/wrladapter.h>
 #include <directx/d3d12.h>
