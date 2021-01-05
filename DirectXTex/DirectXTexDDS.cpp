@@ -572,7 +572,7 @@ HRESULT DirectX::_EncodeDDSHeader(
         {
             // Texture1D arrays, Texture2D arrays, and Cubemap arrays must be stored using 'DX10' extended header
             if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
-                return HRESULT_FROM_WIN32(ERROR_CANNOT_MAKE);
+                return HRESULT_E_CANNOT_MAKE;
 
             flags |= DDS_FLAGS_FORCE_DX10_EXT;
         }
@@ -714,7 +714,7 @@ HRESULT DirectX::_EncodeDDSHeader(
     if (ddpf.size == 0)
     {
         if (flags & DDS_FLAGS_FORCE_DX9_LEGACY)
-            return HRESULT_FROM_WIN32(ERROR_CANNOT_MAKE);
+            return HRESULT_E_CANNOT_MAKE;
 
         required += sizeof(DDS_HEADER_DXT10);
     }
