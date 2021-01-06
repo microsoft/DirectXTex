@@ -2063,11 +2063,7 @@ HRESULT DirectX::SaveToDDSMemory(
                 if (fastpath)
                 {
                     size_t pixsize = images[index].slicePitch;
-                    if (memcpy(pDestination, images[index].pixels, pixsize))
-                    {
-                        blob.Release();
-                        return E_FAIL;
-                    }
+                    memcpy(pDestination, images[index].pixels, pixsize);
 
                     pDestination += pixsize;
                     remaining -= pixsize;
@@ -2092,11 +2088,7 @@ HRESULT DirectX::SaveToDDSMemory(
                     size_t tremaining = remaining;
                     for (size_t j = 0; j < lines; ++j)
                     {
-                        if (memcpy(dPtr, sPtr, csize))
-                        {
-                            blob.Release();
-                            return E_FAIL;
-                        }
+                        memcpy(dPtr, sPtr, csize);
 
                         sPtr += rowPitch;
                         dPtr += ddsRowPitch;
@@ -2137,11 +2129,7 @@ HRESULT DirectX::SaveToDDSMemory(
                 if (fastpath)
                 {
                     size_t pixsize = images[index].slicePitch;
-                    if (memcpy(pDestination, images[index].pixels, pixsize))
-                    {
-                        blob.Release();
-                        return E_FAIL;
-                    }
+                    memcpy(pDestination, images[index].pixels, pixsize);
 
                     pDestination += pixsize;
                     remaining -= pixsize;
@@ -2166,11 +2154,7 @@ HRESULT DirectX::SaveToDDSMemory(
                     size_t tremaining = remaining;
                     for (size_t j = 0; j < lines; ++j)
                     {
-                        if (memcpy(dPtr, sPtr, csize))
-                        {
-                            blob.Release();
-                            return E_FAIL;
-                        }
+                        memcpy(dPtr, sPtr, csize);
 
                         sPtr += rowPitch;
                         dPtr += ddsRowPitch;
