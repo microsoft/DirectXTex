@@ -170,6 +170,8 @@ namespace
             return E_POINTER;
         }
 
+        *bitSize = 0;
+
         if (ddsDataSize > UINT32_MAX)
         {
             return E_FAIL;
@@ -202,7 +204,7 @@ namespace
             (MAKEFOURCC('D', 'X', '1', '0') == hdr->ddspf.fourCC))
         {
             // Must be long enough for both headers and magic value
-            if (ddsDataSize < (sizeof(DDS_HEADER) + sizeof(uint32_t) + sizeof(DDS_HEADER_DXT10)))
+            if (ddsDataSize < (sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10)))
             {
                 return E_FAIL;
             }
@@ -235,6 +237,8 @@ namespace
             return E_POINTER;
         }
 
+        *bitSize = 0;
+
         // open the file
         ScopedHandle hFile(safe_handle(CreateFile2(fileName,
             GENERIC_READ,
@@ -261,7 +265,7 @@ namespace
         }
 
         // Need at least enough data to fill the header and magic number to be a valid DDS
-        if (fileInfo.EndOfFile.LowPart < (sizeof(DDS_HEADER) + sizeof(uint32_t)))
+        if (fileInfo.EndOfFile.LowPart < (sizeof(uint32_t) + sizeof(DDS_HEADER)))
         {
             return E_FAIL;
         }
@@ -274,19 +278,21 @@ namespace
         }
 
         // read the data in
-        DWORD BytesRead = 0;
+        DWORD bytesRead = 0;
         if (!ReadFile(hFile.get(),
             ddsData.get(),
             fileInfo.EndOfFile.LowPart,
-            &BytesRead,
+            &bytesRead,
             nullptr
         ))
         {
+            ddsData.reset();
             return HRESULT_FROM_WIN32(GetLastError());
         }
 
-        if (BytesRead < fileInfo.EndOfFile.LowPart)
+        if (bytesRead < fileInfo.EndOfFile.LowPart)
         {
+            ddsData.reset();
             return E_FAIL;
         }
 
@@ -294,6 +300,7 @@ namespace
         auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
         if (dwMagicNumber != DDS_MAGIC)
         {
+            ddsData.reset();
             return E_FAIL;
         }
 
@@ -303,6 +310,7 @@ namespace
         if (hdr->size != sizeof(DDS_HEADER) ||
             hdr->ddspf.size != sizeof(DDS_PIXELFORMAT))
         {
+            ddsData.reset();
             return E_FAIL;
         }
 
@@ -312,8 +320,9 @@ namespace
             (MAKEFOURCC('D', 'X', '1', '0') == hdr->ddspf.fourCC))
         {
             // Must be long enough for both headers and magic value
-            if (fileInfo.EndOfFile.LowPart < (sizeof(DDS_HEADER) + sizeof(uint32_t) + sizeof(DDS_HEADER_DXT10)))
+            if (fileInfo.EndOfFile.LowPart < (sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10)))
             {
+                ddsData.reset();
                 return E_FAIL;
             }
 
