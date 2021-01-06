@@ -122,6 +122,7 @@
 #ifndef WIN32
 #include <fstream>
 #include <filesystem>
+#include <thread>
 #endif
 
 #define _XM_NO_XMVECTOR_OVERLOADS_
