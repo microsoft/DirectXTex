@@ -16,6 +16,7 @@
 #pragma clang diagnostic ignored "-Wsign-conversion"
 #endif
 
+#ifdef WIN32
 #ifdef _GAMING_XBOX_SCARLETT
 #include <d3dx12_xs.h>
 #elif (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
@@ -23,6 +24,9 @@
 #else
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"
+#endif
+#else
+#include "directx/d3dx12.h"
 #endif
 
 #ifdef __clang__

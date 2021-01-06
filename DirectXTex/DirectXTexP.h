@@ -119,6 +119,11 @@
 #include <iterator>
 #include <memory>
 
+#ifndef WIN32
+#include <fstream>
+#include <filesystem>
+#endif
+
 #define _XM_NO_XMVECTOR_OVERLOADS_
 
 #include <DirectXPackedVector.h>

@@ -113,6 +113,16 @@ namespace
             ifactory)) ? TRUE : FALSE;
     #endif
     }
+
+#ifndef WIN32
+    inline void * _aligned_malloc(size_t size, size_t alignment)
+    {
+        size = (size + alignment - 1) & ~(alignment - 1);
+        return std::aligned_alloc(alignment, size);
+    }
+
+    #define _aligned_free free
+#endif
 }
 
 
