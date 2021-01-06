@@ -2319,7 +2319,7 @@ HRESULT DirectX::SaveToTGAFile(
             if (bytesWritten != sizeof(TGA_EXTENSION))
                 return E_FAIL;
 #else
-            extOffset = outFile.tellp();
+            extOffset = static_cast<uint32_t>(outFile.tellp());
 
             outFile.write(reinterpret_cast<char*>(&ext), sizeof(TGA_EXTENSION));
             if (!outFile)

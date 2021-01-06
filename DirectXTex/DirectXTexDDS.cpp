@@ -1639,11 +1639,11 @@ HRESULT DirectX::GetMetadataFromDDSFile(
 
     auto headerLen = static_cast<size_t>(bytesRead);
 #else
-    inFile.read(reinterpret_cast<char*>(header), MAX_HEADER_SIZE);
+    auto headerLen = std::min<size_t>(len, MAX_HEADER_SIZE);
+
+    inFile.read(reinterpret_cast<char*>(header), headerLen);
     if (!inFile)
         return E_FAIL;
-
-    size_t headerLen = MAX_HEADER_SIZE;
 #endif
 
     uint32_t convFlags = 0;
@@ -1801,11 +1801,11 @@ HRESULT DirectX::LoadFromDDSFile(
 
     auto headerLen = static_cast<size_t>(bytesRead);
 #else
-    inFile.read(reinterpret_cast<char*>(header), MAX_HEADER_SIZE);
+    auto headerLen = std::min<size_t>(len, MAX_HEADER_SIZE);
+
+    inFile.read(reinterpret_cast<char*>(header), headerLen);
     if (!inFile)
         return E_FAIL;
-
-    size_t headerLen = MAX_HEADER_SIZE;
 #endif
 
     uint32_t convFlags = 0;
