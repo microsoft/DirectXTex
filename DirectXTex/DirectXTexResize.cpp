@@ -16,14 +16,17 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
+#ifdef WIN32
 namespace DirectX
 {
     extern HRESULT _ResizeSeparateColorAndAlpha(_In_ IWICImagingFactory* pWIC, _In_ bool iswic2, _In_ IWICBitmap* original,
         _In_ size_t newWidth, _In_ size_t newHeight, _In_ TEX_FILTER_FLAGS filter, _Inout_ const Image* img) noexcept;
 }
+#endif
 
 namespace
 {
+#ifdef WIN32
     //--- Do image resize using WIC ---
     HRESULT PerformResizeUsingWIC(
         const Image& srcImage,
@@ -238,7 +241,7 @@ namespace
 
         return true;
     }
-
+#endif // WIN32
 
     //-------------------------------------------------------------------------------------
     // Resize custom filters
@@ -859,6 +862,7 @@ HRESULT DirectX::Resize(
         return HRESULT_E_NOT_SUPPORTED;
     }
 
+#ifdef WIN32
     bool usewic = UseWICFiltering(srcImage.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
@@ -877,6 +881,7 @@ HRESULT DirectX::Resize(
             usewic = false;
         }
     }
+#endif // WIN32
 
     HRESULT hr = image.Initialize2D(srcImage.format, width, height, 1, 1);
     if (FAILED(hr))
@@ -886,6 +891,7 @@ HRESULT DirectX::Resize(
     if (!rimage)
         return E_POINTER;
 
+#ifdef WIN32
     if (usewic)
     {
         if (wicpf)
@@ -900,6 +906,7 @@ HRESULT DirectX::Resize(
         }
     }
     else
+#endif
     {
         // Case 3: not using WIC resizing
         hr = PerformResizeUsingCustomFilters(srcImage, filter, *rimage);
@@ -942,6 +949,7 @@ HRESULT DirectX::Resize(
     if (FAILED(hr))
         return hr;
 
+#ifdef WIN32
     bool usewic = !metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
@@ -960,6 +968,7 @@ HRESULT DirectX::Resize(
             usewic = false;
         }
     }
+#endif
 
     switch (metadata.dimension)
     {
@@ -996,6 +1005,7 @@ HRESULT DirectX::Resize(
                 return E_FAIL;
             }
 
+#ifdef WIN32
             if (usewic)
             {
                 if (wicpf)
@@ -1010,6 +1020,7 @@ HRESULT DirectX::Resize(
                 }
             }
             else
+#endif
             {
                 // Case 3: not using WIC resizing
                 hr = PerformResizeUsingCustomFilters(*srcimg, filter, *destimg);
@@ -1055,6 +1066,7 @@ HRESULT DirectX::Resize(
                 return E_FAIL;
             }
 
+#ifdef WIN32
             if (usewic)
             {
                 if (wicpf)
@@ -1069,6 +1081,7 @@ HRESULT DirectX::Resize(
                 }
             }
             else
+#endif
             {
                 // Case 3: not using WIC resizing
                 hr = PerformResizeUsingCustomFilters(*srcimg, filter, *destimg);

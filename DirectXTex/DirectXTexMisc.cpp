@@ -13,6 +13,11 @@
 
 using namespace DirectX;
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
+
 namespace
 {
     const XMVECTORF32 g_Gamma22 = { { { 2.2f, 2.2f, 2.2f, 1.f } } };
