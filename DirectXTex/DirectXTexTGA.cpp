@@ -1225,7 +1225,7 @@ namespace
 
 #ifdef WIN32
             tm info;
-            const tm* pinfo = &info;
+            auto pinfo = &info;
             if (!gmtime_s(pinfo, &now))
 #else
             const tm* pinfo = gmtime(&now);
