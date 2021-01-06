@@ -143,6 +143,12 @@ if (NOT WIN32)
     find_package(directx-headers CONFIG REQUIRED)
     find_package(directxmath CONFIG REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectX-Headers Microsoft::DirectXMath)
+
+    if (BUILD_DX12)
+        set(THREADS_PREFER_PTHREAD_FLAG ON)
+        find_package(Threads REQUIRED)
+        target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
+    endif()
 endif()
 
 #--- Package
