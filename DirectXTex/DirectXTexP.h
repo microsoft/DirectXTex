@@ -70,7 +70,7 @@
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #endif
 
-#ifdef WIN32
+#if defined(WIN32) || defined(WINAPI_FAMILY)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -136,7 +136,7 @@
 
 #include <malloc.h>
 
-#if WIN32
+#ifdef WIN32
 #include <Ole2.h>
 #include <wincodec.h>
 #include <wrl\client.h>
