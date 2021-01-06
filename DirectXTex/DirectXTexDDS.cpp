@@ -1894,7 +1894,10 @@ HRESULT DirectX::LoadFromDDSFile(
 #else
         inFile.read(reinterpret_cast<char*>(temp.get()), remaining);
         if (!inFile)
+        {
+            image.Release();
             return E_FAIL;
+        }
 #endif
 
         CP_FLAGS cflags = CP_FLAGS_NONE;
@@ -1943,7 +1946,10 @@ HRESULT DirectX::LoadFromDDSFile(
 #else
         inFile.read(reinterpret_cast<char*>(image.GetPixels()), image.GetPixelsSize());
         if (!inFile)
+        {
+            image.Release();
             return E_FAIL;
+        }
 #endif
 
         if (convFlags & (CONV_FLAGS_SWIZZLE | CONV_FLAGS_NOALPHA))

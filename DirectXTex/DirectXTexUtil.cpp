@@ -32,6 +32,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
+#ifdef WIN32
     //-------------------------------------------------------------------------------------
     // WIC Pixel Format Translation Data
     //-------------------------------------------------------------------------------------
@@ -114,7 +115,7 @@ namespace
     #endif
     }
 
-#ifndef WIN32
+#else // !WIN32
     inline void * _aligned_malloc(size_t size, size_t alignment)
     {
         size = (size + alignment - 1) & ~(alignment - 1);
@@ -126,6 +127,7 @@ namespace
 }
 
 
+#ifdef WIN32
 //=====================================================================================
 // WIC Utilities
 //=====================================================================================
@@ -327,7 +329,7 @@ void DirectX::SetWICFactory(_In_opt_ IWICImagingFactory* pWIC) noexcept
     if (pWIC)
         pWIC->Release();
 }
-
+#endif // WIN32
 
 
 //=====================================================================================

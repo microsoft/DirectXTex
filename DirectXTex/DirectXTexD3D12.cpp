@@ -27,6 +27,7 @@
 #endif
 #else
 #include "directx/d3dx12.h"
+#include "dxguids/dxguids.h"
 #endif
 
 #ifdef __clang__
@@ -303,7 +304,13 @@ namespace
 
         // Block until the copy is complete
         while (fence->GetCompletedValue() < 1)
+        {
+#ifdef WIN32
             SwitchToThread();
+#else
+            pthread_yield();
+#endif
+        }
 
         return S_OK;
     }
