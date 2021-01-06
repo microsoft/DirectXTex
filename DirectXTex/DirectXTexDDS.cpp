@@ -1880,7 +1880,7 @@ HRESULT DirectX::LoadFromDDSFile(
         }
 
 #ifdef WIN32
-        if (!ReadFile(hFile.get(), temp.get(), remaining, &bytesRead, nullptr))
+        if (!ReadFile(hFile.get(), temp.get(), static_cast<DWORD>(remaining), &bytesRead, nullptr))
         {
             image.Release();
             return HRESULT_FROM_WIN32(GetLastError());
