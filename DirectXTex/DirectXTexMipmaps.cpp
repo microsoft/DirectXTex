@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexMipMaps.cpp
-//  
+//
 // DirectX Texture Library - Mip-map generation
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -64,7 +64,7 @@ namespace
         return mipLevels;
     }
 
-
+#ifdef WIN32
     HRESULT EnsureWicBitmapPixelFormat(
         _In_ IWICImagingFactory* pWIC,
         _In_ IWICBitmap* src,
@@ -116,6 +116,7 @@ namespace
 
         return hr;
     }
+#endif // WIN32
 
 
 #if DIRECTX_MATH_VERSION >= 310
@@ -349,9 +350,11 @@ namespace DirectX
     bool _CalculateMipLevels3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth, _Inout_ size_t& mipLevels) noexcept;
         // Also used by Compress
 
+#ifdef WIN32
     HRESULT _ResizeSeparateColorAndAlpha(_In_ IWICImagingFactory* pWIC, _In_ bool iswic2, _In_ IWICBitmap* original,
         _In_ size_t newWidth, _In_ size_t newHeight, _In_ TEX_FILTER_FLAGS filter, _Inout_ const Image* img) noexcept;
         // Also used by Resize
+#endif
 
     bool _CalculateMipLevels(_In_ size_t width, _In_ size_t height, _Inout_ size_t& mipLevels) noexcept
     {
@@ -391,6 +394,7 @@ namespace DirectX
         return true;
     }
 
+#ifdef WIN32
     //--- Resizing color and alpha channels separately using WIC ---
     _Use_decl_annotations_
     HRESULT _ResizeSeparateColorAndAlpha(
@@ -595,7 +599,7 @@ namespace DirectX
         if (SUCCEEDED(hr))
         {
             if (img->rowPitch > UINT32_MAX || img->slicePitch > UINT32_MAX)
-                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                return HRESULT_E_ARITHMETIC_OVERFLOW;
 
             ComPtr<IWICBitmap> wicBitmap;
             hr = EnsureWicBitmapPixelFormat(pWIC, resizedColorWithAlpha.Get(), filter, desiredPixelFormat, wicBitmap.GetAddressOf());
@@ -607,10 +611,12 @@ namespace DirectX
 
         return hr;
     }
+#endif // WIN32
 }
 
 namespace
 {
+#ifdef WIN32
     //--- determine when to use WIC vs. non-WIC paths ---
     bool UseWICFiltering(_In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter) noexcept
     {
@@ -705,7 +711,7 @@ namespace
         size_t height = baseImage.height;
 
         if (baseImage.rowPitch > UINT32_MAX || baseImage.slicePitch > UINT32_MAX)
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         ComPtr<IWICBitmap> source;
         HRESULT hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(width), static_cast<UINT>(height), pfGUID,
@@ -776,7 +782,7 @@ namespace
                     return hr;
 
                 if (img->rowPitch > UINT32_MAX || img->slicePitch > UINT32_MAX)
-                    return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                    return HRESULT_E_ARITHMETIC_OVERFLOW;
 
                 hr = scaler->Initialize(source.Get(), static_cast<UINT>(width), static_cast<UINT>(height), _GetWICInterp(filter));
                 if (FAILED(hr))
@@ -822,6 +828,7 @@ namespace
 
         return S_OK;
     }
+#endif // WIN32
 
 
     //-------------------------------------------------------------------------------------
@@ -873,7 +880,7 @@ namespace
             for (size_t h = 0; h < mdata.height; ++h)
             {
                 size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
-                memcpy_s(pDest, dest->rowPitch, pSrc, msize);
+                memcpy(pDest, pSrc, msize);
                 pSrc += rowPitch;
                 pDest += dest->rowPitch;
             }
@@ -1618,7 +1625,7 @@ namespace
             for (size_t h = 0; h < height; ++h)
             {
                 size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
-                memcpy_s(pDest, dest->rowPitch, pSrc, msize);
+                memcpy(pDest, pSrc, msize);
                 pSrc += rowPitch;
                 pDest += dest->rowPitch;
             }
@@ -2791,13 +2798,14 @@ HRESULT DirectX::GenerateMipMaps(
 
     if (IsCompressed(baseImage.format) || IsTypeless(baseImage.format) || IsPlanar(baseImage.format) || IsPalettized(baseImage.format))
     {
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     HRESULT hr = E_UNEXPECTED;
 
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MODE_MASK");
 
+#ifdef WIN32
     bool usewic = UseWICFiltering(baseImage.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
@@ -2811,7 +2819,7 @@ HRESULT DirectX::GenerateMipMaps(
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
             if (filter & TEX_FILTER_FORCE_WIC)
-                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                return HRESULT_E_ARITHMETIC_OVERFLOW;
 
             usewic = false;
         }
@@ -2872,10 +2880,11 @@ HRESULT DirectX::GenerateMipMaps(
         }
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
     }
     else
+#endif // WIN32
     {
         //--- Use custom filters to generate mipmaps ----------------------------------
         TexMetadata mdata = {};
@@ -2954,7 +2963,7 @@ HRESULT DirectX::GenerateMipMaps(
             return hr;
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
     }
 }
@@ -2973,7 +2982,7 @@ HRESULT DirectX::GenerateMipMaps(
 
     if (metadata.IsVolumemap()
         || IsCompressed(metadata.format) || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (!_CalculateMipLevels(metadata.width, metadata.height, levels))
         return E_INVALIDARG;
@@ -3011,6 +3020,7 @@ HRESULT DirectX::GenerateMipMaps(
 
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MODE_MASK");
 
+#ifdef WIN32
     bool usewic = !metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
@@ -3024,7 +3034,7 @@ HRESULT DirectX::GenerateMipMaps(
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
             if (filter & TEX_FILTER_FORCE_WIC)
-                return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+                return HRESULT_E_ARITHMETIC_OVERFLOW;
 
             usewic = false;
         }
@@ -3098,10 +3108,11 @@ HRESULT DirectX::GenerateMipMaps(
         }
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
     }
     else
+#endif // WIN32
     {
         //--- Use custom filters to generate mipmaps ----------------------------------
         TexMetadata mdata2 = metadata;
@@ -3182,7 +3193,7 @@ HRESULT DirectX::GenerateMipMaps(
             return hr;
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
     }
 }
@@ -3203,7 +3214,7 @@ HRESULT DirectX::GenerateMipMaps3D(
         return E_INVALIDARG;
 
     if (filter & TEX_FILTER_FORCE_WIC)
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     DXGI_FORMAT format = baseImages[0].format;
     size_t width = baseImages[0].width;
@@ -3228,7 +3239,7 @@ HRESULT DirectX::GenerateMipMaps3D(
     }
 
     if (IsCompressed(format) || IsTypeless(format) || IsPlanar(format) || IsPalettized(format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MODE_MASK");
 
@@ -3294,7 +3305,7 @@ HRESULT DirectX::GenerateMipMaps3D(
         return hr;
 
     default:
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 }
 
@@ -3311,11 +3322,11 @@ HRESULT DirectX::GenerateMipMaps3D(
         return E_INVALIDARG;
 
     if (filter & TEX_FILTER_FORCE_WIC)
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (!metadata.IsVolumemap()
         || IsCompressed(metadata.format) || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (!_CalculateMipLevels3D(metadata.width, metadata.height, metadata.depth, levels))
         return E_INVALIDARG;
@@ -3410,7 +3421,7 @@ HRESULT DirectX::GenerateMipMaps3D(
         return hr;
 
     default:
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 }
 
@@ -3428,7 +3439,7 @@ HRESULT DirectX::ScaleMipMapsAlphaForCoverage(
 
     if (metadata.IsVolumemap()
         || IsCompressed(metadata.format) || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (srcImages[0].format != metadata.format || srcImages[0].width != metadata.width || srcImages[0].height != metadata.height)
     {
@@ -3458,7 +3469,7 @@ HRESULT DirectX::ScaleMipMapsAlphaForCoverage(
         for (size_t h = 0; h < metadata.height; ++h)
         {
             size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
-            memcpy_s(pDest, dest->rowPitch, pSrc, msize);
+            memcpy(pDest, pSrc, msize);
             pSrc += rowPitch;
             pDest += dest->rowPitch;
         }
@@ -3482,6 +3493,6 @@ HRESULT DirectX::ScaleMipMapsAlphaForCoverage(
         if (FAILED(hr))
             return hr;
     }
-    
+
     return S_OK;
 }

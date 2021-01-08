@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexFlipRotate.cpp
-//  
+//
 // DirectX Texture Library - Image flip/rotate operations
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -37,7 +37,7 @@ namespace
 
         if (srcImage.rowPitch > UINT32_MAX || srcImage.slicePitch > UINT32_MAX
             || destImage.rowPitch > UINT32_MAX || destImage.slicePitch > UINT32_MAX)
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         ComPtr<IWICBitmap> source;
         HRESULT hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height), pfGUID,
@@ -63,7 +63,7 @@ namespace
         if (memcmp(&pfFR, &pfGUID, sizeof(GUID)) != 0)
         {
             // Flip/rotate should return the same format as the source...
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         UINT nwidth, nheight;
@@ -199,7 +199,7 @@ HRESULT DirectX::FlipRotate(
     if (IsCompressed(srcImage.format))
     {
         // We don't support flip/rotate operations on compressed images
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     static_assert(static_cast<int>(TEX_FR_ROTATE0) == static_cast<int>(WICBitmapTransformRotate0), "TEX_FR_ROTATE0 no longer matches WIC");
@@ -292,7 +292,7 @@ HRESULT DirectX::FlipRotate(
     if (IsCompressed(metadata.format))
     {
         // We don't support flip/rotate operations on compressed images
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     static_assert(static_cast<int>(TEX_FR_ROTATE0) == static_cast<int>(WICBitmapTransformRotate0), "TEX_FR_ROTATE0 no longer matches WIC");

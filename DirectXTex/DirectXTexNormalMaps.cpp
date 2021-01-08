@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexNormalMaps.cpp
-//  
+//
 // DirectX Texture Library - Normal map operations
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -84,7 +84,7 @@ namespace
             return E_FAIL;
 
         if (!(convFlags & (CONVF_UNORM | CONVF_SNORM | CONVF_FLOAT)))
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
 
         const size_t width = srcImage.width;
         const size_t height = srcImage.height;
@@ -124,7 +124,7 @@ namespace
         if (flags & CNMAP_MIRROR_V)
         {
             // Mirror first row
-            memcpy_s(row0, rowPitch, row1, rowPitch);
+            memcpy(row0, row1, rowPitch);
         }
         else
         {
@@ -248,7 +248,7 @@ namespace
 //=====================================================================================
 // Entry points
 //=====================================================================================
-        
+
 //-------------------------------------------------------------------------------------
 // Generates a normal map from a height-map
 //-------------------------------------------------------------------------------------
@@ -282,7 +282,7 @@ HRESULT DirectX::ComputeNormalMap(
         || IsTypeless(format) || IsTypeless(srcImage.format)
         || IsPlanar(format) || IsPlanar(srcImage.format)
         || IsPalettized(format) || IsPalettized(srcImage.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     // Setup target image
     normalMap.Release();
@@ -325,7 +325,7 @@ HRESULT DirectX::ComputeNormalMap(
         || IsTypeless(format) || IsTypeless(metadata.format)
         || IsPlanar(format) || IsPlanar(metadata.format)
         || IsPalettized(format) || IsPalettized(metadata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     static_assert(CNMAP_CHANNEL_RED == 0x1, "CNMAP_CHANNEL_ flag values don't match mask");
     switch (flags & 0xf)
@@ -371,7 +371,7 @@ HRESULT DirectX::ComputeNormalMap(
         if (IsCompressed(src.format) || IsTypeless(src.format))
         {
             normalMaps.Release();
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         if (src.width != dest[index].width || src.height != dest[index].height)
