@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
+#include <cwchar>
 
 #include <dxgiformat.h>
 #include <d3d11_1.h>
