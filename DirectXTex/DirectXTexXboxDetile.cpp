@@ -252,7 +252,7 @@ namespace
 
             UINT32 tiledPixels = mip.PitchPixels * mip.PaddedDepthOrArraySize;
 
-            ScopedAlignedArrayXMVECTOR scanline(reinterpret_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * (tiledPixels + result[0]->width), 16)));
+            auto scanline = make_AlignedArrayXMVECTOR(tiledPixels + result[0]->width);
 
             XMVECTOR* target = scanline.get();
             XMVECTOR* tiled = target + result[0]->width;
@@ -393,9 +393,7 @@ namespace
 
             const UINT32 tiledPixels = mip.PaddedWidthElements * mip.PaddedHeightElements * mip.PaddedDepthOrArraySize;
 
-            ScopedAlignedArrayXMVECTOR scanline(
-                reinterpret_cast<XMVECTOR*>(_aligned_malloc(
-                    sizeof(XMVECTOR) * (tiledPixels + result[0]->width), 16)));
+            auto scanline = make_AlignedArrayXMVECTOR(tiledPixels + result[0]->width);
 
             XMVECTOR* target = scanline.get();
             XMVECTOR* tiled = target + result[0]->width;
@@ -530,9 +528,7 @@ namespace
             const UINT32 tiledPixels = mip.PaddedWidthElements * mip.PaddedHeightElements * mip.PaddedDepthOrArraySize;
             assert(tiledPixels >= (result.width * result.height * slices));
 
-            ScopedAlignedArrayXMVECTOR scanline(
-                reinterpret_cast<XMVECTOR*>(_aligned_malloc(
-                    sizeof(XMVECTOR) * (tiledPixels + result.width), 16)));
+            auto scanline = make_AlignedArrayXMVECTOR(tiledPixels + result.width);
 
             XMVECTOR* target = scanline.get();
             XMVECTOR* tiled = target + result.width;
