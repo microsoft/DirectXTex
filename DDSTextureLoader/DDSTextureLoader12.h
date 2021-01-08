@@ -16,7 +16,7 @@
 
 #pragma once
 
-#if defined(WIN32) || defined(WINAPI_FAMILY)
+#if defined(WIN32) || defined(_WIN32)
 #include <d3d12.h>
 #else
 #include <wsl/winadapter.h>
