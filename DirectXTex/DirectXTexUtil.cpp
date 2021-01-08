@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexUtil.cpp
-//  
+//
 // DirectX Texture Library - Utilities
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -32,6 +32,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
+#ifdef WIN32
     //-------------------------------------------------------------------------------------
     // WIC Pixel Format Translation Data
     //-------------------------------------------------------------------------------------
@@ -113,9 +114,20 @@ namespace
             ifactory)) ? TRUE : FALSE;
     #endif
     }
+
+#else // !WIN32
+    inline void * _aligned_malloc(size_t size, size_t alignment)
+    {
+        size = (size + alignment - 1) & ~(alignment - 1);
+        return std::aligned_alloc(alignment, size);
+    }
+
+    #define _aligned_free free
+#endif
 }
 
 
+#ifdef WIN32
 //=====================================================================================
 // WIC Utilities
 //=====================================================================================
@@ -123,7 +135,7 @@ namespace
 _Use_decl_annotations_
 DXGI_FORMAT DirectX::_WICToDXGI(const GUID& guid) noexcept
 {
-    for (size_t i = 0; i < _countof(g_WICFormats); ++i)
+    for (size_t i = 0; i < std::size(g_WICFormats); ++i)
     {
         if (memcmp(&g_WICFormats[i].wic, &guid, sizeof(GUID)) == 0)
             return g_WICFormats[i].format;
@@ -186,7 +198,7 @@ bool DirectX::_DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR) no
         #endif
 
         default:
-            for (size_t i = 0; i < _countof(g_WICFormats); ++i)
+            for (size_t i = 0; i < std::size(g_WICFormats); ++i)
             {
                 if (g_WICFormats[i].format == format)
                 {
@@ -205,7 +217,7 @@ TEX_FILTER_FLAGS DirectX::_CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ 
 {
     TEX_FILTER_FLAGS srgb = TEX_FILTER_DEFAULT;
 
-    for (size_t i = 0; i < _countof(g_WICFormats); ++i)
+    for (size_t i = 0; i < std::size(g_WICFormats); ++i)
     {
         if (memcmp(&g_WICFormats[i].wic, &sourceGUID, sizeof(GUID)) == 0)
         {
@@ -317,7 +329,7 @@ void DirectX::SetWICFactory(_In_opt_ IWICImagingFactory* pWIC) noexcept
     if (pWIC)
         pWIC->Release();
 }
-
+#endif // WIN32
 
 
 //=====================================================================================
@@ -1056,7 +1068,7 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
     if (pitch > UINT32_MAX || slice > UINT32_MAX)
     {
         rowPitch = slicePitch = 0;
-        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
     }
 #else
     static_assert(sizeof(size_t) == 8, "Not a 64-bit platform!");

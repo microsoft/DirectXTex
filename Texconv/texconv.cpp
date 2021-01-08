@@ -24,7 +24,9 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
+#include <cwchar>
 #include <fstream>
+#include <iterator>
 #include <memory>
 #include <list>
 
@@ -701,7 +703,7 @@ namespace
         wchar_t version[32] = {};
 
         wchar_t appName[_MAX_PATH] = {};
-        if (GetModuleFileNameW(nullptr, appName, _countof(appName)))
+        if (GetModuleFileNameW(nullptr, appName, static_cast<UINT>(std::size(appName))))
         {
             DWORD size = GetFileVersionInfoSizeW(appName, nullptr);
             if (size > 0)
@@ -919,7 +921,7 @@ namespace
         D3D_FEATURE_LEVEL fl;
         HRESULT hr = s_DynamicD3D11CreateDevice(pAdapter.Get(),
             (pAdapter) ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE,
-            nullptr, createDeviceFlags, featureLevels, _countof(featureLevels),
+            nullptr, createDeviceFlags, featureLevels, static_cast<UINT>(std::size(featureLevels)),
             D3D11_SDK_VERSION, pDevice, &fl, nullptr);
         if (SUCCEEDED(hr))
         {

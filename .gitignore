@@ -18,7 +18,7 @@
 *.VC.db
 *.nupkg
 .vs
-Bin
+[Bb]in
 packages
 /DirectXTex/Shaders/Compiled/*.inc
 /DirectXTex/Shaders/Compiled/*.pdb
@@ -34,3 +34,8 @@ x64
 /Tests
 /wiki
 /out
+/CMakeCache.txt
+/CMakeFiles
+/Makefile
+/cmake
+/cmake_install.cmake

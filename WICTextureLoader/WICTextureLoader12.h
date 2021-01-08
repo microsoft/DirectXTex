@@ -22,6 +22,7 @@
 
 #include <d3d12.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 

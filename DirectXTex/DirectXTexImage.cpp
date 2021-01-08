@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexImage.cpp
-//  
+//
 // DirectX Texture Library - Image container
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -19,6 +19,19 @@ namespace DirectX
 }
 
 using namespace DirectX;
+
+#ifndef WIN32
+namespace
+{
+    inline void * _aligned_malloc(size_t size, size_t alignment)
+    {
+        size = (size + alignment - 1) & ~(alignment - 1);
+        return std::aligned_alloc(alignment, size);
+    }
+
+    #define _aligned_free free
+}
+#endif
 
 //-------------------------------------------------------------------------------------
 // Determines number of image array entries and pixel size
@@ -288,7 +301,7 @@ HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags) noexc
         return E_INVALIDARG;
 
     if (IsPalettized(mdata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     size_t mipLevels = mdata.mipLevels;
 
@@ -325,7 +338,7 @@ HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags) noexc
         break;
 
     default:
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     Release();
@@ -342,7 +355,7 @@ HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags) noexc
 
     size_t pixelSize, nimages;
     if (!_DetermineImageArray(m_metadata, flags, nimages, pixelSize))
-        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
 
     m_image = new (std::nothrow) Image[nimages];
     if (!m_image)
@@ -390,7 +403,7 @@ HRESULT ScratchImage::Initialize2D(DXGI_FORMAT fmt, size_t width, size_t height,
         return E_INVALIDARG;
 
     if (IsPalettized(fmt))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (!_CalculateMipLevels(width, height, mipLevels))
         return E_INVALIDARG;
@@ -409,7 +422,7 @@ HRESULT ScratchImage::Initialize2D(DXGI_FORMAT fmt, size_t width, size_t height,
 
     size_t pixelSize, nimages;
     if (!_DetermineImageArray(m_metadata, flags, nimages, pixelSize))
-        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
 
     m_image = new (std::nothrow) Image[nimages];
     if (!m_image)
@@ -441,7 +454,7 @@ HRESULT ScratchImage::Initialize3D(DXGI_FORMAT fmt, size_t width, size_t height,
         return E_INVALIDARG;
 
     if (IsPalettized(fmt))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     if (!_CalculateMipLevels3D(width, height, depth, mipLevels))
         return E_INVALIDARG;
@@ -460,7 +473,7 @@ HRESULT ScratchImage::Initialize3D(DXGI_FORMAT fmt, size_t width, size_t height,
 
     size_t pixelSize, nimages;
     if (!_DetermineImageArray(m_metadata, flags, nimages, pixelSize))
-        return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
 
     m_image = new (std::nothrow) Image[nimages];
     if (!m_image)
@@ -533,7 +546,7 @@ HRESULT ScratchImage::InitializeFromImage(const Image& srcImage, bool allow1D, C
 
     for (size_t y = 0; y < rowCount; ++y)
     {
-        memcpy_s(dptr, dpitch, sptr, size);
+        memcpy(dptr, sptr, size);
         sptr += spitch;
         dptr += dpitch;
     }
@@ -592,7 +605,7 @@ HRESULT ScratchImage::InitializeArrayFromImages(const Image* images, size_t nIma
 
         for (size_t y = 0; y < rowCount; ++y)
         {
-            memcpy_s(dptr, dpitch, sptr, size);
+            memcpy(dptr, sptr, size);
             sptr += spitch;
             dptr += dpitch;
         }
@@ -668,7 +681,7 @@ HRESULT ScratchImage::Initialize3DFromImages(const Image* images, size_t depth, 
 
         for (size_t y = 0; y < rowCount; ++y)
         {
-            memcpy_s(dptr, dpitch, sptr, size);
+            memcpy(dptr, sptr, size);
             sptr += spitch;
             dptr += dpitch;
         }
@@ -786,7 +799,7 @@ bool ScratchImage::IsAlphaAllOpaque() const noexcept
     }
     else
     {
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*m_metadata.width), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(m_metadata.width);
         if (!scanline)
             return false;
 

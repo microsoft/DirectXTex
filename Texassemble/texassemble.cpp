@@ -24,7 +24,9 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
+#include <cwchar>
 #include <fstream>
+#include <iterator>
 #include <memory>
 #include <list>
 #include <utility>
@@ -564,7 +566,7 @@ namespace
         wchar_t version[32] = {};
 
         wchar_t appName[_MAX_PATH] = {};
-        if (GetModuleFileNameW(nullptr, appName, _countof(appName)))
+        if (GetModuleFileNameW(nullptr, appName, static_cast<DWORD>(std::size(appName))))
         {
             DWORD size = GetFileVersionInfoSizeW(appName, nullptr);
             if (size > 0)

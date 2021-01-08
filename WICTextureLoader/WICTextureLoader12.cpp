@@ -23,8 +23,9 @@
 
 #include "WICTextureLoader12.h"
 
-#include <assert.h>
 #include <algorithm>
+#include <cassert>
+#include <cstring>
 
 #include <wincodec.h>
 
@@ -36,6 +37,13 @@
 #pragma clang diagnostic ignored "-Wswitch"
 #pragma clang diagnostic ignored "-Wswitch-enum"
 #endif
+
+// Off by default warnings
+#pragma warning(disable : 4619 4616 4623 4626 5027)
+// C4619/4616 #pragma warning warnings
+// C4623 default constructor was implicitly defined as deleted
+// C4626 assignment operator was implicitly defined as deleted
+// C5027 move assignment operator was implicitly defined as deleted
 
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"
@@ -239,7 +247,7 @@ namespace
     //---------------------------------------------------------------------------------
     DXGI_FORMAT _WICToDXGI(const GUID& guid) noexcept
     {
-        for (size_t i = 0; i < _countof(g_WICFormats); ++i)
+        for (size_t i = 0; i < std::size(g_WICFormats); ++i)
         {
             if (memcmp(&g_WICFormats[i].wic, &guid, sizeof(GUID)) == 0)
                 return g_WICFormats[i].format;
@@ -385,7 +393,7 @@ namespace
         DXGI_FORMAT format = _WICToDXGI(pixelFormat);
         if (format == DXGI_FORMAT_UNKNOWN)
         {
-            for (size_t i = 0; i < _countof(g_WICConvert); ++i)
+            for (size_t i = 0; i < std::size(g_WICConvert); ++i)
             {
                 if (memcmp(&g_WICConvert[i].source, &pixelFormat, sizeof(WICPixelFormatGUID)) == 0)
                 {

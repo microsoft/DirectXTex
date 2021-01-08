@@ -16,8 +16,15 @@
 
 #pragma once
 
+#if defined(WIN32) || defined(WINAPI_FAMILY)
 #include <d3d12.h>
+#else
+#include <wsl/winadapter.h>
+#include <wsl/wrladapter.h>
+#include <directx/d3d12.h>
+#endif
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <vector>

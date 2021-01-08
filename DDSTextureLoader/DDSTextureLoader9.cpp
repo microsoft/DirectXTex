@@ -18,8 +18,9 @@
 
 #include <d3d9types.h>
 
-#include <assert.h>
 #include <algorithm>
+#include <cassert>
+#include <cstring>
 #include <memory>
 
 #include <wrl/client.h>
@@ -126,6 +127,8 @@ namespace
             return E_POINTER;
         }
 
+        *bitSize = 0;
+
         if (ddsDataSize > UINT32_MAX)
         {
             return E_FAIL;
@@ -183,6 +186,8 @@ namespace
             return E_POINTER;
         }
 
+        *bitSize = 0;
+
         // open the file
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
         ScopedHandle hFile(safe_handle(CreateFile2(fileName,
@@ -232,19 +237,21 @@ namespace
         }
 
         // read the data in
-        DWORD BytesRead = 0;
+        DWORD bytesRead = 0;
         if (!ReadFile(hFile.get(),
             ddsData.get(),
             fileInfo.EndOfFile.LowPart,
-            &BytesRead,
+            &bytesRead,
             nullptr
         ))
         {
+            ddsData.reset();
             return HRESULT_FROM_WIN32(GetLastError());
         }
 
-        if (BytesRead < fileInfo.EndOfFile.LowPart)
+        if (bytesRead < fileInfo.EndOfFile.LowPart)
         {
+            ddsData.reset();
             return E_FAIL;
         }
 
@@ -252,6 +259,7 @@ namespace
         auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
         if (dwMagicNumber != DDS_MAGIC)
         {
+            ddsData.reset();
             return E_FAIL;
         }
 
@@ -261,6 +269,7 @@ namespace
         if (hdr->size != sizeof(DDS_HEADER) ||
             hdr->ddspf.size != sizeof(DDS_PIXELFORMAT))
         {
+            ddsData.reset();
             return E_FAIL;
         }
 
@@ -269,6 +278,7 @@ namespace
             (MAKEFOURCC('D', 'X', '1', '0') == hdr->ddspf.fourCC))
         {
             // We don't support the new DX10 header for Direct3D 9
+            ddsData.reset();
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
         }
 

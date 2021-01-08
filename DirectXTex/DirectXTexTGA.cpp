@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexTGA.cpp
-//  
+//
 // DirectX Texture Library - Targa Truevision (TGA) file format reader/writer
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -148,7 +148,7 @@ namespace
 
         if (size < sizeof(TGA_HEADER))
         {
-            return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            return HRESULT_E_INVALID_DATA;
         }
 
         auto pHeader = static_cast<const TGA_HEADER*>(pSource);
@@ -156,17 +156,17 @@ namespace
         if (pHeader->bColorMapType != 0
             || pHeader->wColorMapLength != 0)
         {
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         if (pHeader->bDescriptor & (TGA_FLAGS_INTERLEAVED_2WAY | TGA_FLAGS_INTERLEAVED_4WAY))
         {
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         if (!pHeader->wWidth || !pHeader->wHeight)
         {
-            return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            return HRESULT_E_INVALID_DATA;
         }
 
         switch (pHeader->bImageType)
@@ -214,7 +214,7 @@ namespace
                 break;
 
             default:
-                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                return HRESULT_E_NOT_SUPPORTED;
             }
 
             if (convFlags && (pHeader->bImageType == TGA_BLACK_AND_WHITE_RLE))
@@ -226,10 +226,10 @@ namespace
         case TGA_NO_IMAGE:
         case TGA_COLOR_MAPPED:
         case TGA_COLOR_MAPPED_RLE:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            return HRESULT_E_INVALID_DATA;
         }
 
         metadata.width = pHeader->wWidth;
@@ -1082,7 +1082,7 @@ namespace
         if ((image.width > UINT16_MAX)
             || (image.height > UINT16_MAX))
         {
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         header.wWidth = static_cast<uint16_t>(image.width);
@@ -1127,7 +1127,7 @@ namespace
             break;
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         return S_OK;
@@ -1223,15 +1223,21 @@ namespace
             time_t now = {};
             time(&now);
 
+#ifdef WIN32
             tm info;
-            if (!gmtime_s(&info, &now))
+            auto pinfo = &info;
+            if (!gmtime_s(pinfo, &now))
+#else
+            const tm* pinfo = gmtime(&now);
+            if (pinfo)
+#endif
             {
-                ext->wStampMonth = static_cast<uint16_t>(info.tm_mon + 1);
-                ext->wStampDay = static_cast<uint16_t>(info.tm_mday);
-                ext->wStampYear = static_cast<uint16_t>(info.tm_year + 1900);
-                ext->wStampHour = static_cast<uint16_t>(info.tm_hour);
-                ext->wStampMinute = static_cast<uint16_t>(info.tm_min);
-                ext->wStampSecond = static_cast<uint16_t>(info.tm_sec);
+                ext->wStampMonth = static_cast<uint16_t>(pinfo->tm_mon + 1);
+                ext->wStampDay = static_cast<uint16_t>(pinfo->tm_mday);
+                ext->wStampYear = static_cast<uint16_t>(pinfo->tm_year + 1900);
+                ext->wStampHour = static_cast<uint16_t>(pinfo->tm_hour);
+                ext->wStampMinute = static_cast<uint16_t>(pinfo->tm_min);
+                ext->wStampSecond = static_cast<uint16_t>(pinfo->tm_sec);
             }
         }
     }
@@ -1336,6 +1342,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
     if (!szFile)
         return E_INVALIDARG;
 
+#ifdef WIN32
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
     ScopedHandle hFile(safe_handle(CreateFile2(szFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, nullptr)));
 #else
@@ -1357,25 +1364,56 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
     // File is too big for 32-bit allocation, so reject read (4 GB should be plenty large enough for a valid TGA file)
     if (fileInfo.EndOfFile.HighPart > 0)
     {
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_E_FILE_TOO_LARGE;
     }
 
+    size_t len = fileInfo.EndOfFile.LowPart;
+#else // !WIN32
+    std::ifstream inFile(std::filesystem::path(szFile), std::ios::in | std::ios::binary | std::ios::ate);
+    if (!inFile)
+        return E_FAIL;
+
+    std::streampos fileLen = inFile.tellg();
+    if (!inFile)
+        return E_FAIL;
+
+    if (fileLen > UINT32_MAX)
+        return HRESULT_E_FILE_TOO_LARGE;
+
+    inFile.seekg(0, std::ios::beg);
+    if (!inFile)
+        return E_FAIL;
+
+    size_t len = fileLen;
+#endif
+
     // Need at least enough data to fill the standard header to be a valid TGA
-    if (fileInfo.EndOfFile.LowPart < (sizeof(TGA_HEADER)))
+    if (len < (sizeof(TGA_HEADER)))
     {
         return E_FAIL;
     }
 
     // Read the standard header (we don't need the file footer to parse the file)
     uint8_t header[sizeof(TGA_HEADER)] = {};
+
+#ifdef WIN32
     DWORD bytesRead = 0;
     if (!ReadFile(hFile.get(), header, sizeof(TGA_HEADER), &bytesRead, nullptr))
     {
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
+    auto headerLen = static_cast<size_t>(bytesRead);
+#else
+    inFile.read(reinterpret_cast<char*>(header), sizeof(TGA_HEADER));
+    if (!inFile)
+        return E_FAIL;
+
+    size_t headerLen = sizeof(TGA_HEADER);
+#endif
+
     size_t offset;
-    HRESULT hr = DecodeTGAHeader(header, bytesRead, flags, metadata, offset, nullptr);
+    HRESULT hr = DecodeTGAHeader(header, headerLen, flags, metadata, offset, nullptr);
     if (FAILED(hr))
         return hr;
 
@@ -1383,12 +1421,14 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
     const TGA_EXTENSION* ext = nullptr;
     TGA_EXTENSION extData = {};
     {
+        TGA_FOOTER footer = {};
+
+#ifdef WIN32
         if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) == INVALID_SET_FILE_POINTER)
         {
             return HRESULT_FROM_WIN32(GetLastError());
         }
 
-        TGA_FOOTER footer = {};
         if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
         {
             return HRESULT_FROM_WIN32(GetLastError());
@@ -1398,12 +1438,22 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
         {
             return E_FAIL;
         }
+#else
+        inFile.seekg(-static_cast<int>(sizeof(TGA_FOOTER)), std::ios::end);
+        if (!inFile)
+            return E_FAIL;
+
+        inFile.read(reinterpret_cast<char*>(&footer), sizeof(TGA_FOOTER));
+        if (!inFile)
+            return E_FAIL;
+#endif
 
         if (memcmp(footer.Signature, g_Signature, sizeof(g_Signature)) == 0)
         {
             if (footer.dwExtensionOffset != 0
-                && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= fileInfo.EndOfFile.LowPart))
+                && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= len))
             {
+#ifdef WIN32
                 LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
                 if (SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
                 {
@@ -1414,6 +1464,18 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
                         metadata.SetAlphaMode(GetAlphaModeFromExtension(ext));
                     }
                 }
+#else // !WIN32
+                inFile.seekg(static_cast<std::streampos>(footer.dwExtensionOffset), std::ios::beg);
+                if (inFile)
+                {
+                    inFile.read(reinterpret_cast<char*>(&extData), sizeof(TGA_EXTENSION));
+                    if (inFile)
+                    {
+                        ext = &extData;
+                        metadata.SetAlphaMode(GetAlphaModeFromExtension(ext));
+                    }
+                }
+#endif
             }
         }
     }
@@ -1531,6 +1593,7 @@ HRESULT DirectX::LoadFromTGAFile(
 
     image.Release();
 
+#ifdef WIN32
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
     ScopedHandle hFile(safe_handle(CreateFile2(szFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, nullptr)));
 #else
@@ -1552,43 +1615,80 @@ HRESULT DirectX::LoadFromTGAFile(
     // File is too big for 32-bit allocation, so reject read (4 GB should be plenty large enough for a valid TGA file)
     if (fileInfo.EndOfFile.HighPart > 0)
     {
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_E_FILE_TOO_LARGE;
     }
 
+    size_t len = fileInfo.EndOfFile.LowPart;
+#else // !WIN32
+    std::ifstream inFile(std::filesystem::path(szFile), std::ios::in | std::ios::binary | std::ios::ate);
+    if (!inFile)
+        return E_FAIL;
+
+    std::streampos fileLen = inFile.tellg();
+    if (!inFile)
+        return E_FAIL;
+
+    if (fileLen > UINT32_MAX)
+        return HRESULT_E_FILE_TOO_LARGE;
+
+    inFile.seekg(0, std::ios::beg);
+    if (!inFile)
+        return E_FAIL;
+
+    size_t len = fileLen;
+#endif
+
     // Need at least enough data to fill the header to be a valid TGA
-    if (fileInfo.EndOfFile.LowPart < sizeof(TGA_HEADER))
+    if (len < sizeof(TGA_HEADER))
     {
         return E_FAIL;
     }
 
     // Read the header
     uint8_t header[sizeof(TGA_HEADER)] = {};
+
+#ifdef WIN32
     DWORD bytesRead = 0;
     if (!ReadFile(hFile.get(), header, sizeof(TGA_HEADER), &bytesRead, nullptr))
     {
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
+    auto headerLen = static_cast<size_t>(bytesRead);
+#else
+    inFile.read(reinterpret_cast<char*>(header), sizeof(TGA_HEADER));
+    if (!inFile)
+        return E_FAIL;
+
+    size_t headerLen =  sizeof(TGA_HEADER);
+#endif
+
     size_t offset;
     uint32_t convFlags = 0;
     TexMetadata mdata;
-    HRESULT hr = DecodeTGAHeader(header, bytesRead, flags, mdata, offset, &convFlags);
+    HRESULT hr = DecodeTGAHeader(header, headerLen, flags, mdata, offset, &convFlags);
     if (FAILED(hr))
         return hr;
 
     // Read the pixels
-    auto remaining = static_cast<DWORD>(fileInfo.EndOfFile.LowPart - offset);
+    auto remaining = len - offset;
     if (remaining == 0)
         return E_FAIL;
 
     if (offset > sizeof(TGA_HEADER))
     {
+#ifdef WIN32
         // Skip past the id string
         LARGE_INTEGER filePos = { { static_cast<DWORD>(offset), 0 } };
         if (!SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
         {
             return HRESULT_FROM_WIN32(GetLastError());
         }
+#else
+        inFile.seekg(offset, std::ios::beg);
+        if (!inFile)
+            return E_FAIL;
+#endif
     }
 
     hr = image.Initialize2D(mdata.format, mdata.width, mdata.height, 1, 1);
@@ -1605,15 +1705,16 @@ HRESULT DirectX::LoadFromTGAFile(
         if (remaining < image.GetPixelsSize())
         {
             image.Release();
-            return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+            return HRESULT_E_HANDLE_EOF;
         }
 
         if (image.GetPixelsSize() > UINT32_MAX)
         {
             image.Release();
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
         }
 
+#ifdef WIN32
         if (!ReadFile(hFile.get(), image.GetPixels(), static_cast<DWORD>(image.GetPixelsSize()), &bytesRead, nullptr))
         {
             image.Release();
@@ -1625,6 +1726,14 @@ HRESULT DirectX::LoadFromTGAFile(
             image.Release();
             return E_FAIL;
         }
+#else
+        inFile.read(reinterpret_cast<char*>(image.GetPixels()), image.GetPixelsSize());
+        if (!inFile)
+        {
+            image.Release();
+            return E_FAIL;
+        }
+#endif
 
         switch (mdata.format)
         {
@@ -1824,7 +1933,8 @@ HRESULT DirectX::LoadFromTGAFile(
             return E_OUTOFMEMORY;
         }
 
-        if (!ReadFile(hFile.get(), temp.get(), remaining, &bytesRead, nullptr))
+#ifdef WIN32
+        if (!ReadFile(hFile.get(), temp.get(), static_cast<DWORD>(remaining), &bytesRead, nullptr))
         {
             image.Release();
             return HRESULT_FROM_WIN32(GetLastError());
@@ -1835,6 +1945,14 @@ HRESULT DirectX::LoadFromTGAFile(
             image.Release();
             return E_FAIL;
         }
+#else
+        inFile.read(reinterpret_cast<char*>(temp.get()), remaining);
+        if (!inFile)
+        {
+            image.Release();
+            return E_FAIL;
+        }
+#endif
 
         if (convFlags & CONV_FLAGS_RLE)
         {
@@ -1859,12 +1977,14 @@ HRESULT DirectX::LoadFromTGAFile(
     const TGA_EXTENSION* ext = nullptr;
     TGA_EXTENSION extData = {};
     {
+        TGA_FOOTER footer = {};
+
+#ifdef WIN32
         if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) == INVALID_SET_FILE_POINTER)
         {
             return HRESULT_FROM_WIN32(GetLastError());
         }
 
-        TGA_FOOTER footer = {};
         if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
         {
             image.Release();
@@ -1876,12 +1996,28 @@ HRESULT DirectX::LoadFromTGAFile(
             image.Release();
             return E_FAIL;
         }
+#else // !WIN32
+        inFile.seekg(-static_cast<int>(sizeof(TGA_FOOTER)), std::ios::end);
+        if (!inFile)
+        {
+            image.Release();
+            return E_FAIL;
+        }
+
+        inFile.read(reinterpret_cast<char*>(&footer), sizeof(TGA_FOOTER));
+        if (!inFile)
+        {
+            image.Release();
+            return E_FAIL;
+        }
+#endif
 
         if (memcmp(footer.Signature, g_Signature, sizeof(g_Signature)) == 0)
         {
             if (footer.dwExtensionOffset != 0
-                && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= fileInfo.EndOfFile.LowPart))
+                && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= len))
             {
+#ifdef WIN32
                 LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
                 if (SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
                 {
@@ -1891,6 +2027,17 @@ HRESULT DirectX::LoadFromTGAFile(
                         ext = &extData;
                     }
                 }
+#else // !WIN32
+                inFile.seekg(static_cast<std::streampos>(footer.dwExtensionOffset), std::ios::beg);
+                if (inFile)
+                {
+                    inFile.read(reinterpret_cast<char*>(&extData), sizeof(TGA_EXTENSION));
+                    if (inFile)
+                    {
+                        ext = &extData;
+                    }
+                }
+#endif
             }
         }
     }
@@ -1960,7 +2107,7 @@ HRESULT DirectX::SaveToTGAMemory(
     assert(destPtr  != nullptr);
 
     uint8_t* dPtr = destPtr;
-    memcpy_s(dPtr, blob.GetBufferSize(), &tga_header, sizeof(TGA_HEADER));
+    memcpy(dPtr, &tga_header, sizeof(TGA_HEADER));
     dPtr += sizeof(TGA_HEADER);
 
     const uint8_t* pPixels = image.pixels;
@@ -2033,6 +2180,7 @@ HRESULT DirectX::SaveToTGAFile(
         return hr;
 
     // Create file and write header
+#ifdef WIN32
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
     ScopedHandle hFile(safe_handle(CreateFile2(szFile, GENERIC_WRITE, 0, CREATE_ALWAYS, nullptr)));
 #else
@@ -2044,6 +2192,11 @@ HRESULT DirectX::SaveToTGAFile(
     }
 
     auto_delete_file delonfail(hFile.get());
+#else
+    std::ofstream outFile(std::filesystem::path(szFile), std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!outFile)
+        return E_FAIL;
+#endif
 
     // Determine size for TGA pixel data
     size_t rowPitch, slicePitch;
@@ -2062,6 +2215,7 @@ HRESULT DirectX::SaveToTGAFile(
             return hr;
 
         // Write blob
+#ifdef WIN32
         const DWORD bytesToWrite = static_cast<DWORD>(blob.GetBufferSize());
         DWORD bytesWritten;
         if (!WriteFile(hFile.get(), blob.GetBufferPointer(), bytesToWrite, &bytesWritten, nullptr))
@@ -2073,6 +2227,13 @@ HRESULT DirectX::SaveToTGAFile(
         {
             return E_FAIL;
         }
+#else
+        outFile.write(reinterpret_cast<char*>(blob.GetBufferPointer()),
+            static_cast<std::streamsize>(blob.GetBufferSize()));
+
+        if (!outFile)
+            return E_FAIL;
+#endif
     }
     else
     {
@@ -2082,6 +2243,7 @@ HRESULT DirectX::SaveToTGAFile(
             return E_OUTOFMEMORY;
 
         // Write header
+#ifdef WIN32
         DWORD bytesWritten;
         if (!WriteFile(hFile.get(), &tga_header, sizeof(TGA_HEADER), &bytesWritten, nullptr))
         {
@@ -2090,9 +2252,14 @@ HRESULT DirectX::SaveToTGAFile(
 
         if (bytesWritten != sizeof(TGA_HEADER))
             return E_FAIL;
+#else
+        outFile.write(reinterpret_cast<char*>(&tga_header), sizeof(TGA_HEADER));
+        if (!outFile)
+            return E_FAIL;
+#endif
 
         if (rowPitch > UINT32_MAX)
-            return HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         // Write pixels
         const uint8_t* pPixels = image.pixels;
@@ -2115,6 +2282,7 @@ HRESULT DirectX::SaveToTGAFile(
 
             pPixels += image.rowPitch;
 
+#ifdef WIN32
             if (!WriteFile(hFile.get(), temp.get(), static_cast<DWORD>(rowPitch), &bytesWritten, nullptr))
             {
                 return HRESULT_FROM_WIN32(GetLastError());
@@ -2122,6 +2290,11 @@ HRESULT DirectX::SaveToTGAFile(
 
             if (bytesWritten != rowPitch)
                 return E_FAIL;
+#else
+            outFile.write(reinterpret_cast<char*>(temp.get()), rowPitch);
+            if (!outFile)
+                return E_FAIL;
+#endif
         }
 
         uint32_t extOffset = 0;
@@ -2131,6 +2304,7 @@ HRESULT DirectX::SaveToTGAFile(
             TGA_EXTENSION ext = {};
             SetExtension(&ext, flags, *metadata);
 
+#ifdef WIN32
             extOffset = SetFilePointer(hFile.get(), 0, nullptr, FILE_CURRENT);
             if (extOffset == INVALID_SET_FILE_POINTER)
             {
@@ -2144,6 +2318,13 @@ HRESULT DirectX::SaveToTGAFile(
 
             if (bytesWritten != sizeof(TGA_EXTENSION))
                 return E_FAIL;
+#else
+            extOffset = static_cast<uint32_t>(outFile.tellp());
+
+            outFile.write(reinterpret_cast<char*>(&ext), sizeof(TGA_EXTENSION));
+            if (!outFile)
+                return E_FAIL;
+#endif
         }
 
         // Write TGA 2.0 footer
@@ -2151,16 +2332,24 @@ HRESULT DirectX::SaveToTGAFile(
         footer.dwExtensionOffset = extOffset;
         memcpy(footer.Signature, g_Signature, sizeof(g_Signature));
 
-        if (!WriteFile(hFile.get(), &footer, sizeof(footer), &bytesWritten, nullptr))
+#ifdef WIN32
+        if (!WriteFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesWritten, nullptr))
         {
             return HRESULT_FROM_WIN32(GetLastError());
         }
 
         if (bytesWritten != sizeof(footer))
             return E_FAIL;
+#else
+        outFile.write(reinterpret_cast<char*>(&footer), sizeof(TGA_FOOTER));
+        if (!outFile)
+            return E_FAIL;
+#endif
     }
 
+#ifdef WIN32
     delonfail.clear();
+#endif
 
     return S_OK;
 }

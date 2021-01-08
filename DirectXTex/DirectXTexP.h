@@ -70,6 +70,7 @@
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #endif
 
+#if defined(WIN32) || defined(WINAPI_FAMILY)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -104,25 +105,45 @@
 #else
 #include <d3d11_1.h>
 #endif
-
-#define _XM_NO_XMVECTOR_OVERLOADS_
-
-#include "DirectXTex.h"
+#else // !WIN32
+#include <wsl/winadapter.h>
+#include <wsl/wrladapter.h>
+#include <directx/d3d12.h>
+#endif
 
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <ctime>
 #include <cstring>
+#include <iterator>
 #include <memory>
+
+#ifndef WIN32
+#include <fstream>
+#include <filesystem>
+#include <thread>
+#endif
+
+#define _XM_NO_XMVECTOR_OVERLOADS_
 
 #include <DirectXPackedVector.h>
 
+#if (DIRECTX_MATH_VERSION < 315)
+#define XM_ALIGNED_DATA(x) __declspec(align(x))
+#endif
+
+#include "DirectXTex.h"
+
 #include <malloc.h>
 
+#ifdef WIN32
 #include <Ole2.h>
 #include <wincodec.h>
 #include <wrl\client.h>
+#else
+using WICPixelFormatGUID = GUID;
+#endif
 
 #include "scoped.h"
 
@@ -142,10 +163,34 @@
 
 #define XBOX_DXGI_FORMAT_R4G4_UNORM DXGI_FORMAT(190)
 
+// HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW)
+#define HRESULT_E_ARITHMETIC_OVERFLOW static_cast<HRESULT>(0x80070216L)
+
+// HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED)
+#define HRESULT_E_NOT_SUPPORTED static_cast<HRESULT>(0x80070032L)
+
+// HRESULT_FROM_WIN32(ERROR_HANDLE_EOF)
+#define HRESULT_E_HANDLE_EOF static_cast<HRESULT>(0x80070026L)
+
+// HRESULT_FROM_WIN32(ERROR_INVALID_DATA)
+#define HRESULT_E_INVALID_DATA static_cast<HRESULT>(0x8007000DL)
+
+// HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE)
+#define HRESULT_E_FILE_TOO_LARGE static_cast<HRESULT>(0x800700DFL)
+
+// HRESULT_FROM_WIN32(ERROR_CANNOT_MAKE)
+#define HRESULT_E_CANNOT_MAKE static_cast<HRESULT>(0x80070052L)
+
+// HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)
+#ifndef E_NOT_SUFFICIENT_BUFFER
+#define E_NOT_SUFFICIENT_BUFFER static_cast<HRESULT>(0x8007007AL)
+#endif
+
 namespace DirectX
 {
     //---------------------------------------------------------------------------------
     // WIC helper functions
+#ifdef WIN32
     DXGI_FORMAT __cdecl _WICToDXGI(_In_ const GUID& guid) noexcept;
     bool __cdecl _DXGIToWIC(_In_ DXGI_FORMAT format, _Out_ GUID& guid, _In_ bool ignoreRGBvsBGR = false) noexcept;
 
@@ -230,7 +275,7 @@ namespace DirectX
             return WICBitmapInterpolationModeFant;
         }
     }
-
+#endif // WIN32
 
     //---------------------------------------------------------------------------------
     // Image helper functions

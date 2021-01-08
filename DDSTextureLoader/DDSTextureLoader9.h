@@ -21,6 +21,7 @@
 
 #include <d3d9.h>
 
+#include <cstddef>
 #include <cstdint>
 
 
