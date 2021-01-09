@@ -19,7 +19,7 @@
 #define NOHELP
 #pragma warning(pop)
 
-#include <shlobj.h>
+#include <ShlObj.h>
 
 #include <algorithm>
 #include <cassert>
@@ -3117,7 +3117,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     continue;
                 }
 
-                int err = SHCreateDirectoryExW(nullptr, szPath, nullptr);
+                auto err = static_cast<DWORD>(SHCreateDirectoryExW(nullptr, szPath, nullptr));
                 if (err != ERROR_SUCCESS && err != ERROR_ALREADY_EXISTS)
                 {
                     wprintf(L" directory creation FAILED (%x)\n", static_cast<unsigned int>(HRESULT_FROM_WIN32(err)));
@@ -3126,7 +3126,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             if (*szPrefix)
-                wcscpy_s(szDest, szPrefix);
+                wcscat_s(szDest, szPrefix);
 
             pchSlash = wcsrchr(pConv->szSrc, L'\\');
             if (pchSlash)
