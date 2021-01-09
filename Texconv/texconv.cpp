@@ -847,7 +847,7 @@ namespace
         wprintf(L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n");
         wprintf(L"   -inverty            Invert Y (i.e. green) channel values\n");
         wprintf(L"   -reconstructz       Rebuild Z (blue) channel assuming X/Y are normals\n");
-        wprintf(L"   -swizzle <rgba>     Swizzle image channels\n");
+        wprintf(L"   -swizzle <rgba>     Swizzle image channels using HLSL-style mask\n");
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -1065,36 +1065,46 @@ namespace
         if (!mask || !swizzleElements)
             return false;
 
+        if (!mask[0])
+            return false;
+
         for (size_t j = 0; j < 4; ++j)
         {
+            if (!mask[j])
+                break;
+
             switch (mask[j])
             {
             case L'R':
             case L'X':
             case L'r':
             case L'x':
-                swizzleElements[j] = 0;
+                for (size_t k = j; k < 4; ++k)
+                    swizzleElements[k] = 0;
                 break;
 
             case L'G':
             case L'Y':
             case L'g':
             case L'y':
-                swizzleElements[j] = 1;
+                for (size_t k = j; k < 4; ++k)
+                    swizzleElements[k] = 1;
                 break;
 
             case L'B':
             case L'Z':
             case L'b':
             case L'z':
-                swizzleElements[j] = 2;
+                for (size_t k = j; k < 4; ++k)
+                    swizzleElements[k] = 2;
                 break;
 
             case L'A':
             case L'W':
             case L'a':
             case L'w':
-                swizzleElements[j] = 3;
+                for (size_t k = j; k < 4; ++k)
+                    swizzleElements[k] = 3;
                 break;
 
             default:
@@ -1138,8 +1148,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float paperWhiteNits = 200.f;
     float preserveAlphaCoverageRef = 0.0f;
     bool keepRecursiveDirs = false;
-    bool swizzle = false;
-    uint32_t swizzleElements[4] = {};
+    uint32_t swizzleElements[4] = { 0, 1, 2, 3 };
 
     wchar_t szPrefix[MAX_PATH] = {};
     wchar_t szSuffix[MAX_PATH] = {};
@@ -1685,7 +1694,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_SWIZZLE:
-                if (wcslen(pValue) != 4)
+                if (!*pValue || wcslen(pValue) > 4)
                 {
                     wprintf(L"Invalid value specified with -swizzle (%ls)\n\n", pValue);
                     PrintUsage();
@@ -1693,12 +1702,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else if (!ParseSwizzleMask(pValue, swizzleElements))
                 {
-                    wprintf(L"-swizzle requires a 4 character mask composed of these letters: r, g, b, a, x, y, w, z\n");
+                    wprintf(L"-swizzle requires a 1 to 4 character mask composed of these letters: r, g, b, a, x, y, w, z\n");
                     return 1;
-                }
-                else
-                {
-                    swizzle = true;
                 }
                 break;
             }
@@ -2212,7 +2217,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Swizzle (if requested) --------------------------------------------------
-        if (swizzle)
+        if (swizzleElements[0] != 0 || swizzleElements[1] != 1 || swizzleElements[2] != 2 || swizzleElements[3] != 3)
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
