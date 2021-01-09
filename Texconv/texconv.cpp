@@ -3103,7 +3103,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             // Figure out dest filename
             wchar_t *pchSlash, *pchDot;
 
-            wchar_t szDest[4096] = {};
+            wchar_t szDest[1024] = {};
             wcscpy_s(szDest, szOutputDir);
 
             if (keepRecursiveDirs && *pConv->szFolder)
