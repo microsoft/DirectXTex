@@ -6,6 +6,13 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### January 9, 2021
+* Windows Subsystem for Linux support
+* Code review for improved conformance
+* CMake updated to support package install
+* texassemble: Merge command now supports ``-swizzle`` option
+* texconv: Updated with ``-r:keep`` and ``-swizzle`` options
+
 ### November 11, 2020
 * Use ``SHCreateMemStream`` instead of ``CreateStreamOnHGlobal`` for Win32 on Windows 8.x or Windows 10
 * Updated D3DX12 internal copy with latest change from GitHub

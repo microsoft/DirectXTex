@@ -119,6 +119,7 @@ namespace
         OPT_ROTATE_COLOR,
         OPT_PAPER_WHITE_NITS,
         OPT_BCNONMULT4FIX,
+        OPT_SWIZZLE,
         OPT_MAX
     };
 
@@ -204,6 +205,7 @@ namespace
         { L"rotatecolor",   OPT_ROTATE_COLOR },
         { L"nits",          OPT_PAPER_WHITE_NITS },
         { L"fixbc4x4",      OPT_BCNONMULT4FIX },
+        { L"swizzle",       OPT_SWIZZLE },
         { nullptr,          0 }
     };
 
@@ -845,6 +847,7 @@ namespace
         wprintf(L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n");
         wprintf(L"   -inverty            Invert Y (i.e. green) channel values\n");
         wprintf(L"   -reconstructz       Rebuild Z (blue) channel assuming X/Y are normals\n");
+        wprintf(L"   -swizzle <rgba>     Swizzle image channels using HLSL-style mask\n");
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -1056,6 +1059,61 @@ namespace
         float normalizedLinear = pow(std::max(pow(abs(ST2084), 1.0f / 78.84375f) - 0.8359375f, 0.0f) / (18.8515625f - 18.6875f * pow(abs(ST2084), 1.0f / 78.84375f)), 1.0f / 0.1593017578f);
         return normalizedLinear;
     }
+
+    bool ParseSwizzleMask(_In_reads_(4) const wchar_t* mask, _Out_writes_(4) uint32_t* swizzleElements)
+    {
+        if (!mask || !swizzleElements)
+            return false;
+
+        if (!mask[0])
+            return false;
+
+        for (size_t j = 0; j < 4; ++j)
+        {
+            if (!mask[j])
+                break;
+
+            switch (mask[j])
+            {
+            case L'R':
+            case L'X':
+            case L'r':
+            case L'x':
+                for (size_t k = j; k < 4; ++k)
+                    swizzleElements[k] = 0;
+                break;
+
+            case L'G':
+            case L'Y':
+            case L'g':
+            case L'y':
+                for (size_t k = j; k < 4; ++k)
+                    swizzleElements[k] = 1;
+                break;
+
+            case L'B':
+            case L'Z':
+            case L'b':
+            case L'z':
+                for (size_t k = j; k < 4; ++k)
+                    swizzleElements[k] = 2;
+                break;
+
+            case L'A':
+            case L'W':
+            case L'a':
+            case L'w':
+                for (size_t k = j; k < 4; ++k)
+                    swizzleElements[k] = 3;
+                break;
+
+            default:
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 //--------------------------------------------------------------------------------------
@@ -1090,6 +1148,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float paperWhiteNits = 200.f;
     float preserveAlphaCoverageRef = 0.0f;
     bool keepRecursiveDirs = false;
+    uint32_t swizzleElements[4] = { 0, 1, 2, 3 };
 
     wchar_t szPrefix[MAX_PATH] = {};
     wchar_t szSuffix[MAX_PATH] = {};
@@ -1156,6 +1215,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_ROTATE_COLOR:
             case OPT_PAPER_WHITE_NITS:
             case OPT_PRESERVE_ALPHA_COVERAGE:
+            case OPT_SWIZZLE:
                 // These support either "-arg:value" or "-arg value"
                 if (!*pValue)
                 {
@@ -1348,7 +1408,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 else
                 {
                     wprintf(L"Invalid value specified for -nmap (%ls), missing l, r, g, b, or a\n\n", pValue);
-                    PrintUsage();
                     return 1;
                 }
 
@@ -1396,7 +1455,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 else if (nmapAmplitude < 0.f)
                 {
                     wprintf(L"Normal map amplitude must be positive (%ls)\n\n", pValue);
-                    PrintUsage();
                     return 1;
                 }
                 break;
@@ -1410,7 +1468,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else if (adapter < 0)
                 {
-                    wprintf(L"Adapter index (%ls)\n\n", pValue);
+                    wprintf(L"Invalid adapter index (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
@@ -1498,7 +1556,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (!found)
                 {
                     wprintf(L"Invalid value specified for -bc (%ls), missing d, u, q, or x\n\n", pValue);
-                    PrintUsage();
                     return 1;
                 }
             }
@@ -1632,6 +1689,20 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 else if (preserveAlphaCoverageRef < 0.0f || preserveAlphaCoverageRef > 1.0f)
                 {
                     wprintf(L"-keepcoverage (%ls) parameter must be between 0.0 and 1.0\n\n", pValue);
+                    return 1;
+                }
+                break;
+
+            case OPT_SWIZZLE:
+                if (!*pValue || wcslen(pValue) > 4)
+                {
+                    wprintf(L"Invalid value specified with -swizzle (%ls)\n\n", pValue);
+                    PrintUsage();
+                    return 1;
+                }
+                else if (!ParseSwizzleMask(pValue, swizzleElements))
+                {
+                    wprintf(L"-swizzle requires a 1 to 4 character mask composed of these letters: r, g, b, a, x, y, w, z\n");
                     return 1;
                 }
                 break;
@@ -2137,6 +2208,50 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             assert(info.depth == tinfo.depth);
             assert(info.arraySize == tinfo.arraySize);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.format == tinfo.format);
+            assert(info.dimension == tinfo.dimension);
+
+            image.swap(timage);
+            cimage.reset();
+        }
+
+        // --- Swizzle (if requested) --------------------------------------------------
+        if (swizzleElements[0] != 0 || swizzleElements[1] != 1 || swizzleElements[2] != 2 || swizzleElements[3] != 3)
+        {
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
+            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+                {
+                    UNREFERENCED_PARAMETER(y);
+
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        outPixels[j] = XMVectorSwizzle(inPixels[j],
+                            swizzleElements[0], swizzleElements[1], swizzleElements[2], swizzleElements[3]);
+                    }
+                }, *timage);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [swizzle] (%x)\n", static_cast<unsigned int>(hr));
+                return 1;
+            }
+
+#ifndef NDEBUG
+            auto& tinfo = timage->GetMetadata();
+#endif
+
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
             assert(info.miscFlags == tinfo.miscFlags);
             assert(info.format == tinfo.format);
             assert(info.dimension == tinfo.dimension);
