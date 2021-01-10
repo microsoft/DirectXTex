@@ -119,7 +119,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<INSTALL_INTERFACE:include>)
 
 if(ENABLE_OPENEXR_SUPPORT)
-  find_package(openexr REQUIRED)
+  find_package(OpenEXR REQUIRED)
   target_include_directories(${PROJECT_NAME} PRIVATE ${OPENEXR_INCLUDE_DIRS}/OpenEXR)
 endif()
 
