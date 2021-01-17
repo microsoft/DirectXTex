@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
+#include <new>
 
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wcovered-switch-default"

@@ -22,6 +22,7 @@
 #include <cassert>
 #include <cstring>
 #include <memory>
+#include <new>
 
 #include <wrl/client.h>
 

@@ -29,8 +29,9 @@
 #include <cwchar>
 #include <fstream>
 #include <iterator>
-#include <memory>
 #include <list>
+#include <memory>
+#include <new>
 #include <string>
 
 #include <wrl\client.h>

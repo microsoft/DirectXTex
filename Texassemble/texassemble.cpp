@@ -28,6 +28,7 @@
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <new>
 #include <list>
 #include <utility>
 #include <vector>

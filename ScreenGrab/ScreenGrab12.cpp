@@ -28,6 +28,7 @@
 #include <cstddef>
 #include <cstring>
 #include <memory>
+#include <new>
 
 #ifdef WIN32
 #include <wincodec.h>

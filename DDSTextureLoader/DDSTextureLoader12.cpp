@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
+#include <new>
 
 #ifndef WIN32
 #include <fstream>
