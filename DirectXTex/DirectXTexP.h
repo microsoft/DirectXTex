@@ -118,6 +118,7 @@
 #include <cstring>
 #include <iterator>
 #include <memory>
+#include <new>
 
 #ifndef WIN32
 #include <fstream>

@@ -28,8 +28,9 @@
 #include <cwchar>
 #include <fstream>
 #include <iterator>
-#include <memory>
 #include <list>
+#include <memory>
+#include <new>
 #include <vector>
 
 #include <dxgiformat.h>
