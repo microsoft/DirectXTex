@@ -209,9 +209,9 @@ if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
   endif()
 
   if (VCPKG_TOOLCHAIN)
-    target_link_libraries(texassemble Microsoft::DirectX-Headers Microsoft::DirectXMath)
-    target_link_libraries(texconv Microsoft::DirectX-Headers Microsoft::DirectXMath)
-    target_link_libraries(texdiag Microsoft::DirectX-Headers Microsoft::DirectXMath)
+    target_link_libraries(texassemble Microsoft::DirectXMath)
+    target_link_libraries(texconv Microsoft::DirectXMath)
+    target_link_libraries(texdiag Microsoft::DirectXMath)
   endif()
 endif()
 
