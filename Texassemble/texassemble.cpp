@@ -1287,7 +1287,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     if (FAILED(hr))
                     {
                         wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
-                        continue;
+                        return 1;
                     }
                 }
 #endif
@@ -1334,7 +1334,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [converttosingleplane] (%x)\n", static_cast<unsigned int>(hr));
-                    continue;
+                    return 1;
                 }
 
                 auto& tinfo = timage->GetMetadata();
@@ -1370,7 +1370,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [decompress] (%x)\n", static_cast<unsigned int>(hr));
-                    continue;
+                    return 1;
                 }
 
                 auto& tinfo = timage->GetMetadata();
@@ -1418,7 +1418,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     if (FAILED(hr))
                     {
                         wprintf(L" FAILED [demultiply alpha] (%x)\n", static_cast<unsigned int>(hr));
-                        continue;
+                        return 1;
                     }
 
                     auto& tinfo = timage->GetMetadata();

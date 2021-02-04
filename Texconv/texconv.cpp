@@ -1777,6 +1777,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     bool preserveAlphaCoverage = false;
     ComPtr<ID3D11Device> pDevice;
 
+    int retVal = 0;
+
     for (auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv)
     {
         if (pConv != conversion.begin())
@@ -1813,6 +1815,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                retVal = 1;
                 continue;
             }
 
@@ -1830,6 +1833,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (IsTypeless(info.format))
                 {
                     wprintf(L" FAILED due to Typeless format %d\n", info.format);
+                    retVal = 1;
                     continue;
                 }
 
@@ -1842,6 +1846,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                retVal = 1;
                 continue;
             }
         }
@@ -1851,6 +1856,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                retVal = 1;
                 continue;
             }
         }
@@ -1860,6 +1866,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                retVal = 1;
                 continue;
             }
         }
@@ -1869,6 +1876,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                retVal = 1;
                 continue;
             }
         }
@@ -1878,6 +1886,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                retVal = 1;
                 continue;
             }
         }
@@ -1888,6 +1897,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                retVal = 1;
                 continue;
             }
         }
@@ -1910,6 +1920,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                retVal = 1;
                 continue;
             }
         }
@@ -1940,6 +1951,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED [converttosingleplane] (%x)\n", static_cast<unsigned int>(hr));
+                retVal = 1;
                 continue;
             }
 
@@ -2041,6 +2053,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED [decompress] (%x)\n", static_cast<unsigned int>(hr));
+                retVal = 1;
                 continue;
             }
 
@@ -2098,6 +2111,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [demultiply alpha] (%x)\n", static_cast<unsigned int>(hr));
+                    retVal = 1;
                     continue;
                 }
 
@@ -3042,6 +3056,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [premultiply alpha] (%x)\n", static_cast<unsigned int>(hr));
+                    retVal = 1;
                     continue;
                 }
 
@@ -3159,6 +3174,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [compress] (%x)\n", static_cast<unsigned int>(hr));
+                    retVal = 1;
                     continue;
                 }
 
@@ -3230,6 +3246,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (!GetFullPathNameW(szDest, MAX_PATH, szPath, nullptr))
                 {
                     wprintf(L" get full path FAILED (%x)\n", static_cast<unsigned int>(HRESULT_FROM_WIN32(GetLastError())));
+                    retVal = 1;
                     continue;
                 }
 
@@ -3237,6 +3254,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (err != ERROR_SUCCESS && err != ERROR_ALREADY_EXISTS)
                 {
                     wprintf(L" directory creation FAILED (%x)\n", static_cast<unsigned int>(HRESULT_FROM_WIN32(err)));
+                    retVal = 1;
                     continue;
                 }
             }
@@ -3267,6 +3285,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (wcslen(szDest) > _MAX_PATH)
             {
                 wprintf(L"\nERROR: Output filename exceeds max-path, skipping!\n");
+                retVal = 1;
                 continue;
             }
 
@@ -3279,6 +3298,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (GetFileAttributesW(szDest) != INVALID_FILE_ATTRIBUTES)
                 {
                     wprintf(L"\nERROR: Output file already exists, use -y to overwrite:\n");
+                    retVal = 1;
                     continue;
                 }
             }
@@ -3396,6 +3416,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                retVal = 1;
                 continue;
             }
             wprintf(L"\n");
@@ -3426,5 +3447,5 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
     }
 
-    return 0;
+    return retVal;
 }

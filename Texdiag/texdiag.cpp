@@ -3898,7 +3898,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     if (FAILED(hr))
                     {
                         wprintf(L" FAILED [converttosingleplane] (%x)\n", static_cast<unsigned int>(hr));
-                        continue;
+                        return 1;
                     }
 
                     auto& tinfo = timage->GetMetadata();
