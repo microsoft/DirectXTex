@@ -2792,6 +2792,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
+            bool isunorm = (FormatDataType(info.format) == FORMAT_TYPE_UNORM) != 0;
+
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                 [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
             {
@@ -2803,7 +2805,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     XMVECTOR value = inPixels[j];
 
-                    XMVECTOR z = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(value, value)));
+                    XMVECTOR z;
+                    if (isunorm)
+                    {
+                        XMVECTOR x2 = XMVectorMultiplyAdd(value, g_XMTwo, g_XMNegativeOne);
+                        x2 = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(x2, x2)));
+                        z = XMVectorMultiplyAdd(x2, g_XMOneHalf, g_XMOneHalf);
+                    }
+                    else
+                    {
+                        z = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(value, value)));
+                    }
 
                     outPixels[j] = XMVectorSelect(value, z, s_selectz);
                 }
