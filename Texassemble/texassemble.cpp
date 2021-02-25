@@ -675,9 +675,13 @@ namespace
     }
 
 
-    bool ParseSwizzleMask(_In_reads_(4) const wchar_t* mask, _Out_writes_(4) uint32_t* permuteElements)
+    bool ParseSwizzleMask(
+        _In_reads_(4) const wchar_t* mask,
+        _Out_writes_(4) uint32_t* permuteElements,
+        _Out_writes_(4) uint32_t* zeroElements,
+        _Out_writes_(4) uint32_t* oneElements)
     {
-        if (!mask || !permuteElements)
+        if (!mask || !permuteElements || !zeroElements || !oneElements)
             return false;
 
         if (!mask[0])
@@ -693,49 +697,99 @@ namespace
             case L'r':
             case L'x':
                 for (size_t k = j; k < 4; ++k)
+                {
                     permuteElements[k] = 0;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
                 break;
 
             case L'R':
             case L'X':
                 for (size_t k = j; k < 4; ++k)
+                {
                     permuteElements[k] = 4;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
                 break;
 
             case L'g':
             case L'y':
                 for (size_t k = j; k < 4; ++k)
+                {
                     permuteElements[k] = 1;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
                 break;
 
             case L'G':
             case L'Y':
                 for (size_t k = j; k < 4; ++k)
+                {
                     permuteElements[k] = 5;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
                 break;
 
             case L'b':
             case L'z':
                 for (size_t k = j; k < 4; ++k)
+                {
                     permuteElements[k] = 2;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
                 break;
 
             case L'B':
             case L'Z':
                 for (size_t k = j; k < 4; ++k)
+                {
                     permuteElements[k] = 6;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
                 break;
 
             case L'a':
             case L'w':
                 for (size_t k = j; k < 4; ++k)
+                {
                     permuteElements[k] = 3;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
                 break;
 
             case L'A':
             case L'W':
                 for (size_t k = j; k < 4; ++k)
+                {
                     permuteElements[k] = 7;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
+                break;
+
+            case L'0':
+                for (uint32_t k = j; k < 4; ++k)
+                {
+                    permuteElements[k] = k;
+                    zeroElements[k] = 1;
+                    oneElements[k] = 0;
+                }
+                break;
+
+            case L'1':
+                for (uint32_t k = j; k < 4; ++k)
+                {
+                    permuteElements[k] = k;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 1;
+                }
                 break;
 
             default:
@@ -772,6 +826,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     // DXTex's Open Alpha onto Surface always loaded alpha from the blue channel
     uint32_t permuteElements[4] = { 0, 1, 2, 6 };
+    uint32_t zeroElements[4] = {};
+    uint32_t oneElements[4] = {};
 
     wchar_t szOutputFile[MAX_PATH] = {};
 
@@ -1051,9 +1107,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     PrintUsage();
                     return 1;
                 }
-                else if (!ParseSwizzleMask(pValue, permuteElements))
+                else if (!ParseSwizzleMask(pValue, permuteElements, zeroElements, oneElements))
                 {
-                    wprintf(L"-swizzle requires a 1 to 4 character mask composed of these letters: r, g, b, a, x, y, w, z.\n    Lowercase letters are from the first image, upper-case letters are from the second image.\n");
+                    wprintf(L"-swizzle requires a 1 to 4 character mask composed of these letters: r, g, b, a, x, y, w, z, 0, 1.\n    Lowercase letters are from the first image, upper-case letters are from the second image.\n");
                     return 1;
                 }
                 break;
@@ -1803,14 +1859,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         // Merge with our first source image
         const Image& rgb = *loadedImages[0]->GetImage(0, 0, 0);
 
+        XMVECTOR zc = XMVectorSelectControl(zeroElements[0], zeroElements[1], zeroElements[2], zeroElements[3]);
+        XMVECTOR oc = XMVectorSelectControl(oneElements[0], oneElements[1], oneElements[2], oneElements[3]);
+
         ScratchImage result;
-        hr = TransformImage(rgb, [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+        hr = TransformImage(rgb, [&, zc, oc](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
             {
                 const XMVECTOR *inPixels2 = reinterpret_cast<XMVECTOR*>(img.pixels + img.rowPitch * y);
 
                 for (size_t j = 0; j < w; ++j)
                 {
-                    outPixels[j] = XMVectorPermute(inPixels[j], inPixels2[j],
+                    XMVECTOR pixel1 = XMVectorSelect(inPixels[j], g_XMZero, zc);
+                    pixel1 = XMVectorSelect(pixel1, g_XMOne, oc);
+                    outPixels[j] = XMVectorPermute(pixel1, inPixels2[j],
                         permuteElements[0], permuteElements[1], permuteElements[2], permuteElements[3]);
                 }
             }, result);

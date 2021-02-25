@@ -1061,15 +1061,19 @@ namespace
         return normalizedLinear;
     }
 
-    bool ParseSwizzleMask(_In_reads_(4) const wchar_t* mask, _Out_writes_(4) uint32_t* swizzleElements)
+    bool ParseSwizzleMask(
+        _In_reads_(4) const wchar_t* mask,
+        _Out_writes_(4) uint32_t* swizzleElements,
+        _Out_writes_(4) uint32_t* zeroElements,
+        _Out_writes_(4) uint32_t* oneElements)
     {
-        if (!mask || !swizzleElements)
+        if (!mask || !swizzleElements || !zeroElements || !oneElements)
             return false;
 
         if (!mask[0])
             return false;
 
-        for (size_t j = 0; j < 4; ++j)
+        for (uint32_t j = 0; j < 4; ++j)
         {
             if (!mask[j])
                 break;
@@ -1080,24 +1084,36 @@ namespace
             case L'X':
             case L'r':
             case L'x':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
+                {
                     swizzleElements[k] = 0;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
                 break;
 
             case L'G':
             case L'Y':
             case L'g':
             case L'y':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
+                {
                     swizzleElements[k] = 1;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
                 break;
 
             case L'B':
             case L'Z':
             case L'b':
             case L'z':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
+                {
                     swizzleElements[k] = 2;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
                 break;
 
             case L'A':
@@ -1105,7 +1121,29 @@ namespace
             case L'a':
             case L'w':
                 for (size_t k = j; k < 4; ++k)
+                {
                     swizzleElements[k] = 3;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
+                break;
+
+            case L'0':
+                for (uint32_t k = j; k < 4; ++k)
+                {
+                    swizzleElements[k] = k;
+                    zeroElements[k] = 1;
+                    oneElements[k] = 0;
+                }
+                break;
+
+            case L'1':
+                for (uint32_t k = j; k < 4; ++k)
+                {
+                    swizzleElements[k] = k;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 1;
+                }
                 break;
 
             default:
@@ -1150,6 +1188,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float preserveAlphaCoverageRef = 0.0f;
     bool keepRecursiveDirs = false;
     uint32_t swizzleElements[4] = { 0, 1, 2, 3 };
+    uint32_t zeroElements[4] = {};
+    uint32_t oneElements[4] = {};
 
     wchar_t szPrefix[MAX_PATH] = {};
     wchar_t szSuffix[MAX_PATH] = {};
@@ -1701,9 +1741,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     PrintUsage();
                     return 1;
                 }
-                else if (!ParseSwizzleMask(pValue, swizzleElements))
+                else if (!ParseSwizzleMask(pValue, swizzleElements, zeroElements, oneElements))
                 {
-                    wprintf(L"-swizzle requires a 1 to 4 character mask composed of these letters: r, g, b, a, x, y, w, z\n");
+                    wprintf(L"-swizzle requires a 1 to 4 character mask composed of these letters: r, g, b, a, x, y, w, z, 0, 1\n");
                     return 1;
                 }
                 break;
@@ -2232,7 +2272,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Swizzle (if requested) --------------------------------------------------
-        if (swizzleElements[0] != 0 || swizzleElements[1] != 1 || swizzleElements[2] != 2 || swizzleElements[3] != 3)
+        if (swizzleElements[0] != 0 || swizzleElements[1] != 1 || swizzleElements[2] != 2 || swizzleElements[3] != 3
+            || zeroElements[0] != 0 || zeroElements[1] != 0 || zeroElements[2] != 0 || zeroElements[3] != 0
+            || oneElements[0] != 0 || oneElements[1] != 0 || oneElements[2] != 0 || oneElements[3] != 0)
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -2241,14 +2283,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
+            XMVECTOR zc = XMVectorSelectControl(zeroElements[0], zeroElements[1], zeroElements[2], zeroElements[3]);
+            XMVECTOR oc = XMVectorSelectControl(oneElements[0], oneElements[1], oneElements[2], oneElements[3]);
+
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+                [&, zc, oc](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                 {
                     UNREFERENCED_PARAMETER(y);
 
                     for (size_t j = 0; j < w; ++j)
                     {
-                        outPixels[j] = XMVectorSwizzle(inPixels[j],
+                        XMVECTOR pixel = XMVectorSelect(inPixels[j], g_XMZero, zc);
+                        pixel = XMVectorSelect(pixel, g_XMOne, oc);
+                        outPixels[j] = XMVectorSwizzle(pixel,
                             swizzleElements[0], swizzleElements[1], swizzleElements[2], swizzleElements[3]);
                     }
                 }, *timage);
@@ -2792,6 +2839,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
+            bool isunorm = (FormatDataType(info.format) == FORMAT_TYPE_UNORM) != 0;
+
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                 [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
             {
@@ -2803,7 +2852,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     XMVECTOR value = inPixels[j];
 
-                    XMVECTOR z = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(value, value)));
+                    XMVECTOR z;
+                    if (isunorm)
+                    {
+                        XMVECTOR x2 = XMVectorMultiplyAdd(value, g_XMTwo, g_XMNegativeOne);
+                        x2 = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(x2, x2)));
+                        z = XMVectorMultiplyAdd(x2, g_XMOneHalf, g_XMOneHalf);
+                    }
+                    else
+                    {
+                        z = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(value, value)));
+                    }
 
                     outPixels[j] = XMVectorSelect(value, z, s_selectz);
                 }
