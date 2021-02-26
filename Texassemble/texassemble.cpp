@@ -687,7 +687,7 @@ namespace
         if (!mask[0])
             return false;
 
-        for (size_t j = 0; j < 4; ++j)
+        for (uint32_t j = 0; j < 4; ++j)
         {
             if (!mask[j])
                 break;
@@ -696,7 +696,7 @@ namespace
             {
             case L'r':
             case L'x':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 0;
                     zeroElements[k] = 0;
@@ -706,7 +706,7 @@ namespace
 
             case L'R':
             case L'X':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 4;
                     zeroElements[k] = 0;
@@ -716,7 +716,7 @@ namespace
 
             case L'g':
             case L'y':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 1;
                     zeroElements[k] = 0;
@@ -726,7 +726,7 @@ namespace
 
             case L'G':
             case L'Y':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 5;
                     zeroElements[k] = 0;
@@ -736,7 +736,7 @@ namespace
 
             case L'b':
             case L'z':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 2;
                     zeroElements[k] = 0;
@@ -746,7 +746,7 @@ namespace
 
             case L'B':
             case L'Z':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 6;
                     zeroElements[k] = 0;
@@ -756,7 +756,7 @@ namespace
 
             case L'a':
             case L'w':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 3;
                     zeroElements[k] = 0;
@@ -766,7 +766,7 @@ namespace
 
             case L'A':
             case L'W':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 7;
                     zeroElements[k] = 0;
