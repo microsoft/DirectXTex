@@ -3,7 +3,7 @@
 //  
 // Block-compression (BC) functionality for BC6H and BC7 (DirectX 11 texture compression)
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926
