@@ -2961,7 +2961,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             image.swap(timage);
-            info.mipLevels = image->GetMetadata().mipLevels;
+            info.mipLevels = 1;
 
             if (cimage && (tMips == 1))
             {

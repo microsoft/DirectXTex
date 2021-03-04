@@ -98,6 +98,7 @@ namespace
         OPT_TONEMAP,
         OPT_GIF_BGCOLOR,
         OPT_SWIZZLE,
+        OPT_STRIP_MIPS,
         OPT_MAX
     };
 
@@ -159,6 +160,7 @@ namespace
         { L"tonemap",   OPT_TONEMAP },
         { L"bgcolor",   OPT_GIF_BGCOLOR },
         { L"swizzle",   OPT_SWIZZLE },
+        { L"stripmips", OPT_STRIP_MIPS },
         { nullptr,      0 }
     };
 
@@ -637,6 +639,8 @@ namespace
         wprintf(L"   -bgcolor            Use background color instead of transparency\n");
         wprintf(L"\n                       (merge only)\n");
         wprintf(L"   -swizzle <rgba>     Select channels for merge (defaults to rgbB)\n");
+        wprintf(L"\n                       (cube, volume, array, cubearray only)\n");
+        wprintf(L"   -stripmips          Use only base image from input dds files\n");
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -1114,6 +1118,21 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 break;
 
+            case OPT_STRIP_MIPS:
+                switch (dwCommand)
+                {
+                case CMD_CUBE:
+                case CMD_VOLUME:
+                case CMD_ARRAY:
+                case CMD_CUBEARRAY:
+                    break;
+
+                default:
+                    wprintf(L"-stripmips only applies to cube, volume, array, cubearray commands\n");
+                    return 1;
+                }
+                break;
+
             default:
                 break;
             }
@@ -1310,11 +1329,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         return 1;
                     }
 
-                    if (info.mipLevels > 1
-                        || info.IsVolumemap()
-                        || info.IsCubemap())
+                    if (info.IsVolumemap() || info.IsCubemap())
                     {
                         wprintf(L"\nERROR: Can't assemble complex surfaces\n");
+                        return 1;
+                    }
+                    else if ((info.mipLevels > 1) && ((dwOptions & (1 << OPT_STRIP_MIPS)) == 0))
+                    {
+                        wprintf(L"\nERROR: Can't assemble using input mips. To ignore mips, try again with -stripmips\n");
                         return 1;
                     }
                 }
@@ -1442,6 +1464,56 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 assert(info.dimension == tinfo.dimension);
 
                 image.swap(timage);
+            }
+
+            // --- Strip Mips (if requested) -----------------------------------------------
+            if ((info.mipLevels > 1) && (dwOptions & (1 << OPT_STRIP_MIPS)))
+            {
+                std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                if (!timage)
+                {
+                    wprintf(L"\nERROR: Memory allocation failed\n");
+                    return 1;
+                }
+
+                TexMetadata mdata = info;
+                mdata.mipLevels = 1;
+                hr = timage->Initialize(mdata);
+                if (FAILED(hr))
+                {
+                    wprintf(L" FAILED [copy to single level] (%x)\n", static_cast<unsigned int>(hr));
+                    return 1;
+                }
+
+                if (info.dimension == TEX_DIMENSION_TEXTURE3D)
+                {
+                    for (size_t d = 0; d < info.depth; ++d)
+                    {
+                        hr = CopyRectangle(*image->GetImage(0, 0, d), Rect(0, 0, info.width, info.height),
+                            *timage->GetImage(0, 0, d), TEX_FILTER_DEFAULT, 0, 0);
+                        if (FAILED(hr))
+                        {
+                            wprintf(L" FAILED [copy to single level] (%x)\n", static_cast<unsigned int>(hr));
+                            return 1;
+                        }
+                    }
+                }
+                else
+                {
+                    for (size_t i = 0; i < info.arraySize; ++i)
+                    {
+                        hr = CopyRectangle(*image->GetImage(0, i, 0), Rect(0, 0, info.width, info.height),
+                            *timage->GetImage(0, i, 0), TEX_FILTER_DEFAULT, 0, 0);
+                        if (FAILED(hr))
+                        {
+                            wprintf(L" FAILED [copy to single level] (%x)\n", static_cast<unsigned int>(hr));
+                            return 1;
+                        }
+                    }
+                }
+
+                image.swap(timage);
+                info.mipLevels = 1;
             }
 
             // --- Undo Premultiplied Alpha (if requested) ---------------------------------
