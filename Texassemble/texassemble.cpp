@@ -639,7 +639,7 @@ namespace
         wprintf(L"   -bgcolor            Use background color instead of transparency\n");
         wprintf(L"\n                       (merge only)\n");
         wprintf(L"   -swizzle <rgba>     Select channels for merge (defaults to rgbB)\n");
-        wprintf(L"\n                       (cube, volume, array, cubearray only)\n");
+        wprintf(L"\n                       (cube, volume, array, cubearray, merge only)\n");
         wprintf(L"   -stripmips          Use only base image from input dds files\n");
 
         wprintf(L"\n   <format>: ");
@@ -1125,10 +1125,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 case CMD_VOLUME:
                 case CMD_ARRAY:
                 case CMD_CUBEARRAY:
+                case CMD_MERGE:
                     break;
 
                 default:
-                    wprintf(L"-stripmips only applies to cube, volume, array, cubearray commands\n");
+                    wprintf(L"-stripmips only applies to cube, volume, array, cubearray, or merge commands\n");
                     return 1;
                 }
                 break;
