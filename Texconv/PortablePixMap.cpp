@@ -3,7 +3,7 @@
 //
 // Utilities for reading & writing Portable PixMap files (PPM/PFM)
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926

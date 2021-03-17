@@ -3,7 +3,7 @@
 //
 // Direct3D 11 Compute Shader BC Compressor
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //-------------------------------------------------------------------------------------
 

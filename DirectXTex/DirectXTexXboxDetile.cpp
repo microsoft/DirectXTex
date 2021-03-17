@@ -3,7 +3,7 @@
 //
 // DirectXTex Auxillary functions for converting from Xbox One tiled to linear
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //--------------------------------------------------------------------------------------
 

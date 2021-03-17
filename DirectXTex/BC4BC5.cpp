@@ -3,7 +3,7 @@
 //  
 // Block-compression (BC) functionality for BC4 and BC5 (DirectX 10 texture compression)
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926

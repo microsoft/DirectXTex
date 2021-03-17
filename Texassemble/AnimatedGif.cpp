@@ -7,7 +7,7 @@
 //   https://code.msdn.microsoft.com/windowsapps/Windows-Imaging-Component-65abbc6a/
 //   http://www.imagemagick.org/Usage/anim_basics/#dispose
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926

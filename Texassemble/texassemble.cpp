@@ -3,7 +3,7 @@
 //
 // DirectX Texture assembler for cube maps, volume maps, and arrays
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926
@@ -98,6 +98,7 @@ namespace
         OPT_TONEMAP,
         OPT_GIF_BGCOLOR,
         OPT_SWIZZLE,
+        OPT_STRIP_MIPS,
         OPT_MAX
     };
 
@@ -159,6 +160,7 @@ namespace
         { L"tonemap",   OPT_TONEMAP },
         { L"bgcolor",   OPT_GIF_BGCOLOR },
         { L"swizzle",   OPT_SWIZZLE },
+        { L"stripmips", OPT_STRIP_MIPS },
         { nullptr,      0 }
     };
 
@@ -593,7 +595,7 @@ namespace
         }
 
         wprintf(L"Microsoft (R) DirectX Texture Assembler [DirectXTex] Version %ls\n", version);
-        wprintf(L"Copyright (C) Microsoft Corp. All rights reserved.\n");
+        wprintf(L"Copyright (C) Microsoft Corp.\n");
 #ifdef _DEBUG
         wprintf(L"*** Debug build ***\n");
 #endif
@@ -637,6 +639,8 @@ namespace
         wprintf(L"   -bgcolor            Use background color instead of transparency\n");
         wprintf(L"\n                       (merge only)\n");
         wprintf(L"   -swizzle <rgba>     Select channels for merge (defaults to rgbB)\n");
+        wprintf(L"\n                       (cube, volume, array, cubearray, merge only)\n");
+        wprintf(L"   -stripmips          Use only base image from input dds files\n");
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -687,7 +691,7 @@ namespace
         if (!mask[0])
             return false;
 
-        for (size_t j = 0; j < 4; ++j)
+        for (uint32_t j = 0; j < 4; ++j)
         {
             if (!mask[j])
                 break;
@@ -696,7 +700,7 @@ namespace
             {
             case L'r':
             case L'x':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 0;
                     zeroElements[k] = 0;
@@ -706,7 +710,7 @@ namespace
 
             case L'R':
             case L'X':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 4;
                     zeroElements[k] = 0;
@@ -716,7 +720,7 @@ namespace
 
             case L'g':
             case L'y':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 1;
                     zeroElements[k] = 0;
@@ -726,7 +730,7 @@ namespace
 
             case L'G':
             case L'Y':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 5;
                     zeroElements[k] = 0;
@@ -736,7 +740,7 @@ namespace
 
             case L'b':
             case L'z':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 2;
                     zeroElements[k] = 0;
@@ -746,7 +750,7 @@ namespace
 
             case L'B':
             case L'Z':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 6;
                     zeroElements[k] = 0;
@@ -756,7 +760,7 @@ namespace
 
             case L'a':
             case L'w':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 3;
                     zeroElements[k] = 0;
@@ -766,7 +770,7 @@ namespace
 
             case L'A':
             case L'W':
-                for (size_t k = j; k < 4; ++k)
+                for (uint32_t k = j; k < 4; ++k)
                 {
                     permuteElements[k] = 7;
                     zeroElements[k] = 0;
@@ -1114,6 +1118,22 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 break;
 
+            case OPT_STRIP_MIPS:
+                switch (dwCommand)
+                {
+                case CMD_CUBE:
+                case CMD_VOLUME:
+                case CMD_ARRAY:
+                case CMD_CUBEARRAY:
+                case CMD_MERGE:
+                    break;
+
+                default:
+                    wprintf(L"-stripmips only applies to cube, volume, array, cubearray, or merge commands\n");
+                    return 1;
+                }
+                break;
+
             default:
                 break;
             }
@@ -1310,11 +1330,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         return 1;
                     }
 
-                    if (info.mipLevels > 1
-                        || info.IsVolumemap()
-                        || info.IsCubemap())
+                    if (info.IsVolumemap() || info.IsCubemap())
                     {
                         wprintf(L"\nERROR: Can't assemble complex surfaces\n");
+                        return 1;
+                    }
+                    else if ((info.mipLevels > 1) && ((dwOptions & (1 << OPT_STRIP_MIPS)) == 0))
+                    {
+                        wprintf(L"\nERROR: Can't assemble using input mips. To ignore mips, try again with -stripmips\n");
                         return 1;
                     }
                 }
@@ -1442,6 +1465,56 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 assert(info.dimension == tinfo.dimension);
 
                 image.swap(timage);
+            }
+
+            // --- Strip Mips (if requested) -----------------------------------------------
+            if ((info.mipLevels > 1) && (dwOptions & (1 << OPT_STRIP_MIPS)))
+            {
+                std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                if (!timage)
+                {
+                    wprintf(L"\nERROR: Memory allocation failed\n");
+                    return 1;
+                }
+
+                TexMetadata mdata = info;
+                mdata.mipLevels = 1;
+                hr = timage->Initialize(mdata);
+                if (FAILED(hr))
+                {
+                    wprintf(L" FAILED [copy to single level] (%x)\n", static_cast<unsigned int>(hr));
+                    return 1;
+                }
+
+                if (info.dimension == TEX_DIMENSION_TEXTURE3D)
+                {
+                    for (size_t d = 0; d < info.depth; ++d)
+                    {
+                        hr = CopyRectangle(*image->GetImage(0, 0, d), Rect(0, 0, info.width, info.height),
+                            *timage->GetImage(0, 0, d), TEX_FILTER_DEFAULT, 0, 0);
+                        if (FAILED(hr))
+                        {
+                            wprintf(L" FAILED [copy to single level] (%x)\n", static_cast<unsigned int>(hr));
+                            return 1;
+                        }
+                    }
+                }
+                else
+                {
+                    for (size_t i = 0; i < info.arraySize; ++i)
+                    {
+                        hr = CopyRectangle(*image->GetImage(0, i, 0), Rect(0, 0, info.width, info.height),
+                            *timage->GetImage(0, i, 0), TEX_FILTER_DEFAULT, 0, 0);
+                        if (FAILED(hr))
+                        {
+                            wprintf(L" FAILED [copy to single level] (%x)\n", static_cast<unsigned int>(hr));
+                            return 1;
+                        }
+                    }
+                }
+
+                image.swap(timage);
+                info.mipLevels = 1;
             }
 
             // --- Undo Premultiplied Alpha (if requested) ---------------------------------

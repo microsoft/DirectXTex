@@ -3,7 +3,7 @@
 //
 // DirectX Texture Converter
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926
@@ -739,7 +739,7 @@ namespace
         }
 
         wprintf(L"Microsoft (R) DirectX Texture Converter [DirectXTex] Version %ls\n", version);
-        wprintf(L"Copyright (C) Microsoft Corp. All rights reserved.\n");
+        wprintf(L"Copyright (C) Microsoft Corp.\n");
 #ifdef _DEBUG
         wprintf(L"*** Debug build ***\n");
 #endif
@@ -2961,7 +2961,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             image.swap(timage);
-            info.mipLevels = image->GetMetadata().mipLevels;
+            info.mipLevels = 1;
 
             if (cimage && (tMips == 1))
             {

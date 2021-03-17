@@ -3,7 +3,7 @@
 //
 // DirectXTex Auxillary functions for saving "XBOX" Xbox One variants of DDS files
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //--------------------------------------------------------------------------------------
 
