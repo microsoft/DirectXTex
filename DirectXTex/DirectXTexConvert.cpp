@@ -1611,15 +1611,23 @@ bool DirectX::_StoreScanline(
     size_t count,
     float threshold) noexcept
 {
-    assert(pDestination && size > 0);
-    assert(pSource && count > 0 && ((reinterpret_cast<uintptr_t>(pSource) & 0xF) == 0));
+    assert(pDestination != nullptr);
     assert(IsValid(format) && !IsTypeless(format) && !IsCompressed(format) && !IsPlanar(format) && !IsPalettized(format));
+
+    if (!size || !count)
+        return false;
 
     const XMVECTOR* __restrict sPtr = pSource;
     if (!sPtr)
         return false;
 
-    const XMVECTOR* ePtr = pSource + count;
+    assert((reinterpret_cast<uintptr_t>(pSource) & 0xF) == 0);
+
+    const XMVECTOR* ePtr = sPtr + count;
+
+#ifdef _PREFAST_
+    *reinterpret_cast<uint8_t*>(pDestination) = 0;
+#endif
 
     switch (static_cast<int>(format))
     {
@@ -2735,9 +2743,10 @@ bool DirectX::_StoreScanlineLinear(
     TEX_FILTER_FLAGS flags,
     float threshold) noexcept
 {
-    assert(pDestination && size > 0);
-    assert(pSource && count > 0 && ((reinterpret_cast<uintptr_t>(pSource) & 0xF) == 0));
-    assert(IsValid(format) && !IsTypeless(format) && !IsCompressed(format) && !IsPlanar(format) && !IsPalettized(format));
+    if (!pSource || !count)
+        return false;
+
+    assert((reinterpret_cast<uintptr_t>(pSource) & 0xF) == 0);
 
     switch (format)
     {
@@ -2810,10 +2819,6 @@ bool DirectX::_LoadScanlineLinear(
     DXGI_FORMAT format,
     TEX_FILTER_FLAGS flags) noexcept
 {
-    assert(pDestination && count > 0 && ((reinterpret_cast<uintptr_t>(pDestination) & 0xF) == 0));
-    assert(pSource && size > 0);
-    assert(IsValid(format) && !IsTypeless(format, false) && !IsCompressed(format) && !IsPlanar(format) && !IsPalettized(format));
-
     switch (format)
     {
     case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
@@ -3909,9 +3914,17 @@ bool DirectX::_StoreScanlineDither(
     size_t z,
     XMVECTOR* pDiffusionErrors) noexcept
 {
-    assert(pDestination && size > 0);
-    assert(pSource && count > 0 && ((reinterpret_cast<uintptr_t>(pSource) & 0xF) == 0));
+    assert(pDestination != nullptr);
     assert(IsValid(format) && !IsTypeless(format) && !IsCompressed(format) && !IsPlanar(format) && !IsPalettized(format));
+
+    if (!size || !count)
+        return false;
+
+    const XMVECTOR* __restrict sPtr = pSource;
+    if (!sPtr)
+        return false;
+
+    assert((reinterpret_cast<uintptr_t>(pSource) & 0xF) == 0);
 
     XMVECTOR ordered[4];
     if (pDiffusionErrors)
@@ -3945,11 +3958,11 @@ bool DirectX::_StoreScanlineDither(
         ordered[3] = XMVectorSplatW(dither);
     }
 
-    const XMVECTOR* __restrict sPtr = pSource;
-    if (!sPtr)
-        return false;
-
     const void* ePtr = static_cast<const uint8_t*>(pDestination) + size;
+
+#ifdef _PREFAST_
+    *reinterpret_cast<uint8_t*>(pDestination) = 0;
+#endif
 
     XMVECTOR vError = XMVectorZero();
 
