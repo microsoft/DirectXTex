@@ -1424,28 +1424,26 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
         TGA_FOOTER footer = {};
 
 #ifdef WIN32
-        if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) == INVALID_SET_FILE_POINTER)
+        if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) != INVALID_SET_FILE_POINTER)
         {
-            return HRESULT_FROM_WIN32(GetLastError());
-        }
+            if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
+            {
+                return HRESULT_FROM_WIN32(GetLastError());
+            }
 
-        if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
-        {
-            return HRESULT_FROM_WIN32(GetLastError());
-        }
-
-        if (bytesRead != sizeof(TGA_FOOTER))
-        {
-            return E_FAIL;
+            if (bytesRead != sizeof(TGA_FOOTER))
+            {
+                return E_FAIL;
+            }
         }
 #else
         inFile.seekg(-static_cast<int>(sizeof(TGA_FOOTER)), std::ios::end);
-        if (!inFile)
-            return E_FAIL;
-
-        inFile.read(reinterpret_cast<char*>(&footer), sizeof(TGA_FOOTER));
-        if (!inFile)
-            return E_FAIL;
+        if (inFile)
+        {
+            inFile.read(reinterpret_cast<char*>(&footer), sizeof(TGA_FOOTER));
+            if (!inFile)
+                return E_FAIL;
+        }
 #endif
 
         if (memcmp(footer.Signature, g_Signature, sizeof(g_Signature)) == 0)
@@ -1980,35 +1978,30 @@ HRESULT DirectX::LoadFromTGAFile(
         TGA_FOOTER footer = {};
 
 #ifdef WIN32
-        if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) == INVALID_SET_FILE_POINTER)
+        if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) != INVALID_SET_FILE_POINTER)
         {
-            return HRESULT_FROM_WIN32(GetLastError());
-        }
+            if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
+            {
+                image.Release();
+                return HRESULT_FROM_WIN32(GetLastError());
+            }
 
-        if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
-        {
-            image.Release();
-            return HRESULT_FROM_WIN32(GetLastError());
-        }
-
-        if (bytesRead != sizeof(TGA_FOOTER))
-        {
-            image.Release();
-            return E_FAIL;
+            if (bytesRead != sizeof(TGA_FOOTER))
+            {
+                image.Release();
+                return E_FAIL;
+            }
         }
 #else // !WIN32
         inFile.seekg(-static_cast<int>(sizeof(TGA_FOOTER)), std::ios::end);
-        if (!inFile)
+        if (inFile)
         {
-            image.Release();
-            return E_FAIL;
-        }
-
-        inFile.read(reinterpret_cast<char*>(&footer), sizeof(TGA_FOOTER));
-        if (!inFile)
-        {
-            image.Release();
-            return E_FAIL;
+            inFile.read(reinterpret_cast<char*>(&footer), sizeof(TGA_FOOTER));
+            if (!inFile)
+            {
+                image.Release();
+                return E_FAIL;
+            }
         }
 #endif
 
@@ -2310,7 +2303,7 @@ HRESULT DirectX::SaveToTGAFile(
             extOffset = SetFilePointer(hFile.get(), 0, nullptr, FILE_CURRENT);
             if (extOffset == INVALID_SET_FILE_POINTER)
             {
-                return HRESULT_FROM_WIN32(GetLastError());
+                return E_FAIL;
             }
 
             if (!WriteFile(hFile.get(), &ext, sizeof(TGA_EXTENSION), &bytesWritten, nullptr))
@@ -2322,6 +2315,8 @@ HRESULT DirectX::SaveToTGAFile(
                 return E_FAIL;
 #else
             extOffset = static_cast<uint32_t>(outFile.tellp());
+            if (!outFile)
+                return E_FAIL;
 
             outFile.write(reinterpret_cast<char*>(&ext), sizeof(TGA_EXTENSION));
             if (!outFile)
