@@ -132,6 +132,8 @@ namespace
         ROTATE_2020_TO_709,
         ROTATE_P3_TO_HDR10,
         ROTATE_P3_TO_2020,
+        ROTATE_709_TO_DISPLAY_P3,
+        ROTATE_DISPLAY_P3_TO_709,
     };
 
     static_assert(OPT_MAX <= 64, "dwOptions is a DWORD64 bitfield");
@@ -399,6 +401,8 @@ namespace
         { L"HDR10to709", ROTATE_HDR10_TO_709 },
         { L"P3to2020", ROTATE_P3_TO_2020 },
         { L"P3toHDR10", ROTATE_P3_TO_HDR10 },
+        { L"709toDisplayP3", ROTATE_709_TO_DISPLAY_P3 },
+        { L"DisplayP3to709", ROTATE_DISPLAY_P3_TO_709 },
         { nullptr, 0 },
     };
 
@@ -1041,12 +1045,30 @@ namespace
         0.f,          0.f,         0.f,        1.f
     };
 
+    // DCI-P3 https://en.wikipedia.org/wiki/DCI-P3
     const XMMATRIX c_fromP3to2020 =
     {
         0.753845f, 0.0457456f, -0.00121055f, 0.f,
         0.198593f, 0.941777f,   0.0176041f,  0.f,
         0.047562f, 0.0124772f,  0.983607f,   0.f,
         0.f,       0.f,         0.f,         1.f
+    };
+
+    // Display P3 (P3D65)
+    const XMMATRIX c_from709toDisplayP3 =
+    {
+        0.822461969f, 0.033194199f, 0.017082631f, 0.f,
+        0.1775380f,   0.9668058f,   0.0723974f,   0.f,
+        0.0000000f,   0.0000000f,   0.9105199f,   0.f,
+        0.f,          0.f,          0.f,          1.f
+    };
+
+    const XMMATRIX c_fromDisplayP3to709 =
+    {
+        1.224940176f,  -0.042056955f, -0.019637555f, 0.f,
+        -0.224940176f,  1.042056955f, -0.078636046f, 0.f,
+        0.0000000f,     0.0000000f,    1.098273600f, 0.f,
+        0.f,            0.f,           0.f,          1.f
     };
 
     inline float LinearToST2084(float normalizedLinearValue)
@@ -2325,7 +2347,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         // --- Color rotation (if requested) -------------------------------------------
         if (dwRotateColor)
         {
-            if (dwRotateColor == ROTATE_HDR10_TO_709)
+            if (dwRotateColor == ROTATE_HDR10_TO_709 || dwRotateColor == ROTATE_DISPLAY_P3_TO_709)
             {
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                 if (!timage)
@@ -2518,6 +2540,44 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                             XMVECTOR value = inPixels[j];
 
                             XMVECTOR nvalue = XMVector3Transform(value, c_fromP3to2020);
+
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
+                break;
+
+            case ROTATE_709_TO_DISPLAY_P3:
+                hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+                    {
+                        UNREFERENCED_PARAMETER(y);
+
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
+
+                            XMVECTOR nvalue = XMVector3Transform(value, c_from709toDisplayP3);
+
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
+                break;
+
+            case ROTATE_DISPLAY_P3_TO_709:
+                hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+                    {
+                        UNREFERENCED_PARAMETER(y);
+
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
+
+                            XMVECTOR nvalue = XMVector3Transform(value, c_fromDisplayP3to709);
 
                             value = XMVectorSelect(value, nvalue, g_XMSelect1110);
 
