@@ -585,6 +585,10 @@ namespace
                 {
                     return D3DFMT_A8R3G3B2;
                 }
+                if (ISBITMASK(0x00ff, 0, 0, 0xff00))
+                {
+                    return D3DFMT_A8L8; // NVTT versions 1.x wrote this as RGB instead of LUMINANCE
+                }
                 break;
 
             case 8:
@@ -608,6 +612,10 @@ namespace
                 if (ISBITMASK(0xff, 0, 0, 0))
                 {
                     return D3DFMT_L8;
+                }
+                if (ISBITMASK(0x00ff, 0, 0, 0xff00))
+                {
+                    return D3DFMT_A8L8; // Some DDS writers assume the bitcount should be 8 instead of 16
                 }
             }
 
