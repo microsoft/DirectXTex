@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="SetupVCTargets" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!--
+      A list of VCTargets folders that we expect to exist after copying the BWOI VS 2019 files
+      If any of these folders is not present then we assume that the VCTargets has not been setup
+  -->
+  <ItemGroup>
+    <BWOIVCFolders Include="$(ExtractedFolder)VCTargets150\" />
+    <BWOIVCFolders Include="$(ExtractedFolder)VCTargets150\Platforms\" />
+    <BWOIVCFolders Include="$(ExtractedFolder)VCTargets150\Platforms\gaming.desktop.x64" />
+    <BWOIVCFolders Include="$(ExtractedFolder)VCTargets150\Platforms\gaming.xbox.xboxone.x64" />
+    <BWOIVCFolders Include="$(ExtractedFolder)VCTargets160\" />
+    <BWOIVCFolders Include="$(ExtractedFolder)VCTargets160\Platforms\" />
+    <BWOIVCFolders Include="$(ExtractedFolder)VCTargets160\Platforms\gaming.desktop.x64" />
+    <BWOIVCFolders Include="$(ExtractedFolder)VCTargets160\Platforms\gaming.xbox.xboxone.x64" />
+  </ItemGroup>
+
+  <!--
+      Determine whether the VC Targets has already been setup
+  -->
+  <Target Name="_ProbeForExtractedVCTargets"
+          Outputs="%(BWOIVCFolders.Identity)">
+    <Error Condition="'$(ExtractedFolder)'==''"
+        Text="ExtractedFolder property is required" />
+
+    <PropertyGroup>
+      <_BWOIFolder>%(BWOIVCFolders.Identity)</_BWOIFolder>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_MissingBWOIVCFolders Condition="'$(ForceVCTargetsBWOIRefresh)'=='true' or !Exists($(_BWOIFolder))" Include="$(_BWOIFolder)" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <_ExtractedOutOfDate Condition="'@(_MissingBWOIVCFolders)' != ''">true</_ExtractedOutOfDate>
+      <_BWOIFolder />
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="_CreateVCTargetsFolder"
+          Condition="'@(_MissingBWOIVCFolders)' != ''">
+    <Error Condition="'$(GDKEditionNumber)'==''"
+        Text="GDKEditionNumber property is required" />
+    <Error Condition="!Exists('$(ExtractedFolder)GDK\Microsoft.PGDK.$(GDKEditionNumber)')"
+        Text="NuGet package Microsoft.PGDK.$(GDKEditionNumber) not found in $(ExtractedFolder)GDK" />
+    <Error Condition="!Exists('$(ExtractedFolder)GDK\Microsoft.GDK.$(GDKEditionNumber)')"
+        Text="NuGet package Microsoft.GDK.$(GDKEditionNumber) not found in $(ExtractedFolder)GDK" />
+
+    <!-- Set up files for v141 platform toolset projects from MSBuild 16.0 / VS 2019 -->
+    <ItemGroup>
+      <SourceVCTargetsFilesV150 Include="$(MSBuildExtensionsPath32)\Microsoft\VC\v150\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <GDKVCTargetsFilesV150 Include="$(ExtractedFolder)GDK\Microsoft.PGDK.$(GDKEditionNumber)\native\$(GDKEditionNumber)\GRDK\VS2019\flatDeployment\MSBuild\Microsoft\VC\v150\**" />
+      <GDKVCTargetsFilesV150 Include="$(ExtractedFolder)GDK\Microsoft.GDK.$(GDKEditionNumber)\native\$(GDKEditionNumber)\GXDK\VS2019\flatDeployment\MSBuild\Microsoft\VC\v150\**" />
+    </ItemGroup>
+
+    <Copy SkipUnchangedFiles="true" SourceFiles="@(SourceVCTargetsFilesV150)" DestinationFolder="$(ExtractedFolder)VCTargets150\%(RecursiveDir)/" />
+    <Copy SourceFiles="@(GDKVCTargetsFilesV150)" DestinationFolder="$(ExtractedFolder)VCTargets150\%(RecursiveDir)/" />
+
+    <!-- Set up files for v142 platform toolset projects -->
+    <ItemGroup>
+      <SourceVCTargetsFilesV160 Include="$(MSBuildExtensionsPath32)\Microsoft\VC\v160\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <GDKVCTargetsFilesV160 Include="$(ExtractedFolder)GDK\Microsoft.PGDK.$(GDKEditionNumber)\native\$(GDKEditionNumber)\GRDK\VS2019\flatDeployment\MSBuild\Microsoft\VC\v160\**" />
+      <GDKVCTargetsFilesV160 Include="$(ExtractedFolder)GDK\Microsoft.GDK.$(GDKEditionNumber)\native\$(GDKEditionNumber)\GXDK\VS2019\flatDeployment\MSBuild\Microsoft\VC\v160\**" />
+    </ItemGroup>
+
+    <Copy SkipUnchangedFiles="true" SourceFiles="@(SourceVCTargetsFilesV160)" DestinationFolder="$(ExtractedFolder)VCTargets160\%(RecursiveDir)/" />
+    <Copy SourceFiles="@(GDKVCTargetsFilesV160)" DestinationFolder="$(ExtractedFolder)VCTargets160\%(RecursiveDir)/" />
+
+  </Target>
+
+  <Target Name="SetupVCTargets" DependsOnTargets="_ProbeForExtractedVCTargets;_CreateVCTargetsFolder" />
+</Project>
+
