@@ -396,7 +396,6 @@ namespace
         return 0;
     }
 
-
     void SearchForFiles(const wchar_t* path, std::list<SConversion>& files, bool recursive)
     {
         // Process files
@@ -471,7 +470,6 @@ namespace
         }
     }
 
-
     void PrintFormat(DXGI_FORMAT Format)
     {
         for (const SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
@@ -483,7 +481,6 @@ namespace
             }
         }
     }
-
 
     void PrintInfo(const TexMetadata& info)
     {
@@ -544,7 +541,6 @@ namespace
         wprintf(L")");
     }
 
-
     void PrintList(size_t cch, const SValue *pValue)
     {
         while (pValue->pName)
@@ -564,7 +560,6 @@ namespace
 
         wprintf(L"\n");
     }
-
 
     void PrintLogo()
     {
@@ -602,6 +597,35 @@ namespace
         wprintf(L"\n");
     }
 
+    const wchar_t* GetErrorDesc(HRESULT hr)
+    {
+        static wchar_t desc[1024] = {};
+
+        LPWSTR errorText = nullptr;
+
+        DWORD result = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, nullptr,
+            static_cast<DWORD>(hr),
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&errorText), 0, nullptr);
+
+        *desc = 0;
+
+        if (result > 0 && errorText)
+        {
+            swprintf_s(desc, L": %ls", errorText);
+
+            size_t len = wcslen(desc);
+            if (len >= 2)
+            {
+                desc[len - 2] = 0;
+                desc[len - 1] = 0;
+            }
+
+            if (errorText)
+                LocalFree(errorText);
+        }
+
+        return desc;
+    }
 
     void PrintUsage()
     {
@@ -654,7 +678,6 @@ namespace
         PrintList(13, g_pFeatureLevels);
     }
 
-
     HRESULT SaveImageFile(const Image& img, DWORD fileType, const wchar_t* szOutputFile)
     {
         switch (fileType)
@@ -677,7 +700,6 @@ namespace
             return SaveToWICFile(img, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(fileType)), szOutputFile);
         }
     }
-
 
     bool ParseSwizzleMask(
         _In_reads_(4) const wchar_t* mask,
@@ -839,7 +861,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     HRESULT hr = hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr))
     {
-        wprintf(L"Failed to initialize COM (%08X)\n", static_cast<unsigned int>(hr));
+        wprintf(L"Failed to initialize COM (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
         return 1;
     }
 
@@ -1215,7 +1237,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         hr = LoadAnimatedGif(conversion.front().szSrc, loadedImages, (dwOptions & (1 << OPT_GIF_BGCOLOR)) != 0);
         if (FAILED(hr))
         {
-            wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+            wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
             return 1;
         }
     }
@@ -1276,7 +1298,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_ALLOW_LARGE_FILES, &info, *image);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                        wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                         return 1;
                     }
 
@@ -1303,7 +1325,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_ALLOW_LARGE_FILES, &info, *image);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                        wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                         return 1;
                     }
 
@@ -1326,7 +1348,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = LoadFromDDSFile(pConv->szSrc, DDS_FLAGS_ALLOW_LARGE_FILES, &info, *image);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                        wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                         return 1;
                     }
 
@@ -1346,7 +1368,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = LoadFromTGAFile(pConv->szSrc, TGA_FLAGS_NONE, &info, *image);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                        wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                         return 1;
                     }
                 }
@@ -1355,7 +1377,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = LoadFromHDRFile(pConv->szSrc, &info, *image);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                        wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                         return 1;
                     }
                 }
@@ -1365,7 +1387,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = LoadFromEXRFile(pConv->szSrc, &info, *image);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                        wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                         return 1;
                     }
                 }
@@ -1383,7 +1405,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = LoadFromWICFile(pConv->szSrc, WIC_FLAGS_ALL_FRAMES | dwFilter, &info, *image);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                        wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                         return 1;
                     }
                 }
@@ -1412,7 +1434,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = ConvertToSinglePlane(img, nimg, info, *timage);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [converttosingleplane] (%x)\n", static_cast<unsigned int>(hr));
+                    wprintf(L" FAILED [converttosingleplane] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -1448,7 +1470,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = Decompress(img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage.get());
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [decompress] (%x)\n", static_cast<unsigned int>(hr));
+                    wprintf(L" FAILED [decompress] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -1482,7 +1504,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = timage->Initialize(mdata);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [copy to single level] (%x)\n", static_cast<unsigned int>(hr));
+                    wprintf(L" FAILED [copy to single level] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -1494,7 +1516,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                             *timage->GetImage(0, 0, d), TEX_FILTER_DEFAULT, 0, 0);
                         if (FAILED(hr))
                         {
-                            wprintf(L" FAILED [copy to single level] (%x)\n", static_cast<unsigned int>(hr));
+                            wprintf(L" FAILED [copy to single level] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                             return 1;
                         }
                     }
@@ -1507,7 +1529,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                             *timage->GetImage(0, i, 0), TEX_FILTER_DEFAULT, 0, 0);
                         if (FAILED(hr))
                         {
-                            wprintf(L" FAILED [copy to single level] (%x)\n", static_cast<unsigned int>(hr));
+                            wprintf(L" FAILED [copy to single level] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                             return 1;
                         }
                     }
@@ -1546,7 +1568,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = PremultiplyAlpha(img, nimg, info, TEX_PMALPHA_REVERSE | dwSRGB, *timage);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED [demultiply alpha] (%x)\n", static_cast<unsigned int>(hr));
+                        wprintf(L" FAILED [demultiply alpha] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                         return 1;
                     }
 
@@ -1586,7 +1608,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = Resize(image->GetImages(), image->GetImageCount(), image->GetMetadata(), width, height, dwFilter | dwFilterOpts, *timage.get());
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [resize] (%x)\n", static_cast<unsigned int>(hr));
+                    wprintf(L" FAILED [resize] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -1636,7 +1658,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     });
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [tonemap maxlum] (%x)\n", static_cast<unsigned int>(hr));
+                    wprintf(L" FAILED [tonemap maxlum] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -1665,7 +1687,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }, *timage);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [tonemap apply] (%x)\n", static_cast<unsigned int>(hr));
+                    wprintf(L" FAILED [tonemap apply] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -1703,7 +1725,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     dwFilter | dwFilterOpts | dwSRGB, TEX_THRESHOLD_DEFAULT, *timage.get());
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [convert] (%x)\n", static_cast<unsigned int>(hr));
+                    wprintf(L" FAILED [convert] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -1810,7 +1832,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         hr = result.Initialize2D(format, twidth, theight, 1, 1);
         if (FAILED(hr))
         {
-            wprintf(L"FAILED setting up result image (%x)\n", static_cast<unsigned int>(hr));
+            wprintf(L"FAILED setting up result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
             return 1;
         }
 
@@ -1881,7 +1903,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = CopyRectangle(*img, rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
             if (FAILED(hr))
             {
-                wprintf(L"FAILED building result image (%x)\n", static_cast<unsigned int>(hr));
+                wprintf(L"FAILED building result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
         }
@@ -1909,7 +1931,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         hr = SaveImageFile(*dest, fileType, szOutputFile);
         if (FAILED(hr))
         {
-            wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+            wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
             return 1;
         }
         break;
@@ -1923,7 +1945,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             dwFilter | dwFilterOpts | dwSRGB, TEX_THRESHOLD_DEFAULT, tempImage);
         if (FAILED(hr))
         {
-            wprintf(L" FAILED [convert second input] (%x)\n", static_cast<unsigned int>(hr));
+            wprintf(L" FAILED [convert second input] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
             return 1;
         }
 
@@ -1950,7 +1972,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }, result);
         if (FAILED(hr))
         {
-            wprintf(L" FAILED [merge image] (%x)\n", static_cast<unsigned int>(hr));
+            wprintf(L" FAILED [merge image] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
             return 1;
         }
 
@@ -1977,7 +1999,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         hr = SaveImageFile(*result.GetImage(0, 0, 0), fileType, szOutputFile);
         if (FAILED(hr))
         {
-            wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+            wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
             return 1;
         }
         break;
@@ -1992,7 +2014,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         hr = result.Initialize2D(format, twidth, theight, 1, 1);
         if (FAILED(hr))
         {
-            wprintf(L"FAILED setting up result image (%x)\n", static_cast<unsigned int>(hr));
+            wprintf(L"FAILED setting up result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
             return 1;
         }
 
@@ -2020,7 +2042,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = CopyRectangle(*img, rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
             if (FAILED(hr))
             {
-                wprintf(L"FAILED building result image (%x)\n", static_cast<unsigned int>(hr));
+                wprintf(L"FAILED building result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
         }
@@ -2048,7 +2070,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         hr = SaveImageFile(*dest, fileType, szOutputFile);
         if (FAILED(hr))
         {
-            wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+            wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
             return 1;
         }
         break;
@@ -2131,7 +2153,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
         if (FAILED(hr))
         {
-            wprintf(L"FAILED building result image (%x)\n", static_cast<unsigned int>(hr));
+            wprintf(L"FAILED building result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
             return 1;
         }
 
@@ -2160,7 +2182,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             szOutputFile);
         if (FAILED(hr))
         {
-            wprintf(L"\nFAILED (%x)\n", static_cast<unsigned int>(hr));
+            wprintf(L"\nFAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
             return 1;
         }
         break;

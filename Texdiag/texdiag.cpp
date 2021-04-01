@@ -388,7 +388,6 @@ namespace
         return 0;
     }
 
-
     const wchar_t* LookupByValue(DWORD pValue, const SValue *pArray)
     {
         while (pArray->pName)
@@ -401,7 +400,6 @@ namespace
 
         return L"";
     }
-
 
     void SearchForFiles(const wchar_t* path, std::list<SConversion>& files, bool recursive)
     {
@@ -477,7 +475,6 @@ namespace
         }
     }
 
-
     void PrintFormat(DXGI_FORMAT Format)
     {
         for (const SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
@@ -501,7 +498,6 @@ namespace
         wprintf(L"*UNKNOWN*");
     }
 
-
     void PrintList(size_t cch, const SValue *pValue)
     {
         while (pValue->pName)
@@ -521,7 +517,6 @@ namespace
 
         wprintf(L"\n");
     }
-
 
     void PrintLogo()
     {
@@ -558,7 +553,6 @@ namespace
 #endif
         wprintf(L"\n");
     }
-
 
     void PrintUsage()
     {
@@ -601,6 +595,36 @@ namespace
 
         wprintf(L"\n   <filetype>: ");
         PrintList(15, g_pDumpFileTypes);
+    }
+
+    const wchar_t* GetErrorDesc(HRESULT hr)
+    {
+        static wchar_t desc[1024] = {};
+
+        LPWSTR errorText = nullptr;
+
+        DWORD result = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, nullptr,
+            static_cast<DWORD>(hr),
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&errorText), 0, nullptr);
+
+        *desc = 0;
+
+        if (result > 0 && errorText)
+        {
+            swprintf_s(desc, L": %ls", errorText);
+
+            size_t len = wcslen(desc);
+            if (len >= 2)
+            {
+                desc[len - 2] = 0;
+                desc[len - 1] = 0;
+            }
+
+            if (errorText)
+                LocalFree(errorText);
+        }
+
+        return desc;
     }
 
     HRESULT LoadImage(
@@ -825,7 +849,6 @@ namespace
 
         return S_OK;
     }
-
 
     //--------------------------------------------------------------------------------------
     struct AnalyzeBCData
@@ -1266,7 +1289,6 @@ namespace
         return S_OK;
     }
 
-
     //--------------------------------------------------------------------------------------
     HRESULT Difference(
         const Image& image1,
@@ -1344,7 +1366,6 @@ namespace
 
         return Convert(diffImage.GetImages(), diffImage.GetImageCount(), diffImage.GetMetadata(), format, dwFilter, TEX_THRESHOLD_DEFAULT, result);
     }
-
 
     //--------------------------------------------------------------------------------------
     // Partition, Shape, Fixup
@@ -3087,7 +3108,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     HRESULT hr = hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr))
     {
-        wprintf(L"Failed to initialize COM (%08X)\n", static_cast<unsigned int>(hr));
+        wprintf(L"Failed to initialize COM (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
         return 1;
     }
 
@@ -3358,7 +3379,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = LoadImage(pImage1->szSrc, dwOptions, dwFilter, info1, image1);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
@@ -3373,7 +3394,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = LoadImage(pImage2->szSrc, dwOptions, dwFilter, info2, image2);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
@@ -3410,7 +3431,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = Difference(*image1->GetImage(0, 0, 0), *image2->GetImage(0, 0, 0), dwFilter, diffFormat, diffImage);
                 if (FAILED(hr))
                 {
-                    wprintf(L"Failed diffing images (%08X)\n", static_cast<unsigned int>(hr));
+                    wprintf(L"Failed diffing images (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -3431,7 +3452,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = SaveImage(diffImage.GetImage(0, 0, 0), szOutputFile, fileType);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                    wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -3453,7 +3474,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = ComputeMSE(*image1->GetImage(0, 0, 0), *image2->GetImage(0, 0, 0), mse, mseV);
                 if (FAILED(hr))
                 {
-                    wprintf(L"Failed comparing images (%08X)\n", static_cast<unsigned int>(hr));
+                    wprintf(L"Failed comparing images (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -3500,7 +3521,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = ComputeMSE(*img1, *img2, mse, mseV);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"Failed comparing images at slice %3zu, mip %3zu (%08X)\n", slice, mip, static_cast<unsigned int>(hr));
+                                    wprintf(L"Failed comparing images at slice %3zu, mip %3zu (%08X%ls)\n", slice, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
 
@@ -3551,7 +3572,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = ComputeMSE(*img1, *img2, mse, mseV);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"Failed comparing images at item %3zu, mip %3zu (%08X)\n", item, mip, static_cast<unsigned int>(hr));
+                                    wprintf(L"Failed comparing images at item %3zu, mip %3zu (%08X%ls)\n", item, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
 
@@ -3611,7 +3632,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = LoadImage(pConv->szSrc, dwOptions, dwFilter, info, image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
@@ -3725,7 +3746,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = SaveImage(img, szOutputFile, fileType);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                                    wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
                             }
@@ -3768,7 +3789,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = SaveImage(img, szOutputFile, fileType);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L" FAILED (%x)\n", static_cast<unsigned int>(hr));
+                                    wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
                             }
@@ -3821,7 +3842,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = DumpBCImage(*img, pixelx, pixely);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"ERROR: Failed dumping image at slice %3zu, mip %3zu (%08X)\n", slice, mip, static_cast<unsigned int>(hr));
+                                    wprintf(L"ERROR: Failed dumping image at slice %3zu, mip %3zu (%08X%ls)\n", slice, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
                             }
@@ -3864,7 +3885,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = DumpBCImage(*img, tpixelx, tpixely);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"ERROR: Failed dumping image at item %3zu, mip %3zu (%08X)\n", item, mip, static_cast<unsigned int>(hr));
+                                    wprintf(L"ERROR: Failed dumping image at item %3zu, mip %3zu (%08X%ls)\n", item, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
                             }
@@ -3897,7 +3918,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = ConvertToSinglePlane(img, nimg, info, *timage);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED [converttosingleplane] (%x)\n", static_cast<unsigned int>(hr));
+                        wprintf(L" FAILED [converttosingleplane] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                         return 1;
                     }
 
@@ -3938,7 +3959,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = Analyze(*img, data);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"ERROR: Failed analyzing image at slice %3zu, mip %3zu (%08X)\n", slice, mip, static_cast<unsigned int>(hr));
+                                    wprintf(L"ERROR: Failed analyzing image at slice %3zu, mip %3zu (%08X%ls)\n", slice, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
 
@@ -3952,7 +3973,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = AnalyzeBC(*img, data);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"ERROR: Failed analyzing BC image at slice %3zu, mip %3zu (%08X)\n", slice, mip, static_cast<unsigned int>(hr));
+                                    wprintf(L"ERROR: Failed analyzing BC image at slice %3zu, mip %3zu (%08X%ls)\n", slice, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
 
@@ -3986,7 +4007,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = Analyze(*img, data);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"ERROR: Failed analyzing image at item %3zu, mip %3zu (%08X)\n", item, mip, static_cast<unsigned int>(hr));
+                                    wprintf(L"ERROR: Failed analyzing image at item %3zu, mip %3zu (%08X%ls)\n", item, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
 
@@ -4003,7 +4024,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = AnalyzeBC(*img, data);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"ERROR: Failed analyzing BC image at item %3zu, mip %3zu (%08X)\n", item, mip, static_cast<unsigned int>(hr));
+                                    wprintf(L"ERROR: Failed analyzing BC image at item %3zu, mip %3zu (%08X%ls)\n", item, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
 
