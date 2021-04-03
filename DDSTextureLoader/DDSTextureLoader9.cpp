@@ -585,9 +585,15 @@ namespace
                 {
                     return D3DFMT_A8R3G3B2;
                 }
+
+                // NVTT versions 1.x wrote these as RGB instead of LUMINANCE
+                if (ISBITMASK(0xffff, 0, 0, 0))
+                {
+                    return D3DFMT_L16;
+                }
                 if (ISBITMASK(0x00ff, 0, 0, 0xff00))
                 {
-                    return D3DFMT_A8L8; // NVTT versions 1.x wrote this as RGB instead of LUMINANCE
+                    return D3DFMT_A8L8;
                 }
                 break;
 
@@ -597,14 +603,32 @@ namespace
                     return D3DFMT_R3G3B2;
                 }
 
+                // NVTT versions 1.x wrote these as RGB instead of LUMINANCE
+                if (ISBITMASK(0xff, 0, 0, 0))
+                {
+                    return D3DFMT_L8;
+                }
+
                 // Paletted texture formats are typically not supported on modern video cards aka D3DFMT_P8, D3DFMT_A8P8
                 break;
             }
         }
         else if (ddpf.flags & DDS_LUMINANCE)
         {
-            if (8 == ddpf.RGBBitCount)
+            switch (ddpf.RGBBitCount)
             {
+            case 16:
+                if (ISBITMASK(0xffff, 0, 0, 0))
+                {
+                    return D3DFMT_L16;
+                }
+                if (ISBITMASK(0x00ff, 0, 0, 0xff00))
+                {
+                    return D3DFMT_A8L8;
+                }
+                break;
+
+            case 8:
                 if (ISBITMASK(0x0f, 0, 0, 0xf0))
                 {
                     return D3DFMT_A4L4;
@@ -617,19 +641,7 @@ namespace
                 {
                     return D3DFMT_A8L8; // Some DDS writers assume the bitcount should be 8 instead of 16
                 }
-            }
-
-            if (16 == ddpf.RGBBitCount)
-            {
-                if (ISBITMASK(0xffff, 0, 0, 0))
-                {
-                    return D3DFMT_L16;
-                }
-                if (ISBITMASK(0x00ff, 0, 0, 0xff00))
-                {
-                    return D3DFMT_A8L8;
-                }
-
+                break;
             }
         }
         else if (ddpf.flags & DDS_ALPHA)
@@ -641,16 +653,9 @@ namespace
         }
         else if (ddpf.flags & DDS_BUMPDUDV)
         {
-            if (16 == ddpf.RGBBitCount)
+            switch (ddpf.RGBBitCount)
             {
-                if (ISBITMASK(0x00ff, 0xff00, 0, 0))
-                {
-                    return D3DFMT_V8U8;
-                }
-            }
-
-            if (32 == ddpf.RGBBitCount)
-            {
+            case 32:
                 if (ISBITMASK(0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000))
                 {
                     return D3DFMT_Q8W8V8U8;
@@ -663,24 +668,33 @@ namespace
                 {
                     return D3DFMT_A2W10V10U10;
                 }
+                break;
+
+            case 16:
+                if (ISBITMASK(0x00ff, 0xff00, 0, 0))
+                {
+                    return D3DFMT_V8U8;
+                }
+                break;
             }
         }
         else if (ddpf.flags & DDS_BUMPLUMINANCE)
         {
-            if (16 == ddpf.RGBBitCount)
+            switch (ddpf.RGBBitCount)
             {
-                if (ISBITMASK(0x001f, 0x03e0, 0xfc00, 0))
-                {
-                    return D3DFMT_L6V5U5;
-                }
-            }
-
-            if (32 == ddpf.RGBBitCount)
-            {
+            case 32:
                 if (ISBITMASK(0x000000ff, 0x0000ff00, 0x00ff0000, 0))
                 {
                     return D3DFMT_X8L8V8U8;
                 }
+                break;
+
+            case 16:
+                if (ISBITMASK(0x001f, 0x03e0, 0xfc00, 0))
+                {
+                    return D3DFMT_L6V5U5;
+                }
+                break;
             }
         }
         else if (ddpf.flags & DDS_FOURCC)
