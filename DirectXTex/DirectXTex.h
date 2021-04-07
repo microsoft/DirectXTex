@@ -43,7 +43,7 @@ struct IWICImagingFactory;
 struct IWICMetadataQueryReader;
 #endif
 
-#define DIRECTX_TEX_VERSION 191
+#define DIRECTX_TEX_VERSION 192
 
 
 namespace DirectX
