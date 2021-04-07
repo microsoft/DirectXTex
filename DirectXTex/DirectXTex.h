@@ -396,7 +396,11 @@ namespace DirectX
         void *__cdecl GetBufferPointer() const noexcept { return m_buffer; }
         size_t __cdecl GetBufferSize() const noexcept { return m_size; }
 
+        HRESULT __cdecl Resize(size_t size) noexcept;
+            // Reallocate for a new size
+
         HRESULT __cdecl Trim(size_t size) noexcept;
+            // Shorten size without reallocation
 
     private:
         void*   m_buffer;

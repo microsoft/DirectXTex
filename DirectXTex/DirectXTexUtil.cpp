@@ -1510,3 +1510,25 @@ HRESULT Blob::Trim(size_t size) noexcept
 
     return S_OK;
 }
+
+HRESULT Blob::Resize(size_t size) noexcept
+{
+    if (!size)
+        return E_INVALIDARG;
+
+    if (!m_buffer || !m_size)
+        return E_UNEXPECTED;
+
+    void *tbuffer = _aligned_malloc(size, 16);
+    if (!tbuffer)
+        return E_OUTOFMEMORY;
+
+    memcpy(tbuffer, m_buffer, std::min(m_size, size));
+
+    Release();
+
+    m_buffer = tbuffer;
+    m_size = size;
+
+    return S_OK;
+}
