@@ -6,6 +6,18 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### April 6, 2021
+* DDS reader updated to accept nVidia Texture Tool v1 single-channel and dual-channel files marked as RGB instead of LUMINANCE
+* Fixed TGA reader regression with files smaller than 26 bytes total
+* Removed use of ``CreateStreamOnHGlobal``, ``CreateStreamOverRandomAccessStream``, and ``SHCreateMemStream`` for WICToMemory functions
+* Fix for the DirectX 12 ``CaptureTexture`` for reserved and MSAA resources
+* Minor code and project cleanup
+* texassemble: added ``-stripmips`` switch
+* texassemble, texconv: the ``swizzle`` switch now accepts ``0`` and ``1`` values in swizzle masks
+* texconv: added "709toDisplayP3" and "DisplayP3to709" to ``-rotatecolor`` switch
+* texconv: Fixed ``-reconstructz`` for UNORM formats
+* texassemble, texconv, texdiag: Updated with  descriptions for HRESULT failure codes, and always uses exit code 1 on failure
+
 ### January 9, 2021
 * Windows Subsystem for Linux support
 * Code review for improved conformance
