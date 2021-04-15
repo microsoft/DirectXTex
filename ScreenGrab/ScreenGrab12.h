@@ -20,7 +20,11 @@
 #ifdef WIN32
 #include <d3d12.h>
 
+#ifdef NTDDI_WIN10_FE
+#include <ocidl.h>
+#else
 #include <OCIdl.h>
+#endif
 
 #include <functional>
 #else

@@ -37,7 +37,11 @@
 #include <DirectXMath.h>
 
 #ifdef WIN32
+#ifdef NTDDI_WIN10_FE
+#include <ocidl.h>
+#else
 #include <OCIdl.h>
+#endif
 
 struct IWICImagingFactory;
 struct IWICMetadataQueryReader;
