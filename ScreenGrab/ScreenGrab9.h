@@ -23,7 +23,12 @@
 
 #include <d3d9.h>
 
+#ifdef NTDDI_WIN10_FE
+#include <ocidl.h>
+#else
 #include <OCIdl.h>
+#endif
+
 #include <functional>
 
 
