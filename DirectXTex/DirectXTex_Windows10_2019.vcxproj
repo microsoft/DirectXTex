@@ -239,6 +239,7 @@
       <OpenMPSupport>true</OpenMPSupport>
       <SupportJustMyCode>false</SupportJustMyCode>
       <DisableSpecificWarnings>26812</DisableSpecificWarnings>
+      <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -262,6 +263,7 @@
       <AdditionalOptions>/Zc:twoPhase- /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <OpenMPSupport>true</OpenMPSupport>
       <DisableSpecificWarnings>26812</DisableSpecificWarnings>
+      <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -285,6 +287,7 @@
       <OpenMPSupport>true</OpenMPSupport>
       <SupportJustMyCode>false</SupportJustMyCode>
       <DisableSpecificWarnings>26812</DisableSpecificWarnings>
+      <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -309,6 +312,7 @@
       <OpenMPSupport>true</OpenMPSupport>
       <SupportJustMyCode>false</SupportJustMyCode>
       <DisableSpecificWarnings>26812</DisableSpecificWarnings>
+      <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -331,6 +335,7 @@
       <AdditionalOptions>/Zc:twoPhase- /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <OpenMPSupport>true</OpenMPSupport>
       <DisableSpecificWarnings>26812</DisableSpecificWarnings>
+      <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -354,6 +359,7 @@
       <AdditionalOptions>/Zc:twoPhase- /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <OpenMPSupport>true</OpenMPSupport>
       <DisableSpecificWarnings>26812</DisableSpecificWarnings>
+      <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -377,6 +383,7 @@
       <OpenMPSupport>true</OpenMPSupport>
       <SupportJustMyCode>false</SupportJustMyCode>
       <DisableSpecificWarnings>26812</DisableSpecificWarnings>
+      <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -399,6 +406,7 @@
       <AdditionalOptions>/Zc:twoPhase- /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <OpenMPSupport>true</OpenMPSupport>
       <DisableSpecificWarnings>26812</DisableSpecificWarnings>
+      <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
