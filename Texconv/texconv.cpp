@@ -1853,17 +1853,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         mipLevels = 1;
     }
 
-    LARGE_INTEGER qpcFreq;
-    if (!QueryPerformanceFrequency(&qpcFreq))
-    {
-        qpcFreq.QuadPart = 0;
-    }
+    LARGE_INTEGER qpcFreq = {};
+    (void)QueryPerformanceFrequency(&qpcFreq);
 
-    LARGE_INTEGER qpcStart;
-    if (!QueryPerformanceCounter(&qpcStart))
-    {
-        qpcStart.QuadPart = 0;
-    }
+    LARGE_INTEGER qpcStart = {};
+    (void)QueryPerformanceCounter(&qpcStart);
 
     // Convert images
     bool sizewarn = false;
@@ -3599,12 +3593,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     if (dwOptions & (uint64_t(1) << OPT_TIMING))
     {
-        LARGE_INTEGER qpcEnd;
-        if (QueryPerformanceCounter(&qpcEnd))
-        {
-            LONGLONG delta = qpcEnd.QuadPart - qpcStart.QuadPart;
-            wprintf(L"\n Processing time: %f seconds\n", double(delta) / double(qpcFreq.QuadPart));
-        }
+        LARGE_INTEGER qpcEnd = {};
+        (void)QueryPerformanceCounter(&qpcEnd);
+
+        LONGLONG delta = qpcEnd.QuadPart - qpcStart.QuadPart;
+        wprintf(L"\n Processing time: %f seconds\n", double(delta) / double(qpcFreq.QuadPart));
     }
 
     return retVal;
