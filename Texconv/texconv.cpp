@@ -1060,6 +1060,45 @@ namespace
         }
     }
 
+    size_t CountMips(_In_ size_t width, _In_ size_t height) noexcept
+    {
+        size_t mipLevels = 1;
+
+        while (height > 1 || width > 1)
+        {
+            if (height > 1)
+                height >>= 1;
+
+            if (width > 1)
+                width >>= 1;
+
+            ++mipLevels;
+        }
+
+        return mipLevels;
+    }
+
+    size_t CountMips3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth) noexcept
+    {
+        size_t mipLevels = 1;
+
+        while (height > 1 || width > 1 || depth > 1)
+        {
+            if (height > 1)
+                height >>= 1;
+
+            if (width > 1)
+                width >>= 1;
+
+            if (depth > 1)
+                depth >>= 1;
+
+            ++mipLevels;
+        }
+
+        return mipLevels;
+    }
+
     const XMVECTORF32 c_MaxNitsFor2084 = { { { 10000.0f, 10000.0f, 10000.0f, 1.f } } };
 
     const XMMATRIX c_from709to2020 =
@@ -2321,6 +2360,18 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             image.swap(timage);
             cimage.reset();
+
+            if (tMips > 0)
+            {
+                size_t maxMips = (info.depth > 1)
+                    ? CountMips3D(info.width, info.height, info.depth)
+                    : CountMips(info.width, info.height);
+
+                if (tMips > maxMips)
+                {
+                    tMips = maxMips;
+                }
+            }
         }
 
         // --- Swizzle (if requested) --------------------------------------------------
