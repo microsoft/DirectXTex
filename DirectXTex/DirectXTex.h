@@ -29,7 +29,7 @@
 #include <d3d11_1.h>
 #endif
 #endif
-#else
+#else // !WIN32
 #include <directx/dxgiformat.h>
 #include <wsl/winadapter.h>
 #endif

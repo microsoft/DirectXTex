@@ -100,7 +100,12 @@
 #include <d3d12_x.h>
 #include <d3d11_x.h>
 #elif (_WIN32_WINNT >= _WIN32_WINNT_WIN10)
+#ifdef USING_DIRECTX_HEADERS
+#include <directx/dxgiformat.h>
+#include <directx/d3d12.h>
+#else
 #include <d3d12.h>
+#endif
 #include <d3d11_4.h>
 #else
 #include <d3d11_1.h>
