@@ -9,10 +9,25 @@
     <_AlternativeVCTargetsPath150>$(ExtractedFolder)VCTargets150\</_AlternativeVCTargetsPath150>
   </PropertyGroup>
 
-  <Import Condition="$(Platform.Contains('x64')) and Exists('$(ExtractedFolder)GDK\Microsoft.PGDK.$(GDKEditionNumber)\build\Microsoft.PGDK.$(GDKEditionNumber).props')"
+  <Import Condition="'$(WSDKEnableBWOI)' == 'true'"
+          Project="$(ExtractedFolder)SDK\Microsoft.Windows.SDK.cpp\build\Microsoft.Windows.SDK.cpp.props" />
+
+  <Import Condition="'$(WSDKEnableBWOI)' == 'true' and $(Platform.Contains('x64'))"
+          Project="$(ExtractedFolder)SDK\Microsoft.Windows.SDK.cpp.x64\build\native\Microsoft.Windows.SDK.cpp.x64.props" />
+
+  <Import Condition="'$(WSDKEnableBWOI)' == 'true' and '$(Platform)' == 'Win32'"
+          Project="$(ExtractedFolder)SDK\Microsoft.Windows.SDK.cpp.x86\build\native\Microsoft.Windows.SDK.cpp.x86.props" />
+
+  <Import Condition="'$(WSDKEnableBWOI)' == 'true' and '$(Platform)' == 'ARM'"
+          Project="$(ExtractedFolder)SDK\Microsoft.Windows.SDK.cpp.arm\build\native\Microsoft.Windows.SDK.cpp.arm.props" />
+
+  <Import Condition="'$(WSDKEnableBWOI)' == 'true' and '$(Platform)' == 'ARM64'"
+          Project="$(ExtractedFolder)SDK\Microsoft.Windows.SDK.cpp.arm64\build\native\Microsoft.Windows.SDK.cpp.arm64.props" />
+
+  <Import Condition="'$(GDKEnableBWOI)' == 'true' and $(Platform.Contains('x64')) and Exists('$(ExtractedFolder)GDK\Microsoft.PGDK.$(GDKEditionNumber)\build\Microsoft.PGDK.$(GDKEditionNumber).props')"
           Project="$(ExtractedFolder)GDK\Microsoft.PGDK.$(GDKEditionNumber)\build\Microsoft.PGDK.$(GDKEditionNumber).props" />
 
-  <Import Condition="$(Platform.Contains('x64'))"
+  <Import Condition="'$(GDKEnableBWOI)' == 'true' and $(Platform.Contains('x64'))"
           Project="$(ExtractedFolder)GDK\Microsoft.GDK.$(GDKEditionNumber)\build\Microsoft.GDK.$(GDKEditionNumber).props" />
 
   <!--
