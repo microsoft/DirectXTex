@@ -37,21 +37,21 @@
   -->
   <PropertyGroup Condition="'$(Platform)' == 'Gaming.Xbox.XboxOne.x64' and '$(VisualStudioVersion)' == '16.0'">
     <AdditionalVCTargetsPath>$(_AlternativeVCTargetsPath160)</AdditionalVCTargetsPath>
-    <VCTargetsPath>$(_AlternativeVCTargetsPath160)</VCTargetsPath>
+    <DisableInstalledVCTargetsUse>true</DisableInstalledVCTargetsUse>
     <VCTargetsPath15 Condition="'$(_AlternativeVCTargetsPath150)'!=''">$(_AlternativeVCTargetsPath150)</VCTargetsPath15>
     <VCTargetsPath16>$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Platform)' == 'Gaming.Xbox.Scarlett.x64' and '$(VisualStudioVersion)' == '16.0'">
     <AdditionalVCTargetsPath>$(_AlternativeVCTargetsPath160)</AdditionalVCTargetsPath>
-    <VCTargetsPath>$(_AlternativeVCTargetsPath160)</VCTargetsPath>
+    <DisableInstalledVCTargetsUse>true</DisableInstalledVCTargetsUse>
     <VCTargetsPath15 Condition="'$(_AlternativeVCTargetsPath150)'!=''">$(_AlternativeVCTargetsPath150)</VCTargetsPath15>
     <VCTargetsPath16>$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Platform)' == 'Gaming.Desktop.x64' and '$(VisualStudioVersion)' == '16.0'">
     <AdditionalVCTargetsPath>$(_AlternativeVCTargetsPath160)</AdditionalVCTargetsPath>
-    <VCTargetsPath>$(_AlternativeVCTargetsPath160)</VCTargetsPath>
+    <DisableInstalledVCTargetsUse>true</DisableInstalledVCTargetsUse>
     <VCTargetsPath15 Condition="'$(_AlternativeVCTargetsPath150)'!=''">$(_AlternativeVCTargetsPath150)</VCTargetsPath15>
     <VCTargetsPath16>$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
   </PropertyGroup>
