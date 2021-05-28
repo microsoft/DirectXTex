@@ -7,6 +7,9 @@
 
     <_AlternativeVCTargetsPath160>$(ExtractedFolder)VCTargets160\</_AlternativeVCTargetsPath160>
     <_AlternativeVCTargetsPath150>$(ExtractedFolder)VCTargets150\</_AlternativeVCTargetsPath150>
+
+    <!-- Workaround for VS bug -->
+    <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
   </PropertyGroup>
 
   <Import Condition="'$(WSDKEnableBWOI)' == 'true'"
