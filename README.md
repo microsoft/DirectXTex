@@ -14,7 +14,7 @@ This code is designed to build with Visual Studio 2017 ([15.9](https://walbourn.
 
 These components are designed to work without requiring any content from the legacy DirectX SDK. For details, see [Where is the DirectX SDK?](https://aka.ms/dxsdk).
 
-> This Xbox variant contains DirectXTexXbox modules for tiling/detiling textures offline for use with Xbox One/Xbox One S, Xbox One X, or Xbox Series X/S. Building and running this code requires access to the Xbox One XDK or Microsoft GDK through the ID@Xbox developer program.
+> This Xbox variant contains DirectXTexXbox modules for tiling/detiling textures offline for use with Xbox One/Xbox One S, Xbox One X, or Xbox Series X|S. Building and running this code requires access to the Xbox One XDK or Microsoft GDK through the ID@Xbox developer program.
 
 ## Directory Layout
 
