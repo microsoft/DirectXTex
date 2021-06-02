@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <iterator>
 #include <new>
 
 #include <wincodec.h>

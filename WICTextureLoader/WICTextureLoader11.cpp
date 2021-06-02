@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <iterator>
 #include <memory>
 #include <new>
 
