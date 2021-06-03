@@ -42,14 +42,30 @@ namespace DirectX
         DDS_ALPHA_MODE_OPAQUE        = 3,
         DDS_ALPHA_MODE_CUSTOM        = 4,
     };
+
 #endif
 
-    enum DDS_LOADER_FLAGS
+#ifndef DDS_LOADER_FLAGS_DEFINED
+#define DDS_LOADER_FLAGS_DEFINED
+
+    enum DDS_LOADER_FLAGS : uint32_t
     {
         DDS_LOADER_DEFAULT      = 0,
         DDS_LOADER_FORCE_SRGB   = 0x1,
         DDS_LOADER_MIP_RESERVE  = 0x8,
     };
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-dynamic-exception-spec"
+#endif
+
+    DEFINE_ENUM_FLAG_OPERATORS(DDS_LOADER_FLAGS);
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+#endif
 
     // Standard version
     HRESULT __cdecl LoadDDSTextureFromMemory(
@@ -79,7 +95,7 @@ namespace DirectX
         size_t ddsDataSize,
         size_t maxsize,
         D3D12_RESOURCE_FLAGS resFlags,
-        unsigned int loadFlags,
+        DDS_LOADER_FLAGS loadFlags,
         _Outptr_ ID3D12Resource** texture,
         std::vector<D3D12_SUBRESOURCE_DATA>& subresources,
         _Out_opt_ DDS_ALPHA_MODE* alphaMode = nullptr,
@@ -90,7 +106,7 @@ namespace DirectX
         _In_z_ const wchar_t* szFileName,
         size_t maxsize,
         D3D12_RESOURCE_FLAGS resFlags,
-        unsigned int loadFlags,
+        DDS_LOADER_FLAGS loadFlags,
         _Outptr_ ID3D12Resource** texture,
         std::unique_ptr<uint8_t[]>& ddsData,
         std::vector<D3D12_SUBRESOURCE_DATA>& subresources,

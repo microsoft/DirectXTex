@@ -86,14 +86,13 @@ namespace
     //-------------------------------------------------------------------------------------
     // WIC Pixel Format nearest conversion table
     //-------------------------------------------------------------------------------------
-
     struct WICConvert
     {
-        const GUID&        source;
-        const GUID&        target;
+        const GUID& source;
+        const GUID& target;
     };
 
-    constexpr WICConvert g_WICConvert[] =
+    constexpr WICConvert g_WICConvert [] =
     {
         // Note target GUID in this conversion table must be one of those directly supported formats (above).
 
@@ -272,7 +271,7 @@ namespace
         _In_ size_t maxsize,
         _In_ DWORD usage,
         _In_ D3DPOOL pool,
-        _In_ unsigned int loadFlags,
+        _In_ WIC_LOADER_FLAGS loadFlags,
         _Outptr_ LPDIRECT3DTEXTURE9* texture) noexcept
     {
         UINT width, height;
@@ -536,7 +535,7 @@ HRESULT DirectX::CreateWICTextureFromMemory(
     size_t wicDataSize,
     LPDIRECT3DTEXTURE9* texture,
     size_t maxsize,
-    unsigned int loadFlags) noexcept
+    WIC_LOADER_FLAGS loadFlags) noexcept
 {
     return CreateWICTextureFromMemoryEx(d3dDevice, wicData, wicDataSize, maxsize, 0u, D3DPOOL_DEFAULT, loadFlags, texture);
 }
@@ -550,7 +549,7 @@ HRESULT DirectX::CreateWICTextureFromMemoryEx(
     _In_ size_t maxsize,
     _In_ DWORD usage,
     _In_ D3DPOOL pool,
-    _In_ unsigned int loadFlags,
+    _In_ WIC_LOADER_FLAGS loadFlags,
     LPDIRECT3DTEXTURE9* texture) noexcept
 {
     if (texture)
@@ -602,7 +601,7 @@ HRESULT DirectX::CreateWICTextureFromFile(
     const wchar_t* fileName,
     LPDIRECT3DTEXTURE9* texture,
     size_t maxsize,
-    unsigned int loadFlags) noexcept
+    WIC_LOADER_FLAGS loadFlags) noexcept
 {
     return CreateWICTextureFromFileEx(d3dDevice, fileName, maxsize, 0u, D3DPOOL_DEFAULT, loadFlags, texture);
 }
@@ -614,7 +613,7 @@ HRESULT DirectX::CreateWICTextureFromFileEx(
     size_t maxsize,
     DWORD usage,
     D3DPOOL pool,
-    unsigned int loadFlags,
+    WIC_LOADER_FLAGS loadFlags,
     LPDIRECT3DTEXTURE9* texture) noexcept
 {
     if (texture)
