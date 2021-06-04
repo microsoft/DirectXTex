@@ -22,6 +22,10 @@ option(BUILD_DX12 "Build with DirectX12 Runtime support" ON)
 # Enable the use of OpenMP for software BC6H/BC7 compression
 option(BC_USE_OPENMP "Build with OpenMP support" ON)
 
+# Builds Xbox extensions for Host PC
+option(BUILD_XBOX_EXTS_XBOXONE "Build Xbox library extensions for Xbox One" OFF)
+option(BUILD_XBOX_EXTS_SCARLETT "Build Xbox library extensions for Xbox Series X|S" OFF)
+
 option(ENABLE_CODE_ANALYSIS "Use Static Code Analysis on build" OFF)
 
 # Includes the functions for loading/saving OpenEXR files at runtime
@@ -67,6 +71,24 @@ if(WIN32)
    set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
        DirectXTex/DirectXTexFlipRotate.cpp
        DirectXTex/DirectXTexWIC.cpp)
+endif()
+
+if((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
+    if(DEFINED ENV{GameDKLatest})
+        set(GameDK_DIR $ENV{GameDKLatest})
+    endif()
+    if(DEFINED ENV{XboxOneXDKLatest})
+        set(XboxOneXDK_DIR $ENV{XboxOneXDKLatest})
+    endif()
+
+    set(LIBRARY_HEADERS
+        DirectXTex/DirectXTexXbox.h)
+
+   set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
+       DirectXTex/DirectXTexXboxDDS.cpp
+       DirectXTex/DirectXTexXboxDetile.cpp
+       DirectXTex/DirectXTexXboxImage.cpp
+       DirectXTex/DirectXTexXboxTile.cpp)
 endif()
 
 set(SHADER_SOURCES
@@ -121,6 +143,27 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 if(ENABLE_OPENEXR_SUPPORT)
   find_package(OpenEXR REQUIRED)
   target_include_directories(${PROJECT_NAME} PRIVATE ${OPENEXR_INCLUDE_DIRS}/OpenEXR)
+endif()
+
+if(BUILD_XBOX_EXTS_SCARLETT AND WIN32)
+    if (EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
+        message("INFO: Building Xbox extensions for Xbox Series X|S")
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _USE_GXDK _USE_SCARLETT)
+        target_include_directories(${PROJECT_NAME} PRIVATE ${GameDK_DIR}/GXDK/toolKit/include ${GameDK_DIR}/GXDK/toolKit/include/Scarlett)
+    else()
+        message(FATAL_ERROR "Building Xbox extensions requires GameDKLatest")
+    endif()
+elseif(BUILD_XBOX_EXTS_XBOXONE AND WIN32)
+    if (EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
+        message("INFO: Building Xbox extensions for XboxOne using GDK")
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _USE_GXDK)
+        target_include_directories(${PROJECT_NAME} PRIVATE ${GameDK_DIR}/GXDK/toolKit/include ${GameDK_DIR}/GXDK/toolKit/include/XboxOne)
+    elseif (EXISTS "${XboxOneXDK_DIR}/PC/include/xdk.h")
+        message("INFO: Building Xbox extensions for XboxOne using XDK")
+        target_include_directories(${PROJECT_NAME} PRIVATE ${XboxOneXDK_DIR}/PC/include)
+    else()
+        message(FATAL_ERROR "Building Xbox extensions requires GameDKLatest or XboxOneXDKLatest")
+    endif()
 endif()
 
 if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.16")
