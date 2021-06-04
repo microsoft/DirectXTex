@@ -177,6 +177,8 @@ HRESULT XboxImage::Initialize(const XG_TEXTURE1D_DESC& desc, const XG_RESOURCE_L
     if (!memory)
         return E_OUTOFMEMORY;
 
+    memset(memory, 0, layout.SizeBytes);
+
     memset(&metadata, 0, sizeof(metadata));
     metadata.width = desc.Width;
     metadata.height = 1;
@@ -214,6 +216,8 @@ HRESULT XboxImage::Initialize(const XG_TEXTURE2D_DESC& desc, const XG_RESOURCE_L
     memory = reinterpret_cast<uint8_t*>(_aligned_malloc(layout.SizeBytes, 16));
     if (!memory)
         return E_OUTOFMEMORY;
+
+    memset(memory, 0, layout.SizeBytes);
 
     memset(&metadata, 0, sizeof(metadata));
     metadata.width = desc.Width;
@@ -254,6 +258,8 @@ HRESULT XboxImage::Initialize(const XG_TEXTURE3D_DESC& desc, const XG_RESOURCE_L
     if (!memory)
         return E_OUTOFMEMORY;
 
+    memset(memory, 0, layout.SizeBytes);
+
     memset(&metadata, 0, sizeof(metadata));
     metadata.width = desc.Width;
     metadata.height = desc.Height;
@@ -287,6 +293,8 @@ HRESULT XboxImage::Initialize(const DirectX::TexMetadata& mdata, XboxTileMode tm
     memory = reinterpret_cast<uint8_t*>(_aligned_malloc(size, 16));
     if (!memory)
         return E_OUTOFMEMORY;
+
+    memset(memory, 0, size);
 
     metadata = mdata;
 
