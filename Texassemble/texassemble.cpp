@@ -2102,35 +2102,35 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         case CMD_CUBE:
             if (imageArray[0].width > maxCube || imageArray[0].height > maxCube)
             {
-                wprintf(L"\nWARNING: Target size exceeds maximum cube dimensions for feature level (%lu)\n", maxCube);
+                wprintf(L"\nWARNING: Target size exceeds maximum cube dimensions for feature level (%u)\n", maxCube);
             }
             break;
 
         case CMD_VOLUME:
             if (imageArray[0].width > maxVolume || imageArray[0].height > maxVolume || imageArray.size() > maxVolume)
             {
-                wprintf(L"\nWARNING: Target size exceeds volume extent for feature level (%lu)\n", maxVolume);
+                wprintf(L"\nWARNING: Target size exceeds volume extent for feature level (%u)\n", maxVolume);
             }
             break;
 
         case CMD_ARRAY:
             if (imageArray[0].width > maxSize || imageArray[0].height > maxSize || imageArray.size() > maxArray)
             {
-                wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (size %lu, array %lu)\n", maxSize, maxArray);
+                wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (size %u, array %u)\n", maxSize, maxArray);
             }
             break;
 
         case CMD_CUBEARRAY:
             if (imageArray[0].width > maxCube || imageArray[0].height > maxCube || imageArray.size() > maxArray)
             {
-                wprintf(L"\nWARNING: Target size exceeds maximum cube dimensions for feature level (size %lu, array %lu)\n", maxCube, maxArray);
+                wprintf(L"\nWARNING: Target size exceeds maximum cube dimensions for feature level (size %u, array %u)\n", maxCube, maxArray);
             }
             break;
 
         default:
             if (imageArray[0].width > maxSize || imageArray[0].height > maxSize)
             {
-                wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (%lu)\n", maxSize);
+                wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (%u)\n", maxSize);
             }
             break;
         }
