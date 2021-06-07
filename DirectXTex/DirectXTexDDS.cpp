@@ -509,10 +509,10 @@ namespace
             case DXGI_FORMAT_B5G6R5_UNORM:
             case DXGI_FORMAT_B5G5R5A1_UNORM:
             case DXGI_FORMAT_B4G4R4A4_UNORM:
-                metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
-                convFlags |= CONV_FLAGS_EXPAND;
                 if (metadata.format == DXGI_FORMAT_B5G6R5_UNORM)
                     convFlags |= CONV_FLAGS_NOALPHA;
+                metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                convFlags |= CONV_FLAGS_EXPAND;
                 break;
 
             default:
