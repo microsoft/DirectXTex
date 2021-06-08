@@ -20,17 +20,21 @@
 #define NOHELP
 #pragma warning(pop)
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cwchar>
+#include <cwctype>
 #include <fstream>
 #include <iterator>
 #include <list>
 #include <locale>
 #include <memory>
 #include <new>
+#include <set>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -469,6 +473,90 @@ namespace
                 if (!FindNextFileW(hFile.get(), &findData))
                     break;
             }
+        }
+    }
+
+    void ProcessFileList(std::wifstream& inFile, std::list<SConversion>& files)
+    {
+        std::list<SConversion> flist;
+        std::set<std::wstring> excludes;
+        wchar_t fname[1024] = {};
+        for (;;)
+        {
+            inFile >> fname;
+            if (!inFile)
+                break;
+
+            if (*fname == L'#')
+            {
+                // Comment
+            }
+            else if (*fname == L'-')
+            {
+                if (flist.empty())
+                {
+                    wprintf(L"WARNING: Ignoring the line '%ls' in -flist\n", fname);
+                }
+                else
+                {
+                    if (wcspbrk(fname, L"?*") != nullptr)
+                    {
+                        std::list<SConversion> removeFiles;
+                        SearchForFiles(&fname[1], removeFiles, false);
+
+                        for (auto it : removeFiles)
+                        {
+                            _wcslwr_s(it.szSrc);
+                            excludes.insert(it.szSrc);
+                        }
+                    }
+                    else
+                    {
+                        std::wstring name = (fname + 1);
+                        std::transform(name.begin(), name.end(), name.begin(), towlower);
+                        excludes.insert(name);
+                    }
+                }
+            }
+            else if (wcspbrk(fname, L"?*") != nullptr)
+            {
+                SearchForFiles(fname, flist, false);
+            }
+            else
+            {
+                SConversion conv = {};
+                wcscpy_s(conv.szSrc, MAX_PATH, fname);
+                flist.push_back(conv);
+            }
+
+            inFile.ignore(1000, '\n');
+        }
+
+        inFile.close();
+
+        if (!excludes.empty())
+        {
+            // Remove any excluded files
+            for (auto it = flist.begin(); it != flist.end();)
+            {
+                std::wstring name = it->szSrc;
+                std::transform(name.begin(), name.end(), name.begin(), towlower);
+                auto item = it;
+                ++it;
+                if (excludes.find(name) != excludes.end())
+                {
+                    flist.erase(item);
+                }
+            }
+        }
+
+        if (flist.empty())
+        {
+            wprintf(L"WARNING: No file names found in -flist\n");
+        }
+        else
+        {
+            files.splice(files.end(), flist);
         }
     }
 
@@ -1070,37 +1158,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     wprintf(L"Error opening -flist file %ls\n", pValue);
                     return 1;
                 }
-                wchar_t fname[1024] = {};
-                for (;;)
-                {
-                    inFile >> fname;
-                    if (!inFile)
-                        break;
 
-                    if (*fname == L'#')
-                    {
-                        // Comment
-                    }
-                    else if (*fname == L'-')
-                    {
-                        wprintf(L"Command-line arguments not supported in -flist file\n");
-                        return 1;
-                    }
-                    else if (wcspbrk(fname, L"?*") != nullptr)
-                    {
-                        wprintf(L"Wildcards not supported in -flist file\n");
-                        return 1;
-                    }
-                    else
-                    {
-                        SConversion conv = {};
-                        wcscpy_s(conv.szSrc, MAX_PATH, fname);
-                        conversion.push_back(conv);
-                    }
-
-                    inFile.ignore(1000, '\n');
-                }
-                inFile.close();
+                ProcessFileList(inFile, conversion);
             }
             break;
 
