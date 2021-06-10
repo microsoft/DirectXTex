@@ -6,6 +6,15 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### June 9, 2021
+* Minor bug fix for metadata behavior when using ``DDS_FLAGS_NO_16BPP`` flag for B5G6R5 content
+* texdiag: added ``-c`` and ``-t`` switches for diff command
+* texconv: Fixed bug in ``-m`` switch handling when resizing changes the max mipmap count
+* texconv et al: improved ``-flist`` switch to support wildcards and file exclusions
+* texconv et al: Added 'BGR' alias to ``-f`` switch for the B8G8R8X8_UNORM format
+* WICTextureLoader / DDSTextureLoader12 updated to use typed enum bitmask flags for loadFlags parameter
+* Minor code review
+
 ### April 6, 2021
 * DDS reader updated to accept nVidia Texture Tool v1 single-channel and dual-channel files marked as RGB instead of LUMINANCE
 * Fixed TGA reader regression with files smaller than 26 bytes total
