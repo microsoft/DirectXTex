@@ -43,6 +43,8 @@
 
 #include "DirectXTex.h"
 
+#include <DirectXPackedVector.h>
+
 //Uncomment to add support for OpenEXR (.exr)
 //#define USE_OPENEXR
 
@@ -81,6 +83,8 @@ enum OPTIONS : uint32_t
     OPT_EXPAND_LUMINANCE,
     OPT_TARGET_PIXELX,
     OPT_TARGET_PIXELY,
+    OPT_DIFF_COLOR,
+    OPT_THRESHOLD,
     OPT_FILELIST,
     OPT_MAX
 };
@@ -130,6 +134,8 @@ const SValue g_pOptions[] =
     { L"xlum",      OPT_EXPAND_LUMINANCE },
     { L"targetx",   OPT_TARGET_PIXELX },
     { L"targety",   OPT_TARGET_PIXELY },
+    { L"c",         OPT_DIFF_COLOR },
+    { L"t",         OPT_THRESHOLD },
     { L"flist",     OPT_FILELIST },
     { nullptr,      0 }
 };
@@ -666,6 +672,8 @@ namespace
         wprintf(L"   -o <filename>       output filename\n");
         wprintf(L"   -l                  force output filename to lower case\n");
         wprintf(L"   -y                  overwrite existing output file (if any)\n");
+        wprintf(L"   -c <hex-RGB>        highlight difference color (defaults to off)\n");
+        wprintf(L"   -t <threshold>      highlight threshold (defaults to 0.25)\n");
         wprintf(L"\n                       (dumpbc only)\n");
         wprintf(L"   -targetx <num>      dump pixels at location x (defaults to all)\n");
         wprintf(L"   -targety <num>      dump pixels at location y (defaults to all)\n");
@@ -1384,6 +1392,8 @@ namespace
         const Image& image2,
         TEX_FILTER_FLAGS dwFilter,
         DXGI_FORMAT format,
+        uint32_t diffColor,
+        float threshold,
         ScratchImage& result)
     {
         if (!image1.pixels || !image2.pixels)
@@ -1429,9 +1439,14 @@ namespace
         if (!imageA || !imageB)
             return E_POINTER;
 
+        XMVECTOR colorValue = PackedVector::XMLoadColor(reinterpret_cast<const PackedVector::XMCOLOR*>(&diffColor));
+        colorValue = XMVectorSelect(g_XMIdentityR3, colorValue, g_XMSelect1110);
+
         ScratchImage diffImage;
         HRESULT hr = TransformImage(*imageA, [&](XMVECTOR* outPixels, const XMVECTOR * inPixels, size_t width, size_t y)
             {
+                XMVECTOR tolerance = XMVectorReplicate(threshold);
+
                 auto *inPixelsB = reinterpret_cast<XMVECTOR*>(imageB->pixels + (y*imageB->rowPitch));
 
                 for (size_t x = 0; x < width; ++x)
@@ -1441,17 +1456,26 @@ namespace
 
                     v1 = XMVectorSubtract(v1, v2);
                     v1 = XMVectorAbs(v1);
-
                     v1 = XMVectorSelect(g_XMIdentityR3, v1, g_XMSelect1110);
 
-                    *outPixels++ = v1;
+                    if (diffColor && XMVector3GreaterOrEqual(v1, tolerance))
+                    {
+                        *outPixels++ = colorValue;
+                    }
+                    else
+                    {
+                        *outPixels++ = v1;
+                    }
                 }
             }, (format == DXGI_FORMAT_R32G32B32A32_FLOAT) ? result : diffImage);
         if (FAILED(hr))
             return hr;
 
-        if (format == DXGI_FORMAT_R32G32B32A32_FLOAT)
+        if (format == diffImage.GetMetadata().format)
+        {
+            std::swap(diffImage, result);
             return S_OK;
+        }
 
         return Convert(diffImage.GetImages(), diffImage.GetImageCount(), diffImage.GetMetadata(), format, dwFilter, TEX_THRESHOLD_DEFAULT, result);
     }
@@ -3189,6 +3213,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     TEX_FILTER_FLAGS dwFilter = TEX_FILTER_DEFAULT;
     int pixelx = -1;
     int pixely = -1;
+    uint32_t diffColor = 0;
+    float threshold = 0.25f;
     DXGI_FORMAT diffFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
     uint32_t fileType = WIC_CODEC_BMP;
     wchar_t szOutputFile[MAX_PATH] = {};
@@ -3263,6 +3289,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_OUTPUTFILE:
             case OPT_TARGET_PIXELX:
             case OPT_TARGET_PIXELY:
+            case OPT_DIFF_COLOR:
+            case OPT_THRESHOLD:
             case OPT_FILELIST:
                 if (!*pValue)
                 {
@@ -3371,6 +3399,27 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 else if (swscanf_s(pValue, L"%d", &pixely) != 1)
                 {
                     wprintf(L"Invalid value for pixel y location (%ls)\n", pValue);
+                    return 1;
+                }
+                break;
+
+            case OPT_DIFF_COLOR:
+                if (swscanf_s(pValue, L"%x", &diffColor) != 1)
+                {
+                    printf("Invalid value specified with -c (%ls)\n", pValue);
+                    printf("\n");
+                    PrintUsage();
+                    return 1;
+                }
+                diffColor &= 0xFFFFFF;
+                break;
+
+            case OPT_THRESHOLD:
+                if (swscanf_s(pValue, L"%f", &threshold) != 1)
+                {
+                    printf("Invalid value specified with -t (%ls)\n", pValue);
+                    printf("\n");
+                    PrintUsage();
                     return 1;
                 }
                 break;
@@ -3491,7 +3540,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     wprintf(L"WARNING: ignoring all images but first one in each file\n");
 
                 ScratchImage diffImage;
-                hr = Difference(*image1->GetImage(0, 0, 0), *image2->GetImage(0, 0, 0), dwFilter, diffFormat, diffImage);
+                hr = Difference(*image1->GetImage(0, 0, 0), *image2->GetImage(0, 0, 0), dwFilter, diffFormat, diffColor, threshold, diffImage);
                 if (FAILED(hr))
                 {
                     wprintf(L"Failed diffing images (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
