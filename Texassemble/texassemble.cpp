@@ -2028,10 +2028,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 for (size_t j = 0; j < w; ++j)
                 {
-                    XMVECTOR pixel1 = XMVectorSelect(inPixels[j], g_XMZero, zc);
-                    pixel1 = XMVectorSelect(pixel1, g_XMOne, oc);
-                    outPixels[j] = XMVectorPermute(pixel1, inPixels2[j],
+                    XMVECTOR pixel = XMVectorPermute(inPixels[j], inPixels2[j],
                         permuteElements[0], permuteElements[1], permuteElements[2], permuteElements[3]);
+                    pixel = XMVectorSelect(pixel, g_XMZero, zc);
+                    outPixels[j] = XMVectorSelect(pixel, g_XMOne, oc);
                 }
             }, result);
         if (FAILED(hr))
