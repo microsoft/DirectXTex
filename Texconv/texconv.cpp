@@ -2458,10 +2458,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                     for (size_t j = 0; j < w; ++j)
                     {
-                        XMVECTOR pixel = XMVectorSelect(inPixels[j], g_XMZero, zc);
-                        pixel = XMVectorSelect(pixel, g_XMOne, oc);
-                        outPixels[j] = XMVectorSwizzle(pixel,
+                        XMVECTOR pixel = XMVectorSwizzle(inPixels[j],
                             swizzleElements[0], swizzleElements[1], swizzleElements[2], swizzleElements[3]);
+                        pixel = XMVectorSelect(pixel, g_XMZero, zc);
+                        outPixels[j] = XMVectorSelect(pixel, g_XMOne, oc);
                     }
                 }, *timage);
             if (FAILED(hr))

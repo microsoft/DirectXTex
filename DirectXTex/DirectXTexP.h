@@ -144,7 +144,11 @@
 #include <malloc.h>
 
 #ifdef WIN32
+#ifdef NTDDI_WIN10_FE
+#include <ole2.h>
+#else
 #include <Ole2.h>
+#endif
 #include <wincodec.h>
 #include <wrl\client.h>
 #else
