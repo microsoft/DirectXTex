@@ -1108,7 +1108,7 @@ namespace
             return false;
     }
 
-    void FitPowerOf2(size_t origx, size_t origy, size_t& targetx, size_t& targety, size_t maxsize)
+    void FitPowerOf2(size_t origx, size_t origy, _Inout_ size_t& targetx, _Inout_ size_t& targety, size_t maxsize)
     {
         float origAR = float(origx) / float(origy);
 
