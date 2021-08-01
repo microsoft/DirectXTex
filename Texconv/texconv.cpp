@@ -425,22 +425,22 @@ namespace
 
     const SValue<uint32_t> g_pSaveFileTypes[] =   // valid formats to write to
     {
-        { L"BMP",   WIC_CODEC_BMP  },
-        { L"JPG",   WIC_CODEC_JPEG },
-        { L"JPEG",  WIC_CODEC_JPEG },
-        { L"PNG",   WIC_CODEC_PNG  },
-        { L"DDS",   CODEC_DDS      },
-        { L"TGA",   CODEC_TGA      },
-        { L"HDR",   CODEC_HDR      },
-        { L"TIF",   WIC_CODEC_TIFF },
-        { L"TIFF",  WIC_CODEC_TIFF },
-        { L"WDP",   WIC_CODEC_WMP  },
-        { L"HDP",   CODEC_HDP      },
-        { L"JXR",   CODEC_JXR      },
-        { L"PPM",   CODEC_PPM      },
-        { L"PFM",   CODEC_PFM      },
+        { L"bmp",   WIC_CODEC_BMP  },
+        { L"jpg",   WIC_CODEC_JPEG },
+        { L"jpeg",  WIC_CODEC_JPEG },
+        { L"png",   WIC_CODEC_PNG  },
+        { L"dds",   CODEC_DDS      },
+        { L"tga",   CODEC_TGA      },
+        { L"hdr",   CODEC_HDR      },
+        { L"tif",   WIC_CODEC_TIFF },
+        { L"tiff",  WIC_CODEC_TIFF },
+        { L"wdp",   WIC_CODEC_WMP  },
+        { L"hdp",   CODEC_HDP      },
+        { L"jxr",   CODEC_JXR      },
+        { L"ppm",   CODEC_PPM      },
+        { L"pfm",   CODEC_PFM      },
     #ifdef USE_OPENEXR
-        { L"EXR",   CODEC_EXR      },
+        { L"exr",   CODEC_EXR      },
     #endif
         { nullptr,  CODEC_DDS      }
     };

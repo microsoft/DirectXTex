@@ -335,37 +335,37 @@ const SValue g_pFilters[] =
 
 const SValue g_pDumpFileTypes[] =
 {
-    { L"BMP",   WIC_CODEC_BMP  },
-    { L"JPG",   WIC_CODEC_JPEG },
-    { L"JPEG",  WIC_CODEC_JPEG },
-    { L"PNG",   WIC_CODEC_PNG  },
-    { L"TGA",   CODEC_TGA      },
-    { L"HDR",   CODEC_HDR      },
-    { L"TIF",   WIC_CODEC_TIFF },
-    { L"TIFF",  WIC_CODEC_TIFF },
-    { L"JXR",   WIC_CODEC_WMP  },
+    { L"bmp",   WIC_CODEC_BMP  },
+    { L"jpg",   WIC_CODEC_JPEG },
+    { L"jpeg",  WIC_CODEC_JPEG },
+    { L"png",   WIC_CODEC_PNG  },
+    { L"tga",   CODEC_TGA      },
+    { L"hdr",   CODEC_HDR      },
+    { L"tif",   WIC_CODEC_TIFF },
+    { L"tiff",  WIC_CODEC_TIFF },
+    { L"jxr",   WIC_CODEC_WMP  },
 #ifdef USE_OPENEXR
-    { L"EXR",   CODEC_EXR      },
+    { L"exr",   CODEC_EXR      },
 #endif
     { nullptr,  CODEC_DDS      }
 };
 
 const SValue g_pExtFileTypes[] =
 {
-    { L".BMP",  WIC_CODEC_BMP },
-    { L".JPG",  WIC_CODEC_JPEG },
-    { L".JPEG", WIC_CODEC_JPEG },
-    { L".PNG",  WIC_CODEC_PNG },
-    { L".DDS",  CODEC_DDS },
-    { L".TGA",  CODEC_TGA },
-    { L".HDR",  CODEC_HDR },
-    { L".TIF",  WIC_CODEC_TIFF },
-    { L".TIFF", WIC_CODEC_TIFF },
-    { L".WDP",  WIC_CODEC_WMP },
-    { L".HDP",  WIC_CODEC_WMP },
-    { L".JXR",  WIC_CODEC_WMP },
+    { L".bmp",  WIC_CODEC_BMP },
+    { L".jpg",  WIC_CODEC_JPEG },
+    { L".jpeg", WIC_CODEC_JPEG },
+    { L".png",  WIC_CODEC_PNG },
+    { L".dds",  CODEC_DDS },
+    { L".tga",  CODEC_TGA },
+    { L".hdr",  CODEC_HDR },
+    { L".tif",  WIC_CODEC_TIFF },
+    { L".tiff", WIC_CODEC_TIFF },
+    { L".wdp",  WIC_CODEC_WMP },
+    { L".hdp",  WIC_CODEC_WMP },
+    { L".jxr",  WIC_CODEC_WMP },
 #ifdef USE_OPENEXR
-    { L"EXR",   CODEC_EXR },
+    { L"exr",   CODEC_EXR },
 #endif
     { nullptr,  CODEC_DDS }
 };
