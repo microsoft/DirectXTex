@@ -6,6 +6,14 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### August 1, 2021
+* Fixed weighting bug in custom linear filtering for wrap/mirroring
+* Added VS 2022 Preview projects
+* texconv: Made default output extension to be lower-case like most Windows applications
+* texconv: updated colorspace rotation names for -rotatecolor switch
+* texassemble, texconv: Order of operations fix for -swizzle using 0, 1
+* Minor code review
+
 ### June 9, 2021
 * Minor bug fix for metadata behavior when using ``DDS_FLAGS_NO_16BPP`` flag for B5G6R5 content
 * texdiag: added ``-c`` and ``-t`` switches for diff command
