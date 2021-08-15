@@ -1656,9 +1656,7 @@ bool DirectX::_StoreScanline(
             for (size_t icount = 0; icount < (size - sizeof(XMHALF4) + 1); icount += sizeof(XMHALF4))
             {
                 if (sPtr >= ePtr) break;
-                XMVECTOR v = *sPtr++;
-                v = XMVectorClamp(v, g_HalfMin, g_HalfMax);
-                XMStoreHalf4(dPtr++, v);
+                XMStoreHalf4(dPtr++, *sPtr++);
             }
             return true;
         }
@@ -1849,9 +1847,7 @@ bool DirectX::_StoreScanline(
             for (size_t icount = 0; icount < (size - sizeof(HALF) + 1); icount += sizeof(HALF))
             {
                 if (sPtr >= ePtr) break;
-                float v = XMVectorGetX(*sPtr++);
-                v = std::max<float>(std::min<float>(v, 65504.f), -65504.f);
-                *(dPtr++) = XMConvertFloatToHalf(v);
+                *(dPtr++) = XMConvertFloatToHalf(XMVectorGetX(*sPtr++));
             }
             return true;
         }
@@ -3706,6 +3702,24 @@ void DirectX::_ConvertScanline(
             {
                 *ptr = XMColorRGBToSRGB(*ptr);
             }
+        }
+    }
+
+    // Half-float sanitization
+    if (!(out->flags & CONVF_DEPTH) && (out->flags & CONVF_FLOAT) && out->datasize == 16 && (!(flags & TEX_FILTER_FLOAT16_SATURATE_TO_INF) || !(flags & TEX_FILTER_FLOAT16_KEEP_NANS)))
+    {
+        XMVECTOR* ptr = pBuffer;
+        for (size_t i = 0; i < count; ++i, ++ptr)
+        {
+            XMVECTOR v = *ptr;
+
+            if (!(flags & TEX_FILTER_FLOAT16_SATURATE_TO_INF))
+                v = XMVectorClamp(v, g_HalfMin, g_HalfMax);
+
+            if (!(flags & TEX_FILTER_FLOAT16_KEEP_NANS))
+                v = XMVectorSelect(v, XMVectorZero(), XMVectorIsNaN(v));
+
+            *ptr = v;
         }
     }
 }
