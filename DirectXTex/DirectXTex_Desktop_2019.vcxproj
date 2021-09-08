@@ -137,7 +137,6 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
@@ -170,7 +169,6 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
@@ -203,7 +201,6 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
@@ -237,7 +234,6 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
@@ -272,7 +268,6 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
@@ -306,7 +301,6 @@
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
