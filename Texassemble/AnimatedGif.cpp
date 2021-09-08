@@ -4,7 +4,7 @@
 // Code for converting an animated GIF to a series of texture frames.
 //
 // References:
-//   https://code.msdn.microsoft.com/windowsapps/Windows-Imaging-Component-65abbc6a/
+//   https://github.com/microsoft/Windows-classic-samples/tree/main/Samples/Win7Samples/multimedia/wic/wicanimatedgif
 //   http://www.imagemagick.org/Usage/anim_basics/#dispose
 //
 // Copyright (c) Microsoft Corporation.
