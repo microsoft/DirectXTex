@@ -246,7 +246,6 @@
       <ConformanceMode>true</ConformanceMode>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalOptions>/Zc:twoPhase- %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>5204</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <FXCompile>
@@ -272,7 +271,6 @@
       <ConformanceMode>true</ConformanceMode>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalOptions>/Zc:twoPhase- %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>5204</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <FXCompile>
@@ -298,7 +296,6 @@
       <ConformanceMode>true</ConformanceMode>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalOptions>/Zc:twoPhase- %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>5204</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <FXCompile>
@@ -324,7 +321,6 @@
       <ConformanceMode>true</ConformanceMode>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalOptions>/Zc:twoPhase- %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>5204</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <FXCompile>
@@ -350,7 +346,6 @@
       <ConformanceMode>true</ConformanceMode>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalOptions>/Zc:twoPhase- %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>5204</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <FXCompile>
@@ -376,7 +371,6 @@
       <ConformanceMode>true</ConformanceMode>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalOptions>/Zc:twoPhase- %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>5204</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <FXCompile>
@@ -399,7 +393,6 @@
       <ConformanceMode>true</ConformanceMode>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalOptions>/Zc:twoPhase- %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>5204</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <FXCompile>
@@ -422,7 +415,6 @@
       <ConformanceMode>true</ConformanceMode>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalOptions>/Zc:twoPhase- %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>5204</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <FXCompile>
@@ -445,7 +437,6 @@
       <ConformanceMode>true</ConformanceMode>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalOptions>/Zc:twoPhase- %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>5204</DisableSpecificWarnings>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <FXCompile>
