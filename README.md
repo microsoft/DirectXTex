@@ -93,7 +93,7 @@ For the latest version of DirectXTex, bug reports, etc. please visit the project
 
 For questions, consider using [Stack Overflow](https://stackoverflow.com/questions/tagged/directxtk) with the *directxtk* tag, or the [DirectX Discord Server](https://discord.gg/directx) in the *dx12-developers* or *dx9-dx11-developers* channel.
 
-For bug reports and feature requests, please use GitHub [issues](https://github.com/microsoft/DirectXTK12/issues) for this project.
+For bug reports and feature requests, please use GitHub [issues](https://github.com/microsoft/DirectXTex/issues) for this project.
 
 ## Contributing
 
