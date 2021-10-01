@@ -6,6 +6,9 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### September 28, 2021
+* Minor code and project cleanup
+
 ### August 1, 2021
 * Fixed weighting bug in custom linear filtering for wrap/mirroring
 * Added VS 2022 Preview projects
