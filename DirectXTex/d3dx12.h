@@ -3312,16 +3312,16 @@ inline bool operator==( const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC &a, const D3D
 // Helper classes for creating new style state objects out of an arbitrary set of subobjects.
 // Uses STL
 //
-// Start by instantiating CD3DX12_STATE_OBJECT_DESC (see it's public methods).
+// Start by instantiating CD3DX12_STATE_OBJECT_DESC (see its public methods).
 // One of its methods is CreateSubobject(), which has a comment showing a couple of options for
 // defining subobjects using the helper classes for each subobject (CD3DX12_DXIL_LIBRARY_SUBOBJECT
-// etc.). The subobject helpers each have methods specific to the subobject for configuring it's
+// etc.). The subobject helpers each have methods specific to the subobject for configuring its
 // contents.
 //
 //================================================================================================
 #include <list>
-#include <vector>
 #include <string>
+#include <vector>
 #include <memory>
 #include <wrl/client.h>
 
@@ -3345,7 +3345,7 @@ public:
         m_SubobjectArray.clear();
         m_SubobjectArray.reserve(m_Desc.NumSubobjects);
         // Flatten subobjects into an array (each flattened subobject still has a
-        // member that's a pointer to it's desc that's not flattened)
+        // member that's a pointer to its desc that's not flattened)
         for (auto Iter = m_SubobjectList.begin();
             Iter != m_SubobjectList.end(); Iter++)
         {
@@ -3394,7 +3394,7 @@ public:
     // variables instead, passing the state object desc that should point to it into the helper
     // constructor (or call mySubobjectHelper.AddToStateObject(Collection1)).
     // In this alternative scenario, the user must keep the subobject alive as long as the state
-    // object it is associated with is alive, else it's pointer references will be stale.
+    // object it is associated with is alive, else its pointer references will be stale.
     // e.g.
     //
     //    CD3DX12_STATE_OBJECT_DESC RaytracingState2(D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE);
