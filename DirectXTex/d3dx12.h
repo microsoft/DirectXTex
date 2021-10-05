@@ -217,8 +217,6 @@ struct CD3DX12_DEPTH_STENCIL_DESC : public D3D12_DEPTH_STENCIL_DESC
 };
 
 //------------------------------------------------------------------------------------------------
-// Requires the Windows 10 Creators Update SDK (15063)
-#if defined(NTDDI_WIN10_RS2) && (NTDDI_VERSION >= NTDDI_WIN10_RS2)
 struct CD3DX12_DEPTH_STENCIL_DESC1 : public D3D12_DEPTH_STENCIL_DESC1
 {
     CD3DX12_DEPTH_STENCIL_DESC1() = default;
@@ -310,7 +308,6 @@ struct CD3DX12_DEPTH_STENCIL_DESC1 : public D3D12_DEPTH_STENCIL_DESC1
         return D;
     }
 };
-#endif // NTDDI_WIN10_RS2
 
 //------------------------------------------------------------------------------------------------
 struct CD3DX12_BLEND_DESC : public D3D12_BLEND_DESC
@@ -575,7 +572,6 @@ struct CD3DX12_RANGE : public D3D12_RANGE
 };
 
 //------------------------------------------------------------------------------------------------
-#if defined(NTDDI_WIN10_RS2) && (NTDDI_VERSION >= NTDDI_WIN10_RS2)
 struct CD3DX12_RANGE_UINT64 : public D3D12_RANGE_UINT64
 {
     CD3DX12_RANGE_UINT64() = default;
@@ -615,7 +611,6 @@ struct CD3DX12_SUBRESOURCE_RANGE_UINT64 : public D3D12_SUBRESOURCE_RANGE_UINT64
         Range.End = end;
     }
 };
-#endif // NTDDI_WIN10_RS2
 
 //------------------------------------------------------------------------------------------------
 struct CD3DX12_SHADER_BYTECODE : public D3D12_SHADER_BYTECODE
@@ -1828,8 +1823,6 @@ inline bool operator!=( const D3D12_RESOURCE_DESC& l, const D3D12_RESOURCE_DESC&
 { return !( l == r ); }
 
 //------------------------------------------------------------------------------------------------
-// Requires the Windows 10 SDK (19041)
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
 struct CD3DX12_RESOURCE_DESC1 : public D3D12_RESOURCE_DESC1
 {
     CD3DX12_RESOURCE_DESC1() = default;
@@ -1956,11 +1949,8 @@ inline bool operator==( const D3D12_RESOURCE_DESC1& l, const D3D12_RESOURCE_DESC
 }
 inline bool operator!=( const D3D12_RESOURCE_DESC1& l, const D3D12_RESOURCE_DESC1& r ) noexcept
 { return !( l == r ); }
-#endif // NTDDI_WIN10_VB
 
 //------------------------------------------------------------------------------------------------
-// Requires the Windows 10 Fall Creators Update SDK (16299)
-#if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
 struct CD3DX12_VIEW_INSTANCING_DESC : public D3D12_VIEW_INSTANCING_DESC
 {
     CD3DX12_VIEW_INSTANCING_DESC() = default;
@@ -1983,7 +1973,6 @@ struct CD3DX12_VIEW_INSTANCING_DESC : public D3D12_VIEW_INSTANCING_DESC
         Flags = InFlags;
     }
 };
-#endif // NTDDI_WIN10_RS3
 
 //------------------------------------------------------------------------------------------------
 // Row-by-row memcpy
@@ -2430,7 +2419,6 @@ inline HRESULT D3DX12SerializeVersionedRootSignature(
 }
 
 //------------------------------------------------------------------------------------------------
-#if defined(NTDDI_WIN10_RS2) && (NTDDI_VERSION >= NTDDI_WIN10_RS2)
 struct CD3DX12_RT_FORMAT_ARRAY : public D3D12_RT_FORMAT_ARRAY
 {
     CD3DX12_RT_FORMAT_ARRAY() = default;
@@ -2485,10 +2473,8 @@ typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< D3D12_STREAM_OUTPUT_DESC,      
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< D3D12_SHADER_BYTECODE,              D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_HS>                                CD3DX12_PIPELINE_STATE_STREAM_HS;
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< D3D12_SHADER_BYTECODE,              D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DS>                                CD3DX12_PIPELINE_STATE_STREAM_DS;
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< D3D12_SHADER_BYTECODE,              D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS>                                CD3DX12_PIPELINE_STATE_STREAM_PS;
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< D3D12_SHADER_BYTECODE,              D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_AS>                                CD3DX12_PIPELINE_STATE_STREAM_AS;
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< D3D12_SHADER_BYTECODE,              D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_MS>                                CD3DX12_PIPELINE_STATE_STREAM_MS;
-#endif
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< D3D12_SHADER_BYTECODE,              D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS>                                CD3DX12_PIPELINE_STATE_STREAM_CS;
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< CD3DX12_BLEND_DESC,                 D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND,          CD3DX12_DEFAULT>   CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC;
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< CD3DX12_DEPTH_STENCIL_DESC,         D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL,  CD3DX12_DEFAULT>   CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL;
@@ -2499,9 +2485,7 @@ typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< D3D12_RT_FORMAT_ARRAY,         
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< DXGI_SAMPLE_DESC,                   D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC,    DefaultSampleDesc> CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_DESC;
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< UINT,                               D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_MASK,    DefaultSampleMask> CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_MASK;
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< D3D12_CACHED_PIPELINE_STATE,        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CACHED_PSO>                        CD3DX12_PIPELINE_STATE_STREAM_CACHED_PSO;
-#if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< CD3DX12_VIEW_INSTANCING_DESC,       D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VIEW_INSTANCING, CD3DX12_DEFAULT>  CD3DX12_PIPELINE_STATE_STREAM_VIEW_INSTANCING;
-#endif
 
 //------------------------------------------------------------------------------------------------
 // Stream Parser Helpers
@@ -2522,10 +2506,8 @@ struct ID3DX12PipelineParserCallbacks
     virtual void DSCb(const D3D12_SHADER_BYTECODE&) {}
     virtual void PSCb(const D3D12_SHADER_BYTECODE&) {}
     virtual void CSCb(const D3D12_SHADER_BYTECODE&) {}
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
     virtual void ASCb(const D3D12_SHADER_BYTECODE&) {}
     virtual void MSCb(const D3D12_SHADER_BYTECODE&) {}
-#endif
     virtual void BlendStateCb(const D3D12_BLEND_DESC&) {}
     virtual void DepthStencilStateCb(const D3D12_DEPTH_STENCIL_DESC&) {}
     virtual void DepthStencilState1Cb(const D3D12_DEPTH_STENCIL_DESC1&) {}
@@ -2534,9 +2516,7 @@ struct ID3DX12PipelineParserCallbacks
     virtual void RTVFormatsCb(const D3D12_RT_FORMAT_ARRAY&) {}
     virtual void SampleDescCb(const DXGI_SAMPLE_DESC&) {}
     virtual void SampleMaskCb(UINT) {}
-#if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
     virtual void ViewInstancingCb(const D3D12_VIEW_INSTANCING_DESC&) {}
-#endif
     virtual void CachedPSOCb(const D3D12_CACHED_PIPELINE_STATE&) {}
 
     // Error Callbacks
@@ -2547,7 +2527,6 @@ struct ID3DX12PipelineParserCallbacks
     virtual ~ID3DX12PipelineParserCallbacks() = default;
 };
 
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
 struct D3DX12_MESH_SHADER_PIPELINE_STATE_DESC
 {
     ID3D12RootSignature*          pRootSignature;
@@ -2686,9 +2665,7 @@ struct CD3DX12_PIPELINE_STATE_STREAM2
         return D;
     }
 };
-#endif // NTDDI_WIN10_VB
 
-#if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
 // CD3DX12_PIPELINE_STATE_STREAM1 Works on OS Build 16299+ (where there is a new view instancing subobject).
 // Use CD3DX12_PIPELINE_STATE_STREAM for OS Build 15063+ support.
 struct CD3DX12_PIPELINE_STATE_STREAM1
@@ -2718,7 +2695,6 @@ struct CD3DX12_PIPELINE_STATE_STREAM1
         , CachedPSO(Desc.CachedPSO)
         , ViewInstancingDesc(CD3DX12_VIEW_INSTANCING_DESC(CD3DX12_DEFAULT()))
     {}
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
     CD3DX12_PIPELINE_STATE_STREAM1(const D3DX12_MESH_SHADER_PIPELINE_STATE_DESC& Desc) noexcept
         : Flags(Desc.Flags)
         , NodeMask(Desc.NodeMask)
@@ -2735,7 +2711,6 @@ struct CD3DX12_PIPELINE_STATE_STREAM1
         , CachedPSO(Desc.CachedPSO)
         , ViewInstancingDesc(CD3DX12_VIEW_INSTANCING_DESC(CD3DX12_DEFAULT()))
     {}
-#endif
     CD3DX12_PIPELINE_STATE_STREAM1(const D3D12_COMPUTE_PIPELINE_STATE_DESC& Desc) noexcept
         : Flags(Desc.Flags)
         , NodeMask(Desc.NodeMask)
@@ -2804,9 +2779,8 @@ struct CD3DX12_PIPELINE_STATE_STREAM1
         return D;
     }
 };
-#endif // NTDDI_WIN10_RS3
 
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
+
 struct CD3DX12_PIPELINE_MESH_STATE_STREAM
 {
     CD3DX12_PIPELINE_MESH_STATE_STREAM() = default;
@@ -2863,7 +2837,6 @@ struct CD3DX12_PIPELINE_MESH_STATE_STREAM
         return D;
     }
 };
-#endif // NTDDI_WIN10_VB
 
 // CD3DX12_PIPELINE_STATE_STREAM works on OS Build 15063+ but does not support new subobject(s) added in OS Build 16299+.
 // See CD3DX12_PIPELINE_STATE_STREAM1 for instance.
@@ -2958,7 +2931,6 @@ struct CD3DX12_PIPELINE_STATE_STREAM
     }
 };
 
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
 struct CD3DX12_PIPELINE_STATE_STREAM2_PARSE_HELPER : public ID3DX12PipelineParserCallbacks
 {
     CD3DX12_PIPELINE_STATE_STREAM2 PipelineStream;
@@ -3018,15 +2990,11 @@ struct CD3DX12_PIPELINE_STATE_STREAM2_PARSE_HELPER : public ID3DX12PipelineParse
 private:
     bool SeenDSS;
 };
-#endif // NTDDI_WIN10_VB
+
 
 struct CD3DX12_PIPELINE_STATE_STREAM_PARSE_HELPER : public ID3DX12PipelineParserCallbacks
 {
-#if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
     CD3DX12_PIPELINE_STATE_STREAM1 PipelineStream;
-#else
-    CD3DX12_PIPELINE_STATE_STREAM PipelineStream;
-#endif
     CD3DX12_PIPELINE_STATE_STREAM_PARSE_HELPER() noexcept
         : SeenDSS(false)
     {
@@ -3075,9 +3043,7 @@ struct CD3DX12_PIPELINE_STATE_STREAM_PARSE_HELPER : public ID3DX12PipelineParser
     void RTVFormatsCb(const D3D12_RT_FORMAT_ARRAY& RTVFormats) override {PipelineStream.RTVFormats = RTVFormats;}
     void SampleDescCb(const DXGI_SAMPLE_DESC& SampleDesc) override {PipelineStream.SampleDesc = SampleDesc;}
     void SampleMaskCb(UINT SampleMask) override {PipelineStream.SampleMask = SampleMask;}
-#if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
     void ViewInstancingCb(const D3D12_VIEW_INSTANCING_DESC& ViewInstancingDesc) override {PipelineStream.ViewInstancingDesc = CD3DX12_VIEW_INSTANCING_DESC(ViewInstancingDesc);}
-#endif
     void CachedPSOCb(const D3D12_CACHED_PIPELINE_STATE& CachedPSO) override {PipelineStream.CachedPSO = CachedPSO;}
 
 private:
@@ -3154,7 +3120,6 @@ inline HRESULT D3DX12ParsePipelineStream(const D3D12_PIPELINE_STATE_STREAM_DESC&
             pCallbacks->CSCb(*reinterpret_cast<decltype(CD3DX12_PIPELINE_STATE_STREAM::CS)*>(pStream));
             SizeOfSubobject = sizeof(CD3DX12_PIPELINE_STATE_STREAM::CS);
             break;
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
         case D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_AS:
             pCallbacks->ASCb(*reinterpret_cast<decltype(CD3DX12_PIPELINE_STATE_STREAM2::AS)*>(pStream));
             SizeOfSubobject = sizeof(CD3DX12_PIPELINE_STATE_STREAM2::AS);
@@ -3163,7 +3128,6 @@ inline HRESULT D3DX12ParsePipelineStream(const D3D12_PIPELINE_STATE_STREAM_DESC&
             pCallbacks->MSCb(*reinterpret_cast<decltype(CD3DX12_PIPELINE_STATE_STREAM2::MS)*>(pStream));
             SizeOfSubobject = sizeof(CD3DX12_PIPELINE_STATE_STREAM2::MS);
             break;
-#endif
         case D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_STREAM_OUTPUT:
             pCallbacks->StreamOutputCb(*reinterpret_cast<decltype(CD3DX12_PIPELINE_STATE_STREAM::StreamOutput)*>(pStream));
             SizeOfSubobject = sizeof(CD3DX12_PIPELINE_STATE_STREAM::StreamOutput);
@@ -3224,12 +3188,10 @@ inline HRESULT D3DX12ParsePipelineStream(const D3D12_PIPELINE_STATE_STREAM_DESC&
             pCallbacks->FlagsCb(*reinterpret_cast<decltype(CD3DX12_PIPELINE_STATE_STREAM::Flags)*>(pStream));
             SizeOfSubobject = sizeof(CD3DX12_PIPELINE_STATE_STREAM::Flags);
             break;
-#if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
         case D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VIEW_INSTANCING:
             pCallbacks->ViewInstancingCb(*reinterpret_cast<decltype(CD3DX12_PIPELINE_STATE_STREAM1::ViewInstancingDesc)*>(pStream));
             SizeOfSubobject = sizeof(CD3DX12_PIPELINE_STATE_STREAM1::ViewInstancingDesc);
             break;
-#endif
         default:
             pCallbacks->ErrorUnknownSubobject(SubobjectType);
             return E_INVALIDARG;
@@ -3238,10 +3200,7 @@ inline HRESULT D3DX12ParsePipelineStream(const D3D12_PIPELINE_STATE_STREAM_DESC&
 
     return S_OK;
 }
-#endif // NTDDI_WIN10_RS2
 
-// Requires the Windows 10 October 2018 Update SDK (17763)
-#if defined(NTDDI_WIN10_RS5) && (NTDDI_VERSION >= NTDDI_WIN10_RS5)
 //------------------------------------------------------------------------------------------------
 inline bool operator==( const D3D12_CLEAR_VALUE &a, const D3D12_CLEAR_VALUE &b) noexcept
 {
@@ -3511,9 +3470,7 @@ private:
     friend class CD3DX12_HIT_GROUP_SUBOBJECT;
     friend class CD3DX12_RAYTRACING_SHADER_CONFIG_SUBOBJECT;
     friend class CD3DX12_RAYTRACING_PIPELINE_CONFIG_SUBOBJECT;
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
     friend class CD3DX12_RAYTRACING_PIPELINE_CONFIG1_SUBOBJECT;
-#endif
     friend class CD3DX12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT;
     friend class CD3DX12_LOCAL_ROOT_SIGNATURE_SUBOBJECT;
     friend class CD3DX12_STATE_OBJECT_CONFIG_SUBOBJECT;
@@ -3900,7 +3857,6 @@ private:
 };
 
 //------------------------------------------------------------------------------------------------
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
 class CD3DX12_RAYTRACING_PIPELINE_CONFIG1_SUBOBJECT
     : public CD3DX12_STATE_OBJECT_DESC::SUBOBJECT_HELPER_BASE
 {
@@ -3934,7 +3890,6 @@ private:
     void* Data() noexcept override { return &m_Desc; }
     D3D12_RAYTRACING_PIPELINE_CONFIG1 m_Desc;
 };
-#endif // NTDDI_WIN10_VB
 
 //------------------------------------------------------------------------------------------------
 class CD3DX12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT
@@ -4073,7 +4028,6 @@ private:
 };
 
 #endif // #ifndef D3DX12_NO_STATE_OBJECT_HELPERS
-#endif // NTDDI_WIN10_RS5
 
 #endif // defined( __cplusplus )
 
