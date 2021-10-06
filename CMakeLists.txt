@@ -112,6 +112,10 @@ endif()
 
 add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
 
+if(BUILD_DX11 AND WIN32)
+   target_include_directories(${PROJECT_NAME} PRIVATE DirectXTex/Shaders/Compiled)
+endif()
+
 source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
