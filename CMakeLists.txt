@@ -97,15 +97,19 @@ if(ENABLE_OPENEXR_SUPPORT)
 endif()
 
 if(BUILD_DX11 AND WIN32)
+    set(COMPILED_SHADERS ${CMAKE_CURRENT_BINARY_DIR}/Shaders/Compiled)
+    file(MAKE_DIRECTORY ${COMPILED_SHADERS})
+
     set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
-        DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc)
+        ${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc)
 
    add_custom_command(
-       OUTPUT "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc"
+       OUTPUT "${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc"
        MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
        DEPENDS ${SHADER_SOURCES}
        COMMENT "Generating HLSL shaders..."
-       COMMAND "CompileShaders.cmd"
+       COMMAND set CompileShadersOutput=${COMPILED_SHADERS}
+       COMMAND CompileShaders.cmd
        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
        USES_TERMINAL)
 endif()
@@ -113,7 +117,7 @@ endif()
 add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
 
 if(BUILD_DX11 AND WIN32)
-   target_include_directories(${PROJECT_NAME} PRIVATE DirectXTex/Shaders/Compiled)
+   target_include_directories(${PROJECT_NAME} PRIVATE ${COMPILED_SHADERS})
 endif()
 
 source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
