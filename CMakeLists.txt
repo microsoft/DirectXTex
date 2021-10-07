@@ -28,6 +28,8 @@ option(BUILD_XBOX_EXTS_SCARLETT "Build Xbox library extensions for Xbox Series X
 
 option(ENABLE_CODE_ANALYSIS "Use Static Code Analysis on build" OFF)
 
+option(USE_PREBUILT_SHADERS "Use externally built HLSL shaders" OFF)
+
 # Includes the functions for loading/saving OpenEXR files at runtime
 # NOTE requires adding DirectXTexEXR.h/.cpp source files (vcpkg does this automatically)
 option(ENABLE_OPENEXR_SUPPORT "Build with OpenEXR support" OFF)
@@ -119,20 +121,35 @@ if(ENABLE_OPENEXR_SUPPORT)
 endif()
 
 if(BUILD_DX11 AND WIN32)
-    set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
-        DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc)
+    if (NOT COMPILED_SHADERS)
+        if (USE_PREBUILT_SHADERS)
+            message(FATAL_ERROR "ERROR: Using prebuilt shaders requires the COMPILED_SHADERS variable is set")
+        endif()
+        set(COMPILED_SHADERS ${CMAKE_CURRENT_BINARY_DIR}/Shaders/Compiled)
+        file(MAKE_DIRECTORY ${COMPILED_SHADERS})
+    endif()
 
-   add_custom_command(
-       OUTPUT "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/Compiled/BC6HEncode_EncodeBlockCS.inc"
-       MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
-       DEPENDS ${SHADER_SOURCES}
-       COMMENT "Generating HLSL shaders..."
-       COMMAND "CompileShaders.cmd"
-       WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
-       USES_TERMINAL)
+    set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
+        ${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc)
+
+    if (NOT USE_PREBUILT_SHADERS)
+        add_custom_command(
+            OUTPUT "${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc"
+            MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
+            DEPENDS ${SHADER_SOURCES}
+            COMMENT "Generating HLSL shaders..."
+            COMMAND set CompileShadersOutput=${COMPILED_SHADERS}
+            COMMAND CompileShaders.cmd
+            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
+            USES_TERMINAL)
+    endif()
 endif()
 
 add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
+
+if(BUILD_DX11 AND WIN32)
+   target_include_directories(${PROJECT_NAME} PRIVATE ${COMPILED_SHADERS})
+endif()
 
 source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 

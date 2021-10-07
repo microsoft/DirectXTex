@@ -47,6 +47,7 @@
 #endif
 
 #define D3DX12_NO_STATE_OBJECT_HELPERS
+#define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
 #ifdef WIN32
 #include "d3dx12.h"
 #else
