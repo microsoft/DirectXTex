@@ -1,4 +1,4 @@
-![DirectX Logo](https://github.com/Microsoft/DirectXTex/wiki/X_jpg.jpg)
+![DirectX Logo](https://raw.githubusercontent.com/wiki/Microsoft/DirectXTex/X_jpg.jpg)
 
 # DirectXTex texture processing library
 
