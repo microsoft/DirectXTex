@@ -62,7 +62,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    enum COMMANDS
+    enum COMMANDS : uint32_t
     {
         CMD_CUBE = 1,
         CMD_VOLUME,

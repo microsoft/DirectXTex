@@ -55,7 +55,7 @@
 
 using namespace DirectX;
 
-enum COMMANDS
+enum COMMANDS : uint32_t
 {
     CMD_INFO = 1,
     CMD_ANALYZE,
