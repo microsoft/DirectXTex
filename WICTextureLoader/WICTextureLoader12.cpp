@@ -28,6 +28,7 @@
 #include <cstring>
 #include <iterator>
 #include <new>
+#include <tuple>
 
 #include <wincodec.h>
 
@@ -469,7 +470,7 @@ namespace
                         sRGB = (loadFlags & WIC_LOADER_SRGB_DEFAULT) != 0;
                     }
 
-                    (void)PropVariantClear(&value);
+                    std::ignore = PropVariantClear(&value);
 
                     if (sRGB)
                         format = MakeSRGB(format);

@@ -29,6 +29,7 @@
 #include <cstring>
 #include <memory>
 #include <new>
+#include <tuple>
 
 #include <wincodec.h>
 
@@ -212,7 +213,7 @@ namespace
             {
                 FILE_DISPOSITION_INFO info = {};
                 info.DeleteFile = TRUE;
-                (void)SetFileInformationByHandle(m_handle, FileDispositionInfo, &info, sizeof(info));
+                std::ignore = SetFileInformationByHandle(m_handle, FileDispositionInfo, &info, sizeof(info));
             }
         }
 
@@ -1049,7 +1050,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         VARIANT varValue;
         varValue.vt = VT_BOOL;
         varValue.boolVal = VARIANT_TRUE;
-        (void)props->Write(1, &option, &varValue);
+        std::ignore = props->Write(1, &option, &varValue);
     }
 
     if (setCustomProps)
@@ -1135,37 +1136,37 @@ HRESULT DirectX::SaveWICTextureToFile(
         if (memcmp(&guidContainerFormat, &GUID_ContainerFormatPng, sizeof(GUID)) == 0)
         {
             // Set Software name
-            (void)metawriter->SetMetadataByName(L"/tEXt/{str=Software}", &value);
+            std::ignore = metawriter->SetMetadataByName(L"/tEXt/{str=Software}", &value);
 
             // Set sRGB chunk
             if (sRGB)
             {
                 value.vt = VT_UI1;
                 value.bVal = 0;
-                (void)metawriter->SetMetadataByName(L"/sRGB/RenderingIntent", &value);
+                std::ignore = metawriter->SetMetadataByName(L"/sRGB/RenderingIntent", &value);
             }
             else
             {
                 // add gAMA chunk with gamma 1.0
                 value.vt = VT_UI4;
                 value.uintVal = 100000; // gama value * 100,000 -- i.e. gamma 1.0
-                (void)metawriter->SetMetadataByName(L"/gAMA/ImageGamma", &value);
+                std::ignore = metawriter->SetMetadataByName(L"/gAMA/ImageGamma", &value);
 
                 // remove sRGB chunk which is added by default.
-                (void)metawriter->RemoveMetadataByName(L"/sRGB/RenderingIntent");
+                std::ignore = metawriter->RemoveMetadataByName(L"/sRGB/RenderingIntent");
             }
         }
         else
         {
             // Set Software name
-            (void)metawriter->SetMetadataByName(L"System.ApplicationName", &value);
+            std::ignore = metawriter->SetMetadataByName(L"System.ApplicationName", &value);
 
             if (sRGB)
             {
                 // Set EXIF Colorspace of sRGB
                 value.vt = VT_UI2;
                 value.uiVal = 1;
-                (void)metawriter->SetMetadataByName(L"System.Image.ColorSpace", &value);
+                std::ignore = metawriter->SetMetadataByName(L"System.Image.ColorSpace", &value);
             }
         }
     }

@@ -36,6 +36,7 @@
 #include <new>
 #include <set>
 #include <string>
+#include <tuple>
 
 #include <wrl\client.h>
 
@@ -1958,10 +1959,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     }
 
     LARGE_INTEGER qpcFreq = {};
-    (void)QueryPerformanceFrequency(&qpcFreq);
+    std::ignore = QueryPerformanceFrequency(&qpcFreq);
 
     LARGE_INTEGER qpcStart = {};
-    (void)QueryPerformanceCounter(&qpcStart);
+    std::ignore = QueryPerformanceCounter(&qpcStart);
 
     // Convert images
     bool sizewarn = false;
@@ -3549,7 +3550,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             if (dwOptions & (uint64_t(1) << OPT_TOLOWER))
             {
-                (void)_wcslwr_s(szDest);
+                std::ignore = _wcslwr_s(szDest);
             }
 
             if (wcslen(szDest) > _MAX_PATH)
@@ -3632,7 +3633,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
                                 varValues.vt = VT_R4;
                                 varValues.fltVal = (wicLossless) ? 1.f : wicQuality;
-                                (void)props->Write(1, &options, &varValues);
+                                std::ignore = props->Write(1, &options, &varValues);
                             }
                             break;
 
@@ -3652,7 +3653,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 varValues.vt = VT_R4;
                                 varValues.fltVal = wicQuality;
                             }
-                            (void)props->Write(1, &options, &varValues);
+                            std::ignore = props->Write(1, &options, &varValues);
                         }
                         break;
 
@@ -3674,7 +3675,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 varValues.vt = VT_R4;
                                 varValues.fltVal = wicQuality;
                             }
-                            (void)props->Write(1, &options, &varValues);
+                            std::ignore = props->Write(1, &options, &varValues);
                         }
                         break;
                         }
@@ -3710,7 +3711,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     if (dwOptions & (uint64_t(1) << OPT_TIMING))
     {
         LARGE_INTEGER qpcEnd = {};
-        (void)QueryPerformanceCounter(&qpcEnd);
+        std::ignore = QueryPerformanceCounter(&qpcEnd);
 
         LONGLONG delta = qpcEnd.QuadPart - qpcStart.QuadPart;
         wprintf(L"\n Processing time: %f seconds\n", double(delta) / double(qpcFreq.QuadPart));
