@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <tuple>
 
 #ifndef WIN32
 #include <cstdlib>
@@ -98,7 +99,7 @@ public:
         {
             FILE_DISPOSITION_INFO info = {};
             info.DeleteFile = TRUE;
-            (void)SetFileInformationByHandle(m_handle, FileDispositionInfo, &info, sizeof(info));
+            std::ignore = SetFileInformationByHandle(m_handle, FileDispositionInfo, &info, sizeof(info));
         }
     }
 

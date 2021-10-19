@@ -14,6 +14,7 @@
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wsign-conversion"
+#pragma clang diagnostic ignored "-Wunused-macros"
 #endif
 
 #define D3DX12_NO_STATE_OBJECT_HELPERS

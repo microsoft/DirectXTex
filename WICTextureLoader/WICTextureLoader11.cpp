@@ -38,6 +38,7 @@
 #include <iterator>
 #include <memory>
 #include <new>
+#include <tuple>
 
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wcovered-switch-default"
@@ -557,7 +558,7 @@ namespace
                         sRGB = (loadFlags & WIC_LOADER_SRGB_DEFAULT) != 0;
                     }
 
-                    (void)PropVariantClear(&value);
+                    std::ignore = PropVariantClear(&value);
 
                     if (sRGB)
                         format = MakeSRGB(format);

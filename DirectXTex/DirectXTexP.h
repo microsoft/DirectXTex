@@ -130,6 +130,7 @@
 #include <iterator>
 #include <memory>
 #include <new>
+#include <tuple>
 
 #ifndef WIN32
 #include <fstream>
