@@ -69,7 +69,7 @@ namespace
         uint32_t cSteps,
         uint32_t flags) noexcept
     {
-        static const float fEpsilon = (0.25f / 64.0f) * (0.25f / 64.0f);
+        constexpr float fEpsilon = (0.25f / 64.0f) * (0.25f / 64.0f);
         static const float pC3[] = { 2.0f / 2.0f, 1.0f / 2.0f, 0.0f / 2.0f };
         static const float pD3[] = { 0.0f / 2.0f, 1.0f / 2.0f, 2.0f / 2.0f };
         static const float pC4[] = { 3.0f / 3.0f, 2.0f / 3.0f, 1.0f / 3.0f, 0.0f / 3.0f };

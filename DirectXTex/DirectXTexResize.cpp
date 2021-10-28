@@ -254,7 +254,7 @@ namespace
         assert(srcImage.format == destImage.format);
 
         // Allocate temporary space (2 scanlines)
-        auto scanline = make_AlignedArrayXMVECTOR(srcImage.width + destImage.width);
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(srcImage.width) + destImage.width);
         if (!scanline)
             return E_OUTOFMEMORY;
 
