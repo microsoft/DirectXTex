@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <memory>
 #include <new>
+#include <tuple>
 
 #include "DirectXTex.h"
 
