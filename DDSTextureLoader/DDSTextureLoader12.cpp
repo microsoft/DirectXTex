@@ -31,6 +31,7 @@
 #pragma clang diagnostic ignored "-Wcovered-switch-default"
 #pragma clang diagnostic ignored "-Wswitch"
 #pragma clang diagnostic ignored "-Wswitch-enum"
+#pragma clang diagnostic ignored "-Wunused-macros"
 #endif
 
 #pragma warning(disable : 4062)
