@@ -44,12 +44,12 @@ namespace
 
 #pragma pack(pop)
 
-    static const uint32_t XBOX_TILEMODE_SCARLETT = 0x1000000;
+    constexpr uint32_t XBOX_TILEMODE_SCARLETT = 0x1000000;
 
     static_assert(sizeof(DDS_HEADER_XBOX) == 36, "DDS XBOX Header size mismatch");
     static_assert(sizeof(DDS_HEADER_XBOX) >= sizeof(DDS_HEADER_DXT10), "DDS XBOX Header should be larger than DX10 header");
 
-    static const size_t XBOX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_XBOX);
+    constexpr size_t XBOX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_XBOX);
 
     //-------------------------------------------------------------------------------------
     // Decodes DDS header using XBOX extended header (variant of DX10 header)
