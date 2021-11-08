@@ -6,6 +6,14 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### November 8, 2021
+* VS 2022 support
+* Updated D3DX12 internal copy with latest change from GitHubf
+* Minor code and project review
+* VS 2017 projects updated to require the Windows 10 SDK (19401)
+* texassemble/texconv: Updated with 12.2 for ``-fl`` switch
+* texassemble/texconv/texdiag: Fixed potential locale issue with ``-flist``
+
 ### September 28, 2021
 * Minor code and project cleanup
 
