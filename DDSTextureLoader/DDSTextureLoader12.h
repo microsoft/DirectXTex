@@ -24,6 +24,8 @@
 #include <directx/d3d12.h>
 #endif
 
+#pragma comment(lib,"dxguid.lib")
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>

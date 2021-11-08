@@ -22,6 +22,9 @@
 
 #include <d3d12.h>
 
+#pragma comment(lib,"dxguid.lib")
+#pragma comment(lib,"windowscodecs.lib")
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>
