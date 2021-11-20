@@ -21,7 +21,7 @@ if not defined CompileShadersOutput set CompileShadersOutput=Compiled
 set StrTrim=%CompileShadersOutput%##
 set StrTrim=%StrTrim: ##=%
 set CompileShadersOutput=%StrTrim:##=%
-@if not exist %CompileShadersOutput% mkdir %CompileShadersOutput%
+@if not exist "%CompileShadersOutput%" mkdir "%CompileShadersOutput%"
 call :CompileShader BC7Encode TryMode456CS
 call :CompileShader BC7Encode TryMode137CS
 call :CompileShader BC7Encode TryMode02CS
@@ -43,7 +43,7 @@ endlocal
 exit /b
 
 :CompileShader
-set fxc=%PCFXC% %1.hlsl %FXCOPTS% /Tcs_4_0 /E%2 /Fh%CompileShadersOutput%\%1_%2.inc /Fd%CompileShadersOutput%\%1_%2.pdb /Vn%1_%2
+set fxc=%PCFXC% %1.hlsl %FXCOPTS% /Tcs_4_0 /E%2 "/Fh%CompileShadersOutput%\%1_%2.inc" "/Fd%CompileShadersOutput%\%1_%2.pdb" /Vn%1_%2
 echo.
 echo %fxc%
 %fxc% || set error=1
