@@ -759,17 +759,9 @@ HRESULT DirectX::CaptureTexture(
         return E_FAIL;
     }
 
-    UINT arraySize, depth;
-    if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
-    {
-        arraySize = 1;
-        depth = desc.DepthOrArraySize;
-    }
-    else
-    {
-        arraySize = desc.DepthOrArraySize;
-        depth = 1;
-    }
+    UINT arraySize = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) 
+                     ? 1 
+                     : desc.DepthOrArraySize;
 
     for (UINT plane = 0; plane < numberOfPlanes; ++plane)
     {
