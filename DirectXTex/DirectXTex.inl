@@ -43,7 +43,7 @@ constexpr TEX_COMPRESS_FLAGS operator|(TEX_FILTER_FLAGS a, TEX_COMPRESS_FLAGS b)
 //=====================================================================================
 
 _Use_decl_annotations_
-constexpr inline bool __cdecl IsValid(DXGI_FORMAT fmt) noexcept
+constexpr bool __cdecl IsValid(DXGI_FORMAT fmt) noexcept
 {
     return (static_cast<size_t>(fmt) >= 1 && static_cast<size_t>(fmt) <= 190);
 }
