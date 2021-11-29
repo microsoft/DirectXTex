@@ -26,6 +26,15 @@
 
 #include <wrl/client.h>
 
+#ifdef _MSC_VER
+// Off by default warnings
+#pragma warning(disable : 4619 4616 4623 4626 5027)
+// C4619/4616 #pragma warning warnings
+// C4623 default constructor was implicitly defined as deleted
+// C4626 assignment operator was implicitly defined as deleted
+// C5027 move assignment operator was implicitly defined as deleted
+#endif
+
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wcovered-switch-default"
 #pragma clang diagnostic ignored "-Wswitch-enum"

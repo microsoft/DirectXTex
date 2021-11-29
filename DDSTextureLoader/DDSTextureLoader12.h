@@ -18,13 +18,12 @@
 
 #if defined(WIN32) || defined(_WIN32)
 #include <d3d12.h>
+#pragma comment(lib,"dxguid.lib")
 #else
 #include <wsl/winadapter.h>
 #include <wsl/wrladapter.h>
 #include <directx/d3d12.h>
 #endif
-
-#pragma comment(lib,"dxguid.lib")
 
 #include <cstddef>
 #include <cstdint>
