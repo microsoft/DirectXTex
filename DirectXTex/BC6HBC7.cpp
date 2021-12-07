@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // BC6HBC7.cpp
-//  
+//
 // Block-compression (BC) functionality for BC6H and BC7 (DirectX 11 texture compression)
 //
 // Copyright (c) Microsoft Corporation.
@@ -872,7 +872,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 2 (0x01) - 7 6 6 6
@@ -884,7 +884,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GX, 5}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BX, 5}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {RY, 5}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 3 (0x02) - 11 5 4 4
@@ -896,7 +896,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BW,10},
         {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 4 (0x06) - 11 4 5 4
@@ -908,7 +908,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GW,10}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BW,10},
         {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {BZ, 0},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {GY, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 5 (0x0a) - 11 4 4 5
@@ -920,7 +920,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BW,10}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {BZ, 1},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {BZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 6 (0x0e) - 9 5 5 5
@@ -932,7 +932,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 7 (0x12) - 8 6 5 5
@@ -944,7 +944,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {RY, 5}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 8 (0x16) - 8 5 6 5
@@ -956,7 +956,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GX, 5}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 9 (0x1a) - 8 5 5 6
@@ -968,7 +968,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BX, 5}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 10 (0x1e) - 6 6 6 6
@@ -980,7 +980,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GX, 5}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BX, 5}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {RY, 5}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 11 (0x03) - 10 10
@@ -992,7 +992,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GX, 5}, {GX, 6}, {GX, 7}, {GX, 8}, {GX, 9}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BX, 5}, {BX, 6}, {BX, 7}, {BX, 8}, {BX, 9}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
         {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0}, 
+        {NA, 0}, {NA, 0},
     },
 
     {   // Mode 12 (0x07) - 11 9
@@ -1004,7 +1004,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GX, 5}, {GX, 6}, {GX, 7}, {GX, 8}, {GW,10}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BX, 5}, {BX, 6}, {BX, 7}, {BX, 8}, {BW,10}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
         {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0}, 
+        {NA, 0}, {NA, 0},
     },
 
     {   // Mode 13 (0x0b) - 12 8
@@ -1016,7 +1016,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GX, 5}, {GX, 6}, {GX, 7}, {GW,11}, {GW,10}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BX, 5}, {BX, 6}, {BX, 7}, {BW,11}, {BW,10}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
         {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0}, 
+        {NA, 0}, {NA, 0},
     },
 
     {   // Mode 14 (0x0f) - 16 4
@@ -1028,7 +1028,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GW,14}, {GW,13}, {GW,12}, {GW,11}, {GW,10}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BW,15},
         {BW,14}, {BW,13}, {BW,12}, {BW,11}, {BW,10}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
         {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0}, 
+        {NA, 0}, {NA, 0},
     },
 };
 
@@ -3284,7 +3284,7 @@ void D3DX_BC7::FixEndpointPBits(const EncodeParams* pEP, const LDREndPntPair *pO
             }
         }
 
-        // Compute the actual pbits we'll use when we encode block. Note this is not 
+        // Compute the actual pbits we'll use when we encode block. Note this is not
         // rounding the component indices correctly in cases the pbits != a component's LSB.
         int pbits[BC7_MAX_REGIONS << 1];
         for (size_t i = 0; i < uPBits; i++)

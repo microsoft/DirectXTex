@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTex.inl
-//  
+//
 // DirectX Texture Library
 //
 // Copyright (c) Microsoft Corporation.

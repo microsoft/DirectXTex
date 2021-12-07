@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // BCDirectCompute.h
-//  
+//
 // Direct3D 11 Compute Shader BC Compressor
 //
 // Copyright (c) Microsoft Corporation.
