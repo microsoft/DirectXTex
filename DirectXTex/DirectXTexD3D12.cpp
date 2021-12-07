@@ -524,7 +524,7 @@ HRESULT DirectX::PrepareUpload(
     }
 
     size_t numberOfResources = (metadata.dimension == TEX_DIMENSION_TEXTURE3D)
-                               ? 1 : metadata.arraySize;
+                               ? 1u : metadata.arraySize;
     numberOfResources *= metadata.mipLevels;
     numberOfResources *= numberOfPlanes;
 
@@ -759,8 +759,8 @@ HRESULT DirectX::CaptureTexture(
         return E_FAIL;
     }
 
-    UINT arraySize = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) 
-                     ? 1 
+    UINT arraySize = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+                     ? 1u
                      : desc.DepthOrArraySize;
 
     for (UINT plane = 0; plane < numberOfPlanes; ++plane)

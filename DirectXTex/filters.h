@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // filters.h
-//  
+//
 // Utility header with helpers for implementing image filters
 //
 // Copyright (c) Microsoft Corporation.

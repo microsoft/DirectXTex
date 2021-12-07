@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // BC.h
-//  
+//
 // Block-compression (BC) functionality
 //
 // Copyright (c) Microsoft Corporation.

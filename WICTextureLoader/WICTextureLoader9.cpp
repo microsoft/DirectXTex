@@ -106,11 +106,11 @@ namespace
         { GUID_WICPixelFormat4bppIndexed,           GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
         { GUID_WICPixelFormat8bppIndexed,           GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
 
-        { GUID_WICPixelFormat2bppGray,              GUID_WICPixelFormat8bppGray }, // D3DFMT_L8 
-        { GUID_WICPixelFormat4bppGray,              GUID_WICPixelFormat8bppGray }, // D3DFMT_L8 
+        { GUID_WICPixelFormat2bppGray,              GUID_WICPixelFormat8bppGray }, // D3DFMT_L8
+        { GUID_WICPixelFormat4bppGray,              GUID_WICPixelFormat8bppGray }, // D3DFMT_L8
 
-        { GUID_WICPixelFormat16bppGrayFixedPoint,   GUID_WICPixelFormat16bppGrayHalf }, // D3DFMT_R16F 
-        { GUID_WICPixelFormat32bppGrayFixedPoint,   GUID_WICPixelFormat32bppGrayFloat }, // D3DFMT_R32F 
+        { GUID_WICPixelFormat16bppGrayFixedPoint,   GUID_WICPixelFormat16bppGrayHalf }, // D3DFMT_R16F
+        { GUID_WICPixelFormat32bppGrayFixedPoint,   GUID_WICPixelFormat32bppGrayFloat }, // D3DFMT_R32F
 
         { GUID_WICPixelFormat32bppBGR101010,        GUID_WICPixelFormat32bppRGBA1010102 }, // D3DFMT_A2B10G10R10
 
@@ -127,18 +127,18 @@ namespace
         { GUID_WICPixelFormat64bppPRGBA,            GUID_WICPixelFormat64bppRGBA }, // D3DFMT_A16B16G16R16
         { GUID_WICPixelFormat64bppPBGRA,            GUID_WICPixelFormat64bppRGBA }, // D3DFMT_A16B16G16R16
 
-        { GUID_WICPixelFormat48bppRGBFixedPoint,    GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F 
-        { GUID_WICPixelFormat48bppBGRFixedPoint,    GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F 
-        { GUID_WICPixelFormat64bppRGBAFixedPoint,   GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F 
-        { GUID_WICPixelFormat64bppBGRAFixedPoint,   GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F 
-        { GUID_WICPixelFormat64bppRGBFixedPoint,    GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F 
-        { GUID_WICPixelFormat64bppRGBHalf,          GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F 
-        { GUID_WICPixelFormat48bppRGBHalf,          GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F 
+        { GUID_WICPixelFormat48bppRGBFixedPoint,    GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F
+        { GUID_WICPixelFormat48bppBGRFixedPoint,    GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F
+        { GUID_WICPixelFormat64bppRGBAFixedPoint,   GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F
+        { GUID_WICPixelFormat64bppBGRAFixedPoint,   GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F
+        { GUID_WICPixelFormat64bppRGBFixedPoint,    GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F
+        { GUID_WICPixelFormat64bppRGBHalf,          GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F
+        { GUID_WICPixelFormat48bppRGBHalf,          GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F
 
-        { GUID_WICPixelFormat128bppPRGBAFloat,      GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F 
-        { GUID_WICPixelFormat128bppRGBFloat,        GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F 
-        { GUID_WICPixelFormat128bppRGBAFixedPoint,  GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F 
-        { GUID_WICPixelFormat128bppRGBFixedPoint,   GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F 
+        { GUID_WICPixelFormat128bppPRGBAFloat,      GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F
+        { GUID_WICPixelFormat128bppRGBFloat,        GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F
+        { GUID_WICPixelFormat128bppRGBAFixedPoint,  GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F
+        { GUID_WICPixelFormat128bppRGBFixedPoint,   GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F
         { GUID_WICPixelFormat32bppRGBE,             GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F
 
         { GUID_WICPixelFormat32bppCMYK,             GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
@@ -149,8 +149,8 @@ namespace
     #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         { GUID_WICPixelFormat32bppRGB,              GUID_WICPixelFormat32bppBGRA }, // D3DFMT_A8R8G8B8
         { GUID_WICPixelFormat64bppRGB,              GUID_WICPixelFormat64bppRGBA }, // D3DFMT_A16B16G16R16
-        { GUID_WICPixelFormat64bppPRGBAHalf,        GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F 
-        { GUID_WICPixelFormat96bppRGBFloat,         GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F 
+        { GUID_WICPixelFormat64bppPRGBAHalf,        GUID_WICPixelFormat64bppRGBAHalf }, // D3DFMT_A16B16G16R16F
+        { GUID_WICPixelFormat96bppRGBFloat,         GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F
     #endif
 
         // We don't support n-channel formats

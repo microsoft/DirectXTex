@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // BC.cpp
-//  
+//
 // Block-compression (BC) functionality for BC1, BC2, BC3 (orginal DXTn formats)
 //
 // Copyright (c) Microsoft Corporation.
@@ -405,8 +405,8 @@ namespace
             uSteps = 4u;
         }
 
-        // Quantize block to R56B5, using Floyd Stienberg error diffusion.  This 
-        // increases the chance that colors will map directly to the quantized 
+        // Quantize block to R56B5, using Floyd Stienberg error diffusion.  This
+        // increases the chance that colors will map directly to the quantized
         // axis endpoints.
         HDRColorA Color[NUM_PIXELS_PER_BLOCK];
         HDRColorA Error[NUM_PIXELS_PER_BLOCK];
@@ -954,8 +954,8 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
 
     auto pBC3 = reinterpret_cast<D3DX_BC3 *>(pBC);
 
-    // Quantize block to A8, using Floyd Stienberg error diffusion.  This 
-    // increases the chance that colors will map directly to the quantized 
+    // Quantize block to A8, using Floyd Stienberg error diffusion.  This
+    // increases the chance that colors will map directly to the quantized
     // axis endpoints.
     float fAlpha[NUM_PIXELS_PER_BLOCK] = {};
     float fError[NUM_PIXELS_PER_BLOCK] = {};
