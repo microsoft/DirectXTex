@@ -26,16 +26,16 @@ DEFINE_ENUM_FLAG_OPERATORS(CNMAP_FLAGS);
 DEFINE_ENUM_FLAG_OPERATORS(CMSE_FLAGS);
 
 // WIC_FILTER modes match TEX_FILTER modes
-inline constexpr WIC_FLAGS operator|(WIC_FLAGS a, TEX_FILTER_FLAGS b) { return static_cast<WIC_FLAGS>(static_cast<unsigned long>(a) | static_cast<unsigned long>(b & TEX_FILTER_MODE_MASK)); }
-inline constexpr WIC_FLAGS operator|(TEX_FILTER_FLAGS a, WIC_FLAGS b) { return static_cast<WIC_FLAGS>(static_cast<unsigned long>(a & TEX_FILTER_MODE_MASK) | static_cast<unsigned long>(b)); }
+constexpr WIC_FLAGS operator|(WIC_FLAGS a, TEX_FILTER_FLAGS b) { return static_cast<WIC_FLAGS>(static_cast<unsigned long>(a) | static_cast<unsigned long>(b & TEX_FILTER_MODE_MASK)); }
+constexpr WIC_FLAGS operator|(TEX_FILTER_FLAGS a, WIC_FLAGS b) { return static_cast<WIC_FLAGS>(static_cast<unsigned long>(a & TEX_FILTER_MODE_MASK) | static_cast<unsigned long>(b)); }
 
 // TEX_PMALPHA_SRGB match TEX_FILTER_SRGB
-inline constexpr TEX_PMALPHA_FLAGS operator|(TEX_PMALPHA_FLAGS a, TEX_FILTER_FLAGS b) { return static_cast<TEX_PMALPHA_FLAGS>(static_cast<unsigned long>(a) | static_cast<unsigned long>(b & TEX_FILTER_SRGB_MASK)); }
-inline constexpr TEX_PMALPHA_FLAGS operator|(TEX_FILTER_FLAGS a, TEX_PMALPHA_FLAGS b) { return static_cast<TEX_PMALPHA_FLAGS>(static_cast<unsigned long>(a & TEX_FILTER_SRGB_MASK) | static_cast<unsigned long>(b)); }
+constexpr TEX_PMALPHA_FLAGS operator|(TEX_PMALPHA_FLAGS a, TEX_FILTER_FLAGS b) { return static_cast<TEX_PMALPHA_FLAGS>(static_cast<unsigned long>(a) | static_cast<unsigned long>(b & TEX_FILTER_SRGB_MASK)); }
+constexpr TEX_PMALPHA_FLAGS operator|(TEX_FILTER_FLAGS a, TEX_PMALPHA_FLAGS b) { return static_cast<TEX_PMALPHA_FLAGS>(static_cast<unsigned long>(a & TEX_FILTER_SRGB_MASK) | static_cast<unsigned long>(b)); }
 
 // TEX_COMPRESS_SRGB match TEX_FILTER_SRGB
-inline constexpr TEX_COMPRESS_FLAGS operator|(TEX_COMPRESS_FLAGS a, TEX_FILTER_FLAGS b) { return static_cast<TEX_COMPRESS_FLAGS>(static_cast<unsigned long>(a) | static_cast<unsigned long>(b & TEX_FILTER_SRGB_MASK)); }
-inline constexpr TEX_COMPRESS_FLAGS operator|(TEX_FILTER_FLAGS a, TEX_COMPRESS_FLAGS b) { return static_cast<TEX_COMPRESS_FLAGS>(static_cast<unsigned long>(a & TEX_FILTER_SRGB_MASK) | static_cast<unsigned long>(b)); }
+constexpr TEX_COMPRESS_FLAGS operator|(TEX_COMPRESS_FLAGS a, TEX_FILTER_FLAGS b) { return static_cast<TEX_COMPRESS_FLAGS>(static_cast<unsigned long>(a) | static_cast<unsigned long>(b & TEX_FILTER_SRGB_MASK)); }
+constexpr TEX_COMPRESS_FLAGS operator|(TEX_FILTER_FLAGS a, TEX_COMPRESS_FLAGS b) { return static_cast<TEX_COMPRESS_FLAGS>(static_cast<unsigned long>(a & TEX_FILTER_SRGB_MASK) | static_cast<unsigned long>(b)); }
 
 
 //=====================================================================================
@@ -43,7 +43,7 @@ inline constexpr TEX_COMPRESS_FLAGS operator|(TEX_FILTER_FLAGS a, TEX_COMPRESS_F
 //=====================================================================================
 
 _Use_decl_annotations_
-constexpr inline bool __cdecl IsValid(DXGI_FORMAT fmt) noexcept
+constexpr bool __cdecl IsValid(DXGI_FORMAT fmt) noexcept
 {
     return (static_cast<size_t>(fmt) >= 1 && static_cast<size_t>(fmt) <= 190);
 }

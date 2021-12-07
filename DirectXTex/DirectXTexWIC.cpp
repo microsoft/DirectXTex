@@ -361,8 +361,6 @@ namespace
                 if (FAILED(hr))
                     return hr;
 
-                blobSize = mBlob.GetBufferSize();
-
                 auto ptr = static_cast<uint8_t*>(mBlob.GetBufferPointer());
                 if (m_streamEOF < size.LowPart)
                 {
