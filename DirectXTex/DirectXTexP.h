@@ -296,11 +296,11 @@ namespace DirectX
 
     //---------------------------------------------------------------------------------
     // Image helper functions
-    _Success_(return != false) bool __cdecl _DetermineImageArray(
+    _Success_(return) bool __cdecl _DetermineImageArray(
         _In_ const TexMetadata& metadata, _In_ CP_FLAGS cpFlags,
         _Out_ size_t& nImages, _Out_ size_t& pixelSize) noexcept;
 
-    _Success_(return != false) bool __cdecl _SetupImageArray(
+    _Success_(return) bool __cdecl _SetupImageArray(
         _In_reads_bytes_(pixelSize) uint8_t *pMemory, _In_ size_t pixelSize,
         _In_ const TexMetadata& metadata, _In_ CP_FLAGS cpFlags,
         _Out_writes_(nImages) Image* images, _In_ size_t nImages) noexcept;
@@ -355,29 +355,29 @@ namespace DirectX
         _In_reads_bytes_(inSize) const void* pSource, _In_ size_t inSize,
         _In_ DXGI_FORMAT format, _In_ uint32_t tflags) noexcept;
 
-    _Success_(return != false) bool __cdecl _ExpandScanline(
+    _Success_(return) bool __cdecl _ExpandScanline(
         _Out_writes_bytes_(outSize) void* pDestination, _In_ size_t outSize,
         _In_ DXGI_FORMAT outFormat,
         _In_reads_bytes_(inSize) const void* pSource, _In_ size_t inSize,
         _In_ DXGI_FORMAT inFormat, _In_ uint32_t tflags) noexcept;
 
-    _Success_(return != false) bool __cdecl _LoadScanline(
+    _Success_(return) bool __cdecl _LoadScanline(
         _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,
         _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DXGI_FORMAT format) noexcept;
 
-    _Success_(return != false) bool __cdecl _LoadScanlineLinear(
+    _Success_(return) bool __cdecl _LoadScanlineLinear(
         _Out_writes_(count) XMVECTOR* pDestination, _In_ size_t count,
         _In_reads_bytes_(size) const void* pSource, _In_ size_t size, _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS flags) noexcept;
 
-    _Success_(return != false) bool __cdecl _StoreScanline(
+    _Success_(return) bool __cdecl _StoreScanline(
         _Out_writes_bytes_(size) void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
         _In_reads_(count) const XMVECTOR* pSource, _In_ size_t count, _In_ float threshold = 0) noexcept;
 
-    _Success_(return != false) bool __cdecl _StoreScanlineLinear(
+    _Success_(return) bool __cdecl _StoreScanlineLinear(
         _Out_writes_bytes_(size) void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
         _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ TEX_FILTER_FLAGS flags, _In_ float threshold = 0) noexcept;
 
-    _Success_(return != false) bool __cdecl _StoreScanlineDither(
+    _Success_(return) bool __cdecl _StoreScanlineDither(
         _Out_writes_bytes_(size) void* pDestination, _In_ size_t size, _In_ DXGI_FORMAT format,
         _Inout_updates_all_(count) XMVECTOR* pSource, _In_ size_t count, _In_ float threshold, size_t y, size_t z,
         _Inout_updates_all_opt_(count + 2) XMVECTOR* pDiffusionErrors) noexcept;
