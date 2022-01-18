@@ -917,7 +917,7 @@ namespace
         return lformat;
     }
 
-    _Success_(return != false)
+    _Success_(return)
         bool LegacyExpandScanline(
             _Out_writes_bytes_(outSize) void* pDestination,
             size_t outSize,

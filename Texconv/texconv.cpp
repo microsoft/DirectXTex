@@ -843,7 +843,7 @@ namespace
         wprintf(L"\n");
     }
 
-    _Success_(return != false)
+    _Success_(return)
         bool GetDXGIFactory(_Outptr_ IDXGIFactory1** pFactory)
     {
         if (!pFactory)
@@ -1013,7 +1013,7 @@ namespace
         return desc;
     }
 
-    _Success_(return != false)
+    _Success_(return)
         bool CreateDevice(int adapter, _Outptr_ ID3D11Device** pDevice)
     {
         if (!pDevice)
