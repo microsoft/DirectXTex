@@ -37,12 +37,12 @@ namespace Xbox
 {
 #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
     using XboxTileMode = XG_SWIZZLE_MODE;
-    const XboxTileMode c_XboxTileModeInvalid = XG_SWIZZLE_MODE_INVALID;
-    const XboxTileMode c_XboxTileModeLinear = XG_SWIZZLE_MODE_LINEAR;
+    constexpr XboxTileMode c_XboxTileModeInvalid = XG_SWIZZLE_MODE_INVALID;
+    constexpr XboxTileMode c_XboxTileModeLinear = XG_SWIZZLE_MODE_LINEAR;
 #else
     using XboxTileMode = XG_TILE_MODE;
     constexpr XboxTileMode c_XboxTileModeInvalid = XG_TILE_MODE_INVALID;
-    const XboxTileMode c_XboxTileModeLinear = XG_TILE_MODE_LINEAR;
+    constexpr XboxTileMode c_XboxTileModeLinear = XG_TILE_MODE_LINEAR;
 #endif
 
     class XboxImage
