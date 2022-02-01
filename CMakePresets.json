@@ -77,6 +77,21 @@
       },
       "hidden": true
     },
+    {
+      "name": "XboxOne",
+      "cacheVariables": {
+        "BUILD_XBOX_EXTS_XBOXONE": true
+      },
+      "hidden": true
+    },
+    {
+      "name": "Scarlett",
+      "cacheVariables": {
+        "BUILD_XBOX_EXTS_SCARLETT": true
+      },
+      "hidden": true
+    },
+
 
     { "name": "x64-Debug"    , "description": "MSVC for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "MSVC" ] },
     { "name": "x64-Release"  , "description": "MSVC for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "MSVC" ] },
@@ -100,6 +115,12 @@
     { "name": "x64-Debug-Win7-Clang"    , "description": "Clang/LLVM for x64 (Debug) for Windows 7", "inherits": [ "base", "x64", "Debug", "Clang", "Win7" ] },
     { "name": "x64-Release-Win7-Clang"  , "description": "Clang/LLVM for x64 (Release) for Windows 7", "inherits": [ "base", "x64", "Release", "Clang", "Win7" ] },
     { "name": "x86-Debug-Win7-Clang"    , "description": "Clang/LLVM for x86 (Debug) for Windows 7", "inherits": [ "base", "x86", "Debug", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
-    { "name": "x86-Release-Win7-Clang"  , "description": "Clang/LLVM for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } }
+    { "name": "x86-Release-Win7-Clang"  , "description": "Clang/LLVM for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
+
+    { "name": "x64-Debug-XboxOne"    , "description": "MSVC for x64 (Debug) Xbox One Extensions", "inherits": [ "base", "x64", "Debug", "XboxOne", "MSVC" ] },
+    { "name": "x64-Release-XboxOne"  , "description": "MSVC for x64 (Release) Xbox One Extensions", "inherits": [ "base", "x64", "Release", "XboxOne", "MSVC" ] },
+
+    { "name": "x64-Debug-Scarlett"   , "description": "MSVC for x64 (Debug) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Debug", "Scarlett", "MSVC" ] },
+    { "name": "x64-Release-Scarlett" , "description": "MSVC for x64 (Release) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Release", "Scarlett", "MSVC" ] }
   ]
 }
