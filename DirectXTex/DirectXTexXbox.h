@@ -140,4 +140,4 @@ namespace Xbox
 
 #endif
 
-}; // namespace
+} // namespace
