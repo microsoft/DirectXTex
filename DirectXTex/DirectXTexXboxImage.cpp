@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: DirectXTexXboxImage.cpp
 //
-// DirectXTex Auxillary functions for Xbox One texture blob
+// DirectXTex Auxillary functions for Xbox texture blob
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.

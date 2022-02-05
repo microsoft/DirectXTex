@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: DirectXTexXboxDDS.cpp
 //
-// DirectXTex Auxillary functions for saving "XBOX" Xbox One variants of DDS files
+// DirectXTex Auxillary functions for saving "XBOX" Xbox variants of DDS files
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.

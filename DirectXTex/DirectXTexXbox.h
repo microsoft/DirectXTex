@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: DirectXTexXbox.h
 //
-// DirectXTex Auxillary functions for Xbox One texture processing
+// DirectXTex Auxillary functions for Xbox texture processing
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
@@ -101,7 +101,7 @@ namespace Xbox
     HRESULT SaveToDDSFile(_In_ const XboxImage& xbox, _In_z_ const wchar_t* szFile);
 
     //---------------------------------------------------------------------------------
-    // Xbox One Texture Tiling / Detiling (requires XG DLL to be present at runtime)
+    // Xbox Texture Tiling / Detiling (requires XG DLL to be present at runtime)
 
     HRESULT Tile(_In_ const DirectX::Image& srcImage, _Out_ XboxImage& xbox, _In_ XboxTileMode mode = c_XboxTileModeInvalid);
     HRESULT Tile(
