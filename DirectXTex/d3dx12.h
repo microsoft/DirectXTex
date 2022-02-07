@@ -1829,6 +1829,20 @@ struct CD3DX12_RESOURCE_DESC1 : public D3D12_RESOURCE_DESC1
     explicit CD3DX12_RESOURCE_DESC1( const D3D12_RESOURCE_DESC1& o ) noexcept :
         D3D12_RESOURCE_DESC1( o )
     {}
+    explicit CD3DX12_RESOURCE_DESC1( const D3D12_RESOURCE_DESC& o ) noexcept
+    {
+        Dimension = o.Dimension;
+        Alignment = o.Alignment;
+        Width = o.Width;
+        Height = o.Height;
+        DepthOrArraySize = o.DepthOrArraySize;
+        MipLevels = o.MipLevels;
+        Format = o.Format;
+        SampleDesc = o.SampleDesc;
+        Layout = o.Layout;
+        Flags = o.Flags;
+        SamplerFeedbackMipRegion = {};
+    }
     CD3DX12_RESOURCE_DESC1(
         D3D12_RESOURCE_DIMENSION dimension,
         UINT64 alignment,
