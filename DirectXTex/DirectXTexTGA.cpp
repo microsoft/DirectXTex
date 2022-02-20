@@ -20,6 +20,7 @@
 //
 
 using namespace DirectX;
+using namespace DirectX::Internal;
 
 namespace
 {
@@ -270,7 +271,7 @@ namespace
 
         for (size_t y = 0; y < image->height; ++y)
         {
-            _CopyScanline(pPixels, image->rowPitch, pPixels, image->rowPitch, image->format, TEXP_SCANLINE_SETALPHA);
+            CopyScanline(pPixels, image->rowPitch, pPixels, image->rowPitch, image->format, TEXP_SCANLINE_SETALPHA);
             pPixels += image->rowPitch;
         }
 
@@ -1792,7 +1793,7 @@ HRESULT DirectX::LoadFromTGAFile(
 
             for (size_t h = 0; h < img->height; ++h)
             {
-                _SwizzleScanline(pPixels, rowPitch, pPixels, rowPitch, mdata.format, tflags);
+                SwizzleScanline(pPixels, rowPitch, pPixels, rowPitch, mdata.format, tflags);
                 pPixels += rowPitch;
             }
         }
@@ -2115,11 +2116,11 @@ HRESULT DirectX::SaveToTGAMemory(
         }
         else if (convFlags & CONV_FLAGS_SWIZZLE)
         {
-            _SwizzleScanline(dPtr, rowPitch, pPixels, image.rowPitch, image.format, TEXP_SCANLINE_NONE);
+            SwizzleScanline(dPtr, rowPitch, pPixels, image.rowPitch, image.format, TEXP_SCANLINE_NONE);
         }
         else
         {
-            _CopyScanline(dPtr, rowPitch, pPixels, image.rowPitch, image.format, TEXP_SCANLINE_NONE);
+            CopyScanline(dPtr, rowPitch, pPixels, image.rowPitch, image.format, TEXP_SCANLINE_NONE);
         }
 
         dPtr += rowPitch;
@@ -2268,11 +2269,11 @@ HRESULT DirectX::SaveToTGAFile(
             }
             else if (convFlags & CONV_FLAGS_SWIZZLE)
             {
-                _SwizzleScanline(temp.get(), rowPitch, pPixels, image.rowPitch, image.format, TEXP_SCANLINE_NONE);
+                SwizzleScanline(temp.get(), rowPitch, pPixels, image.rowPitch, image.format, TEXP_SCANLINE_NONE);
             }
             else
             {
-                _CopyScanline(temp.get(), rowPitch, pPixels, image.rowPitch, image.format, TEXP_SCANLINE_NONE);
+                CopyScanline(temp.get(), rowPitch, pPixels, image.rowPitch, image.format, TEXP_SCANLINE_NONE);
             }
 
             pPixels += image.rowPitch;

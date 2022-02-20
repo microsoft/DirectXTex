@@ -549,7 +549,7 @@ namespace
 #endif
     }
 
-    IWICImagingFactory* _GetWIC()
+    IWICImagingFactory* GetWIC()
     {
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
@@ -770,7 +770,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
-    auto pWIC = _GetWIC();
+    auto pWIC = GetWIC();
     if (!pWIC)
         return E_NOINTERFACE;
 

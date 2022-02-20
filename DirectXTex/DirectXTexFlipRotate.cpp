@@ -12,6 +12,7 @@
 #include "DirectXTexP.h"
 
 using namespace DirectX;
+using namespace DirectX::Internal;
 using Microsoft::WRL::ComPtr;
 
 namespace
@@ -100,7 +101,7 @@ namespace
         assert(srcImage.format == destImage.format);
 
         ScratchImage temp;
-        HRESULT hr = _ConvertToR16G16B16A16(srcImage, temp);
+        HRESULT hr = ConvertToR16G16B16A16(srcImage, temp);
         if (FAILED(hr))
             return hr;
 
@@ -123,7 +124,7 @@ namespace
 
         temp.Release();
 
-        hr = _ConvertFromR16G16B16A16(*tdest, destImage);
+        hr = ConvertFromR16G16B16A16(*tdest, destImage);
         if (FAILED(hr))
             return hr;
 
@@ -142,7 +143,7 @@ namespace
         assert(srcImage.format == destImage.format);
 
         ScratchImage temp;
-        HRESULT hr = _ConvertToR32G32B32A32(srcImage, temp);
+        HRESULT hr = ConvertToR32G32B32A32(srcImage, temp);
         if (FAILED(hr))
             return hr;
 
@@ -165,7 +166,7 @@ namespace
 
         temp.Release();
 
-        hr = _ConvertFromR32G32B32A32(*tdest, destImage);
+        hr = ConvertFromR32G32B32A32(*tdest, destImage);
         if (FAILED(hr))
             return hr;
 
@@ -245,7 +246,7 @@ HRESULT DirectX::FlipRotate(
     }
 
     WICPixelFormatGUID pfGUID;
-    if (_DXGIToWIC(srcImage.format, pfGUID))
+    if (DXGIToWIC(srcImage.format, pfGUID))
     {
         // Case 1: Source format is supported by Windows Imaging Component
         hr = PerformFlipRotateUsingWIC(srcImage, flags, pfGUID, *rimage);
@@ -345,7 +346,7 @@ HRESULT DirectX::FlipRotate(
     }
 
     WICPixelFormatGUID pfGUID;
-    bool wicpf = _DXGIToWIC(metadata.format, pfGUID);
+    bool wicpf = DXGIToWIC(metadata.format, pfGUID);
 
     for (size_t index = 0; index < nimages; ++index)
     {

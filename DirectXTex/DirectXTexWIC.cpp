@@ -12,6 +12,7 @@
 #include "DirectXTexP.h"
 
 using namespace DirectX;
+using namespace DirectX::Internal;
 using Microsoft::WRL::ComPtr;
 
 namespace
@@ -99,7 +100,7 @@ namespace
 
         *alphaMode = TEX_ALPHA_MODE_UNKNOWN;
 
-        DXGI_FORMAT format = _WICToDXGI(pixelFormat);
+        DXGI_FORMAT format = WICToDXGI(pixelFormat);
 
         if (format == DXGI_FORMAT_UNKNOWN)
         {
@@ -132,7 +133,7 @@ namespace
                         if (pConvert)
                             memcpy_s(pConvert, sizeof(WICPixelFormatGUID), &g_WICConvert[i].target, sizeof(GUID));
 
-                        format = _WICToDXGI(g_WICConvert[i].target);
+                        format = WICToDXGI(g_WICConvert[i].target);
                         assert(format != DXGI_FORMAT_UNKNOWN);
                         *alphaMode = g_WICConvert[i].alphaMode;
                         break;
@@ -712,7 +713,8 @@ namespace
                 return E_UNEXPECTED;
             }
 
-            hr = FC->Initialize(frame, convertGUID, _GetWICDither(flags), nullptr, 0, WICBitmapPaletteTypeMedianCut);
+            hr = FC->Initialize(frame, convertGUID, GetWICDither(flags), nullptr,
+                0, WICBitmapPaletteTypeMedianCut);
             if (FAILED(hr))
                 return hr;
 
@@ -747,7 +749,7 @@ namespace
             return E_NOINTERFACE;
 
         WICPixelFormatGUID sourceGUID;
-        if (!_DXGIToWIC(metadata.format, sourceGUID))
+        if (!DXGIToWIC(metadata.format, sourceGUID))
             return E_FAIL;
 
         for (size_t index = 0; index < metadata.arraySize; ++index)
@@ -797,7 +799,8 @@ namespace
                         return E_UNEXPECTED;
                     }
 
-                    hr = FC->Initialize(frame.Get(), sourceGUID, _GetWICDither(flags), nullptr, 0, WICBitmapPaletteTypeMedianCut);
+                    hr = FC->Initialize(frame.Get(), sourceGUID, GetWICDither(flags), nullptr,
+                        0, WICBitmapPaletteTypeMedianCut);
                     if (FAILED(hr))
                         return hr;
 
@@ -814,7 +817,9 @@ namespace
                 if (FAILED(hr))
                     return hr;
 
-                hr = scaler->Initialize(frame.Get(), static_cast<UINT>(metadata.width), static_cast<UINT>(metadata.height), _GetWICInterp(flags));
+                hr = scaler->Initialize(frame.Get(),
+                    static_cast<UINT>(metadata.width), static_cast<UINT>(metadata.height),
+                    GetWICInterp(flags));
                 if (FAILED(hr))
                     return hr;
 
@@ -845,7 +850,8 @@ namespace
                         return E_UNEXPECTED;
                     }
 
-                    hr = FC->Initialize(scaler.Get(), sourceGUID, _GetWICDither(flags), nullptr, 0, WICBitmapPaletteTypeMedianCut);
+                    hr = FC->Initialize(scaler.Get(), sourceGUID, GetWICDither(flags), nullptr,
+                        0, WICBitmapPaletteTypeMedianCut);
                     if (FAILED(hr))
                         return hr;
 
@@ -978,7 +984,7 @@ namespace
             return E_POINTER;
 
         WICPixelFormatGUID pfGuid;
-        if (!_DXGIToWIC(image.format, pfGuid))
+        if (!DXGIToWIC(image.format, pfGuid))
             return HRESULT_E_NOT_SUPPORTED;
 
         HRESULT hr = frame->Initialize(props);
@@ -1041,7 +1047,8 @@ namespace
                 return E_UNEXPECTED;
             }
 
-            hr = FC->Initialize(source.Get(), targetGuid, _GetWICDither(flags), nullptr, 0, WICBitmapPaletteTypeMedianCut);
+            hr = FC->Initialize(source.Get(), targetGuid, GetWICDither(flags), nullptr,
+                0, WICBitmapPaletteTypeMedianCut);
             if (FAILED(hr))
                 return hr;
 
