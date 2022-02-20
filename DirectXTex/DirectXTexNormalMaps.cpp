@@ -12,6 +12,7 @@
 #include "DirectXTexP.h"
 
 using namespace DirectX;
+using namespace DirectX::Internal;
 
 namespace
 {
@@ -79,7 +80,7 @@ namespace
         if (!srcImage.pixels || !normalMap.pixels)
             return E_INVALIDARG;
 
-        const uint32_t convFlags = _GetConvertFlags(format);
+        const uint32_t convFlags = GetConvertFlags(format);
         if (!convFlags)
             return E_FAIL;
 
@@ -117,7 +118,7 @@ namespace
         const uint8_t* pSrc = srcImage.pixels;
 
         // Read first scanline row into 'row1'
-        if (!_LoadScanline(row1, width, pSrc, rowPitch, srcImage.format))
+        if (!LoadScanline(row1, width, pSrc, rowPitch, srcImage.format))
             return E_FAIL;
 
         // Setup 'row0'
@@ -129,7 +130,7 @@ namespace
         else
         {
             // Read last row (Wrap V)
-            if (!_LoadScanline(row0, width, pSrc + (rowPitch * (height - 1)), rowPitch, srcImage.format))
+            if (!LoadScanline(row0, width, pSrc + (rowPitch * (height - 1)), rowPitch, srcImage.format))
                 return E_FAIL;
         }
 
@@ -144,7 +145,7 @@ namespace
             // Load next scanline of source image
             if (y < (height - 1))
             {
-                if (!_LoadScanline(row2, width, pSrc, rowPitch, srcImage.format))
+                if (!LoadScanline(row2, width, pSrc, rowPitch, srcImage.format))
                     return E_FAIL;
             }
             else
@@ -152,13 +153,13 @@ namespace
                 if (flags & CNMAP_MIRROR_V)
                 {
                     // Use last row of source image
-                    if (!_LoadScanline(row2, width, srcImage.pixels + (rowPitch * (height - 1)), rowPitch, srcImage.format))
+                    if (!LoadScanline(row2, width, srcImage.pixels + (rowPitch * (height - 1)), rowPitch, srcImage.format))
                         return E_FAIL;
                 }
                 else
                 {
                     // Use first row of source image (Wrap V)
-                    if (!_LoadScanline(row2, width, srcImage.pixels, rowPitch, srcImage.format))
+                    if (!LoadScanline(row2, width, srcImage.pixels, rowPitch, srcImage.format))
                         return E_FAIL;
                 }
             }
@@ -227,7 +228,7 @@ namespace
                 }
             }
 
-            if (!_StoreScanline(pDest, normalMap.rowPitch, format, target, width))
+            if (!StoreScanline(pDest, normalMap.rowPitch, format, target, width))
                 return E_FAIL;
 
             // Cycle buffers

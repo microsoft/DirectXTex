@@ -133,7 +133,7 @@ namespace
 //=====================================================================================
 
 _Use_decl_annotations_
-DXGI_FORMAT DirectX::_WICToDXGI(const GUID& guid) noexcept
+DXGI_FORMAT DirectX::Internal::WICToDXGI(const GUID& guid) noexcept
 {
     for (size_t i = 0; i < std::size(g_WICFormats); ++i)
     {
@@ -153,7 +153,7 @@ DXGI_FORMAT DirectX::_WICToDXGI(const GUID& guid) noexcept
 }
 
 _Use_decl_annotations_
-bool DirectX::_DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR) noexcept
+bool DirectX::Internal::DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR) noexcept
 {
     switch (format)
     {
@@ -213,7 +213,7 @@ bool DirectX::_DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR) no
     return false;
 }
 
-TEX_FILTER_FLAGS DirectX::_CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID& targetGUID) noexcept
+TEX_FILTER_FLAGS DirectX::Internal::CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID& targetGUID) noexcept
 {
     TEX_FILTER_FLAGS srgb = TEX_FILTER_DEFAULT;
 

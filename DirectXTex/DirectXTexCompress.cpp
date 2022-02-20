@@ -19,6 +19,7 @@
 #include "BC.h"
 
 using namespace DirectX;
+using namespace DirectX::Internal;
 
 namespace
 {
@@ -122,25 +123,25 @@ namespace
                 ptrdiff_t bytesLeft = pEnd - sptr;
                 assert(bytesLeft > 0);
                 size_t bytesToRead = std::min<size_t>(rowPitch, static_cast<size_t>(bytesLeft));
-                if (!_LoadScanline(&temp[0], pw, sptr, bytesToRead, format))
+                if (!LoadScanline(&temp[0], pw, sptr, bytesToRead, format))
                     return E_FAIL;
 
                 if (ph > 1)
                 {
                     bytesToRead = std::min<size_t>(rowPitch, static_cast<size_t>(bytesLeft) - rowPitch);
-                    if (!_LoadScanline(&temp[4], pw, sptr + rowPitch, bytesToRead, format))
+                    if (!LoadScanline(&temp[4], pw, sptr + rowPitch, bytesToRead, format))
                         return E_FAIL;
 
                     if (ph > 2)
                     {
                         bytesToRead = std::min<size_t>(rowPitch, static_cast<size_t>(bytesLeft) - rowPitch * 2);
-                        if (!_LoadScanline(&temp[8], pw, sptr + rowPitch * 2, bytesToRead, format))
+                        if (!LoadScanline(&temp[8], pw, sptr + rowPitch * 2, bytesToRead, format))
                             return E_FAIL;
 
                         if (ph > 3)
                         {
                             bytesToRead = std::min<size_t>(rowPitch, static_cast<size_t>(bytesLeft) - rowPitch * 3);
-                            if (!_LoadScanline(&temp[12], pw, sptr + rowPitch * 3, bytesToRead, format))
+                            if (!LoadScanline(&temp[12], pw, sptr + rowPitch * 3, bytesToRead, format))
                                 return E_FAIL;
                         }
                     }
@@ -176,7 +177,7 @@ namespace
                     }
                 }
 
-                _ConvertScanline(temp, 16, result.format, format, cflags | srgb);
+                ConvertScanline(temp, 16, result.format, format, cflags | srgb);
 
                 if (pfEncode)
                     pfEncode(dptr, temp, bcflags);
@@ -264,25 +265,25 @@ namespace
             size_t bytesToRead = std::min<size_t>(rowPitch, size_t(bytesLeft));
 
             XM_ALIGNED_DATA(16) XMVECTOR temp[16];
-            if (!_LoadScanline(&temp[0], pw, pSrc, bytesToRead, format))
+            if (!LoadScanline(&temp[0], pw, pSrc, bytesToRead, format))
                 fail = true;
 
             if (ph > 1)
             {
                 bytesToRead = std::min<size_t>(rowPitch, size_t(bytesLeft) - rowPitch);
-                if (!_LoadScanline(&temp[4], pw, pSrc + rowPitch, bytesToRead, format))
+                if (!LoadScanline(&temp[4], pw, pSrc + rowPitch, bytesToRead, format))
                     fail = true;
 
                 if (ph > 2)
                 {
                     bytesToRead = std::min<size_t>(rowPitch, size_t(bytesLeft) - rowPitch * 2);
-                    if (!_LoadScanline(&temp[8], pw, pSrc + rowPitch * 2, bytesToRead, format))
+                    if (!LoadScanline(&temp[8], pw, pSrc + rowPitch * 2, bytesToRead, format))
                         fail = true;
 
                     if (ph > 3)
                     {
                         bytesToRead = std::min<size_t>(rowPitch, size_t(bytesLeft) - rowPitch * 3);
-                        if (!_LoadScanline(&temp[12], pw, pSrc + rowPitch * 3, bytesToRead, format))
+                        if (!LoadScanline(&temp[12], pw, pSrc + rowPitch * 3, bytesToRead, format))
                             fail = true;
                     }
                 }
@@ -316,7 +317,7 @@ namespace
                 }
             }
 
-            _ConvertScanline(temp, 16, result.format, format, cflags | srgb);
+            ConvertScanline(temp, 16, result.format, format, cflags | srgb);
 
             if (pfEncode)
                 pfEncode(pDest, temp, bcflags);
@@ -453,27 +454,27 @@ namespace
             for (size_t count = 0; (count < cImage.rowPitch) && (w < cImage.width); count += sbpp, w += 4)
             {
                 pfDecode(temp, sptr);
-                _ConvertScanline(temp, 16, format, cformat, TEX_FILTER_DEFAULT);
+                ConvertScanline(temp, 16, format, cformat, TEX_FILTER_DEFAULT);
 
                 size_t pw = std::min<size_t>(4, cImage.width - w);
                 assert(pw > 0 && ph > 0);
 
-                if (!_StoreScanline(dptr, rowPitch, format, &temp[0], pw))
+                if (!StoreScanline(dptr, rowPitch, format, &temp[0], pw))
                     return E_FAIL;
 
                 if (ph > 1)
                 {
-                    if (!_StoreScanline(dptr + rowPitch, rowPitch, format, &temp[4], pw))
+                    if (!StoreScanline(dptr + rowPitch, rowPitch, format, &temp[4], pw))
                         return E_FAIL;
 
                     if (ph > 2)
                     {
-                        if (!_StoreScanline(dptr + rowPitch * 2, rowPitch, format, &temp[8], pw))
+                        if (!StoreScanline(dptr + rowPitch * 2, rowPitch, format, &temp[8], pw))
                             return E_FAIL;
 
                         if (ph > 3)
                         {
-                            if (!_StoreScanline(dptr + rowPitch * 3, rowPitch, format, &temp[12], pw))
+                            if (!StoreScanline(dptr + rowPitch * 3, rowPitch, format, &temp[12], pw))
                                 return E_FAIL;
                         }
                     }
@@ -492,95 +493,89 @@ namespace
 }
 
 //-------------------------------------------------------------------------------------
-namespace DirectX
+bool DirectX::Internal::IsAlphaAllOpaqueBC(_In_ const Image& cImage) noexcept
 {
-    bool _IsAlphaAllOpaqueBC(_In_ const Image& cImage) noexcept;
-        // Also used by Image
+    if (!cImage.pixels)
+        return false;
 
-    bool _IsAlphaAllOpaqueBC(_In_ const Image& cImage) noexcept
+    // Promote "typeless" BC formats
+    DXGI_FORMAT cformat;
+    switch (cImage.format)
     {
-        if (!cImage.pixels)
-            return false;
+    case DXGI_FORMAT_BC1_TYPELESS:  cformat = DXGI_FORMAT_BC1_UNORM; break;
+    case DXGI_FORMAT_BC2_TYPELESS:  cformat = DXGI_FORMAT_BC2_UNORM; break;
+    case DXGI_FORMAT_BC3_TYPELESS:  cformat = DXGI_FORMAT_BC3_UNORM; break;
+    case DXGI_FORMAT_BC7_TYPELESS:  cformat = DXGI_FORMAT_BC7_UNORM; break;
+    default:                        cformat = cImage.format;         break;
+    }
 
-        // Promote "typeless" BC formats
-        DXGI_FORMAT cformat;
-        switch (cImage.format)
+    // Determine BC format decoder
+    BC_DECODE pfDecode;
+    size_t sbpp;
+    switch (cformat)
+    {
+    case DXGI_FORMAT_BC1_UNORM:
+    case DXGI_FORMAT_BC1_UNORM_SRGB:    pfDecode = D3DXDecodeBC1;   sbpp = 8;   break;
+    case DXGI_FORMAT_BC2_UNORM:
+    case DXGI_FORMAT_BC2_UNORM_SRGB:    pfDecode = D3DXDecodeBC2;   sbpp = 16;  break;
+    case DXGI_FORMAT_BC3_UNORM:
+    case DXGI_FORMAT_BC3_UNORM_SRGB:    pfDecode = D3DXDecodeBC3;   sbpp = 16;  break;
+    case DXGI_FORMAT_BC7_UNORM:
+    case DXGI_FORMAT_BC7_UNORM_SRGB:    pfDecode = D3DXDecodeBC7;   sbpp = 16;  break;
+    default:
+        // BC4, BC5, and BC6 don't have alpha channels
+        return false;
+    }
+
+    // Scan blocks for non-opaque alpha
+    static const XMVECTORF32 threshold = { { { 0.99f, 0.99f, 0.99f, 0.99f } } };
+
+    XM_ALIGNED_DATA(16) XMVECTOR temp[16];
+    const uint8_t* pPixels = cImage.pixels;
+    for (size_t h = 0; h < cImage.height; h += 4)
+    {
+        const uint8_t* ptr = pPixels;
+        size_t ph = std::min<size_t>(4, cImage.height - h);
+        size_t w = 0;
+        for (size_t count = 0; (count < cImage.rowPitch) && (w < cImage.width); count += sbpp, w += 4)
         {
-        case DXGI_FORMAT_BC1_TYPELESS:  cformat = DXGI_FORMAT_BC1_UNORM; break;
-        case DXGI_FORMAT_BC2_TYPELESS:  cformat = DXGI_FORMAT_BC2_UNORM; break;
-        case DXGI_FORMAT_BC3_TYPELESS:  cformat = DXGI_FORMAT_BC3_UNORM; break;
-        case DXGI_FORMAT_BC7_TYPELESS:  cformat = DXGI_FORMAT_BC7_UNORM; break;
-        default:                        cformat = cImage.format;         break;
-        }
+            pfDecode(temp, ptr);
 
-        // Determine BC format decoder
-        BC_DECODE pfDecode;
-        size_t sbpp;
-        switch (cformat)
-        {
-        case DXGI_FORMAT_BC1_UNORM:
-        case DXGI_FORMAT_BC1_UNORM_SRGB:    pfDecode = D3DXDecodeBC1;   sbpp = 8;   break;
-        case DXGI_FORMAT_BC2_UNORM:
-        case DXGI_FORMAT_BC2_UNORM_SRGB:    pfDecode = D3DXDecodeBC2;   sbpp = 16;  break;
-        case DXGI_FORMAT_BC3_UNORM:
-        case DXGI_FORMAT_BC3_UNORM_SRGB:    pfDecode = D3DXDecodeBC3;   sbpp = 16;  break;
-        case DXGI_FORMAT_BC7_UNORM:
-        case DXGI_FORMAT_BC7_UNORM_SRGB:    pfDecode = D3DXDecodeBC7;   sbpp = 16;  break;
-        default:
-            // BC4, BC5, and BC6 don't have alpha channels
-            return false;
-        }
+            size_t pw = std::min<size_t>(4, cImage.width - w);
+            assert(pw > 0 && ph > 0);
 
-        // Scan blocks for non-opaque alpha
-        static const XMVECTORF32 threshold = { { { 0.99f, 0.99f, 0.99f, 0.99f } } };
-
-        XM_ALIGNED_DATA(16) XMVECTOR temp[16];
-        const uint8_t *pPixels = cImage.pixels;
-        for (size_t h = 0; h < cImage.height; h += 4)
-        {
-            const uint8_t *ptr = pPixels;
-            size_t ph = std::min<size_t>(4, cImage.height - h);
-            size_t w = 0;
-            for (size_t count = 0; (count < cImage.rowPitch) && (w < cImage.width); count += sbpp, w += 4)
+            if (pw == 4 && ph == 4)
             {
-                pfDecode(temp, ptr);
-
-                size_t pw = std::min<size_t>(4, cImage.width - w);
-                assert(pw > 0 && ph > 0);
-
-                if (pw == 4 && ph == 4)
+                // Full blocks
+                for (size_t j = 0; j < 16; ++j)
                 {
-                    // Full blocks
-                    for (size_t j = 0; j < 16; ++j)
+                    XMVECTOR alpha = XMVectorSplatW(temp[j]);
+                    if (XMVector4Less(alpha, threshold))
+                        return false;
+                }
+            }
+            else
+            {
+                // Handle partial blocks
+                for (size_t y = 0; y < ph; ++y)
+                {
+                    for (size_t x = 0; x < pw; ++x)
                     {
-                        XMVECTOR alpha = XMVectorSplatW(temp[j]);
+                        XMVECTOR alpha = XMVectorSplatW(temp[y * 4 + x]);
                         if (XMVector4Less(alpha, threshold))
                             return false;
                     }
                 }
-                else
-                {
-                    // Handle partial blocks
-                    for (size_t y = 0; y < ph; ++y)
-                    {
-                        for (size_t x = 0; x < pw; ++x)
-                        {
-                            XMVECTOR alpha = XMVectorSplatW(temp[y * 4 + x]);
-                            if (XMVector4Less(alpha, threshold))
-                                return false;
-                        }
-                    }
-                }
-
-                ptr += sbpp;
             }
 
-            pPixels += cImage.rowPitch;
+            ptr += sbpp;
         }
 
-        return true;
+        pPixels += cImage.rowPitch;
     }
-};
+
+    return true;
+}
 
 
 //=====================================================================================

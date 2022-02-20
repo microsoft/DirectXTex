@@ -863,7 +863,7 @@ namespace
             ifactory)) ? TRUE : FALSE;
     }
 
-    IWICImagingFactory2* _GetWIC() noexcept
+    IWICImagingFactory2* GetWIC() noexcept
     {
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
@@ -1200,7 +1200,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         return HRESULT_E_NOT_SUPPORTED;
     }
 
-    auto pWIC = _GetWIC();
+    auto pWIC = GetWIC();
     if (!pWIC)
         return E_NOINTERFACE;
 

@@ -14,6 +14,7 @@
 #include "BCDirectCompute.h"
 
 using namespace DirectX;
+using namespace DirectX::Internal;
 
 namespace
 {
@@ -69,15 +70,15 @@ namespace
         const uint8_t *pSrc = srcImage.pixels;
         for (size_t h = 0; h < srcImage.height; ++h)
         {
-            if (!_LoadScanline(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format))
+            if (!LoadScanline(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format))
             {
                 image.Release();
                 return E_FAIL;
             }
 
-            _ConvertScanline(scanline.get(), srcImage.width, format, srcImage.format, filter);
+            ConvertScanline(scanline.get(), srcImage.width, format, srcImage.format, filter);
 
-            if (!_StoreScanline(pDest, img->rowPitch, format, scanline.get(), srcImage.width))
+            if (!StoreScanline(pDest, img->rowPitch, format, scanline.get(), srcImage.width))
             {
                 image.Release();
                 return E_FAIL;
@@ -123,13 +124,13 @@ namespace
         const uint8_t *pSrc = srcImage.pixels;
         for (size_t h = 0; h < srcImage.height; ++h)
         {
-            if (!_LoadScanline(reinterpret_cast<XMVECTOR*>(pDest), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format))
+            if (!LoadScanline(reinterpret_cast<XMVECTOR*>(pDest), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format))
             {
                 image.Release();
                 return E_FAIL;
             }
 
-            _ConvertScanline(reinterpret_cast<XMVECTOR*>(pDest), srcImage.width, DXGI_FORMAT_R32G32B32A32_FLOAT, srcImage.format, filter);
+            ConvertScanline(reinterpret_cast<XMVECTOR*>(pDest), srcImage.width, DXGI_FORMAT_R32G32B32A32_FLOAT, srcImage.format, filter);
 
             pSrc += srcImage.rowPitch;
             pDest += img->rowPitch;

@@ -12,6 +12,7 @@
 #include "DirectXTexP.h"
 
 using namespace DirectX;
+using namespace DirectX::Internal;
 
 namespace
 {
@@ -42,7 +43,7 @@ namespace
 
         for (size_t h = 0; h < srcImage.height; ++h)
         {
-            if (!_LoadScanline(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format))
+            if (!LoadScanline(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format))
                 return E_FAIL;
 
             XMVECTOR* ptr = scanline.get();
@@ -54,7 +55,7 @@ namespace
                 *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
             }
 
-            if (!_StoreScanline(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width))
+            if (!StoreScanline(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width))
                 return E_FAIL;
 
             pSrc += srcImage.rowPitch;
@@ -87,7 +88,7 @@ namespace
 
         for (size_t h = 0; h < srcImage.height; ++h)
         {
-            if (!_LoadScanlineLinear(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format, filter))
+            if (!LoadScanlineLinear(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format, filter))
                 return E_FAIL;
 
             XMVECTOR* ptr = scanline.get();
@@ -99,7 +100,7 @@ namespace
                 *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
             }
 
-            if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width, filter))
+            if (!StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width, filter))
                 return E_FAIL;
 
             pSrc += srcImage.rowPitch;
@@ -127,7 +128,7 @@ namespace
 
         for (size_t h = 0; h < srcImage.height; ++h)
         {
-            if (!_LoadScanline(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format))
+            if (!LoadScanline(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format))
                 return E_FAIL;
 
             XMVECTOR* ptr = scanline.get();
@@ -142,7 +143,7 @@ namespace
                 *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
             }
 
-            if (!_StoreScanline(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width))
+            if (!StoreScanline(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width))
                 return E_FAIL;
 
             pSrc += srcImage.rowPitch;
@@ -175,7 +176,7 @@ namespace
 
         for (size_t h = 0; h < srcImage.height; ++h)
         {
-            if (!_LoadScanlineLinear(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format, filter))
+            if (!LoadScanlineLinear(scanline.get(), srcImage.width, pSrc, srcImage.rowPitch, srcImage.format, filter))
                 return E_FAIL;
 
             XMVECTOR* ptr = scanline.get();
@@ -190,7 +191,7 @@ namespace
                 *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
             }
 
-            if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width, filter))
+            if (!StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width, filter))
                 return E_FAIL;
 
             pSrc += srcImage.rowPitch;
