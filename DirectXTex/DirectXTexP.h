@@ -407,13 +407,6 @@ namespace DirectX
             _In_ DXGI_FORMAT outFormat, _In_ DXGI_FORMAT inFormat, _In_ TEX_FILTER_FLAGS flags) noexcept;
 
         //---------------------------------------------------------------------------------
-        // DDS helper functions
-        HRESULT __cdecl EncodeDDSHeader(
-            _In_ const TexMetadata& metadata, DDS_FLAGS flags,
-            _Out_writes_bytes_to_opt_(maxsize, required) void* pDestination, _In_ size_t maxsize,
-            _Out_ size_t& required) noexcept;
-
-        //---------------------------------------------------------------------------------
         // Misc helper functions
         bool IsAlphaAllOpaqueBC(_In_ const Image& cImage) noexcept;
         bool CalculateMipLevels(_In_ size_t width, _In_ size_t height, _Inout_ size_t& mipLevels) noexcept;

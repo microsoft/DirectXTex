@@ -559,7 +559,7 @@ namespace
 // Encodes DDS file header (magic value, header, optional DX10 extended header)
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::Internal::EncodeDDSHeader(
+HRESULT DirectX::EncodeDDSHeader(
     const TexMetadata& metadata,
     DDS_FLAGS flags,
     void* pDestination,
