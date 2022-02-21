@@ -474,7 +474,7 @@ namespace
         }
         else
         {
-            size_t bpp = BitsPerPixel(fmt);
+            const size_t bpp = BitsPerPixel(fmt);
             if (!bpp)
                 return E_INVALIDARG;
 
@@ -605,13 +605,13 @@ HRESULT DirectX::SaveDDSTextureToFile(
     auto_delete_file delonfail(hFile.get());
 
     // Setup header
-    const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER);
+    constexpr size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER);
     uint8_t fileHeader[MAX_HEADER_SIZE] = {};
 
     *reinterpret_cast<uint32_t*>(&fileHeader[0]) = DDS_MAGIC;
 
     auto header = reinterpret_cast<DDS_HEADER*>(&fileHeader[0] + sizeof(uint32_t));
-    size_t headerSize = sizeof(uint32_t) + sizeof(DDS_HEADER);
+    constexpr size_t headerSize = sizeof(uint32_t) + sizeof(DDS_HEADER);
     header->size = sizeof(DDS_HEADER);
     header->flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_MIPMAP;
     header->height = desc.Height;
@@ -713,7 +713,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
 
     uint8_t* dptr = pixels.get();
 
-    size_t msize = std::min<size_t>(rowPitch, static_cast<size_t>(lockedRect.Pitch));
+    const size_t msize = std::min<size_t>(rowPitch, static_cast<size_t>(lockedRect.Pitch));
     for (size_t h = 0; h < rowCount; ++h)
     {
         memcpy_s(dptr, rowPitch, sptr, msize);
@@ -949,7 +949,7 @@ HRESULT DirectX::SaveWICTextureToFile(
     if (FAILED(hr))
         return hr;
 
-    uint64_t imageSize = uint64_t(lockedRect.Pitch) * uint64_t(desc.Height);
+    const uint64_t imageSize = uint64_t(lockedRect.Pitch) * uint64_t(desc.Height);
     if (imageSize > UINT32_MAX)
     {
         pSource->UnlockRect();

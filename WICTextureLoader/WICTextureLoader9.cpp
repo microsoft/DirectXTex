@@ -229,7 +229,7 @@ namespace
     //---------------------------------------------------------------------------------
     void FitPowerOf2(UINT origx, UINT origy, UINT& targetx, UINT& targety, size_t maxsize)
     {
-        float origAR = float(origx) / float(origy);
+        const float origAR = float(origx) / float(origy);
 
         if (origx > origy)
         {
@@ -240,7 +240,7 @@ namespace
             float bestScore = FLT_MAX;
             for (size_t y = maxsize; y > 0; y >>= 1)
             {
-                float score = fabsf((float(x) / float(y)) - origAR);
+                const float score = fabsf((float(x) / float(y)) - origAR);
                 if (score < bestScore)
                 {
                     bestScore = score;
@@ -257,7 +257,7 @@ namespace
             float bestScore = FLT_MAX;
             for (size_t x = maxsize; x > 0; x >>= 1)
             {
-                float score = fabsf((float(x) / float(y)) - origAR);
+                const float score = fabsf((float(x) / float(y)) - origAR);
                 if (score < bestScore)
                 {
                     bestScore = score;
@@ -302,7 +302,7 @@ namespace
         }
         else if (width > maxsize || height > maxsize)
         {
-            float ar = static_cast<float>(height) / static_cast<float>(width);
+            const float ar = static_cast<float>(height) / static_cast<float>(width);
             if (width > height)
             {
                 twidth = static_cast<UINT>(maxsize);
@@ -387,7 +387,7 @@ namespace
         if (FAILED(hr))
             return hr;
 
-        uint64_t numBytes = uint64_t(LockedRect.Pitch) * uint64_t(theight);
+        const uint64_t numBytes = uint64_t(LockedRect.Pitch) * uint64_t(theight);
 
         pStagingTexture->UnlockRect(0);
 

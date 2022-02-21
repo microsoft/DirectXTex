@@ -593,7 +593,7 @@ namespace
         }
         else
         {
-            size_t bpp = BitsPerPixel(fmt);
+            const size_t bpp = BitsPerPixel(fmt);
             if (!bpp)
                 return E_INVALIDARG;
 
@@ -700,7 +700,7 @@ namespace
         if (srcPitch > UINT32_MAX)
             return HRESULT_E_ARITHMETIC_OVERFLOW;
 
-        UINT numberOfPlanes = D3D12GetFormatPlaneCount(device, desc.Format);
+        const UINT numberOfPlanes = D3D12GetFormatPlaneCount(device, desc.Format);
         if (numberOfPlanes != 1)
             return HRESULT_E_NOT_SUPPORTED;
 
@@ -733,8 +733,8 @@ namespace
 
         assert((srcPitch & 0xFF) == 0);
 
-        CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
-        CD3DX12_HEAP_PROPERTIES readBackHeapProperties(D3D12_HEAP_TYPE_READBACK);
+        const CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
+        const CD3DX12_HEAP_PROPERTIES readBackHeapProperties(D3D12_HEAP_TYPE_READBACK);
 
         // Readback resources must be buffers
         D3D12_RESOURCE_DESC bufferDesc = {};
@@ -771,7 +771,7 @@ namespace
 
             assert(pTemp);
 
-            DXGI_FORMAT fmt = EnsureNotTypeless(desc.Format);
+            const DXGI_FORMAT fmt = EnsureNotTypeless(desc.Format);
 
             D3D12_FEATURE_DATA_FORMAT_SUPPORT formatInfo = { fmt, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
             hr = device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatInfo, sizeof(formatInfo));
@@ -785,7 +785,7 @@ namespace
             {
                 for (UINT level = 0; level < desc.MipLevels; ++level)
                 {
-                    UINT index = D3D12CalcSubresource(level, item, 0, desc.MipLevels, desc.DepthOrArraySize);
+                    const UINT index = D3D12CalcSubresource(level, item, 0, desc.MipLevels, desc.DepthOrArraySize);
                     commandList->ResolveSubresource(pTemp.Get(), index, pSource, index, fmt);
                 }
             }
@@ -818,8 +818,8 @@ namespace
         bufferFootprint.Footprint.RowPitch = static_cast<UINT>(srcPitch);
         bufferFootprint.Footprint.Format = desc.Format;
 
-        CD3DX12_TEXTURE_COPY_LOCATION copyDest(pStaging.Get(), bufferFootprint);
-        CD3DX12_TEXTURE_COPY_LOCATION copySrc(copySource.Get(), 0);
+        const CD3DX12_TEXTURE_COPY_LOCATION copyDest(pStaging.Get(), bufferFootprint);
+        const CD3DX12_TEXTURE_COPY_LOCATION copySrc(copySource.Get(), 0);
 
         // Copy the texture
         commandList->CopyTextureRegion(&copyDest, 0, 0, 0, &copySrc, nullptr);
@@ -918,7 +918,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
         &totalResourceSize);
 
     // Round up the srcPitch to multiples of 256
-    UINT64 dstRowPitch = (fpRowPitch + 255) & ~0xFFu;
+    const UINT64 dstRowPitch = (fpRowPitch + 255) & ~0xFFu;
 
     if (dstRowPitch > UINT32_MAX)
         return HRESULT_E_ARITHMETIC_OVERFLOW;
@@ -942,7 +942,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
 #endif
 
     // Setup header
-    const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
+    constexpr size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
     uint8_t fileHeader[MAX_HEADER_SIZE] = {};
 
     *reinterpret_cast<uint32_t*>(&fileHeader[0]) = DDS_MAGIC;
@@ -1039,7 +1039,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
     assert(fpRowCount == rowCount);
     assert(fpRowPitch == rowPitch);
 
-    UINT64 imageSize = dstRowPitch * UINT64(rowCount);
+    const UINT64 imageSize = dstRowPitch * UINT64(rowCount);
     if (imageSize > UINT32_MAX)
         return HRESULT_E_ARITHMETIC_OVERFLOW;
 
@@ -1059,7 +1059,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
 
     uint8_t* dptr = pixels.get();
 
-    size_t msize = std::min<size_t>(rowPitch, size_t(dstRowPitch));
+    const size_t msize = std::min<size_t>(rowPitch, size_t(dstRowPitch));
     for (size_t h = 0; h < rowCount; ++h)
     {
         memcpy(dptr, sptr, msize);
@@ -1141,7 +1141,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         &totalResourceSize);
 
     // Round up the srcPitch to multiples of 256
-    UINT64 dstRowPitch = (fpRowPitch + 255) & ~0xFFu;
+    const UINT64 dstRowPitch = (fpRowPitch + 255) & ~0xFFu;
 
     if (dstRowPitch > UINT32_MAX)
         return HRESULT_E_ARITHMETIC_OVERFLOW;
@@ -1351,7 +1351,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         }
     }
 
-    UINT64 imageSize = dstRowPitch * UINT64(desc.Height);
+    const UINT64 imageSize = dstRowPitch * UINT64(desc.Height);
     if (imageSize > UINT32_MAX)
         return HRESULT_E_ARITHMETIC_OVERFLOW;
 

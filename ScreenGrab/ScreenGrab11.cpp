@@ -565,7 +565,7 @@ namespace
         }
         else
         {
-            size_t bpp = BitsPerPixel(fmt);
+            const size_t bpp = BitsPerPixel(fmt);
             if (!bpp)
                 return E_INVALIDARG;
 
@@ -670,7 +670,7 @@ namespace
 
             assert(pTemp);
 
-            DXGI_FORMAT fmt = EnsureNotTypeless(desc.Format);
+            const DXGI_FORMAT fmt = EnsureNotTypeless(desc.Format);
 
             UINT support = 0;
             hr = d3dDevice->CheckFormatSupport(fmt, &support);
@@ -684,7 +684,7 @@ namespace
             {
                 for (UINT level = 0; level < desc.MipLevels; ++level)
                 {
-                    UINT index = D3D11CalcSubresource(level, item, desc.MipLevels);
+                    const UINT index = D3D11CalcSubresource(level, item, desc.MipLevels);
                     pContext->ResolveSubresource(pTemp.Get(), index, pSource, index, fmt);
                 }
             }
@@ -816,7 +816,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
     auto_delete_file delonfail(hFile.get());
 
     // Setup header
-    const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
+    constexpr size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
     uint8_t fileHeader[MAX_HEADER_SIZE] = {};
 
     *reinterpret_cast<uint32_t*>(&fileHeader[0]) = DDS_MAGIC;
@@ -924,7 +924,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
 
     uint8_t* dptr = pixels.get();
 
-    size_t msize = std::min<size_t>(rowPitch, mapped.RowPitch);
+    const size_t msize = std::min<size_t>(rowPitch, mapped.RowPitch);
     for (size_t h = 0; h < rowCount; ++h)
     {
         memcpy_s(dptr, rowPitch, sptr, msize);
@@ -1187,7 +1187,7 @@ HRESULT DirectX::SaveWICTextureToFile(
     if (FAILED(hr))
         return hr;
 
-    uint64_t imageSize = uint64_t(mapped.RowPitch) * uint64_t(desc.Height);
+    const uint64_t imageSize = uint64_t(mapped.RowPitch) * uint64_t(desc.Height);
     if (imageSize > UINT32_MAX)
     {
         pContext->Unmap(pStaging.Get(), 0);
