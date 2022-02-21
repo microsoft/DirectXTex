@@ -403,7 +403,7 @@ namespace
 
                         auto t = static_cast<uint16_t>(uint32_t(*sPtr) | uint32_t(*(sPtr + 1u) << 8));
 
-                        uint32_t alpha = (t & 0x8000) ? 255 : 0;
+                        const uint32_t alpha = (t & 0x8000) ? 255 : 0;
                         minalpha = std::min(minalpha, alpha);
                         maxalpha = std::max(maxalpha, alpha);
 
@@ -438,7 +438,7 @@ namespace
 
                             auto t = static_cast<uint16_t>(uint32_t(*sPtr) | uint32_t(*(sPtr + 1u) << 8));
 
-                            uint32_t alpha = (t & 0x8000) ? 255 : 0;
+                            const uint32_t alpha = (t & 0x8000) ? 255 : 0;
                             minalpha = std::min(minalpha, alpha);
                             maxalpha = std::max(maxalpha, alpha);
 
@@ -516,7 +516,7 @@ namespace
                                 return E_FAIL;
 
                             // BGRA -> RGBA
-                            uint32_t alpha = *(sPtr + 3);
+                            const uint32_t alpha = *(sPtr + 3);
                             t = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(alpha << 24);
 
                             minalpha = std::min(minalpha, alpha);
@@ -646,7 +646,7 @@ namespace
                         if (sPtr + 3 >= endPtr)
                             return E_FAIL;
 
-                        uint32_t alpha = *(sPtr + 3);
+                        const uint32_t alpha = *(sPtr + 3);
 
                         auto t = *reinterpret_cast<const uint32_t*>(sPtr);
 
@@ -687,7 +687,7 @@ namespace
                             if (sPtr + 3 >= endPtr)
                                 return E_FAIL;
 
-                            uint32_t alpha = *(sPtr + 3);
+                            const uint32_t alpha = *(sPtr + 3);
                             *dPtr = *reinterpret_cast<const uint32_t*>(sPtr);
 
                             minalpha = std::min(minalpha, alpha);
@@ -885,7 +885,7 @@ namespace
                     sPtr += 2;
                     *dPtr = t;
 
-                    uint32_t alpha = (t & 0x8000) ? 255 : 0;
+                    const uint32_t alpha = (t & 0x8000) ? 255 : 0;
                     minalpha = std::min(minalpha, alpha);
                     maxalpha = std::max(maxalpha, alpha);
 
@@ -1002,7 +1002,7 @@ namespace
                     if (sPtr + 3 >= endPtr)
                         return E_FAIL;
 
-                    uint32_t alpha = *(sPtr + 3);
+                    const uint32_t alpha = *(sPtr + 3);
                     *dPtr = *reinterpret_cast<const uint32_t*>(sPtr);
 
                     minalpha = std::min(minalpha, alpha);
@@ -1184,7 +1184,7 @@ namespace
         ext->wVersionNumber = DIRECTX_TEX_VERSION;
         ext->bVersionLetter = ' ';
 
-        bool sRGB = ((flags & TGA_FLAGS_FORCE_LINEAR) == 0) && ((flags & TGA_FLAGS_FORCE_SRGB) != 0 || IsSRGB(metadata.format));
+        const bool sRGB = ((flags & TGA_FLAGS_FORCE_LINEAR) == 0) && ((flags & TGA_FLAGS_FORCE_SRGB) != 0 || IsSRGB(metadata.format));
         if (sRGB)
         {
             ext->wGammaNumerator = 22;
@@ -1265,7 +1265,7 @@ namespace
 
         if (ext && ext->wSize == sizeof(TGA_EXTENSION) && ext->wGammaDenominator != 0)
         {
-            float gamma = static_cast<float>(ext->wGammaNumerator) / static_cast<float>(ext->wGammaDenominator);
+            auto const gamma = static_cast<float>(ext->wGammaNumerator) / static_cast<float>(ext->wGammaDenominator);
             if (fabsf(gamma - 2.2f) < GAMMA_EPSILON || fabsf(gamma - 2.4f) < GAMMA_EPSILON)
             {
                 sRGB = true;
@@ -1368,7 +1368,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
         return HRESULT_E_FILE_TOO_LARGE;
     }
 
-    size_t len = fileInfo.EndOfFile.LowPart;
+    const size_t len = fileInfo.EndOfFile.LowPart;
 #else // !WIN32
     std::ifstream inFile(std::filesystem::path(szFile), std::ios::in | std::ios::binary | std::ios::ate);
     if (!inFile)
@@ -1404,7 +1404,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    auto headerLen = static_cast<size_t>(bytesRead);
+    auto const headerLen = static_cast<size_t>(bytesRead);
 #else
     inFile.read(reinterpret_cast<char*>(header), sizeof(TGA_HEADER));
     if (!inFile)
@@ -1453,7 +1453,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
                 && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= len))
             {
 #ifdef WIN32
-                LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
+                const LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
                 if (SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
                 {
                     if (ReadFile(hFile.get(), &extData, sizeof(TGA_EXTENSION), &bytesRead, nullptr)
@@ -1516,7 +1516,7 @@ HRESULT DirectX::LoadFromTGAMemory(
 
     const void* pPixels = static_cast<const uint8_t*>(pSource) + offset;
 
-    size_t remaining = size - offset;
+    const size_t remaining = size - offset;
     if (remaining == 0)
         return E_FAIL;
 
@@ -1617,7 +1617,7 @@ HRESULT DirectX::LoadFromTGAFile(
         return HRESULT_E_FILE_TOO_LARGE;
     }
 
-    size_t len = fileInfo.EndOfFile.LowPart;
+    const size_t len = fileInfo.EndOfFile.LowPart;
 #else // !WIN32
     std::ifstream inFile(std::filesystem::path(szFile), std::ios::in | std::ios::binary | std::ios::ate);
     if (!inFile)
@@ -1653,7 +1653,7 @@ HRESULT DirectX::LoadFromTGAFile(
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    auto headerLen = static_cast<size_t>(bytesRead);
+    auto const headerLen = static_cast<size_t>(bytesRead);
 #else
     inFile.read(reinterpret_cast<char*>(header), sizeof(TGA_HEADER));
     if (!inFile)
@@ -1670,7 +1670,7 @@ HRESULT DirectX::LoadFromTGAFile(
         return hr;
 
     // Read the pixels
-    auto remaining = len - offset;
+    auto const remaining = len - offset;
     if (remaining == 0)
         return E_FAIL;
 
@@ -1678,7 +1678,7 @@ HRESULT DirectX::LoadFromTGAFile(
     {
 #ifdef WIN32
         // Skip past the id string
-        LARGE_INTEGER filePos = { { static_cast<DWORD>(offset), 0 } };
+        const LARGE_INTEGER filePos = { { static_cast<DWORD>(offset), 0 } };
         if (!SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
         {
             return HRESULT_FROM_WIN32(GetLastError());
@@ -1766,7 +1766,7 @@ HRESULT DirectX::LoadFromTGAFile(
 
                 for (size_t x = 0; x < img->width; ++x)
                 {
-                    uint32_t alpha = ((*sPtr & 0xFF000000) >> 24);
+                    const uint32_t alpha = ((*sPtr & 0xFF000000) >> 24);
 
                     minalpha = std::min(minalpha, alpha);
                     maxalpha = std::max(maxalpha, alpha);
@@ -1820,7 +1820,7 @@ HRESULT DirectX::LoadFromTGAFile(
                 return E_POINTER;
             }
 
-            size_t rowPitch = img->rowPitch;
+            const size_t rowPitch = img->rowPitch;
 
             for (size_t h = 0; h < img->height; ++h)
             {
@@ -1828,7 +1828,7 @@ HRESULT DirectX::LoadFromTGAFile(
 
                 for (size_t x = 0; x < img->width; ++x)
                 {
-                    uint32_t alpha = ((*sPtr & 0xFF000000) >> 24);
+                    const uint32_t alpha = ((*sPtr & 0xFF000000) >> 24);
 
                     minalpha = std::min(minalpha, alpha);
                     maxalpha = std::max(maxalpha, alpha);
@@ -1878,7 +1878,7 @@ HRESULT DirectX::LoadFromTGAFile(
                 return E_POINTER;
             }
 
-            size_t rowPitch = img->rowPitch;
+            const size_t rowPitch = img->rowPitch;
 
             for (size_t h = 0; h < img->height; ++h)
             {
@@ -1886,7 +1886,7 @@ HRESULT DirectX::LoadFromTGAFile(
 
                 for (size_t x = 0; x < img->width; ++x)
                 {
-                    uint32_t alpha = (*sPtr & 0x8000) ? 255 : 0;
+                    const uint32_t alpha = (*sPtr & 0x8000) ? 255 : 0;
 
                     minalpha = std::min(minalpha, alpha);
                     maxalpha = std::max(maxalpha, alpha);
@@ -2012,7 +2012,7 @@ HRESULT DirectX::LoadFromTGAFile(
                 && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= len))
             {
 #ifdef WIN32
-                LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
+                const LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
                 if (SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
                 {
                     if (ReadFile(hFile.get(), &extData, sizeof(TGA_EXTENSION), &bytesRead, nullptr)

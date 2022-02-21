@@ -211,7 +211,7 @@ HRESULT DirectX::FlipRotate(
     static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical), "TEX_FR_FLIP_VERTICAL no longer matches WIC");
 
     // Only supports 90, 180, 270, or no rotation flags... not a combination of rotation flags
-    int rotateMode = static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270));
+    const int rotateMode = static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270));
 
     switch (rotateMode)
     {
@@ -254,7 +254,7 @@ HRESULT DirectX::FlipRotate(
     else
     {
         // Case 2: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back
-        uint64_t expandedSize = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
+        const uint64_t expandedSize = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
         if (expandedSize > UINT32_MAX)
         {
             // Image is too large for float32, so have to use float16 instead
@@ -304,7 +304,7 @@ HRESULT DirectX::FlipRotate(
     static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical), "TEX_FR_FLIP_VERTICAL no longer matches WIC");
 
     // Only supports 90, 180, 270, or no rotation flags... not a combination of rotation flags
-    int rotateMode = static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270));
+    const int rotateMode = static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270));
 
     switch (rotateMode)
     {
@@ -346,7 +346,7 @@ HRESULT DirectX::FlipRotate(
     }
 
     WICPixelFormatGUID pfGUID;
-    bool wicpf = DXGIToWIC(metadata.format, pfGUID);
+    const bool wicpf = DXGIToWIC(metadata.format, pfGUID);
 
     for (size_t index = 0; index < nimages; ++index)
     {
@@ -388,7 +388,7 @@ HRESULT DirectX::FlipRotate(
         else
         {
             // Case 2: Source format is not supported by WIC, so we have to convert, flip/rotate, and convert back
-            uint64_t expandedSize = uint64_t(src.width) * uint64_t(src.height) * sizeof(float) * 4;
+            const uint64_t expandedSize = uint64_t(src.width) * uint64_t(src.height) * sizeof(float) * 4;
             if (expandedSize > UINT32_MAX)
             {
                 // Image is too large for float32, so have to use float16 instead

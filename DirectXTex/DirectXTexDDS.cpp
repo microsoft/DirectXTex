@@ -22,6 +22,8 @@ static_assert(static_cast<int>(TEX_DIMENSION_TEXTURE3D) == static_cast<int>(DDS_
 
 namespace
 {
+    constexpr size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
+
     //-------------------------------------------------------------------------------------
     // Legacy format mapping table (used for DDS files without 'DX10' extended header)
     //-------------------------------------------------------------------------------------
@@ -172,7 +174,7 @@ namespace
             ddpfFlags &= ~0xC0000000 /* DDPF_SRGB | DDPF_NORMAL */;
         }
 
-        const size_t MAP_SIZE = sizeof(g_LegacyDDSMap) / sizeof(LegacyDDS);
+        constexpr size_t MAP_SIZE = sizeof(g_LegacyDDSMap) / sizeof(LegacyDDS);
         size_t index = 0;
         for (index = 0; index < MAP_SIZE; ++index)
         {
@@ -294,7 +296,7 @@ namespace
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        auto dwMagicNumber = *static_cast<const uint32_t*>(pSource);
+        auto const dwMagicNumber = *static_cast<const uint32_t*>(pSource);
         if (dwMagicNumber != DDS_MAGIC)
         {
             return E_FAIL;
@@ -890,7 +892,7 @@ namespace
         TEXP_LEGACY_A8L8
     };
 
-    inline TEXP_LEGACY_FORMAT FindLegacyFormat(uint32_t flags) noexcept
+    constexpr TEXP_LEGACY_FORMAT FindLegacyFormat(uint32_t flags) noexcept
     {
         TEXP_LEGACY_FORMAT lformat = TEXP_LEGACY_UNKNOWN;
 
@@ -971,7 +973,7 @@ namespace
 
                     for (size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < (outSize - 3))); ++icount, ocount += 4)
                     {
-                        uint8_t t = *(sPtr++);
+                        const uint8_t t = *(sPtr++);
 
                         uint32_t t1 = uint32_t((t & 0xe0) | ((t & 0xe0) >> 3) | ((t & 0xc0) >> 6));
                         uint32_t t2 = uint32_t(((t & 0x1c) << 11) | ((t & 0x1c) << 8) | ((t & 0x18) << 5));
@@ -992,7 +994,7 @@ namespace
 
                     for (size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < (outSize - 1))); ++icount, ocount += 2)
                     {
-                        unsigned t = *(sPtr++);
+                        const unsigned t = *(sPtr++);
 
                         unsigned t1 = ((t & 0xe0u) << 8) | ((t & 0xc0u) << 5);
                         unsigned t2 = ((t & 0x1cu) << 6) | ((t & 0x1cu) << 3);
@@ -1020,7 +1022,7 @@ namespace
 
                 for (size_t ocount = 0, icount = 0; ((icount < (inSize - 1)) && (ocount < (outSize - 3))); icount += 2, ocount += 4)
                 {
-                    uint16_t t = *(sPtr++);
+                    const uint16_t t = *(sPtr++);
 
                     uint32_t t1 = uint32_t((t & 0x00e0) | ((t & 0x00e0) >> 3) | ((t & 0x00c0) >> 6));
                     uint32_t t2 = uint32_t(((t & 0x001c) << 11) | ((t & 0x001c) << 8) | ((t & 0x0018) << 5));
@@ -1065,7 +1067,7 @@ namespace
 
                 for (size_t ocount = 0, icount = 0; ((icount < (inSize - 1)) && (ocount < (outSize - 3))); icount += 2, ocount += 4)
                 {
-                    uint16_t t = *(sPtr++);
+                    const uint16_t t = *(sPtr++);
 
                     uint32_t t1 = pal8[t & 0xff];
                     uint32_t ta = (tflags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t((t & 0xff00) << 16);
@@ -1088,7 +1090,7 @@ namespace
 
                     for (size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < (outSize - 1))); ++icount, ocount += 2)
                     {
-                        unsigned t = *(sPtr++);
+                        const unsigned t = *(sPtr++);
 
                         unsigned t1 = (t & 0x0fu);
                         unsigned ta = (tflags & TEXP_SCANLINE_SETALPHA) ? 0xf000u : ((t & 0xf0u) << 8);
@@ -1108,7 +1110,7 @@ namespace
 
                     for (size_t ocount = 0, icount = 0; ((icount < inSize) && (ocount < (outSize - 3))); ++icount, ocount += 4)
                     {
-                        uint8_t t = *(sPtr++);
+                        const uint8_t t = *(sPtr++);
 
                         uint32_t t1 = uint32_t(((t & 0x0f) << 4) | (t & 0x0f));
                         uint32_t ta = (tflags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t(((t & 0xf0) << 24) | ((t & 0xf0) << 20));
@@ -1135,7 +1137,7 @@ namespace
 
                 for (size_t ocount = 0, icount = 0; ((icount < (inSize - 1)) && (ocount < (outSize - 3))); icount += 2, ocount += 4)
                 {
-                    uint32_t t = *(sPtr++);
+                    const uint32_t t = *(sPtr++);
 
                     uint32_t t1 = uint32_t((t & 0x0f00) >> 4) | ((t & 0x0f00) >> 8);
                     uint32_t t2 = uint32_t((t & 0x00f0) << 8) | ((t & 0x00f0) << 4);
@@ -1182,7 +1184,7 @@ namespace
 
                 for (size_t ocount = 0, icount = 0; ((icount < (inSize - 1)) && (ocount < (outSize - 7))); icount += 2, ocount += 8)
                 {
-                    uint16_t t = *(sPtr++);
+                    const uint16_t t = *(sPtr++);
 
                     uint64_t t1 = t;
                     uint64_t t2 = (t1 << 16);
@@ -1206,7 +1208,7 @@ namespace
 
                 for (size_t ocount = 0, icount = 0; ((icount < (inSize - 1)) && (ocount < (outSize - 3))); icount += 2, ocount += 4)
                 {
-                    uint16_t t = *(sPtr++);
+                    const uint16_t t = *(sPtr++);
 
                     uint32_t t1 = uint32_t(t & 0xff);
                     uint32_t t2 = uint32_t(t1 << 8);
@@ -1317,7 +1319,7 @@ namespace
                         return E_FAIL;
 
                     size_t dpitch = images[index].rowPitch;
-                    size_t spitch = timages[index].rowPitch;
+                    const size_t spitch = timages[index].rowPitch;
 
                     const uint8_t *pSrc = timages[index].pixels;
                     if (!pSrc)
@@ -1347,11 +1349,11 @@ namespace
                     }
                     else if (IsPlanar(metadata.format))
                     {
-                        size_t count = ComputeScanlines(metadata.format, images[index].height);
+                        const size_t count = ComputeScanlines(metadata.format, images[index].height);
                         if (!count)
                             return E_UNEXPECTED;
 
-                        size_t csize = std::min<size_t>(dpitch, spitch);
+                        const size_t csize = std::min<size_t>(dpitch, spitch);
                         for (size_t h = 0; h < count; ++h)
                         {
                             memcpy(pDest, pSrc, csize);
@@ -1375,7 +1377,7 @@ namespace
                                 }
                                 else
                                 {
-                                    TEXP_LEGACY_FORMAT lformat = FindLegacyFormat(convFlags);
+                                    const TEXP_LEGACY_FORMAT lformat = FindLegacyFormat(convFlags);
                                     if (!LegacyExpandScanline(pDest, dpitch, metadata.format,
                                         pSrc, spitch, lformat, pal8,
                                         tflags))
@@ -1419,7 +1421,7 @@ namespace
                         return E_FAIL;
 
                     size_t dpitch = images[index].rowPitch;
-                    size_t spitch = timages[index].rowPitch;
+                    const size_t spitch = timages[index].rowPitch;
 
                     const uint8_t *pSrc = timages[index].pixels;
                     if (!pSrc)
@@ -1468,7 +1470,7 @@ namespace
                                 }
                                 else
                                 {
-                                    TEXP_LEGACY_FORMAT lformat = FindLegacyFormat(convFlags);
+                                    const TEXP_LEGACY_FORMAT lformat = FindLegacyFormat(convFlags);
                                     if (!LegacyExpandScanline(pDest, dpitch, metadata.format,
                                         pSrc, spitch, lformat, pal8,
                                         tflags))
@@ -1606,7 +1608,7 @@ HRESULT DirectX::GetMetadataFromDDSFile(
         return HRESULT_E_FILE_TOO_LARGE;
     }
 
-    size_t len = fileInfo.EndOfFile.LowPart;
+    const size_t len = fileInfo.EndOfFile.LowPart;
 #else // !WIN32
     std::ifstream inFile(std::filesystem::path(szFile), std::ios::in | std::ios::binary | std::ios::ate);
     if (!inFile)
@@ -1623,7 +1625,7 @@ HRESULT DirectX::GetMetadataFromDDSFile(
     if (!inFile)
         return E_FAIL;
 
-    size_t len = fileLen;
+    const size_t len = fileLen;
 #endif
 
     // Need at least enough data to fill the standard header and magic number to be a valid DDS
@@ -1633,7 +1635,6 @@ HRESULT DirectX::GetMetadataFromDDSFile(
     }
 
     // Read the header in (including extended header if present)
-    const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
     uint8_t header[MAX_HEADER_SIZE] = {};
 
 #ifdef WIN32
@@ -1643,9 +1644,9 @@ HRESULT DirectX::GetMetadataFromDDSFile(
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    auto headerLen = static_cast<size_t>(bytesRead);
+    auto const headerLen = static_cast<size_t>(bytesRead);
 #else
-    auto headerLen = std::min<size_t>(len, MAX_HEADER_SIZE);
+    auto const headerLen = std::min<size_t>(len, MAX_HEADER_SIZE);
 
     inFile.read(reinterpret_cast<char*>(header), headerLen);
     if (!inFile)
@@ -1768,7 +1769,7 @@ HRESULT DirectX::LoadFromDDSFile(
     if (fileInfo.EndOfFile.HighPart > 0)
         return HRESULT_E_FILE_TOO_LARGE;
 
-    size_t len = fileInfo.EndOfFile.LowPart;
+    const size_t len = fileInfo.EndOfFile.LowPart;
 #else // !WIN32
     std::ifstream inFile(std::filesystem::path(szFile), std::ios::in | std::ios::binary | std::ios::ate);
     if (!inFile)
@@ -1785,7 +1786,7 @@ HRESULT DirectX::LoadFromDDSFile(
     if (!inFile)
         return E_FAIL;
 
-    size_t len = fileLen;
+    const size_t len = fileLen;
 #endif
 
     // Need at least enough data to fill the standard header and magic number to be a valid DDS
@@ -1795,7 +1796,6 @@ HRESULT DirectX::LoadFromDDSFile(
     }
 
     // Read the header in (including extended header if present)
-    const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
     uint8_t header[MAX_HEADER_SIZE] = {};
 
 #ifdef WIN32
@@ -1805,9 +1805,9 @@ HRESULT DirectX::LoadFromDDSFile(
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    auto headerLen = static_cast<size_t>(bytesRead);
+    auto const headerLen = static_cast<size_t>(bytesRead);
 #else
-    auto headerLen = std::min<size_t>(len, MAX_HEADER_SIZE);
+    auto const headerLen = std::min<size_t>(len, MAX_HEADER_SIZE);
 
     inFile.read(reinterpret_cast<char*>(header), headerLen);
     if (!inFile)
@@ -1826,7 +1826,7 @@ HRESULT DirectX::LoadFromDDSFile(
     {
 #ifdef WIN32
         // Must reset file position since we read more than the standard header above
-        LARGE_INTEGER filePos = { { sizeof(uint32_t) + sizeof(DDS_HEADER), 0 } };
+        const LARGE_INTEGER filePos = { { sizeof(uint32_t) + sizeof(DDS_HEADER), 0 } };
         if (!SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
         {
             return HRESULT_FROM_WIN32(GetLastError());
@@ -1868,7 +1868,7 @@ HRESULT DirectX::LoadFromDDSFile(
         offset += (256 * sizeof(uint32_t));
     }
 
-    size_t remaining = len - offset;
+    const size_t remaining = len - offset;
     if (remaining == 0)
         return E_FAIL;
 
@@ -2216,7 +2216,6 @@ HRESULT DirectX::SaveToDDSFile(
         return E_INVALIDARG;
 
     // Create DDS Header
-    const size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
     uint8_t header[MAX_HEADER_SIZE];
     size_t required;
     HRESULT hr = EncodeDDSHeader(metadata, flags, header, MAX_HEADER_SIZE, required);
@@ -2304,7 +2303,7 @@ HRESULT DirectX::SaveToDDSFile(
                 }
                 else
                 {
-                    size_t rowPitch = images[index].rowPitch;
+                    const size_t rowPitch = images[index].rowPitch;
                     if (rowPitch < ddsRowPitch)
                     {
                         // DDS uses 1-byte alignment, so if this is happening then the input pitch isn't actually a full line of data
@@ -2316,7 +2315,7 @@ HRESULT DirectX::SaveToDDSFile(
 
                     const uint8_t * __restrict sPtr = images[index].pixels;
 
-                    size_t lines = ComputeScanlines(metadata.format, images[index].height);
+                    const size_t lines = ComputeScanlines(metadata.format, images[index].height);
                     for (size_t j = 0; j < lines; ++j)
                     {
 #ifdef WIN32
@@ -2389,7 +2388,7 @@ HRESULT DirectX::SaveToDDSFile(
                 }
                 else
                 {
-                    size_t rowPitch = images[index].rowPitch;
+                    const size_t rowPitch = images[index].rowPitch;
                     if (rowPitch < ddsRowPitch)
                     {
                         // DDS uses 1-byte alignment, so if this is happening then the input pitch isn't actually a full line of data
@@ -2401,7 +2400,7 @@ HRESULT DirectX::SaveToDDSFile(
 
                     const uint8_t * __restrict sPtr = images[index].pixels;
 
-                    size_t lines = ComputeScanlines(metadata.format, images[index].height);
+                    const size_t lines = ComputeScanlines(metadata.format, images[index].height);
                     for (size_t j = 0; j < lines; ++j)
                     {
 #ifdef WIN32

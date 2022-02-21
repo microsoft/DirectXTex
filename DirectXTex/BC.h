@@ -70,7 +70,7 @@ public:
 
     HDRColorA operator / (float f) const noexcept
     {
-        float fInv = 1.0f / f;
+        const float fInv = 1.0f / f;
         return HDRColorA(r * fInv, g * fInv, b * fInv, a * fInv);
     }
 
@@ -109,7 +109,7 @@ public:
 
     HDRColorA& operator /= (float f) noexcept
     {
-        float fInv = 1.0f / f;
+        const float fInv = 1.0f / f;
         r *= fInv;
         g *= fInv;
         b *= fInv;
@@ -179,8 +179,8 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
     const float *pC = (6 == cSteps) ? pC6 : pC8;
     const float *pD = (6 == cSteps) ? pD6 : pD8;
 
-    const float MAX_VALUE = 1.0f;
-    const float MIN_VALUE = (bRange) ? -1.0f : 0.0f;
+    constexpr float MAX_VALUE = 1.0f;
+    constexpr float MIN_VALUE = (bRange) ? -1.0f : 0.0f;
 
     // Find Min and Max points, as starting point
     float fX = MAX_VALUE;
@@ -215,14 +215,14 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
     }
 
     // Use Newton's Method to find local minima of sum-of-squares error.
-    auto fSteps = static_cast<float>(cSteps - 1);
+    auto const fSteps = static_cast<float>(cSteps - 1);
 
     for (size_t iIteration = 0; iIteration < 8; iIteration++)
     {
         if ((fY - fX) < (1.0f / 256.0f))
             break;
 
-        float fScale = fSteps / (fY - fX);
+        float const fScale = fSteps / (fY - fX);
 
         // Calculate new steps
         float pSteps[8];
@@ -244,7 +244,7 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
 
         for (size_t iPoint = 0; iPoint < NUM_PIXELS_PER_BLOCK; iPoint++)
         {
-            float fDot = (pPoints[iPoint] - fX) * fScale;
+            const float fDot = (pPoints[iPoint] - fX) * fScale;
 
             uint32_t iStep;
             if (fDot <= 0.0f)
@@ -265,7 +265,7 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
             {
                 // D3DX had this computation backwards (pPoints[iPoint] - pSteps[iStep])
                 // this fix improves RMS of the alpha component
-                float fDiff = pSteps[iStep] - pPoints[iPoint];
+                const float fDiff = pSteps[iStep] - pPoints[iPoint];
 
                 dX += pC[iStep] * fDiff;
                 d2X += pC[iStep] * pC[iStep];
@@ -284,7 +284,7 @@ template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPo
 
         if (fX > fY)
         {
-            float f = fX; fX = fY; fY = f;
+            const float f = fX; fX = fY; fY = f;
         }
 
         if ((dX * dX < (1.0f / 64.0f)) && (dY * dY < (1.0f / 64.0f)))

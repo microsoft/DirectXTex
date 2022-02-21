@@ -35,7 +35,7 @@ namespace
 
         case CNMAP_CHANNEL_LUMINANCE:
         {
-            XMVECTOR v = XMVectorMultiply(val, lScale);
+            const XMVECTOR v = XMVectorMultiply(val, lScale);
             XMStoreFloat4A(&f, v);
             return f.x + f.y + f.z;
         }
@@ -173,15 +173,15 @@ namespace
             {
                 // Compute normal via central differencing
                 float totDelta = (val0[x] - val0[x + 2]) + (val1[x] - val1[x + 2]) + (val2[x] - val2[x + 2]);
-                float deltaZX = totDelta * amplitude / 6.f;
+                const float deltaZX = totDelta * amplitude / 6.f;
 
                 totDelta = (val0[x] - val2[x]) + (val0[x + 1] - val2[x + 1]) + (val0[x + 2] - val2[x + 2]);
-                float deltaZY = totDelta * amplitude / 6.f;
+                const float deltaZY = totDelta * amplitude / 6.f;
 
-                XMVECTOR vx = XMVectorSetZ(g_XMNegIdentityR0, deltaZX);   // (-1.0f, 0.0f, deltaZX)
-                XMVECTOR vy = XMVectorSetZ(g_XMNegIdentityR1, deltaZY);   // (0.0f, -1.0f, deltaZY)
+                const XMVECTOR vx = XMVectorSetZ(g_XMNegIdentityR0, deltaZX);   // (-1.0f, 0.0f, deltaZX)
+                const XMVECTOR vy = XMVectorSetZ(g_XMNegIdentityR1, deltaZY);   // (0.0f, -1.0f, deltaZY)
 
-                XMVECTOR normal = XMVector3Normalize(XMVector3Cross(vx, vy));
+                const XMVECTOR normal = XMVector3Normalize(XMVector3Cross(vx, vy));
 
                 // Compute alpha (1.0 or an occlusion term)
                 float alpha = 1.f;
@@ -189,7 +189,7 @@ namespace
                 if (flags & CNMAP_COMPUTE_OCCLUSION)
                 {
                     float delta = 0.f;
-                    float c = val1[x + 1];
+                    const float c = val1[x + 1];
 
                     float t = val0[x] - c;  if (t > 0.f) delta += t;
                     t = val0[x + 1] - c;    if (t > 0.f) delta += t;
@@ -206,7 +206,7 @@ namespace
                     if (delta > 0.f)
                     {
                         // If < 0, then no occlusion
-                        float r = sqrtf(1.f + delta*delta);
+                        const float r = sqrtf(1.f + delta*delta);
                         alpha = (r - delta) / r;
                     }
                 }
@@ -215,7 +215,7 @@ namespace
                 if (convFlags & CONVF_UNORM)
                 {
                     // 0.5f*normal + 0.5f -or- invert sign case: -0.5f*normal + 0.5f
-                    XMVECTOR n1 = XMVectorMultiplyAdd((flags & CNMAP_INVERT_SIGN) ? g_XMNegativeOneHalf : g_XMOneHalf, normal, g_XMOneHalf);
+                    const XMVECTOR n1 = XMVectorMultiplyAdd((flags & CNMAP_INVERT_SIGN) ? g_XMNegativeOneHalf : g_XMOneHalf, normal, g_XMOneHalf);
                     *dptr++ = XMVectorSetW(n1, alpha);
                 }
                 else if (flags & CNMAP_INVERT_SIGN)

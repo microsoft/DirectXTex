@@ -109,9 +109,9 @@ namespace
         }
 
         // Diagonal axis
-        HDRColorA AB(Y.r - X.r, Y.g - X.g, Y.b - X.b, 0.0f);
+        const HDRColorA AB(Y.r - X.r, Y.g - X.g, Y.b - X.b, 0.0f);
 
-        float fAB = AB.r * AB.r + AB.g * AB.g + AB.b * AB.b;
+        const float fAB = AB.r * AB.r + AB.g * AB.g + AB.b * AB.b;
 
         // Single color block.. no need to root-find
         if (fAB < FLT_MIN)
@@ -122,11 +122,11 @@ namespace
         }
 
         // Try all four axis directions, to determine which diagonal best fits data
-        float fABInv = 1.0f / fAB;
+        const float fABInv = 1.0f / fAB;
 
         HDRColorA Dir(AB.r * fABInv, AB.g * fABInv, AB.b * fABInv, 0.0f);
 
-        HDRColorA Mid(
+        const HDRColorA Mid(
             (X.r + Y.r) * 0.5f,
             (X.g + Y.g) * 0.5f,
             (X.b + Y.b) * 0.5f,
@@ -185,12 +185,12 @@ namespace
 
         if (iDirMax & 2)
         {
-            float f = X.g; X.g = Y.g; Y.g = f;
+            const float f = X.g; X.g = Y.g; Y.g = f;
         }
 
         if (iDirMax & 1)
         {
-            float f = X.b; X.b = Y.b; Y.b = f;
+            const float f = X.b; X.b = Y.b; Y.b = f;
         }
 
 
@@ -203,7 +203,7 @@ namespace
         }
 
         // Use Newton's Method to find local minima of sum-of-squares error.
-        auto fSteps = static_cast<float>(cSteps - 1);
+        auto const fSteps = static_cast<float>(cSteps - 1);
 
         for (size_t iIteration = 0; iIteration < 8; iIteration++)
         {
@@ -224,12 +224,12 @@ namespace
             Dir.g = Y.g - X.g;
             Dir.b = Y.b - X.b;
 
-            float fLen = (Dir.r * Dir.r + Dir.g * Dir.g + Dir.b * Dir.b);
+            const float fLen = (Dir.r * Dir.r + Dir.g * Dir.g + Dir.b * Dir.b);
 
             if (fLen < (1.0f / 4096.0f))
                 break;
 
-            float fScale = fSteps / fLen;
+            const float fScale = fSteps / fLen;
 
             Dir.r *= fScale;
             Dir.g *= fScale;
@@ -244,7 +244,7 @@ namespace
 
             for (size_t iPoint = 0; iPoint < NUM_PIXELS_PER_BLOCK; iPoint++)
             {
-                float fDot = (pPoints[iPoint].r - X.r) * Dir.r +
+                const float fDot = (pPoints[iPoint].r - X.r) * Dir.r +
                     (pPoints[iPoint].g - X.g) * Dir.g +
                     (pPoints[iPoint].b - X.b) * Dir.b;
 
@@ -265,11 +265,11 @@ namespace
                 Diff.a = 0.0f;
 
 #ifdef COLOR_WEIGHTS
-                float fC = pC[iStep] * pPoints[iPoint].a * (1.0f / 8.0f);
-                float fD = pD[iStep] * pPoints[iPoint].a * (1.0f / 8.0f);
+                const float fC = pC[iStep] * pPoints[iPoint].a * (1.0f / 8.0f);
+                const float fD = pD[iStep] * pPoints[iPoint].a * (1.0f / 8.0f);
 #else
-                float fC = pC[iStep] * (1.0f / 8.0f);
-                float fD = pD[iStep] * (1.0f / 8.0f);
+                const float fC = pC[iStep] * (1.0f / 8.0f);
+                const float fD = pD[iStep] * (1.0f / 8.0f);
 #endif // COLOR_WEIGHTS
 
                 d2X += fC * pC[iStep];
@@ -286,7 +286,7 @@ namespace
             // Move endpoints
             if (d2X > 0.0f)
             {
-                float f = -1.0f / d2X;
+                const float f = -1.0f / d2X;
 
                 X.r += dX.r * f;
                 X.g += dX.g * f;
@@ -295,7 +295,7 @@ namespace
 
             if (d2Y > 0.0f)
             {
-                float f = -1.0f / d2Y;
+                const float f = -1.0f / d2Y;
 
                 Y.r += dY.r * f;
                 Y.g += dY.g * f;
@@ -513,8 +513,8 @@ namespace
             ColorD.a = ColorB.a;
         }
 
-        uint16_t wColorA = Encode565(&ColorC);
-        uint16_t wColorB = Encode565(&ColorD);
+        const uint16_t wColorA = Encode565(&ColorC);
+        const uint16_t wColorB = Encode565(&ColorD);
 
         if ((uSteps == 4) && (wColorA == wColorB))
         {
@@ -588,8 +588,8 @@ namespace
         Dir.b = Step[1].b - Step[0].b;
         Dir.a = 0.0f;
 
-        auto fSteps = static_cast<float>(uSteps - 1);
-        float fScale = (wColorA != wColorB) ? (fSteps / (Dir.r * Dir.r + Dir.g * Dir.g + Dir.b * Dir.b)) : 0.0f;
+        const auto fSteps = static_cast<float>(uSteps - 1);
+        const float fScale = (wColorA != wColorB) ? (fSteps / (Dir.r * Dir.r + Dir.g * Dir.g + Dir.b * Dir.b)) : 0.0f;
 
         Dir.r *= fScale;
         Dir.g *= fScale;
@@ -630,7 +630,7 @@ namespace
                     Clr.b += Error[i].b;
                 }
 
-                float fDot = (Clr.r - Step[0].r) * Dir.r + (Clr.g - Step[0].g) * Dir.g + (Clr.b - Step[0].b) * Dir.b;
+                const float fDot = (Clr.r - Step[0].r) * Dir.r + (Clr.g - Step[0].g) * Dir.g + (Clr.b - Step[0].b) * Dir.b;
 
                 uint32_t iStep;
                 if (fDot <= 0.0f)
@@ -706,9 +706,9 @@ namespace
         Color.g *= 1.0f / 16.0f;
         Color.b *= 1.0f / 16.0f;
 
-        uint16_t wColor = Encode565(&Color);
+        const uint16_t wColor = Encode565(&Color);
 #else
-        uint16_t wColor = 0x0000;
+        const uint16_t wColor = 0x0000;
 #endif // COLOR_AVG_0WEIGHTS
 
         // Encode solid block
@@ -750,14 +750,14 @@ void DirectX::D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshol
             HDRColorA clr;
             XMStoreFloat4(reinterpret_cast<XMFLOAT4*>(&clr), pColor[i]);
 
-            float fAlph = clr.a + fError[i];
+            const float fAlph = clr.a + fError[i];
 
             Color[i].r = clr.r;
             Color[i].g = clr.g;
             Color[i].b = clr.b;
             Color[i].a = static_cast<float>(static_cast<int32_t>(clr.a + fError[i] + 0.5f));
 
-            float fDiff = fAlph - Color[i].a;
+            const float fDiff = fAlph - Color[i].a;
 
             if (3 != (i & 3))
             {
@@ -849,14 +849,14 @@ void DirectX::D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
         if (flags & BC_FLAGS_DITHER_A)
             fAlph += fError[i];
 
-        auto u = static_cast<uint32_t>(fAlph * 15.0f + 0.5f);
+        const auto u = static_cast<uint32_t>(fAlph * 15.0f + 0.5f);
 
         pBC2->bitmap[i >> 3] >>= 4;
         pBC2->bitmap[i >> 3] |= (u << 28);
 
         if (flags & BC_FLAGS_DITHER_A)
         {
-            float fDiff = fAlph - float(u) * (1.0f / 15.0f);
+            const float fDiff = fAlph - float(u) * (1.0f / 15.0f);
 
             if (3 != (i & 3))
             {
@@ -978,7 +978,7 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
 
         if (flags & BC_FLAGS_DITHER_A)
         {
-            float fDiff = fAlph - fAlpha[i];
+            const float fDiff = fAlph - fAlpha[i];
 
             if (3 != (i & 3))
             {
@@ -1027,13 +1027,13 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
     }
 
     // Optimize and Quantize Min and Max values
-    uint32_t uSteps = ((0.0f == fMinAlpha) || (1.0f == fMaxAlpha)) ? 6u : 8u;
+    const uint32_t uSteps = ((0.0f == fMinAlpha) || (1.0f == fMaxAlpha)) ? 6u : 8u;
 
     float fAlphaA, fAlphaB;
     OptimizeAlpha<false>(&fAlphaA, &fAlphaB, fAlpha, uSteps);
 
-    auto bAlphaA = static_cast<uint8_t>(static_cast<int32_t>(fAlphaA * 255.0f + 0.5f));
-    auto bAlphaB = static_cast<uint8_t>(static_cast<int32_t>(fAlphaB * 255.0f + 0.5f));
+    auto const bAlphaA = static_cast<uint8_t>(static_cast<int32_t>(fAlphaA * 255.0f + 0.5f));
+    auto const bAlphaB = static_cast<uint8_t>(static_cast<int32_t>(fAlphaB * 255.0f + 0.5f));
 
     fAlphaA = static_cast<float>(bAlphaA) * (1.0f / 255.0f);
     fAlphaB = static_cast<float>(bAlphaB) * (1.0f / 255.0f);
@@ -1084,8 +1084,8 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
     }
 
     // Encode alpha bitmap
-    auto fSteps = static_cast<float>(uSteps - 1);
-    float fScale = (fStep[0] != fStep[1]) ? (fSteps / (fStep[1] - fStep[0])) : 0.0f;
+    auto const fSteps = static_cast<float>(uSteps - 1);
+    const float fScale = (fStep[0] != fStep[1]) ? (fSteps / (fStep[1] - fStep[0])) : 0.0f;
 
     if (flags & BC_FLAGS_DITHER_A)
         memset(fError, 0x00, NUM_PIXELS_PER_BLOCK * sizeof(float));
@@ -1094,15 +1094,15 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
     {
         uint32_t dw = 0;
 
-        size_t iMin = iSet * 8;
-        size_t iLim = iMin + 8;
+        const size_t iMin = iSet * 8;
+        const size_t iLim = iMin + 8;
 
         for (size_t i = iMin; i < iLim; ++i)
         {
             float fAlph = Color[i].a;
             if (flags & BC_FLAGS_DITHER_A)
                 fAlph += fError[i];
-            float fDot = (fAlph - fStep[0]) * fScale;
+            const float fDot = (fAlph - fStep[0]) * fScale;
 
             uint32_t iStep;
             if (fDot <= 0.0f)
@@ -1116,7 +1116,7 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
 
             if (flags & BC_FLAGS_DITHER_A)
             {
-                float fDiff = (fAlph - fStep[iStep]);
+                const float fDiff = (fAlph - fStep[iStep]);
 
                 if (3 != (i & 3))
                     fError[i + 1] += fDiff * (7.0f / 16.0f);

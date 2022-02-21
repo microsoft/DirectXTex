@@ -99,7 +99,7 @@ HRESULT GPUCompressBC::Initialize(ID3D11Device* pDevice)
         return E_INVALIDARG;
 
     // Check for DirectCompute support
-    D3D_FEATURE_LEVEL fl = pDevice->GetFeatureLevel();
+    const D3D_FEATURE_LEVEL fl = pDevice->GetFeatureLevel();
 
     if (fl < D3D_FEATURE_LEVEL_10_0)
     {
@@ -197,9 +197,9 @@ HRESULT GPUCompressBC::Prepare(size_t width, size_t height, uint32_t flags, DXGI
         m_bc7_mode137 = true;
     }
 
-    size_t xblocks = std::max<size_t>(1, (width + 3) >> 2);
-    size_t yblocks = std::max<size_t>(1, (height + 3) >> 2);
-    size_t num_blocks = xblocks * yblocks;
+    const size_t xblocks = std::max<size_t>(1, (width + 3) >> 2);
+    const size_t yblocks = std::max<size_t>(1, (height + 3) >> 2);
+    const size_t num_blocks = xblocks * yblocks;
 
     switch (format)
     {
@@ -232,11 +232,11 @@ HRESULT GPUCompressBC::Prepare(size_t width, size_t height, uint32_t flags, DXGI
         return E_POINTER;
 
     // Create structured buffers
-    uint64_t sizeInBytes = uint64_t(num_blocks) * sizeof(BufferBC6HBC7);
+    const uint64_t sizeInBytes = uint64_t(num_blocks) * sizeof(BufferBC6HBC7);
     if (sizeInBytes >= UINT32_MAX)
         return HRESULT_E_ARITHMETIC_OVERFLOW;
 
-    auto bufferSize = static_cast<size_t>(sizeInBytes);
+    auto const bufferSize = static_cast<size_t>(sizeInBytes);
 
     {
         D3D11_BUFFER_DESC desc = {};
@@ -364,7 +364,7 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
         return E_POINTER;
 
     // We need to avoid the hardware doing additional colorspace conversion
-    DXGI_FORMAT inputFormat = (m_srcformat == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB) ? DXGI_FORMAT_R8G8B8A8_UNORM : m_srcformat;
+    const DXGI_FORMAT inputFormat = (m_srcformat == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB) ? DXGI_FORMAT_R8G8B8A8_UNORM : m_srcformat;
 
     ComPtr<ID3D11Texture2D> sourceTex;
     {
@@ -423,22 +423,22 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
         return E_UNEXPECTED;
     }
 
-    const UINT MAX_BLOCK_BATCH = 64;
+    constexpr UINT MAX_BLOCK_BATCH = 64u;
 
     auto pContext = m_context.Get();
     if (!pContext)
         return E_UNEXPECTED;
 
-    size_t xblocks = std::max<size_t>(1, (m_width + 3) >> 2);
-    size_t yblocks = std::max<size_t>(1, (m_height + 3) >> 2);
+    const size_t xblocks = std::max<size_t>(1, (m_width + 3) >> 2);
+    const size_t yblocks = std::max<size_t>(1, (m_height + 3) >> 2);
 
-    auto num_total_blocks = static_cast<UINT>(xblocks * yblocks);
+    auto const num_total_blocks = static_cast<UINT>(xblocks * yblocks);
     UINT num_blocks = num_total_blocks;
     UINT start_block_id = 0;
     while (num_blocks > 0)
     {
-        UINT n = std::min<UINT>(num_blocks, MAX_BLOCK_BATCH);
-        UINT uThreadGroupCount = n;
+        const UINT n = std::min<UINT>(num_blocks, MAX_BLOCK_BATCH);
+        const UINT uThreadGroupCount = n;
 
         {
             D3D11_MAPPED_SUBRESOURCE mapped;
@@ -597,9 +597,9 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
         auto pSrc = static_cast<const uint8_t *>(mapped.pData);
         uint8_t *pDest = destImage.pixels;
 
-        size_t pitch = xblocks * sizeof(BufferBC6HBC7);
+        const size_t pitch = xblocks * sizeof(BufferBC6HBC7);
 
-        size_t rows = std::max<size_t>(1, (destImage.height + 3) >> 2);
+        const size_t rows = std::max<size_t>(1, (destImage.height + 3) >> 2);
 
         for (size_t h = 0; h < rows; ++h)
         {

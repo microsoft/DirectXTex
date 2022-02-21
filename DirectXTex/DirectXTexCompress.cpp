@@ -23,7 +23,7 @@ using namespace DirectX::Internal;
 
 namespace
 {
-    inline uint32_t GetBCFlags(_In_ TEX_COMPRESS_FLAGS compress) noexcept
+    constexpr uint32_t GetBCFlags(_In_ TEX_COMPRESS_FLAGS compress) noexcept
     {
         static_assert(static_cast<int>(TEX_COMPRESS_RGB_DITHER) == static_cast<int>(BC_FLAGS_DITHER_RGB), "TEX_COMPRESS_* flags should match BC_FLAGS_*");
         static_assert(static_cast<int>(TEX_COMPRESS_A_DITHER) == static_cast<int>(BC_FLAGS_DITHER_A), "TEX_COMPRESS_* flags should match BC_FLAGS_*");
@@ -34,7 +34,7 @@ namespace
         return (compress & (BC_FLAGS_DITHER_RGB | BC_FLAGS_DITHER_A | BC_FLAGS_UNIFORM | BC_FLAGS_USE_3SUBSETS | BC_FLAGS_FORCE_BC7_MODE6));
     }
 
-    inline TEX_FILTER_FLAGS GetSRGBFlags(_In_ TEX_COMPRESS_FLAGS compress) noexcept
+    constexpr TEX_FILTER_FLAGS GetSRGBFlags(_In_ TEX_COMPRESS_FLAGS compress) noexcept
     {
         static_assert(TEX_FILTER_SRGB_IN == 0x1000000, "TEX_FILTER_SRGB flag values don't match TEX_FILTER_SRGB_MASK");
         static_assert(static_cast<int>(TEX_COMPRESS_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN), "TEX_COMPRESS_SRGB* should match TEX_FILTER_SRGB*");
@@ -113,14 +113,14 @@ namespace
         {
             const uint8_t *sptr = pSrc;
             uint8_t* dptr = pDest;
-            size_t ph = std::min<size_t>(4, image.height - h);
+            const size_t ph = std::min<size_t>(4, image.height - h);
             size_t w = 0;
             for (size_t count = 0; (count < result.rowPitch) && (w < image.width); count += blocksize, w += 4)
             {
-                size_t pw = std::min<size_t>(4, image.width - w);
+                const size_t pw = std::min<size_t>(4, image.width - w);
                 assert(pw > 0 && ph > 0);
 
-                ptrdiff_t bytesLeft = pEnd - sptr;
+                const ptrdiff_t bytesLeft = pEnd - sptr;
                 assert(bytesLeft > 0);
                 size_t bytesToRead = std::min<size_t>(rowPitch, static_cast<size_t>(bytesLeft));
                 if (!LoadScanline(&temp[0], pw, sptr, bytesToRead, format))
@@ -242,25 +242,25 @@ namespace
 #pragma omp parallel for
         for (int nb = 0; nb < static_cast<int>(nBlocks); ++nb)
         {
-            int nbWidth = std::max<int>(1, int((image.width + 3) / 4));
+            const int nbWidth = std::max<int>(1, int((image.width + 3) / 4));
 
             int y = nb / nbWidth;
-            int x = (nb - (y*nbWidth)) * 4;
+            const int x = (nb - (y*nbWidth)) * 4;
             y *= 4;
 
             assert((x >= 0) && (x < int(image.width)));
             assert((y >= 0) && (y < int(image.height)));
 
-            size_t rowPitch = image.rowPitch;
+            const size_t rowPitch = image.rowPitch;
             const uint8_t *pSrc = image.pixels + (size_t(y)*rowPitch) + (size_t(x)*sbpp);
 
             uint8_t *pDest = result.pixels + (size_t(nb)*blocksize);
 
-            size_t ph = std::min<size_t>(4, image.height - size_t(y));
-            size_t pw = std::min<size_t>(4, image.width - size_t(x));
+            const size_t ph = std::min<size_t>(4, image.height - size_t(y));
+            const size_t pw = std::min<size_t>(4, image.width - size_t(x));
             assert(pw > 0 && ph > 0);
 
-            ptrdiff_t bytesLeft = pEnd - pSrc;
+            const ptrdiff_t bytesLeft = pEnd - pSrc;
             assert(bytesLeft > 0);
             size_t bytesToRead = std::min<size_t>(rowPitch, size_t(bytesLeft));
 
@@ -449,14 +449,14 @@ namespace
         {
             const uint8_t *sptr = pSrc;
             uint8_t* dptr = pDest;
-            size_t ph = std::min<size_t>(4, cImage.height - h);
+            const size_t ph = std::min<size_t>(4, cImage.height - h);
             size_t w = 0;
             for (size_t count = 0; (count < cImage.rowPitch) && (w < cImage.width); count += sbpp, w += 4)
             {
                 pfDecode(temp, sptr);
                 ConvertScanline(temp, 16, format, cformat, TEX_FILTER_DEFAULT);
 
-                size_t pw = std::min<size_t>(4, cImage.width - w);
+                const size_t pw = std::min<size_t>(4, cImage.width - w);
                 assert(pw > 0 && ph > 0);
 
                 if (!StoreScanline(dptr, rowPitch, format, &temp[0], pw))
@@ -535,13 +535,13 @@ bool DirectX::Internal::IsAlphaAllOpaqueBC(_In_ const Image& cImage) noexcept
     for (size_t h = 0; h < cImage.height; h += 4)
     {
         const uint8_t* ptr = pPixels;
-        size_t ph = std::min<size_t>(4, cImage.height - h);
+        const size_t ph = std::min<size_t>(4, cImage.height - h);
         size_t w = 0;
         for (size_t count = 0; (count < cImage.rowPitch) && (w < cImage.width); count += sbpp, w += 4)
         {
             pfDecode(temp, ptr);
 
-            size_t pw = std::min<size_t>(4, cImage.width - w);
+            const size_t pw = std::min<size_t>(4, cImage.width - w);
             assert(pw > 0 && ph > 0);
 
             if (pw == 4 && ph == 4)
@@ -549,7 +549,7 @@ bool DirectX::Internal::IsAlphaAllOpaqueBC(_In_ const Image& cImage) noexcept
                 // Full blocks
                 for (size_t j = 0; j < 16; ++j)
                 {
-                    XMVECTOR alpha = XMVectorSplatW(temp[j]);
+                    const XMVECTOR alpha = XMVectorSplatW(temp[j]);
                     if (XMVector4Less(alpha, threshold))
                         return false;
                 }
@@ -561,7 +561,7 @@ bool DirectX::Internal::IsAlphaAllOpaqueBC(_In_ const Image& cImage) noexcept
                 {
                     for (size_t x = 0; x < pw; ++x)
                     {
-                        XMVECTOR alpha = XMVectorSplatW(temp[y * 4 + x]);
+                        const XMVECTOR alpha = XMVectorSplatW(temp[y * 4 + x]);
                         if (XMVector4Less(alpha, threshold))
                             return false;
                     }

@@ -76,7 +76,7 @@ namespace
 
             for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
-                UINT dindex = D3D11CalcSubresource(static_cast<UINT>(level), 0, static_cast<UINT>(metadata.mipLevels));
+                const UINT dindex = D3D11CalcSubresource(static_cast<UINT>(level), 0, static_cast<UINT>(metadata.mipLevels));
 
                 D3D11_MAPPED_SUBRESOURCE mapped;
                 HRESULT hr = pContext->Map(pSource, dindex, D3D11_MAP_READ, 0, &mapped);
@@ -90,7 +90,7 @@ namespace
                     return E_POINTER;
                 }
 
-                size_t lines = ComputeScanlines(metadata.format, height);
+                const size_t lines = ComputeScanlines(metadata.format, height);
                 if (!lines)
                 {
                     pContext->Unmap(pSource, dindex);
@@ -116,7 +116,7 @@ namespace
                     uint8_t* dptr = img->pixels;
                     for (size_t h = 0; h < lines; ++h)
                     {
-                        size_t msize = std::min<size_t>(img->rowPitch, mapped.RowPitch);
+                        const size_t msize = std::min<size_t>(img->rowPitch, mapped.RowPitch);
                         memcpy(dptr, sptr, msize);
                         sptr += mapped.RowPitch;
                         dptr += img->rowPitch;
@@ -144,7 +144,7 @@ namespace
 
                 for (size_t level = 0; level < metadata.mipLevels; ++level)
                 {
-                    UINT dindex = D3D11CalcSubresource(static_cast<UINT>(level), static_cast<UINT>(item), static_cast<UINT>(metadata.mipLevels));
+                    const UINT dindex = D3D11CalcSubresource(static_cast<UINT>(level), static_cast<UINT>(item), static_cast<UINT>(metadata.mipLevels));
 
                     D3D11_MAPPED_SUBRESOURCE mapped;
                     HRESULT hr = pContext->Map(pSource, dindex, D3D11_MAP_READ, 0, &mapped);
@@ -164,7 +164,7 @@ namespace
                         return E_POINTER;
                     }
 
-                    size_t lines = ComputeScanlines(metadata.format, height);
+                    const size_t lines = ComputeScanlines(metadata.format, height);
                     if (!lines)
                     {
                         pContext->Unmap(pSource, dindex);
@@ -175,7 +175,7 @@ namespace
                     uint8_t* dptr = img->pixels;
                     for (size_t h = 0; h < lines; ++h)
                     {
-                        size_t msize = std::min<size_t>(img->rowPitch, mapped.RowPitch);
+                        const size_t msize = std::min<size_t>(img->rowPitch, mapped.RowPitch);
                         memcpy(dptr, sptr, msize);
                         sptr += mapped.RowPitch;
                         dptr += img->rowPitch;
@@ -209,10 +209,10 @@ bool DirectX::IsSupportedTexture(
     if (!pDevice)
         return false;
 
-    D3D_FEATURE_LEVEL fl = pDevice->GetFeatureLevel();
+    const D3D_FEATURE_LEVEL fl = pDevice->GetFeatureLevel();
 
     // Validate format
-    DXGI_FORMAT fmt = metadata.format;
+    const DXGI_FORMAT fmt = metadata.format;
 
     if (!IsValid(fmt))
         return false;
@@ -248,10 +248,10 @@ bool DirectX::IsSupportedTexture(
         return false;
 
     // Validate array size, dimension, and width/height
-    size_t arraySize = metadata.arraySize;
-    size_t iWidth = metadata.width;
-    size_t iHeight = metadata.height;
-    size_t iDepth = metadata.depth;
+    const size_t arraySize = metadata.arraySize;
+    const size_t iWidth = metadata.width;
+    const size_t iHeight = metadata.height;
+    const size_t iDepth = metadata.depth;
 
     // Most cases are known apriori based on feature level, but we use this for robustness to handle the few optional cases
     UINT formatSupport = 0;
@@ -461,7 +461,7 @@ HRESULT DirectX::CreateTextureEx(
         size_t idx = 0;
         for (size_t level = 0; level < metadata.mipLevels; ++level)
         {
-            size_t index = metadata.ComputeIndex(level, 0, 0);
+            const size_t index = metadata.ComputeIndex(level, 0, 0);
             if (index >= nimages)
                 return E_FAIL;
 
@@ -479,7 +479,7 @@ HRESULT DirectX::CreateTextureEx(
             const uint8_t* pSlice = img.pixels + img.slicePitch;
             for (size_t slice = 1; slice < depth; ++slice)
             {
-                size_t tindex = metadata.ComputeIndex(level, 0, slice);
+                const size_t tindex = metadata.ComputeIndex(level, 0, slice);
                 if (tindex >= nimages)
                     return E_FAIL;
 
@@ -516,7 +516,7 @@ HRESULT DirectX::CreateTextureEx(
         {
             for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
-                size_t index = metadata.ComputeIndex(level, item, 0);
+                const size_t index = metadata.ComputeIndex(level, item, 0);
                 if (index >= nimages)
                     return E_FAIL;
 
@@ -541,7 +541,7 @@ HRESULT DirectX::CreateTextureEx(
     // Create texture using static initialization data
     HRESULT hr = E_UNEXPECTED;
 
-    DXGI_FORMAT tformat = (forceSRGB) ? MakeSRGB(metadata.format) : metadata.format;
+    const DXGI_FORMAT tformat = (forceSRGB) ? MakeSRGB(metadata.format) : metadata.format;
 
     switch (metadata.dimension)
     {
@@ -843,7 +843,7 @@ HRESULT DirectX::CaptureTexture(
             {
                 for (UINT level = 0; level < desc.MipLevels; ++level)
                 {
-                    UINT index = D3D11CalcSubresource(level, item, desc.MipLevels);
+                    const UINT index = D3D11CalcSubresource(level, item, desc.MipLevels);
                     pContext->ResolveSubresource(pTemp.Get(), index, pSource, index, fmt);
                 }
             }

@@ -158,8 +158,8 @@ namespace
         }
 
         // MSE = sum[ (I1 - I2)^2 ] / w*h
-        XMVECTOR d = XMVectorReplicate(float(image1.width * image1.height));
-        XMVECTOR v = XMVectorDivide(acc, d);
+        const XMVECTOR d = XMVectorReplicate(float(image1.width * image1.height));
+        const XMVECTOR v = XMVectorDivide(acc, d);
         if (mseV)
         {
             XMStoreFloat4(reinterpret_cast<XMFLOAT4*>(mseV), v);
@@ -178,7 +178,7 @@ namespace
     //-------------------------------------------------------------------------------------
     HRESULT EvaluateImage_(
         const Image& image,
-        std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)>& pixelFunc)
+        const std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)>& pixelFunc)
     {
         if (!pixelFunc)
             return E_INVALIDARG;
@@ -214,7 +214,7 @@ namespace
     //-------------------------------------------------------------------------------------
     HRESULT TransformImage_(
         const Image& srcImage,
-        std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)>& pixelFunc,
+        const std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)>& pixelFunc,
         const Image& destImage)
     {
         if (!pixelFunc)

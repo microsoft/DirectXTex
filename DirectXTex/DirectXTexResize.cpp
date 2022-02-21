@@ -265,10 +265,10 @@ namespace
         const uint8_t* pSrc = srcImage.pixels;
         uint8_t* pDest = destImage.pixels;
 
-        size_t rowPitch = srcImage.rowPitch;
+        const size_t rowPitch = srcImage.rowPitch;
 
-        size_t xinc = (srcImage.width << 16) / destImage.width;
-        size_t yinc = (srcImage.height << 16) / destImage.height;
+        const size_t xinc = (srcImage.width << 16) / destImage.width;
+        const size_t yinc = (srcImage.height << 16) / destImage.height;
 
         size_t lasty = size_t(-1);
 
@@ -332,7 +332,7 @@ namespace
         const uint8_t* pSrc = srcImage.pixels;
         uint8_t* pDest = destImage.pixels;
 
-        size_t rowPitch = srcImage.rowPitch;
+        const size_t rowPitch = srcImage.rowPitch;
 
         for (size_t y = 0; y < destImage.height; ++y)
         {
@@ -349,7 +349,7 @@ namespace
 
             for (size_t x = 0; x < destImage.width; ++x)
             {
-                size_t x2 = x << 1;
+                const size_t x2 = x << 1;
 
                 AVERAGE4(target[x], urow0[x2], urow1[x2], urow2[x2], urow3[x2])
             }
@@ -399,14 +399,14 @@ namespace
         const uint8_t* pSrc = srcImage.pixels;
         uint8_t* pDest = destImage.pixels;
 
-        size_t rowPitch = srcImage.rowPitch;
+        const size_t rowPitch = srcImage.rowPitch;
 
         size_t u0 = size_t(-1);
         size_t u1 = size_t(-1);
 
         for (size_t y = 0; y < destImage.height; ++y)
         {
-            auto& toY = lfY[y];
+            auto const& toY = lfY[y];
 
             if (toY.u0 != u0)
             {
@@ -436,7 +436,7 @@ namespace
 
             for (size_t x = 0; x < destImage.width; ++x)
             {
-                auto& toX = lfX[x];
+                auto const& toX = lfX[x];
 
                 BILINEAR_INTERPOLATE(target[x], toX, toY, row0, row1)
             }
@@ -490,7 +490,7 @@ namespace
         const uint8_t* pSrc = srcImage.pixels;
         uint8_t* pDest = destImage.pixels;
 
-        size_t rowPitch = srcImage.rowPitch;
+        const size_t rowPitch = srcImage.rowPitch;
 
         size_t u0 = size_t(-1);
         size_t u1 = size_t(-1);
@@ -499,7 +499,7 @@ namespace
 
         for (size_t y = 0; y < destImage.height; ++y)
         {
-            auto& toY = cfY[y];
+            auto const& toY = cfY[y];
 
             // Scanline 1
             if (toY.u0 != u0)
@@ -590,7 +590,7 @@ namespace
 
             for (size_t x = 0; x < destImage.width; ++x)
             {
-                auto& toX = cfX[x];
+                auto const& toX = cfX[x];
 
                 XMVECTOR C0, C1, C2, C3;
 
@@ -654,7 +654,7 @@ namespace
         {
             for (size_t j = 0; j < yFrom->count; ++j)
             {
-                size_t v = yFrom->to[j].u;
+                const size_t v = yFrom->to[j].u;
                 assert(v < destImage.height);
                 ++rowActive[v].remaining;
             }
@@ -664,7 +664,7 @@ namespace
 
         // Filter image
         const uint8_t* pSrc = srcImage.pixels;
-        size_t rowPitch = srcImage.rowPitch;
+        const size_t rowPitch = srcImage.rowPitch;
         const uint8_t* pEndSrc = pSrc + rowPitch * srcImage.height;
 
         uint8_t* pDest = destImage.pixels;
@@ -674,7 +674,7 @@ namespace
             // Create accumulation rows as needed
             for (size_t j = 0; j < yFrom->count; ++j)
             {
-                size_t v = yFrom->to[j].u;
+                const size_t v = yFrom->to[j].u;
                 assert(v < destImage.height);
                 TriangleRow* rowAcc = &rowActive[v];
 
@@ -714,9 +714,9 @@ namespace
             {
                 for (size_t j = 0; j < yFrom->count; ++j)
                 {
-                    size_t v = yFrom->to[j].u;
+                    const size_t v = yFrom->to[j].u;
                     assert(v < destImage.height);
-                    float yweight = yFrom->to[j].weight;
+                    const float yweight = yFrom->to[j].weight;
 
                     XMVECTOR* accPtr = rowActive[v].scanline.get();
                     if (!accPtr)
@@ -727,7 +727,7 @@ namespace
                         size_t u = xFrom->to[k].u;
                         assert(u < destImage.width);
 
-                        XMVECTOR weight = XMVectorReplicate(yweight * xFrom->to[k].weight);
+                        const XMVECTOR weight = XMVectorReplicate(yweight * xFrom->to[k].weight);
 
                         assert(x < srcImage.width);
                         accPtr[u] = XMVectorMultiplyAdd(row[x], weight, accPtr[u]);
@@ -868,13 +868,13 @@ HRESULT DirectX::Resize(
     bool usewic = UseWICFiltering(srcImage.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
-    bool wicpf = (usewic) ? DXGIToWIC(srcImage.format, pfGUID, true) : false;
+    const bool wicpf = (usewic) ? DXGIToWIC(srcImage.format, pfGUID, true) : false;
 
     if (usewic && !wicpf)
     {
         // Check to see if the source and/or result size is too big for WIC
-        uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
-        uint64_t expandedSize2 = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
+        const uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
+        const uint64_t expandedSize2 = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
             if (filter & TEX_FILTER_FORCE_WIC)
@@ -955,13 +955,13 @@ HRESULT DirectX::Resize(
     bool usewic = !metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
-    bool wicpf = (usewic) ? DXGIToWIC(metadata.format, pfGUID, true) : false;
+    const bool wicpf = (usewic) ? DXGIToWIC(metadata.format, pfGUID, true) : false;
 
     if (usewic && !wicpf)
     {
         // Check to see if the source and/or result size is too big for WIC
-        uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
-        uint64_t expandedSize2 = uint64_t(metadata.width) * uint64_t(metadata.height) * sizeof(float) * 4;
+        const uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
+        const uint64_t expandedSize2 = uint64_t(metadata.width) * uint64_t(metadata.height) * sizeof(float) * 4;
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
             if (filter & TEX_FILTER_FORCE_WIC)
@@ -980,7 +980,7 @@ HRESULT DirectX::Resize(
 
         for (size_t item = 0; item < metadata.arraySize; ++item)
         {
-            size_t srcIndex = metadata.ComputeIndex(0, item, 0);
+            const size_t srcIndex = metadata.ComputeIndex(0, item, 0);
             if (srcIndex >= nimages)
             {
                 result.Release();
@@ -1041,7 +1041,7 @@ HRESULT DirectX::Resize(
 
         for (size_t slice = 0; slice < metadata.depth; ++slice)
         {
-            size_t srcIndex = metadata.ComputeIndex(0, 0, slice);
+            const size_t srcIndex = metadata.ComputeIndex(0, 0, slice);
             if (srcIndex >= nimages)
             {
                 result.Release();
