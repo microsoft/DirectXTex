@@ -16,7 +16,7 @@ using namespace DirectX::Internal;
 
 namespace
 {
-    inline TEX_FILTER_FLAGS GetSRGBFlags(_In_ TEX_PMALPHA_FLAGS compress) noexcept
+    constexpr TEX_FILTER_FLAGS GetSRGBFlags(_In_ TEX_PMALPHA_FLAGS compress) noexcept
     {
         static_assert(TEX_FILTER_SRGB_IN == 0x1000000, "TEX_FILTER_SRGB flag values don't match TEX_FILTER_SRGB_MASK");
         static_assert(static_cast<int>(TEX_PMALPHA_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
@@ -49,7 +49,7 @@ namespace
             XMVECTOR* ptr = scanline.get();
             for (size_t w = 0; w < srcImage.width; ++w)
             {
-                XMVECTOR v = *ptr;
+                const XMVECTOR v = *ptr;
                 XMVECTOR alpha = XMVectorSplatW(*ptr);
                 alpha = XMVectorMultiply(v, alpha);
                 *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
@@ -84,7 +84,7 @@ namespace
         if (!pSrc || !pDest)
             return E_POINTER;
 
-        TEX_FILTER_FLAGS filter = GetSRGBFlags(flags);
+        const TEX_FILTER_FLAGS filter = GetSRGBFlags(flags);
 
         for (size_t h = 0; h < srcImage.height; ++h)
         {
@@ -94,7 +94,7 @@ namespace
             XMVECTOR* ptr = scanline.get();
             for (size_t w = 0; w < srcImage.width; ++w)
             {
-                XMVECTOR v = *ptr;
+                const XMVECTOR v = *ptr;
                 XMVECTOR alpha = XMVectorSplatW(*ptr);
                 alpha = XMVectorMultiply(v, alpha);
                 *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
@@ -134,7 +134,7 @@ namespace
             XMVECTOR* ptr = scanline.get();
             for (size_t w = 0; w < srcImage.width; ++w)
             {
-                XMVECTOR v = *ptr;
+                const XMVECTOR v = *ptr;
                 XMVECTOR alpha = XMVectorSplatW(*ptr);
                 if (XMVectorGetX(alpha) > 0)
                 {
@@ -172,7 +172,7 @@ namespace
         if (!pSrc || !pDest)
             return E_POINTER;
 
-        TEX_FILTER_FLAGS filter = GetSRGBFlags(flags);
+        const TEX_FILTER_FLAGS filter = GetSRGBFlags(flags);
 
         for (size_t h = 0; h < srcImage.height; ++h)
         {
@@ -182,7 +182,7 @@ namespace
             XMVECTOR* ptr = scanline.get();
             for (size_t w = 0; w < srcImage.width; ++w)
             {
-                XMVECTOR v = *ptr;
+                const XMVECTOR v = *ptr;
                 XMVECTOR alpha = XMVectorSplatW(*ptr);
                 if (XMVectorGetX(alpha) > 0)
                 {

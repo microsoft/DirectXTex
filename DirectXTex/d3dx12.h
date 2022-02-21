@@ -2101,8 +2101,8 @@ inline UINT64 UpdateSubresources(
     {
         for (UINT i = 0; i < NumSubresources; ++i)
         {
-            CD3DX12_TEXTURE_COPY_LOCATION Dst(pDestinationResource, i + FirstSubresource);
-            CD3DX12_TEXTURE_COPY_LOCATION Src(pIntermediate, pLayouts[i]);
+            const CD3DX12_TEXTURE_COPY_LOCATION Dst(pDestinationResource, i + FirstSubresource);
+            const CD3DX12_TEXTURE_COPY_LOCATION Src(pIntermediate, pLayouts[i]);
             pCmdList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
         }
     }
@@ -2160,8 +2160,8 @@ inline UINT64 UpdateSubresources(
     {
         for (UINT i = 0; i < NumSubresources; ++i)
         {
-            CD3DX12_TEXTURE_COPY_LOCATION Dst(pDestinationResource, i + FirstSubresource);
-            CD3DX12_TEXTURE_COPY_LOCATION Src(pIntermediate, pLayouts[i]);
+            const CD3DX12_TEXTURE_COPY_LOCATION Dst(pDestinationResource, i + FirstSubresource);
+            const CD3DX12_TEXTURE_COPY_LOCATION Src(pIntermediate, pLayouts[i]);
             pCmdList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
         }
     }
@@ -2404,7 +2404,7 @@ inline HRESULT D3DX12SerializeVersionedRootSignature(
 
                     if (SUCCEEDED(hr))
                     {
-                        CD3DX12_ROOT_SIGNATURE_DESC desc_1_0(desc_1_1.NumParameters, pParameters_1_0, desc_1_1.NumStaticSamplers, desc_1_1.pStaticSamplers, desc_1_1.Flags);
+                        const CD3DX12_ROOT_SIGNATURE_DESC desc_1_0(desc_1_1.NumParameters, pParameters_1_0, desc_1_1.NumStaticSamplers, desc_1_1.pStaticSamplers, desc_1_1.Flags);
                         hr = D3D12SerializeRootSignature(&desc_1_0, D3D_ROOT_SIGNATURE_VERSION_1, ppBlob, ppErrorBlob);
                     }
 

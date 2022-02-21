@@ -55,7 +55,7 @@ using namespace DirectX;
 //--------------------------------------------------------------------------------------
 #pragma pack(push,1)
 
-const uint32_t DDS_MAGIC = 0x20534444; // "DDS "
+constexpr uint32_t DDS_MAGIC = 0x20534444; // "DDS "
 
 struct DDS_PIXELFORMAT
 {
@@ -172,7 +172,7 @@ namespace
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData);
+        auto const dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData);
         if (dwMagicNumber != DDS_MAGIC)
         {
             return E_FAIL;
@@ -296,7 +296,7 @@ namespace
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
+        auto const dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
         if (dwMagicNumber != DDS_MAGIC)
         {
             ddsData.reset();
@@ -602,7 +602,7 @@ namespace
         }
         else
         {
-            size_t bpp = BitsPerPixel(fmt);
+            const size_t bpp = BitsPerPixel(fmt);
             if (!bpp)
                 return E_INVALIDARG;
 
@@ -1053,7 +1053,7 @@ namespace
         _In_ unsigned int miscFlags,
         _In_ bool forceSRGB,
         _In_ bool isCubeMap,
-        _In_reads_opt_(mipCount*arraySize) D3D11_SUBRESOURCE_DATA* initData,
+        _In_reads_opt_(mipCount*arraySize) const D3D11_SUBRESOURCE_DATA* initData,
         _Outptr_opt_ ID3D11Resource** texture,
         _Outptr_opt_ ID3D11ShaderResourceView** textureView) noexcept
     {
@@ -1289,7 +1289,7 @@ namespace
     {
         HRESULT hr = S_OK;
 
-        UINT width = header->width;
+        const UINT width = header->width;
         UINT height = header->height;
         UINT depth = header->depth;
 
@@ -1541,7 +1541,7 @@ namespace
                             return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
                         }
 
-                        UINT res = D3D11CalcSubresource(0, item, mipLevels);
+                        const UINT res = D3D11CalcSubresource(0, item, mipLevels);
                         d3dContext->UpdateSubresource(tex, res, nullptr, pSrcBits, static_cast<UINT>(rowBytes), static_cast<UINT>(numBytes));
                         pSrcBits += numBytes;
                     }
@@ -1652,7 +1652,7 @@ namespace
             if (MAKEFOURCC('D', 'X', '1', '0') == header->ddspf.fourCC)
             {
                 auto d3d10ext = reinterpret_cast<const DDS_HEADER_DXT10*>(reinterpret_cast<const uint8_t*>(header) + sizeof(DDS_HEADER));
-                auto mode = static_cast<DDS_ALPHA_MODE>(d3d10ext->miscFlags2 & DDS_MISC_FLAGS2_ALPHA_MODE_MASK);
+                auto const mode = static_cast<DDS_ALPHA_MODE>(d3d10ext->miscFlags2 & DDS_MISC_FLAGS2_ALPHA_MODE_MASK);
                 switch (mode)
                 {
                 case DDS_ALPHA_MODE_STRAIGHT:
@@ -1686,7 +1686,7 @@ namespace
         if (texture || textureView)
         {
             CHAR strFileA[MAX_PATH];
-            int result = WideCharToMultiByte(CP_UTF8,
+            const int result = WideCharToMultiByte(CP_UTF8,
                 WC_NO_BEST_FIT_CHARS,
                 fileName,
                 -1,

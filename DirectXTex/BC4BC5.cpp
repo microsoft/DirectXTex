@@ -40,7 +40,7 @@ namespace
     {
         float R(size_t uOffset) const noexcept
         {
-            size_t uIndex = GetIndex(uOffset);
+            const size_t uIndex = GetIndex(uOffset);
             return DecodeFromIndex(uIndex);
         }
 
@@ -50,8 +50,8 @@ namespace
                 return float(red_0) / 255.0f;
             if (uIndex == 1)
                 return float(red_1) / 255.0f;
-            float fred_0 = float(red_0) / 255.0f;
-            float fred_1 = float(red_1) / 255.0f;
+            const float fred_0 = float(red_0) / 255.0f;
+            const float fred_1 = float(red_1) / 255.0f;
             if (red_0 > red_1)
             {
                 uIndex -= 1;
@@ -96,21 +96,21 @@ namespace
     {
         float R(size_t uOffset) const noexcept
         {
-            size_t uIndex = GetIndex(uOffset);
+            const size_t uIndex = GetIndex(uOffset);
             return DecodeFromIndex(uIndex);
         }
 
         float DecodeFromIndex(size_t uIndex) const noexcept
         {
-            int8_t sred_0 = (red_0 == -128) ? -127 : red_0;
-            int8_t sred_1 = (red_1 == -128) ? -127 : red_1;
+            const int8_t sred_0 = (red_0 == -128) ? -127 : red_0;
+            const int8_t sred_1 = (red_1 == -128) ? -127 : red_1;
 
             if (uIndex == 0)
                 return float(sred_0) / 127.0f;
             if (uIndex == 1)
                 return float(sred_1) / 127.0f;
-            float fred_0 = float(sred_0) / 127.0f;
-            float fred_1 = float(sred_1) / 127.0f;
+            const float fred_0 = float(sred_0) / 127.0f;
+            const float fred_1 = float(sred_1) / 127.0f;
             if (red_0 > red_1)
             {
                 uIndex -= 1;
@@ -157,7 +157,7 @@ namespace
     //-------------------------------------------------------------------------------------
     void inline FloatToSNorm(_In_ float fVal, _Out_ int8_t *piSNorm) noexcept
     {
-        const uint32_t dwMostNeg = (1 << (8 * sizeof(int8_t) - 1));
+        constexpr uint32_t dwMostNeg = (1 << (8 * sizeof(int8_t) - 1));
 
         if (isnan(fVal))
             fVal = 0;
@@ -186,8 +186,8 @@ namespace
         _Out_ uint8_t &endpointU_1) noexcept
     {
         // The boundary of codec for signed/unsigned format
-        const float MIN_NORM = 0.f;
-        const float MAX_NORM = 1.f;
+        constexpr float MIN_NORM = 0.f;
+        constexpr float MAX_NORM = 1.f;
 
         // Find max/min of input texels
         float fBlockMax = theTexelsU[0];
@@ -206,7 +206,7 @@ namespace
 
         //  If there are boundary values in input texels, should use 4 interpolated color values to guarantee
         //  the exact code of the boundary values.
-        bool bUsing4BlockCodec = (MIN_NORM == fBlockMin || MAX_NORM == fBlockMax);
+        const bool bUsing4BlockCodec = (MIN_NORM == fBlockMin || MAX_NORM == fBlockMax);
 
         // Using Optimize
         float fStart, fEnd;
@@ -241,8 +241,8 @@ namespace
         _Out_ int8_t &endpointU_1) noexcept
     {
         //  The boundary of codec for signed/unsigned format
-        const float MIN_NORM = -1.f;
-        const float MAX_NORM = 1.f;
+        constexpr float MIN_NORM = -1.f;
+        constexpr float MAX_NORM = 1.f;
 
         // Find max/min of input texels
         float fBlockMax = theTexelsU[0];
@@ -261,7 +261,7 @@ namespace
 
         //  If there are boundary values in input texels, should use 4 interpolated color values to guarantee
         //  the exact code of the boundary values.
-        bool bUsing4BlockCodec = (MIN_NORM == fBlockMin || MAX_NORM == fBlockMax);
+        const bool bUsing4BlockCodec = (MIN_NORM == fBlockMin || MAX_NORM == fBlockMax);
 
         // Using Optimize
         float fStart, fEnd;
@@ -338,7 +338,7 @@ namespace
             float fBestDelta = 100000;
             for (size_t uIndex = 0; uIndex < 8; uIndex++)
             {
-                float fCurrentDelta = fabsf(rGradient[uIndex] - theTexelsU[i]);
+                const float fCurrentDelta = fabsf(rGradient[uIndex] - theTexelsU[i]);
                 if (fCurrentDelta < fBestDelta)
                 {
                     uBestIndex = uIndex;
@@ -365,7 +365,7 @@ namespace
             float fBestDelta = 100000;
             for (size_t uIndex = 0; uIndex < 8; uIndex++)
             {
-                float fCurrentDelta = fabsf(rGradient[uIndex] - theTexelsU[i]);
+                const float fCurrentDelta = fabsf(rGradient[uIndex] - theTexelsU[i]);
                 if (fCurrentDelta < fBestDelta)
                 {
                     uBestIndex = uIndex;

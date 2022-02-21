@@ -83,7 +83,7 @@ using namespace DirectX;
 //--------------------------------------------------------------------------------------
 #pragma pack(push,1)
 
-const uint32_t DDS_MAGIC = 0x20534444; // "DDS "
+constexpr uint32_t DDS_MAGIC = 0x20534444; // "DDS "
 
 struct DDS_PIXELFORMAT
 {
@@ -218,7 +218,7 @@ namespace
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData);
+        auto const dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData);
         if (dwMagicNumber != DDS_MAGIC)
         {
             return E_FAIL;
@@ -371,7 +371,7 @@ namespace
 #endif
 
         // DDS files always start with the same magic number ("DDS ")
-        auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
+        auto const dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
         if (dwMagicNumber != DDS_MAGIC)
         {
             ddsData.reset();
@@ -681,7 +681,7 @@ namespace
         }
         else
         {
-            size_t bpp = BitsPerPixel(fmt);
+            const size_t bpp = BitsPerPixel(fmt);
             if (!bpp)
                 return E_INVALIDARG;
 
@@ -1226,7 +1226,7 @@ namespace
         desc.SampleDesc.Quality = 0;
         desc.Dimension = resDim;
 
-        CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
+        const CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 
         hr = d3dDevice->CreateCommittedResource(
             &defaultHeapProperties,
@@ -1260,7 +1260,7 @@ namespace
     {
         HRESULT hr = S_OK;
 
-        UINT width = header->width;
+        const UINT width = header->width;
         UINT height = header->height;
         UINT depth = header->depth;
 
@@ -1426,7 +1426,7 @@ namespace
             return HRESULT_E_NOT_SUPPORTED;
         }
 
-        UINT numberOfPlanes = D3D12GetFormatPlaneCount(d3dDevice, format);
+        const UINT numberOfPlanes = D3D12GetFormatPlaneCount(d3dDevice, format);
         if (!numberOfPlanes)
             return E_INVALIDARG;
 
@@ -1510,7 +1510,7 @@ namespace
             if ( MAKEFOURCC( 'D', 'X', '1', '0' ) == header->ddspf.fourCC )
             {
                 auto d3d10ext = reinterpret_cast<const DDS_HEADER_DXT10*>(reinterpret_cast<const uint8_t*>(header) + sizeof(DDS_HEADER));
-                auto mode = static_cast<DDS_ALPHA_MODE>( d3d10ext->miscFlags2 & DDS_MISC_FLAGS2_ALPHA_MODE_MASK );
+                auto const mode = static_cast<DDS_ALPHA_MODE>( d3d10ext->miscFlags2 & DDS_MISC_FLAGS2_ALPHA_MODE_MASK );
                 switch( mode )
                 {
                 case DDS_ALPHA_MODE_STRAIGHT:

@@ -80,7 +80,7 @@ namespace
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(pSource);
+        auto const dwMagicNumber = *reinterpret_cast<const uint32_t*>(pSource);
         if (dwMagicNumber != DDS_MAGIC)
         {
             return E_FAIL;
@@ -527,7 +527,7 @@ HRESULT Xbox::LoadFromDDSMemory(
     }
 
     // Copy tiled data
-    size_t remaining = size - XBOX_HEADER_SIZE;
+    const size_t remaining = size - XBOX_HEADER_SIZE;
 
     if (remaining < dataSize)
     {
@@ -622,7 +622,7 @@ HRESULT Xbox::LoadFromDDSFile(
     }
 
     // Read tiled data
-    DWORD remaining = fileInfo.EndOfFile.LowPart - XBOX_HEADER_SIZE;
+    const DWORD remaining = fileInfo.EndOfFile.LowPart - XBOX_HEADER_SIZE;
     if (remaining == 0)
         return E_FAIL;
 
@@ -677,7 +677,7 @@ HRESULT Xbox::SaveToDDSMemory(const XboxImage& xbox, Blob& blob)
     }
 
     // Copy tiled data
-    size_t remaining = blob.GetBufferSize() - XBOX_HEADER_SIZE;
+    const size_t remaining = blob.GetBufferSize() - XBOX_HEADER_SIZE;
     pDestination += XBOX_HEADER_SIZE;
 
     if (!remaining)

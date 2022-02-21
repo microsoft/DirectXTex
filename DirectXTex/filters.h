@@ -67,18 +67,18 @@ namespace DirectX
             assert(dest > 0);
             assert(lf != nullptr);
 
-            float scale = float(source) / float(dest);
+            const float scale = float(source) / float(dest);
 
             // Mirror is the same case as clamp for linear
 
             for (size_t u = 0; u < dest; ++u)
             {
-                float srcB = (float(u) + 0.5f) * scale + 0.5f;
+                const float srcB = (float(u) + 0.5f) * scale + 0.5f;
 
                 ptrdiff_t isrcB = ptrdiff_t(srcB);
                 ptrdiff_t isrcA = isrcB - 1;
 
-                float weight = 1.0f + float(isrcB) - srcB;
+                const float weight = 1.0f + float(isrcB) - srcB;
 
                 if (isrcA < 0)
                 {
@@ -105,10 +105,10 @@ namespace DirectX
 
 #define TRILINEAR_INTERPOLATE( res, x, y, z, r0, r1, r2, r3 ) \
 {\
-    XMVECTOR a0 = XMVectorScale(XMVectorAdd(XMVectorScale((r0)[ x.u0 ], x.weight0 ), XMVectorScale((r0)[ x.u1 ], x.weight1)), y.weight0); \
-    XMVECTOR a1 = XMVectorScale(XMVectorAdd(XMVectorScale((r1)[ x.u0 ], x.weight0 ), XMVectorScale((r1)[ x.u1 ], x.weight1)), y.weight1); \
-    XMVECTOR a2 = XMVectorScale(XMVectorAdd(XMVectorScale((r2)[ x.u0 ], x.weight0 ), XMVectorScale((r2)[ x.u1 ], x.weight1)), y.weight0); \
-    XMVECTOR a3 = XMVectorScale(XMVectorAdd(XMVectorScale((r3)[ x.u0 ], x.weight0 ), XMVectorScale((r3)[ x.u1 ], x.weight1)), y.weight1); \
+    const XMVECTOR a0 = XMVectorScale(XMVectorAdd(XMVectorScale((r0)[ x.u0 ], x.weight0 ), XMVectorScale((r0)[ x.u1 ], x.weight1)), y.weight0); \
+    const XMVECTOR a1 = XMVectorScale(XMVectorAdd(XMVectorScale((r1)[ x.u0 ], x.weight0 ), XMVectorScale((r1)[ x.u1 ], x.weight1)), y.weight1); \
+    const XMVECTOR a2 = XMVectorScale(XMVectorAdd(XMVectorScale((r2)[ x.u0 ], x.weight0 ), XMVectorScale((r2)[ x.u1 ], x.weight1)), y.weight0); \
+    const XMVECTOR a3 = XMVectorScale(XMVectorAdd(XMVectorScale((r3)[ x.u0 ], x.weight0 ), XMVectorScale((r3)[ x.u1 ], x.weight1)), y.weight1); \
     res = XMVectorAdd(XMVectorScale(XMVectorAdd(a0, a1), z.weight0), XMVectorScale(XMVectorAdd(a2, a3), z.weight1)); \
 }
 
@@ -120,7 +120,7 @@ namespace DirectX
         XMGLOBALCONST XMVECTORF32 g_cubicSixth = { { { 1.f / 6.f, 1.f / 6.f, 1.f / 6.f, 1.f / 6.f } } };
         XMGLOBALCONST XMVECTORF32 g_cubicHalf = { { { 1.f / 2.f, 1.f / 2.f, 1.f / 2.f, 1.f / 2.f } } };
 
-        inline ptrdiff_t bounduvw(ptrdiff_t u, ptrdiff_t maxu, bool wrap, bool mirror) noexcept
+        constexpr ptrdiff_t bounduvw(ptrdiff_t u, ptrdiff_t maxu, bool wrap, bool mirror) noexcept
         {
             if (wrap)
             {
@@ -167,16 +167,16 @@ namespace DirectX
             assert(dest > 0);
             assert(cf != nullptr);
 
-            float scale = float(source) / float(dest);
+            const float scale = float(source) / float(dest);
 
             for (size_t u = 0; u < dest; ++u)
             {
-                float srcB = (float(u) + 0.5f) * scale - 0.5f;
+                const float srcB = (float(u) + 0.5f) * scale - 0.5f;
 
-                ptrdiff_t isrcB = bounduvw(ptrdiff_t(srcB), ptrdiff_t(source) - 1, wrap, mirror);
-                ptrdiff_t isrcA = bounduvw(isrcB - 1, ptrdiff_t(source) - 1, wrap, mirror);
-                ptrdiff_t isrcC = bounduvw(isrcB + 1, ptrdiff_t(source) - 1, wrap, mirror);
-                ptrdiff_t isrcD = bounduvw(isrcB + 2, ptrdiff_t(source) - 1, wrap, mirror);
+                const ptrdiff_t isrcB = bounduvw(ptrdiff_t(srcB), ptrdiff_t(source) - 1, wrap, mirror);
+                const ptrdiff_t isrcA = bounduvw(isrcB - 1, ptrdiff_t(source) - 1, wrap, mirror);
+                const ptrdiff_t isrcC = bounduvw(isrcB + 1, ptrdiff_t(source) - 1, wrap, mirror);
+                const ptrdiff_t isrcD = bounduvw(isrcB + 2, ptrdiff_t(source) - 1, wrap, mirror);
 
                 auto& entry = cf[u];
                 entry.u0 = size_t(isrcA);
@@ -184,25 +184,25 @@ namespace DirectX
                 entry.u2 = size_t(isrcC);
                 entry.u3 = size_t(isrcD);
 
-                float x = srcB - float(isrcB);
+                const float x = srcB - float(isrcB);
                 entry.x = x;
             }
         }
 
 #define CUBIC_INTERPOLATE( res, dx, p0, p1, p2, p3 ) \
 { \
-    XMVECTOR a0 = (p1); \
-    XMVECTOR d0 = XMVectorSubtract(p0, a0); \
-    XMVECTOR d2 = XMVectorSubtract(p2, a0); \
-    XMVECTOR d3 = XMVectorSubtract(p3, a0); \
+    const XMVECTOR a0 = (p1); \
+    const XMVECTOR d0 = XMVectorSubtract(p0, a0); \
+    const XMVECTOR d2 = XMVectorSubtract(p2, a0); \
+    const XMVECTOR d3 = XMVectorSubtract(p3, a0); \
     XMVECTOR a1 = XMVectorSubtract(d2, XMVectorMultiply(g_cubicThird, d0)); \
     a1 = XMVectorSubtract(a1, XMVectorMultiply(g_cubicSixth, d3)); \
-    XMVECTOR a2 = XMVectorAdd(XMVectorMultiply(g_cubicHalf, d0), XMVectorMultiply(g_cubicHalf, d2)); \
+    const XMVECTOR a2 = XMVectorAdd(XMVectorMultiply(g_cubicHalf, d0), XMVectorMultiply(g_cubicHalf, d2)); \
     XMVECTOR a3 = XMVectorSubtract(XMVectorMultiply(g_cubicSixth, d3), XMVectorMultiply(g_cubicSixth, d0)); \
     a3 = XMVectorSubtract(a3, XMVectorMultiply(g_cubicHalf, d2)); \
-    XMVECTOR vdx = XMVectorReplicate(dx); \
-    XMVECTOR vdx2 = XMVectorMultiply(vdx, vdx); \
-    XMVECTOR vdx3 = XMVectorMultiply(vdx2, vdx); \
+    const XMVECTOR vdx = XMVectorReplicate(dx); \
+    const XMVECTOR vdx2 = XMVectorMultiply(vdx, vdx); \
+    const XMVECTOR vdx3 = XMVectorMultiply(vdx2, vdx); \
     res = XMVectorAdd(XMVectorAdd(XMVectorAdd(a0, XMVectorMultiply(a1, vdx)), XMVectorMultiply(a2, vdx2)), XMVectorMultiply(a3, vdx3)); \
 }
 
@@ -251,19 +251,19 @@ namespace DirectX
             assert(source > 0);
             assert(dest > 0);
 
-            float scale = float(dest) / float(source);
-            float scaleInv = 0.5f / scale;
+            const float scale = float(dest) / float(source);
+            const float scaleInv = 0.5f / scale;
 
             // Determine storage required for filter and allocate memory if needed
             size_t totalSize = TF_FILTER_SIZE + TF_FROM_SIZE + TF_TO_SIZE;
-            float repeat = (wrap) ? 1.f : 0.f;
+            const float repeat = (wrap) ? 1.f : 0.f;
 
             for (size_t u = 0; u < source; ++u)
             {
-                float src = float(u) - 0.5f;
-                float destMin = src * scale;
-                float destMax = destMin + scale;
-                float t = destMax - destMin + repeat + 1.f;
+                const float src = float(u) - 0.5f;
+                const float destMin = src * scale;
+                const float destMax = destMin + scale;
+                const float t = destMax - destMin + repeat + 1.f;
                 totalSize += TF_FROM_SIZE + TF_TO_SIZE + size_t(t) * TF_TO_SIZE * 2;
             }
 
@@ -305,7 +305,7 @@ namespace DirectX
             for (size_t u = 0; u < source; ++u)
             {
                 // Setup from entry
-                size_t sizeFrom = sizeInBytes;
+                const size_t sizeFrom = sizeInBytes;
                 auto pFrom = reinterpret_cast<FilterFrom*>(pFilter + sizeInBytes);
                 sizeInBytes += TF_FROM_SIZE;
 
@@ -317,7 +317,7 @@ namespace DirectX
                 // Perform two passes to capture the influences from both sides
                 for (size_t j = 0; j < 2; ++j)
                 {
-                    float src = float(u + j) - 0.5f;
+                    const float src = float(u + j) - 0.5f;
 
                     float destMin = src * scale;
                     float destMax = destMin + scale;

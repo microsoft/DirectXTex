@@ -598,7 +598,7 @@ namespace DirectX
         // Resize the image to width x height. Defaults to Fant filtering.
         // Note for a complex resize, the result will always have mipLevels == 1
 
-    const float TEX_THRESHOLD_DEFAULT = 0.5f;
+    constexpr float TEX_THRESHOLD_DEFAULT = 0.5f;
         // Default value for alpha threshold used when converting to 1-bit alpha
 
     HRESULT __cdecl Convert(

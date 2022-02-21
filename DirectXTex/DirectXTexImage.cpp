@@ -521,7 +521,7 @@ HRESULT ScratchImage::InitializeFromImage(const Image& srcImage, bool allow1D, C
     if (FAILED(hr))
         return hr;
 
-    size_t rowCount = ComputeScanlines(srcImage.format, srcImage.height);
+    const size_t rowCount = ComputeScanlines(srcImage.format, srcImage.height);
     if (!rowCount)
         return E_UNEXPECTED;
 
@@ -533,10 +533,10 @@ HRESULT ScratchImage::InitializeFromImage(const Image& srcImage, bool allow1D, C
     if (!dptr)
         return E_POINTER;
 
-    size_t spitch = srcImage.rowPitch;
-    size_t dpitch = m_image[0].rowPitch;
+    const size_t spitch = srcImage.rowPitch;
+    const size_t dpitch = m_image[0].rowPitch;
 
-    size_t size = std::min<size_t>(dpitch, spitch);
+    const size_t size = std::min<size_t>(dpitch, spitch);
 
     for (size_t y = 0; y < rowCount; ++y)
     {
@@ -554,9 +554,9 @@ HRESULT ScratchImage::InitializeArrayFromImages(const Image* images, size_t nIma
     if (!images || !nImages)
         return E_INVALIDARG;
 
-    DXGI_FORMAT format = images[0].format;
-    size_t width = images[0].width;
-    size_t height = images[0].height;
+    const DXGI_FORMAT format = images[0].format;
+    const size_t width = images[0].width;
+    const size_t height = images[0].height;
 
     for (size_t index = 0; index < nImages; ++index)
     {
@@ -577,7 +577,7 @@ HRESULT ScratchImage::InitializeArrayFromImages(const Image* images, size_t nIma
     if (FAILED(hr))
         return hr;
 
-    size_t rowCount = ComputeScanlines(format, height);
+    const size_t rowCount = ComputeScanlines(format, height);
     if (!rowCount)
         return E_UNEXPECTED;
 
@@ -592,10 +592,10 @@ HRESULT ScratchImage::InitializeArrayFromImages(const Image* images, size_t nIma
         if (!dptr)
             return E_POINTER;
 
-        size_t spitch = images[index].rowPitch;
-        size_t dpitch = m_image[index].rowPitch;
+        const size_t spitch = images[index].rowPitch;
+        const size_t dpitch = m_image[index].rowPitch;
 
-        size_t size = std::min<size_t>(dpitch, spitch);
+        const size_t size = std::min<size_t>(dpitch, spitch);
 
         for (size_t y = 0; y < rowCount; ++y)
         {
@@ -633,9 +633,9 @@ HRESULT ScratchImage::Initialize3DFromImages(const Image* images, size_t depth, 
     if (!images || !depth)
         return E_INVALIDARG;
 
-    DXGI_FORMAT format = images[0].format;
-    size_t width = images[0].width;
-    size_t height = images[0].height;
+    const DXGI_FORMAT format = images[0].format;
+    const size_t width = images[0].width;
+    const size_t height = images[0].height;
 
     for (size_t slice = 0; slice < depth; ++slice)
     {
@@ -653,7 +653,7 @@ HRESULT ScratchImage::Initialize3DFromImages(const Image* images, size_t depth, 
     if (FAILED(hr))
         return hr;
 
-    size_t rowCount = ComputeScanlines(format, height);
+    const size_t rowCount = ComputeScanlines(format, height);
     if (!rowCount)
         return E_UNEXPECTED;
 
@@ -668,10 +668,10 @@ HRESULT ScratchImage::Initialize3DFromImages(const Image* images, size_t depth, 
         if (!dptr)
             return E_POINTER;
 
-        size_t spitch = images[slice].rowPitch;
-        size_t dpitch = m_image[slice].rowPitch;
+        const size_t spitch = images[slice].rowPitch;
+        const size_t dpitch = m_image[slice].rowPitch;
 
-        size_t size = std::min<size_t>(dpitch, spitch);
+        const size_t size = std::min<size_t>(dpitch, spitch);
 
         for (size_t y = 0; y < rowCount; ++y)
         {
@@ -815,7 +815,7 @@ bool ScratchImage::IsAlphaAllOpaque() const noexcept
                 const XMVECTOR* ptr = scanline.get();
                 for (size_t w = 0; w < img.width; ++w)
                 {
-                    XMVECTOR alpha = XMVectorSplatW(*ptr);
+                    const XMVECTOR alpha = XMVectorSplatW(*ptr);
                     if (XMVector4Less(alpha, threshold))
                         return false;
                     ++ptr;

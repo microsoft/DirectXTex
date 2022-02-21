@@ -237,7 +237,7 @@ namespace
 
         ULONG STDMETHODCALLTYPE Release() override
         {
-            ULONG res = InterlockedDecrement(&mRefCount);
+            const ULONG res = InterlockedDecrement(&mRefCount);
             if (res == 0)
             {
                 delete this;
@@ -252,7 +252,7 @@ namespace
             auto ptr = static_cast<const uint8_t*>(mBlob.GetBufferPointer());
             if (cb > maxRead)
             {
-                uint64_t pos = uint64_t(m_streamPosition) + uint64_t(maxRead);
+                const uint64_t pos = uint64_t(m_streamPosition) + uint64_t(maxRead);
                 if (pos > UINT32_MAX)
                     return HRESULT_E_ARITHMETIC_OVERFLOW;
 
@@ -268,7 +268,7 @@ namespace
             }
             else
             {
-                uint64_t pos = uint64_t(m_streamPosition) + uint64_t(cb);
+                const uint64_t pos = uint64_t(m_streamPosition) + uint64_t(cb);
                 if (pos > UINT32_MAX)
                     return HRESULT_E_ARITHMETIC_OVERFLOW;
 
@@ -286,8 +286,8 @@ namespace
 
         HRESULT STDMETHODCALLTYPE Write(void const* pv, ULONG cb, ULONG* pcbWritten) override
         {
-            size_t blobSize = mBlob.GetBufferSize();
-            size_t spaceAvailable = blobSize - m_streamPosition;
+            const size_t blobSize = mBlob.GetBufferSize();
+            const size_t spaceAvailable = blobSize - m_streamPosition;
             size_t growAmount = cb;
 
             if (spaceAvailable > 0)
@@ -305,7 +305,7 @@ namespace
             if (growAmount > 0)
             {
                 uint64_t newSize = uint64_t(blobSize);
-                uint64_t targetSize = uint64_t(blobSize) + growAmount;
+                const uint64_t targetSize = uint64_t(blobSize) + growAmount;
                 HRESULT hr = ComputeGrowSize(newSize, targetSize);
                 if (FAILED(hr))
                     return hr;
@@ -315,7 +315,7 @@ namespace
                     return hr;
             }
 
-            uint64_t pos = uint64_t(m_streamPosition) + uint64_t(cb);
+            const uint64_t pos = uint64_t(m_streamPosition) + uint64_t(cb);
             if (pos > UINT32_MAX)
                 return HRESULT_E_ARITHMETIC_OVERFLOW;
 
@@ -338,7 +338,7 @@ namespace
             if (size.HighPart > 0)
                 return E_OUTOFMEMORY;
 
-            size_t blobSize = mBlob.GetBufferSize();
+            const size_t blobSize = mBlob.GetBufferSize();
 
             if (blobSize >= size.LowPart)
             {
@@ -353,7 +353,7 @@ namespace
             else
             {
                 uint64_t newSize = uint64_t(blobSize);
-                uint64_t targetSize = uint64_t(size.QuadPart);
+                const uint64_t targetSize = uint64_t(size.QuadPart);
                 HRESULT hr = ComputeGrowSize(newSize, targetSize);
                 if (FAILED(hr))
                     return hr;
@@ -494,7 +494,7 @@ namespace
         size_t m_streamEOF;
         ULONG mRefCount;
 
-        static HRESULT ComputeGrowSize(uint64_t& newSize, uint64_t& targetSize) noexcept
+        static HRESULT ComputeGrowSize(uint64_t& newSize, const uint64_t targetSize) noexcept
         {
             // We grow by doubling until we hit 256MB, then we add 16MB at a time.
             while (newSize < targetSize)
@@ -885,7 +885,7 @@ namespace
             PROPVARIANT value;
             PropVariantInit(&value);
 
-            bool sRGB = ((flags & WIC_FLAGS_FORCE_LINEAR) == 0) && ((flags & WIC_FLAGS_FORCE_SRGB) != 0 || IsSRGB(format));
+            const bool sRGB = ((flags & WIC_FLAGS_FORCE_LINEAR) == 0) && ((flags & WIC_FLAGS_FORCE_SRGB) != 0 || IsSRGB(format));
 
             value.vt = VT_LPSTR;
             value.pszVal = const_cast<char*>("DirectXTex");

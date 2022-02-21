@@ -19,7 +19,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    inline bool ispow2(_In_ size_t x) noexcept
+    constexpr bool ispow2(_In_ size_t x) noexcept
     {
         return ((x != 0) && !(x & (x - 1)));
     }
@@ -170,8 +170,8 @@ namespace
             XMVECTOR* ptr = scanline.get();
             for (size_t w = 0; w < srcImage.width; ++w)
             {
-                XMVECTOR v = *ptr;
-                XMVECTOR alpha = XMVectorMultiply(XMVectorSplatW(v), vscale);
+                const XMVECTOR v = *ptr;
+                const XMVECTOR alpha = XMVectorMultiply(XMVectorSplatW(v), vscale);
                 *(ptr++) = XMVectorSelect(alpha, v, g_XMSelect1110);
             }
 
@@ -237,7 +237,7 @@ namespace
             return E_POINTER;
         }
 
-        const size_t N = 8;
+        constexpr size_t N = 8;
         XMVECTOR convolution[N * N];
         GenerateAlphaCoverageConvolutionVectors(N, convolution);
 
@@ -261,9 +261,9 @@ namespace
             {
                 // [0]=(x+0, y+0), [1]=(x+0, y+1), [2]=(x+1, y+0), [3]=(x+1, y+1)
                 XMVECTOR v1 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*pRow0), scale));
-                XMVECTOR v2 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*pRow1), scale));
+                const XMVECTOR v2 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*pRow1), scale));
                 XMVECTOR v3 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow0++)), scale));
-                XMVECTOR v4 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow1++)), scale));
+                const XMVECTOR v4 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(*(pRow1++)), scale));
 
                 v1 = XMVectorMergeXY(v1, v2); // [v1.x v2.x --- ---]
                 v3 = XMVectorMergeXY(v3, v4); // [v3.x v4.x --- ---]
@@ -309,7 +309,7 @@ namespace
 
         // Determine desired scale using a binary search. Hardcoded to 10 steps max.
         alphaScale = 1.0f;
-        const size_t N = 10;
+        constexpr size_t N = 10;
         for (size_t i = 0; i < N; ++i)
         {
             float currentCoverage = 0.0f;
@@ -353,7 +353,7 @@ bool DirectX::Internal::CalculateMipLevels(
 {
     if (mipLevels > 1)
     {
-        size_t maxMips = CountMips(width, height);
+        const size_t maxMips = CountMips(width, height);
         if (mipLevels > maxMips)
             return false;
     }
@@ -377,7 +377,7 @@ bool DirectX::Internal::CalculateMipLevels3D(
 {
     if (mipLevels > 1)
     {
-        size_t maxMips = CountMips3D(width, height, depth);
+        const size_t maxMips = CountMips3D(width, height, depth);
         if (mipLevels > maxMips)
             return false;
     }
@@ -577,7 +577,7 @@ HRESULT DirectX::Internal::ResizeSeparateColorAndAlpha(
                 for (size_t i = 0; SUCCEEDED(hr) && i < newWidth; i++)
                 {
                     size_t colorWithAlphaIndex = (j * colorWithAlphaStride) + (i * colorWithAlphaBytesPerPixel);
-                    size_t colorIndex = (j * colorStride) + (i * colorBytesPerPixel);
+                    const size_t colorIndex = (j * colorStride) + (i * colorBytesPerPixel);
 
                     if (((colorWithAlphaIndex + colorBytesInPixel) > colorWithAlphaSizeInBytes)
                         || ((colorIndex + colorBytesPerPixel) > colorSizeInBytes))
@@ -729,7 +729,7 @@ namespace
         const uint8_t *pSrc = baseImage.pixels;
         for (size_t h = 0; h < height; ++h)
         {
-            size_t msize = std::min<size_t>(img0->rowPitch, baseImage.rowPitch);
+            const size_t msize = std::min<size_t>(img0->rowPitch, baseImage.rowPitch);
             memcpy_s(pDest, img0->rowPitch, pSrc, msize);
             pSrc += baseImage.rowPitch;
             pDest += img0->rowPitch;
@@ -876,10 +876,10 @@ namespace
             }
 
             const uint8_t *pSrc = src.pixels;
-            size_t rowPitch = src.rowPitch;
+            const size_t rowPitch = src.rowPitch;
             for (size_t h = 0; h < mdata.height; ++h)
             {
-                size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
+                const size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
                 memcpy(pDest, pSrc, msize);
                 pSrc += rowPitch;
                 pDest += dest->rowPitch;
@@ -928,13 +928,13 @@ namespace
             const uint8_t* pSrc = src->pixels;
             uint8_t* pDest = dest->pixels;
 
-            size_t rowPitch = src->rowPitch;
+            const size_t rowPitch = src->rowPitch;
 
-            size_t nwidth = (width > 1) ? (width >> 1) : 1;
-            size_t nheight = (height > 1) ? (height >> 1) : 1;
+            const size_t nwidth = (width > 1) ? (width >> 1) : 1;
+            const size_t nheight = (height > 1) ? (height >> 1) : 1;
 
-            size_t xinc = (width << 16) / nwidth;
-            size_t yinc = (height << 16) / nheight;
+            const size_t xinc = (width << 16) / nwidth;
+            const size_t yinc = (height << 16) / nheight;
 
             size_t lasty = size_t(-1);
 
@@ -1028,10 +1028,10 @@ namespace
             const uint8_t* pSrc = src->pixels;
             uint8_t* pDest = dest->pixels;
 
-            size_t rowPitch = src->rowPitch;
+            const size_t rowPitch = src->rowPitch;
 
-            size_t nwidth = (width > 1) ? (width >> 1) : 1;
-            size_t nheight = (height > 1) ? (height >> 1) : 1;
+            const size_t nwidth = (width > 1) ? (width >> 1) : 1;
+            const size_t nheight = (height > 1) ? (height >> 1) : 1;
 
             for (size_t y = 0; y < nheight; ++y)
             {
@@ -1048,7 +1048,7 @@ namespace
 
                 for (size_t x = 0; x < nwidth; ++x)
                 {
-                    size_t x2 = x << 1;
+                    const size_t x2 = x << 1;
 
                     AVERAGE4(target[x], urow0[x2], urow1[x2], urow2[x2], urow3[x2])
                 }
@@ -1114,12 +1114,12 @@ namespace
             const uint8_t* pSrc = src->pixels;
             uint8_t* pDest = dest->pixels;
 
-            size_t rowPitch = src->rowPitch;
+            const size_t rowPitch = src->rowPitch;
 
-            size_t nwidth = (width > 1) ? (width >> 1) : 1;
+            const size_t nwidth = (width > 1) ? (width >> 1) : 1;
             CreateLinearFilter(width, nwidth, (filter & TEX_FILTER_WRAP_U) != 0, lfX);
 
-            size_t nheight = (height > 1) ? (height >> 1) : 1;
+            const size_t nheight = (height > 1) ? (height >> 1) : 1;
             CreateLinearFilter(height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, lfY);
 
 #ifdef _DEBUG
@@ -1132,7 +1132,7 @@ namespace
 
             for (size_t y = 0; y < nheight; ++y)
             {
-                auto& toY = lfY[y];
+                auto const& toY = lfY[y];
 
                 if (toY.u0 != u0)
                 {
@@ -1162,7 +1162,7 @@ namespace
 
                 for (size_t x = 0; x < nwidth; ++x)
                 {
-                    auto& toX = lfX[x];
+                    auto const& toX = lfX[x];
 
                     BILINEAR_INTERPOLATE(target[x], toX, toY, row0, row1)
                 }
@@ -1229,12 +1229,12 @@ namespace
             const uint8_t* pSrc = src->pixels;
             uint8_t* pDest = dest->pixels;
 
-            size_t rowPitch = src->rowPitch;
+            const size_t rowPitch = src->rowPitch;
 
-            size_t nwidth = (width > 1) ? (width >> 1) : 1;
+            const size_t nwidth = (width > 1) ? (width >> 1) : 1;
             CreateCubicFilter(width, nwidth, (filter & TEX_FILTER_WRAP_U) != 0, (filter & TEX_FILTER_MIRROR_U) != 0, cfX);
 
-            size_t nheight = (height > 1) ? (height >> 1) : 1;
+            const size_t nheight = (height > 1) ? (height >> 1) : 1;
             CreateCubicFilter(height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, (filter & TEX_FILTER_MIRROR_V) != 0, cfY);
 
 #ifdef _DEBUG
@@ -1251,7 +1251,7 @@ namespace
 
             for (size_t y = 0; y < nheight; ++y)
             {
-                auto& toY = cfY[y];
+                auto const& toY = cfY[y];
 
                 // Scanline 1
                 if (toY.u0 != u0)
@@ -1342,7 +1342,7 @@ namespace
 
                 for (size_t x = 0; x < nwidth; ++x)
                 {
-                    auto& toX = cfX[x];
+                    auto const& toX = cfX[x];
 
                     XMVECTOR C0, C1, C2, C3;
 
@@ -1411,17 +1411,17 @@ namespace
                 return E_POINTER;
 
             const uint8_t* pSrc = src->pixels;
-            size_t rowPitch = src->rowPitch;
+            const size_t rowPitch = src->rowPitch;
             const uint8_t* pEndSrc = pSrc + rowPitch * height;
 
             uint8_t* pDest = dest->pixels;
 
-            size_t nwidth = (width > 1) ? (width >> 1) : 1;
+            const size_t nwidth = (width > 1) ? (width >> 1) : 1;
             HRESULT hr = CreateTriangleFilter(width, nwidth, (filter & TEX_FILTER_WRAP_U) != 0, tfX);
             if (FAILED(hr))
                 return hr;
 
-            size_t nheight = (height > 1) ? (height >> 1) : 1;
+            const size_t nheight = (height > 1) ? (height >> 1) : 1;
             hr = CreateTriangleFilter(height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, tfY);
             if (FAILED(hr))
                 return hr;
@@ -1438,7 +1438,7 @@ namespace
             {
                 for (size_t j = 0; j < yFrom->count; ++j)
                 {
-                    size_t v = yFrom->to[j].u;
+                    const size_t v = yFrom->to[j].u;
                     assert(v < nheight);
                     TriangleRow* rowAcc = &rowActive[v];
 
@@ -1459,7 +1459,7 @@ namespace
                 // Create accumulation rows as needed
                 for (size_t j = 0; j < yFrom->count; ++j)
                 {
-                    size_t v = yFrom->to[j].u;
+                    const size_t v = yFrom->to[j].u;
                     assert(v < nheight);
                     TriangleRow* rowAcc = &rowActive[v];
 
@@ -1500,9 +1500,9 @@ namespace
                 {
                     for (size_t j = 0; j < yFrom->count; ++j)
                     {
-                        size_t v = yFrom->to[j].u;
+                        const size_t v = yFrom->to[j].u;
                         assert(v < nheight);
-                        float yweight = yFrom->to[j].weight;
+                        const float yweight = yFrom->to[j].weight;
 
                         XMVECTOR* accPtr = rowActive[v].scanline.get();
                         if (!accPtr)
@@ -1513,7 +1513,7 @@ namespace
                             size_t u = xFrom->to[k].u;
                             assert(u < nwidth);
 
-                            XMVECTOR weight = XMVectorReplicate(yweight * xFrom->to[k].weight);
+                            const XMVECTOR weight = XMVectorReplicate(yweight * xFrom->to[k].weight);
 
                             assert(x < width);
                             accPtr[u] = XMVectorMultiplyAdd(row[x], weight, accPtr[u]);
@@ -1598,8 +1598,8 @@ namespace
 
         assert(levels > 1);
 
-        size_t width = baseImages[0].width;
-        size_t height = baseImages[0].height;
+        const size_t width = baseImages[0].width;
+        const size_t height = baseImages[0].height;
 
         HRESULT hr = mipChain.Initialize3D(baseImages[0].format, width, height, depth, levels);
         if (FAILED(hr))
@@ -1627,10 +1627,10 @@ namespace
             }
 
             const uint8_t *pSrc = src.pixels;
-            size_t rowPitch = src.rowPitch;
+            const size_t rowPitch = src.rowPitch;
             for (size_t h = 0; h < height; ++h)
             {
-                size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
+                const size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
                 memcpy(pDest, pSrc, msize);
                 pSrc += rowPitch;
                 pDest += dest->rowPitch;
@@ -1673,9 +1673,9 @@ namespace
             if (depth > 1)
             {
                 // 3D point filter
-                size_t ndepth = depth >> 1;
+                const size_t ndepth = depth >> 1;
 
-                size_t zinc = (depth << 16) / ndepth;
+                const size_t zinc = (depth << 16) / ndepth;
 
                 size_t sz = 0;
                 for (size_t slice = 0; slice < ndepth; ++slice)
@@ -1689,13 +1689,13 @@ namespace
                     const uint8_t* pSrc = src->pixels;
                     uint8_t* pDest = dest->pixels;
 
-                    size_t rowPitch = src->rowPitch;
+                    const size_t rowPitch = src->rowPitch;
 
-                    size_t nwidth = (width > 1) ? (width >> 1) : 1;
-                    size_t nheight = (height > 1) ? (height >> 1) : 1;
+                    const size_t nwidth = (width > 1) ? (width >> 1) : 1;
+                    const size_t nheight = (height > 1) ? (height >> 1) : 1;
 
-                    size_t xinc = (width << 16) / nwidth;
-                    size_t yinc = (height << 16) / nheight;
+                    const size_t xinc = (width << 16) / nwidth;
+                    const size_t yinc = (height << 16) / nheight;
 
                     size_t lasty = size_t(-1);
 
@@ -1738,13 +1738,13 @@ namespace
                 const uint8_t* pSrc = src->pixels;
                 uint8_t* pDest = dest->pixels;
 
-                size_t rowPitch = src->rowPitch;
+                const size_t rowPitch = src->rowPitch;
 
-                size_t nwidth = (width > 1) ? (width >> 1) : 1;
-                size_t nheight = (height > 1) ? (height >> 1) : 1;
+                const size_t nwidth = (width > 1) ? (width >> 1) : 1;
+                const size_t nheight = (height > 1) ? (height >> 1) : 1;
 
-                size_t xinc = (width << 16) / nwidth;
-                size_t yinc = (height << 16) / nheight;
+                const size_t xinc = (width << 16) / nwidth;
+                const size_t yinc = (height << 16) / nheight;
 
                 size_t lasty = size_t(-1);
 
@@ -1842,12 +1842,12 @@ namespace
             if (depth > 1)
             {
                 // 3D box filter
-                size_t ndepth = depth >> 1;
+                const size_t ndepth = depth >> 1;
 
                 for (size_t slice = 0; slice < ndepth; ++slice)
                 {
-                    size_t slicea = std::min<size_t>(slice * 2, depth - 1);
-                    size_t sliceb = std::min<size_t>(slicea + 1, depth - 1);
+                    const size_t slicea = std::min<size_t>(slice * 2, depth - 1);
+                    const size_t sliceb = std::min<size_t>(slicea + 1, depth - 1);
 
                     const Image* srca = mipChain.GetImage(level - 1, 0, slicea);
                     const Image* srcb = mipChain.GetImage(level - 1, 0, sliceb);
@@ -1860,11 +1860,11 @@ namespace
                     const uint8_t* pSrc2 = srcb->pixels;
                     uint8_t* pDest = dest->pixels;
 
-                    size_t aRowPitch = srca->rowPitch;
-                    size_t bRowPitch = srcb->rowPitch;
+                    const size_t aRowPitch = srca->rowPitch;
+                    const size_t bRowPitch = srcb->rowPitch;
 
-                    size_t nwidth = (width > 1) ? (width >> 1) : 1;
-                    size_t nheight = (height > 1) ? (height >> 1) : 1;
+                    const size_t nwidth = (width > 1) ? (width >> 1) : 1;
+                    const size_t nheight = (height > 1) ? (height >> 1) : 1;
 
                     for (size_t y = 0; y < nheight; ++y)
                     {
@@ -1892,7 +1892,7 @@ namespace
 
                         for (size_t x = 0; x < nwidth; ++x)
                         {
-                            size_t x2 = x << 1;
+                            const size_t x2 = x << 1;
 
                             AVERAGE8(target[x], urow0[x2], urow1[x2], urow2[x2], urow3[x2],
                                 vrow0[x2], vrow1[x2], vrow2[x2], vrow3[x2])
@@ -1916,10 +1916,10 @@ namespace
                 const uint8_t* pSrc = src->pixels;
                 uint8_t* pDest = dest->pixels;
 
-                size_t rowPitch = src->rowPitch;
+                const size_t rowPitch = src->rowPitch;
 
-                size_t nwidth = (width > 1) ? (width >> 1) : 1;
-                size_t nheight = (height > 1) ? (height >> 1) : 1;
+                const size_t nwidth = (width > 1) ? (width >> 1) : 1;
+                const size_t nheight = (height > 1) ? (height >> 1) : 1;
 
                 for (size_t y = 0; y < nheight; ++y)
                 {
@@ -1936,7 +1936,7 @@ namespace
 
                     for (size_t x = 0; x < nwidth; ++x)
                     {
-                        size_t x2 = x << 1;
+                        const size_t x2 = x << 1;
 
                         AVERAGE4(target[x], urow0[x2], urow1[x2], urow2[x2], urow3[x2])
                     }
@@ -1999,10 +1999,10 @@ namespace
         // Resize base image to each target mip level
         for (size_t level = 1; level < levels; ++level)
         {
-            size_t nwidth = (width > 1) ? (width >> 1) : 1;
+            const size_t nwidth = (width > 1) ? (width >> 1) : 1;
             CreateLinearFilter(width, nwidth, (filter & TEX_FILTER_WRAP_U) != 0, lfX);
 
-            size_t nheight = (height > 1) ? (height >> 1) : 1;
+            const size_t nheight = (height > 1) ? (height >> 1) : 1;
             CreateLinearFilter(height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, lfY);
 
 #ifdef _DEBUG
@@ -2015,12 +2015,12 @@ namespace
             if (depth > 1)
             {
                 // 3D linear filter
-                size_t ndepth = depth >> 1;
+                const size_t ndepth = depth >> 1;
                 CreateLinearFilter(depth, ndepth, (filter & TEX_FILTER_WRAP_W) != 0, lfZ);
 
                 for (size_t slice = 0; slice < ndepth; ++slice)
                 {
-                    auto& toZ = lfZ[slice];
+                    auto const& toZ = lfZ[slice];
 
                     const Image* srca = mipChain.GetImage(level - 1, 0, toZ.u0);
                     const Image* srcb = mipChain.GetImage(level - 1, 0, toZ.u1);
@@ -2038,7 +2038,7 @@ namespace
 
                     for (size_t y = 0; y < nheight; ++y)
                     {
-                        auto& toY = lfY[y];
+                        auto const& toY = lfY[y];
 
                         if (toY.u0 != u0)
                         {
@@ -2071,7 +2071,7 @@ namespace
 
                         for (size_t x = 0; x < nwidth; ++x)
                         {
-                            auto& toX = lfX[x];
+                            auto const& toX = lfX[x];
 
                             TRILINEAR_INTERPOLATE(target[x], toX, toY, toZ, urow0, urow1, vrow0, vrow1)
                         }
@@ -2094,14 +2094,14 @@ namespace
                 const uint8_t* pSrc = src->pixels;
                 uint8_t* pDest = dest->pixels;
 
-                size_t rowPitch = src->rowPitch;
+                const size_t rowPitch = src->rowPitch;
 
                 size_t u0 = size_t(-1);
                 size_t u1 = size_t(-1);
 
                 for (size_t y = 0; y < nheight; ++y)
                 {
-                    auto& toY = lfY[y];
+                    auto const& toY = lfY[y];
 
                     if (toY.u0 != u0)
                     {
@@ -2131,7 +2131,7 @@ namespace
 
                     for (size_t x = 0; x < nwidth; ++x)
                     {
-                        auto& toX = lfX[x];
+                        auto const& toX = lfX[x];
 
                         BILINEAR_INTERPOLATE(target[x], toX, toY, urow0, urow1)
                     }
@@ -2203,10 +2203,10 @@ namespace
         // Resize base image to each target mip level
         for (size_t level = 1; level < levels; ++level)
         {
-            size_t nwidth = (width > 1) ? (width >> 1) : 1;
+            const size_t nwidth = (width > 1) ? (width >> 1) : 1;
             CreateCubicFilter(width, nwidth, (filter & TEX_FILTER_WRAP_U) != 0, (filter & TEX_FILTER_MIRROR_U) != 0, cfX);
 
-            size_t nheight = (height > 1) ? (height >> 1) : 1;
+            const size_t nheight = (height > 1) ? (height >> 1) : 1;
             CreateCubicFilter(height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, (filter & TEX_FILTER_MIRROR_V) != 0, cfY);
 
 #ifdef _DEBUG
@@ -2222,12 +2222,12 @@ namespace
             if (depth > 1)
             {
                 // 3D cubic filter
-                size_t ndepth = depth >> 1;
+                const size_t ndepth = depth >> 1;
                 CreateCubicFilter(depth, ndepth, (filter & TEX_FILTER_WRAP_W) != 0, (filter & TEX_FILTER_MIRROR_W) != 0, cfZ);
 
                 for (size_t slice = 0; slice < ndepth; ++slice)
                 {
-                    auto& toZ = cfZ[slice];
+                    auto const& toZ = cfZ[slice];
 
                     const Image* srca = mipChain.GetImage(level - 1, 0, toZ.u0);
                     const Image* srcb = mipChain.GetImage(level - 1, 0, toZ.u1);
@@ -2249,7 +2249,7 @@ namespace
 
                     for (size_t y = 0; y < nheight; ++y)
                     {
-                        auto& toY = cfY[y];
+                        auto const& toY = cfY[y];
 
                         // Scanline 1
                         if (toY.u0 != u0)
@@ -2370,7 +2370,7 @@ namespace
 
                         for (size_t x = 0; x < nwidth; ++x)
                         {
-                            auto& toX = cfX[x];
+                            auto const& toX = cfX[x];
 
                             XMVECTOR D[4];
 
@@ -2406,7 +2406,7 @@ namespace
                 const uint8_t* pSrc = src->pixels;
                 uint8_t* pDest = dest->pixels;
 
-                size_t rowPitch = src->rowPitch;
+                const size_t rowPitch = src->rowPitch;
 
                 size_t u0 = size_t(-1);
                 size_t u1 = size_t(-1);
@@ -2415,7 +2415,7 @@ namespace
 
                 for (size_t y = 0; y < nheight; ++y)
                 {
-                    auto& toY = cfY[y];
+                    auto const& toY = cfY[y];
 
                     // Scanline 1
                     if (toY.u0 != u0)
@@ -2506,7 +2506,7 @@ namespace
 
                     for (size_t x = 0; x < nwidth; ++x)
                     {
-                        auto& toX = cfX[x];
+                        auto const& toX = cfX[x];
 
                         XMVECTOR C0, C1, C2, C3;
                         CUBIC_INTERPOLATE(C0, toX.x, urow[0][toX.u0], urow[0][toX.u1], urow[0][toX.u2], urow[0][toX.u3])
@@ -2570,17 +2570,17 @@ namespace
         // Resize base image to each target mip level
         for (size_t level = 1; level < levels; ++level)
         {
-            size_t nwidth = (width > 1) ? (width >> 1) : 1;
+            const size_t nwidth = (width > 1) ? (width >> 1) : 1;
             HRESULT hr = CreateTriangleFilter(width, nwidth, (filter & TEX_FILTER_WRAP_U) != 0, tfX);
             if (FAILED(hr))
                 return hr;
 
-            size_t nheight = (height > 1) ? (height >> 1) : 1;
+            const size_t nheight = (height > 1) ? (height >> 1) : 1;
             hr = CreateTriangleFilter(height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, tfY);
             if (FAILED(hr))
                 return hr;
 
-            size_t ndepth = (depth > 1) ? (depth >> 1) : 1;
+            const size_t ndepth = (depth > 1) ? (depth >> 1) : 1;
             hr = CreateTriangleFilter(depth, ndepth, (filter & TEX_FILTER_WRAP_W) != 0, tfZ);
             if (FAILED(hr))
                 return hr;
@@ -2598,7 +2598,7 @@ namespace
             {
                 for (size_t j = 0; j < zFrom->count; ++j)
                 {
-                    size_t w = zFrom->to[j].u;
+                    const size_t w = zFrom->to[j].u;
                     assert(w < ndepth);
                     TriangleRow* sliceAcc = &sliceActive[w];
 
@@ -2620,7 +2620,7 @@ namespace
                 // Create accumulation slices as needed
                 for (size_t j = 0; j < zFrom->count; ++j)
                 {
-                    size_t w = zFrom->to[j].u;
+                    const size_t w = zFrom->to[j].u;
                     assert(w < ndepth);
                     TriangleRow* sliceAcc = &sliceActive[w];
 
@@ -2652,7 +2652,7 @@ namespace
                     return E_POINTER;
 
                 const uint8_t* pSrc = src->pixels;
-                size_t rowPitch = src->rowPitch;
+                const size_t rowPitch = src->rowPitch;
                 const uint8_t* pEndSrc = pSrc + rowPitch * height;
 
                 for (FilterFrom* yFrom = tfY->from; yFrom < yFromEnd; )
@@ -2672,9 +2672,9 @@ namespace
                     {
                         for (size_t j = 0; j < zFrom->count; ++j)
                         {
-                            size_t w = zFrom->to[j].u;
+                            const size_t w = zFrom->to[j].u;
                             assert(w < ndepth);
-                            float zweight = zFrom->to[j].weight;
+                            const float zweight = zFrom->to[j].weight;
 
                             XMVECTOR* accSlice = sliceActive[w].scanline.get();
                             if (!accSlice)
@@ -2684,7 +2684,7 @@ namespace
                             {
                                 size_t v = yFrom->to[k].u;
                                 assert(v < nheight);
-                                float yweight = yFrom->to[k].weight;
+                                const float yweight = yFrom->to[k].weight;
 
                                 XMVECTOR * accPtr = accSlice + v * nwidth;
 
@@ -2693,7 +2693,7 @@ namespace
                                     size_t u = xFrom->to[l].u;
                                     assert(u < nwidth);
 
-                                    XMVECTOR weight = XMVectorReplicate(zweight * yweight * xFrom->to[l].weight);
+                                    const XMVECTOR weight = XMVectorReplicate(zweight * yweight * xFrom->to[l].weight);
 
                                     assert(x < width);
                                     accPtr[u] = XMVectorMultiplyAdd(row[x], weight, accPtr[u]);
@@ -2710,7 +2710,7 @@ namespace
                 // Write completed accumulation slices
                 for (size_t j = 0; j < zFrom->count; ++j)
                 {
-                    size_t w = zFrom->to[j].u;
+                    const size_t w = zFrom->to[j].u;
                     assert(w < ndepth);
                     TriangleRow* sliceAcc = &sliceActive[w];
 
@@ -2821,13 +2821,13 @@ HRESULT DirectX::GenerateMipMaps(
     bool usewic = UseWICFiltering(baseImage.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
-    bool wicpf = (usewic) ? DXGIToWIC(baseImage.format, pfGUID, true) : false;
+    const bool wicpf = (usewic) ? DXGIToWIC(baseImage.format, pfGUID, true) : false;
 
     if (usewic && !wicpf)
     {
         // Check to see if the source and/or result size is too big for WIC
-        uint64_t expandedSize = uint64_t(std::max<size_t>(1, baseImage.width >> 1)) * uint64_t(std::max<size_t>(1, baseImage.height >> 1)) * sizeof(float) * 4;
-        uint64_t expandedSize2 = uint64_t(baseImage.width) * uint64_t(baseImage.height) * sizeof(float) * 4;
+        const uint64_t expandedSize = uint64_t(std::max<size_t>(1, baseImage.width >> 1)) * uint64_t(std::max<size_t>(1, baseImage.height >> 1)) * sizeof(float) * 4;
+        const uint64_t expandedSize2 = uint64_t(baseImage.width) * uint64_t(baseImage.height) * sizeof(float) * 4;
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
             if (filter & TEX_FILTER_FORCE_WIC)
@@ -3006,7 +3006,7 @@ HRESULT DirectX::GenerateMipMaps(
     baseImages.reserve(metadata.arraySize);
     for (size_t item = 0; item < metadata.arraySize; ++item)
     {
-        size_t index = metadata.ComputeIndex(0, item, 0);
+        const size_t index = metadata.ComputeIndex(0, item, 0);
         if (index >= nimages)
             return E_FAIL;
 
@@ -3036,13 +3036,13 @@ HRESULT DirectX::GenerateMipMaps(
     bool usewic = !metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
-    bool wicpf = (usewic) ? DXGIToWIC(metadata.format, pfGUID, true) : false;
+    const bool wicpf = (usewic) ? DXGIToWIC(metadata.format, pfGUID, true) : false;
 
     if (usewic && !wicpf)
     {
         // Check to see if the source and/or result size is too big for WIC
-        uint64_t expandedSize = uint64_t(std::max<size_t>(1, metadata.width >> 1)) * uint64_t(std::max<size_t>(1, metadata.height >> 1)) * sizeof(float) * 4;
-        uint64_t expandedSize2 = uint64_t(metadata.width) * uint64_t(metadata.height) * sizeof(float) * 4;
+        const uint64_t expandedSize = uint64_t(std::max<size_t>(1, metadata.width >> 1)) * uint64_t(std::max<size_t>(1, metadata.height >> 1)) * sizeof(float) * 4;
+        const uint64_t expandedSize2 = uint64_t(metadata.width) * uint64_t(metadata.height) * sizeof(float) * 4;
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
             if (filter & TEX_FILTER_FORCE_WIC)
@@ -3228,9 +3228,9 @@ HRESULT DirectX::GenerateMipMaps3D(
     if (filter & TEX_FILTER_FORCE_WIC)
         return HRESULT_E_NOT_SUPPORTED;
 
-    DXGI_FORMAT format = baseImages[0].format;
-    size_t width = baseImages[0].width;
-    size_t height = baseImages[0].height;
+    const DXGI_FORMAT format = baseImages[0].format;
+    const size_t width = baseImages[0].width;
+    const size_t height = baseImages[0].height;
 
     if (!CalculateMipLevels3D(width, height, depth, levels))
         return E_INVALIDARG;
@@ -3350,7 +3350,7 @@ HRESULT DirectX::GenerateMipMaps3D(
     baseImages.reserve(metadata.depth);
     for (size_t slice = 0; slice < metadata.depth; ++slice)
     {
-        size_t index = metadata.ComputeIndex(0, 0, slice);
+        const size_t index = metadata.ComputeIndex(0, 0, slice);
         if (index >= nimages)
             return E_FAIL;
 
@@ -3477,10 +3477,10 @@ HRESULT DirectX::ScaleMipMapsAlphaForCoverage(
             return E_POINTER;
 
         const uint8_t *pSrc = src.pixels;
-        size_t rowPitch = src.rowPitch;
+        const size_t rowPitch = src.rowPitch;
         for (size_t h = 0; h < metadata.height; ++h)
         {
-            size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
+            const size_t msize = std::min<size_t>(dest->rowPitch, rowPitch);
             memcpy(pDest, pSrc, msize);
             pSrc += rowPitch;
             pDest += dest->rowPitch;

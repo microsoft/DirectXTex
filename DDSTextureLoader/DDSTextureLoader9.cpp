@@ -59,7 +59,7 @@ using Microsoft::WRL::ComPtr;
 //--------------------------------------------------------------------------------------
 #pragma pack(push,1)
 
-const uint32_t DDS_MAGIC = 0x20534444; // "DDS "
+constexpr uint32_t DDS_MAGIC = 0x20534444; // "DDS "
 
 struct DDS_PIXELFORMAT
 {
@@ -150,7 +150,7 @@ namespace
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData);
+        auto const dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData);
         if (dwMagicNumber != DDS_MAGIC)
         {
             return E_FAIL;
@@ -266,7 +266,7 @@ namespace
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
+        auto const dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
         if (dwMagicNumber != DDS_MAGIC)
         {
             ddsData.reset();
@@ -474,7 +474,7 @@ namespace
         }
         else
         {
-            size_t bpp = BitsPerPixel(fmt);
+            const size_t bpp = BitsPerPixel(fmt);
             if (!bpp)
                 return E_INVALIDARG;
 
@@ -800,7 +800,7 @@ namespace
         // We could support a subset of 'DX10' extended header DDS files, but we'll assume here we are only
         // supporting legacy DDS files for a Direct3D9 device
 
-        D3DFORMAT fmt = GetD3D9Format(header->ddspf);
+        const D3DFORMAT fmt = GetD3D9Format(header->ddspf);
         if (fmt == D3DFMT_UNKNOWN || BitsPerPixel(fmt) == 0)
         {
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);

@@ -901,15 +901,15 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
         {
             if (flags & CP_FLAGS_BAD_DXTN_TAILS)
             {
-                size_t nbw = width >> 2;
-                size_t nbh = height >> 2;
+                const size_t nbw = width >> 2;
+                const size_t nbh = height >> 2;
                 pitch = std::max<uint64_t>(1u, uint64_t(nbw) * 8u);
                 slice = std::max<uint64_t>(1u, pitch * uint64_t(nbh));
             }
             else
             {
-                uint64_t nbw = std::max<uint64_t>(1u, (uint64_t(width) + 3u) / 4u);
-                uint64_t nbh = std::max<uint64_t>(1u, (uint64_t(height) + 3u) / 4u);
+                const uint64_t nbw = std::max<uint64_t>(1u, (uint64_t(width) + 3u) / 4u);
+                const uint64_t nbh = std::max<uint64_t>(1u, (uint64_t(height) + 3u) / 4u);
                 pitch = nbw * 8u;
                 slice = pitch * nbh;
             }
@@ -935,15 +935,15 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
         {
             if (flags & CP_FLAGS_BAD_DXTN_TAILS)
             {
-                size_t nbw = width >> 2;
-                size_t nbh = height >> 2;
+                const size_t nbw = width >> 2;
+                const size_t nbh = height >> 2;
                 pitch = std::max<uint64_t>(1u, uint64_t(nbw) * 16u);
                 slice = std::max<uint64_t>(1u, pitch * uint64_t(nbh));
             }
             else
             {
-                uint64_t nbw = std::max<uint64_t>(1u, (uint64_t(width) + 3u) / 4u);
-                uint64_t nbh = std::max<uint64_t>(1u, (uint64_t(height) + 3u) / 4u);
+                const uint64_t nbw = std::max<uint64_t>(1u, (uint64_t(width) + 3u) / 4u);
+                const uint64_t nbh = std::max<uint64_t>(1u, (uint64_t(height) + 3u) / 4u);
                 pitch = nbw * 16u;
                 slice = pitch * nbh;
             }
