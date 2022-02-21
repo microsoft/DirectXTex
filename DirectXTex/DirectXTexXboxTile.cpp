@@ -14,6 +14,7 @@
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
+using namespace DirectX::Internal;
 using namespace Xbox;
 
 namespace
@@ -361,7 +362,7 @@ namespace
                 assert(img->rowPitch == images[0]->rowPitch);
                 assert(img->format == images[0]->format);
 
-                if (!_LoadScanline(row, img->width, img->pixels, img->rowPitch, img->format))
+                if (!LoadScanline(row, img->width, img->pixels, img->rowPitch, img->format))
                     return E_FAIL;
 
                 for (size_t x = 0; x < img->width; ++x)
@@ -386,7 +387,7 @@ namespace
 
             // Store tiled texture
             assert(mip.OffsetBytes + mip.SizeBytes <= layout.SizeBytes);
-            if (!_StoreScanline(xbox.GetPointer() + mip.OffsetBytes, mip.SizeBytes, xbox.GetMetadata().format, tiled, tiledPixels))
+            if (!StoreScanline(xbox.GetPointer() + mip.OffsetBytes, mip.SizeBytes, xbox.GetMetadata().format, tiled, tiledPixels))
                 return E_FAIL;
         }
 
@@ -503,7 +504,7 @@ namespace
                 auto sptr = reinterpret_cast<const uint8_t * __restrict>(img->pixels);
                 for (uint32_t y = 0; y < img->height; ++y)
                 {
-                    if (!_LoadScanline(row, img->width, sptr, img->rowPitch, img->format))
+                    if (!LoadScanline(row, img->width, sptr, img->rowPitch, img->format))
                         return E_FAIL;
 
                     sptr += img->rowPitch;
@@ -531,7 +532,7 @@ namespace
 
             // Store tiled texture
             assert(mip.OffsetBytes + mip.SizeBytes <= layout.SizeBytes);
-            if (!_StoreScanline(xbox.GetPointer() + mip.OffsetBytes, mip.SizeBytes, xbox.GetMetadata().format, tiled, tiledPixels))
+            if (!StoreScanline(xbox.GetPointer() + mip.OffsetBytes, mip.SizeBytes, xbox.GetMetadata().format, tiled, tiledPixels))
                 return E_FAIL;
         }
 
@@ -632,7 +633,7 @@ namespace
 
                 for (uint32_t y = 0; y < image.height; ++y)
                 {
-                    if (!_LoadScanline(row, image.width, rptr, image.rowPitch, image.format))
+                    if (!LoadScanline(row, image.width, rptr, image.rowPitch, image.format))
                         return E_FAIL;
 
                     rptr += image.rowPitch;
@@ -674,7 +675,7 @@ namespace
                     if ((rptr + mip.PitchBytes) > endPtr)
                         return E_FAIL;
 
-                    if (!_StoreScanline(rptr, mip.PitchBytes, xbox.GetMetadata().format, uptr, mip.PitchPixels))
+                    if (!StoreScanline(rptr, mip.PitchBytes, xbox.GetMetadata().format, uptr, mip.PitchPixels))
                         return E_FAIL;
 
                     rptr += mip.PitchBytes;

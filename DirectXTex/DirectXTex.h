@@ -828,6 +828,13 @@ namespace DirectX
 #endif
 
     //---------------------------------------------------------------------------------
+    // DDS helper functions
+    HRESULT __cdecl EncodeDDSHeader(
+        _In_ const TexMetadata& metadata, DDS_FLAGS flags,
+        _Out_writes_bytes_to_opt_(maxsize, required) void* pDestination, _In_ size_t maxsize,
+        _Out_ size_t& required) noexcept;
+
+    //---------------------------------------------------------------------------------
     // Direct3D 11 functions
 #if defined(__d3d11_h__) || defined(__d3d11_x_h__)
     bool __cdecl IsSupportedTexture(_In_ ID3D11Device* pDevice, _In_ const TexMetadata& metadata) noexcept;

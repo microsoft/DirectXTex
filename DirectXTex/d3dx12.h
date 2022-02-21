@@ -2463,16 +2463,16 @@ template <typename InnerStructType, D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type, ty
 class alignas(void*) CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT
 {
 private:
-    D3D12_PIPELINE_STATE_SUBOBJECT_TYPE _Type;
-    InnerStructType _Inner;
+    D3D12_PIPELINE_STATE_SUBOBJECT_TYPE pssType;
+    InnerStructType pssInner;
 public:
-    CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT() noexcept : _Type(Type), _Inner(DefaultArg()) {}
-    CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT(InnerStructType const& i) noexcept : _Type(Type), _Inner(i) {}
-    CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT& operator=(InnerStructType const& i) noexcept { _Type = Type; _Inner = i; return *this; }
-    operator InnerStructType const&() const noexcept { return _Inner; }
-    operator InnerStructType&() noexcept { return _Inner; }
-    InnerStructType* operator&() noexcept { return &_Inner; }
-    InnerStructType const* operator&() const noexcept { return &_Inner; }
+    CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT() noexcept : pssType(Type), pssInner(DefaultArg()) {}
+    CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT(InnerStructType const& i) noexcept : pssType(Type), pssInner(i) {}
+    CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT& operator=(InnerStructType const& i) noexcept { pssType = Type; pssInner = i; return *this; }
+    operator InnerStructType const&() const noexcept { return pssInner; }
+    operator InnerStructType&() noexcept { return pssInner; }
+    InnerStructType* operator&() noexcept { return &pssInner; }
+    InnerStructType const* operator&() const noexcept { return &pssInner; }
 };
 #pragma warning(pop)
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< D3D12_PIPELINE_STATE_FLAGS,         D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_FLAGS>                             CD3DX12_PIPELINE_STATE_STREAM_FLAGS;

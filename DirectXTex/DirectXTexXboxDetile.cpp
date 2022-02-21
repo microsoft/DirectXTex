@@ -12,6 +12,7 @@
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
+using namespace DirectX::Internal;
 using namespace Xbox;
 
 namespace
@@ -266,7 +267,7 @@ namespace
             if ((xbox.GetSize() - mip.OffsetBytes) < mip.SizeBytes)
                 return E_FAIL;
 
-            if (!_LoadScanline(tiled, tiledPixels, xbox.GetPointer() + mip.OffsetBytes, mip.SizeBytes, xbox.GetMetadata().format))
+            if (!LoadScanline(tiled, tiledPixels, xbox.GetPointer() + mip.OffsetBytes, mip.SizeBytes, xbox.GetMetadata().format))
                 return E_FAIL;
 
             // Perform detiling
@@ -300,7 +301,7 @@ namespace
                     target[x] = tiled[offset];
                 }
 
-                if (!_StoreScanline(img->pixels, img->rowPitch, img->format, target, img->width))
+                if (!StoreScanline(img->pixels, img->rowPitch, img->format, target, img->width))
                     return E_FAIL;
             }
         }
@@ -407,7 +408,7 @@ namespace
             if ((xbox.GetSize() - mip.OffsetBytes) < mip.SizeBytes)
                 return E_FAIL;
 
-            if (!_LoadScanline(tiled, tiledPixels, xbox.GetPointer() + mip.OffsetBytes, mip.SizeBytes, xbox.GetMetadata().format))
+            if (!LoadScanline(tiled, tiledPixels, xbox.GetPointer() + mip.OffsetBytes, mip.SizeBytes, xbox.GetMetadata().format))
                 return E_FAIL;
 
             // Perform detiling
@@ -444,7 +445,7 @@ namespace
                         target[x] = tiled[offset];
                     }
 
-                    if (!_StoreScanline(dptr, img->rowPitch, img->format, target, img->width))
+                    if (!StoreScanline(dptr, img->rowPitch, img->format, target, img->width))
                         return E_FAIL;
 
                     dptr += img->rowPitch;
@@ -555,7 +556,7 @@ namespace
                     if ((rptr + mip.PitchBytes) > endPtr)
                         return E_FAIL;
 
-                    if (!_LoadScanline(uptr, mip.PitchPixels, rptr, mip.PitchBytes, xbox.GetMetadata().format))
+                    if (!LoadScanline(uptr, mip.PitchPixels, rptr, mip.PitchBytes, xbox.GetMetadata().format))
                         return E_FAIL;
 
                     rptr += mip.PitchBytes;
@@ -593,7 +594,7 @@ namespace
                         target[x] = tiled[offset];
                     }
 
-                    if (!_StoreScanline(rptr, result.rowPitch, result.format, target, result.width))
+                    if (!StoreScanline(rptr, result.rowPitch, result.format, target, result.width))
                         return E_FAIL;
 
                     rptr += result.rowPitch;

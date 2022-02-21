@@ -197,7 +197,7 @@ namespace
 #endif
     }
 
-    IWICImagingFactory* _GetWIC() noexcept
+    IWICImagingFactory* GetWIC() noexcept
     {
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
@@ -215,7 +215,7 @@ namespace
     }
 
     //---------------------------------------------------------------------------------
-    D3DFORMAT _WICToD3D9(const GUID& guid) noexcept
+    D3DFORMAT WICToD3D9(const GUID& guid) noexcept
     {
         for (size_t i = 0; i < std::size(g_WICFormats); ++i)
         {
@@ -331,7 +331,7 @@ namespace
         WICPixelFormatGUID convertGUID;
         memcpy_s(&convertGUID, sizeof(WICPixelFormatGUID), &pixelFormat, sizeof(GUID));
 
-        D3DFORMAT format = _WICToD3D9(pixelFormat);
+        D3DFORMAT format = WICToD3D9(pixelFormat);
         if (format == D3DFMT_UNKNOWN)
         {
             for (size_t i = 0; i < std::size(g_WICConvert); ++i)
@@ -340,7 +340,7 @@ namespace
                 {
                     memcpy_s(&convertGUID, sizeof(WICPixelFormatGUID), &g_WICConvert[i].target, sizeof(GUID));
 
-                    format = _WICToD3D9(g_WICConvert[i].target);
+                    format = WICToD3D9(g_WICConvert[i].target);
                     assert(format != D3DFMT_UNKNOWN);
                     break;
                 }
@@ -417,7 +417,7 @@ namespace
         else if (twidth != width || theight != height)
         {
             // Resize
-            auto pWIC = _GetWIC();
+            auto pWIC = GetWIC();
             if (!pWIC)
                 return E_NOINTERFACE;
 
@@ -484,7 +484,7 @@ namespace
         else
         {
             // Format conversion but no resize
-            auto pWIC = _GetWIC();
+            auto pWIC = GetWIC();
             if (!pWIC)
                 return E_NOINTERFACE;
 
@@ -569,7 +569,7 @@ HRESULT DirectX::CreateWICTextureFromMemoryEx(
     if (wicDataSize > UINT32_MAX)
         return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
 
-    auto pWIC = _GetWIC();
+    auto pWIC = GetWIC();
     if (!pWIC)
         return E_NOINTERFACE;
 
@@ -627,7 +627,7 @@ HRESULT DirectX::CreateWICTextureFromFileEx(
     if (!d3dDevice || !fileName || !texture)
         return E_INVALIDARG;
 
-    auto pWIC = _GetWIC();
+    auto pWIC = GetWIC();
     if (!pWIC)
         return E_NOINTERFACE;
 
