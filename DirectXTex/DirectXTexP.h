@@ -313,32 +313,32 @@ namespace DirectX
 
         enum TEXP_SCANLINE_FLAGS : uint32_t
         {
-            TEXP_SCANLINE_NONE = 0,
+            TEXP_SCANLINE_NONE     = 0,
             TEXP_SCANLINE_SETALPHA = 0x1,  // Set alpha channel to known opaque value
-            TEXP_SCANLINE_LEGACY = 0x2,  // Enables specific legacy format conversion cases
+            TEXP_SCANLINE_LEGACY   = 0x2,  // Enables specific legacy format conversion cases
         };
 
         enum CONVERT_FLAGS : uint32_t
         {
-            CONVF_FLOAT = 0x1,
-            CONVF_UNORM = 0x2,
-            CONVF_UINT = 0x4,
-            CONVF_SNORM = 0x8,
-            CONVF_SINT = 0x10,
-            CONVF_DEPTH = 0x20,
-            CONVF_STENCIL = 0x40,
+            CONVF_FLOAT     = 0x1,
+            CONVF_UNORM     = 0x2,
+            CONVF_UINT      = 0x4,
+            CONVF_SNORM     = 0x8,
+            CONVF_SINT      = 0x10,
+            CONVF_DEPTH     = 0x20,
+            CONVF_STENCIL   = 0x40,
             CONVF_SHAREDEXP = 0x80,
-            CONVF_BGR = 0x100,
-            CONVF_XR = 0x200,
-            CONVF_PACKED = 0x400,
-            CONVF_BC = 0x800,
-            CONVF_YUV = 0x1000,
-            CONVF_POS_ONLY = 0x2000,
-            CONVF_R = 0x10000,
-            CONVF_G = 0x20000,
-            CONVF_B = 0x40000,
-            CONVF_A = 0x80000,
-            CONVF_RGB_MASK = 0x70000,
+            CONVF_BGR       = 0x100,
+            CONVF_XR        = 0x200,
+            CONVF_PACKED    = 0x400,
+            CONVF_BC        = 0x800,
+            CONVF_YUV       = 0x1000,
+            CONVF_POS_ONLY  = 0x2000,
+            CONVF_R         = 0x10000,
+            CONVF_G         = 0x20000,
+            CONVF_B         = 0x40000,
+            CONVF_A         = 0x80000,
+            CONVF_RGB_MASK  = 0x70000,
             CONVF_RGBA_MASK = 0xF0000,
         };
 
@@ -408,13 +408,13 @@ namespace DirectX
 
         //---------------------------------------------------------------------------------
         // Misc helper functions
-        bool IsAlphaAllOpaqueBC(_In_ const Image& cImage) noexcept;
-        bool CalculateMipLevels(_In_ size_t width, _In_ size_t height, _Inout_ size_t& mipLevels) noexcept;
-        bool CalculateMipLevels3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth,
+        bool __cdecl IsAlphaAllOpaqueBC(_In_ const Image& cImage) noexcept;
+        bool __cdecl CalculateMipLevels(_In_ size_t width, _In_ size_t height, _Inout_ size_t& mipLevels) noexcept;
+        bool __cdecl CalculateMipLevels3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth,
             _Inout_ size_t& mipLevels) noexcept;
 
 #ifdef WIN32
-        HRESULT ResizeSeparateColorAndAlpha(_In_ IWICImagingFactory* pWIC,
+        HRESULT __cdecl ResizeSeparateColorAndAlpha(_In_ IWICImagingFactory* pWIC,
             _In_ bool iswic2,
             _In_ IWICBitmap* original,
             _In_ size_t newWidth, _In_ size_t newHeight, _In_ TEX_FILTER_FLAGS filter,
