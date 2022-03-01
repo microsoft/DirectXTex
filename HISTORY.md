@@ -6,6 +6,11 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### February 28, 2022
+* Updated D3DX12 internal copy with latest changes from GitHub
+* Code and project review including fixing clang v13 warnings
+* Added CMakePresets.json
+
 ### November 8, 2021
 * VS 2022 support
 * Updated D3DX12 internal copy with latest change from GitHubf
