@@ -791,6 +791,11 @@ namespace
 #endif
         else
         {
+            // This supports the built-in native codecs as well as installed WIC codecs.
+            //
+            // .HEIC, .HEIF : install https://aka.ms/heif
+            // .WEBP        : install https://www.microsoft.com/p/webp-image-extensions/9pg2dk419drg
+
             // WIC shares the same filter values for mode and dither
             static_assert(static_cast<int>(WIC_FLAGS_DITHER) == static_cast<int>(TEX_FILTER_DITHER), "WIC_FLAGS_* & TEX_FILTER_* should match");
             static_assert(static_cast<int>(WIC_FLAGS_DITHER_DIFFUSION) == static_cast<int>(TEX_FILTER_DITHER_DIFFUSION), "WIC_FLAGS_* & TEX_FILTER_* should match");

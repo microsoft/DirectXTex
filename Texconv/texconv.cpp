@@ -443,6 +443,8 @@ namespace
     #ifdef USE_OPENEXR
         { L"exr",   CODEC_EXR      },
     #endif
+        { L"heic",  WIC_CODEC_HEIF },
+        { L"heif",  WIC_CODEC_HEIF },
         { nullptr,  CODEC_DDS      }
     };
 
@@ -2101,6 +2103,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 #endif
         else
         {
+            // This supports the built-in native codecs as well as installed WIC codecs.
+            //
+            // .HEIC, .HEIF : install https://aka.ms/heif
+            // .WEBP        : install https://www.microsoft.com/p/webp-image-extensions/9pg2dk419drg
+
             // WIC shares the same filter values for mode and dither
             static_assert(static_cast<int>(WIC_FLAGS_DITHER) == static_cast<int>(TEX_FILTER_DITHER), "WIC_FLAGS_* & TEX_FILTER_* should match");
             static_assert(static_cast<int>(WIC_FLAGS_DITHER_DIFFUSION) == static_cast<int>(TEX_FILTER_DITHER_DIFFUSION), "WIC_FLAGS_* & TEX_FILTER_* should match");
@@ -3691,6 +3698,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 retVal = 1;
+                if (hr == WINCODEC_ERR_COMPONENTNOTFOUND && FileType == WIC_CODEC_HEIF)
+                {
+                    wprintf(L"This format requires installing the HEIF Image Extensions - https://aka.ms/heif\n");
+                }
                 continue;
             }
             wprintf(L"\n");
