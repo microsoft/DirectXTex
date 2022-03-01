@@ -598,7 +598,7 @@ namespace
     {
         while (pValue->name)
         {
-            size_t cchName = wcslen(pValue->name);
+            const size_t cchName = wcslen(pValue->name);
 
             if (cch + cchName + 2 >= 80)
             {
@@ -621,7 +621,7 @@ namespace
         wchar_t appName[_MAX_PATH] = {};
         if (GetModuleFileNameW(nullptr, appName, static_cast<DWORD>(std::size(appName))))
         {
-            DWORD size = GetFileVersionInfoSizeW(appName, nullptr);
+            const DWORD size = GetFileVersionInfoSizeW(appName, nullptr);
             if (size > 0)
             {
                 auto verInfo = std::make_unique<uint8_t[]>(size);
@@ -701,7 +701,7 @@ namespace
 
         LPWSTR errorText = nullptr;
 
-        DWORD result = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+        const DWORD result = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
             nullptr, static_cast<DWORD>(hr),
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&errorText), 0, nullptr);
 
@@ -877,7 +877,7 @@ namespace
 
                 for (size_t x = 0; x < width; ++x)
                 {
-                    XMVECTOR v = *pixels++;
+                    const XMVECTOR v = *pixels++;
                     luminance = XMVectorMax(luminance, XMVector3Dot(v, s_luminance));
                     minv = XMVectorMin(minv, v);
                     maxv = XMVectorMax(maxv, v);
@@ -917,7 +917,7 @@ namespace
         XMStoreFloat4(&result.imageMin, minv);
         XMStoreFloat4(&result.imageMax, maxv);
 
-        XMVECTOR pixelv = XMVectorReplicate(float(totalPixels));
+        const XMVECTOR pixelv = XMVectorReplicate(float(totalPixels));
         XMVECTOR avgv = XMVectorDivide(acc, pixelv);
         XMStoreFloat4(&result.imageAvg, avgv);
 
@@ -930,9 +930,9 @@ namespace
 
                 for (size_t x = 0; x < width; ++x)
                 {
-                    XMVECTOR v = *pixels++;
+                    const XMVECTOR v = *pixels++;
 
-                    XMVECTOR diff = XMVectorSubtract(v, avgv);
+                    const XMVECTOR diff = XMVectorSubtract(v, avgv);
                     acc = XMVectorMultiplyAdd(diff, diff, acc);
                 }
             });
@@ -941,7 +941,7 @@ namespace
 
         XMStoreFloat4(&result.imageVariance, acc);
 
-        XMVECTOR stddev = XMVectorSqrt(acc);
+        const XMVECTOR stddev = XMVectorSqrt(acc);
 
         XMStoreFloat4(&result.imageStdDev, stddev);
 
@@ -1446,14 +1446,14 @@ namespace
         ScratchImage diffImage;
         HRESULT hr = TransformImage(*imageA, [&](XMVECTOR* outPixels, const XMVECTOR * inPixels, size_t width, size_t y)
             {
-                XMVECTOR tolerance = XMVectorReplicate(threshold);
+                const XMVECTOR tolerance = XMVectorReplicate(threshold);
 
                 auto *inPixelsB = reinterpret_cast<XMVECTOR*>(imageB->pixels + (y*imageB->rowPitch));
 
                 for (size_t x = 0; x < width; ++x)
                 {
                     XMVECTOR v1 = *inPixels++;
-                    XMVECTOR v2 = *inPixelsB++;
+                    const XMVECTOR v2 = *inPixelsB++;
 
                     v1 = XMVectorSubtract(v1, v2);
                     v1 = XMVectorAbs(v1);
@@ -1567,9 +1567,9 @@ namespace
 
     void Print565(uint16_t rgb)
     {
-        auto r = float(((rgb >> 11) & 31) * (1.0f / 31.0f));
-        auto g = float(((rgb >> 5) & 63) * (1.0f / 63.0f));
-        auto b = float(((rgb >> 0) & 31) * (1.0f / 31.0f));
+        auto const r = float(((rgb >> 11) & 31) * (1.0f / 31.0f));
+        auto const g = float(((rgb >> 5) & 63) * (1.0f / 63.0f));
+        auto const b = float(((rgb >> 0) & 31) * (1.0f / 31.0f));
 
         wprintf(L"(R: %.3f, G: %.3f, B: %.3f)", r, g, b);
     }
@@ -1906,7 +1906,7 @@ namespace
                         };
                         static_assert(sizeof(bc6h_mode1) == 16, "Block size must be 16 bytes");
 
-                        bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                        const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                         auto m = reinterpret_cast<const bc6h_mode1*>(sptr);
 
@@ -1982,7 +1982,7 @@ namespace
                         };
                         static_assert(sizeof(bc6h_mode2) == 16, "Block size must be 16 bytes");
 
-                        bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                        const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                         auto m = reinterpret_cast<const bc6h_mode2*>(sptr);
 
@@ -2059,7 +2059,7 @@ namespace
                             };
                             static_assert(sizeof(bc6h_mode3) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                             auto m = reinterpret_cast<const bc6h_mode3*>(sptr);
 
@@ -2136,7 +2136,7 @@ namespace
                             };
                             static_assert(sizeof(bc6h_mode4) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                             auto m = reinterpret_cast<const bc6h_mode4*>(sptr);
 
@@ -2211,7 +2211,7 @@ namespace
                             };
                             static_assert(sizeof(bc6h_mode5) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                             auto m = reinterpret_cast<const bc6h_mode5*>(sptr);
 
@@ -2285,7 +2285,7 @@ namespace
                             };
                             static_assert(sizeof(bc6h_mode6) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                             auto m = reinterpret_cast<const bc6h_mode6*>(sptr);
 
@@ -2359,7 +2359,7 @@ namespace
                             };
                             static_assert(sizeof(bc6h_mode7) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                             auto m = reinterpret_cast<const bc6h_mode7*>(sptr);
 
@@ -2435,7 +2435,7 @@ namespace
                             };
                             static_assert(sizeof(bc6h_mode8) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                             auto m = reinterpret_cast<const bc6h_mode8*>(sptr);
 
@@ -2511,7 +2511,7 @@ namespace
                             };
                             static_assert(sizeof(bc6h_mode9) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                             auto m = reinterpret_cast<const bc6h_mode9*>(sptr);
 
@@ -2587,7 +2587,7 @@ namespace
                             };
                             static_assert(sizeof(bc6h_mode10) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                             auto m = reinterpret_cast<const bc6h_mode10*>(sptr);
 
@@ -2647,7 +2647,7 @@ namespace
                             };
                             static_assert(sizeof(bc6h_mode11) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                             auto m = reinterpret_cast<const bc6h_mode11*>(sptr);
 
@@ -2694,7 +2694,7 @@ namespace
                             };
                             static_assert(sizeof(bc6h_mode12) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                             auto m = reinterpret_cast<const bc6h_mode12*>(sptr);
 
@@ -2745,7 +2745,7 @@ namespace
                             };
                             static_assert(sizeof(bc6h_mode13) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                             auto m = reinterpret_cast<const bc6h_mode13*>(sptr);
 
@@ -2808,7 +2808,7 @@ namespace
                             };
                             static_assert(sizeof(bc6h_mode14) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
                             auto m = reinterpret_cast<const bc6h_mode14*>(sptr);
 
@@ -3062,7 +3062,7 @@ namespace
                         wprintf(L"\t         A1:(%0.3f)\n", float(m->a1) / 63.f);
                         wprintf(L"\t    Colors: ");
 
-                        uint64_t color_index = uint64_t(m->color_index) | uint64_t(m->color_indexn << 14);
+                        const uint64_t color_index = uint64_t(m->color_index) | uint64_t(m->color_indexn << 14);
                         if (m->idx)
                             PrintIndex3bpp(color_index, 0, 0);
                         else
@@ -3238,7 +3238,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
-    uint32_t dwCommand = LookupByName(argv[1], g_pCommands);
+    const uint32_t dwCommand = LookupByName(argv[1], g_pCommands);
     switch (dwCommand)
     {
     case CMD_INFO:
@@ -3271,7 +3271,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (*pValue)
                 *pValue++ = 0;
 
-            uint32_t dwOption = LookupByName(pArg, g_pOptions);
+            const uint32_t dwOption = LookupByName(pArg, g_pOptions);
 
             if (!dwOption || (dwOptions & (1 << dwOption)))
             {
@@ -3446,7 +3446,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else if (wcspbrk(pArg, L"?*") != nullptr)
         {
-            size_t count = conversion.size();
+            const size_t count = conversion.size();
             SearchForFiles(pArg, conversion, (dwOptions & (1 << OPT_RECURSIVE)) != 0);
             if (conversion.size() <= count)
             {
@@ -3716,9 +3716,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     wprintf(L"\n    Minimum MSE: %f (%f %f %f %f) PSNR %f dB\n", min_mse, min_mseV[0], min_mseV[1], min_mseV[2], min_mseV[3],
                         10.0 * log10(3.0 / (double(min_mseV[0]) + double(min_mseV[1]) + double(min_mseV[2]))));
-                    double total_mseV0 = sum_mseV[0] / double(total_images);
-                    double total_mseV1 = sum_mseV[1] / double(total_images);
-                    double total_mseV2 = sum_mseV[2] / double(total_images);
+                    const double total_mseV0 = sum_mseV[0] / double(total_images);
+                    const double total_mseV1 = sum_mseV[1] / double(total_images);
+                    const double total_mseV2 = sum_mseV[2] / double(total_images);
                     wprintf(L"    Average MSE: %f (%f %f %f %f) PSNR %f dB\n", sum_mse / double(total_images),
                         total_mseV0,
                         total_mseV1,
@@ -3809,7 +3809,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 wprintf(L"\n       images = %zu\n", image->GetImageCount());
 
-                auto sizeInKb = static_cast<uint32_t>(image->GetPixelsSize() / 1024);
+                auto const sizeInKb = static_cast<uint32_t>(image->GetPixelsSize() / 1024);
 
                 wprintf(L"   pixel size = %u (KB)\n\n", sizeInKb);
             }
@@ -4021,7 +4021,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     auto img = image->GetImage(0, 0, 0);
                     assert(img);
-                    size_t nimg = image->GetImageCount();
+                    const size_t nimg = image->GetImageCount();
 
                     std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                     if (!timage)

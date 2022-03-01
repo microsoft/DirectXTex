@@ -640,7 +640,7 @@ namespace
     {
         while (pValue->name)
         {
-            size_t cchName = wcslen(pValue->name);
+            const size_t cchName = wcslen(pValue->name);
 
             if (cch + cchName + 2 >= 80)
             {
@@ -663,7 +663,7 @@ namespace
         wchar_t appName[_MAX_PATH] = {};
         if (GetModuleFileNameW(nullptr, appName, static_cast<DWORD>(std::size(appName))))
         {
-            DWORD size = GetFileVersionInfoSizeW(appName, nullptr);
+            const DWORD size = GetFileVersionInfoSizeW(appName, nullptr);
             if (size > 0)
             {
                 auto verInfo = std::make_unique<uint8_t[]>(size);
@@ -698,7 +698,7 @@ namespace
 
         LPWSTR errorText = nullptr;
 
-        DWORD result = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+        const DWORD result = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
             nullptr, static_cast<DWORD>(hr),
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&errorText), 0, nullptr);
 
@@ -970,7 +970,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
-    uint32_t dwCommand = LookupByName(argv[1], g_pCommands);
+    const uint32_t dwCommand = LookupByName(argv[1], g_pCommands);
     switch (dwCommand)
     {
     case CMD_CUBE:
@@ -1008,7 +1008,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (*pValue)
                 *pValue++ = 0;
 
-            uint32_t dwOption = LookupByName(pArg, g_pOptions);
+            const uint32_t dwOption = LookupByName(pArg, g_pOptions);
 
             if (!dwOption || (dwOptions & (1 << dwOption)))
             {
@@ -1233,7 +1233,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else if (wcspbrk(pArg, L"?*") != nullptr)
         {
-            size_t count = conversion.size();
+            const size_t count = conversion.size();
             SearchForFiles(pArg, conversion, (dwOptions & (1 << OPT_RECURSIVE)) != 0);
             if (conversion.size() <= count)
             {
@@ -1493,7 +1493,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 auto img = image->GetImage(0, 0, 0);
                 assert(img);
-                size_t nimg = image->GetImageCount();
+                const size_t nimg = image->GetImageCount();
 
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                 if (!timage)
@@ -1529,7 +1529,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 const Image* img = image->GetImage(0, 0, 0);
                 assert(img);
-                size_t nimg = image->GetImageCount();
+                const size_t nimg = image->GetImageCount();
 
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                 if (!timage)
@@ -1627,7 +1627,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     auto img = image->GetImage(0, 0, 0);
                     assert(img);
-                    size_t nimg = image->GetImageCount();
+                    const size_t nimg = image->GetImageCount();
 
                     std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                     if (!timage)
@@ -1746,10 +1746,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         {
                             XMVECTOR value = inPixels[j];
 
-                            XMVECTOR scale = XMVectorDivide(
+                            const XMVECTOR scale = XMVectorDivide(
                                 XMVectorAdd(g_XMOne, XMVectorDivide(value, maxLum)),
                                 XMVectorAdd(g_XMOne, value));
-                            XMVECTOR nvalue = XMVectorMultiply(value, scale);
+                            const XMVECTOR nvalue = XMVectorMultiply(value, scale);
 
                             value = XMVectorSelect(value, nvalue, g_XMSelect1110);
 
@@ -1921,7 +1921,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            Rect rect(0, 0, width, height);
+            const Rect rect(0, 0, width, height);
 
             size_t offsetx = 0;
             size_t offsety = 0;
@@ -2025,8 +2025,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         // Merge with our first source image
         const Image& rgb = *loadedImages[0]->GetImage(0, 0, 0);
 
-        XMVECTOR zc = XMVectorSelectControl(zeroElements[0], zeroElements[1], zeroElements[2], zeroElements[3]);
-        XMVECTOR oc = XMVectorSelectControl(oneElements[0], oneElements[1], oneElements[2], oneElements[3]);
+        const XMVECTOR zc = XMVectorSelectControl(zeroElements[0], zeroElements[1], zeroElements[2], zeroElements[3]);
+        const XMVECTOR oc = XMVectorSelectControl(oneElements[0], oneElements[1], oneElements[2], oneElements[3]);
 
         ScratchImage result;
         hr = TransformImage(rgb, [&, zc, oc](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
@@ -2078,8 +2078,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     case CMD_ARRAY_STRIP:
     {
-        size_t twidth = width;
-        size_t theight = height * images;
+        const size_t twidth = width;
+        const size_t theight = height * images;
 
         ScratchImage result;
         hr = result.Initialize2D(format, twidth, theight, 1, 1);
@@ -2103,9 +2103,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            Rect rect(0, 0, width, height);
+            const Rect rect(0, 0, width, height);
 
-            size_t offsetx = 0;
+            constexpr size_t offsetx = 0;
             size_t offsety = 0;
 
             offsety = index * height;

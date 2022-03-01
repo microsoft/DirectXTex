@@ -171,7 +171,7 @@ HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<Scrat
         hr = metareader->GetMetadataByName(L"/logscrdesc/GlobalColorTableFlag", &propValue);
         if (SUCCEEDED(hr))
         {
-            bool hasTable = (propValue.vt == VT_BOOL && propValue.boolVal);
+            const bool hasTable = (propValue.vt == VT_BOOL && propValue.boolVal);
             PropVariantClear(&propValue);
 
             if (hasTable)
@@ -181,7 +181,7 @@ HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<Scrat
                 {
                     if (propValue.vt == VT_UI1)
                     {
-                        uint8_t index = propValue.bVal;
+                        const uint8_t index = propValue.bVal;
 
                         if (index < actualColors)
                         {
@@ -387,7 +387,7 @@ HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<Scrat
 
         if (!iframe || transparentIndex == -1)
         {
-            Rect fullRect(0, 0, img->width, img->height);
+            const Rect fullRect(0, 0, img->width, img->height);
             hr = CopyRectangle(*img, fullRect, *composedImage, TEX_FILTER_DEFAULT, size_t(rct.left), size_t(rct.top));
             if (FAILED(hr))
                 return hr;

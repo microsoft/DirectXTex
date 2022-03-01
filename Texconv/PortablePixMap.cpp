@@ -159,7 +159,7 @@ HRESULT __cdecl LoadFromPortablePixMap(
     if (ppmData[0] != 'P' || (ppmData[1] != '3' && ppmData[1] != '6'))
         return E_FAIL;
 
-    bool ascii = ppmData[1] == '3';
+    const bool ascii = ppmData[1] == '3';
 
     enum
     {
@@ -343,7 +343,7 @@ HRESULT __cdecl SaveToPortablePixMap(
     }
 
     char header[256] = {};
-    int len = sprintf_s(header, "P6\n%zu %zu\n255\n", image.width, image.height);
+    const int len = sprintf_s(header, "P6\n%zu %zu\n255\n", image.width, image.height);
     if (len == -1)
         return E_UNEXPECTED;
 
@@ -498,14 +498,14 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
     if (sscanf_s(dataStr, "%f%s", &aspectRatio, junkStr, 256) != 1)
         return E_FAIL;
 
-    bool bigendian = (aspectRatio >= 0);
+    const bool bigendian = (aspectRatio >= 0);
 
     pData += len + 1;
     pfmSize -= len + 1;
     if (!pfmSize)
         return E_FAIL;
 
-    size_t scanline = width * (half16 ? sizeof(uint16_t) : sizeof(float)) * (monochrome ? 1 : 3);
+    const size_t scanline = width * (half16 ? sizeof(uint16_t) : sizeof(float)) * (monochrome ? 1 : 3);
     if (pfmSize < scanline * height)
         return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
 
@@ -636,7 +636,7 @@ HRESULT __cdecl SaveToPortablePixMapHDR(
     }
 
     char header[256] = {};
-    int len = sprintf_s(header, "P%c\n%zu %zu\n-1.000000\n",
+    const int len = sprintf_s(header, "P%c\n%zu %zu\n-1.000000\n",
         (image.format == DXGI_FORMAT_R32_FLOAT) ? 'f' : 'F',
         image.width, image.height);
 

@@ -151,7 +151,7 @@ namespace
         if (header->biSizeImage != image.GetPixelsSize())
             return E_UNEXPECTED;
 
-        size_t remaining = size - filehdr->bfOffBits;
+        const size_t remaining = size - filehdr->bfOffBits;
         if (!remaining)
             return E_FAIL;
 
