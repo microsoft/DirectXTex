@@ -1569,7 +1569,7 @@ HRESULT DirectX::SaveToWICFile(
     if (FAILED(hr))
     {
         stream.Reset();
-        DeleteFileW(szFile);
+        std::ignore = DeleteFileW(szFile);
         return hr;
     }
 
@@ -1611,7 +1611,7 @@ HRESULT DirectX::SaveToWICFile(
     if (FAILED(hr))
     {
         stream.Reset();
-        DeleteFileW(szFile);
+        std::ignore = DeleteFileW(szFile);
         return hr;
     }
 

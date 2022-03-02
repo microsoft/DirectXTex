@@ -65,7 +65,7 @@ Documentation is available on the [GitHub wiki](https://github.com/Microsoft/Dir
 
 ## Notices
 
-All content and source code for this package are subject to the terms of the [MIT License](http://opensource.org/licenses/MIT).
+All content and source code for this package are subject to the terms of the [MIT License](https://github.com/microsoft/DirectXTex/blob/main/LICENSE).
 
 For the latest version of DirectXTex, bug reports, etc. please visit the project site on [GitHub](https://github.com/microsoft/DirectXTex).
 
