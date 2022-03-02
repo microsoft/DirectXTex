@@ -819,6 +819,7 @@ namespace DirectX
         WIC_CODEC_GIF,              // Graphics Interchange Format  (.gif)
         WIC_CODEC_WMP,              // Windows Media Photo / HD Photo / JPEG XR (.hdp, .jxr, .wdp)
         WIC_CODEC_ICO,              // Windows Icon (.ico)
+        WIC_CODEC_HEIF,             // High Efficiency Image File (.heif, .heic)
     };
 
     REFGUID __cdecl GetWICCodec(_In_ WICCodecs codec) noexcept;
