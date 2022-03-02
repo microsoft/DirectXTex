@@ -709,9 +709,8 @@ namespace
             swprintf_s(desc, L": %ls", errorText);
 
             size_t len = wcslen(desc);
-            if (len >= 2)
+            if (len >= 1)
             {
-                desc[len - 2] = 0;
                 desc[len - 1] = 0;
             }
 
@@ -1465,11 +1464,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 #endif
                 else
                 {
-                    // This supports the built-in native codecs as well as installed WIC codecs.
-                    //
-                    // .HEIC, .HEIF : install https://aka.ms/heif
-                    // .WEBP        : install https://www.microsoft.com/p/webp-image-extensions/9pg2dk419drg
-
                     // WIC shares the same filter values for mode and dither
                     static_assert(static_cast<int>(WIC_FLAGS_DITHER) == static_cast<int>(TEX_FILTER_DITHER), "WIC_FLAGS_* & TEX_FILTER_* should match");
                     static_assert(static_cast<int>(WIC_FLAGS_DITHER_DIFFUSION) == static_cast<int>(TEX_FILTER_DITHER_DIFFUSION), "WIC_FLAGS_* & TEX_FILTER_* should match");
@@ -1482,6 +1476,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     if (FAILED(hr))
                     {
                         wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                        if (hr == 0xc00d5212 /* MF_E_TOPO_CODEC_NOT_FOUND */)
+                        {
+                            if (_wcsicmp(ext, L".heic") == 0 || _wcsicmp(ext, L".heif") == 0)
+                            {
+                                wprintf(L"INFO: This format requires installing the HEIF Image Extensions - https://aka.ms/heif\n");
+                            }
+                            else if (_wcsicmp(ext, L".webp") == 0)
+                            {
+                                wprintf(L"INFO: This format requires installing the WEBP Image Extensions - https://www.microsoft.com/p/webp-image-extensions/9pg2dk419drg\n");
+                            }
+                        }
                         return 1;
                     }
                 }
