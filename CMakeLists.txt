@@ -313,6 +313,10 @@ if(WIN32)
       target_compile_definitions(texdiag PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0601)
     endif()
 
+    if(WINDOWS_STORE)
+      target_compile_definitions(${PROJECT_NAME} PRIVATE WINAPI_FAMILY=WINAPI_FAMILY_APP)
+    endif()
+
     if(BUILD_DX12 OR WINDOWS_STORE)
         if(BUILD_DX12)
           message("INFO: Building with DirectX 12 Runtime support")

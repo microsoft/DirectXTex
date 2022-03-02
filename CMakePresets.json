@@ -28,6 +28,14 @@
       "hidden": true
     },
     {
+      "name": "ARM",
+      "architecture": {
+        "value": "arm",
+        "strategy": "external"
+      },
+      "hidden": true
+    },
+    {
       "name": "ARM64",
       "architecture": {
         "value": "arm64",
@@ -77,6 +85,15 @@
       },
       "hidden": true
     },
+    {
+      "name": "UWP",
+      "cacheVariables": {
+        "CMAKE_SYSTEM_NAME": "WindowsStore",
+        "CMAKE_SYSTEM_VERSION": "10.0",
+        "BUILD_DX12": true
+      },
+      "hidden": true
+    },
 
     { "name": "x64-Debug"    , "description": "MSVC for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "MSVC" ] },
     { "name": "x64-Release"  , "description": "MSVC for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "MSVC" ] },
@@ -84,6 +101,15 @@
     { "name": "x86-Release"  , "description": "MSVC for x86 (Release) with DX12", "inherits": [ "base", "x86", "Release", "MSVC" ] },
     { "name": "arm64-Debug"  , "description": "MSVC for ARM64 (Debug) with DX12", "inherits": [ "base", "ARM64", "Debug", "MSVC" ] },
     { "name": "arm64-Release", "description": "MSVC for ARM64 (Release) with DX12", "inherits": [ "base", "ARM64", "Release", "MSVC" ] },
+
+    { "name": "x64-Debug-UWP"    , "description": "MSVC for x64 (Debug) for UWP", "inherits": [ "base", "x64", "Debug", "MSVC", "UWP" ] },
+    { "name": "x64-Release-UWP"  , "description": "MSVC for x64 (Release) for UWP", "inherits": [ "base", "x64", "Release", "MSVC", "UWP" ] },
+    { "name": "x86-Debug-UWP"    , "description": "MSVC for x86 (Debug) for UWP", "inherits": [ "base", "x86", "Debug", "MSVC", "UWP" ] },
+    { "name": "x86-Release-UWP"  , "description": "MSVC for x86 (Release) for UWP", "inherits": [ "base", "x86", "Release", "MSVC", "UWP" ] },
+    { "name": "arm-Debug-UWP"    , "description": "MSVC for ARM (Debug) for UWP", "inherits": [ "base", "ARM", "Debug", "MSVC", "UWP" ] },
+    { "name": "arm-Release-UWP"  , "description": "MSVC for ARM (Release) for UWP", "inherits": [ "base", "ARM", "Release", "MSVC", "UWP" ] },
+    { "name": "arm64-Debug-UWP"  , "description": "MSVC for ARM64 (Debug) for UWP", "inherits": [ "base", "ARM64", "Debug", "MSVC", "UWP" ] },
+    { "name": "arm64-Release-UWP", "description": "MSVC for ARM64 (Release) for UWP", "inherits": [ "base", "ARM64", "Release", "MSVC", "UWP" ] },
 
     { "name": "x64-Debug-Win7"    , "description": "MSVC for x64 (Debug) for Windows 7", "inherits": [ "base", "x64", "Debug", "MSVC", "Win7" ] },
     { "name": "x64-Release-Win7"  , "description": "MSVC for x64 (Release) for Windows 7", "inherits": [ "base", "x64", "Release", "MSVC", "Win7" ] },
@@ -96,6 +122,13 @@
     { "name": "x86-Release-Clang"  , "description": "Clang/LLVM for x86 (Release) with DX12", "inherits": [ "base", "x86", "Release", "Clang" ], "environment": { "CXXFLAGS": "-m32" } },
     { "name": "arm64-Debug-Clang"  , "description": "Clang/LLVM for AArch64 (Debug) with DX12", "inherits": [ "base", "ARM64", "Debug", "Clang" ], "environment": { "CXXFLAGS": "--target=arm64-pc-windows-msvc" } },
     { "name": "arm64-Release-Clang", "description": "Clang/LLVM for AArch64 (Release) with DX12", "inherits": [ "base", "ARM64", "Release", "Clang" ], "environment": { "CXXFLAGS": "--target=arm64-pc-windows-msvc" } },
+
+    { "name": "x64-Debug-UWP-Clang"    , "description": "Clang/LLVM for x64 (Debug) for UWP", "inherits": [ "base", "x64", "Debug", "Clang", "UWP" ] },
+    { "name": "x64-Release-UWP-Clang"  , "description": "Clang/LLVM for x64 (Release) for UWP", "inherits": [ "base", "x64", "Release", "Clang", "UWP" ] },
+    { "name": "x86-Debug-UWP-Clang"    , "description": "Clang/LLVM for x86 (Debug) for UWP", "inherits": [ "base", "x86", "Debug", "Clang", "UWP" ], "environment": { "CXXFLAGS": "-m32" } },
+    { "name": "x86-Release-UWP-Clang"  , "description": "Clang/LLVM for x86 (Release) for UWP", "inherits": [ "base", "x86", "Release", "Clang", "UWP" ], "environment": { "CXXFLAGS": "-m32" } },
+    { "name": "arm64-Debug-UWP-Clang"  , "description": "Clang/LLVM for AArch64 (Debug) for UWP", "inherits": [ "base", "ARM64", "Debug", "Clang", "UWP" ], "environment": { "CXXFLAGS": "--target=arm64-pc-windows-msvc" } },
+    { "name": "arm64-Release-UWP-Clang", "description": "Clang/LLVM for AArch64 (Release) for UWP", "inherits": [ "base", "ARM64", "Release", "Clang", "UWP" ], "environment": { "CXXFLAGS": "--target=arm64-pc-windows-msvc" } },
 
     { "name": "x64-Debug-Win7-Clang"    , "description": "Clang/LLVM for x64 (Debug) for Windows 7", "inherits": [ "base", "x64", "Debug", "Clang", "Win7" ] },
     { "name": "x64-Release-Win7-Clang"  , "description": "Clang/LLVM for x64 (Release) for Windows 7", "inherits": [ "base", "x64", "Release", "Clang", "Win7" ] },
