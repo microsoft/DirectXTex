@@ -793,7 +793,7 @@ namespace
         default:
         {
             HRESULT hr = SaveToWICFile(img, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(fileType)), szOutputFile);
-            if ((hr == 0xc00d5212 /* MF_E_TOPO_CODEC_NOT_FOUND */) && (fileType == WIC_CODEC_HEIF))
+            if ((hr == static_cast<HRESULT>(0xc00d5212) /* MF_E_TOPO_CODEC_NOT_FOUND */) && (fileType == WIC_CODEC_HEIF))
             {
                 wprintf(L"\nINFO: This format requires installing the HEIF Image Extensions - https://aka.ms/heif\n");
             }
@@ -1483,7 +1483,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     if (FAILED(hr))
                     {
                         wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-                        if (hr == 0xc00d5212 /* MF_E_TOPO_CODEC_NOT_FOUND */)
+                        if (hr == static_cast<HRESULT>(0xc00d5212) /* MF_E_TOPO_CODEC_NOT_FOUND */)
                         {
                             if (_wcsicmp(ext, L".heic") == 0 || _wcsicmp(ext, L".heif") == 0)
                             {

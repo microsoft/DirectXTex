@@ -799,7 +799,7 @@ namespace
             static_assert(static_cast<int>(WIC_FLAGS_FILTER_FANT) == static_cast<int>(TEX_FILTER_FANT), "WIC_FLAGS_* & TEX_FILTER_* should match");
 
             HRESULT hr = LoadFromWICFile(fileName, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image);
-            if (hr == 0xc00d5212 /* MF_E_TOPO_CODEC_NOT_FOUND */)
+            if (hr == static_cast<HRESULT>(0xc00d5212) /* MF_E_TOPO_CODEC_NOT_FOUND */)
             {
                 if (_wcsicmp(ext, L".heic") == 0 || _wcsicmp(ext, L".heif") == 0)
                 {

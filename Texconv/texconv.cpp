@@ -2119,7 +2119,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 retVal = 1;
-                if (hr == 0xc00d5212 /* MF_E_TOPO_CODEC_NOT_FOUND */)
+                if (hr == static_cast<HRESULT>(0xc00d5212) /* MF_E_TOPO_CODEC_NOT_FOUND */)
                 {
                     if (_wcsicmp(ext, L".heic") == 0 || _wcsicmp(ext, L".heif") == 0)
                     {
@@ -3703,7 +3703,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 retVal = 1;
-                if ((hr == 0xc00d5212 /* MF_E_TOPO_CODEC_NOT_FOUND */) && (FileType == WIC_CODEC_HEIF))
+                if ((hr == static_cast<HRESULT>(0xc00d5212) /* MF_E_TOPO_CODEC_NOT_FOUND */) && (FileType == WIC_CODEC_HEIF))
                 {
                     wprintf(L"INFO: This format requires installing the HEIF Image Extensions - https://aka.ms/heif\n");
                 }
