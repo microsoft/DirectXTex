@@ -1195,7 +1195,11 @@ namespace
 
         // Find Min and Max points, as starting point
         HDRColorA X, Y;
+#if (__cplusplus >= 201703L)
+        if constexpr (ishdr)
+#else
         if (ishdr)
+#endif
         {
             X = HDRColorA{ FLT_MAX, FLT_MAX, FLT_MAX, 0.0f };
             Y = HDRColorA{ -FLT_MAX, -FLT_MAX, -FLT_MAX, 0.0f };
