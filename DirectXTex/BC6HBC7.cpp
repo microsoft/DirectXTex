@@ -1180,6 +1180,7 @@ namespace
 
 
     //-------------------------------------------------------------------------------------
+    template<bool ishdr>
     float OptimizeRGB(
         _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pPoints,
         _Out_ HDRColorA* pX,
@@ -1193,8 +1194,21 @@ namespace
         const float *pD = (3 == cSteps) ? pD3 : pD4;
 
         // Find Min and Max points, as starting point
-        HDRColorA X(1.0f, 1.0f, 1.0f, 0.0f);
-        HDRColorA Y(0.0f, 0.0f, 0.0f, 0.0f);
+        HDRColorA X, Y;
+#if (__cplusplus >= 201703L)
+        if constexpr (ishdr)
+#else
+        if (ishdr)
+#endif
+        {
+            X = HDRColorA{ FLT_MAX, FLT_MAX, FLT_MAX, 0.0f };
+            Y = HDRColorA{ -FLT_MAX, -FLT_MAX, -FLT_MAX, 0.0f };
+        }
+        else
+        {
+            X = HDRColorA{ 1.0f, 1.0f, 1.0f, 0.0f };
+            Y = HDRColorA{ 0.0f, 0.0f, 0.0f, 0.0f };
+        }
 
         for (size_t iPoint = 0; iPoint < cPixels; iPoint++)
         {
@@ -2492,7 +2506,7 @@ float D3DX_BC6H::RoughMSE(EncodeParams* pEP) const noexcept
         }
 
         HDRColorA epA, epB;
-        OptimizeRGB(pEP->aHDRPixels, &epA, &epB, 4, np, auPixIdx);
+        OptimizeRGB<true>(pEP->aHDRPixels, &epA, &epB, 4, np, auPixIdx);
         aEndPts[p].A.Set(epA, pEP->bSigned);
         aEndPts[p].B.Set(epB, pEP->bSigned);
         if (pEP->bSigned)
@@ -3464,7 +3478,7 @@ float D3DX_BC7::RoughMSE(EncodeParams* pEP, size_t uShape, size_t uIndexMode) no
             }
 
             HDRColorA epA, epB;
-            OptimizeRGB(pEP->aHDRPixels, &epA, &epB, 4, np, auPixIdx);
+            OptimizeRGB<false>(pEP->aHDRPixels, &epA, &epB, 4, np, auPixIdx);
             epA.Clamp(0.0f, 1.0f);
             epB.Clamp(0.0f, 1.0f);
             epA *= 255.0f;

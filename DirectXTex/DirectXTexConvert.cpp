@@ -3263,10 +3263,11 @@ void DirectX::Internal::ConvertScanline(
                         break;
                     }
 
-#ifdef _MSC_VER
+#if (__cplusplus >= 201703L)
+                    [[fallthrough]];
+#elif defined(_MSC_VER)
                     __fallthrough;
-#endif
-#ifdef __clang__
+#elif defined(__clang__)
                     [[clang::fallthrough]];
 #endif
 
@@ -3552,10 +3553,11 @@ void DirectX::Internal::ConvertScanline(
                     break;
                 }
 
-#ifdef _MSC_VER
+#if (__cplusplus >= 201703L)
+                [[fallthrough]];
+#elif defined(_MSC_VER)
                 __fallthrough;
-#endif
-#ifdef __clang__
+#elif defined(__clang__)
                 [[clang::fallthrough]];
 #endif
 
@@ -3650,10 +3652,11 @@ void DirectX::Internal::ConvertScanline(
                         break;
                     }
 
-#ifdef _MSC_VER
+#if (__cplusplus >= 201703L)
+                    [[fallthrough]];
+#elif defined(_MSC_VER)
                     __fallthrough;
-#endif
-#ifdef __clang__
+#elif defined(__clang__)
                     [[clang::fallthrough]];
 #endif
 
