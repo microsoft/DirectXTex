@@ -3265,10 +3265,10 @@ void DirectX::Internal::ConvertScanline(
 
 #if (__cplusplus >= 201703L)
                     [[fallthrough]];
-#elif defined(_MSC_VER)
-                    __fallthrough;
 #elif defined(__clang__)
                     [[clang::fallthrough]];
+#elif defined(_MSC_VER)
+                    __fallthrough;
 #endif
 
                 case TEX_FILTER_RGB_COPY_RED:
@@ -3555,10 +3555,10 @@ void DirectX::Internal::ConvertScanline(
 
 #if (__cplusplus >= 201703L)
                 [[fallthrough]];
-#elif defined(_MSC_VER)
-                __fallthrough;
 #elif defined(__clang__)
                 [[clang::fallthrough]];
+#elif defined(_MSC_VER)
+                __fallthrough;
 #endif
 
             case TEX_FILTER_RGB_COPY_RED:
@@ -3654,10 +3654,10 @@ void DirectX::Internal::ConvertScanline(
 
 #if (__cplusplus >= 201703L)
                     [[fallthrough]];
-#elif defined(_MSC_VER)
-                    __fallthrough;
 #elif defined(__clang__)
                     [[clang::fallthrough]];
+#elif defined(_MSC_VER)
+                    __fallthrough;
 #endif
 
                 case TEX_FILTER_RGB_COPY_RED:
