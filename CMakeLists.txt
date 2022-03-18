@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-cmake_minimum_required (VERSION 3.11)
+cmake_minimum_required (VERSION 3.13)
 
 set(DIRECTXTEX_VERSION 1.9.5)
 
@@ -324,6 +324,15 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
       endif()
     endif()
 
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.24)
+        target_compile_options(${PROJECT_NAME} PRIVATE /ZH:SHA_256)
+        if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
+          target_compile_options(texassemble PRIVATE /ZH:SHA_256)
+          target_compile_options(texconv PRIVATE /ZH:SHA_256)
+          target_compile_options(texdiag PRIVATE /ZH:SHA_256)
+        endif()
+    endif()
+
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.26)
         target_compile_options(${PROJECT_NAME} PRIVATE /Zc:preprocessor /wd5105)
         if(BUILD_XBOX_EXTS_XBOXONE)
@@ -333,6 +342,14 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
           target_compile_options(texassemble PRIVATE /Zc:preprocessor /wd5105)
           target_compile_options(texconv PRIVATE /Zc:preprocessor /wd5105)
           target_compile_options(texdiag PRIVATE /Zc:preprocessor /wd5105)
+        endif()
+    endif()
+
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.27)
+        if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
+          target_link_options(texassemble PRIVATE /CETCOMPAT)
+          target_link_options(texconv PRIVATE /CETCOMPAT)
+          target_link_options(texdiag PRIVATE /CETCOMPAT)
         endif()
     endif()
 
