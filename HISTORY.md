@@ -6,6 +6,15 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### March 24, 2022
+* Fixed end-point bounds issue with BC6H CPU compressor if none of the pixels are in 0-1 range
+* Fixed bug in alpha-to-coverage computation
+* Add support for installable WIC codecs for HEIF and WEBP (if present)
+* Update build switches for SDL recommendations
+* CMake project updates and UWP platform CMakePresets
+* Code cleaup for tools
+* Optional C++17 usage in a few places
+
 ### February 28, 2022
 * Updated D3DX12 internal copy with latest changes from GitHub
 * Code and project review including fixing clang v13 warnings
