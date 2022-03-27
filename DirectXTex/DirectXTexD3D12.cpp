@@ -144,7 +144,7 @@ namespace
         }
 
         numberOfResources = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
-                            ? 1u : desc.DepthOrArraySize;
+            ? 1u : desc.DepthOrArraySize;
         numberOfResources *= desc.MipLevels;
         numberOfResources *= numberOfPlanes;
 
@@ -304,11 +304,11 @@ namespace
         // Block until the copy is complete
         while (fence->GetCompletedValue() < 1)
         {
-#ifdef WIN32
+        #ifdef WIN32
             SwitchToThread();
-#else
+        #else
             std::this_thread::yield();
-#endif
+        #endif
         }
 
         return S_OK;
@@ -477,8 +477,8 @@ HRESULT DirectX::CreateTextureEx(
     desc.Height = static_cast<UINT>(metadata.height);
     desc.MipLevels = static_cast<UINT16>(metadata.mipLevels);
     desc.DepthOrArraySize = (metadata.dimension == TEX_DIMENSION_TEXTURE3D)
-                            ? static_cast<UINT16>(metadata.depth)
-                            : static_cast<UINT16>(metadata.arraySize);
+        ? static_cast<UINT16>(metadata.depth)
+        : static_cast<UINT16>(metadata.arraySize);
     desc.Format = format;
     desc.Flags = resFlags;
     desc.SampleDesc.Count = 1;
@@ -524,7 +524,7 @@ HRESULT DirectX::PrepareUpload(
     }
 
     size_t numberOfResources = (metadata.dimension == TEX_DIMENSION_TEXTURE3D)
-                               ? 1u : metadata.arraySize;
+        ? 1u : metadata.arraySize;
     numberOfResources *= metadata.mipLevels;
     numberOfResources *= numberOfPlanes;
 
@@ -691,7 +691,7 @@ HRESULT DirectX::CaptureTexture(
 
     switch (desc.Dimension)
     {
-        case D3D12_RESOURCE_DIMENSION_TEXTURE1D:
+    case D3D12_RESOURCE_DIMENSION_TEXTURE1D:
         {
             TexMetadata mdata;
             mdata.width = static_cast<size_t>(desc.Width);

@@ -106,7 +106,7 @@ namespace
         {
             if (memcmp(&GUID_WICPixelFormat96bppRGBFixedPoint, &pixelFormat, sizeof(WICPixelFormatGUID)) == 0)
             {
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+            #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
                 if (iswic2)
                 {
                     if (pConvert)
@@ -114,9 +114,9 @@ namespace
                     format = DXGI_FORMAT_R32G32B32_FLOAT;
                 }
                 else
-#else
+                #else
                 UNREFERENCED_PARAMETER(iswic2);
-#endif
+            #endif
                 {
                     if (pConvert)
                         memcpy_s(pConvert, sizeof(WICPixelFormatGUID), &GUID_WICPixelFormat128bppRGBAFloat, sizeof(GUID));
@@ -600,7 +600,7 @@ namespace
                         sRGB = (flags & WIC_FLAGS_DEFAULT_SRGB) != 0;
                     }
                 }
-#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+            #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
                 else if (memcmp(&containerFormat, &GUID_ContainerFormatJpeg, sizeof(GUID)) == 0)
                 {
                     if (SUCCEEDED(metareader->GetMetadataByName(L"/app1/ifd/exif/{ushort=40961}", &value)) && value.vt == VT_UI2)
@@ -623,7 +623,7 @@ namespace
                         sRGB = (flags & WIC_FLAGS_DEFAULT_SRGB) != 0;
                     }
                 }
-#else
+            #else
                 else if (SUCCEEDED(metareader->GetMetadataByName(L"System.Image.ColorSpace", &value)) && value.vt == VT_UI2)
                 {
                     sRGB = (value.uiVal == 1);
@@ -632,7 +632,7 @@ namespace
                 {
                     sRGB = (flags & WIC_FLAGS_DEFAULT_SRGB) != 0;
                 }
-#endif
+            #endif
 
                 std::ignore = PropVariantClear(&value);
 
@@ -913,7 +913,7 @@ namespace
                     std::ignore = metawriter->RemoveMetadataByName(L"/sRGB/RenderingIntent");
                 }
             }
-#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+        #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
             else if (memcmp(&containerFormat, &GUID_ContainerFormatJpeg, sizeof(GUID)) == 0)
             {
                 // Set Software name
@@ -940,7 +940,7 @@ namespace
                     std::ignore = metawriter->SetMetadataByName(L"/ifd/exif/{ushort=40961}", &value);
                 }
             }
-#else
+        #else
             else
             {
                 // Set Software name
@@ -954,7 +954,7 @@ namespace
                     std::ignore = metawriter->SetMetadataByName(L"System.Image.ColorSpace", &value);
                 }
             }
-#endif
+        #endif
         }
         else if (hr == WINCODEC_ERR_UNSUPPORTEDOPERATION)
         {

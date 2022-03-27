@@ -305,10 +305,10 @@ namespace
 
 
     HRESULT EstimateAlphaScaleForCoverage(
-            const Image& srcImage,
-            float alphaReference,
-            float targetCoverage,
-            float& alphaScale) noexcept
+        const Image& srcImage,
+        float alphaReference,
+        float targetCoverage,
+        float& alphaScale) noexcept
     {
         float minAlphaScale = 0.0f;
         float maxAlphaScale = 4.0f;
@@ -454,16 +454,16 @@ HRESULT DirectX::Internal::ResizeSeparateColorAndAlpha(
             }
             else
             {
-#if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+            #if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
                 if (iswic2)
                 {
                     colorBytesInPixel = colorBytesPerPixel = 12;
                     colorPixelFormat = GUID_WICPixelFormat96bppRGBFloat;
                 }
                 else
-#else
+                #else
                 UNREFERENCED_PARAMETER(iswic2);
-#endif
+            #endif
                 {
                     colorBytesInPixel = 12;
                     colorBytesPerPixel = 16;
@@ -593,7 +593,7 @@ HRESULT DirectX::Internal::ResizeSeparateColorAndAlpha(
                     }
                     else
                     {
-#pragma warning( suppress : 26014 6386 ) // No overflow possible here
+                    #pragma warning( suppress : 26014 6386 ) // No overflow possible here
                         memcpy_s(colorWithAlphaData + colorWithAlphaIndex, colorWithAlphaBytesPerPixel, colorData + colorIndex, colorBytesInPixel);
                     }
                 }
@@ -642,14 +642,14 @@ namespace
             return false;
         }
 
-#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+    #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
         if (format == DXGI_FORMAT_R16G16B16A16_FLOAT
             || format == DXGI_FORMAT_R16_FLOAT)
         {
             // Use non-WIC code paths as these conversions are not supported by Xbox version of WIC
             return false;
         }
-#endif
+    #endif
 
         static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MODE_MASK");
 
@@ -921,9 +921,9 @@ namespace
         // Resize base image to each target mip level
         for (size_t level = 1; level < levels; ++level)
         {
-#ifdef _DEBUG
+        #ifdef _DEBUG
             memset(row, 0xCD, sizeof(XMVECTOR)*width);
-#endif
+        #endif
 
             // 2D point filter
             const Image* src = mipChain.GetImage(level - 1, item, 0);
@@ -1129,10 +1129,10 @@ namespace
             const size_t nheight = (height > 1) ? (height >> 1) : 1;
             CreateLinearFilter(height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, lfY);
 
-#ifdef _DEBUG
+        #ifdef _DEBUG
             memset(row0, 0xCD, sizeof(XMVECTOR)*width);
             memset(row1, 0xDD, sizeof(XMVECTOR)*width);
-#endif
+        #endif
 
             size_t u0 = size_t(-1);
             size_t u1 = size_t(-1);
@@ -1190,6 +1190,10 @@ namespace
     }
 
     //--- 2D Cubic Filter ---
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wextra-semi-stmt"
+#endif
+
     HRESULT Generate2DMipsCubicFilter(size_t levels, TEX_FILTER_FLAGS filter, const ScratchImage& mipChain, size_t item) noexcept
     {
         using namespace DirectX::Filters;
@@ -1244,12 +1248,12 @@ namespace
             const size_t nheight = (height > 1) ? (height >> 1) : 1;
             CreateCubicFilter(height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, (filter & TEX_FILTER_MIRROR_V) != 0, cfY);
 
-#ifdef _DEBUG
+        #ifdef _DEBUG
             memset(row0, 0xCD, sizeof(XMVECTOR)*width);
             memset(row1, 0xDD, sizeof(XMVECTOR)*width);
             memset(row2, 0xED, sizeof(XMVECTOR)*width);
             memset(row3, 0xFD, sizeof(XMVECTOR)*width);
-#endif
+        #endif
 
             size_t u0 = size_t(-1);
             size_t u1 = size_t(-1);
@@ -1353,12 +1357,12 @@ namespace
 
                     XMVECTOR C0, C1, C2, C3;
 
-                    CUBIC_INTERPOLATE(C0, toX.x, row0[toX.u0], row0[toX.u1], row0[toX.u2], row0[toX.u3])
-                    CUBIC_INTERPOLATE(C1, toX.x, row1[toX.u0], row1[toX.u1], row1[toX.u2], row1[toX.u3])
-                    CUBIC_INTERPOLATE(C2, toX.x, row2[toX.u0], row2[toX.u1], row2[toX.u2], row2[toX.u3])
-                    CUBIC_INTERPOLATE(C3, toX.x, row3[toX.u0], row3[toX.u1], row3[toX.u2], row3[toX.u3])
+                    CUBIC_INTERPOLATE(C0, toX.x, row0[toX.u0], row0[toX.u1], row0[toX.u2], row0[toX.u3]);
+                    CUBIC_INTERPOLATE(C1, toX.x, row1[toX.u0], row1[toX.u1], row1[toX.u2], row1[toX.u3]);
+                    CUBIC_INTERPOLATE(C2, toX.x, row2[toX.u0], row2[toX.u1], row2[toX.u2], row2[toX.u3]);
+                    CUBIC_INTERPOLATE(C3, toX.x, row3[toX.u0], row3[toX.u1], row3[toX.u2], row3[toX.u3]);
 
-                    CUBIC_INTERPOLATE(target[x], toY.x, C0, C1, C2, C3)
+                    CUBIC_INTERPOLATE(target[x], toY.x, C0, C1, C2, C3);
                 }
 
                 if (!StoreScanlineLinear(pDest, dest->rowPitch, dest->format, target, nwidth, filter))
@@ -1433,9 +1437,9 @@ namespace
             if (FAILED(hr))
                 return hr;
 
-#ifdef _DEBUG
+        #ifdef _DEBUG
             memset(row, 0xCD, sizeof(XMVECTOR)*width);
-#endif
+        #endif
 
             auto xFromEnd = reinterpret_cast<const FilterFrom*>(reinterpret_cast<const uint8_t*>(tfX.get()) + tfX->sizeInBytes);
             auto yFromEnd = reinterpret_cast<const FilterFrom*>(reinterpret_cast<const uint8_t*>(tfY.get()) + tfY->sizeInBytes);
@@ -1550,18 +1554,18 @@ namespace
                         {
                         case DXGI_FORMAT_R10G10B10A2_UNORM:
                         case DXGI_FORMAT_R10G10B10A2_UINT:
-                        {
-                            // Need to slightly bias results for floating-point error accumulation which can
-                            // be visible with harshly quantized values
-                            static const XMVECTORF32 Bias = { { { 0.f, 0.f, 0.f, 0.1f } } };
-
-                            XMVECTOR* ptr = pAccSrc;
-                            for (size_t i = 0; i < dest->width; ++i, ++ptr)
                             {
-                                *ptr = XMVectorAdd(*ptr, Bias);
+                                // Need to slightly bias results for floating-point error accumulation which can
+                                // be visible with harshly quantized values
+                                static const XMVECTORF32 Bias = { { { 0.f, 0.f, 0.f, 0.1f } } };
+
+                                XMVECTOR* ptr = pAccSrc;
+                                for (size_t i = 0; i < dest->width; ++i, ++ptr)
+                                {
+                                    *ptr = XMVectorAdd(*ptr, Bias);
+                                }
                             }
-                        }
-                        break;
+                            break;
 
                         default:
                             break;
@@ -1673,9 +1677,9 @@ namespace
         // Resize base image to each target mip level
         for (size_t level = 1; level < levels; ++level)
         {
-#ifdef _DEBUG
+        #ifdef _DEBUG
             memset(row, 0xCD, sizeof(XMVECTOR)*width);
-#endif
+        #endif
 
             if (depth > 1)
             {
@@ -2012,12 +2016,12 @@ namespace
             const size_t nheight = (height > 1) ? (height >> 1) : 1;
             CreateLinearFilter(height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, lfY);
 
-#ifdef _DEBUG
+        #ifdef _DEBUG
             memset(urow0, 0xCD, sizeof(XMVECTOR)*width);
             memset(urow1, 0xDD, sizeof(XMVECTOR)*width);
             memset(vrow0, 0xED, sizeof(XMVECTOR)*width);
             memset(vrow1, 0xFD, sizeof(XMVECTOR)*width);
-#endif
+        #endif
 
             if (depth > 1)
             {
@@ -2216,7 +2220,7 @@ namespace
             const size_t nheight = (height > 1) ? (height >> 1) : 1;
             CreateCubicFilter(height, nheight, (filter & TEX_FILTER_WRAP_V) != 0, (filter & TEX_FILTER_MIRROR_V) != 0, cfY);
 
-#ifdef _DEBUG
+        #ifdef _DEBUG
             for (size_t j = 0; j < 4; ++j)
             {
                 memset(urow[j], 0xCD, sizeof(XMVECTOR)*width);
@@ -2224,7 +2228,7 @@ namespace
                 memset(srow[j], 0xED, sizeof(XMVECTOR)*width);
                 memset(trow[j], 0xFD, sizeof(XMVECTOR)*width);
             }
-#endif
+        #endif
 
             if (depth > 1)
             {
@@ -2384,15 +2388,15 @@ namespace
                             for (size_t j = 0; j < 4; ++j)
                             {
                                 XMVECTOR C0, C1, C2, C3;
-                                CUBIC_INTERPOLATE(C0, toX.x, urow[j][toX.u0], urow[j][toX.u1], urow[j][toX.u2], urow[j][toX.u3])
-                                CUBIC_INTERPOLATE(C1, toX.x, vrow[j][toX.u0], vrow[j][toX.u1], vrow[j][toX.u2], vrow[j][toX.u3])
-                                CUBIC_INTERPOLATE(C2, toX.x, srow[j][toX.u0], srow[j][toX.u1], srow[j][toX.u2], srow[j][toX.u3])
-                                CUBIC_INTERPOLATE(C3, toX.x, trow[j][toX.u0], trow[j][toX.u1], trow[j][toX.u2], trow[j][toX.u3])
+                                CUBIC_INTERPOLATE(C0, toX.x, urow[j][toX.u0], urow[j][toX.u1], urow[j][toX.u2], urow[j][toX.u3]);
+                                CUBIC_INTERPOLATE(C1, toX.x, vrow[j][toX.u0], vrow[j][toX.u1], vrow[j][toX.u2], vrow[j][toX.u3]);
+                                CUBIC_INTERPOLATE(C2, toX.x, srow[j][toX.u0], srow[j][toX.u1], srow[j][toX.u2], srow[j][toX.u3]);
+                                CUBIC_INTERPOLATE(C3, toX.x, trow[j][toX.u0], trow[j][toX.u1], trow[j][toX.u2], trow[j][toX.u3]);
 
-                                CUBIC_INTERPOLATE(D[j], toY.x, C0, C1, C2, C3)
+                                CUBIC_INTERPOLATE(D[j], toY.x, C0, C1, C2, C3);
                             }
 
-                            CUBIC_INTERPOLATE(target[x], toZ.x, D[0], D[1], D[2], D[3])
+                            CUBIC_INTERPOLATE(target[x], toZ.x, D[0], D[1], D[2], D[3]);
                         }
 
                         if (!StoreScanlineLinear(pDest, dest->rowPitch, dest->format, target, nwidth, filter))
@@ -2516,12 +2520,12 @@ namespace
                         auto const& toX = cfX[x];
 
                         XMVECTOR C0, C1, C2, C3;
-                        CUBIC_INTERPOLATE(C0, toX.x, urow[0][toX.u0], urow[0][toX.u1], urow[0][toX.u2], urow[0][toX.u3])
-                        CUBIC_INTERPOLATE(C1, toX.x, vrow[0][toX.u0], vrow[0][toX.u1], vrow[0][toX.u2], vrow[0][toX.u3])
-                        CUBIC_INTERPOLATE(C2, toX.x, srow[0][toX.u0], srow[0][toX.u1], srow[0][toX.u2], srow[0][toX.u3])
-                        CUBIC_INTERPOLATE(C3, toX.x, trow[0][toX.u0], trow[0][toX.u1], trow[0][toX.u2], trow[0][toX.u3])
+                        CUBIC_INTERPOLATE(C0, toX.x, urow[0][toX.u0], urow[0][toX.u1], urow[0][toX.u2], urow[0][toX.u3]);
+                        CUBIC_INTERPOLATE(C1, toX.x, vrow[0][toX.u0], vrow[0][toX.u1], vrow[0][toX.u2], vrow[0][toX.u3]);
+                        CUBIC_INTERPOLATE(C2, toX.x, srow[0][toX.u0], srow[0][toX.u1], srow[0][toX.u2], srow[0][toX.u3]);
+                        CUBIC_INTERPOLATE(C3, toX.x, trow[0][toX.u0], trow[0][toX.u1], trow[0][toX.u2], trow[0][toX.u3]);
 
-                        CUBIC_INTERPOLATE(target[x], toY.x, C0, C1, C2, C3)
+                        CUBIC_INTERPOLATE(target[x], toY.x, C0, C1, C2, C3);
                     }
 
                     if (!StoreScanlineLinear(pDest, dest->rowPitch, dest->format, target, nwidth, filter))
@@ -2592,9 +2596,9 @@ namespace
             if (FAILED(hr))
                 return hr;
 
-#ifdef _DEBUG
+        #ifdef _DEBUG
             memset(row, 0xCD, sizeof(XMVECTOR)*width);
-#endif
+        #endif
 
             auto xFromEnd = reinterpret_cast<const FilterFrom*>(reinterpret_cast<const uint8_t*>(tfX.get()) + tfX->sizeInBytes);
             auto yFromEnd = reinterpret_cast<const FilterFrom*>(reinterpret_cast<const uint8_t*>(tfY.get()) + tfY->sizeInBytes);
@@ -2739,18 +2743,18 @@ namespace
                             {
                             case DXGI_FORMAT_R10G10B10A2_UNORM:
                             case DXGI_FORMAT_R10G10B10A2_UINT:
-                            {
-                                // Need to slightly bias results for floating-point error accumulation which can
-                                // be visible with harshly quantized values
-                                static const XMVECTORF32 Bias = { { { 0.f, 0.f, 0.f, 0.1f } } };
-
-                                XMVECTOR* ptr = pAccSrc;
-                                for (size_t i = 0; i < dest->width; ++i, ++ptr)
                                 {
-                                    *ptr = XMVectorAdd(*ptr, Bias);
+                                    // Need to slightly bias results for floating-point error accumulation which can
+                                    // be visible with harshly quantized values
+                                    static const XMVECTORF32 Bias = { { { 0.f, 0.f, 0.f, 0.1f } } };
+
+                                    XMVECTOR* ptr = pAccSrc;
+                                    for (size_t i = 0; i < dest->width; ++i, ++ptr)
+                                    {
+                                        *ptr = XMVectorAdd(*ptr, Bias);
+                                    }
                                 }
-                            }
-                            break;
+                                break;
 
                             default:
                                 break;
@@ -2854,56 +2858,56 @@ HRESULT DirectX::GenerateMipMaps(
         case TEX_FILTER_FANT: // Equivalent to Box filter
         case TEX_FILTER_LINEAR:
         case TEX_FILTER_CUBIC:
-        {
-            static_assert(TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flag alias mismatch");
-
-            if (wicpf)
             {
-                // Case 1: Base image format is supported by Windows Imaging Component
-                hr = (baseImage.height > 1 || !allow1D)
-                    ? mipChain.Initialize2D(baseImage.format, baseImage.width, baseImage.height, 1, levels)
-                    : mipChain.Initialize1D(baseImage.format, baseImage.width, 1, levels);
-                if (FAILED(hr))
-                    return hr;
+                static_assert(TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flag alias mismatch");
 
-                return GenerateMipMapsUsingWIC(baseImage, filter, levels, pfGUID, mipChain, 0);
+                if (wicpf)
+                {
+                    // Case 1: Base image format is supported by Windows Imaging Component
+                    hr = (baseImage.height > 1 || !allow1D)
+                        ? mipChain.Initialize2D(baseImage.format, baseImage.width, baseImage.height, 1, levels)
+                        : mipChain.Initialize1D(baseImage.format, baseImage.width, 1, levels);
+                    if (FAILED(hr))
+                        return hr;
+
+                    return GenerateMipMapsUsingWIC(baseImage, filter, levels, pfGUID, mipChain, 0);
+                }
+                else
+                {
+                    // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
+                    assert(baseImage.format != DXGI_FORMAT_R32G32B32A32_FLOAT);
+                    ScratchImage temp;
+                    hr = ConvertToR32G32B32A32(baseImage, temp);
+                    if (FAILED(hr))
+                        return hr;
+
+                    const Image *timg = temp.GetImage(0, 0, 0);
+                    if (!timg)
+                        return E_POINTER;
+
+                    ScratchImage tMipChain;
+                    hr = (baseImage.height > 1 || !allow1D)
+                        ? tMipChain.Initialize2D(DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, baseImage.height, 1, levels)
+                        : tMipChain.Initialize1D(DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, 1, levels);
+                    if (FAILED(hr))
+                        return hr;
+
+                    hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, 0);
+                    if (FAILED(hr))
+                        return hr;
+
+                    temp.Release();
+
+                    return ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), baseImage.format, mipChain);
+                }
             }
-            else
-            {
-                // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
-                assert(baseImage.format != DXGI_FORMAT_R32G32B32A32_FLOAT);
-                ScratchImage temp;
-                hr = ConvertToR32G32B32A32(baseImage, temp);
-                if (FAILED(hr))
-                    return hr;
-
-                const Image *timg = temp.GetImage(0, 0, 0);
-                if (!timg)
-                    return E_POINTER;
-
-                ScratchImage tMipChain;
-                hr = (baseImage.height > 1 || !allow1D)
-                    ? tMipChain.Initialize2D(DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, baseImage.height, 1, levels)
-                    : tMipChain.Initialize1D(DXGI_FORMAT_R32G32B32A32_FLOAT, baseImage.width, 1, levels);
-                if (FAILED(hr))
-                    return hr;
-
-                hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, 0);
-                if (FAILED(hr))
-                    return hr;
-
-                temp.Release();
-
-                return ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), baseImage.format, mipChain);
-            }
-        }
 
         default:
             return HRESULT_E_NOT_SUPPORTED;
         }
     }
     else
-#endif // WIN32
+    #endif // WIN32
     {
         //--- Use custom filters to generate mipmaps ----------------------------------
         TexMetadata mdata = {};
@@ -3069,69 +3073,69 @@ HRESULT DirectX::GenerateMipMaps(
         case TEX_FILTER_FANT: // Equivalent to Box filter
         case TEX_FILTER_LINEAR:
         case TEX_FILTER_CUBIC:
-        {
-            static_assert(TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flag alias mismatch");
-
-            if (wicpf)
             {
-                // Case 1: Base image format is supported by Windows Imaging Component
-                TexMetadata mdata2 = metadata;
-                mdata2.mipLevels = levels;
-                hr = mipChain.Initialize(mdata2);
-                if (FAILED(hr))
-                    return hr;
+                static_assert(TEX_FILTER_FANT == TEX_FILTER_BOX, "TEX_FILTER_ flag alias mismatch");
 
-                for (size_t item = 0; item < metadata.arraySize; ++item)
+                if (wicpf)
                 {
-                    hr = GenerateMipMapsUsingWIC(baseImages[item], filter, levels, pfGUID, mipChain, item);
+                    // Case 1: Base image format is supported by Windows Imaging Component
+                    TexMetadata mdata2 = metadata;
+                    mdata2.mipLevels = levels;
+                    hr = mipChain.Initialize(mdata2);
                     if (FAILED(hr))
+                        return hr;
+
+                    for (size_t item = 0; item < metadata.arraySize; ++item)
                     {
-                        mipChain.Release();
-                        return hr;
+                        hr = GenerateMipMapsUsingWIC(baseImages[item], filter, levels, pfGUID, mipChain, item);
+                        if (FAILED(hr))
+                        {
+                            mipChain.Release();
+                            return hr;
+                        }
                     }
+
+                    return S_OK;
                 }
-
-                return S_OK;
-            }
-            else
-            {
-                // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
-                assert(metadata.format != DXGI_FORMAT_R32G32B32A32_FLOAT);
-
-                TexMetadata mdata2 = metadata;
-                mdata2.mipLevels = levels;
-                mdata2.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-                ScratchImage tMipChain;
-                hr = tMipChain.Initialize(mdata2);
-                if (FAILED(hr))
-                    return hr;
-
-                for (size_t item = 0; item < metadata.arraySize; ++item)
+                else
                 {
-                    ScratchImage temp;
-                    hr = ConvertToR32G32B32A32(baseImages[item], temp);
+                    // Case 2: Base image format is not supported by WIC, so we have to convert, generate, and convert back
+                    assert(metadata.format != DXGI_FORMAT_R32G32B32A32_FLOAT);
+
+                    TexMetadata mdata2 = metadata;
+                    mdata2.mipLevels = levels;
+                    mdata2.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+                    ScratchImage tMipChain;
+                    hr = tMipChain.Initialize(mdata2);
                     if (FAILED(hr))
                         return hr;
 
-                    const Image *timg = temp.GetImage(0, 0, 0);
-                    if (!timg)
-                        return E_POINTER;
+                    for (size_t item = 0; item < metadata.arraySize; ++item)
+                    {
+                        ScratchImage temp;
+                        hr = ConvertToR32G32B32A32(baseImages[item], temp);
+                        if (FAILED(hr))
+                            return hr;
 
-                    hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, item);
-                    if (FAILED(hr))
-                        return hr;
+                        const Image *timg = temp.GetImage(0, 0, 0);
+                        if (!timg)
+                            return E_POINTER;
+
+                        hr = GenerateMipMapsUsingWIC(*timg, filter, levels, GUID_WICPixelFormat128bppRGBAFloat, tMipChain, item);
+                        if (FAILED(hr))
+                            return hr;
+                    }
+
+                    return ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), metadata.format, mipChain);
                 }
-
-                return ConvertFromR32G32B32A32(tMipChain.GetImages(), tMipChain.GetImageCount(), tMipChain.GetMetadata(), metadata.format, mipChain);
             }
-        }
 
         default:
             return HRESULT_E_NOT_SUPPORTED;
         }
     }
     else
-#endif // WIN32
+    #endif // WIN32
     {
         //--- Use custom filters to generate mipmaps ----------------------------------
         TexMetadata mdata2 = metadata;

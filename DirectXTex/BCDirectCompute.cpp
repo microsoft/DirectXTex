@@ -20,13 +20,13 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    #include "BC7Encode_EncodeBlockCS.inc"
-    #include "BC7Encode_TryMode02CS.inc"
-    #include "BC7Encode_TryMode137CS.inc"
-    #include "BC7Encode_TryMode456CS.inc"
-    #include "BC6HEncode_EncodeBlockCS.inc"
-    #include "BC6HEncode_TryModeG10CS.inc"
-    #include "BC6HEncode_TryModeLE10CS.inc"
+#include "BC7Encode_EncodeBlockCS.inc"
+#include "BC7Encode_TryMode02CS.inc"
+#include "BC7Encode_TryMode137CS.inc"
+#include "BC7Encode_TryMode456CS.inc"
+#include "BC6HEncode_EncodeBlockCS.inc"
+#include "BC6HEncode_TryModeG10CS.inc"
+#include "BC6HEncode_TryModeLE10CS.inc"
 
     struct BufferBC6HBC7
     {
