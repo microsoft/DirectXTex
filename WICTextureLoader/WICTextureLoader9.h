@@ -35,10 +35,10 @@ namespace DirectX
 #define WIC_LOADER_FLAGS_DEFINED
     enum WIC_LOADER_FLAGS : uint32_t
     {
-        WIC_LOADER_DEFAULT      = 0,
-        WIC_LOADER_MIP_AUTOGEN  = 0x8,
-        WIC_LOADER_FIT_POW2     = 0x20,
-        WIC_LOADER_MAKE_SQUARE  = 0x40,
+        WIC_LOADER_DEFAULT = 0,
+        WIC_LOADER_MIP_AUTOGEN = 0x8,
+        WIC_LOADER_FIT_POW2 = 0x20,
+        WIC_LOADER_MAKE_SQUARE = 0x40,
         WIC_LOADER_FORCE_RGBA32 = 0x80,
     };
 
