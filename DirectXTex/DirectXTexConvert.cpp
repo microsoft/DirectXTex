@@ -4775,6 +4775,10 @@ namespace
             }\
         }
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wextra-semi-stmt"
+#endif
+
     HRESULT ConvertToSinglePlane_(_In_ const Image& srcImage, _In_ const Image& destImage) noexcept
     {
         assert(srcImage.width == destImage.width);
@@ -4788,24 +4792,18 @@ namespace
         switch (srcImage.format)
         {
         case DXGI_FORMAT_NV12:
-            {
-                assert(destImage.format == DXGI_FORMAT_YUY2);
-                CONVERT_420_TO_422(uint8_t, XMUBYTEN4)
-            }
+            assert(destImage.format == DXGI_FORMAT_YUY2);
+            CONVERT_420_TO_422(uint8_t, XMUBYTEN4);
             return S_OK;
 
         case DXGI_FORMAT_P010:
-            {
-                assert(destImage.format == DXGI_FORMAT_Y210);
-                CONVERT_420_TO_422(uint16_t, XMUSHORTN4)
-            }
+            assert(destImage.format == DXGI_FORMAT_Y210);
+            CONVERT_420_TO_422(uint16_t, XMUSHORTN4);
             return S_OK;
 
         case DXGI_FORMAT_P016:
-            {
-                assert(destImage.format == DXGI_FORMAT_Y216);
-                CONVERT_420_TO_422(uint16_t, XMUSHORTN4)
-            }
+            assert(destImage.format == DXGI_FORMAT_Y216);
+            CONVERT_420_TO_422(uint16_t, XMUSHORTN4);
             return S_OK;
 
         case DXGI_FORMAT_NV11:
