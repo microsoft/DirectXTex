@@ -312,7 +312,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 
 if(WIN32)
-    foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+    foreach(t IN LISTS TOOL_EXES)
       target_compile_definitions(${t} PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0601)
     endforeach()
 
