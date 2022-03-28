@@ -146,7 +146,7 @@ static const uint aWeight[3][16] = { {0,  4,  9, 13, 17, 21, 26, 30, 34, 38, 43,
                                     {0,  9, 18, 27, 37, 46, 55, 64,  0,  0,  0,  0,  0,  0,  0,  0},
                                     {0, 21, 43, 64,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0} };
 
-                                //4 bit index: 0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64
+//4 bit index: 0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64
 static const uint aStep[3][64] = { { 0, 0, 0, 1, 1, 1, 1, 2,
                                     2, 2, 2, 2, 3, 3, 3, 3,
                                     4, 4, 4, 4, 5, 5, 5, 5,
@@ -155,24 +155,24 @@ static const uint aStep[3][64] = { { 0, 0, 0, 1, 1, 1, 1, 2,
                                     9,10,10,10,10,10,11,11,
                                    11,11,12,12,12,12,13,13,
                                    13,13,14,14,14,14,15,15 },
-                                //3 bit index: 0, 9, 18, 27, 37, 46, 55, 64
-                                    { 0,0,0,0,0,1,1,1,
-                                    1,1,1,1,1,1,2,2,
-                                    2,2,2,2,2,2,2,3,
-                                    3,3,3,3,3,3,3,3,
-                                    3,4,4,4,4,4,4,4,
-                                    4,4,5,5,5,5,5,5,
-                                    5,5,5,6,6,6,6,6,
-                                    6,6,6,6,7,7,7,7 },
-                                //2 bit index: 0, 21, 43, 64
-                                    { 0,0,0,0,0,0,0,0,
-                                    0,0,0,1,1,1,1,1,
-                                    1,1,1,1,1,1,1,1,
-                                    1,1,1,1,1,1,1,1,
-                                    1,2,2,2,2,2,2,2,
-                                    2,2,2,2,2,2,2,2,
-                                    2,2,2,2,2,2,3,3,
-                                    3,3,3,3,3,3,3,3 } };
+    //3 bit index: 0, 9, 18, 27, 37, 46, 55, 64
+        { 0,0,0,0,0,1,1,1,
+        1,1,1,1,1,1,2,2,
+        2,2,2,2,2,2,2,3,
+        3,3,3,3,3,3,3,3,
+        3,4,4,4,4,4,4,4,
+        4,4,5,5,5,5,5,5,
+        5,5,5,6,6,6,6,6,
+        6,6,6,6,7,7,7,7 },
+    //2 bit index: 0, 21, 43, 64
+        { 0,0,0,0,0,0,0,0,
+        0,0,0,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,
+        1,2,2,2,2,2,2,2,
+        2,2,2,2,2,2,2,2,
+        2,2,2,2,2,2,3,3,
+        3,3,3,3,3,3,3,3 } };
 
 cbuffer cbCS : register(b0)
 {
@@ -361,7 +361,7 @@ void TryMode456CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID) // mode 4
     }
     else
     {
-         //2 represents 2bit index precision
+        //2 represents 2bit index precision
         indexPrec = uint2(2, 2);
     }
 
@@ -468,7 +468,7 @@ void TryMode456CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID) // mode 4
         }
 
         error = 0;
-        for (uint i = 0; i < 16; i ++)
+        for (uint i = 0; i < 16; i++)
         {
             pixel = shared_temp[threadBase + i].pixel;
             if (1 == rotation)
@@ -539,7 +539,7 @@ void TryMode456CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID) // mode 4
         }
 
         error = 0;
-        for (uint i = 0; i < 16; i ++)
+        for (uint i = 0; i < 16; i++)
         {
             pixel = shared_temp[threadBase + i].pixel;
 
@@ -658,7 +658,7 @@ void TryMode137CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID) // mode 1
         endPoint[1][0] = MAX_UINT;
         endPoint[1][1] = MIN_UINT;
         uint bits = candidateSectionBit[partition];
-        for (uint i = 0; i < 16; i ++)
+        for (uint i = 0; i < 16; i++)
         {
             uint4 pixel = shared_temp[threadBase + i].pixel;
             if (((bits >> i) & 0x01) == 1)
@@ -690,12 +690,12 @@ void TryMode137CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID) // mode 1
 
         uint final_p[2] = { 0, 0 };
         uint error[2] = { MAX_UINT, MAX_UINT };
-        for (uint p = 0; p < max_p; p ++)
+        for (uint p = 0; p < max_p; p++)
         {
             endPoint[0] = endPointBackup[0];
             endPoint[1] = endPointBackup[1];
 
-            for (i = 0; i < 2; i ++) // loop through 2 subsets
+            for (i = 0; i < 2; i++) // loop through 2 subsets
             {
                 if (g_mode_id == 1)
                 {
@@ -749,7 +749,7 @@ void TryMode137CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID) // mode 1
             }
 
             uint p_error[2] = { 0, 0 };
-            for (i = 0; i < 16; i ++)
+            for (i = 0; i < 16; i++)
             {
                 uint subset_index = (bits >> i) & 0x01;
 
@@ -939,7 +939,7 @@ void TryMode02CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID) // mode 0 
         endPoint[2][0] = MAX_UINT;
         endPoint[2][1] = MIN_UINT;
         uint bits2 = candidateSectionBit2[partition - 64];
-        for (uint i = 0; i < 16; i ++)
+        for (uint i = 0; i < 16; i++)
         {
             uint4 pixel = shared_temp[threadBase + i].pixel;
             uint subset_index = (bits2 >> (i * 2)) & 0x03;
@@ -976,13 +976,13 @@ void TryMode02CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID) // mode 0 
 
         uint final_p[3] = { 0, 0, 0 };
         uint error[3] = { MAX_UINT, MAX_UINT, MAX_UINT };
-        for (uint p = 0; p < max_p; p ++)
+        for (uint p = 0; p < max_p; p++)
         {
             endPoint[0] = endPointBackup[0];
             endPoint[1] = endPointBackup[1];
             endPoint[2] = endPointBackup[2];
 
-            for (i = 0; i < 3; i ++)
+            for (i = 0; i < 3; i++)
             {
                 if (0 == g_mode_id)
                 {
@@ -1008,7 +1008,7 @@ void TryMode02CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID) // mode 0 
 
             // TODO: again, this shouldn't be necessary here in error calculation
             uint ci[3] = { 0, candidateFixUpIndex1D[partition].x, candidateFixUpIndex1D[partition].y };
-            for (i = 0; i < 3; i ++)
+            for (i = 0; i < 3; i++)
             {
                 int dotProduct = dot(span[i], shared_temp[threadBase + ci[i]].pixel - endPoint[i][0]);
                 if (span_norm_sqr[i] > 0 && dotProduct > 0 && uint(dotProduct * 63.49999) > uint(32 * span_norm_sqr[i]))
@@ -1019,7 +1019,7 @@ void TryMode02CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID) // mode 0 
             }
 
             uint p_error[3] = { 0, 0, 0 };
-            for (i = 0; i < 16; i ++)
+            for (i = 0; i < 16; i++)
             {
                 uint subset_index = (bits2 >> (i * 2)) & 0x03;
                 if (subset_index == 2)
@@ -1216,7 +1216,7 @@ void EncodeBlockCS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
     ep[1] = MIN_UINT;
     uint2x4 ep_quantized;
     [unroll]
-    for (int ii = 2; ii >= 0; -- ii)
+    for (int ii = 2; ii >= 0; --ii)
     {
         if (threadInBlock < 16)
         {
@@ -1280,42 +1280,42 @@ void EncodeBlockCS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
             shared_temp[GI].endPoint_low = ep[0];
             shared_temp[GI].endPoint_high = ep[1];
         }
-    #ifdef REF_DEVICE
+#ifdef REF_DEVICE
         GroupMemoryBarrierWithGroupSync();
-    #endif
+#endif
 
         if (threadInBlock < 8)
         {
             shared_temp[GI].endPoint_low = min(shared_temp[GI].endPoint_low, shared_temp[GI + 8].endPoint_low);
             shared_temp[GI].endPoint_high = max(shared_temp[GI].endPoint_high, shared_temp[GI + 8].endPoint_high);
         }
-    #ifdef REF_DEVICE
+#ifdef REF_DEVICE
         GroupMemoryBarrierWithGroupSync();
-    #endif
+#endif
         if (threadInBlock < 4)
         {
             shared_temp[GI].endPoint_low = min(shared_temp[GI].endPoint_low, shared_temp[GI + 4].endPoint_low);
             shared_temp[GI].endPoint_high = max(shared_temp[GI].endPoint_high, shared_temp[GI + 4].endPoint_high);
         }
-    #ifdef REF_DEVICE
+#ifdef REF_DEVICE
         GroupMemoryBarrierWithGroupSync();
-    #endif
+#endif
         if (threadInBlock < 2)
         {
             shared_temp[GI].endPoint_low = min(shared_temp[GI].endPoint_low, shared_temp[GI + 2].endPoint_low);
             shared_temp[GI].endPoint_high = max(shared_temp[GI].endPoint_high, shared_temp[GI + 2].endPoint_high);
         }
-    #ifdef REF_DEVICE
+#ifdef REF_DEVICE
         GroupMemoryBarrierWithGroupSync();
-    #endif
+#endif
         if (threadInBlock < 1)
         {
             shared_temp[GI].endPoint_low = min(shared_temp[GI].endPoint_low, shared_temp[GI + 1].endPoint_low);
             shared_temp[GI].endPoint_high = max(shared_temp[GI].endPoint_high, shared_temp[GI + 1].endPoint_high);
         }
-    #ifdef REF_DEVICE
+#ifdef REF_DEVICE
         GroupMemoryBarrierWithGroupSync();
-    #endif
+#endif
 
         if (ii == (int)threadInBlock)
         {
@@ -1597,7 +1597,7 @@ uint4 unquantize(uint4 color, uint uPrec)
 uint2x4 compress_endpoints0(inout uint2x4 endPoint, uint2 P)
 {
     uint2x4 quantized;
-    [unroll] for (uint j = 0; j < 2; j ++)
+    [unroll] for (uint j = 0; j < 2; j++)
     {
         quantized[j].rgb = quantize(endPoint[j].rgbb, 5).rgb & 0xFFFFFFFE;
         quantized[j].rgb |= P[j];
@@ -1613,7 +1613,7 @@ uint2x4 compress_endpoints0(inout uint2x4 endPoint, uint2 P)
 uint2x4 compress_endpoints1(inout uint2x4 endPoint, uint2 P)
 {
     uint2x4 quantized;
-    [unroll] for (uint j = 0; j < 2; j ++)
+    [unroll] for (uint j = 0; j < 2; j++)
     {
         quantized[j].rgb = quantize(endPoint[j].rgbb, 7).rgb & 0xFFFFFFFE;
         quantized[j].rgb |= P[j];
@@ -1629,7 +1629,7 @@ uint2x4 compress_endpoints1(inout uint2x4 endPoint, uint2 P)
 uint2x4 compress_endpoints2(inout uint2x4 endPoint)
 {
     uint2x4 quantized;
-    [unroll] for (uint j = 0; j < 2; j ++)
+    [unroll] for (uint j = 0; j < 2; j++)
     {
         quantized[j].rgb = quantize(endPoint[j].rgbb, 5).rgb;
         quantized[j].a = 0xFF;
@@ -1644,7 +1644,7 @@ uint2x4 compress_endpoints2(inout uint2x4 endPoint)
 uint2x4 compress_endpoints3(inout uint2x4 endPoint, uint2 P)
 {
     uint2x4 quantized;
-    for (uint j = 0; j < 2; j ++)
+    for (uint j = 0; j < 2; j++)
     {
         quantized[j].rgb = endPoint[j].rgb & 0xFFFFFFFE;
         quantized[j].rgb |= P[j];
@@ -1658,7 +1658,7 @@ uint2x4 compress_endpoints3(inout uint2x4 endPoint, uint2 P)
 uint2x4 compress_endpoints4(inout uint2x4 endPoint)
 {
     uint2x4 quantized;
-    [unroll] for (uint j = 0; j < 2; j ++)
+    [unroll] for (uint j = 0; j < 2; j++)
     {
         quantized[j].rgb = quantize(endPoint[j].rgbb, 5).rgb;
         quantized[j].a = quantize(endPoint[j].a, 6).r;
@@ -1674,7 +1674,7 @@ uint2x4 compress_endpoints4(inout uint2x4 endPoint)
 uint2x4 compress_endpoints5(inout uint2x4 endPoint)
 {
     uint2x4 quantized;
-    [unroll] for (uint j = 0; j < 2; j ++)
+    [unroll] for (uint j = 0; j < 2; j++)
     {
         quantized[j].rgb = quantize(endPoint[j].rgbb, 7).rgb;
         quantized[j].a = endPoint[j].a;
@@ -1689,7 +1689,7 @@ uint2x4 compress_endpoints5(inout uint2x4 endPoint)
 uint2x4 compress_endpoints6(inout uint2x4 endPoint, uint2 P)
 {
     uint2x4 quantized;
-    for (uint j = 0; j < 2; j ++)
+    for (uint j = 0; j < 2; j++)
     {
         quantized[j] = endPoint[j] & 0xFFFFFFFE;
         quantized[j] |= P[j];
@@ -1701,7 +1701,7 @@ uint2x4 compress_endpoints6(inout uint2x4 endPoint, uint2 P)
 uint2x4 compress_endpoints7(inout uint2x4 endPoint, uint2 P)
 {
     uint2x4 quantized;
-    [unroll] for (uint j = 0; j < 2; j ++)
+    [unroll] for (uint j = 0; j < 2; j++)
     {
         quantized[j] = quantize(endPoint[j], 6) & 0xFFFFFFFE;
         quantized[j] |= P[j];
@@ -1736,7 +1736,7 @@ void block_package0(out uint4 block, uint partition, uint threadBase)
         | (get_color_index(0) << 19);
     block.w = 0;
     uint i = 1;
-    for (; i <= min(candidateFixUpIndex1DOrdered[partition][0], 4); i ++)
+    for (; i <= min(candidateFixUpIndex1DOrdered[partition][0], 4); i++)
     {
         block.z |= get_color_index(i) << (i * 3 + 18);
     }
@@ -1748,14 +1748,14 @@ void block_package0(out uint4 block, uint partition, uint threadBase)
     else //i = 5
     {
         block.w |= (get_color_index(4) & 0x04) >> 2;
-        for (; i <= candidateFixUpIndex1DOrdered[partition][0]; i ++)
+        for (; i <= candidateFixUpIndex1DOrdered[partition][0]; i++)
             block.w |= get_color_index(i) << (i * 3 - 14);
     }
-    for (; i <= candidateFixUpIndex1DOrdered[partition][1]; i ++)
+    for (; i <= candidateFixUpIndex1DOrdered[partition][1]; i++)
     {
         block.w |= get_color_index(i) << (i * 3 - 15);
     }
-    for (; i < 16; i ++)
+    for (; i < 16; i++)
     {
         block.w |= get_color_index(i) << (i * 3 - 16);
     }
@@ -1814,15 +1814,15 @@ void block_package2(out uint4 block, uint partition, uint threadBase)
     block.w = ((get_end_point_h(2).b & 0xF8) >>  5)
         | (get_color_index(0) << 3);
     uint i = 1;
-    for (; i <= candidateFixUpIndex1DOrdered[partition][0]; i ++)
+    for (; i <= candidateFixUpIndex1DOrdered[partition][0]; i++)
     {
         block.w |= get_color_index(i) << (i * 2 + 2);
     }
-    for (; i <= candidateFixUpIndex1DOrdered[partition][1]; i ++)
+    for (; i <= candidateFixUpIndex1DOrdered[partition][1]; i++)
     {
         block.w |= get_color_index(i) << (i * 2 + 1);
     }
-    for (; i < 16; i ++)
+    for (; i < 16; i++)
     {
         block.w |= get_color_index(i) << (i * 2);
     }
@@ -1842,11 +1842,11 @@ void block_package3(out uint4 block, uint partition, uint threadBase)
     block.w = ((get_end_point_l(1).r & 0x01) <<  0) | ((get_end_point_h(1).r & 0x01) <<  1)
         | (get_color_index(0) << 2);
     uint i = 1;
-    for (; i <= candidateFixUpIndex1DOrdered[partition][0]; i ++)
+    for (; i <= candidateFixUpIndex1DOrdered[partition][0]; i++)
     {
         block.w |= get_color_index(i) << (i * 2 + 1);
     }
-    for (; i < 16; i ++)
+    for (; i < 16; i++)
     {
         block.w |= get_color_index(i) << (i * 2);
     }
@@ -1921,11 +1921,11 @@ void block_package7(out uint4 block, uint partition, uint threadBase)
     block.w = ((get_end_point_l(1).r & 0x04) >>  2) | ((get_end_point_h(1).r & 0x04) >>  1)
         | (get_color_index(0) <<  2);
     uint i = 1;
-    for (; i <= candidateFixUpIndex1DOrdered[partition][0]; i ++)
+    for (; i <= candidateFixUpIndex1DOrdered[partition][0]; i++)
     {
         block.w |= get_color_index(i) << (i * 2 + 1);
     }
-    for (; i < 16; i ++)
+    for (; i < 16; i++)
     {
         block.w |= get_color_index(i) << (i * 2);
     }

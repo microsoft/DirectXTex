@@ -303,7 +303,7 @@ void TryModeG10CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
         unquantize(endPoint_q, prec.x);
 
         float error = 0;
-        [loop] for (uint j = 0; j < 16; j ++)
+        [loop] for (uint j = 0; j < 16; j++)
         {
             float dotProduct = dot(span, shared_temp[threadBase + j].pixel_ph - endPoint[0]);// fixed a bug in v0.2
             uint index = (span_norm_sqr <= 0 || dotProduct <= 0) ? 0
@@ -405,7 +405,7 @@ void TryModeLE10CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
         endPoint_lum[1][1] = MIN_FLOAT;
 
         uint bit = candidateSectionBit[threadInBlock];
-        for (uint i = 0; i < 16; i ++)
+        for (uint i = 0; i < 16; i++)
         {
             int3 pixel_ph = shared_temp[threadBase + i].pixel_ph;
             float pixel_lum = shared_temp[threadBase + i].pixel_lum;
@@ -441,7 +441,7 @@ void TryModeLE10CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
         float3 span[2];// fixed a bug in v0.2
         float span_norm_sqr[2];// fixed a bug in v0.2
         [unroll]
-        for (uint p = 0; p < 2; ++ p)
+        for (uint p = 0; p < 2; ++p)
         {
             span[p] = endPoint[p][1] - endPoint[p][0];
             span_norm_sqr[p] = dot(span[p], span[p]);
@@ -477,7 +477,7 @@ void TryModeLE10CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
         unquantize(endPoint_q[1], prec.x);
 
         float error = 0;
-        for (uint j = 0; j < 16; j ++)
+        for (uint j = 0; j < 16; j++)
         {
             uint3 pixel_rh;
             if ((bit >> j) & 1)
@@ -1222,8 +1222,7 @@ float half2float1(uint Value)
         {
             Exponent--;
             Mantissa <<= 1;
-        }
-        while ((Mantissa & 0x0400) == 0);
+        } while ((Mantissa & 0x0400) == 0);
 
         Mantissa &= 0x03FF;
     }
@@ -2258,9 +2257,9 @@ void block_package(inout uint4 block, int2x3 endPoint, uint mode_type) // for mo
 
     if (mode_type == candidateModeFlag[10])
     {
-       /* block.x |= candidateModeMemory[10];
-        block.y |= ( ( endPoint[1].r << 3 ) & 0x00001FF8 ) | ( ( endPoint[1].g << 13 ) & 0x007FE000 ) | ( ( endPoint[1].b << 23 ) & 0xFF800000 );
-        block.z |= ( endPoint[1].b >> 9 ) & 0x00000001;*/
+        /* block.x |= candidateModeMemory[10];
+         block.y |= ( ( endPoint[1].r << 3 ) & 0x00001FF8 ) | ( ( endPoint[1].g << 13 ) & 0x007FE000 ) | ( ( endPoint[1].b << 23 ) & 0xFF800000 );
+         block.z |= ( endPoint[1].b >> 9 ) & 0x00000001;*/
 
         block.x |= ((candidateModeMemory[10] >> 0) & 1) << 0;
         block.x |= ((candidateModeMemory[10] >> 1) & 1) << 1;
