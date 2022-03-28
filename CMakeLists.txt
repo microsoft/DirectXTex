@@ -13,6 +13,8 @@ project (DirectXTex
 
 option(BUILD_TOOLS "Build tex command-line tools" ON)
 
+option(BUILD_SAMPLE "Build DDSView sample" ON)
+
 # Includes the functions for Direct3D 11 resources and DirectCompute compression
 option(BUILD_DX11 "Build with DirectX11 Runtime support" ON)
 
@@ -244,6 +246,17 @@ if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
   endif()
 endif()
 
+#--- DDSView sample
+if(BUILD_SAMPLE AND WIN32 AND (NOT WINDOWS_STORE))
+  list(APPEND TOOL_EXES ddsview)
+
+  add_executable(ddsview WIN32
+    DDSView/ddsview.cpp
+    DDSView/ddsview.rc)
+  target_link_libraries(ddsview ${PROJECT_NAME} d3d11.lib)
+  source_group(ddsview REGULAR_EXPRESSION DDSView/*.*)
+endif()
+
 if(MSVC)
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
       target_compile_options(${t} PRIVATE /fp:fast "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
@@ -264,7 +277,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 
     # OpenMP is not supported for clang for Windows by default
 
-    set(WarningsEXE ${WarningsLib} "-Wno-c++98-compat" "-Wno-c++98-compat-pedantic" "-Wno-switch" "-Wno-switch-enum" "-Wno-language-extension-token" "-Wno-missing-prototypes" "-Wno-global-constructors" "-Wno-double-promotion")
+    set(WarningsEXE ${WarningsLib} "-Wno-c++98-compat" "-Wno-c++98-compat-pedantic" "-Wno-switch" "-Wno-switch-enum" "-Wno-covered-switch-default" "-Wno-language-extension-token" "-Wno-missing-prototypes" "-Wno-global-constructors" "-Wno-double-promotion")
     foreach(t IN LISTS TOOL_EXES)
       target_compile_options(${t} PRIVATE ${WarningsEXE})
     endforeach()
