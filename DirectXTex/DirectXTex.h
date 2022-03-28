@@ -118,13 +118,13 @@ namespace DirectX
         TEX_DIMENSION_TEXTURE3D    = 4,
     };
 
-    enum TEX_MISC_FLAG
+    enum TEX_MISC_FLAG : unsigned long
         // Subset here matches D3D10_RESOURCE_MISC_FLAG and D3D11_RESOURCE_MISC_FLAG
     {
         TEX_MISC_TEXTURECUBE = 0x4L,
     };
 
-    enum TEX_MISC_FLAG2
+    enum TEX_MISC_FLAG2 : unsigned long
     {
         TEX_MISC2_ALPHA_MODE_MASK = 0x7L,
     };
