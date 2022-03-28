@@ -53,26 +53,13 @@ struct CBArrayControl
 
 namespace
 {
-// fxc ddsview.fx /nologo /EVS /Tvs_4_1 /Fhshaders\vs.h
-#include "shaders\vs.h"
-
-// fxc ddsview.fx /nologo /EPS_1D /Tps_4_1 /Fhshaders\ps1D.h
-#include "shaders\ps1D.h"
-
-// fxc ddsview.fx /nologo /EPS_1DArray /Tps_4_1 /Fhshaders\ps1Darray.h
-#include "shaders\\ps1Darray.h"
-
-// fxc ddsview.fx /nologo /EPS_2D /Tps_4_1 /Fhshaders\ps2D.h
-#include "shaders\\ps2D.h"
-
-// fxc ddsview.fx /nologo /EPS_2DArray /Tps_4_1 /Fhshaders\ps2Darray.h
-#include "shaders\ps2Darray.h"
-
-// fxc ddsview.fx /nologo /EPS_3D /Tps_4_1 /Fhshaders\ps3D.h
-#include "shaders\ps3D.h"
-
-// fxc ddsview.fx /nologo /EPS_Cube /Tps_4_1 /Fhshaders\psCube.h
-#include "shaders\psCube.h"
+#include "ddsview_vs.inc"
+#include "ddsview_ps1D.inc"
+#include "ddsview_ps1Darray.inc"
+#include "ddsview_ps2D.inc"
+#include "ddsview_ps2Darray.inc"
+#include "ddsview_ps3D.inc"
+#include "ddsview_psCube.inc"
 }
 
 //--------------------------------------------------------------------------------------

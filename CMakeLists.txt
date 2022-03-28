@@ -252,9 +252,24 @@ if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
 
   add_executable(ddsview WIN32
     DDSView/ddsview.cpp
-    DDSView/ddsview.rc)
+    DDSView/ddsview.rc
+    ${COMPILED_SHADERS}/ddsview_ps1D.inc)
   target_link_libraries(ddsview ${PROJECT_NAME} d3d11.lib)
   source_group(ddsview REGULAR_EXPRESSION DDSView/*.*)
+
+  target_include_directories(ddsview PRIVATE ${COMPILED_SHADERS})
+
+  if (NOT USE_PREBUILT_SHADERS)
+      add_custom_command(
+            OUTPUT "${COMPILED_SHADERS}/ddsview_ps1D.inc"
+            MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DDSView/hlsl.cmd"
+            DEPENDS "${PROJECT_SOURCE_DIR}/DDSView/ddsview.fx"
+            COMMENT "Generating HLSL shaders for DDSView..."
+            COMMAND set CompileShadersOutput=${COMPILED_SHADERS}
+            COMMAND hlsl.cmd
+            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DDSView"
+            USES_TERMINAL)
+  endif()
 endif()
 
 if(MSVC)
