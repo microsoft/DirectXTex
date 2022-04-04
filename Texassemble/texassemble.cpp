@@ -686,9 +686,9 @@ namespace
 
         wprintf(L"Microsoft (R) DirectX Texture Assembler [DirectXTex] Version %ls\n", version);
         wprintf(L"Copyright (C) Microsoft Corp.\n");
-#ifdef _DEBUG
+    #ifdef _DEBUG
         wprintf(L"*** Debug build ***\n");
-#endif
+    #endif
         wprintf(L"\n");
     }
 
@@ -785,20 +785,20 @@ namespace
         case CODEC_HDR:
             return SaveToHDRFile(img, szOutputFile);
 
-#ifdef USE_OPENEXR
+        #ifdef USE_OPENEXR
         case CODEC_EXR:
             return SaveToEXRFile(img, szOutputFile);
-#endif
+        #endif
 
         default:
-        {
-            HRESULT hr = SaveToWICFile(img, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(fileType)), szOutputFile);
-            if ((hr == static_cast<HRESULT>(0xc00d5212) /* MF_E_TOPO_CODEC_NOT_FOUND */) && (fileType == WIC_CODEC_HEIF))
             {
-                wprintf(L"\nINFO: This format requires installing the HEIF Image Extensions - https://aka.ms/heif\n");
+                HRESULT hr = SaveToWICFile(img, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(fileType)), szOutputFile);
+                if ((hr == static_cast<HRESULT>(0xc00d5212) /* MF_E_TOPO_CODEC_NOT_FOUND */) && (fileType == WIC_CODEC_HEIF))
+                {
+                    wprintf(L"\nINFO: This format requires installing the HEIF Image Extensions - https://aka.ms/heif\n");
+                }
+                return hr;
             }
-            return hr;
-        }
         }
     }
 
@@ -1113,33 +1113,33 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_OUTPUTFILE:
-            {
-                wcscpy_s(szOutputFile, MAX_PATH, pValue);
-
-                wchar_t ext[_MAX_EXT] = {};
-                _wsplitpath_s(szOutputFile, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
-
-                fileType = LookupByName(ext, g_pExtFileTypes);
-
-                switch (dwCommand)
                 {
-                case CMD_H_CROSS:
-                case CMD_V_CROSS:
-                case CMD_H_STRIP:
-                case CMD_V_STRIP:
-                case CMD_MERGE:
-                case CMD_ARRAY_STRIP:
-                    break;
+                    wcscpy_s(szOutputFile, MAX_PATH, pValue);
 
-                default:
-                    if (fileType != CODEC_DDS)
+                    wchar_t ext[_MAX_EXT] = {};
+                    _wsplitpath_s(szOutputFile, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
+
+                    fileType = LookupByName(ext, g_pExtFileTypes);
+
+                    switch (dwCommand)
                     {
-                        wprintf(L"Assembled output file must be a dds\n");
-                        return 1;
+                    case CMD_H_CROSS:
+                    case CMD_V_CROSS:
+                    case CMD_H_STRIP:
+                    case CMD_V_STRIP:
+                    case CMD_MERGE:
+                    case CMD_ARRAY_STRIP:
+                        break;
+
+                    default:
+                        if (fileType != CODEC_DDS)
+                        {
+                            wprintf(L"Assembled output file must be a dds\n");
+                            return 1;
+                        }
                     }
+                    break;
                 }
-                break;
-            }
 
             case OPT_TA_WRAP:
                 if (dwFilterOpts & TEX_FILTER_MIRROR)
@@ -1162,19 +1162,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_FILELIST:
-            {
-                std::wifstream inFile(pValue);
-                if (!inFile)
                 {
-                    wprintf(L"Error opening -flist file %ls\n", pValue);
-                    return 1;
+                    std::wifstream inFile(pValue);
+                    if (!inFile)
+                    {
+                        wprintf(L"Error opening -flist file %ls\n", pValue);
+                        return 1;
+                    }
+
+                    inFile.imbue(std::locale::classic());
+
+                    ProcessFileList(inFile, conversion);
                 }
-
-                inFile.imbue(std::locale::classic());
-
-                ProcessFileList(inFile, conversion);
-            }
-            break;
+                break;
 
             case OPT_FEATURE_LEVEL:
                 maxSize = LookupByName(pValue, g_pFeatureLevels);
@@ -1458,7 +1458,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         return 1;
                     }
                 }
-#ifdef USE_OPENEXR
+            #ifdef USE_OPENEXR
                 else if (_wcsicmp(ext, L".exr") == 0)
                 {
                     hr = LoadFromEXRFile(pConv->szSrc, &info, *image);
@@ -1468,7 +1468,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         return 1;
                     }
                 }
-#endif
+            #endif
                 else
                 {
                     // WIC shares the same filter values for mode and dither
@@ -1779,9 +1779,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-#ifndef NDEBUG
+            #ifndef NDEBUG
                 auto& tinfo = timage->GetMetadata();
-#endif
+            #endif
 
                 assert(info.width == tinfo.width);
                 assert(info.height == tinfo.height);
@@ -1879,402 +1879,402 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_V_CROSS:
     case CMD_H_STRIP:
     case CMD_V_STRIP:
-    {
-        size_t twidth = 0;
-        size_t theight = 0;
-
-        switch (dwCommand)
         {
-        case CMD_H_CROSS:
-            //      posy
-            // negx posz posx negz
-            //      negy
-            twidth = width * 4;
-            theight = height * 3;
-            break;
-
-        case CMD_V_CROSS:
-            //      posy
-            // posz posx negz
-            //      negy
-            //      negx
-            twidth = width * 3;
-            theight = height * 4;
-            break;
-
-        case CMD_H_STRIP:
-            twidth = width * 6;
-            theight = height;
-            break;
-
-        case CMD_V_STRIP:
-            twidth = width;
-            theight = height * 6;
-            break;
-
-        default:
-            break;
-        }
-
-        ScratchImage result;
-        hr = result.Initialize2D(format, twidth, theight, 1, 1);
-        if (FAILED(hr))
-        {
-            wprintf(L"FAILED setting up result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-            return 1;
-        }
-
-        memset(result.GetPixels(), 0, result.GetPixelsSize());
-
-        auto src = loadedImages.cbegin();
-        auto dest = result.GetImage(0, 0, 0);
-
-        for (size_t index = 0; index < 6; ++index)
-        {
-            auto img = (*src)->GetImage(0, index, 0);
-            if (!img)
-            {
-                wprintf(L"FAILED: Unexpected error\n");
-                return 1;
-            }
-
-            const Rect rect(0, 0, width, height);
-
-            size_t offsetx = 0;
-            size_t offsety = 0;
+            size_t twidth = 0;
+            size_t theight = 0;
 
             switch (dwCommand)
             {
             case CMD_H_CROSS:
-            {
                 //      posy
                 // negx posz posx negz
                 //      negy
-
-                static const size_t s_offsetx[6] = { 2, 0, 1, 1, 1, 3 };
-                static const size_t s_offsety[6] = { 1, 1, 0, 2, 1, 1 };
-
-                offsetx = s_offsetx[index] * width;
-                offsety = s_offsety[index] * height;
+                twidth = width * 4;
+                theight = height * 3;
                 break;
-            }
 
             case CMD_V_CROSS:
-            {
                 //      posy
                 // posz posx negz
                 //      negy
                 //      negx
-
-                static const size_t s_offsetx[6] = { 1, 1, 1, 1, 0, 2 };
-                static const size_t s_offsety[6] = { 1, 3, 0, 2, 1, 1 };
-
-                offsetx = s_offsetx[index] * width;
-                offsety = s_offsety[index] * height;
+                twidth = width * 3;
+                theight = height * 4;
                 break;
-            }
 
             case CMD_H_STRIP:
-                // posx, negx, posy, negy, posz, negz
-                offsetx = index * width;
+                twidth = width * 6;
+                theight = height;
                 break;
 
             case CMD_V_STRIP:
-                // posx, negx, posy, negy, posz, negz
-                offsety = index * height;
+                twidth = width;
+                theight = height * 6;
                 break;
 
             default:
                 break;
             }
 
-            hr = CopyRectangle(*img, rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
+            ScratchImage result;
+            hr = result.Initialize2D(format, twidth, theight, 1, 1);
             if (FAILED(hr))
             {
-                wprintf(L"FAILED building result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                wprintf(L"FAILED setting up result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
-        }
 
-        // Write cross/strip
-        wprintf(L"\nWriting %ls ", szOutputFile);
-        PrintInfo(result.GetMetadata());
-        wprintf(L"\n");
-        fflush(stdout);
+            memset(result.GetPixels(), 0, result.GetPixelsSize());
 
-        if (dwOptions & (1 << OPT_TOLOWER))
-        {
-            std::ignore = _wcslwr_s(szOutputFile);
-        }
+            auto src = loadedImages.cbegin();
+            auto dest = result.GetImage(0, 0, 0);
 
-        if (~dwOptions & (1 << OPT_OVERWRITE))
-        {
-            if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+            for (size_t index = 0; index < 6; ++index)
             {
-                wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
+                auto img = (*src)->GetImage(0, index, 0);
+                if (!img)
+                {
+                    wprintf(L"FAILED: Unexpected error\n");
+                    return 1;
+                }
+
+                const Rect rect(0, 0, width, height);
+
+                size_t offsetx = 0;
+                size_t offsety = 0;
+
+                switch (dwCommand)
+                {
+                case CMD_H_CROSS:
+                    {
+                        //      posy
+                        // negx posz posx negz
+                        //      negy
+
+                        static const size_t s_offsetx[6] = { 2, 0, 1, 1, 1, 3 };
+                        static const size_t s_offsety[6] = { 1, 1, 0, 2, 1, 1 };
+
+                        offsetx = s_offsetx[index] * width;
+                        offsety = s_offsety[index] * height;
+                        break;
+                    }
+
+                case CMD_V_CROSS:
+                    {
+                        //      posy
+                        // posz posx negz
+                        //      negy
+                        //      negx
+
+                        static const size_t s_offsetx[6] = { 1, 1, 1, 1, 0, 2 };
+                        static const size_t s_offsety[6] = { 1, 3, 0, 2, 1, 1 };
+
+                        offsetx = s_offsetx[index] * width;
+                        offsety = s_offsety[index] * height;
+                        break;
+                    }
+
+                case CMD_H_STRIP:
+                    // posx, negx, posy, negy, posz, negz
+                    offsetx = index * width;
+                    break;
+
+                case CMD_V_STRIP:
+                    // posx, negx, posy, negy, posz, negz
+                    offsety = index * height;
+                    break;
+
+                default:
+                    break;
+                }
+
+                hr = CopyRectangle(*img, rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
+                if (FAILED(hr))
+                {
+                    wprintf(L"FAILED building result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                    return 1;
+                }
+            }
+
+            // Write cross/strip
+            wprintf(L"\nWriting %ls ", szOutputFile);
+            PrintInfo(result.GetMetadata());
+            wprintf(L"\n");
+            fflush(stdout);
+
+            if (dwOptions & (1 << OPT_TOLOWER))
+            {
+                std::ignore = _wcslwr_s(szOutputFile);
+            }
+
+            if (~dwOptions & (1 << OPT_OVERWRITE))
+            {
+                if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+                {
+                    wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
+                    return 1;
+                }
+            }
+
+            hr = SaveImageFile(*dest, fileType, szOutputFile);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
+            break;
         }
-
-        hr = SaveImageFile(*dest, fileType, szOutputFile);
-        if (FAILED(hr))
-        {
-            wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-            return 1;
-        }
-        break;
-    }
 
     case CMD_MERGE:
-    {
-        // Capture data from our second source image
-        ScratchImage tempImage;
-        hr = Convert(*loadedImages[1]->GetImage(0, 0, 0), DXGI_FORMAT_R32G32B32A32_FLOAT,
-            dwFilter | dwFilterOpts | dwSRGB, TEX_THRESHOLD_DEFAULT, tempImage);
-        if (FAILED(hr))
         {
-            wprintf(L" FAILED [convert second input] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-            return 1;
-        }
-
-        const Image& img = *tempImage.GetImage(0, 0, 0);
-
-        // Merge with our first source image
-        const Image& rgb = *loadedImages[0]->GetImage(0, 0, 0);
-
-        const XMVECTOR zc = XMVectorSelectControl(zeroElements[0], zeroElements[1], zeroElements[2], zeroElements[3]);
-        const XMVECTOR oc = XMVectorSelectControl(oneElements[0], oneElements[1], oneElements[2], oneElements[3]);
-
-        ScratchImage result;
-        hr = TransformImage(rgb, [&, zc, oc](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+            // Capture data from our second source image
+            ScratchImage tempImage;
+            hr = Convert(*loadedImages[1]->GetImage(0, 0, 0), DXGI_FORMAT_R32G32B32A32_FLOAT,
+                dwFilter | dwFilterOpts | dwSRGB, TEX_THRESHOLD_DEFAULT, tempImage);
+            if (FAILED(hr))
             {
-                const XMVECTOR *inPixels2 = reinterpret_cast<XMVECTOR*>(img.pixels + img.rowPitch * y);
-
-                for (size_t j = 0; j < w; ++j)
-                {
-                    XMVECTOR pixel = XMVectorPermute(inPixels[j], inPixels2[j],
-                        permuteElements[0], permuteElements[1], permuteElements[2], permuteElements[3]);
-                    pixel = XMVectorSelect(pixel, g_XMZero, zc);
-                    outPixels[j] = XMVectorSelect(pixel, g_XMOne, oc);
-                }
-            }, result);
-        if (FAILED(hr))
-        {
-            wprintf(L" FAILED [merge image] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-            return 1;
-        }
-
-        // Write merged texture
-        wprintf(L"\nWriting %ls ", szOutputFile);
-        PrintInfo(result.GetMetadata());
-        wprintf(L"\n");
-        fflush(stdout);
-
-        if (dwOptions & (1 << OPT_TOLOWER))
-        {
-            std::ignore = _wcslwr_s(szOutputFile);
-        }
-
-        if (~dwOptions & (1 << OPT_OVERWRITE))
-        {
-            if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
-            {
-                wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
+                wprintf(L" FAILED [convert second input] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
-        }
 
-        hr = SaveImageFile(*result.GetImage(0, 0, 0), fileType, szOutputFile);
-        if (FAILED(hr))
-        {
-            wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-            return 1;
+            const Image& img = *tempImage.GetImage(0, 0, 0);
+
+            // Merge with our first source image
+            const Image& rgb = *loadedImages[0]->GetImage(0, 0, 0);
+
+            const XMVECTOR zc = XMVectorSelectControl(zeroElements[0], zeroElements[1], zeroElements[2], zeroElements[3]);
+            const XMVECTOR oc = XMVectorSelectControl(oneElements[0], oneElements[1], oneElements[2], oneElements[3]);
+
+            ScratchImage result;
+            hr = TransformImage(rgb, [&, zc, oc](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+                {
+                    const XMVECTOR *inPixels2 = reinterpret_cast<XMVECTOR*>(img.pixels + img.rowPitch * y);
+
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        XMVECTOR pixel = XMVectorPermute(inPixels[j], inPixels2[j],
+                            permuteElements[0], permuteElements[1], permuteElements[2], permuteElements[3]);
+                        pixel = XMVectorSelect(pixel, g_XMZero, zc);
+                        outPixels[j] = XMVectorSelect(pixel, g_XMOne, oc);
+                    }
+                }, result);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [merge image] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                return 1;
+            }
+
+            // Write merged texture
+            wprintf(L"\nWriting %ls ", szOutputFile);
+            PrintInfo(result.GetMetadata());
+            wprintf(L"\n");
+            fflush(stdout);
+
+            if (dwOptions & (1 << OPT_TOLOWER))
+            {
+                std::ignore = _wcslwr_s(szOutputFile);
+            }
+
+            if (~dwOptions & (1 << OPT_OVERWRITE))
+            {
+                if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+                {
+                    wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
+                    return 1;
+                }
+            }
+
+            hr = SaveImageFile(*result.GetImage(0, 0, 0), fileType, szOutputFile);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                return 1;
+            }
+            break;
         }
-        break;
-    }
 
     case CMD_ARRAY_STRIP:
-    {
-        const size_t twidth = width;
-        const size_t theight = height * images;
-
-        ScratchImage result;
-        hr = result.Initialize2D(format, twidth, theight, 1, 1);
-        if (FAILED(hr))
         {
-            wprintf(L"FAILED setting up result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-            return 1;
-        }
+            const size_t twidth = width;
+            const size_t theight = height * images;
 
-        memset(result.GetPixels(), 0, result.GetPixelsSize());
-
-        auto src = loadedImages.cbegin();
-        auto dest = result.GetImage(0, 0, 0);
-
-        for (size_t index = 0; index < images; ++index)
-        {
-            auto img = (*src)->GetImage(0, index, 0);
-            if (!img)
+            ScratchImage result;
+            hr = result.Initialize2D(format, twidth, theight, 1, 1);
+            if (FAILED(hr))
             {
-                wprintf(L"FAILED: Unexpected error\n");
+                wprintf(L"FAILED setting up result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
-            const Rect rect(0, 0, width, height);
+            memset(result.GetPixels(), 0, result.GetPixelsSize());
 
-            constexpr size_t offsetx = 0;
-            size_t offsety = 0;
+            auto src = loadedImages.cbegin();
+            auto dest = result.GetImage(0, 0, 0);
 
-            offsety = index * height;
+            for (size_t index = 0; index < images; ++index)
+            {
+                auto img = (*src)->GetImage(0, index, 0);
+                if (!img)
+                {
+                    wprintf(L"FAILED: Unexpected error\n");
+                    return 1;
+                }
 
-            hr = CopyRectangle(*img, rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
+                const Rect rect(0, 0, width, height);
+
+                constexpr size_t offsetx = 0;
+                size_t offsety = 0;
+
+                offsety = index * height;
+
+                hr = CopyRectangle(*img, rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
+                if (FAILED(hr))
+                {
+                    wprintf(L"FAILED building result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                    return 1;
+                }
+            }
+
+            // Write array strip
+            wprintf(L"\nWriting %ls ", szOutputFile);
+            PrintInfo(result.GetMetadata());
+            wprintf(L"\n");
+            fflush(stdout);
+
+            if (dwOptions & (1 << OPT_TOLOWER))
+            {
+                std::ignore = _wcslwr_s(szOutputFile);
+            }
+
+            if (~dwOptions & (1 << OPT_OVERWRITE))
+            {
+                if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+                {
+                    wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
+                    return 1;
+                }
+            }
+
+            hr = SaveImageFile(*dest, fileType, szOutputFile);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                return 1;
+            }
+            break;
+        }
+    default:
+        {
+            std::vector<Image> imageArray;
+            imageArray.reserve(images);
+
+            for (auto it = loadedImages.cbegin(); it != loadedImages.cend(); ++it)
+            {
+                const ScratchImage* simage = it->get();
+                assert(simage != nullptr);
+                for (size_t j = 0; j < simage->GetMetadata().arraySize; ++j)
+                {
+                    const Image* img = simage->GetImage(0, j, 0);
+                    assert(img != nullptr);
+                    imageArray.push_back(*img);
+                }
+            }
+
+            switch (dwCommand)
+            {
+            case CMD_CUBE:
+                if (imageArray[0].width > maxCube || imageArray[0].height > maxCube)
+                {
+                    wprintf(L"\nWARNING: Target size exceeds maximum cube dimensions for feature level (%u)\n", maxCube);
+                }
+                break;
+
+            case CMD_VOLUME:
+                if (imageArray[0].width > maxVolume || imageArray[0].height > maxVolume || imageArray.size() > maxVolume)
+                {
+                    wprintf(L"\nWARNING: Target size exceeds volume extent for feature level (%u)\n", maxVolume);
+                }
+                break;
+
+            case CMD_ARRAY:
+                if (imageArray[0].width > maxSize || imageArray[0].height > maxSize || imageArray.size() > maxArray)
+                {
+                    wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (size %u, array %u)\n", maxSize, maxArray);
+                }
+                break;
+
+            case CMD_CUBEARRAY:
+                if (imageArray[0].width > maxCube || imageArray[0].height > maxCube || imageArray.size() > maxArray)
+                {
+                    wprintf(L"\nWARNING: Target size exceeds maximum cube dimensions for feature level (size %u, array %u)\n", maxCube, maxArray);
+                }
+                break;
+
+            default:
+                if (imageArray[0].width > maxSize || imageArray[0].height > maxSize)
+                {
+                    wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (%u)\n", maxSize);
+                }
+                break;
+            }
+
+            ScratchImage result;
+            switch (dwCommand)
+            {
+            case CMD_VOLUME:
+                hr = result.Initialize3DFromImages(&imageArray[0], imageArray.size());
+                break;
+
+            case CMD_ARRAY:
+            case CMD_GIF:
+                hr = result.InitializeArrayFromImages(&imageArray[0], imageArray.size(), (dwOptions & (1 << OPT_USE_DX10)) != 0);
+                break;
+
+            case CMD_CUBE:
+            case CMD_CUBEARRAY:
+                hr = result.InitializeCubeFromImages(&imageArray[0], imageArray.size());
+                break;
+
+            default:
+                break;
+            }
+
             if (FAILED(hr))
             {
                 wprintf(L"FAILED building result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
-        }
 
-        // Write array strip
-        wprintf(L"\nWriting %ls ", szOutputFile);
-        PrintInfo(result.GetMetadata());
-        wprintf(L"\n");
-        fflush(stdout);
+            // Write texture
+            wprintf(L"\nWriting %ls ", szOutputFile);
+            PrintInfo(result.GetMetadata());
+            wprintf(L"\n");
+            fflush(stdout);
 
-        if (dwOptions & (1 << OPT_TOLOWER))
-        {
-            std::ignore = _wcslwr_s(szOutputFile);
-        }
-
-        if (~dwOptions & (1 << OPT_OVERWRITE))
-        {
-            if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+            if (dwOptions & (1 << OPT_TOLOWER))
             {
-                wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
+                std::ignore = _wcslwr_s(szOutputFile);
+            }
+
+            if (~dwOptions & (1 << OPT_OVERWRITE))
+            {
+                if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+                {
+                    wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
+                    return 1;
+                }
+            }
+
+            hr = SaveToDDSFile(result.GetImages(), result.GetImageCount(), result.GetMetadata(),
+                (dwOptions & (1 << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
+                szOutputFile);
+            if (FAILED(hr))
+            {
+                wprintf(L"\nFAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
-        }
-
-        hr = SaveImageFile(*dest, fileType, szOutputFile);
-        if (FAILED(hr))
-        {
-            wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-            return 1;
-        }
-        break;
-    }
-    default:
-    {
-        std::vector<Image> imageArray;
-        imageArray.reserve(images);
-
-        for (auto it = loadedImages.cbegin(); it != loadedImages.cend(); ++it)
-        {
-            const ScratchImage* simage = it->get();
-            assert(simage != nullptr);
-            for (size_t j = 0; j < simage->GetMetadata().arraySize; ++j)
-            {
-                const Image* img = simage->GetImage(0, j, 0);
-                assert(img != nullptr);
-                imageArray.push_back(*img);
-            }
-        }
-
-        switch (dwCommand)
-        {
-        case CMD_CUBE:
-            if (imageArray[0].width > maxCube || imageArray[0].height > maxCube)
-            {
-                wprintf(L"\nWARNING: Target size exceeds maximum cube dimensions for feature level (%u)\n", maxCube);
-            }
-            break;
-
-        case CMD_VOLUME:
-            if (imageArray[0].width > maxVolume || imageArray[0].height > maxVolume || imageArray.size() > maxVolume)
-            {
-                wprintf(L"\nWARNING: Target size exceeds volume extent for feature level (%u)\n", maxVolume);
-            }
-            break;
-
-        case CMD_ARRAY:
-            if (imageArray[0].width > maxSize || imageArray[0].height > maxSize || imageArray.size() > maxArray)
-            {
-                wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (size %u, array %u)\n", maxSize, maxArray);
-            }
-            break;
-
-        case CMD_CUBEARRAY:
-            if (imageArray[0].width > maxCube || imageArray[0].height > maxCube || imageArray.size() > maxArray)
-            {
-                wprintf(L"\nWARNING: Target size exceeds maximum cube dimensions for feature level (size %u, array %u)\n", maxCube, maxArray);
-            }
-            break;
-
-        default:
-            if (imageArray[0].width > maxSize || imageArray[0].height > maxSize)
-            {
-                wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (%u)\n", maxSize);
-            }
             break;
         }
-
-        ScratchImage result;
-        switch (dwCommand)
-        {
-        case CMD_VOLUME:
-            hr = result.Initialize3DFromImages(&imageArray[0], imageArray.size());
-            break;
-
-        case CMD_ARRAY:
-        case CMD_GIF:
-            hr = result.InitializeArrayFromImages(&imageArray[0], imageArray.size(), (dwOptions & (1 << OPT_USE_DX10)) != 0);
-            break;
-
-        case CMD_CUBE:
-        case CMD_CUBEARRAY:
-            hr = result.InitializeCubeFromImages(&imageArray[0], imageArray.size());
-            break;
-
-        default:
-            break;
-        }
-
-        if (FAILED(hr))
-        {
-            wprintf(L"FAILED building result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-            return 1;
-        }
-
-        // Write texture
-        wprintf(L"\nWriting %ls ", szOutputFile);
-        PrintInfo(result.GetMetadata());
-        wprintf(L"\n");
-        fflush(stdout);
-
-        if (dwOptions & (1 << OPT_TOLOWER))
-        {
-            std::ignore = _wcslwr_s(szOutputFile);
-        }
-
-        if (~dwOptions & (1 << OPT_OVERWRITE))
-        {
-            if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
-            {
-                wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
-                return 1;
-            }
-        }
-
-        hr = SaveToDDSFile(result.GetImages(), result.GetImageCount(), result.GetMetadata(),
-            (dwOptions & (1 << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
-            szOutputFile);
-        if (FAILED(hr))
-        {
-            wprintf(L"\nFAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-            return 1;
-        }
-        break;
-    }
     }
 
     return 0;

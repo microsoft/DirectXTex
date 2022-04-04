@@ -660,8 +660,8 @@ namespace
         void Encode(_In_ bool bSigned, _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pIn) noexcept;
 
     private:
-#pragma warning(push)
-#pragma warning(disable : 4480)
+    #pragma warning(push)
+    #pragma warning(disable : 4480)
         enum EField : uint8_t
         {
             NA, // N/A
@@ -680,7 +680,7 @@ namespace
             BY,
             BZ,
         };
-#pragma warning(pop)
+    #pragma warning(pop)
 
         struct ModeDescriptor
         {
@@ -697,8 +697,8 @@ namespace
             LDRColorA RGBAPrec[BC6H_MAX_REGIONS][2];
         };
 
-#pragma warning(push)
-#pragma warning(disable : 4512)
+    #pragma warning(push)
+    #pragma warning(disable : 4512)
         struct EncodeParams
         {
             float fBestErr;
@@ -718,7 +718,7 @@ namespace
                 }
             }
         };
-#pragma warning(pop)
+    #pragma warning(pop)
 
         static int Quantize(_In_ int iValue, _In_ int prec, _In_ bool bSigned) noexcept;
         static int Unquantize(_In_ int comp, _In_ uint8_t uBitsPerComp, _In_ bool bSigned) noexcept;
@@ -777,8 +777,8 @@ namespace
             LDRColorA RGBAPrecWithP;
         };
 
-#pragma warning(push)
-#pragma warning(disable : 4512)
+    #pragma warning(push)
+    #pragma warning(disable : 4512)
         struct EncodeParams
         {
             uint8_t uMode;
@@ -788,7 +788,7 @@ namespace
 
             EncodeParams(const HDRColorA* const aOriginal) noexcept : uMode(0), aEndPts{}, aLDRPixels{}, aHDRPixels(aOriginal) {}
         };
-#pragma warning(pop)
+    #pragma warning(pop)
 
         static uint8_t Quantize(_In_ uint8_t comp, _In_ uint8_t uPrec) noexcept
         {
@@ -1035,20 +1035,20 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
 // Mode, Partitions, Transformed, IndexPrec, RGBAPrec
 const D3DX_BC6H::ModeInfo D3DX_BC6H::ms_aInfo[] =
 {
-    {0x00, 1, true,  3, { { LDRColorA(10,10,10,0), LDRColorA( 5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 1
-    {0x01, 1, true,  3, { { LDRColorA( 7, 7, 7,0), LDRColorA( 6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 2
-    {0x02, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA( 5, 4, 4,0) }, { LDRColorA(5,4,4,0), LDRColorA(5,4,4,0) } } }, // Mode 3
-    {0x06, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA( 4, 5, 4,0) }, { LDRColorA(4,5,4,0), LDRColorA(4,5,4,0) } } }, // Mode 4
-    {0x0a, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA( 4, 4, 5,0) }, { LDRColorA(4,4,5,0), LDRColorA(4,4,5,0) } } }, // Mode 5
-    {0x0e, 1, true,  3, { { LDRColorA( 9, 9, 9,0), LDRColorA( 5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 6
-    {0x12, 1, true,  3, { { LDRColorA( 8, 8, 8,0), LDRColorA( 6, 5, 5,0) }, { LDRColorA(6,5,5,0), LDRColorA(6,5,5,0) } } }, // Mode 7
-    {0x16, 1, true,  3, { { LDRColorA( 8, 8, 8,0), LDRColorA( 5, 6, 5,0) }, { LDRColorA(5,6,5,0), LDRColorA(5,6,5,0) } } }, // Mode 8
-    {0x1a, 1, true,  3, { { LDRColorA( 8, 8, 8,0), LDRColorA( 5, 5, 6,0) }, { LDRColorA(5,5,6,0), LDRColorA(5,5,6,0) } } }, // Mode 9
-    {0x1e, 1, false, 3, { { LDRColorA( 6, 6, 6,0), LDRColorA( 6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 10
+    {0x00, 1, true,  3, { { LDRColorA(10,10,10,0), LDRColorA(5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 1
+    {0x01, 1, true,  3, { { LDRColorA(7, 7, 7,0), LDRColorA(6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 2
+    {0x02, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(5, 4, 4,0) }, { LDRColorA(5,4,4,0), LDRColorA(5,4,4,0) } } }, // Mode 3
+    {0x06, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(4, 5, 4,0) }, { LDRColorA(4,5,4,0), LDRColorA(4,5,4,0) } } }, // Mode 4
+    {0x0a, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(4, 4, 5,0) }, { LDRColorA(4,4,5,0), LDRColorA(4,4,5,0) } } }, // Mode 5
+    {0x0e, 1, true,  3, { { LDRColorA(9, 9, 9,0), LDRColorA(5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 6
+    {0x12, 1, true,  3, { { LDRColorA(8, 8, 8,0), LDRColorA(6, 5, 5,0) }, { LDRColorA(6,5,5,0), LDRColorA(6,5,5,0) } } }, // Mode 7
+    {0x16, 1, true,  3, { { LDRColorA(8, 8, 8,0), LDRColorA(5, 6, 5,0) }, { LDRColorA(5,6,5,0), LDRColorA(5,6,5,0) } } }, // Mode 8
+    {0x1a, 1, true,  3, { { LDRColorA(8, 8, 8,0), LDRColorA(5, 5, 6,0) }, { LDRColorA(5,5,6,0), LDRColorA(5,5,6,0) } } }, // Mode 9
+    {0x1e, 1, false, 3, { { LDRColorA(6, 6, 6,0), LDRColorA(6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 10
     {0x03, 0, false, 4, { { LDRColorA(10,10,10,0), LDRColorA(10,10,10,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 11
-    {0x07, 0, true,  4, { { LDRColorA(11,11,11,0), LDRColorA( 9, 9, 9,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 12
-    {0x0b, 0, true,  4, { { LDRColorA(12,12,12,0), LDRColorA( 8, 8, 8,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 13
-    {0x0f, 0, true,  4, { { LDRColorA(16,16,16,0), LDRColorA( 4, 4, 4,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 14
+    {0x07, 0, true,  4, { { LDRColorA(11,11,11,0), LDRColorA(9, 9, 9,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 12
+    {0x0b, 0, true,  4, { { LDRColorA(12,12,12,0), LDRColorA(8, 8, 8,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 13
+    {0x0f, 0, true,  4, { { LDRColorA(16,16,16,0), LDRColorA(4, 4, 4,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 14
 };
 
 const int D3DX_BC6H::ms_aModeToInfo[] =
@@ -1628,13 +1628,13 @@ namespace
     {
         for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
-#ifdef _DEBUG
+        #ifdef _DEBUG
             // Use Magenta in debug as a highly-visible error color
             pOut[i] = HDRColorA(1.0f, 0.0f, 1.0f, 1.0f);
-#else
+        #else
             // In production use, default to black
             pOut[i] = HDRColorA(0.0f, 0.0f, 0.0f, 1.0f);
-#endif
+        #endif
         }
     }
 }
@@ -1694,13 +1694,13 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const noexcept
                 case BY: aEndPts[1].A.b |= 1 << uint32_t(desc[uCurBit].m_uBit); break;
                 case BZ: aEndPts[1].B.b |= 1 << uint32_t(desc[uCurBit].m_uBit); break;
                 default:
-                {
-#ifdef _DEBUG
-                    OutputDebugStringA("BC6H: Invalid header bits encountered during decoding\n");
-#endif
-                    FillWithErrorColors(pOut);
-                    return;
-                }
+                    {
+                    #ifdef _DEBUG
+                        OutputDebugStringA("BC6H: Invalid header bits encountered during decoding\n");
+                    #endif
+                        FillWithErrorColors(pOut);
+                        return;
+                    }
                 }
             }
         }
@@ -1739,9 +1739,9 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const noexcept
             const size_t uNumBits = IsFixUpOffset(info.uPartitions, uShape, i) ? info.uIndexPrec - 1u : info.uIndexPrec;
             if (uStartBit + uNumBits > 128)
             {
-#ifdef _DEBUG
+            #ifdef _DEBUG
                 OutputDebugStringA("BC6H: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -1749,9 +1749,9 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const noexcept
 
             if (uIndex >= ((info.uPartitions > 0) ? 8 : 16))
             {
-#ifdef _DEBUG
+            #ifdef _DEBUG
                 OutputDebugStringA("BC6H: Invalid index encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -1784,7 +1784,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const noexcept
     }
     else
     {
-#ifdef _DEBUG
+    #ifdef _DEBUG
         const char* warnstr = "BC6H: Invalid mode encountered during decoding\n";
         switch (uMode)
         {
@@ -1794,7 +1794,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const noexcept
         case 0x1F:  warnstr = "BC6H: Reserved mode 11111 encountered during decoding\n"; break;
         }
         OutputDebugStringA(warnstr);
-#endif
+    #endif
         // Per the BC6H format spec, we must return opaque black
         for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
@@ -2003,7 +2003,7 @@ void D3DX_BC6H::GeneratePaletteQuantized(const EncodeParams* pEP, const INTEndPn
         assert(false);
         for (size_t i = 0; i < uNumIndices; ++i)
         {
-#pragma prefast(suppress:22102 22103, "writing blocks in two halves confuses tool")
+        #pragma prefast(suppress:22102 22103, "writing blocks in two halves confuses tool")
             aPalette[i] = INTColor(0, 0, 0);
         }
         return;
@@ -2409,7 +2409,7 @@ void D3DX_BC6H::GeneratePaletteUnquantized(const EncodeParams* pEP, size_t uRegi
         assert(false);
         for (size_t i = 0; i < uNumIndices; ++i)
         {
-#pragma prefast(suppress:22102 22103, "writing blocks in two halves confuses tool")
+        #pragma prefast(suppress:22102 22103, "writing blocks in two halves confuses tool")
             aPalette[i] = INTColor(0, 0, 0);
         }
         return;
@@ -2558,9 +2558,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         {
             if (uStartBit + RGBAPrec.r > 128)
             {
-#ifdef _DEBUG
+            #ifdef _DEBUG
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -2573,9 +2573,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         {
             if (uStartBit + RGBAPrec.g > 128)
             {
-#ifdef _DEBUG
+            #ifdef _DEBUG
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -2588,9 +2588,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         {
             if (uStartBit + RGBAPrec.b > 128)
             {
-#ifdef _DEBUG
+            #ifdef _DEBUG
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -2603,9 +2603,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         {
             if (uStartBit + RGBAPrec.a > 128)
             {
-#ifdef _DEBUG
+            #ifdef _DEBUG
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -2620,9 +2620,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         {
             if (uStartBit > 127)
             {
-#ifdef _DEBUG
+            #ifdef _DEBUG
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -2658,9 +2658,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
             const size_t uNumBits = IsFixUpOffset(ms_aInfo[uMode].uPartitions, uShape, i) ? uIndexPrec - 1u : uIndexPrec;
             if (uStartBit + uNumBits > 128)
             {
-#ifdef _DEBUG
+            #ifdef _DEBUG
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -2675,9 +2675,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
                 const size_t uNumBits = i ? uIndexPrec2 : uIndexPrec2 - 1u;
                 if (uStartBit + uNumBits > 128)
                 {
-#ifdef _DEBUG
+                #ifdef _DEBUG
                     OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+                #endif
                     FillWithErrorColors(pOut);
                     return;
                 }
@@ -2717,9 +2717,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
     }
     else
     {
-#ifdef _DEBUG
+    #ifdef _DEBUG
         OutputDebugStringA("BC7: Reserved mode 8 encountered during decoding\n");
-#endif
+    #endif
         // Per the BC7 format spec, we must return transparent black
         memset(pOut, 0, sizeof(HDRColorA) * NUM_PIXELS_PER_BLOCK);
     }
@@ -3201,7 +3201,7 @@ void D3DX_BC7::EmitBlock(const EncodeParams* pEP, size_t uShape, size_t uRotatio
 
         for (i = 0; i < uPBits; i++)
         {
-            SetBits(uStartBit, 1, aPVote[i] > (aCount[i] >> 1) ? 1u : 0u);
+            SetBits(uStartBit, 1, (aPVote[i] >(aCount[i] >> 1)) ? 1u : 0u);
         }
     }
     else

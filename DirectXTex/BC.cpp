@@ -84,9 +84,9 @@ namespace
 
         for (size_t iPoint = 0; iPoint < NUM_PIXELS_PER_BLOCK; iPoint++)
         {
-#ifdef COLOR_WEIGHTS
+        #ifdef COLOR_WEIGHTS
             if (pPoints[iPoint].a > 0.0f)
-#endif // COLOR_WEIGHTS
+            #endif // COLOR_WEIGHTS
             {
                 if (pPoints[iPoint].r < X.r)
                     X.r = pPoints[iPoint].r;
@@ -144,7 +144,7 @@ namespace
 
             float f;
 
-#ifdef COLOR_WEIGHTS
+        #ifdef COLOR_WEIGHTS
             f = Pt.r + Pt.g + Pt.b;
             fDir[0] += pPoints[iPoint].a * f * f;
 
@@ -156,7 +156,7 @@ namespace
 
             f = Pt.r - Pt.g - Pt.b;
             fDir[3] += pPoints[iPoint].a * f * f;
-#else
+        #else
             f = Pt.r + Pt.g + Pt.b;
             fDir[0] += f * f;
 
@@ -168,7 +168,7 @@ namespace
 
             f = Pt.r - Pt.g - Pt.b;
             fDir[3] += f * f;
-#endif // COLOR_WEIGHTS
+        #endif // COLOR_WEIGHTS
         }
 
         float fDirMax = fDir[0];
@@ -264,13 +264,13 @@ namespace
                 Diff.b = pSteps[iStep].b - pPoints[iPoint].b;
                 Diff.a = 0.0f;
 
-#ifdef COLOR_WEIGHTS
+            #ifdef COLOR_WEIGHTS
                 const float fC = pC[iStep] * pPoints[iPoint].a * (1.0f / 8.0f);
                 const float fD = pD[iStep] * pPoints[iPoint].a * (1.0f / 8.0f);
-#else
+            #else
                 const float fC = pC[iStep] * (1.0f / 8.0f);
                 const float fD = pD[iStep] * (1.0f / 8.0f);
-#endif // COLOR_WEIGHTS
+            #endif // COLOR_WEIGHTS
 
                 d2X += fC * pC[iStep];
                 dX.r += fC * Diff.r;
@@ -434,11 +434,11 @@ namespace
             Color[i].g = static_cast<float>(static_cast<int32_t>(Clr.g * 63.0f + 0.5f)) * (1.0f / 63.0f);
             Color[i].b = static_cast<float>(static_cast<int32_t>(Clr.b * 31.0f + 0.5f)) * (1.0f / 31.0f);
 
-#ifdef COLOR_WEIGHTS
+        #ifdef COLOR_WEIGHTS
             Color[i].a = pColor[i].a;
-#else
+        #else
             Color[i].a = 1.0f;
-#endif // COLOR_WEIGHTS
+        #endif // COLOR_WEIGHTS
 
             if (flags & BC_FLAGS_DITHER_RGB)
             {
@@ -688,7 +688,7 @@ namespace
 #ifdef COLOR_WEIGHTS
     void EncodeSolidBC1(_Out_ D3DX_BC1 *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA *pColor)
     {
-#ifdef COLOR_AVG_0WEIGHTS
+    #ifdef COLOR_AVG_0WEIGHTS
         // Compute avg color
         HDRColorA Color;
         Color.r = pColor[0].r;
@@ -707,9 +707,9 @@ namespace
         Color.b *= 1.0f / 16.0f;
 
         const uint16_t wColor = Encode565(&Color);
-#else
+    #else
         const uint16_t wColor = 0x0000;
-#endif // COLOR_AVG_0WEIGHTS
+    #endif // COLOR_AVG_0WEIGHTS
 
         // Encode solid block
         pBC->rgb[0] = wColor;
@@ -814,7 +814,7 @@ void DirectX::D3DXDecodeBC2(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 
     for (size_t i = 0; i < 8; ++i, dw >>= 4)
     {
-#pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
+    #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
         pColor[i] = XMVectorSetW(pColor[i], static_cast<float>(dw & 0xf) * (1.0f / 15.0f));
     }
 

@@ -28,7 +28,7 @@ namespace DirectX
         XMGLOBALCONST XMVECTORF32 g_boxScale = { { { 0.25f, 0.25f, 0.25f, 0.25f } } };
         XMGLOBALCONST XMVECTORF32 g_boxScale3D = { { { 0.125f, 0.125f, 0.125f, 0.125f } } };
 
-#define AVERAGE4( res, p0, p1, p2, p3 ) \
+    #define AVERAGE4( res, p0, p1, p2, p3 ) \
 { \
     XMVECTOR v = XMVectorAdd((p0), (p1)); \
     v = XMVectorAdd(v, (p2)); \
@@ -36,7 +36,7 @@ namespace DirectX
     res = XMVectorMultiply(v, g_boxScale); \
 }
 
-#define AVERAGE8( res, p0, p1, p2, p3, p4, p5, p6, p7) \
+    #define AVERAGE8( res, p0, p1, p2, p3, p4, p5, p6, p7) \
 { \
     XMVECTOR v = XMVectorAdd((p0), (p1)); \
     v = XMVectorAdd(v, (p2)); \
@@ -99,11 +99,11 @@ namespace DirectX
             }
         }
 
-#define BILINEAR_INTERPOLATE( res, x, y, r0, r1 ) \
+    #define BILINEAR_INTERPOLATE( res, x, y, r0, r1 ) \
     res = XMVectorAdd(XMVectorScale(XMVectorAdd(XMVectorScale((r0)[ x.u0 ], x.weight0), XMVectorScale((r0)[ x.u1 ], x.weight1)), y.weight0), \
                       XMVectorScale(XMVectorAdd(XMVectorScale((r1)[ x.u0 ], x.weight0), XMVectorScale((r1)[ x.u1 ], x.weight1)), y.weight1) );
 
-#define TRILINEAR_INTERPOLATE( res, x, y, z, r0, r1, r2, r3 ) \
+    #define TRILINEAR_INTERPOLATE( res, x, y, z, r0, r1, r2, r3 ) \
 {\
     const XMVECTOR a0 = XMVectorScale(XMVectorAdd(XMVectorScale((r0)[ x.u0 ], x.weight0 ), XMVectorScale((r0)[ x.u1 ], x.weight1)), y.weight0); \
     const XMVECTOR a1 = XMVectorScale(XMVectorAdd(XMVectorScale((r1)[ x.u0 ], x.weight0 ), XMVectorScale((r1)[ x.u1 ], x.weight1)), y.weight1); \
@@ -189,7 +189,7 @@ namespace DirectX
             }
         }
 
-#define CUBIC_INTERPOLATE( res, dx, p0, p1, p2, p3 ) \
+    #define CUBIC_INTERPOLATE( res, dx, p0, p1, p2, p3 ) \
 { \
     const XMVECTOR a0 = (p1); \
     const XMVECTOR d0 = XMVectorSubtract(p0, a0); \
