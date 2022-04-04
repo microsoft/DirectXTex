@@ -33,10 +33,10 @@ namespace
         XALLOC_MEMTYPE_GRAPHICS_WRITECOMBINE_GPU_READONLY,
         XALLOC_PAGESIZE_64KB,
         XALLOC_ALIGNMENT_64K
-#ifdef _GAMING_XBOX
+    #ifdef _GAMING_XBOX
         , 0
-#endif
-        );
+    #endif
+    );
 }
 
 //=====================================================================================

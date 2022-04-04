@@ -91,9 +91,9 @@ using Microsoft::WRL::ComPtr;
 //--------------------------------------------------------------------------------------
 namespace
 {
-    #pragma pack(push,1)
+#pragma pack(push,1)
 
-    #define DDS_MAGIC 0x20534444 // "DDS "
+#define DDS_MAGIC 0x20534444 // "DDS "
 
     struct DDS_PIXELFORMAT
     {
@@ -107,20 +107,20 @@ namespace
         uint32_t    ABitMask;
     };
 
-    #define DDS_FOURCC      0x00000004  // DDPF_FOURCC
-    #define DDS_RGB         0x00000040  // DDPF_RGB
-    #define DDS_RGBA        0x00000041  // DDPF_RGB | DDPF_ALPHAPIXELS
-    #define DDS_LUMINANCE   0x00020000  // DDPF_LUMINANCE
-    #define DDS_LUMINANCEA  0x00020001  // DDPF_LUMINANCE | DDPF_ALPHAPIXELS
-    #define DDS_ALPHA       0x00000002  // DDPF_ALPHA
-    #define DDS_BUMPDUDV    0x00080000  // DDPF_BUMPDUDV
+#define DDS_FOURCC      0x00000004  // DDPF_FOURCC
+#define DDS_RGB         0x00000040  // DDPF_RGB
+#define DDS_RGBA        0x00000041  // DDPF_RGB | DDPF_ALPHAPIXELS
+#define DDS_LUMINANCE   0x00020000  // DDPF_LUMINANCE
+#define DDS_LUMINANCEA  0x00020001  // DDPF_LUMINANCE | DDPF_ALPHAPIXELS
+#define DDS_ALPHA       0x00000002  // DDPF_ALPHA
+#define DDS_BUMPDUDV    0x00080000  // DDPF_BUMPDUDV
 
-    #define DDS_HEADER_FLAGS_TEXTURE        0x00001007  // DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT
-    #define DDS_HEADER_FLAGS_MIPMAP         0x00020000  // DDSD_MIPMAPCOUNT
-    #define DDS_HEADER_FLAGS_PITCH          0x00000008  // DDSD_PITCH
-    #define DDS_HEADER_FLAGS_LINEARSIZE     0x00080000  // DDSD_LINEARSIZE
+#define DDS_HEADER_FLAGS_TEXTURE        0x00001007  // DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT
+#define DDS_HEADER_FLAGS_MIPMAP         0x00020000  // DDSD_MIPMAPCOUNT
+#define DDS_HEADER_FLAGS_PITCH          0x00000008  // DDSD_PITCH
+#define DDS_HEADER_FLAGS_LINEARSIZE     0x00080000  // DDSD_LINEARSIZE
 
-    #define DDS_SURFACE_FLAGS_TEXTURE 0x00001000 // DDSCAPS_TEXTURE
+#define DDS_SURFACE_FLAGS_TEXTURE 0x00001000 // DDSCAPS_TEXTURE
 
     struct DDS_HEADER
     {
@@ -149,7 +149,7 @@ namespace
         uint32_t        reserved;
     };
 
-    #pragma pack(pop)
+#pragma pack(pop)
 
     const DDS_PIXELFORMAT DDSPF_DXT1 =
     { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 };
@@ -602,13 +602,13 @@ namespace
             numBytes = rowBytes * height;
         }
 
-#if defined(_M_IX86) || defined(_M_ARM) || defined(_M_HYBRID_X86_ARM64)
+    #if defined(_M_IX86) || defined(_M_ARM) || defined(_M_HYBRID_X86_ARM64)
         static_assert(sizeof(size_t) == 4, "Not a 32-bit platform!");
         if (numBytes > UINT32_MAX || rowBytes > UINT32_MAX || numRows > UINT32_MAX)
             return HRESULT_E_ARITHMETIC_OVERFLOW;
-#else
+    #else
         static_assert(sizeof(size_t) == 8, "Not a 64-bit platform!");
-#endif
+    #endif
 
         if (outNumBytes)
         {
@@ -842,11 +842,11 @@ namespace
         // Block until the copy is complete
         while (fence->GetCompletedValue() < 1)
         {
-#ifdef WIN32
+        #ifdef WIN32
             SwitchToThread();
-#else
+        #else
             std::this_thread::yield();
-#endif
+        #endif
         }
 
         return S_OK;

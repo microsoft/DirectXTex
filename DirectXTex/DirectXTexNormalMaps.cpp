@@ -34,11 +34,11 @@ namespace
         case CNMAP_CHANNEL_ALPHA:   return XMVectorGetW(val);
 
         case CNMAP_CHANNEL_LUMINANCE:
-        {
-            const XMVECTOR v = XMVectorMultiply(val, lScale);
-            XMStoreFloat4A(&f, v);
-            return f.x + f.y + f.z;
-        }
+            {
+                const XMVECTOR v = XMVectorMultiply(val, lScale);
+                XMStoreFloat4A(&f, v);
+                return f.x + f.y + f.z;
+            }
 
         default:
             assert(false);

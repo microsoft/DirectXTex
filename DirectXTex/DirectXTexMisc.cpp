@@ -246,9 +246,9 @@ namespace
             if (!LoadScanline(sScanline, width, pSrc, spitch, srcImage.format))
                 return E_FAIL;
 
-#ifdef _DEBUG
+        #ifdef _DEBUG
             memset(dScanline, 0xCD, sizeof(XMVECTOR)*width);
-#endif
+        #endif
 
             pixelFunc(dScanline, sScanline, width, h);
 
@@ -563,33 +563,33 @@ HRESULT DirectX::EvaluateImage(
         break;
 
     case TEX_DIMENSION_TEXTURE3D:
-    {
-        size_t index = 0;
-        size_t d = metadata.depth;
-        for (size_t level = 0; level < metadata.mipLevels; ++level)
         {
-            for (size_t slice = 0; slice < d; ++slice, ++index)
+            size_t index = 0;
+            size_t d = metadata.depth;
+            for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
-                if (index >= nimages)
-                    return E_FAIL;
+                for (size_t slice = 0; slice < d; ++slice, ++index)
+                {
+                    if (index >= nimages)
+                        return E_FAIL;
 
-                const Image& img = images[index];
-                if (img.format != format)
-                    return E_FAIL;
+                    const Image& img = images[index];
+                    if (img.format != format)
+                        return E_FAIL;
 
-                if ((img.width > UINT32_MAX) || (img.height > UINT32_MAX))
-                    return E_FAIL;
+                    if ((img.width > UINT32_MAX) || (img.height > UINT32_MAX))
+                        return E_FAIL;
 
-                HRESULT hr = EvaluateImage_(img, pixelFunc);
-                if (FAILED(hr))
-                    return hr;
+                    HRESULT hr = EvaluateImage_(img, pixelFunc);
+                    if (FAILED(hr))
+                        return hr;
+                }
+
+                if (d > 1)
+                    d >>= 1;
             }
-
-            if (d > 1)
-                d >>= 1;
         }
-    }
-    break;
+        break;
 
     default:
         return E_FAIL;
@@ -710,53 +710,53 @@ HRESULT DirectX::TransformImage(
         break;
 
     case TEX_DIMENSION_TEXTURE3D:
-    {
-        size_t index = 0;
-        size_t d = metadata.depth;
-        for (size_t level = 0; level < metadata.mipLevels; ++level)
         {
-            for (size_t slice = 0; slice < d; ++slice, ++index)
+            size_t index = 0;
+            size_t d = metadata.depth;
+            for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
-                if (index >= nimages)
+                for (size_t slice = 0; slice < d; ++slice, ++index)
                 {
-                    result.Release();
-                    return E_FAIL;
+                    if (index >= nimages)
+                    {
+                        result.Release();
+                        return E_FAIL;
+                    }
+
+                    const Image& src = srcImages[index];
+                    if (src.format != metadata.format)
+                    {
+                        result.Release();
+                        return E_FAIL;
+                    }
+
+                    if ((src.width > UINT32_MAX) || (src.height > UINT32_MAX))
+                    {
+                        result.Release();
+                        return E_FAIL;
+                    }
+
+                    const Image& dst = dest[index];
+
+                    if (src.width != dst.width || src.height != dst.height)
+                    {
+                        result.Release();
+                        return E_FAIL;
+                    }
+
+                    hr = TransformImage_(src, pixelFunc, dst);
+                    if (FAILED(hr))
+                    {
+                        result.Release();
+                        return hr;
+                    }
                 }
 
-                const Image& src = srcImages[index];
-                if (src.format != metadata.format)
-                {
-                    result.Release();
-                    return E_FAIL;
-                }
-
-                if ((src.width > UINT32_MAX) || (src.height > UINT32_MAX))
-                {
-                    result.Release();
-                    return E_FAIL;
-                }
-
-                const Image& dst = dest[index];
-
-                if (src.width != dst.width || src.height != dst.height)
-                {
-                    result.Release();
-                    return E_FAIL;
-                }
-
-                hr = TransformImage_(src, pixelFunc, dst);
-                if (FAILED(hr))
-                {
-                    result.Release();
-                    return hr;
-                }
+                if (d > 1)
+                    d >>= 1;
             }
-
-            if (d > 1)
-                d >>= 1;
         }
-    }
-    break;
+        break;
 
     default:
         result.Release();

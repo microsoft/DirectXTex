@@ -59,7 +59,7 @@ using namespace DirectX;
 // Macros
 //--------------------------------------------------------------------------------------
 #ifndef MAKEFOURCC
-    #define MAKEFOURCC(ch0, ch1, ch2, ch3)                              \
+#define MAKEFOURCC(ch0, ch1, ch2, ch3)                              \
                 ((uint32_t)(uint8_t)(ch0) | ((uint32_t)(uint8_t)(ch1) << 8) |       \
                 ((uint32_t)(uint8_t)(ch2) << 16) | ((uint32_t)(uint8_t)(ch3) << 24 ))
 #endif /* defined(MAKEFOURCC) */
@@ -168,12 +168,12 @@ namespace
     template<UINT TNameLength>
     inline void SetDebugObjectName(_In_ ID3D12DeviceChild* resource, _In_z_ const wchar_t(&name)[TNameLength]) noexcept
     {
-        #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
-            resource->SetName(name);
-        #else
-            UNREFERENCED_PARAMETER(resource);
-            UNREFERENCED_PARAMETER(name);
-        #endif
+    #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
+        resource->SetName(name);
+    #else
+        UNREFERENCED_PARAMETER(resource);
+        UNREFERENCED_PARAMETER(name);
+    #endif
     }
 
     inline uint32_t CountMips(uint32_t width, uint32_t height) noexcept
@@ -274,8 +274,8 @@ namespace
 
         *bitSize = 0;
 
-#ifdef WIN32
-        // open the file
+    #ifdef WIN32
+            // open the file
         ScopedHandle hFile(safe_handle(CreateFile2(fileName,
             GENERIC_READ,
             FILE_SHARE_READ,
@@ -334,7 +334,7 @@ namespace
 
         size_t len = fileInfo.EndOfFile.LowPart;
 
-#else // !WIN32
+    #else // !WIN32
         std::ifstream inFile(std::filesystem::path(fileName), std::ios::in | std::ios::binary | std::ios::ate);
         if (!inFile)
             return E_FAIL;
@@ -358,17 +358,17 @@ namespace
             return E_FAIL;
         }
 
-       inFile.read(reinterpret_cast<char*>(ddsData.get()), fileLen);
-       if (!inFile)
-       {
-           ddsData.reset();
-           return E_FAIL;
-       }
+        inFile.read(reinterpret_cast<char*>(ddsData.get()), fileLen);
+        if (!inFile)
+        {
+            ddsData.reset();
+            return E_FAIL;
+        }
 
-       inFile.close();
+        inFile.close();
 
-       size_t len = fileLen;
-#endif
+        size_t len = fileLen;
+    #endif
 
         // DDS files always start with the same magic number ("DDS ")
         auto const dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
@@ -690,13 +690,13 @@ namespace
             numBytes = rowBytes * height;
         }
 
-#if defined(_M_IX86) || defined(_M_ARM) || defined(_M_HYBRID_X86_ARM64)
+    #if defined(_M_IX86) || defined(_M_ARM) || defined(_M_HYBRID_X86_ARM64)
         static_assert(sizeof(size_t) == 4, "Not a 32-bit platform!");
         if (numBytes > UINT32_MAX || rowBytes > UINT32_MAX || numRows > UINT32_MAX)
             return HRESULT_E_ARITHMETIC_OVERFLOW;
-#else
+    #else
         static_assert(sizeof(size_t) == 8, "Not a 64-bit platform!");
-#endif
+    #endif
 
         if (outNumBytes)
         {
@@ -716,7 +716,7 @@ namespace
 
 
     //--------------------------------------------------------------------------------------
-    #define ISBITMASK( r,g,b,a ) ( ddpf.RBitMask == r && ddpf.GBitMask == g && ddpf.BBitMask == b && ddpf.ABitMask == a )
+#define ISBITMASK( r,g,b,a ) ( ddpf.RBitMask == r && ddpf.GBitMask == g && ddpf.BBitMask == b && ddpf.ABitMask == a )
 
     DXGI_FORMAT GetDXGIFormat(const DDS_PIXELFORMAT& ddpf) noexcept
     {
@@ -983,10 +983,10 @@ namespace
         return DXGI_FORMAT_UNKNOWN;
     }
 
-    #undef ISBITMASK
+#undef ISBITMASK
 
 
-    //--------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
     DXGI_FORMAT MakeSRGB(_In_ DXGI_FORMAT format) noexcept
     {
         switch (format)
@@ -1405,8 +1405,8 @@ namespace
                 }
             }
             else if ((arraySize > D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) ||
-                     (width > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION) ||
-                     (height > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION))
+                (width > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION) ||
+                (height > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION))
             {
                 return HRESULT_E_NOT_SUPPORTED;
             }
@@ -1443,7 +1443,7 @@ namespace
 
         // Create the texture
         size_t numberOfResources = (resDim == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
-                                   ? 1 : arraySize;
+            ? 1 : arraySize;
         numberOfResources *= mipCount;
         numberOfResources *= numberOfPlanes;
 
@@ -1503,15 +1503,15 @@ namespace
     }
 
     //--------------------------------------------------------------------------------------
-    DDS_ALPHA_MODE GetAlphaMode( _In_ const DDS_HEADER* header ) noexcept
+    DDS_ALPHA_MODE GetAlphaMode(_In_ const DDS_HEADER* header) noexcept
     {
-        if ( header->ddspf.flags & DDS_FOURCC )
+        if (header->ddspf.flags & DDS_FOURCC)
         {
-            if ( MAKEFOURCC( 'D', 'X', '1', '0' ) == header->ddspf.fourCC )
+            if (MAKEFOURCC('D', 'X', '1', '0') == header->ddspf.fourCC)
             {
                 auto d3d10ext = reinterpret_cast<const DDS_HEADER_DXT10*>(reinterpret_cast<const uint8_t*>(header) + sizeof(DDS_HEADER));
-                auto const mode = static_cast<DDS_ALPHA_MODE>( d3d10ext->miscFlags2 & DDS_MISC_FLAGS2_ALPHA_MODE_MASK );
-                switch( mode )
+                auto const mode = static_cast<DDS_ALPHA_MODE>(d3d10ext->miscFlags2 & DDS_MISC_FLAGS2_ALPHA_MODE_MASK);
+                switch (mode)
                 {
                 case DDS_ALPHA_MODE_STRAIGHT:
                 case DDS_ALPHA_MODE_PREMULTIPLIED:
@@ -1524,8 +1524,8 @@ namespace
                     break;
                 }
             }
-            else if ( ( MAKEFOURCC( 'D', 'X', 'T', '2' ) == header->ddspf.fourCC )
-                      || ( MAKEFOURCC( 'D', 'X', 'T', '4' ) == header->ddspf.fourCC ) )
+            else if ((MAKEFOURCC('D', 'X', 'T', '2') == header->ddspf.fourCC)
+                || (MAKEFOURCC('D', 'X', 'T', '4') == header->ddspf.fourCC))
             {
                 return DDS_ALPHA_MODE_PREMULTIPLIED;
             }
@@ -1539,7 +1539,7 @@ namespace
         _In_z_ const wchar_t* fileName,
         _In_ ID3D12Resource** texture) noexcept
     {
-#if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
+    #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
         if (texture && *texture)
         {
             const wchar_t* pstrName = wcsrchr(fileName, '\\');
@@ -1554,10 +1554,10 @@ namespace
 
             (*texture)->SetName(pstrName);
         }
-#else
+    #else
         UNREFERENCED_PARAMETER(fileName);
         UNREFERENCED_PARAMETER(texture);
-#endif
+    #endif
     }
 } // anonymous namespace
 

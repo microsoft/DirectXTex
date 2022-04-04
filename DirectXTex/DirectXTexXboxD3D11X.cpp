@@ -72,65 +72,65 @@ HRESULT Xbox::CreateTexture(
     switch (metadata.dimension)
     {
     case DirectX::TEX_DIMENSION_TEXTURE1D:
-    {
-        D3D11_TEXTURE1D_DESC desc = {};
-        desc.Width = static_cast<UINT>(metadata.width);
-        desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
-        desc.ArraySize = static_cast<UINT>(metadata.arraySize);
-        desc.Format = metadata.format;
-        desc.Usage = D3D11_USAGE_DEFAULT;
-        desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-
-        ID3D11Texture1D* tex = nullptr;
-        hr = d3dDevice->CreatePlacementTexture1D(&desc, xbox.GetTileMode(), 0, *grfxMemory, &tex);
-        if (SUCCEEDED(hr) && tex)
         {
-            *ppResource = tex;
+            D3D11_TEXTURE1D_DESC desc = {};
+            desc.Width = static_cast<UINT>(metadata.width);
+            desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
+            desc.ArraySize = static_cast<UINT>(metadata.arraySize);
+            desc.Format = metadata.format;
+            desc.Usage = D3D11_USAGE_DEFAULT;
+            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+            ID3D11Texture1D* tex = nullptr;
+            hr = d3dDevice->CreatePlacementTexture1D(&desc, xbox.GetTileMode(), 0, *grfxMemory, &tex);
+            if (SUCCEEDED(hr) && tex)
+            {
+                *ppResource = tex;
+            }
         }
-    }
-    break;
+        break;
 
     case DirectX::TEX_DIMENSION_TEXTURE2D:
-    {
-        D3D11_TEXTURE2D_DESC desc = {};
-        desc.Width = static_cast<UINT>(metadata.width);
-        desc.Height = static_cast<UINT>(metadata.height);
-        desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
-        desc.ArraySize = static_cast<UINT>(metadata.arraySize);
-        desc.Format = metadata.format;
-        desc.SampleDesc.Count = 1;
-        desc.Usage = D3D11_USAGE_DEFAULT;
-        desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-        desc.MiscFlags = (metadata.miscFlags & DirectX::TEX_MISC_TEXTURECUBE) ? D3D11_RESOURCE_MISC_TEXTURECUBE : 0;
-
-        ID3D11Texture2D* tex = nullptr;
-        hr = d3dDevice->CreatePlacementTexture2D(&desc, xbox.GetTileMode(), 0, *grfxMemory, &tex);
-        if (SUCCEEDED(hr) && tex)
         {
-            *ppResource = tex;
+            D3D11_TEXTURE2D_DESC desc = {};
+            desc.Width = static_cast<UINT>(metadata.width);
+            desc.Height = static_cast<UINT>(metadata.height);
+            desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
+            desc.ArraySize = static_cast<UINT>(metadata.arraySize);
+            desc.Format = metadata.format;
+            desc.SampleDesc.Count = 1;
+            desc.Usage = D3D11_USAGE_DEFAULT;
+            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+            desc.MiscFlags = (metadata.miscFlags & DirectX::TEX_MISC_TEXTURECUBE) ? D3D11_RESOURCE_MISC_TEXTURECUBE : 0;
+
+            ID3D11Texture2D* tex = nullptr;
+            hr = d3dDevice->CreatePlacementTexture2D(&desc, xbox.GetTileMode(), 0, *grfxMemory, &tex);
+            if (SUCCEEDED(hr) && tex)
+            {
+                *ppResource = tex;
+            }
         }
-    }
-    break;
+        break;
 
     case DirectX::TEX_DIMENSION_TEXTURE3D:
-    {
-        D3D11_TEXTURE3D_DESC desc = {};
-        desc.Width = static_cast<UINT>(metadata.width);
-        desc.Height = static_cast<UINT>(metadata.height);
-        desc.Depth = static_cast<UINT>(metadata.depth);
-        desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
-        desc.Format = metadata.format;
-        desc.Usage = D3D11_USAGE_DEFAULT;
-        desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-
-        ID3D11Texture3D* tex = nullptr;
-        hr = d3dDevice->CreatePlacementTexture3D(&desc, xbox.GetTileMode(), 0, *grfxMemory, &tex);
-        if (SUCCEEDED(hr) && tex)
         {
-            *ppResource = tex;
+            D3D11_TEXTURE3D_DESC desc = {};
+            desc.Width = static_cast<UINT>(metadata.width);
+            desc.Height = static_cast<UINT>(metadata.height);
+            desc.Depth = static_cast<UINT>(metadata.depth);
+            desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
+            desc.Format = metadata.format;
+            desc.Usage = D3D11_USAGE_DEFAULT;
+            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+            ID3D11Texture3D* tex = nullptr;
+            hr = d3dDevice->CreatePlacementTexture3D(&desc, xbox.GetTileMode(), 0, *grfxMemory, &tex);
+            if (SUCCEEDED(hr) && tex)
+            {
+                *ppResource = tex;
+            }
         }
-    }
-    break;
+        break;
 
     default:
         hr = E_FAIL;

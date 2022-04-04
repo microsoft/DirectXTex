@@ -50,12 +50,12 @@ namespace
 
             for (size_t x = 0; x < w; ++x)
             {
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+            #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
                 UINT64 element = (packed) ? (x >> 1) : x;
                 size_t offset = computer->GetTexelElementOffsetBytes(0, level, element, 0, item, 0, nullptr);
-#else
+            #else
                 size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, item, 0);
-#endif
+            #endif
                 if (offset == size_t(-1))
                     return E_FAIL;
 
@@ -110,12 +110,12 @@ namespace
 
                 for (size_t x = 0; x < w; ++x)
                 {
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+                #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
                     UINT64 element = (packed) ? (x >> 1) : x;
                     size_t offset = computer->GetTexelElementOffsetBytes(0, level, element, y, item, 0, nullptr);
-#else
+                #else
                     size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, item, 0);
-#endif
+                #endif
                     if (offset == size_t(-1))
                         return E_FAIL;
 
@@ -165,12 +165,12 @@ namespace
 
                 for (size_t x = 0; x < w; ++x)
                 {
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+                #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
                     UINT64 element = (packed) ? (x >> 1) : x;
                     size_t offset = computer->GetTexelElementOffsetBytes(0, level, element, y, z, 0, nullptr);
-#else
+                #else
                     size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, z, 0);
-#endif
+                #endif
                     if (offset == size_t(-1))
                         return E_FAIL;
 
@@ -202,11 +202,11 @@ namespace
         wchar_t buff[2048] = {};
         swprintf_s(buff, L"XG_TEXTURE1D_DESC = { %u, %u, %u, %u, %u, %u, %u, %u, %u, %u }\n",
             desc.Width, desc.MipLevels, desc.ArraySize, desc.Format, desc.Usage, desc.BindFlags, desc.CPUAccessFlags, desc.MiscFlags,
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
             desc.SwizzleMode,
-#else
+        #else
             desc.TileMode,
-#endif
+        #endif
             desc.Pitch);
         OutputDebugStringW(buff);
     }
@@ -216,11 +216,11 @@ namespace
         wchar_t buff[2048] = {};
         swprintf_s(buff, L"XG_TEXTURE2D_DESC = { %u, %u, %u, %u, %u, { %u, %u }, %u, %u, %u, %u, %u, %u }\n",
             desc.Width, desc.Height, desc.MipLevels, desc.ArraySize, desc.Format, desc.SampleDesc.Count, desc.SampleDesc.Quality, desc.Usage, desc.BindFlags, desc.CPUAccessFlags, desc.MiscFlags,
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
             desc.SwizzleMode,
-#else
+        #else
             desc.TileMode,
-#endif
+        #endif
             desc.Pitch);
         OutputDebugStringW(buff);
     }
@@ -230,11 +230,11 @@ namespace
         wchar_t buff[2048] = {};
         swprintf_s(buff, L"XG_TEXTURE3D_DESC = { %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u }\n",
             desc.Width, desc.Height, desc.Depth, desc.MipLevels, desc.Format, desc.Usage, desc.BindFlags, desc.CPUAccessFlags, desc.MiscFlags,
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+        #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
             desc.SwizzleMode,
-#else
+        #else
             desc.TileMode,
-#endif
+        #endif
             desc.Pitch);
         OutputDebugStringW(buff);
     }
@@ -267,11 +267,11 @@ namespace
                 swprintf_s(buff, L"\t\tpitch %u pixels (%u bytes)\n", mip.PitchPixels, mip.PitchBytes);
                 OutputDebugStringW(buff);
 
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+            #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
                 swprintf_s(buff, L"\t\t\t%u samples, %u swizzlemode\n", mip.SampleCount, mip.SwizzleMode);
-#else
+            #else
                 swprintf_s(buff, L"\t\t\t%u samples, %u tilemode\n", mip.SampleCount, mip.TileMode);
-#endif
+            #endif
                 OutputDebugStringW(buff);
             }
         }
@@ -304,10 +304,10 @@ namespace
         assert(!IsCompressed(format));
 
         bool byelement = IsTypeless(format);
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
         if (nimages > 1)
             byelement = true;
-#endif
+    #endif
 
         if (IsPacked(format))
         {
@@ -343,9 +343,9 @@ namespace
             XMVECTOR* row = scanline.get();
             XMVECTOR* tiled = row + images[0]->width;
 
-#ifdef _DEBUG
+        #ifdef _DEBUG
             memset(row, 0xCD, sizeof(XMVECTOR) * images[0]->width);
-#endif
+        #endif
 
             memset(tiled, 0, sizeof(XMVECTOR) * tiledPixels);
 
@@ -367,11 +367,11 @@ namespace
 
                 for (size_t x = 0; x < img->width; ++x)
                 {
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+                #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
                     size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, item, 0, nullptr);
-#else
+                #else
                     size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, item, 0);
-#endif
+                #endif
                     if (offset == size_t(-1))
                         return E_FAIL;
 
@@ -419,10 +419,10 @@ namespace
         assert(format == xbox.GetMetadata().format);
 
         bool byelement = IsTypeless(format);
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
         if (nimages > 1)
             byelement = true;
-#endif
+    #endif
 
         if (IsCompressed(format))
         {
@@ -482,9 +482,9 @@ namespace
             XMVECTOR* row = scanline.get();
             XMVECTOR* tiled = row + images[0]->width;
 
-#ifdef _DEBUG
+        #ifdef _DEBUG
             memset(row, 0xCD, sizeof(XMVECTOR) * images[0]->width);
-#endif
+        #endif
 
             memset(tiled, 0, sizeof(XMVECTOR) * tiledPixels);
 
@@ -511,11 +511,11 @@ namespace
 
                     for (size_t x = 0; x < img->width; ++x)
                     {
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+                    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
                         size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, item, 0, nullptr);
-#else
+                    #else
                         size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, item, 0);
-#endif
+                    #endif
                         if (offset == size_t(-1))
                             return E_FAIL;
 
@@ -560,11 +560,11 @@ namespace
 
         assert(image.format == xbox.GetMetadata().format);
 
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
         const bool byelement = true;
-#else
+    #else
         const bool byelement = IsTypeless(image.format);
-#endif
+    #endif
 
         if (IsCompressed(image.format))
         {
@@ -620,9 +620,9 @@ namespace
             XMVECTOR* row = scanline.get();
             XMVECTOR* tiled = row + image.width;
 
-#ifdef _DEBUG
+        #ifdef _DEBUG
             memset(row, 0xCD, sizeof(XMVECTOR) * image.width);
-#endif
+        #endif
 
             memset(tiled, 0, sizeof(XMVECTOR) * tiledPixels);
 
@@ -641,11 +641,11 @@ namespace
 
                     for (size_t x = 0; x < image.width; ++x)
                     {
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+                    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
                         size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, z, 0, nullptr);
-#else
+                    #else
                         size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, z, 0);
-#endif
+                    #endif
                         if (offset == size_t(-1))
                             return E_FAIL;
 
@@ -722,15 +722,15 @@ HRESULT Xbox::Tile(
     if (mode == c_XboxTileModeInvalid)
     {
         // If no specific tile mode is given, assume the optimal default
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
         mode = XGComputeOptimalSwizzleMode(XG_RESOURCE_DIMENSION_TEXTURE2D, static_cast<XG_FORMAT>(srcImage.format),
             static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height),
             1, 1, XG_BIND_SHADER_RESOURCE);
-#else
+    #else
         mode = XGComputeOptimalTileMode(XG_RESOURCE_DIMENSION_TEXTURE2D, static_cast<XG_FORMAT>(srcImage.format),
             static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height),
             1, 1, XG_BIND_SHADER_RESOURCE);
-#endif
+    #endif
     }
 
     XG_TEXTURE2D_DESC desc = {};
@@ -819,18 +819,18 @@ HRESULT Xbox::Tile(
 
     if (mode == c_XboxTileModeInvalid)
     {
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
         mode = XGComputeOptimalSwizzleMode(static_cast<XG_RESOURCE_DIMENSION>(metadata.dimension), static_cast<XG_FORMAT>(metadata.format),
             static_cast<UINT>(metadata.width), static_cast<UINT>(metadata.height),
             static_cast<UINT>((metadata.dimension == TEX_DIMENSION_TEXTURE3D) ? metadata.depth : metadata.arraySize),
             1, XG_BIND_SHADER_RESOURCE);
-#else
-        // If no specific tile mode is given, assume the optimal default
+    #else
+            // If no specific tile mode is given, assume the optimal default
         mode = XGComputeOptimalTileMode(static_cast<XG_RESOURCE_DIMENSION>(metadata.dimension), static_cast<XG_FORMAT>(metadata.format),
             static_cast<UINT>(metadata.width), static_cast<UINT>(metadata.height),
             static_cast<UINT>((metadata.dimension == TEX_DIMENSION_TEXTURE3D) ? metadata.depth : metadata.arraySize),
             1, XG_BIND_SHADER_RESOURCE);
-#endif
+    #endif
     }
 
     XG_RESOURCE_LAYOUT layout = {};
@@ -838,237 +838,237 @@ HRESULT Xbox::Tile(
     switch (metadata.dimension)
     {
     case TEX_DIMENSION_TEXTURE1D:
-    {
-        XG_TEXTURE1D_DESC desc = {};
-        desc.Width = static_cast<UINT>(metadata.width);
-        desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
-        desc.ArraySize = static_cast<UINT>(metadata.arraySize);
-        desc.Format = static_cast<XG_FORMAT>(metadata.format);
-        desc.Usage = XG_USAGE_DEFAULT;
-        desc.BindFlags = XG_BIND_SHADER_RESOURCE;
-        desc.MiscFlags = (metadata.IsCubemap()) ? XG_RESOURCE_MISC_TEXTURECUBE : 0;
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-        desc.SwizzleMode = mode;
-#else
-        desc.TileMode = mode;
-#endif
-
-#ifdef VERBOSE
-        DebugPrintDesc(desc);
-#endif
-
-        ComPtr<XGTextureAddressComputer> computer;
-        HRESULT hr = XGCreateTexture1DComputer(&desc, computer.GetAddressOf());
-        if (FAILED(hr))
-            return hr;
-
-        hr = computer->GetResourceLayout(&layout);
-        if (FAILED(hr))
-            return hr;
-
-#ifdef VERBOSE
-        DebugPrintLayout(layout);
-#endif
-
-        if (layout.Planes != 1)
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
-
-        hr = xbox.Initialize(desc, layout, metadata.miscFlags2);
-        if (FAILED(hr))
-            return hr;
-
-        for (uint32_t level = 0; level < metadata.mipLevels; ++level)
         {
-            if (metadata.arraySize > 1)
+            XG_TEXTURE1D_DESC desc = {};
+            desc.Width = static_cast<UINT>(metadata.width);
+            desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
+            desc.ArraySize = static_cast<UINT>(metadata.arraySize);
+            desc.Format = static_cast<XG_FORMAT>(metadata.format);
+            desc.Usage = XG_USAGE_DEFAULT;
+            desc.BindFlags = XG_BIND_SHADER_RESOURCE;
+            desc.MiscFlags = (metadata.IsCubemap()) ? XG_RESOURCE_MISC_TEXTURECUBE : 0;
+        #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+            desc.SwizzleMode = mode;
+        #else
+            desc.TileMode = mode;
+        #endif
+
+        #ifdef VERBOSE
+            DebugPrintDesc(desc);
+        #endif
+
+            ComPtr<XGTextureAddressComputer> computer;
+            HRESULT hr = XGCreateTexture1DComputer(&desc, computer.GetAddressOf());
+            if (FAILED(hr))
+                return hr;
+
+            hr = computer->GetResourceLayout(&layout);
+            if (FAILED(hr))
+                return hr;
+
+        #ifdef VERBOSE
+            DebugPrintLayout(layout);
+        #endif
+
+            if (layout.Planes != 1)
+                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+
+            hr = xbox.Initialize(desc, layout, metadata.miscFlags2);
+            if (FAILED(hr))
+                return hr;
+
+            for (uint32_t level = 0; level < metadata.mipLevels; ++level)
             {
-                std::vector<const Image*> images;
-                images.reserve(metadata.arraySize);
-                for (uint32_t item = 0; item < metadata.arraySize; ++item)
+                if (metadata.arraySize > 1)
                 {
-                    const size_t index = metadata.ComputeIndex(level, item, 0);
+                    std::vector<const Image*> images;
+                    images.reserve(metadata.arraySize);
+                    for (uint32_t item = 0; item < metadata.arraySize; ++item)
+                    {
+                        const size_t index = metadata.ComputeIndex(level, item, 0);
+                        if (index >= nimages)
+                        {
+                            xbox.Release();
+                            return E_FAIL;
+                        }
+
+                        images.push_back(&srcImages[index]);
+                    }
+
+                    hr = Tile1D(&images[0], images.size(), level, computer.Get(), layout, xbox);
+                }
+                else
+                {
+                    const size_t index = metadata.ComputeIndex(level, 0, 0);
                     if (index >= nimages)
                     {
                         xbox.Release();
                         return E_FAIL;
                     }
 
-                    images.push_back(&srcImages[index]);
+                    const Image* images = &srcImages[index];
+                    hr = Tile1D(&images, 1, level, computer.Get(), layout, xbox);
                 }
 
-                hr = Tile1D(&images[0], images.size(), level, computer.Get(), layout, xbox);
-            }
-            else
-            {
-                const size_t index = metadata.ComputeIndex(level, 0, 0);
-                if (index >= nimages)
+                if (FAILED(hr))
                 {
                     xbox.Release();
-                    return E_FAIL;
+                    return hr;
                 }
-
-                const Image* images = &srcImages[index];
-                hr = Tile1D(&images, 1, level, computer.Get(), layout, xbox);
-            }
-
-            if (FAILED(hr))
-            {
-                xbox.Release();
-                return hr;
             }
         }
-    }
-    break;
+        break;
 
     case TEX_DIMENSION_TEXTURE2D:
-    {
-        XG_TEXTURE2D_DESC desc = {};
-        desc.Width = static_cast<UINT>(metadata.width);
-        desc.Height = static_cast<UINT>(metadata.height);
-        desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
-        desc.ArraySize = static_cast<UINT>(metadata.arraySize);
-        desc.Format = static_cast<XG_FORMAT>(metadata.format);
-        desc.SampleDesc.Count = 1;
-        desc.Usage = XG_USAGE_DEFAULT;
-        desc.BindFlags = XG_BIND_SHADER_RESOURCE;
-        desc.MiscFlags = (metadata.miscFlags & TEX_MISC_TEXTURECUBE) ? XG_RESOURCE_MISC_TEXTURECUBE : 0;
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-        desc.SwizzleMode = mode;
-#else
-        desc.TileMode = mode;
-#endif
-
-#ifdef VERBOSE
-        DebugPrintDesc(desc);
-#endif
-
-        ComPtr<XGTextureAddressComputer> computer;
-        HRESULT hr = XGCreateTexture2DComputer(&desc, computer.GetAddressOf());
-        if (FAILED(hr))
-            return hr;
-
-        hr = computer->GetResourceLayout(&layout);
-        if (FAILED(hr))
-            return hr;
-
-#ifdef VERBOSE
-        DebugPrintLayout(layout);
-#endif
-
-        if (layout.Planes != 1)
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
-
-        hr = xbox.Initialize(desc, layout, metadata.miscFlags2);
-        if (FAILED(hr))
-            return hr;
-
-        for (uint32_t level = 0; level < metadata.mipLevels; ++level)
         {
-            if (metadata.arraySize > 1)
+            XG_TEXTURE2D_DESC desc = {};
+            desc.Width = static_cast<UINT>(metadata.width);
+            desc.Height = static_cast<UINT>(metadata.height);
+            desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
+            desc.ArraySize = static_cast<UINT>(metadata.arraySize);
+            desc.Format = static_cast<XG_FORMAT>(metadata.format);
+            desc.SampleDesc.Count = 1;
+            desc.Usage = XG_USAGE_DEFAULT;
+            desc.BindFlags = XG_BIND_SHADER_RESOURCE;
+            desc.MiscFlags = (metadata.miscFlags & TEX_MISC_TEXTURECUBE) ? XG_RESOURCE_MISC_TEXTURECUBE : 0;
+        #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+            desc.SwizzleMode = mode;
+        #else
+            desc.TileMode = mode;
+        #endif
+
+        #ifdef VERBOSE
+            DebugPrintDesc(desc);
+        #endif
+
+            ComPtr<XGTextureAddressComputer> computer;
+            HRESULT hr = XGCreateTexture2DComputer(&desc, computer.GetAddressOf());
+            if (FAILED(hr))
+                return hr;
+
+            hr = computer->GetResourceLayout(&layout);
+            if (FAILED(hr))
+                return hr;
+
+        #ifdef VERBOSE
+            DebugPrintLayout(layout);
+        #endif
+
+            if (layout.Planes != 1)
+                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+
+            hr = xbox.Initialize(desc, layout, metadata.miscFlags2);
+            if (FAILED(hr))
+                return hr;
+
+            for (uint32_t level = 0; level < metadata.mipLevels; ++level)
             {
-                std::vector<const Image*> images;
-                images.reserve(metadata.arraySize);
-                for (uint32_t item = 0; item < metadata.arraySize; ++item)
+                if (metadata.arraySize > 1)
                 {
-                    const size_t index = metadata.ComputeIndex(level, item, 0);
+                    std::vector<const Image*> images;
+                    images.reserve(metadata.arraySize);
+                    for (uint32_t item = 0; item < metadata.arraySize; ++item)
+                    {
+                        const size_t index = metadata.ComputeIndex(level, item, 0);
+                        if (index >= nimages)
+                        {
+                            xbox.Release();
+                            return E_FAIL;
+                        }
+
+                        images.push_back(&srcImages[index]);
+                    }
+
+                    hr = Tile2D(&images[0], images.size(), level, computer.Get(), layout, xbox);
+                }
+                else
+                {
+                    const size_t index = metadata.ComputeIndex(level, 0, 0);
                     if (index >= nimages)
                     {
                         xbox.Release();
                         return E_FAIL;
                     }
 
-                    images.push_back(&srcImages[index]);
+                    const Image* images = &srcImages[index];
+                    hr = Tile2D(&images, 1, level, computer.Get(), layout, xbox);
                 }
 
-                hr = Tile2D(&images[0], images.size(), level, computer.Get(), layout, xbox);
+                if (FAILED(hr))
+                {
+                    xbox.Release();
+                    return hr;
+                }
             }
-            else
+        }
+        break;
+
+    case TEX_DIMENSION_TEXTURE3D:
+        {
+            XG_TEXTURE3D_DESC desc = {};
+            desc.Width = static_cast<UINT>(metadata.width);
+            desc.Height = static_cast<UINT>(metadata.height);
+            desc.Depth = static_cast<UINT>(metadata.depth);
+            desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
+            desc.Format = static_cast<XG_FORMAT>(metadata.format);
+            desc.Usage = XG_USAGE_DEFAULT;
+            desc.BindFlags = XG_BIND_SHADER_RESOURCE;
+        #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+            desc.SwizzleMode = mode;
+        #else
+            desc.TileMode = mode;
+        #endif
+
+        #ifdef VERBOSE
+            DebugPrintDesc(desc);
+        #endif
+
+            ComPtr<XGTextureAddressComputer> computer;
+            HRESULT hr = XGCreateTexture3DComputer(&desc, computer.GetAddressOf());
+            if (FAILED(hr))
+                return hr;
+
+            hr = computer->GetResourceLayout(&layout);
+            if (FAILED(hr))
+                return hr;
+
+        #ifdef VERBOSE
+            DebugPrintLayout(layout);
+        #endif
+
+            if (layout.Planes != 1)
+                return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+
+            hr = xbox.Initialize(desc, layout, metadata.miscFlags2);
+            if (FAILED(hr))
+                return hr;
+
+            uint32_t d = static_cast<uint32_t>(metadata.depth);
+
+            size_t index = 0;
+            for (uint32_t level = 0; level < metadata.mipLevels; ++level)
             {
-                const size_t index = metadata.ComputeIndex(level, 0, 0);
-                if (index >= nimages)
+                if ((index + d) > nimages)
                 {
                     xbox.Release();
                     return E_FAIL;
                 }
 
-                const Image* images = &srcImages[index];
-                hr = Tile2D(&images, 1, level, computer.Get(), layout, xbox);
-            }
+                // Relies on the fact that slices are contiguous
+                hr = Tile3D(srcImages[index], level, d, computer.Get(), layout, xbox);
+                if (FAILED(hr))
+                {
+                    xbox.Release();
+                    return hr;
+                }
 
-            if (FAILED(hr))
-            {
-                xbox.Release();
-                return hr;
+                index += d;
+
+                if (d > 1)
+                    d >>= 1;
             }
         }
-    }
-    break;
-
-    case TEX_DIMENSION_TEXTURE3D:
-    {
-        XG_TEXTURE3D_DESC desc = {};
-        desc.Width = static_cast<UINT>(metadata.width);
-        desc.Height = static_cast<UINT>(metadata.height);
-        desc.Depth = static_cast<UINT>(metadata.depth);
-        desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
-        desc.Format = static_cast<XG_FORMAT>(metadata.format);
-        desc.Usage = XG_USAGE_DEFAULT;
-        desc.BindFlags = XG_BIND_SHADER_RESOURCE;
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-        desc.SwizzleMode = mode;
-#else
-        desc.TileMode = mode;
-#endif
-
-#ifdef VERBOSE
-        DebugPrintDesc(desc);
-#endif
-
-        ComPtr<XGTextureAddressComputer> computer;
-        HRESULT hr = XGCreateTexture3DComputer(&desc, computer.GetAddressOf());
-        if (FAILED(hr))
-            return hr;
-
-        hr = computer->GetResourceLayout(&layout);
-        if (FAILED(hr))
-            return hr;
-
-#ifdef VERBOSE
-        DebugPrintLayout(layout);
-#endif
-
-        if (layout.Planes != 1)
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
-
-        hr = xbox.Initialize(desc, layout, metadata.miscFlags2);
-        if (FAILED(hr))
-            return hr;
-
-        uint32_t d = static_cast<uint32_t>(metadata.depth);
-
-        size_t index = 0;
-        for (uint32_t level = 0; level < metadata.mipLevels; ++level)
-        {
-            if ((index + d) > nimages)
-            {
-                xbox.Release();
-                return E_FAIL;
-            }
-
-            // Relies on the fact that slices are contiguous
-            hr = Tile3D(srcImages[index], level, d, computer.Get(), layout, xbox);
-            if (FAILED(hr))
-            {
-                xbox.Release();
-                return hr;
-            }
-
-            index += d;
-
-            if (d > 1)
-                d >>= 1;
-        }
-    }
-    break;
+        break;
 
     default:
         return E_FAIL;

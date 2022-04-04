@@ -311,108 +311,108 @@ HRESULT DirectX::Compress(
     {
     case TEX_DIMENSION_TEXTURE1D:
     case TEX_DIMENSION_TEXTURE2D:
-    {
-        size_t w = metadata.width;
-        size_t h = metadata.height;
-
-        for (size_t level = 0; level < metadata.mipLevels; ++level)
         {
-            hr = gpubc->Prepare(w, h, compress, format, alphaWeight);
-            if (FAILED(hr))
+            size_t w = metadata.width;
+            size_t h = metadata.height;
+
+            for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
-                cImages.Release();
-                return hr;
-            }
-
-            for (size_t item = 0; item < metadata.arraySize; ++item)
-            {
-                const size_t index = metadata.ComputeIndex(level, item, 0);
-                if (index >= nimages)
-                {
-                    cImages.Release();
-                    return E_FAIL;
-                }
-
-                assert(dest[index].format == format);
-
-                const Image& src = srcImages[index];
-
-                if (src.width != dest[index].width || src.height != dest[index].height)
-                {
-                    cImages.Release();
-                    return E_FAIL;
-                }
-
-                hr = GPUCompress(gpubc.get(), src, dest[index], compress);
+                hr = gpubc->Prepare(w, h, compress, format, alphaWeight);
                 if (FAILED(hr))
                 {
                     cImages.Release();
                     return hr;
                 }
+
+                for (size_t item = 0; item < metadata.arraySize; ++item)
+                {
+                    const size_t index = metadata.ComputeIndex(level, item, 0);
+                    if (index >= nimages)
+                    {
+                        cImages.Release();
+                        return E_FAIL;
+                    }
+
+                    assert(dest[index].format == format);
+
+                    const Image& src = srcImages[index];
+
+                    if (src.width != dest[index].width || src.height != dest[index].height)
+                    {
+                        cImages.Release();
+                        return E_FAIL;
+                    }
+
+                    hr = GPUCompress(gpubc.get(), src, dest[index], compress);
+                    if (FAILED(hr))
+                    {
+                        cImages.Release();
+                        return hr;
+                    }
+                }
+
+                if (h > 1)
+                    h >>= 1;
+
+                if (w > 1)
+                    w >>= 1;
             }
-
-            if (h > 1)
-                h >>= 1;
-
-            if (w > 1)
-                w >>= 1;
         }
-    }
-    break;
+        break;
 
     case TEX_DIMENSION_TEXTURE3D:
-    {
-        size_t w = metadata.width;
-        size_t h = metadata.height;
-        size_t d = metadata.depth;
-
-        for (size_t level = 0; level < metadata.mipLevels; ++level)
         {
-            hr = gpubc->Prepare(w, h, compress, format, alphaWeight);
-            if (FAILED(hr))
+            size_t w = metadata.width;
+            size_t h = metadata.height;
+            size_t d = metadata.depth;
+
+            for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
-                cImages.Release();
-                return hr;
-            }
-
-            for (size_t slice = 0; slice < d; ++slice)
-            {
-                const size_t index = metadata.ComputeIndex(level, 0, slice);
-                if (index >= nimages)
-                {
-                    cImages.Release();
-                    return E_FAIL;
-                }
-
-                assert(dest[index].format == format);
-
-                const Image& src = srcImages[index];
-
-                if (src.width != dest[index].width || src.height != dest[index].height)
-                {
-                    cImages.Release();
-                    return E_FAIL;
-                }
-
-                hr = GPUCompress(gpubc.get(), src, dest[index], compress);
+                hr = gpubc->Prepare(w, h, compress, format, alphaWeight);
                 if (FAILED(hr))
                 {
                     cImages.Release();
                     return hr;
                 }
+
+                for (size_t slice = 0; slice < d; ++slice)
+                {
+                    const size_t index = metadata.ComputeIndex(level, 0, slice);
+                    if (index >= nimages)
+                    {
+                        cImages.Release();
+                        return E_FAIL;
+                    }
+
+                    assert(dest[index].format == format);
+
+                    const Image& src = srcImages[index];
+
+                    if (src.width != dest[index].width || src.height != dest[index].height)
+                    {
+                        cImages.Release();
+                        return E_FAIL;
+                    }
+
+                    hr = GPUCompress(gpubc.get(), src, dest[index], compress);
+                    if (FAILED(hr))
+                    {
+                        cImages.Release();
+                        return hr;
+                    }
+                }
+
+                if (h > 1)
+                    h >>= 1;
+
+                if (w > 1)
+                    w >>= 1;
+
+                if (d > 1)
+                    d >>= 1;
             }
-
-            if (h > 1)
-                h >>= 1;
-
-            if (w > 1)
-                w >>= 1;
-
-            if (d > 1)
-                d >>= 1;
         }
-    }
-    break;
+        break;
 
     default:
         return HRESULT_E_NOT_SUPPORTED;

@@ -116,17 +116,17 @@ namespace
         auto xboxext = reinterpret_cast<const DDS_HEADER_XBOX*>(
             reinterpret_cast<const uint8_t*>(pSource) + sizeof(uint32_t) + sizeof(DDS_HEADER));
 
-#ifdef _GXDK_VER
+    #ifdef _GXDK_VER
         if (xboxext->xdkVer < _GXDK_VER)
         {
             OutputDebugStringA("WARNING: DDS XBOX file may be outdated and need regeneration\n");
         }
-#elif defined(_XDK_VER)
+    #elif defined(_XDK_VER)
         if (xboxext->xdkVer < _XDK_VER)
         {
             OutputDebugStringA("WARNING: DDS XBOX file may be outdated and need regeneration\n");
         }
-#endif
+    #endif
 
         metadata.arraySize = xboxext->arraySize;
         if (metadata.arraySize == 0)
@@ -196,17 +196,17 @@ namespace
             return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
         }
 
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
         else if (!(xboxext->tileMode & XBOX_TILEMODE_SCARLETT))
         {
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
         }
-#else
+    #else
         else if (xboxext->tileMode & XBOX_TILEMODE_SCARLETT)
         {
             return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
         }
-#endif
+    #endif
 
         static_assert(static_cast<int>(TEX_MISC2_ALPHA_MODE_MASK) == static_cast<int>(DDS_MISC_FLAGS2_ALPHA_MODE_MASK), "DDS header mismatch");
 
@@ -368,19 +368,19 @@ namespace
 
         xboxext->miscFlags2 = metadata.miscFlags2;
 
-#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
         xboxext->tileMode = static_cast<uint32_t>(xbox.GetTileMode()) | XBOX_TILEMODE_SCARLETT;
-#else
+    #else
         xboxext->tileMode = static_cast<uint32_t>(xbox.GetTileMode());
-#endif
+    #endif
 
         xboxext->baseAlignment = xbox.GetAlignment();
         xboxext->dataSize = xbox.GetSize();
-#ifdef _GXDK_VER
+    #ifdef _GXDK_VER
         xboxext->xdkVer = _GXDK_VER;
-#elif defined(_XDK_VER)
+    #elif defined(_XDK_VER)
         xboxext->xdkVer = _XDK_VER;
-#endif
+    #endif
 
         return S_OK;
     }

@@ -13,6 +13,8 @@ project (DirectXTex
 
 option(BUILD_TOOLS "Build tex command-line tools" ON)
 
+option(BUILD_SAMPLE "Build DDSView sample" ON)
+
 # Includes the functions for Direct3D 11 resources and DirectCompute compression
 option(BUILD_DX11 "Build with DirectX11 Runtime support" ON)
 
@@ -287,6 +289,32 @@ if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
   endif()
 endif()
 
+#--- DDSView sample
+if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
+  list(APPEND TOOL_EXES ddsview)
+
+  add_executable(ddsview WIN32
+    DDSView/ddsview.cpp
+    DDSView/ddsview.rc
+    ${COMPILED_SHADERS}/ddsview_ps1D.inc)
+  target_link_libraries(ddsview ${PROJECT_NAME} d3d11.lib)
+  source_group(ddsview REGULAR_EXPRESSION DDSView/*.*)
+
+  target_include_directories(ddsview PRIVATE ${COMPILED_SHADERS})
+
+  if (NOT USE_PREBUILT_SHADERS)
+      add_custom_command(
+            OUTPUT "${COMPILED_SHADERS}/ddsview_ps1D.inc"
+            MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DDSView/hlsl.cmd"
+            DEPENDS "${PROJECT_SOURCE_DIR}/DDSView/ddsview.fx"
+            COMMENT "Generating HLSL shaders for DDSView..."
+            COMMAND set CompileShadersOutput=${COMPILED_SHADERS}
+            COMMAND hlsl.cmd
+            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DDSView"
+            USES_TERMINAL)
+  endif()
+endif()
+
 if(MSVC)
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
       target_compile_options(${t} PRIVATE /fp:fast "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
@@ -307,7 +335,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 
     # OpenMP is not supported for clang for Windows by default
 
-    set(WarningsEXE ${WarningsLib} "-Wno-c++98-compat" "-Wno-c++98-compat-pedantic" "-Wno-switch" "-Wno-switch-enum" "-Wno-language-extension-token" "-Wno-missing-prototypes" "-Wno-global-constructors" "-Wno-double-promotion")
+    set(WarningsEXE ${WarningsLib} "-Wno-c++98-compat" "-Wno-c++98-compat-pedantic" "-Wno-switch" "-Wno-switch-enum" "-Wno-covered-switch-default" "-Wno-language-extension-token" "-Wno-missing-prototypes" "-Wno-global-constructors" "-Wno-double-promotion")
     foreach(t IN LISTS TOOL_EXES)
       target_compile_options(${t} PRIVATE ${WarningsEXE})
     endforeach()
@@ -358,7 +386,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 
 if(WIN32)
-    foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+    foreach(t IN LISTS TOOL_EXES)
       target_compile_definitions(${t} PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0601)
     endforeach()
 

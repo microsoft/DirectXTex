@@ -107,7 +107,7 @@ namespace
         const GUID& target;
     };
 
-    constexpr WICConvert g_WICConvert [] =
+    constexpr WICConvert g_WICConvert[] =
     {
         // Note target GUID in this conversion table must be one of those directly supported formats (above).
 
@@ -198,12 +198,12 @@ namespace
     template<UINT TNameLength>
     inline void SetDebugObjectName(_In_ ID3D12DeviceChild* resource, _In_z_ const wchar_t(&name)[TNameLength]) noexcept
     {
-        #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
-            resource->SetName(name);
-        #else
-            UNREFERENCED_PARAMETER(resource);
-            UNREFERENCED_PARAMETER(name);
-        #endif
+    #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
+        resource->SetName(name);
+    #else
+        UNREFERENCED_PARAMETER(resource);
+        UNREFERENCED_PARAMETER(name);
+    #endif
     }
 
     inline uint32_t CountMips(uint32_t width, uint32_t height) noexcept
@@ -634,7 +634,7 @@ namespace
         _In_z_ const wchar_t* fileName,
         _In_ ID3D12Resource** texture) noexcept
     {
-#if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
+    #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
         if (texture && *texture)
         {
             const wchar_t* pstrName = wcsrchr(fileName, '\\');
@@ -649,10 +649,10 @@ namespace
 
             (*texture)->SetName(pstrName);
         }
-#else
+    #else
         UNREFERENCED_PARAMETER(fileName);
         UNREFERENCED_PARAMETER(texture);
-#endif
+    #endif
     }
 } // anonymous namespace
 

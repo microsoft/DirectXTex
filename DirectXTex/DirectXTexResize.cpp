@@ -189,14 +189,14 @@ namespace
             return false;
         }
 
-#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+    #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
         if (format == DXGI_FORMAT_R16G16B16A16_FLOAT
             || format == DXGI_FORMAT_R16_FLOAT)
         {
             // Use non-WIC code paths as these conversions are not supported by Xbox version of WIC
             return false;
         }
-#endif
+    #endif
 
         static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
@@ -258,9 +258,9 @@ namespace
 
         XMVECTOR* row = target + destImage.width;
 
-#ifdef _DEBUG
+    #ifdef _DEBUG
         memset(row, 0xCD, sizeof(XMVECTOR)*srcImage.width);
-#endif
+    #endif
 
         const uint8_t* pSrc = srcImage.pixels;
         uint8_t* pDest = destImage.pixels;
@@ -321,10 +321,10 @@ namespace
         XMVECTOR* urow0 = target + destImage.width;
         XMVECTOR* urow1 = urow0 + srcImage.width;
 
-#ifdef _DEBUG
+    #ifdef _DEBUG
         memset(urow0, 0xCD, sizeof(XMVECTOR)*srcImage.width);
         memset(urow1, 0xDD, sizeof(XMVECTOR)*srcImage.width);
-#endif
+    #endif
 
         const XMVECTOR* urow2 = urow0 + 1;
         const XMVECTOR* urow3 = urow1 + 1;
@@ -391,10 +391,10 @@ namespace
         XMVECTOR* row0 = target + destImage.width;
         XMVECTOR* row1 = row0 + srcImage.width;
 
-#ifdef _DEBUG
+    #ifdef _DEBUG
         memset(row0, 0xCD, sizeof(XMVECTOR)*srcImage.width);
         memset(row1, 0xDD, sizeof(XMVECTOR)*srcImage.width);
-#endif
+    #endif
 
         const uint8_t* pSrc = srcImage.pixels;
         uint8_t* pDest = destImage.pixels;
@@ -451,6 +451,10 @@ namespace
 
 
     //--- Cubic Filter ---
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wextra-semi-stmt"
+#endif
+
     HRESULT ResizeCubicFilter(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
         using namespace DirectX::Filters;
@@ -480,12 +484,12 @@ namespace
         XMVECTOR* row2 = row0 + srcImage.width * 2;
         XMVECTOR* row3 = row0 + srcImage.width * 3;
 
-#ifdef _DEBUG
+    #ifdef _DEBUG
         memset(row0, 0xCD, sizeof(XMVECTOR)*srcImage.width);
         memset(row1, 0xDD, sizeof(XMVECTOR)*srcImage.width);
         memset(row2, 0xED, sizeof(XMVECTOR)*srcImage.width);
         memset(row3, 0xFD, sizeof(XMVECTOR)*srcImage.width);
-#endif
+    #endif
 
         const uint8_t* pSrc = srcImage.pixels;
         uint8_t* pDest = destImage.pixels;
@@ -594,12 +598,12 @@ namespace
 
                 XMVECTOR C0, C1, C2, C3;
 
-                CUBIC_INTERPOLATE(C0, toX.x, row0[toX.u0], row0[toX.u1], row0[toX.u2], row0[toX.u3])
-                CUBIC_INTERPOLATE(C1, toX.x, row1[toX.u0], row1[toX.u1], row1[toX.u2], row1[toX.u3])
-                CUBIC_INTERPOLATE(C2, toX.x, row2[toX.u0], row2[toX.u1], row2[toX.u2], row2[toX.u3])
-                CUBIC_INTERPOLATE(C3, toX.x, row3[toX.u0], row3[toX.u1], row3[toX.u2], row3[toX.u3])
+                CUBIC_INTERPOLATE(C0, toX.x, row0[toX.u0], row0[toX.u1], row0[toX.u2], row0[toX.u3]);
+                CUBIC_INTERPOLATE(C1, toX.x, row1[toX.u0], row1[toX.u1], row1[toX.u2], row1[toX.u3]);
+                CUBIC_INTERPOLATE(C2, toX.x, row2[toX.u0], row2[toX.u1], row2[toX.u2], row2[toX.u3]);
+                CUBIC_INTERPOLATE(C3, toX.x, row3[toX.u0], row3[toX.u1], row3[toX.u2], row3[toX.u3]);
 
-                CUBIC_INTERPOLATE(target[x], toY.x, C0, C1, C2, C3)
+                CUBIC_INTERPOLATE(target[x], toY.x, C0, C1, C2, C3);
             }
 
             if (!StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter))
@@ -642,9 +646,9 @@ namespace
 
         XMVECTOR* row = scanline.get();
 
-#ifdef _DEBUG
+    #ifdef _DEBUG
         memset(row, 0xCD, sizeof(XMVECTOR)*srcImage.width);
-#endif
+    #endif
 
         auto xFromEnd = reinterpret_cast<const FilterFrom*>(reinterpret_cast<const uint8_t*>(tfX.get()) + tfX->sizeInBytes);
         auto yFromEnd = reinterpret_cast<const FilterFrom*>(reinterpret_cast<const uint8_t*>(tfY.get()) + tfY->sizeInBytes);
@@ -757,18 +761,18 @@ namespace
                     {
                     case DXGI_FORMAT_R10G10B10A2_UNORM:
                     case DXGI_FORMAT_R10G10B10A2_UINT:
-                    {
-                        // Need to slightly bias results for floating-point error accumulation which can
-                        // be visible with harshly quantized values
-                        static const XMVECTORF32 Bias = { { { 0.f, 0.f, 0.f, 0.1f } } };
-
-                        XMVECTOR* ptr = pAccSrc;
-                        for (size_t i = 0; i < destImage.width; ++i, ++ptr)
                         {
-                            *ptr = XMVectorAdd(*ptr, Bias);
+                            // Need to slightly bias results for floating-point error accumulation which can
+                            // be visible with harshly quantized values
+                            static const XMVECTORF32 Bias = { { { 0.f, 0.f, 0.f, 0.1f } } };
+
+                            XMVECTOR* ptr = pAccSrc;
+                            for (size_t i = 0; i < destImage.width; ++i, ++ptr)
+                            {
+                                *ptr = XMVectorAdd(*ptr, Bias);
+                            }
                         }
-                    }
-                    break;
+                        break;
 
                     default:
                         break;
@@ -908,7 +912,7 @@ HRESULT DirectX::Resize(
         }
     }
     else
-#endif
+    #endif
     {
         // Case 3: not using WIC resizing
         hr = PerformResizeUsingCustomFilters(srcImage, filter, *rimage);
@@ -1007,7 +1011,7 @@ HRESULT DirectX::Resize(
                 return E_FAIL;
             }
 
-#ifdef WIN32
+        #ifdef WIN32
             if (usewic)
             {
                 if (wicpf)
@@ -1022,7 +1026,7 @@ HRESULT DirectX::Resize(
                 }
             }
             else
-#endif
+            #endif
             {
                 // Case 3: not using WIC resizing
                 hr = PerformResizeUsingCustomFilters(*srcimg, filter, *destimg);
@@ -1068,7 +1072,7 @@ HRESULT DirectX::Resize(
                 return E_FAIL;
             }
 
-#ifdef WIN32
+        #ifdef WIN32
             if (usewic)
             {
                 if (wicpf)
@@ -1083,7 +1087,7 @@ HRESULT DirectX::Resize(
                 }
             }
             else
-#endif
+            #endif
             {
                 // Case 3: not using WIC resizing
                 hr = PerformResizeUsingCustomFilters(*srcimg, filter, *destimg);

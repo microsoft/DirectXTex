@@ -839,9 +839,9 @@ namespace
 
         wprintf(L"Microsoft (R) DirectX Texture Converter [DirectXTex] Version %ls\n", version);
         wprintf(L"Copyright (C) Microsoft Corp.\n");
-#ifdef _DEBUG
+    #ifdef _DEBUG
         wprintf(L"*** Debug build ***\n");
-#endif
+    #endif
         wprintf(L"\n");
     }
 
@@ -928,9 +928,9 @@ namespace
         wprintf(L"   -wicmulti           When writing images with WIC encode multiframe images\n");
         wprintf(L"\n   -nologo             suppress copyright message\n");
         wprintf(L"   -timing             Display elapsed processing time\n\n");
-#ifdef _OPENMP
+    #ifdef _OPENMP
         wprintf(L"   -singleproc         Do not use multi-threaded compression\n");
-#endif
+    #endif
         wprintf(L"   -gpu <adapter>      Select GPU for DirectCompute-based codecs (0 is default)\n");
         wprintf(L"   -nogpu              Do not use DirectCompute-based codecs\n");
         wprintf(
@@ -1043,9 +1043,9 @@ namespace
         };
 
         UINT createDeviceFlags = 0;
-#ifdef _DEBUG
+    #ifdef _DEBUG
         createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
+    #endif
 
         ComPtr<IDXGIAdapter> pAdapter;
         if (adapter >= 0)
@@ -1614,62 +1614,62 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_NORMAL_MAP:
-            {
-                dwNormalMap = CNMAP_DEFAULT;
+                {
+                    dwNormalMap = CNMAP_DEFAULT;
 
-                if (wcschr(pValue, L'l'))
-                {
-                    dwNormalMap |= CNMAP_CHANNEL_LUMINANCE;
-                }
-                else if (wcschr(pValue, L'r'))
-                {
-                    dwNormalMap |= CNMAP_CHANNEL_RED;
-                }
-                else if (wcschr(pValue, L'g'))
-                {
-                    dwNormalMap |= CNMAP_CHANNEL_GREEN;
-                }
-                else if (wcschr(pValue, L'b'))
-                {
-                    dwNormalMap |= CNMAP_CHANNEL_BLUE;
-                }
-                else if (wcschr(pValue, L'a'))
-                {
-                    dwNormalMap |= CNMAP_CHANNEL_ALPHA;
-                }
-                else
-                {
-                    wprintf(L"Invalid value specified for -nmap (%ls), missing l, r, g, b, or a\n\n", pValue);
-                    return 1;
-                }
-
-                if (wcschr(pValue, L'm'))
-                {
-                    dwNormalMap |= CNMAP_MIRROR;
-                }
-                else
-                {
-                    if (wcschr(pValue, L'u'))
+                    if (wcschr(pValue, L'l'))
                     {
-                        dwNormalMap |= CNMAP_MIRROR_U;
+                        dwNormalMap |= CNMAP_CHANNEL_LUMINANCE;
                     }
-                    if (wcschr(pValue, L'v'))
+                    else if (wcschr(pValue, L'r'))
                     {
-                        dwNormalMap |= CNMAP_MIRROR_V;
+                        dwNormalMap |= CNMAP_CHANNEL_RED;
+                    }
+                    else if (wcschr(pValue, L'g'))
+                    {
+                        dwNormalMap |= CNMAP_CHANNEL_GREEN;
+                    }
+                    else if (wcschr(pValue, L'b'))
+                    {
+                        dwNormalMap |= CNMAP_CHANNEL_BLUE;
+                    }
+                    else if (wcschr(pValue, L'a'))
+                    {
+                        dwNormalMap |= CNMAP_CHANNEL_ALPHA;
+                    }
+                    else
+                    {
+                        wprintf(L"Invalid value specified for -nmap (%ls), missing l, r, g, b, or a\n\n", pValue);
+                        return 1;
+                    }
+
+                    if (wcschr(pValue, L'm'))
+                    {
+                        dwNormalMap |= CNMAP_MIRROR;
+                    }
+                    else
+                    {
+                        if (wcschr(pValue, L'u'))
+                        {
+                            dwNormalMap |= CNMAP_MIRROR_U;
+                        }
+                        if (wcschr(pValue, L'v'))
+                        {
+                            dwNormalMap |= CNMAP_MIRROR_V;
+                        }
+                    }
+
+                    if (wcschr(pValue, L'i'))
+                    {
+                        dwNormalMap |= CNMAP_INVERT_SIGN;
+                    }
+
+                    if (wcschr(pValue, L'o'))
+                    {
+                        dwNormalMap |= CNMAP_COMPUTE_OCCLUSION;
                     }
                 }
-
-                if (wcschr(pValue, L'i'))
-                {
-                    dwNormalMap |= CNMAP_INVERT_SIGN;
-                }
-
-                if (wcschr(pValue, L'o'))
-                {
-                    dwNormalMap |= CNMAP_COMPUTE_OCCLUSION;
-                }
-            }
-            break;
+                break;
 
             case OPT_NORMAL_MAP_AMPLITUDE:
                 if (!dwNormalMap)
@@ -1750,48 +1750,48 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_BC_COMPRESS:
-            {
-                dwCompress = TEX_COMPRESS_DEFAULT;
-
-                bool found = false;
-                if (wcschr(pValue, L'u'))
                 {
-                    dwCompress |= TEX_COMPRESS_UNIFORM;
-                    found = true;
-                }
+                    dwCompress = TEX_COMPRESS_DEFAULT;
 
-                if (wcschr(pValue, L'd'))
-                {
-                    dwCompress |= TEX_COMPRESS_DITHER;
-                    found = true;
-                }
+                    bool found = false;
+                    if (wcschr(pValue, L'u'))
+                    {
+                        dwCompress |= TEX_COMPRESS_UNIFORM;
+                        found = true;
+                    }
 
-                if (wcschr(pValue, L'q'))
-                {
-                    dwCompress |= TEX_COMPRESS_BC7_QUICK;
-                    found = true;
-                }
+                    if (wcschr(pValue, L'd'))
+                    {
+                        dwCompress |= TEX_COMPRESS_DITHER;
+                        found = true;
+                    }
 
-                if (wcschr(pValue, L'x'))
-                {
-                    dwCompress |= TEX_COMPRESS_BC7_USE_3SUBSETS;
-                    found = true;
-                }
+                    if (wcschr(pValue, L'q'))
+                    {
+                        dwCompress |= TEX_COMPRESS_BC7_QUICK;
+                        found = true;
+                    }
 
-                if ((dwCompress & (TEX_COMPRESS_BC7_QUICK | TEX_COMPRESS_BC7_USE_3SUBSETS)) == (TEX_COMPRESS_BC7_QUICK | TEX_COMPRESS_BC7_USE_3SUBSETS))
-                {
-                    wprintf(L"Can't use -bc x (max) and -bc q (quick) at same time\n\n");
-                    PrintUsage();
-                    return 1;
-                }
+                    if (wcschr(pValue, L'x'))
+                    {
+                        dwCompress |= TEX_COMPRESS_BC7_USE_3SUBSETS;
+                        found = true;
+                    }
 
-                if (!found)
-                {
-                    wprintf(L"Invalid value specified for -bc (%ls), missing d, u, q, or x\n\n", pValue);
-                    return 1;
+                    if ((dwCompress & (TEX_COMPRESS_BC7_QUICK | TEX_COMPRESS_BC7_USE_3SUBSETS)) == (TEX_COMPRESS_BC7_QUICK | TEX_COMPRESS_BC7_USE_3SUBSETS))
+                    {
+                        wprintf(L"Can't use -bc x (max) and -bc q (quick) at same time\n\n");
+                        PrintUsage();
+                        return 1;
+                    }
+
+                    if (!found)
+                    {
+                        wprintf(L"Invalid value specified for -bc (%ls), missing d, u, q, or x\n\n", pValue);
+                        return 1;
+                    }
                 }
-            }
-            break;
+                break;
 
             case OPT_WIC_QUALITY:
                 if (swscanf_s(pValue, L"%f", &wicQuality) != 1
@@ -1856,19 +1856,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_FILELIST:
-            {
-                std::wifstream inFile(pValue);
-                if (!inFile)
                 {
-                    wprintf(L"Error opening -flist file %ls\n", pValue);
-                    return 1;
+                    std::wifstream inFile(pValue);
+                    if (!inFile)
+                    {
+                        wprintf(L"Error opening -flist file %ls\n", pValue);
+                        return 1;
+                    }
+
+                    inFile.imbue(std::locale::classic());
+
+                    ProcessFileList(inFile, conversion);
                 }
-
-                inFile.imbue(std::locale::classic());
-
-                ProcessFileList(inFile, conversion);
-            }
-            break;
+                break;
 
             case OPT_PAPER_WHITE_NITS:
                 if (swscanf_s(pValue, L"%f", &paperWhiteNits) != 1)
@@ -2088,7 +2088,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 continue;
             }
         }
-#ifdef USE_OPENEXR
+    #ifdef USE_OPENEXR
         else if (_wcsicmp(ext, L".exr") == 0)
         {
             hr = LoadFromEXRFile(pConv->szSrc, &info, *image);
@@ -2099,7 +2099,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 continue;
             }
         }
-#endif
+    #endif
         else
         {
             // WIC shares the same filter values for mode and dither
@@ -2489,9 +2489,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-#ifndef NDEBUG
+        #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-#endif
+        #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2526,9 +2526,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-#ifndef NDEBUG
+            #ifndef NDEBUG
                 auto& tinfo = timage->GetMetadata();
-#endif
+            #endif
 
                 assert(tinfo.format == DXGI_FORMAT_R16G16B16A16_FLOAT);
                 info.format = DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -2759,9 +2759,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-#ifndef NDEBUG
+        #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-#endif
+        #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2839,9 +2839,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-#ifndef NDEBUG
+        #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-#endif
+        #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2986,9 +2986,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-#ifndef NDEBUG
+        #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-#endif
+        #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -3035,9 +3035,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-#ifndef NDEBUG
+        #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-#endif
+        #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -3066,39 +3066,39 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
                 [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
-            {
-                static const XMVECTORU32 s_selectz = { { { XM_SELECT_0, XM_SELECT_0, XM_SELECT_1, XM_SELECT_0 } } };
-
-                UNREFERENCED_PARAMETER(y);
-
-                for (size_t j = 0; j < w; ++j)
                 {
-                    const XMVECTOR value = inPixels[j];
+                    static const XMVECTORU32 s_selectz = { { { XM_SELECT_0, XM_SELECT_0, XM_SELECT_1, XM_SELECT_0 } } };
 
-                    XMVECTOR z;
-                    if (isunorm)
-                    {
-                        XMVECTOR x2 = XMVectorMultiplyAdd(value, g_XMTwo, g_XMNegativeOne);
-                        x2 = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(x2, x2)));
-                        z = XMVectorMultiplyAdd(x2, g_XMOneHalf, g_XMOneHalf);
-                    }
-                    else
-                    {
-                        z = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(value, value)));
-                    }
+                    UNREFERENCED_PARAMETER(y);
 
-                    outPixels[j] = XMVectorSelect(value, z, s_selectz);
-                }
-            }, *timage);
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        const XMVECTOR value = inPixels[j];
+
+                        XMVECTOR z;
+                        if (isunorm)
+                        {
+                            XMVECTOR x2 = XMVectorMultiplyAdd(value, g_XMTwo, g_XMNegativeOne);
+                            x2 = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(x2, x2)));
+                            z = XMVectorMultiplyAdd(x2, g_XMOneHalf, g_XMOneHalf);
+                        }
+                        else
+                        {
+                            z = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(value, value)));
+                        }
+
+                        outPixels[j] = XMVectorSelect(value, z, s_selectz);
+                    }
+                }, *timage);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED [reconstructz] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
-#ifndef NDEBUG
+        #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-#endif
+        #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -3298,9 +3298,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
             }
 
-#ifndef NDEBUG
+        #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-#endif
+        #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -3435,12 +3435,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
 
                 TEX_COMPRESS_FLAGS cflags = dwCompress;
-#ifdef _OPENMP
+            #ifdef _OPENMP
                 if (!(dwOptions & (uint64_t(1) << OPT_FORCE_SINGLEPROC)))
                 {
                     cflags |= TEX_COMPRESS_PARALLEL;
                 }
-#endif
+            #endif
 
                 if ((img->width % 4) != 0 || (img->height % 4) != 0)
                 {
@@ -3592,20 +3592,20 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             switch (FileType)
             {
             case CODEC_DDS:
-            {
-                DDS_FLAGS ddsFlags = DDS_FLAGS_NONE;
-                if (dwOptions & (uint64_t(1) << OPT_USE_DX10))
                 {
-                    ddsFlags |= DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2;
-                }
-                else if (dwOptions & (uint64_t(1) << OPT_USE_DX9))
-                {
-                    ddsFlags |= DDS_FLAGS_FORCE_DX9_LEGACY;
-                }
+                    DDS_FLAGS ddsFlags = DDS_FLAGS_NONE;
+                    if (dwOptions & (uint64_t(1) << OPT_USE_DX10))
+                    {
+                        ddsFlags |= DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2;
+                    }
+                    else if (dwOptions & (uint64_t(1) << OPT_USE_DX9))
+                    {
+                        ddsFlags |= DDS_FLAGS_FORCE_DX9_LEGACY;
+                    }
 
-                hr = SaveToDDSFile(img, nimg, info, ddsFlags, szDest);
-                break;
-            }
+                    hr = SaveToDDSFile(img, nimg, info, ddsFlags, szDest);
+                    break;
+                }
 
             case CODEC_TGA:
                 hr = SaveToTGAFile(img[0], TGA_FLAGS_NONE, szDest, (dwOptions & (uint64_t(1) << OPT_TGA20)) ? &info : nullptr);
@@ -3623,80 +3623,80 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = SaveToPortablePixMapHDR(img[0], szDest);
                 break;
 
-#ifdef USE_OPENEXR
+            #ifdef USE_OPENEXR
             case CODEC_EXR:
                 hr = SaveToEXRFile(img[0], szDest);
                 break;
-#endif
+            #endif
 
             default:
-            {
-                const WICCodecs codec = (FileType == CODEC_HDP || FileType == CODEC_JXR) ? WIC_CODEC_WMP : static_cast<WICCodecs>(FileType);
-                const size_t nimages = (dwOptions & (uint64_t(1) << OPT_WIC_MULTIFRAME)) ? nimg : 1;
-                hr = SaveToWICFile(img, nimages, WIC_FLAGS_NONE, GetWICCodec(codec), szDest, nullptr,
-                    [&](IPropertyBag2* props)
-                    {
-                        const bool wicLossless = (dwOptions & (uint64_t(1) << OPT_WIC_LOSSLESS)) != 0;
-
-                        switch (FileType)
+                {
+                    const WICCodecs codec = (FileType == CODEC_HDP || FileType == CODEC_JXR) ? WIC_CODEC_WMP : static_cast<WICCodecs>(FileType);
+                    const size_t nimages = (dwOptions & (uint64_t(1) << OPT_WIC_MULTIFRAME)) ? nimg : 1;
+                    hr = SaveToWICFile(img, nimages, WIC_FLAGS_NONE, GetWICCodec(codec), szDest, nullptr,
+                        [&](IPropertyBag2* props)
                         {
-                        case WIC_CODEC_JPEG:
-                            if (wicLossless || wicQuality >= 0.f)
-                            {
-                                PROPBAG2 options = {};
-                                VARIANT varValues = {};
-                                options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
-                                varValues.vt = VT_R4;
-                                varValues.fltVal = (wicLossless) ? 1.f : wicQuality;
-                                std::ignore = props->Write(1, &options, &varValues);
-                            }
-                            break;
+                            const bool wicLossless = (dwOptions & (uint64_t(1) << OPT_WIC_LOSSLESS)) != 0;
 
-                        case WIC_CODEC_TIFF:
-                        {
-                            PROPBAG2 options = {};
-                            VARIANT varValues = {};
-                            if (wicLossless)
+                            switch (FileType)
                             {
-                                options.pstrName = const_cast<wchar_t*>(L"TiffCompressionMethod");
-                                varValues.vt = VT_UI1;
-                                varValues.bVal = WICTiffCompressionNone;
-                            }
-                            else if (wicQuality >= 0.f)
-                            {
-                                options.pstrName = const_cast<wchar_t*>(L"CompressionQuality");
-                                varValues.vt = VT_R4;
-                                varValues.fltVal = wicQuality;
-                            }
-                            std::ignore = props->Write(1, &options, &varValues);
-                        }
-                        break;
+                            case WIC_CODEC_JPEG:
+                                if (wicLossless || wicQuality >= 0.f)
+                                {
+                                    PROPBAG2 options = {};
+                                    VARIANT varValues = {};
+                                    options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
+                                    varValues.vt = VT_R4;
+                                    varValues.fltVal = (wicLossless) ? 1.f : wicQuality;
+                                    std::ignore = props->Write(1, &options, &varValues);
+                                }
+                                break;
 
-                        case WIC_CODEC_WMP:
-                        case CODEC_HDP:
-                        case CODEC_JXR:
-                        {
-                            PROPBAG2 options = {};
-                            VARIANT varValues = {};
-                            if (wicLossless)
-                            {
-                                options.pstrName = const_cast<wchar_t*>(L"Lossless");
-                                varValues.vt = VT_BOOL;
-                                varValues.bVal = TRUE;
+                            case WIC_CODEC_TIFF:
+                                {
+                                    PROPBAG2 options = {};
+                                    VARIANT varValues = {};
+                                    if (wicLossless)
+                                    {
+                                        options.pstrName = const_cast<wchar_t*>(L"TiffCompressionMethod");
+                                        varValues.vt = VT_UI1;
+                                        varValues.bVal = WICTiffCompressionNone;
+                                    }
+                                    else if (wicQuality >= 0.f)
+                                    {
+                                        options.pstrName = const_cast<wchar_t*>(L"CompressionQuality");
+                                        varValues.vt = VT_R4;
+                                        varValues.fltVal = wicQuality;
+                                    }
+                                    std::ignore = props->Write(1, &options, &varValues);
+                                }
+                                break;
+
+                            case WIC_CODEC_WMP:
+                            case CODEC_HDP:
+                            case CODEC_JXR:
+                                {
+                                    PROPBAG2 options = {};
+                                    VARIANT varValues = {};
+                                    if (wicLossless)
+                                    {
+                                        options.pstrName = const_cast<wchar_t*>(L"Lossless");
+                                        varValues.vt = VT_BOOL;
+                                        varValues.bVal = TRUE;
+                                    }
+                                    else if (wicQuality >= 0.f)
+                                    {
+                                        options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
+                                        varValues.vt = VT_R4;
+                                        varValues.fltVal = wicQuality;
+                                    }
+                                    std::ignore = props->Write(1, &options, &varValues);
+                                }
+                                break;
                             }
-                            else if (wicQuality >= 0.f)
-                            {
-                                options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
-                                varValues.vt = VT_R4;
-                                varValues.fltVal = wicQuality;
-                            }
-                            std::ignore = props->Write(1, &options, &varValues);
-                        }
-                        break;
-                        }
-                    });
-            }
-            break;
+                        });
+                }
+                break;
             }
 
             if (FAILED(hr))

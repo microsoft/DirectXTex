@@ -95,7 +95,7 @@ namespace
         const GUID& target;
     };
 
-    constexpr WICConvert g_WICConvert [] =
+    constexpr WICConvert g_WICConvert[] =
     {
         // Note target GUID in this conversion table must be one of those directly supported formats (above).
 
@@ -161,7 +161,7 @@ namespace
     //--------------------------------------------------------------------------------------
     BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID* ifactory) noexcept
     {
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+    #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         HRESULT hr = CoCreateInstance(
             CLSID_WICImagingFactory2,
             nullptr,
@@ -187,14 +187,14 @@ namespace
             );
             return SUCCEEDED(hr) ? TRUE : FALSE;
         }
-#else
+    #else
         return SUCCEEDED(CoCreateInstance(
             CLSID_WICImagingFactory,
             nullptr,
             CLSCTX_INPROC_SERVER,
             __uuidof(IWICImagingFactory),
             ifactory)) ? TRUE : FALSE;
-#endif
+    #endif
     }
 
     IWICImagingFactory* GetWIC() noexcept

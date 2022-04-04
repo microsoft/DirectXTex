@@ -158,7 +158,7 @@ namespace
                         {
                             for (size_t s = pw; s < 4; ++s)
                             {
-#pragma prefast(suppress: 26000, "PREFAST false positive")
+                            #pragma prefast(suppress: 26000, "PREFAST false positive")
                                 temp[(t << 2) | s] = temp[(t << 2) | uSrc[s]];
                             }
                         }
@@ -170,7 +170,7 @@ namespace
                         {
                             for (size_t s = 0; s < 4; ++s)
                             {
-#pragma prefast(suppress: 26000, "PREFAST false positive")
+                            #pragma prefast(suppress: 26000, "PREFAST false positive")
                                 temp[(t << 2) | s] = temp[(uSrc[t] << 2) | s];
                             }
                         }
@@ -239,7 +239,7 @@ namespace
 
         bool fail = false;
 
-#pragma omp parallel for
+    #pragma omp parallel for
         for (int nb = 0; nb < static_cast<int>(nBlocks); ++nb)
         {
             const int nbWidth = std::max<int>(1, int((image.width + 3) / 4));
@@ -615,11 +615,11 @@ HRESULT DirectX::Compress(
     // Compress single image
     if (compress & TEX_COMPRESS_PARALLEL)
     {
-#ifndef _OPENMP
+    #ifndef _OPENMP
         return E_NOTIMPL;
-#else
+    #else
         hr = CompressBC_Parallel(srcImage, *img, GetBCFlags(compress), GetSRGBFlags(compress), threshold);
-#endif // _OPENMP
+    #endif // _OPENMP
     }
     else
     {
@@ -687,9 +687,9 @@ HRESULT DirectX::Compress(
 
         if ((compress & TEX_COMPRESS_PARALLEL))
         {
-#ifndef _OPENMP
+        #ifndef _OPENMP
             return E_NOTIMPL;
-#else
+        #else
             if (compress & TEX_COMPRESS_PARALLEL)
             {
                 hr = CompressBC_Parallel(src, dest[index], GetBCFlags(compress), GetSRGBFlags(compress), threshold);
@@ -699,7 +699,7 @@ HRESULT DirectX::Compress(
                     return  hr;
                 }
             }
-#endif // _OPENMP
+        #endif // _OPENMP
         }
         else
         {
