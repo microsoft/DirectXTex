@@ -686,6 +686,14 @@ namespace
         case TEX_FILTER_TRIANGLE:
             // WIC does not implement this filter
             return false;
+
+        default:
+            if (BitsPerColor(format) > 8)
+            {
+                // Avoid the WIC bitmap scaler when doing filtering of XR/HDR formats
+                return false;
+            }
+            break;
         }
 
         return true;
