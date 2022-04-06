@@ -171,11 +171,13 @@ namespace
                         return E_UNEXPECTED;
                     }
 
+                    const size_t msize = (metadata.dimension == TEX_DIMENSION_TEXTURE2D)
+                        ? std::min<size_t>(img->rowPitch, mapped.RowPitch) : img->rowPitch;
+
                     auto sptr = static_cast<const uint8_t*>(mapped.pData);
                     uint8_t* dptr = img->pixels;
                     for (size_t h = 0; h < lines; ++h)
                     {
-                        const size_t msize = std::min<size_t>(img->rowPitch, mapped.RowPitch);
                         memcpy(dptr, sptr, msize);
                         sptr += mapped.RowPitch;
                         dptr += img->rowPitch;
