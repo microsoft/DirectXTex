@@ -401,7 +401,7 @@ if(WIN32)
         target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0A00)
     else()
         message("INFO: Building with Windows 7 compatibility")
-        target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0601)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0601 _WIN7_PLATFORM_UPDATE)
     endif()
 endif()
 

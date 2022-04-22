@@ -1944,10 +1944,17 @@ HRESULT DirectX::LoadFromDDSFile(
         }
 
     #ifdef WIN32
-        if (!ReadFile(hFile.get(), image.GetPixels(), static_cast<DWORD>(image.GetPixelsSize()), &bytesRead, nullptr))
+        auto pixelBytes = static_cast<DWORD>(image.GetPixelsSize());
+        if (!ReadFile(hFile.get(), image.GetPixels(), pixelBytes, &bytesRead, nullptr))
         {
             image.Release();
             return HRESULT_FROM_WIN32(GetLastError());
+        }
+
+        if (bytesRead != pixelBytes)
+        {
+            image.Release();
+            return E_FAIL;
         }
     #else
         inFile.read(reinterpret_cast<char*>(image.GetPixels()), image.GetPixelsSize());

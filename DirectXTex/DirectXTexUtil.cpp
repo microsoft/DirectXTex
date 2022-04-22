@@ -270,9 +270,11 @@ REFGUID DirectX::GetWICCodec(WICCodecs codec) noexcept
     case WIC_CODEC_ICO:
         return GUID_ContainerFormatIco;
 
+#ifdef NTDDI_WIN10_RS4
     case WIC_CODEC_HEIF:
         // This requires installing https://aka.ms/heif
         return GUID_ContainerFormatHeif;
+#endif
 
     default:
         return GUID_NULL;
