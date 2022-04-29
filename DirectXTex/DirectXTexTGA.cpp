@@ -120,15 +120,15 @@ namespace
 
     enum CONVERSION_FLAGS
     {
-        CONV_FLAGS_NONE     = 0x0,
-        CONV_FLAGS_EXPAND   = 0x1,      // Conversion requires expanded pixel size
-        CONV_FLAGS_INVERTX  = 0x2,      // If set, scanlines are right-to-left
-        CONV_FLAGS_INVERTY  = 0x4,      // If set, scanlines are top-to-bottom
-        CONV_FLAGS_RLE      = 0x8,      // Source data is RLE compressed
+        CONV_FLAGS_NONE = 0x0,
+        CONV_FLAGS_EXPAND = 0x1,        // Conversion requires expanded pixel size
+        CONV_FLAGS_INVERTX = 0x2,       // If set, scanlines are right-to-left
+        CONV_FLAGS_INVERTY = 0x4,       // If set, scanlines are top-to-bottom
+        CONV_FLAGS_RLE = 0x8,           // Source data is RLE compressed
         CONV_FLAGS_PALETTED = 0x10,     // Source data is paletted
 
-        CONV_FLAGS_SWIZZLE  = 0x10000,  // Swizzle BGR<->RGB data
-        CONV_FLAGS_888      = 0x20000,  // 24bpp format
+        CONV_FLAGS_SWIZZLE = 0x10000,   // Swizzle BGR<->RGB data
+        CONV_FLAGS_888 = 0x20000,       // 24bpp format
     };
 
 
@@ -260,20 +260,18 @@ namespace
             offset += pHeader->bIDLength;
         }
 
-//        offset = pHeader->wColorMapFirst;
-
         return S_OK;
     }
 
+
     //-------------------------------------------------------------------------------------
-    // Reades palette for paletted TGA formats
+    // Reads palette for paletted TGA formats
     //-------------------------------------------------------------------------------------
     HRESULT ReadPalette(
         uint8_t* header,
         _In_reads_bytes_(size) const void* pSource,
         size_t size,
-        uint8_t palette[256 * 4]
-    )
+        uint8_t palette[256 * 4]) noexcept
     {
         using namespace DirectX;
 
@@ -289,7 +287,7 @@ namespace
             return HRESULT_E_NOT_SUPPORTED;
         }
 
-        const uint8_t* bytes = reinterpret_cast<const uint8_t *>(pSource);
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(pSource);
 
         for (int i = 0; i < pHeader->wColorMapLength; i++)
         {
@@ -311,6 +309,7 @@ namespace
             }
         }
     }
+
 
     //-------------------------------------------------------------------------------------
     // Set alpha for images with all 0 alpha channel
@@ -428,66 +427,31 @@ namespace
 
         //-------------------------------------------------------------------------- 16-bit
         case DXGI_FORMAT_B5G5R5A1_UNORM:
-        {
-            uint32_t minalpha = 255;
-            uint32_t maxalpha = 0;
-
-            for (size_t y = 0; y < image->height; ++y)
             {
-                size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
-                assert(offset * 2 < rowPitch);
+                uint32_t minalpha = 255;
+                uint32_t maxalpha = 0;
 
-                auto dPtr = reinterpret_cast<uint16_t*>(image->pixels
-                    + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
-                    + offset;
-
-                for (size_t x = 0; x < image->width; )
+                for (size_t y = 0; y < image->height; ++y)
                 {
-                    if (sPtr >= endPtr)
-                        return E_FAIL;
+                    size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
+                    assert(offset * 2 < rowPitch);
 
-                    if (*sPtr & 0x80)
+                    auto dPtr = reinterpret_cast<uint16_t*>(image->pixels
+                        + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
+                        + offset;
+
+                    for (size_t x = 0; x < image->width; )
                     {
-                        // Repeat
-                        size_t j = size_t(*sPtr & 0x7F) + 1;
-                        ++sPtr;
-
-                        if (sPtr + 1 >= endPtr)
+                        if (sPtr >= endPtr)
                             return E_FAIL;
 
-                        auto t = static_cast<uint16_t>(uint32_t(*sPtr) | uint32_t(*(sPtr + 1u) << 8));
-
-                        const uint32_t alpha = (t & 0x8000) ? 255 : 0;
-                        minalpha = std::min(minalpha, alpha);
-                        maxalpha = std::max(maxalpha, alpha);
-
-                        sPtr += 2;
-
-                        for (; j > 0; --j, ++x)
+                        if (*sPtr & 0x80)
                         {
-                            if (x >= image->width)
-                                return E_FAIL;
+                            // Repeat
+                            size_t j = size_t(*sPtr & 0x7F) + 1;
+                            ++sPtr;
 
-                            *dPtr = t;
-
-                            if (convFlags & CONV_FLAGS_INVERTX)
-                                --dPtr;
-                            else
-                                ++dPtr;
-                        }
-                    }
-                    else
-                    {
-                        // Literal
-                        size_t j = size_t(*sPtr & 0x7F) + 1;
-                        ++sPtr;
-
-                        if (sPtr + (j * 2) > endPtr)
-                            return E_FAIL;
-
-                        for (; j > 0; --j, ++x)
-                        {
-                            if (x >= image->width)
+                            if (sPtr + 1 >= endPtr)
                                 return E_FAIL;
 
                             auto t = static_cast<uint16_t>(uint32_t(*sPtr) | uint32_t(*(sPtr + 1u) << 8));
@@ -497,123 +461,93 @@ namespace
                             maxalpha = std::max(maxalpha, alpha);
 
                             sPtr += 2;
-                            *dPtr = t;
 
-                            if (convFlags & CONV_FLAGS_INVERTX)
-                                --dPtr;
-                            else
-                                ++dPtr;
+                            for (; j > 0; --j, ++x)
+                            {
+                                if (x >= image->width)
+                                    return E_FAIL;
+
+                                *dPtr = t;
+
+                                if (convFlags & CONV_FLAGS_INVERTX)
+                                    --dPtr;
+                                else
+                                    ++dPtr;
+                            }
+                        }
+                        else
+                        {
+                            // Literal
+                            size_t j = size_t(*sPtr & 0x7F) + 1;
+                            ++sPtr;
+
+                            if (sPtr + (j * 2) > endPtr)
+                                return E_FAIL;
+
+                            for (; j > 0; --j, ++x)
+                            {
+                                if (x >= image->width)
+                                    return E_FAIL;
+
+                                auto t = static_cast<uint16_t>(uint32_t(*sPtr) | uint32_t(*(sPtr + 1u) << 8));
+
+                                const uint32_t alpha = (t & 0x8000) ? 255 : 0;
+                                minalpha = std::min(minalpha, alpha);
+                                maxalpha = std::max(maxalpha, alpha);
+
+                                sPtr += 2;
+                                *dPtr = t;
+
+                                if (convFlags & CONV_FLAGS_INVERTX)
+                                    --dPtr;
+                                else
+                                    ++dPtr;
+                            }
                         }
                     }
                 }
-            }
 
-            // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
-            {
-                opaquealpha = true;
-                hr = SetAlphaChannelToOpaque(image);
-                if (FAILED(hr))
-                    return hr;
-            }
-            else if (minalpha == 255)
-            {
-                opaquealpha = true;
-            }
-        }
-        break;
-
-        //------------------------------------------------------ 24/32-bit (with swizzling)
-        case DXGI_FORMAT_R8G8B8A8_UNORM:
-        {
-            uint32_t minalpha = 255;
-            uint32_t maxalpha = 0;
-
-            for (size_t y = 0; y < image->height; ++y)
-            {
-                size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
-
-                auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
-                    + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
-                    + offset;
-
-                for (size_t x = 0; x < image->width; )
+                // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
+                if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
                 {
-                    if (sPtr >= endPtr)
-                        return E_FAIL;
+                    opaquealpha = true;
+                    hr = SetAlphaChannelToOpaque(image);
+                    if (FAILED(hr))
+                        return hr;
+                }
+                else if (minalpha == 255)
+                {
+                    opaquealpha = true;
+                }
+            }
+            break;
 
-                    if (*sPtr & 0x80)
+            //------------------------------------------------------ 24/32-bit (with swizzling)
+        case DXGI_FORMAT_R8G8B8A8_UNORM:
+            {
+                uint32_t minalpha = 255;
+                uint32_t maxalpha = 0;
+
+                for (size_t y = 0; y < image->height; ++y)
+                {
+                    size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
+
+                    auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
+                        + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
+                        + offset;
+
+                    for (size_t x = 0; x < image->width; )
                     {
-                        // Repeat
-                        size_t j = size_t(*sPtr & 0x7F) + 1;
-                        ++sPtr;
+                        if (sPtr >= endPtr)
+                            return E_FAIL;
 
-                        uint32_t t;
-                        if (convFlags & CONV_FLAGS_EXPAND)
+                        if (*sPtr & 0x80)
                         {
-                            assert(offset * 3 < rowPitch);
+                            // Repeat
+                            size_t j = size_t(*sPtr & 0x7F) + 1;
+                            ++sPtr;
 
-                            if (sPtr + 2 >= endPtr)
-                                return E_FAIL;
-
-                            // BGR -> RGBA
-                            t = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | 0xFF000000;
-                            sPtr += 3;
-
-                            minalpha = maxalpha = 255;
-                        }
-                        else
-                        {
-                            assert(offset * 4 < rowPitch);
-
-                            if (sPtr + 3 >= endPtr)
-                                return E_FAIL;
-
-                            // BGRA -> RGBA
-                            const uint32_t alpha = *(sPtr + 3);
-                            t = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(alpha << 24);
-
-                            minalpha = std::min(minalpha, alpha);
-                            maxalpha = std::max(maxalpha, alpha);
-
-                            sPtr += 4;
-                        }
-
-                        for (; j > 0; --j, ++x)
-                        {
-                            if (x >= image->width)
-                                return E_FAIL;
-
-                            *dPtr = t;
-
-                            if (convFlags & CONV_FLAGS_INVERTX)
-                                --dPtr;
-                            else
-                                ++dPtr;
-                        }
-                    }
-                    else
-                    {
-                        // Literal
-                        size_t j = size_t(*sPtr & 0x7F) + 1;
-                        ++sPtr;
-
-                        if (convFlags & CONV_FLAGS_EXPAND)
-                        {
-                            if (sPtr + (j * 3) > endPtr)
-                                return E_FAIL;
-                        }
-                        else
-                        {
-                            if (sPtr + (j * 4) > endPtr)
-                                return E_FAIL;
-                        }
-
-                        for (; j > 0; --j, ++x)
-                        {
-                            if (x >= image->width)
-                                return E_FAIL;
-
+                            uint32_t t;
                             if (convFlags & CONV_FLAGS_EXPAND)
                             {
                                 assert(offset * 3 < rowPitch);
@@ -622,7 +556,7 @@ namespace
                                     return E_FAIL;
 
                                 // BGR -> RGBA
-                                *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | 0xFF000000;
+                                t = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | 0xFF000000;
                                 sPtr += 3;
 
                                 minalpha = maxalpha = 255;
@@ -635,8 +569,8 @@ namespace
                                     return E_FAIL;
 
                                 // BGRA -> RGBA
-                                uint32_t alpha = *(sPtr + 3);
-                                *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(alpha << 24);
+                                const uint32_t alpha = *(sPtr + 3);
+                                t = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(alpha << 24);
 
                                 minalpha = std::min(minalpha, alpha);
                                 maxalpha = std::max(maxalpha, alpha);
@@ -644,97 +578,121 @@ namespace
                                 sPtr += 4;
                             }
 
-                            if (convFlags & CONV_FLAGS_INVERTX)
-                                --dPtr;
+                            for (; j > 0; --j, ++x)
+                            {
+                                if (x >= image->width)
+                                    return E_FAIL;
+
+                                *dPtr = t;
+
+                                if (convFlags & CONV_FLAGS_INVERTX)
+                                    --dPtr;
+                                else
+                                    ++dPtr;
+                            }
+                        }
+                        else
+                        {
+                            // Literal
+                            size_t j = size_t(*sPtr & 0x7F) + 1;
+                            ++sPtr;
+
+                            if (convFlags & CONV_FLAGS_EXPAND)
+                            {
+                                if (sPtr + (j * 3) > endPtr)
+                                    return E_FAIL;
+                            }
                             else
-                                ++dPtr;
+                            {
+                                if (sPtr + (j * 4) > endPtr)
+                                    return E_FAIL;
+                            }
+
+                            for (; j > 0; --j, ++x)
+                            {
+                                if (x >= image->width)
+                                    return E_FAIL;
+
+                                if (convFlags & CONV_FLAGS_EXPAND)
+                                {
+                                    assert(offset * 3 < rowPitch);
+
+                                    if (sPtr + 2 >= endPtr)
+                                        return E_FAIL;
+
+                                    // BGR -> RGBA
+                                    *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | 0xFF000000;
+                                    sPtr += 3;
+
+                                    minalpha = maxalpha = 255;
+                                }
+                                else
+                                {
+                                    assert(offset * 4 < rowPitch);
+
+                                    if (sPtr + 3 >= endPtr)
+                                        return E_FAIL;
+
+                                    // BGRA -> RGBA
+                                    uint32_t alpha = *(sPtr + 3);
+                                    *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(alpha << 24);
+
+                                    minalpha = std::min(minalpha, alpha);
+                                    maxalpha = std::max(maxalpha, alpha);
+
+                                    sPtr += 4;
+                                }
+
+                                if (convFlags & CONV_FLAGS_INVERTX)
+                                    --dPtr;
+                                else
+                                    ++dPtr;
+                            }
                         }
                     }
                 }
-            }
 
-            // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
-            {
-                opaquealpha = true;
-                hr = SetAlphaChannelToOpaque(image);
-                if (FAILED(hr))
-                    return hr;
-            }
-            else if (minalpha == 255)
-            {
-                opaquealpha = true;
-            }
-        }
-        break;
-
-        //-------------------------------------------------------------------- 32-bit (BGR)
-        case DXGI_FORMAT_B8G8R8A8_UNORM:
-        {
-            assert((convFlags & CONV_FLAGS_EXPAND) == 0);
-
-            uint32_t minalpha = 255;
-            uint32_t maxalpha = 0;
-
-            for (size_t y = 0; y < image->height; ++y)
-            {
-                size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
-
-                auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
-                    + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
-                    + offset;
-
-                for (size_t x = 0; x < image->width; )
+                // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
+                if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
                 {
-                    if (sPtr >= endPtr)
-                        return E_FAIL;
+                    opaquealpha = true;
+                    hr = SetAlphaChannelToOpaque(image);
+                    if (FAILED(hr))
+                        return hr;
+                }
+                else if (minalpha == 255)
+                {
+                    opaquealpha = true;
+                }
+            }
+            break;
 
-                    if (*sPtr & 0x80)
+            //-------------------------------------------------------------------- 32-bit (BGR)
+        case DXGI_FORMAT_B8G8R8A8_UNORM:
+            {
+                assert((convFlags & CONV_FLAGS_EXPAND) == 0);
+
+                uint32_t minalpha = 255;
+                uint32_t maxalpha = 0;
+
+                for (size_t y = 0; y < image->height; ++y)
+                {
+                    size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
+
+                    auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
+                        + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
+                        + offset;
+
+                    for (size_t x = 0; x < image->width; )
                     {
-                        // Repeat
-                        size_t j = size_t(*sPtr & 0x7F) + 1;
-                        ++sPtr;
-
-                        assert(offset * 4 < rowPitch);
-
-                        if (sPtr + 3 >= endPtr)
+                        if (sPtr >= endPtr)
                             return E_FAIL;
 
-                        const uint32_t alpha = *(sPtr + 3);
-
-                        auto t = *reinterpret_cast<const uint32_t*>(sPtr);
-
-                        minalpha = std::min(minalpha, alpha);
-                        maxalpha = std::max(maxalpha, alpha);
-
-                        sPtr += 4;
-
-                        for (; j > 0; --j, ++x)
+                        if (*sPtr & 0x80)
                         {
-                            if (x >= image->width)
-                                return E_FAIL;
-
-                            *dPtr = t;
-
-                            if (convFlags & CONV_FLAGS_INVERTX)
-                                --dPtr;
-                            else
-                                ++dPtr;
-                        }
-                    }
-                    else
-                    {
-                        // Literal
-                        size_t j = size_t(*sPtr & 0x7F) + 1;
-                        ++sPtr;
-
-                        if (sPtr + (j * 4) > endPtr)
-                            return E_FAIL;
-
-                        for (; j > 0; --j, ++x)
-                        {
-                            if (x >= image->width)
-                                return E_FAIL;
+                            // Repeat
+                            size_t j = size_t(*sPtr & 0x7F) + 1;
+                            ++sPtr;
 
                             assert(offset * 4 < rowPitch);
 
@@ -742,116 +700,157 @@ namespace
                                 return E_FAIL;
 
                             const uint32_t alpha = *(sPtr + 3);
-                            *dPtr = *reinterpret_cast<const uint32_t*>(sPtr);
+
+                            auto t = *reinterpret_cast<const uint32_t*>(sPtr);
 
                             minalpha = std::min(minalpha, alpha);
                             maxalpha = std::max(maxalpha, alpha);
 
                             sPtr += 4;
 
-                            if (convFlags & CONV_FLAGS_INVERTX)
-                                --dPtr;
-                            else
-                                ++dPtr;
+                            for (; j > 0; --j, ++x)
+                            {
+                                if (x >= image->width)
+                                    return E_FAIL;
+
+                                *dPtr = t;
+
+                                if (convFlags & CONV_FLAGS_INVERTX)
+                                    --dPtr;
+                                else
+                                    ++dPtr;
+                            }
+                        }
+                        else
+                        {
+                            // Literal
+                            size_t j = size_t(*sPtr & 0x7F) + 1;
+                            ++sPtr;
+
+                            if (sPtr + (j * 4) > endPtr)
+                                return E_FAIL;
+
+                            for (; j > 0; --j, ++x)
+                            {
+                                if (x >= image->width)
+                                    return E_FAIL;
+
+                                assert(offset * 4 < rowPitch);
+
+                                if (sPtr + 3 >= endPtr)
+                                    return E_FAIL;
+
+                                const uint32_t alpha = *(sPtr + 3);
+                                *dPtr = *reinterpret_cast<const uint32_t*>(sPtr);
+
+                                minalpha = std::min(minalpha, alpha);
+                                maxalpha = std::max(maxalpha, alpha);
+
+                                sPtr += 4;
+
+                                if (convFlags & CONV_FLAGS_INVERTX)
+                                    --dPtr;
+                                else
+                                    ++dPtr;
+                            }
                         }
                     }
                 }
-            }
 
-            // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
-            {
-                opaquealpha = true;
-                hr = SetAlphaChannelToOpaque(image);
-                if (FAILED(hr))
-                    return hr;
-            }
-            else if (minalpha == 255)
-            {
-                opaquealpha = true;
-            }
-        }
-        break;
-
-        //-------------------------------------------------------------------- 24-bit (BGR)
-        case DXGI_FORMAT_B8G8R8X8_UNORM:
-        {
-            assert((convFlags & CONV_FLAGS_EXPAND) != 0);
-
-            for (size_t y = 0; y < image->height; ++y)
-            {
-                size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
-
-                auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
-                    + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
-                    + offset;
-
-                for (size_t x = 0; x < image->width; )
+                // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
+                if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
                 {
-                    if (sPtr >= endPtr)
-                        return E_FAIL;
+                    opaquealpha = true;
+                    hr = SetAlphaChannelToOpaque(image);
+                    if (FAILED(hr))
+                        return hr;
+                }
+                else if (minalpha == 255)
+                {
+                    opaquealpha = true;
+                }
+            }
+            break;
 
-                    if (*sPtr & 0x80)
+            //-------------------------------------------------------------------- 24-bit (BGR)
+        case DXGI_FORMAT_B8G8R8X8_UNORM:
+            {
+                assert((convFlags & CONV_FLAGS_EXPAND) != 0);
+
+                for (size_t y = 0; y < image->height; ++y)
+                {
+                    size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
+
+                    auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
+                        + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
+                        + offset;
+
+                    for (size_t x = 0; x < image->width; )
                     {
-                        // Repeat
-                        size_t j = size_t(*sPtr & 0x7F) + 1;
-                        ++sPtr;
-
-                        assert(offset * 3 < rowPitch);
-
-                        if (sPtr + 2 >= endPtr)
+                        if (sPtr >= endPtr)
                             return E_FAIL;
 
-                        uint32_t t = uint32_t(*sPtr) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2) << 16);
-                        sPtr += 3;
-
-                        for (; j > 0; --j, ++x)
+                        if (*sPtr & 0x80)
                         {
-                            if (x >= image->width)
-                                return E_FAIL;
-
-                            *dPtr = t;
-
-                            if (convFlags & CONV_FLAGS_INVERTX)
-                                --dPtr;
-                            else
-                                ++dPtr;
-                        }
-                    }
-                    else
-                    {
-                        // Literal
-                        size_t j = size_t(*sPtr & 0x7F) + 1;
-                        ++sPtr;
-
-                        if (sPtr + (j * 3) > endPtr)
-                            return E_FAIL;
-
-                        for (; j > 0; --j, ++x)
-                        {
-                            if (x >= image->width)
-                                return E_FAIL;
+                            // Repeat
+                            size_t j = size_t(*sPtr & 0x7F) + 1;
+                            ++sPtr;
 
                             assert(offset * 3 < rowPitch);
 
                             if (sPtr + 2 >= endPtr)
                                 return E_FAIL;
 
-                            *dPtr = uint32_t(*sPtr) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2) << 16);
+                            uint32_t t = uint32_t(*sPtr) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2) << 16);
                             sPtr += 3;
 
-                            if (convFlags & CONV_FLAGS_INVERTX)
-                                --dPtr;
-                            else
-                                ++dPtr;
+                            for (; j > 0; --j, ++x)
+                            {
+                                if (x >= image->width)
+                                    return E_FAIL;
+
+                                *dPtr = t;
+
+                                if (convFlags & CONV_FLAGS_INVERTX)
+                                    --dPtr;
+                                else
+                                    ++dPtr;
+                            }
+                        }
+                        else
+                        {
+                            // Literal
+                            size_t j = size_t(*sPtr & 0x7F) + 1;
+                            ++sPtr;
+
+                            if (sPtr + (j * 3) > endPtr)
+                                return E_FAIL;
+
+                            for (; j > 0; --j, ++x)
+                            {
+                                if (x >= image->width)
+                                    return E_FAIL;
+
+                                assert(offset * 3 < rowPitch);
+
+                                if (sPtr + 2 >= endPtr)
+                                    return E_FAIL;
+
+                                *dPtr = uint32_t(*sPtr) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2) << 16);
+                                sPtr += 3;
+
+                                if (convFlags & CONV_FLAGS_INVERTX)
+                                    --dPtr;
+                                else
+                                    ++dPtr;
+                            }
                         }
                     }
                 }
             }
-        }
-        break;
+            break;
 
-        //---------------------------------------------------------------------------------
+            //---------------------------------------------------------------------------------
         default:
             return E_FAIL;
         }
@@ -869,8 +868,7 @@ namespace
         TGA_FLAGS flags,
         _In_ const Image* image,
         _In_ uint32_t convFlags,
-        _In_ uint8_t* palette
-    ) noexcept
+        _In_ uint8_t* palette) noexcept
     {
         assert(pSource && size > 0);
 
@@ -951,208 +949,208 @@ namespace
 
         //-------------------------------------------------------------------------- 16-bit
         case DXGI_FORMAT_B5G5R5A1_UNORM:
-        {
-            uint32_t minalpha = 255;
-            uint32_t maxalpha = 0;
-
-            for (size_t y = 0; y < image->height; ++y)
             {
-                size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
-                assert(offset * 2 < rowPitch);
+                uint32_t minalpha = 255;
+                uint32_t maxalpha = 0;
 
-                auto dPtr = reinterpret_cast<uint16_t*>(image->pixels
-                    + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
-                    + offset;
-
-                for (size_t x = 0; x < image->width; ++x)
+                for (size_t y = 0; y < image->height; ++y)
                 {
-                    if (sPtr + 1 >= endPtr)
-                        return E_FAIL;
+                    size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
+                    assert(offset * 2 < rowPitch);
 
-                    auto t = static_cast<uint16_t>(uint32_t(*sPtr) | uint32_t(*(sPtr + 1u) << 8));
-                    sPtr += 2;
-                    *dPtr = t;
+                    auto dPtr = reinterpret_cast<uint16_t*>(image->pixels
+                        + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
+                        + offset;
 
-                    const uint32_t alpha = (t & 0x8000) ? 255 : 0;
-                    minalpha = std::min(minalpha, alpha);
-                    maxalpha = std::max(maxalpha, alpha);
-
-                    if (convFlags & CONV_FLAGS_INVERTX)
-                        --dPtr;
-                    else
-                        ++dPtr;
-                }
-            }
-
-            // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
-            {
-                opaquealpha = true;
-                hr = SetAlphaChannelToOpaque(image);
-                if (FAILED(hr))
-                    return hr;
-            }
-            else if (minalpha == 255)
-            {
-                opaquealpha = true;
-            }
-        }
-        break;
-
-        //------------------------------------------------------ 24/32-bit (with swizzling)
-        case DXGI_FORMAT_R8G8B8A8_UNORM:
-        {
-            uint32_t minalpha = 255;
-            uint32_t maxalpha = 0;
-
-            for (size_t y = 0; y < image->height; ++y)
-            {
-                size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
-
-                auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
-                    + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
-                    + offset;
-
-                for (size_t x = 0; x < image->width; ++x)
-                {
-                    if (convFlags & CONV_FLAGS_EXPAND)
+                    for (size_t x = 0; x < image->width; ++x)
                     {
-                        assert(offset * 3 < rowPitch);
-
-                        if (sPtr + 2 >= endPtr)
+                        if (sPtr + 1 >= endPtr)
                             return E_FAIL;
 
-                        // BGR -> RGBA
-                        *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | 0xFF000000;
-                        sPtr += 3;
+                        auto t = static_cast<uint16_t>(uint32_t(*sPtr) | uint32_t(*(sPtr + 1u) << 8));
+                        sPtr += 2;
+                        *dPtr = t;
 
-                        minalpha = maxalpha = 255;
+                        const uint32_t alpha = (t & 0x8000) ? 255 : 0;
+                        minalpha = std::min(minalpha, alpha);
+                        maxalpha = std::max(maxalpha, alpha);
+
+                        if (convFlags & CONV_FLAGS_INVERTX)
+                            --dPtr;
+                        else
+                            ++dPtr;
                     }
-                    else
+                }
+
+                // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
+                if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
+                {
+                    opaquealpha = true;
+                    hr = SetAlphaChannelToOpaque(image);
+                    if (FAILED(hr))
+                        return hr;
+                }
+                else if (minalpha == 255)
+                {
+                    opaquealpha = true;
+                }
+            }
+            break;
+
+            //------------------------------------------------------ 24/32-bit (with swizzling)
+        case DXGI_FORMAT_R8G8B8A8_UNORM:
+            {
+                uint32_t minalpha = 255;
+                uint32_t maxalpha = 0;
+
+                for (size_t y = 0; y < image->height; ++y)
+                {
+                    size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
+
+                    auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
+                        + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
+                        + offset;
+
+                    for (size_t x = 0; x < image->width; ++x)
+                    {
+                        if (convFlags & CONV_FLAGS_EXPAND)
+                        {
+                            assert(offset * 3 < rowPitch);
+
+                            if (sPtr + 2 >= endPtr)
+                                return E_FAIL;
+
+                            // BGR -> RGBA
+                            *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | 0xFF000000;
+                            sPtr += 3;
+
+                            minalpha = maxalpha = 255;
+                        }
+                        else
+                        {
+                            assert(offset * 4 < rowPitch);
+
+                            if (sPtr + 3 >= endPtr)
+                                return E_FAIL;
+
+                            // BGRA -> RGBA
+                            uint32_t alpha = *(sPtr + 3);
+                            *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(alpha << 24);
+
+                            minalpha = std::min(minalpha, alpha);
+                            maxalpha = std::max(maxalpha, alpha);
+
+                            sPtr += 4;
+                        }
+
+                        if (convFlags & CONV_FLAGS_INVERTX)
+                            --dPtr;
+                        else
+                            ++dPtr;
+                    }
+                }
+
+                // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
+                if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
+                {
+                    opaquealpha = true;
+                    hr = SetAlphaChannelToOpaque(image);
+                    if (FAILED(hr))
+                        return hr;
+                }
+                else if (minalpha == 255)
+                {
+                    opaquealpha = true;
+                }
+            }
+            break;
+
+            //-------------------------------------------------------------------- 32-bit (BGR)
+        case DXGI_FORMAT_B8G8R8A8_UNORM:
+            {
+                assert((convFlags & CONV_FLAGS_EXPAND) == 0);
+
+                uint32_t minalpha = 255;
+                uint32_t maxalpha = 0;
+
+                for (size_t y = 0; y < image->height; ++y)
+                {
+                    size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
+
+                    auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
+                        + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
+                        + offset;
+
+                    for (size_t x = 0; x < image->width; ++x)
                     {
                         assert(offset * 4 < rowPitch);
 
                         if (sPtr + 3 >= endPtr)
                             return E_FAIL;
 
-                        // BGRA -> RGBA
-                        uint32_t alpha = *(sPtr + 3);
-                        *dPtr = uint32_t(*sPtr << 16) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2)) | uint32_t(alpha << 24);
+                        const uint32_t alpha = *(sPtr + 3);
+                        *dPtr = *reinterpret_cast<const uint32_t*>(sPtr);
 
                         minalpha = std::min(minalpha, alpha);
                         maxalpha = std::max(maxalpha, alpha);
 
                         sPtr += 4;
+
+                        if (convFlags & CONV_FLAGS_INVERTX)
+                            --dPtr;
+                        else
+                            ++dPtr;
                     }
-
-                    if (convFlags & CONV_FLAGS_INVERTX)
-                        --dPtr;
-                    else
-                        ++dPtr;
                 }
-            }
 
-            // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
-            {
-                opaquealpha = true;
-                hr = SetAlphaChannelToOpaque(image);
-                if (FAILED(hr))
-                    return hr;
-            }
-            else if (minalpha == 255)
-            {
-                opaquealpha = true;
-            }
-        }
-        break;
-
-        //-------------------------------------------------------------------- 32-bit (BGR)
-        case DXGI_FORMAT_B8G8R8A8_UNORM:
-        {
-            assert((convFlags & CONV_FLAGS_EXPAND) == 0);
-
-            uint32_t minalpha = 255;
-            uint32_t maxalpha = 0;
-
-            for (size_t y = 0; y < image->height; ++y)
-            {
-                size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
-
-                auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
-                    + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
-                    + offset;
-
-                for (size_t x = 0; x < image->width; ++x)
+                // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
+                if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
                 {
-                    assert(offset * 4 < rowPitch);
-
-                    if (sPtr + 3 >= endPtr)
-                        return E_FAIL;
-
-                    const uint32_t alpha = *(sPtr + 3);
-                    *dPtr = *reinterpret_cast<const uint32_t*>(sPtr);
-
-                    minalpha = std::min(minalpha, alpha);
-                    maxalpha = std::max(maxalpha, alpha);
-
-                    sPtr += 4;
-
-                    if (convFlags & CONV_FLAGS_INVERTX)
-                        --dPtr;
-                    else
-                        ++dPtr;
+                    opaquealpha = true;
+                    hr = SetAlphaChannelToOpaque(image);
+                    if (FAILED(hr))
+                        return hr;
+                }
+                else if (minalpha == 255)
+                {
+                    opaquealpha = true;
                 }
             }
+            break;
 
-            // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
-            {
-                opaquealpha = true;
-                hr = SetAlphaChannelToOpaque(image);
-                if (FAILED(hr))
-                    return hr;
-            }
-            else if (minalpha == 255)
-            {
-                opaquealpha = true;
-            }
-        }
-        break;
-
-        //-------------------------------------------------------------------- 24-bit (BGR)
+            //-------------------------------------------------------------------- 24-bit (BGR)
         case DXGI_FORMAT_B8G8R8X8_UNORM:
-        {
-            assert((convFlags & CONV_FLAGS_EXPAND) != 0);
-
-            for (size_t y = 0; y < image->height; ++y)
             {
-                size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
+                assert((convFlags & CONV_FLAGS_EXPAND) != 0);
 
-                auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
-                    + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
-                    + offset;
-
-                for (size_t x = 0; x < image->width; ++x)
+                for (size_t y = 0; y < image->height; ++y)
                 {
-                    assert(offset * 3 < rowPitch);
+                    size_t offset = ((convFlags & CONV_FLAGS_INVERTX) ? (image->width - 1) : 0);
 
-                    if (sPtr + 2 >= endPtr)
-                        return E_FAIL;
+                    auto dPtr = reinterpret_cast<uint32_t*>(image->pixels
+                        + (image->rowPitch * ((convFlags & CONV_FLAGS_INVERTY) ? y : (image->height - y - 1))))
+                        + offset;
 
-                    *dPtr = uint32_t(*sPtr) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2) << 16);
-                    sPtr += 3;
+                    for (size_t x = 0; x < image->width; ++x)
+                    {
+                        assert(offset * 3 < rowPitch);
 
-                    if (convFlags & CONV_FLAGS_INVERTX)
-                        --dPtr;
-                    else
-                        ++dPtr;
+                        if (sPtr + 2 >= endPtr)
+                            return E_FAIL;
+
+                        *dPtr = uint32_t(*sPtr) | uint32_t(*(sPtr + 1) << 8) | uint32_t(*(sPtr + 2) << 16);
+                        sPtr += 3;
+
+                        if (convFlags & CONV_FLAGS_INVERTX)
+                            --dPtr;
+                        else
+                            ++dPtr;
+                    }
                 }
             }
-        }
-        break;
+            break;
 
-        //---------------------------------------------------------------------------------
+            //---------------------------------------------------------------------------------
         default:
             return E_FAIL;
         }
@@ -1312,14 +1310,14 @@ namespace
             time_t now = {};
             time(&now);
 
-#ifdef WIN32
+        #ifdef WIN32
             tm info;
             auto pinfo = &info;
             if (!gmtime_s(pinfo, &now))
-#else
+            #else
             const tm* pinfo = gmtime(&now);
             if (pinfo)
-#endif
+            #endif
             {
                 ext->wStampMonth = static_cast<uint16_t>(pinfo->tm_mon + 1);
                 ext->wStampDay = static_cast<uint16_t>(pinfo->tm_mday);
@@ -1512,7 +1510,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
     {
         TGA_FOOTER footer = {};
 
-#ifdef WIN32
+    #ifdef WIN32
         if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) != INVALID_SET_FILE_POINTER)
         {
             if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
@@ -1525,7 +1523,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
                 return E_FAIL;
             }
         }
-#else
+    #else
         inFile.seekg(-static_cast<int>(sizeof(TGA_FOOTER)), std::ios::end);
         if (inFile)
         {
@@ -1533,14 +1531,14 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
             if (!inFile)
                 return E_FAIL;
         }
-#endif
+    #endif
 
         if (memcmp(footer.Signature, g_Signature, sizeof(g_Signature)) == 0)
         {
             if (footer.dwExtensionOffset != 0
                 && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= len))
             {
-#ifdef WIN32
+            #ifdef WIN32
                 const LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
                 if (SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
                 {
@@ -1551,7 +1549,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
                         metadata.SetAlphaMode(GetAlphaModeFromExtension(ext));
                     }
                 }
-#else // !WIN32
+            #else // !WIN32
                 inFile.seekg(static_cast<std::streampos>(footer.dwExtensionOffset), std::ios::beg);
                 if (inFile)
                 {
@@ -1562,7 +1560,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
                         metadata.SetAlphaMode(GetAlphaModeFromExtension(ext));
                     }
                 }
-#endif
+            #endif
             }
         }
     }
@@ -1747,7 +1745,7 @@ HRESULT DirectX::LoadFromTGAFile(
     if (!inFile)
         return E_FAIL;
 
-    size_t headerLen =  sizeof(TGA_HEADER);
+    size_t headerLen = sizeof(TGA_HEADER);
 #endif
 
     size_t offset;
@@ -1764,18 +1762,18 @@ HRESULT DirectX::LoadFromTGAFile(
 
     if (offset > sizeof(TGA_HEADER))
     {
-#ifdef WIN32
-        // Skip past the id string
+    #ifdef WIN32
+            // Skip past the id string
         const LARGE_INTEGER filePos = { { static_cast<DWORD>(offset), 0 } };
         if (!SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
         {
             return HRESULT_FROM_WIN32(GetLastError());
         }
-#else
+    #else
         inFile.seekg(offset, std::ios::beg);
         if (!inFile)
             return E_FAIL;
-#endif
+    #endif
     }
 
     hr = image.Initialize2D(mdata.format, mdata.width, mdata.height, 1, 1);
@@ -1801,7 +1799,7 @@ HRESULT DirectX::LoadFromTGAFile(
             return HRESULT_E_ARITHMETIC_OVERFLOW;
         }
 
-#ifdef WIN32
+    #ifdef WIN32
         if (!ReadFile(hFile.get(), image.GetPixels(), static_cast<DWORD>(image.GetPixelsSize()), &bytesRead, nullptr))
         {
             image.Release();
@@ -1813,195 +1811,195 @@ HRESULT DirectX::LoadFromTGAFile(
             image.Release();
             return E_FAIL;
         }
-#else
+    #else
         inFile.read(reinterpret_cast<char*>(image.GetPixels()), image.GetPixelsSize());
         if (!inFile)
         {
             image.Release();
             return E_FAIL;
         }
-#endif
+    #endif
 
         switch (mdata.format)
         {
         case DXGI_FORMAT_R8G8B8A8_UNORM:
-        {
-            // TGA stores 32-bit data in BGRA form, need to swizzle to RGBA
-            assert(image.GetImageCount() == 1);
-            const Image* img = image.GetImage(0, 0, 0);
-            if (!img)
             {
-                image.Release();
-                return E_POINTER;
-            }
-
-            uint8_t *pPixels = img->pixels;
-            if (!pPixels)
-            {
-                image.Release();
-                return E_POINTER;
-            }
-
-            size_t rowPitch = img->rowPitch;
-
-            // Scan for non-zero alpha channel
-            uint32_t minalpha = 255;
-            uint32_t maxalpha = 0;
-
-            for (size_t h = 0; h < img->height; ++h)
-            {
-                auto sPtr = reinterpret_cast<const uint32_t*>(pPixels);
-
-                for (size_t x = 0; x < img->width; ++x)
+                // TGA stores 32-bit data in BGRA form, need to swizzle to RGBA
+                assert(image.GetImageCount() == 1);
+                const Image* img = image.GetImage(0, 0, 0);
+                if (!img)
                 {
-                    const uint32_t alpha = ((*sPtr & 0xFF000000) >> 24);
-
-                    minalpha = std::min(minalpha, alpha);
-                    maxalpha = std::max(maxalpha, alpha);
-
-                    ++sPtr;
+                    image.Release();
+                    return E_POINTER;
                 }
 
-                pPixels += rowPitch;
-            }
+                uint8_t *pPixels = img->pixels;
+                if (!pPixels)
+                {
+                    image.Release();
+                    return E_POINTER;
+                }
 
-            uint32_t tflags = TEXP_SCANLINE_NONE;
-            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
-            {
-                opaquealpha = true;
-                tflags = TEXP_SCANLINE_SETALPHA;
-            }
-            else if (minalpha == 255)
-            {
-                opaquealpha = true;
-            }
+                size_t rowPitch = img->rowPitch;
 
-            // Swizzle scanlines
-            pPixels = img->pixels;
+                // Scan for non-zero alpha channel
+                uint32_t minalpha = 255;
+                uint32_t maxalpha = 0;
 
-            for (size_t h = 0; h < img->height; ++h)
-            {
-                SwizzleScanline(pPixels, rowPitch, pPixels, rowPitch, mdata.format, tflags);
-                pPixels += rowPitch;
+                for (size_t h = 0; h < img->height; ++h)
+                {
+                    auto sPtr = reinterpret_cast<const uint32_t*>(pPixels);
+
+                    for (size_t x = 0; x < img->width; ++x)
+                    {
+                        const uint32_t alpha = ((*sPtr & 0xFF000000) >> 24);
+
+                        minalpha = std::min(minalpha, alpha);
+                        maxalpha = std::max(maxalpha, alpha);
+
+                        ++sPtr;
+                    }
+
+                    pPixels += rowPitch;
+                }
+
+                uint32_t tflags = TEXP_SCANLINE_NONE;
+                if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
+                {
+                    opaquealpha = true;
+                    tflags = TEXP_SCANLINE_SETALPHA;
+                }
+                else if (minalpha == 255)
+                {
+                    opaquealpha = true;
+                }
+
+                // Swizzle scanlines
+                pPixels = img->pixels;
+
+                for (size_t h = 0; h < img->height; ++h)
+                {
+                    SwizzleScanline(pPixels, rowPitch, pPixels, rowPitch, mdata.format, tflags);
+                    pPixels += rowPitch;
+                }
             }
-        }
-        break;
+            break;
 
         case DXGI_FORMAT_B8G8R8A8_UNORM:
-        {
-            assert(image.GetImageCount() == 1);
-            const Image* img = image.GetImage(0, 0, 0);
-            if (!img)
             {
-                image.Release();
-                return E_POINTER;
-            }
-
-            // Scan for non-zero alpha channel
-            uint32_t minalpha = 255;
-            uint32_t maxalpha = 0;
-
-            const uint8_t *pPixels = img->pixels;
-            if (!pPixels)
-            {
-                image.Release();
-                return E_POINTER;
-            }
-
-            const size_t rowPitch = img->rowPitch;
-
-            for (size_t h = 0; h < img->height; ++h)
-            {
-                auto sPtr = reinterpret_cast<const uint32_t*>(pPixels);
-
-                for (size_t x = 0; x < img->width; ++x)
-                {
-                    const uint32_t alpha = ((*sPtr & 0xFF000000) >> 24);
-
-                    minalpha = std::min(minalpha, alpha);
-                    maxalpha = std::max(maxalpha, alpha);
-
-                    ++sPtr;
-                }
-
-                pPixels += rowPitch;
-            }
-
-            // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
-            {
-                opaquealpha = true;
-                hr = SetAlphaChannelToOpaque(img);
-                if (FAILED(hr))
+                assert(image.GetImageCount() == 1);
+                const Image* img = image.GetImage(0, 0, 0);
+                if (!img)
                 {
                     image.Release();
-                    return hr;
+                    return E_POINTER;
+                }
+
+                // Scan for non-zero alpha channel
+                uint32_t minalpha = 255;
+                uint32_t maxalpha = 0;
+
+                const uint8_t *pPixels = img->pixels;
+                if (!pPixels)
+                {
+                    image.Release();
+                    return E_POINTER;
+                }
+
+                const size_t rowPitch = img->rowPitch;
+
+                for (size_t h = 0; h < img->height; ++h)
+                {
+                    auto sPtr = reinterpret_cast<const uint32_t*>(pPixels);
+
+                    for (size_t x = 0; x < img->width; ++x)
+                    {
+                        const uint32_t alpha = ((*sPtr & 0xFF000000) >> 24);
+
+                        minalpha = std::min(minalpha, alpha);
+                        maxalpha = std::max(maxalpha, alpha);
+
+                        ++sPtr;
+                    }
+
+                    pPixels += rowPitch;
+                }
+
+                // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
+                if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
+                {
+                    opaquealpha = true;
+                    hr = SetAlphaChannelToOpaque(img);
+                    if (FAILED(hr))
+                    {
+                        image.Release();
+                        return hr;
+                    }
+                }
+                else if (minalpha == 255)
+                {
+                    opaquealpha = true;
                 }
             }
-            else if (minalpha == 255)
-            {
-                opaquealpha = true;
-            }
-        }
-        break;
+            break;
 
         case DXGI_FORMAT_B5G5R5A1_UNORM:
-        {
-            assert(image.GetImageCount() == 1);
-            const Image* img = image.GetImage(0, 0, 0);
-            if (!img)
             {
-                image.Release();
-                return E_POINTER;
-            }
-
-            // Scan for non-zero alpha channel
-            uint32_t minalpha = 255;
-            uint32_t maxalpha = 0;
-
-            const uint8_t *pPixels = img->pixels;
-            if (!pPixels)
-            {
-                image.Release();
-                return E_POINTER;
-            }
-
-            const size_t rowPitch = img->rowPitch;
-
-            for (size_t h = 0; h < img->height; ++h)
-            {
-                auto sPtr = reinterpret_cast<const uint16_t*>(pPixels);
-
-                for (size_t x = 0; x < img->width; ++x)
-                {
-                    const uint32_t alpha = (*sPtr & 0x8000) ? 255 : 0;
-
-                    minalpha = std::min(minalpha, alpha);
-                    maxalpha = std::max(maxalpha, alpha);
-
-                    ++sPtr;
-                }
-
-                pPixels += rowPitch;
-            }
-
-            // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
-            if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
-            {
-                opaquealpha = true;
-                hr = SetAlphaChannelToOpaque(img);
-                if (FAILED(hr))
+                assert(image.GetImageCount() == 1);
+                const Image* img = image.GetImage(0, 0, 0);
+                if (!img)
                 {
                     image.Release();
-                    return hr;
+                    return E_POINTER;
+                }
+
+                // Scan for non-zero alpha channel
+                uint32_t minalpha = 255;
+                uint32_t maxalpha = 0;
+
+                const uint8_t *pPixels = img->pixels;
+                if (!pPixels)
+                {
+                    image.Release();
+                    return E_POINTER;
+                }
+
+                const size_t rowPitch = img->rowPitch;
+
+                for (size_t h = 0; h < img->height; ++h)
+                {
+                    auto sPtr = reinterpret_cast<const uint16_t*>(pPixels);
+
+                    for (size_t x = 0; x < img->width; ++x)
+                    {
+                        const uint32_t alpha = (*sPtr & 0x8000) ? 255 : 0;
+
+                        minalpha = std::min(minalpha, alpha);
+                        maxalpha = std::max(maxalpha, alpha);
+
+                        ++sPtr;
+                    }
+
+                    pPixels += rowPitch;
+                }
+
+                // If there are no non-zero alpha channel entries, we'll assume alpha is not used and force it to opaque
+                if (maxalpha == 0 && !(flags & TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA))
+                {
+                    opaquealpha = true;
+                    hr = SetAlphaChannelToOpaque(img);
+                    if (FAILED(hr))
+                    {
+                        image.Release();
+                        return hr;
+                    }
+                }
+                else if (minalpha == 255)
+                {
+                    opaquealpha = true;
                 }
             }
-            else if (minalpha == 255)
-            {
-                opaquealpha = true;
-            }
-        }
-        break;
+            break;
 
         case DXGI_FORMAT_B8G8R8X8_UNORM:
             // Should never be trying to direct-read 24bpp
@@ -2020,7 +2018,7 @@ HRESULT DirectX::LoadFromTGAFile(
             return E_OUTOFMEMORY;
         }
 
-#ifdef WIN32
+    #ifdef WIN32
         if (!ReadFile(hFile.get(), temp.get(), static_cast<DWORD>(remaining), &bytesRead, nullptr))
         {
             image.Release();
@@ -2032,14 +2030,14 @@ HRESULT DirectX::LoadFromTGAFile(
             image.Release();
             return E_FAIL;
         }
-#else
+    #else
         inFile.read(reinterpret_cast<char*>(temp.get()), remaining);
         if (!inFile)
         {
             image.Release();
             return E_FAIL;
         }
-#endif
+    #endif
 
         uint8_t palette[256 * 4] = {};
         hr = ReadPalette(header, temp.get(), remaining, palette);
@@ -2081,7 +2079,7 @@ HRESULT DirectX::LoadFromTGAFile(
     {
         TGA_FOOTER footer = {};
 
-#ifdef WIN32
+    #ifdef WIN32
         if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) != INVALID_SET_FILE_POINTER)
         {
             if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
@@ -2096,7 +2094,7 @@ HRESULT DirectX::LoadFromTGAFile(
                 return E_FAIL;
             }
         }
-#else // !WIN32
+    #else // !WIN32
         inFile.seekg(-static_cast<int>(sizeof(TGA_FOOTER)), std::ios::end);
         if (inFile)
         {
@@ -2107,14 +2105,14 @@ HRESULT DirectX::LoadFromTGAFile(
                 return E_FAIL;
             }
         }
-#endif
+    #endif
 
         if (memcmp(footer.Signature, g_Signature, sizeof(g_Signature)) == 0)
         {
             if (footer.dwExtensionOffset != 0
                 && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= len))
             {
-#ifdef WIN32
+            #ifdef WIN32
                 const LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
                 if (SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
                 {
@@ -2124,7 +2122,7 @@ HRESULT DirectX::LoadFromTGAFile(
                         ext = &extData;
                     }
                 }
-#else // !WIN32
+            #else // !WIN32
                 inFile.seekg(static_cast<std::streampos>(footer.dwExtensionOffset), std::ios::beg);
                 if (inFile)
                 {
@@ -2134,7 +2132,7 @@ HRESULT DirectX::LoadFromTGAFile(
                         ext = &extData;
                     }
                 }
-#endif
+            #endif
             }
         }
     }
@@ -2314,7 +2312,7 @@ HRESULT DirectX::SaveToTGAFile(
             return hr;
 
         // Write blob
-#ifdef WIN32
+    #ifdef WIN32
         const DWORD bytesToWrite = static_cast<DWORD>(blob.GetBufferSize());
         DWORD bytesWritten;
         if (!WriteFile(hFile.get(), blob.GetBufferPointer(), bytesToWrite, &bytesWritten, nullptr))
@@ -2326,13 +2324,13 @@ HRESULT DirectX::SaveToTGAFile(
         {
             return E_FAIL;
         }
-#else
+    #else
         outFile.write(reinterpret_cast<char*>(blob.GetBufferPointer()),
             static_cast<std::streamsize>(blob.GetBufferSize()));
 
         if (!outFile)
             return E_FAIL;
-#endif
+    #endif
     }
     else
     {
@@ -2342,7 +2340,7 @@ HRESULT DirectX::SaveToTGAFile(
             return E_OUTOFMEMORY;
 
         // Write header
-#ifdef WIN32
+    #ifdef WIN32
         DWORD bytesWritten;
         if (!WriteFile(hFile.get(), &tga_header, sizeof(TGA_HEADER), &bytesWritten, nullptr))
         {
@@ -2351,11 +2349,11 @@ HRESULT DirectX::SaveToTGAFile(
 
         if (bytesWritten != sizeof(TGA_HEADER))
             return E_FAIL;
-#else
+    #else
         outFile.write(reinterpret_cast<char*>(&tga_header), sizeof(TGA_HEADER));
         if (!outFile)
             return E_FAIL;
-#endif
+    #endif
 
         if (rowPitch > UINT32_MAX)
             return HRESULT_E_ARITHMETIC_OVERFLOW;
@@ -2381,7 +2379,7 @@ HRESULT DirectX::SaveToTGAFile(
 
             pPixels += image.rowPitch;
 
-#ifdef WIN32
+        #ifdef WIN32
             if (!WriteFile(hFile.get(), temp.get(), static_cast<DWORD>(rowPitch), &bytesWritten, nullptr))
             {
                 return HRESULT_FROM_WIN32(GetLastError());
@@ -2389,11 +2387,11 @@ HRESULT DirectX::SaveToTGAFile(
 
             if (bytesWritten != rowPitch)
                 return E_FAIL;
-#else
+        #else
             outFile.write(reinterpret_cast<char*>(temp.get()), rowPitch);
             if (!outFile)
                 return E_FAIL;
-#endif
+        #endif
         }
 
         uint32_t extOffset = 0;
@@ -2403,7 +2401,7 @@ HRESULT DirectX::SaveToTGAFile(
             TGA_EXTENSION ext = {};
             SetExtension(&ext, flags, *metadata);
 
-#ifdef WIN32
+        #ifdef WIN32
             extOffset = SetFilePointer(hFile.get(), 0, nullptr, FILE_CURRENT);
             if (extOffset == INVALID_SET_FILE_POINTER)
             {
@@ -2417,7 +2415,7 @@ HRESULT DirectX::SaveToTGAFile(
 
             if (bytesWritten != sizeof(TGA_EXTENSION))
                 return E_FAIL;
-#else
+        #else
             extOffset = static_cast<uint32_t>(outFile.tellp());
             if (!outFile)
                 return E_FAIL;
@@ -2425,7 +2423,7 @@ HRESULT DirectX::SaveToTGAFile(
             outFile.write(reinterpret_cast<char*>(&ext), sizeof(TGA_EXTENSION));
             if (!outFile)
                 return E_FAIL;
-#endif
+        #endif
         }
 
         // Write TGA 2.0 footer
@@ -2433,7 +2431,7 @@ HRESULT DirectX::SaveToTGAFile(
         footer.dwExtensionOffset = extOffset;
         memcpy(footer.Signature, g_Signature, sizeof(g_Signature));
 
-#ifdef WIN32
+    #ifdef WIN32
         if (!WriteFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesWritten, nullptr))
         {
             return HRESULT_FROM_WIN32(GetLastError());
@@ -2441,11 +2439,11 @@ HRESULT DirectX::SaveToTGAFile(
 
         if (bytesWritten != sizeof(footer))
             return E_FAIL;
-#else
+    #else
         outFile.write(reinterpret_cast<char*>(&footer), sizeof(TGA_FOOTER));
         if (!outFile)
             return E_FAIL;
-#endif
+    #endif
     }
 
 #ifdef WIN32
