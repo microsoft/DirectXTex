@@ -17,8 +17,16 @@
 
 #pragma once
 
-#ifdef WIN32
+#ifdef __MINGW32__
+#include <unknwn.h>
+#endif
+
+#ifdef _WIN32
+#ifdef USING_DIRECTX_HEADERS
+#include <directx/d3d12.h>
+#else
 #include <d3d12.h>
+#endif
 
 #ifdef NTDDI_WIN10_FE
 #include <ocidl.h>
@@ -43,7 +51,7 @@ namespace DirectX
         D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET,
         D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_RENDER_TARGET) noexcept;
 
-#ifdef WIN32
+#ifdef _WIN32
     HRESULT __cdecl SaveWICTextureToFile(
         _In_ ID3D12CommandQueue* pCommandQ,
         _In_ ID3D12Resource* pSource,

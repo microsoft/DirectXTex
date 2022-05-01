@@ -34,7 +34,7 @@
 
 using namespace DirectX;
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <cstdarg>
 
 #define strncpy_s strncpy
@@ -77,7 +77,7 @@ namespace
         return 0;
     }
 
-#ifndef WIN32
+#ifndef _WIN32
     template<size_t sizeOfBuffer>
     inline int sprintf_s(char(&buffer)[sizeOfBuffer], const char* format, ...)
     {
@@ -598,7 +598,7 @@ HRESULT DirectX::GetMetadataFromHDRFile(const wchar_t* szFile, TexMetadata& meta
     if (!szFile)
         return E_INVALIDARG;
 
-#ifdef WIN32
+#ifdef _WIN32
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
     ScopedHandle hFile(safe_handle(CreateFile2(szFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, nullptr)));
 #else
@@ -652,7 +652,7 @@ HRESULT DirectX::GetMetadataFromHDRFile(const wchar_t* szFile, TexMetadata& meta
     // Read the first part of the file to find the header
     uint8_t header[8192] = {};
 
-#ifdef WIN32
+#ifdef _WIN32
     DWORD bytesRead = 0;
     if (!ReadFile(hFile.get(), header, std::min<DWORD>(sizeof(header), fileInfo.EndOfFile.LowPart), &bytesRead, nullptr))
     {
@@ -902,7 +902,7 @@ HRESULT DirectX::LoadFromHDRFile(const wchar_t* szFile, TexMetadata* metadata, S
 
     image.Release();
 
-#ifdef WIN32
+#ifdef _WIN32
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
     ScopedHandle hFile(safe_handle(CreateFile2(szFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, nullptr)));
 #else
@@ -960,7 +960,7 @@ HRESULT DirectX::LoadFromHDRFile(const wchar_t* szFile, TexMetadata* metadata, S
         return E_OUTOFMEMORY;
     }
 
-#ifdef WIN32
+#ifdef _WIN32
     DWORD bytesRead = 0;
     if (!ReadFile(hFile.get(), temp.get(), fileInfo.EndOfFile.LowPart, &bytesRead, nullptr))
     {
@@ -1125,7 +1125,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
     }
 
     // Create file and write header
-#ifdef WIN32
+#ifdef _WIN32
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
     ScopedHandle hFile(safe_handle(CreateFile2(szFile,
         GENERIC_WRITE, 0, CREATE_ALWAYS, nullptr)));
@@ -1163,7 +1163,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
             return hr;
 
         // Write blob
-    #ifdef WIN32
+    #ifdef _WIN32
         auto const bytesToWrite = static_cast<const DWORD>(blob.GetBufferSize());
         DWORD bytesWritten;
         if (!WriteFile(hFile.get(), blob.GetBufferPointer(), bytesToWrite, &bytesWritten, nullptr))
@@ -1196,7 +1196,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
         char header[256] = {};
         sprintf_s(header, g_Header, image.height, image.width);
 
-    #ifdef WIN32
+    #ifdef _WIN32
         auto const headerLen = static_cast<DWORD>(strlen(header));
 
         DWORD bytesWritten;
@@ -1221,7 +1221,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
             FloatToRGBE(rgbe, reinterpret_cast<const float*>(sPtr), image.width, fpp);
             sPtr += image.rowPitch;
 
-        #ifdef WIN32
+        #ifdef _WIN32
             if (!WriteFile(hFile.get(), rgbe, static_cast<DWORD>(rowPitch), &bytesWritten, nullptr))
             {
                 return HRESULT_FROM_WIN32(GetLastError());
@@ -1258,7 +1258,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
                 if (encSize > UINT32_MAX)
                     return HRESULT_E_ARITHMETIC_OVERFLOW;
 
-            #ifdef WIN32
+            #ifdef _WIN32
                 if (!WriteFile(hFile.get(), enc, static_cast<DWORD>(encSize), &bytesWritten, nullptr))
                 {
                     return HRESULT_FROM_WIN32(GetLastError());
@@ -1274,7 +1274,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
             }
             else
             {
-            #ifdef WIN32
+            #ifdef _WIN32
                 if (!WriteFile(hFile.get(), rgbe, static_cast<DWORD>(rowPitch), &bytesWritten, nullptr))
                 {
                     return HRESULT_FROM_WIN32(GetLastError());
@@ -1292,7 +1292,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
     #endif
     }
 
-#ifdef WIN32
+#ifdef _WIN32
     delonfail.clear();
 #endif
 

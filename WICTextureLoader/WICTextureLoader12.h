@@ -20,7 +20,19 @@
 
 #pragma once
 
+#ifndef _WIN32
+#error This module only supports Windows
+#endif
+
+#ifdef __MINGW32__
+#include <unknwn.h>
+#endif
+
+#ifdef USING_DIRECTX_HEADERS
+#include <directx/d3d12.h>
+#else
 #include <d3d12.h>
+#endif
 
 #pragma comment(lib,"dxguid.lib")
 #pragma comment(lib,"windowscodecs.lib")

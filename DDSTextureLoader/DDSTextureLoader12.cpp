@@ -21,7 +21,7 @@
 #include <memory>
 #include <new>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <fstream>
 #include <filesystem>
 #endif
@@ -47,10 +47,10 @@
 
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
-#ifdef WIN32
-#include "d3dx12.h"
-#else
+#if !defined(_WIN32) || defined(USING_DIRECTX_HEADERS)
 #include "directx/d3dx12.h"
+#else
+#include "d3dx12.h"
 #endif
 
 using namespace DirectX;
@@ -157,7 +157,7 @@ struct DDS_HEADER_DXT10
 //--------------------------------------------------------------------------------------
 namespace
 {
-#ifdef WIN32
+#ifdef _WIN32
     struct handle_closer { void operator()(HANDLE h) noexcept { if (h) CloseHandle(h); } };
 
     using ScopedHandle = std::unique_ptr<void, handle_closer>;
@@ -165,16 +165,18 @@ namespace
     inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 #endif
 
+    #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
     template<UINT TNameLength>
     inline void SetDebugObjectName(_In_ ID3D12DeviceChild* resource, _In_z_ const wchar_t(&name)[TNameLength]) noexcept
     {
-    #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
         resource->SetName(name);
-    #else
-        UNREFERENCED_PARAMETER(resource);
-        UNREFERENCED_PARAMETER(name);
-    #endif
     }
+    #else
+    template<UINT TNameLength>
+    inline void SetDebugObjectName(_In_ ID3D12DeviceChild*, _In_z_ const wchar_t(&)[TNameLength]) noexcept
+    {
+    }
+    #endif
 
     inline uint32_t CountMips(uint32_t width, uint32_t height) noexcept
     {
@@ -274,7 +276,7 @@ namespace
 
         *bitSize = 0;
 
-    #ifdef WIN32
+    #ifdef _WIN32
             // open the file
         ScopedHandle hFile(safe_handle(CreateFile2(fileName,
             GENERIC_READ,

@@ -65,7 +65,7 @@ namespace
         return mipLevels;
     }
 
-#ifdef WIN32
+#ifdef _WIN32
     HRESULT EnsureWicBitmapPixelFormat(
         _In_ IWICImagingFactory* pWIC,
         _In_ IWICBitmap* src,
@@ -399,7 +399,7 @@ bool DirectX::Internal::CalculateMipLevels3D(
     return true;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 //--- Resizing color and alpha channels separately using WIC ---
 _Use_decl_annotations_
 HRESULT DirectX::Internal::ResizeSeparateColorAndAlpha(
@@ -620,7 +620,7 @@ HRESULT DirectX::Internal::ResizeSeparateColorAndAlpha(
 
 namespace
 {
-#ifdef WIN32
+#ifdef _WIN32
     //--- determine when to use WIC vs. non-WIC paths ---
     bool UseWICFiltering(_In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter) noexcept
     {
@@ -2836,7 +2836,7 @@ HRESULT DirectX::GenerateMipMaps(
 
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MODE_MASK");
 
-#ifdef WIN32
+#ifdef _WIN32
     bool usewic = UseWICFiltering(baseImage.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
@@ -3051,7 +3051,7 @@ HRESULT DirectX::GenerateMipMaps(
 
     static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MODE_MASK");
 
-#ifdef WIN32
+#ifdef _WIN32
     bool usewic = !metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter);
 
     WICPixelFormatGUID pfGUID = {};

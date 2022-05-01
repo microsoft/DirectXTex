@@ -1224,7 +1224,7 @@ namespace
             time_t now = {};
             time(&now);
 
-        #ifdef WIN32
+        #ifdef _WIN32
             tm info;
             auto pinfo = &info;
             if (!gmtime_s(pinfo, &now))
@@ -1343,7 +1343,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
     if (!szFile)
         return E_INVALIDARG;
 
-#ifdef WIN32
+#ifdef _WIN32
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
     ScopedHandle hFile(safe_handle(CreateFile2(szFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, nullptr)));
 #else
@@ -1397,7 +1397,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
     // Read the standard header (we don't need the file footer to parse the file)
     uint8_t header[sizeof(TGA_HEADER)] = {};
 
-#ifdef WIN32
+#ifdef _WIN32
     DWORD bytesRead = 0;
     if (!ReadFile(hFile.get(), header, sizeof(TGA_HEADER), &bytesRead, nullptr))
     {
@@ -1424,7 +1424,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
     {
         TGA_FOOTER footer = {};
 
-    #ifdef WIN32
+    #ifdef _WIN32
         if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) != INVALID_SET_FILE_POINTER)
         {
             if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
@@ -1452,7 +1452,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
             if (footer.dwExtensionOffset != 0
                 && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= len))
             {
-            #ifdef WIN32
+            #ifdef _WIN32
                 const LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
                 if (SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
                 {
@@ -1592,7 +1592,7 @@ HRESULT DirectX::LoadFromTGAFile(
 
     image.Release();
 
-#ifdef WIN32
+#ifdef _WIN32
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
     ScopedHandle hFile(safe_handle(CreateFile2(szFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, nullptr)));
 #else
@@ -1646,7 +1646,7 @@ HRESULT DirectX::LoadFromTGAFile(
     // Read the header
     uint8_t header[sizeof(TGA_HEADER)] = {};
 
-#ifdef WIN32
+#ifdef _WIN32
     DWORD bytesRead = 0;
     if (!ReadFile(hFile.get(), header, sizeof(TGA_HEADER), &bytesRead, nullptr))
     {
@@ -1676,7 +1676,7 @@ HRESULT DirectX::LoadFromTGAFile(
 
     if (offset > sizeof(TGA_HEADER))
     {
-    #ifdef WIN32
+    #ifdef _WIN32
             // Skip past the id string
         const LARGE_INTEGER filePos = { { static_cast<DWORD>(offset), 0 } };
         if (!SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
@@ -1713,7 +1713,7 @@ HRESULT DirectX::LoadFromTGAFile(
             return HRESULT_E_ARITHMETIC_OVERFLOW;
         }
 
-    #ifdef WIN32
+    #ifdef _WIN32
         if (!ReadFile(hFile.get(), image.GetPixels(), static_cast<DWORD>(image.GetPixelsSize()), &bytesRead, nullptr))
         {
             image.Release();
@@ -1932,7 +1932,7 @@ HRESULT DirectX::LoadFromTGAFile(
             return E_OUTOFMEMORY;
         }
 
-    #ifdef WIN32
+    #ifdef _WIN32
         if (!ReadFile(hFile.get(), temp.get(), static_cast<DWORD>(remaining), &bytesRead, nullptr))
         {
             image.Release();
@@ -1978,7 +1978,7 @@ HRESULT DirectX::LoadFromTGAFile(
     {
         TGA_FOOTER footer = {};
 
-    #ifdef WIN32
+    #ifdef _WIN32
         if (SetFilePointer(hFile.get(), -static_cast<int>(sizeof(TGA_FOOTER)), nullptr, FILE_END) != INVALID_SET_FILE_POINTER)
         {
             if (!ReadFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesRead, nullptr))
@@ -2011,7 +2011,7 @@ HRESULT DirectX::LoadFromTGAFile(
             if (footer.dwExtensionOffset != 0
                 && ((footer.dwExtensionOffset + sizeof(TGA_EXTENSION)) <= len))
             {
-            #ifdef WIN32
+            #ifdef _WIN32
                 const LARGE_INTEGER filePos = { { static_cast<DWORD>(footer.dwExtensionOffset), 0 } };
                 if (SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
                 {
@@ -2174,7 +2174,7 @@ HRESULT DirectX::SaveToTGAFile(
         return hr;
 
     // Create file and write header
-#ifdef WIN32
+#ifdef _WIN32
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
     ScopedHandle hFile(safe_handle(CreateFile2(szFile, GENERIC_WRITE, 0,
         CREATE_ALWAYS, nullptr)));
@@ -2211,7 +2211,7 @@ HRESULT DirectX::SaveToTGAFile(
             return hr;
 
         // Write blob
-    #ifdef WIN32
+    #ifdef _WIN32
         const DWORD bytesToWrite = static_cast<DWORD>(blob.GetBufferSize());
         DWORD bytesWritten;
         if (!WriteFile(hFile.get(), blob.GetBufferPointer(), bytesToWrite, &bytesWritten, nullptr))
@@ -2239,7 +2239,7 @@ HRESULT DirectX::SaveToTGAFile(
             return E_OUTOFMEMORY;
 
         // Write header
-    #ifdef WIN32
+    #ifdef _WIN32
         DWORD bytesWritten;
         if (!WriteFile(hFile.get(), &tga_header, sizeof(TGA_HEADER), &bytesWritten, nullptr))
         {
@@ -2278,7 +2278,7 @@ HRESULT DirectX::SaveToTGAFile(
 
             pPixels += image.rowPitch;
 
-        #ifdef WIN32
+        #ifdef _WIN32
             if (!WriteFile(hFile.get(), temp.get(), static_cast<DWORD>(rowPitch), &bytesWritten, nullptr))
             {
                 return HRESULT_FROM_WIN32(GetLastError());
@@ -2300,7 +2300,7 @@ HRESULT DirectX::SaveToTGAFile(
             TGA_EXTENSION ext = {};
             SetExtension(&ext, flags, *metadata);
 
-        #ifdef WIN32
+        #ifdef _WIN32
             extOffset = SetFilePointer(hFile.get(), 0, nullptr, FILE_CURRENT);
             if (extOffset == INVALID_SET_FILE_POINTER)
             {
@@ -2330,7 +2330,7 @@ HRESULT DirectX::SaveToTGAFile(
         footer.dwExtensionOffset = extOffset;
         memcpy(footer.Signature, g_Signature, sizeof(g_Signature));
 
-    #ifdef WIN32
+    #ifdef _WIN32
         if (!WriteFile(hFile.get(), &footer, sizeof(TGA_FOOTER), &bytesWritten, nullptr))
         {
             return HRESULT_FROM_WIN32(GetLastError());
@@ -2345,7 +2345,7 @@ HRESULT DirectX::SaveToTGAFile(
     #endif
     }
 
-#ifdef WIN32
+#ifdef _WIN32
     delonfail.clear();
 #endif
 

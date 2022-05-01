@@ -14,7 +14,7 @@
 using namespace DirectX;
 using namespace DirectX::Internal;
 
-#ifndef WIN32
+#ifndef _WIN32
 namespace
 {
     inline void * _aligned_malloc(size_t size, size_t alignment)

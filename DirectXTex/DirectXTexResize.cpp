@@ -19,7 +19,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-#ifdef WIN32
+#ifdef _WIN32
     //--- Do image resize using WIC ---
     HRESULT PerformResizeUsingWIC(
         const Image& srcImage,
@@ -876,7 +876,7 @@ HRESULT DirectX::Resize(
         return HRESULT_E_NOT_SUPPORTED;
     }
 
-#ifdef WIN32
+#ifdef _WIN32
     bool usewic = UseWICFiltering(srcImage.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
@@ -905,7 +905,7 @@ HRESULT DirectX::Resize(
     if (!rimage)
         return E_POINTER;
 
-#ifdef WIN32
+#ifdef _WIN32
     if (usewic)
     {
         if (wicpf)
@@ -963,7 +963,7 @@ HRESULT DirectX::Resize(
     if (FAILED(hr))
         return hr;
 
-#ifdef WIN32
+#ifdef _WIN32
     bool usewic = !metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
@@ -1019,7 +1019,7 @@ HRESULT DirectX::Resize(
                 return E_FAIL;
             }
 
-        #ifdef WIN32
+        #ifdef _WIN32
             if (usewic)
             {
                 if (wicpf)
@@ -1080,7 +1080,7 @@ HRESULT DirectX::Resize(
                 return E_FAIL;
             }
 
-        #ifdef WIN32
+        #ifdef _WIN32
             if (usewic)
             {
                 if (wicpf)

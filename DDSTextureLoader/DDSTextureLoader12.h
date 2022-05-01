@@ -16,9 +16,17 @@
 
 #pragma once
 
-#if defined(WIN32) || defined(_WIN32)
+#ifdef __MINGW32__
+#include <unknwn.h>
+#endif
+
+#ifdef _WIN32
+#ifdef USING_DIRECTX_HEADERS
+#include <directx/d3d12.h>
+#else
 #include <d3d12.h>
 #pragma comment(lib,"dxguid.lib")
+#endif
 #else
 #include <wsl/winadapter.h>
 #include <wsl/wrladapter.h>

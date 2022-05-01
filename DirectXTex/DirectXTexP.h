@@ -71,7 +71,7 @@
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #endif
 
-#if defined(WIN32) || defined(_WIN32)
+#ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -89,7 +89,7 @@
 
 #include <Windows.h>
 
-#ifdef _WIN32
+#ifdef __MINGW32__
 #include <unknwn.h>
 #endif
 
@@ -137,7 +137,7 @@
 #include <new>
 #include <tuple>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <fstream>
 #include <filesystem>
 #include <thread>
@@ -155,7 +155,7 @@
 
 #include <malloc.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #ifdef NTDDI_WIN10_FE
 #include <ole2.h>
 #else
@@ -219,7 +219,7 @@ namespace DirectX
     {
         //-----------------------------------------------------------------------------
         // WIC helper functions
-    #ifdef WIN32
+    #ifdef _WIN32
         DXGI_FORMAT __cdecl WICToDXGI(_In_ const GUID& guid) noexcept;
         bool __cdecl DXGIToWIC(_In_ DXGI_FORMAT format, _Out_ GUID& guid, _In_ bool ignoreRGBvsBGR = false) noexcept;
 
@@ -426,7 +426,7 @@ namespace DirectX
         bool __cdecl CalculateMipLevels3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth,
             _Inout_ size_t& mipLevels) noexcept;
 
-    #ifdef WIN32
+    #ifdef _WIN32
         HRESULT __cdecl ResizeSeparateColorAndAlpha(_In_ IWICImagingFactory* pWIC,
             _In_ bool iswic2,
             _In_ IWICBitmap* original,

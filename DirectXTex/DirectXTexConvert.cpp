@@ -4394,7 +4394,7 @@ namespace
         _Out_ WICPixelFormatGUID& pfGUID,
         _Out_ WICPixelFormatGUID& targetGUID) noexcept
     {
-    #ifndef WIN32
+    #ifndef _WIN32
         UNREFERENCED_PARAMETER(filter);
         UNREFERENCED_PARAMETER(sformat);
         UNREFERENCED_PARAMETER(tformat);
@@ -4557,7 +4557,7 @@ namespace
         _In_ float threshold,
         _In_ const Image& destImage)
     {
-    #ifndef WIN32
+    #ifndef _WIN32
         UNREFERENCED_PARAMETER(srcImage);
         UNREFERENCED_PARAMETER(pfGUID);
         UNREFERENCED_PARAMETER(targetGUID);
