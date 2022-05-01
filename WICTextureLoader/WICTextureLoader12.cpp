@@ -25,6 +25,8 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cfloat>
+#include <cmath>
 #include <cstring>
 #include <iterator>
 #include <new>
