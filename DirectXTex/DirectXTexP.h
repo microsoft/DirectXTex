@@ -89,6 +89,10 @@
 
 #include <Windows.h>
 
+#ifdef _WIN32
+#include <unknwn.h>
+#endif
+
 #ifndef _WIN32_WINNT_WIN10
 #define _WIN32_WINNT_WIN10 0x0A00
 #endif
@@ -180,6 +184,10 @@ using WICPixelFormatGUID = GUID;
 #endif
 
 #define XBOX_DXGI_FORMAT_R4G4_UNORM DXGI_FORMAT(190)
+
+#if defined(__MINGW32__) && !defined(E_BOUNDS)
+#define E_BOUNDS static_cast<HRESULT>(0x8000000BL)
+#endif
 
 // HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW)
 #define HRESULT_E_ARITHMETIC_OVERFLOW static_cast<HRESULT>(0x80070216L)

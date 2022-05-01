@@ -543,7 +543,7 @@ HRESULT DirectX::Internal::ResizeSeparateColorAndAlpha(
 
         if (SUCCEEDED(hr))
         {
-            WICInProcPointer colorWithAlphaData = nullptr;
+            BYTE* colorWithAlphaData = nullptr;
             UINT colorWithAlphaSizeInBytes = 0;
             UINT colorWithAlphaStride = 0;
 
@@ -560,7 +560,7 @@ HRESULT DirectX::Internal::ResizeSeparateColorAndAlpha(
                 }
             }
 
-            WICInProcPointer colorData = nullptr;
+            BYTE* colorData = nullptr;
             UINT colorSizeInBytes = 0;
             UINT colorStride = 0;
             if (SUCCEEDED(hr))

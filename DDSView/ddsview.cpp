@@ -452,8 +452,8 @@ HRESULT InitDevice(const TexMetadata& mdata)
     vp.TopLeftX = vp.TopLeftY = 0.f;
     vp.Width = static_cast<float>(width);
     vp.Height = static_cast<float>(height);
-    vp.MinDepth = D3D11_MIN_DEPTH;
-    vp.MaxDepth = D3D11_MAX_DEPTH;
+    vp.MinDepth = 0.f /* D3D11_MIN_DEPTH */;
+    vp.MaxDepth = 1.f /* D3D11_MAX_DEPTH */;
     g_pImmediateContext->RSSetViewports(1, &vp);
 
     // Create the vertex shader
