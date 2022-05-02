@@ -8,7 +8,7 @@ if(ENABLE_OPENEXR_SUPPORT)
     find_dependency(OpenEXR)
 endif()
 
-if((NOT WIN32) OR VCPKG_TOOLCHAIN)
+if(MINGW OR (NOT WIN32) OR VCPKG_TOOLCHAIN)
     find_dependency(directx-headers CONFIG)
     find_dependency(directxmath CONFIG)
 endif()
