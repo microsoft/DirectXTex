@@ -286,6 +286,10 @@ namespace
         {
             return HRESULT_E_NOT_SUPPORTED;
         }
+        if (size_t(pHeader->wColorMapLength * (pHeader->bColorMapSize / 8)) > size)
+        {
+            return HRESULT_E_INVALID_DATA;
+        }
 
         const uint8_t* bytes = reinterpret_cast<const uint8_t*>(pSource);
 
@@ -308,6 +312,8 @@ namespace
                 return HRESULT_E_INVALID_DATA;
             }
         }
+
+        return S_OK;
     }
 
 
@@ -2047,20 +2053,20 @@ HRESULT DirectX::LoadFromTGAFile(
             return hr;
         }
 
-        size_t offset = 0;
+        size_t palette_offset = 0;
         if (convFlags & CONV_FLAGS_PALETTED)
         {
             auto pHeader = reinterpret_cast<const TGA_HEADER*>(header);
-            offset += pHeader->wColorMapLength * (pHeader->bColorMapSize / 8);
+            palette_offset += pHeader->wColorMapLength * (pHeader->bColorMapSize / 8);
         }
 
         if (convFlags & CONV_FLAGS_RLE)
         {
-            hr = UncompressPixels(temp.get() + offset, remaining, flags, image.GetImage(0, 0, 0), convFlags);
+            hr = UncompressPixels(temp.get() + palette_offset, remaining, flags, image.GetImage(0, 0, 0), convFlags);
         }
         else
         {
-            hr = CopyPixels(temp.get() + offset, remaining, flags, image.GetImage(0, 0, 0), convFlags, palette);
+            hr = CopyPixels(temp.get() + palette_offset, remaining, flags, image.GetImage(0, 0, 0), convFlags, palette);
         }
 
         if (FAILED(hr))
