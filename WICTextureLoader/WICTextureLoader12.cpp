@@ -57,7 +57,7 @@
 
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
-#if defined(USING_DIRECTX_HEADERS)
+#ifdef USING_DIRECTX_HEADERS
 #include "directx/d3dx12.h"
 #else
 #include "d3dx12.h"
