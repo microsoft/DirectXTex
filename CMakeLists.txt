@@ -133,7 +133,7 @@ if(BUILD_DX11 AND WIN32)
             DEPENDS ${SHADER_SOURCES}
             COMMENT "Generating HLSL shaders..."
             COMMAND set CompileShadersOutput=${COMPILED_SHADERS}
-            COMMAND CompileShaders.cmd
+            COMMAND CompileShaders.cmd > ${COMPILED_SHADERS}/compileshaders.log
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
             USES_TERMINAL)
     endif()
@@ -240,12 +240,6 @@ if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
       target_compile_options(${t} PRIVATE -DUSE_OPENEXR)
     endforeach()
   endif()
-
-  if (VCPKG_TOOLCHAIN)
-    foreach(t IN LISTS TOOL_EXES)
-      target_link_libraries(${t} Microsoft::DirectXMath)
-    endforeach()
-  endif()
 endif()
 
 #--- DDSView sample
@@ -268,10 +262,16 @@ if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
             DEPENDS "${PROJECT_SOURCE_DIR}/DDSView/ddsview.fx"
             COMMENT "Generating HLSL shaders for DDSView..."
             COMMAND set CompileShadersOutput=${COMPILED_SHADERS}
-            COMMAND hlsl.cmd
+            COMMAND hlsl.cmd > ${COMPILED_SHADERS}/hlsl.log
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DDSView"
             USES_TERMINAL)
   endif()
+endif()
+
+if ((NOT WIN32) OR VCPKG_TOOLCHAIN)
+  foreach(t IN LISTS TOOL_EXES)
+    target_link_libraries(${t} Microsoft::DirectXMath)
+  endforeach()
 endif()
 
 if(MSVC)
@@ -280,7 +280,7 @@ if(MSVC)
       target_link_options(${t} PRIVATE /DYNAMICBASE /NXCOMPAT)
     endforeach()
 
-    if((${CMAKE_SIZEOF_VOID_P} EQUAL 4) AND (NOT ${DIRECTX_ARCH} MATCHES "arm"))
+    if((${CMAKE_SIZEOF_VOID_P} EQUAL 4) AND (NOT ${DIRECTX_ARCH} MATCHES "^arm"))
         foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
           target_compile_options(${t} PRIVATE /arch:SSE2)
           target_link_options(${t} PRIVATE /SAFESEH)
@@ -301,7 +301,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-      target_compile_options(${t} PRIVATE /sdl /permissive- /Zc:__cplusplus)
+      target_compile_options(${t} PRIVATE /sdl /permissive- /JMC- /Zc:__cplusplus)
     endforeach()
 
     if(ENABLE_CODE_ANALYSIS)
@@ -322,8 +322,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         endforeach()
     endif()
 
-    if ((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.27) AND (NOT (${DIRECTX_ARCH} MATCHES "arm(64)?")))
-        foreach(t IN LISTS TOOL_EXES)
+    if ((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.27) AND (NOT (${DIRECTX_ARCH} MATCHES "^arm")))
+        foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
           target_link_options(${t} PRIVATE /CETCOMPAT)
         endforeach()
     endif()
@@ -342,8 +342,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 
 if(WIN32)
-    foreach(t IN LISTS TOOL_EXES)
-      target_compile_definitions(${t} PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0601)
+    foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+      target_compile_definitions(${t} PRIVATE _UNICODE UNICODE)
     endforeach()
 
     if(WINDOWS_STORE)
@@ -359,6 +359,9 @@ if(WIN32)
         message("INFO: Building with Windows 7 compatibility")
         target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0601 _WIN7_PLATFORM_UPDATE)
     endif()
+    foreach(t IN LISTS TOOL_EXES)
+      target_compile_definitions(${t} PRIVATE _WIN32_WINNT=0x0601)
+    endforeach()
 endif()
 
 if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))

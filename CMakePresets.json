@@ -98,6 +98,16 @@
       },
       "hidden": true
     },
+    {
+      "name": "VCPKG",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+          "type": "FILEPATH"
+        }
+      },
+      "hidden": true
+    },
 
     { "name": "x64-Debug"    , "description": "MSVC for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "MSVC" ] },
     { "name": "x64-Release"  , "description": "MSVC for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "MSVC" ] },
@@ -119,6 +129,13 @@
     { "name": "x64-Release-Win7"  , "description": "MSVC for x64 (Release) for Windows 7", "inherits": [ "base", "x64", "Release", "MSVC", "Win7" ] },
     { "name": "x86-Debug-Win7"    , "description": "MSVC for x86 (Debug) for Windows 7", "inherits": [ "base", "x86", "Debug", "MSVC", "Win7" ] },
     { "name": "x86-Release-Win7"  , "description": "MSVC for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "MSVC", "Win7" ] },
+
+    { "name": "x64-Debug-VCPKG"    , "description": "MSVC for x64 (Debug) using VCPKG", "inherits": [ "base", "x64", "Debug", "MSVC", "VCPKG" ] },
+    { "name": "x64-Release-VCPKG"  , "description": "MSVC for x64 (Release) using VCPKG", "inherits": [ "base", "x64", "Release", "MSVC", "VCPKG" ] },
+    { "name": "x86-Debug-VCPKG"    , "description": "MSVC for x86 (Debug) using VCPKG", "inherits": [ "base", "x86", "Debug", "MSVC", "VCPKG" ] },
+    { "name": "x86-Release-VCPKG"  , "description": "MSVC for x86 (Release) using VCPKG", "inherits": [ "base", "x86", "Release", "MSVC", "VCPKG" ] },
+    { "name": "arm64-Debug-VCPKG"  , "description": "MSVC for ARM64 (Debug) using VCPKG", "inherits": [ "base", "ARM64", "Debug", "MSVC", "VCPKG" ] },
+    { "name": "arm64-Release-VCPKG", "description": "MSVC for ARM64 (Release) using VCPKG", "inherits": [ "base", "ARM64", "Release", "MSVC", "VCPKG" ] },
 
     { "name": "x64-Debug-Clang"    , "description": "Clang/LLVM for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "Clang" ] },
     { "name": "x64-Release-Clang"  , "description": "Clang/LLVM for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "Clang" ] },
