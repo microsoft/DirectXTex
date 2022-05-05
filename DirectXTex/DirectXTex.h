@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 
-#if defined(WIN32) || defined(_WIN32)
+#ifdef _WIN32
 #if !defined(__d3d11_h__) && !defined(__d3d11_x_h__) && !defined(__d3d12_h__) && !defined(__d3d12_x_h__) && !defined(__XBOX_D3D12_X__)
 #ifdef _GAMING_XBOX_SCARLETT
 #include <d3d12_xs.h>
@@ -36,8 +36,8 @@
 
 #include <DirectXMath.h>
 
-#ifdef WIN32
-#ifdef NTDDI_WIN10_FE
+#ifdef _WIN32
+#if defined(NTDDI_WIN10_FE) || defined(__MINGW32__)
 #include <ocidl.h>
 #else
 #include <OCIdl.h>
@@ -315,7 +315,7 @@ namespace DirectX
         _In_ TGA_FLAGS flags,
         _Out_ TexMetadata& metadata) noexcept;
 
-#ifdef WIN32
+#ifdef _WIN32
     HRESULT __cdecl GetMetadataFromWICMemory(
         _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
         _In_ WIC_FLAGS flags,
@@ -486,7 +486,7 @@ namespace DirectX
         _In_z_ const wchar_t* szFile, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
 
     // WIC operations
-#ifdef WIN32
+#ifdef _WIN32
     HRESULT __cdecl LoadFromWICMemory(
         _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
         _In_ WIC_FLAGS flags,
@@ -542,7 +542,7 @@ namespace DirectX
         TEX_FR_FLIP_VERTICAL = 0x10,
     };
 
-#ifdef WIN32
+#ifdef _WIN32
     HRESULT __cdecl FlipRotate(_In_ const Image& srcImage, _In_ TEX_FR_FLAGS flags, _Out_ ScratchImage& image) noexcept;
     HRESULT __cdecl FlipRotate(
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
@@ -828,7 +828,7 @@ namespace DirectX
 
     //---------------------------------------------------------------------------------
     // WIC utility code
-#ifdef WIN32
+#ifdef _WIN32
     enum WICCodecs
     {
         WIC_CODEC_BMP = 1,          // Windows Bitmap (.bmp)

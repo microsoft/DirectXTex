@@ -15,7 +15,7 @@
 #include <memory>
 #include <tuple>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <cstdlib>
 
 struct aligned_deleter { void operator()(void* p) noexcept { free(p); } };

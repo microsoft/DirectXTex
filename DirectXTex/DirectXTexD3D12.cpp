@@ -19,17 +19,15 @@
 
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
-#ifdef WIN32
 #ifdef _GAMING_XBOX_SCARLETT
 #include <d3dx12_xs.h>
 #elif (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
 #include "d3dx12_x.h"
-#else
-#include "d3dx12.h"
-#endif
-#else
+#elif !defined(_WIN32) || defined(USING_DIRECTX_HEADERS)
 #include "directx/d3dx12.h"
 #include "dxguids/dxguids.h"
+#else
+#include "d3dx12.h"
 #endif
 
 #ifdef __clang__
@@ -304,7 +302,7 @@ namespace
         // Block until the copy is complete
         while (fence->GetCompletedValue() < 1)
         {
-        #ifdef WIN32
+        #ifdef _WIN32
             SwitchToThread();
         #else
             std::this_thread::yield();

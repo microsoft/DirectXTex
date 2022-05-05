@@ -31,7 +31,7 @@
 #include <new>
 #include <tuple>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <wincodec.h>
 #include <wrl\client.h>
 #else
@@ -61,10 +61,10 @@
 
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
-#ifdef WIN32
-#include "d3dx12.h"
-#else
+#if !defined(_WIN32) || defined(USING_DIRECTX_HEADERS)
 #include "directx/d3dx12.h"
+#else
+#include "d3dx12.h"
 #endif
 
 using Microsoft::WRL::ComPtr;
@@ -230,7 +230,7 @@ namespace
     { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','1','0'), 0, 0, 0, 0, 0 };
 
     //-----------------------------------------------------------------------------
-#ifdef WIN32
+#ifdef _WIN32
     struct handle_closer { void operator()(HANDLE h) noexcept { if (h) CloseHandle(h); } };
 
     using ScopedHandle = std::unique_ptr<void, handle_closer>;
@@ -842,7 +842,7 @@ namespace
         // Block until the copy is complete
         while (fence->GetCompletedValue() < 1)
         {
-        #ifdef WIN32
+        #ifdef _WIN32
             SwitchToThread();
         #else
             std::this_thread::yield();
@@ -852,7 +852,7 @@ namespace
         return S_OK;
     }
 
-#ifdef WIN32
+#ifdef _WIN32
     BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID* ifactory) noexcept
     {
         return SUCCEEDED(CoCreateInstance(
@@ -929,7 +929,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
         return hr;
 
     // Create file
-#ifdef WIN32
+#ifdef _WIN32
     ScopedHandle hFile(safe_handle(CreateFile2(fileName, GENERIC_WRITE, 0, CREATE_ALWAYS, nullptr)));
     if (!hFile)
         return HRESULT_FROM_WIN32(GetLastError());
@@ -1070,7 +1070,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
     pStaging->Unmap(0, &writeRange);
 
     // Write header & pixels
-#ifdef WIN32
+#ifdef _WIN32
     DWORD bytesWritten;
     if (!WriteFile(hFile.get(), fileHeader, static_cast<DWORD>(headerSize), &bytesWritten, nullptr))
         return HRESULT_FROM_WIN32(GetLastError());
@@ -1101,7 +1101,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
 }
 
 //--------------------------------------------------------------------------------------
-#ifdef WIN32
+#ifdef _WIN32
 _Use_decl_annotations_
 HRESULT DirectX::SaveWICTextureToFile(
     ID3D12CommandQueue* pCommandQ,

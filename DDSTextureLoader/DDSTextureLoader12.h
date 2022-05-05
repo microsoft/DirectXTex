@@ -16,13 +16,21 @@
 
 #pragma once
 
-#if defined(WIN32) || defined(_WIN32)
-#include <d3d12.h>
-#pragma comment(lib,"dxguid.lib")
-#else
+#ifdef __MINGW32__
+#include <unknwn.h>
+#endif
+
+#ifndef _WIN32
 #include <wsl/winadapter.h>
 #include <wsl/wrladapter.h>
+#endif
+
+#if !defined(_WIN32) || defined(USING_DIRECTX_HEADERS)
 #include <directx/d3d12.h>
+#include <dxguids/dxguids.h>
+#else
+#include <d3d12.h>
+#pragma comment(lib,"dxguid.lib")
 #endif
 
 #include <cstddef>
