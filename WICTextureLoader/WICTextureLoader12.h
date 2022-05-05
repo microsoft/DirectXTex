@@ -30,6 +30,7 @@
 
 #ifdef USING_DIRECTX_HEADERS
 #include <directx/d3d12.h>
+#include <dxguids/dxguids.h>
 #else
 #include <d3d12.h>
 #endif
