@@ -19,19 +19,15 @@
 
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
-#ifdef _WIN32
 #ifdef _GAMING_XBOX_SCARLETT
 #include <d3dx12_xs.h>
 #elif (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
 #include "d3dx12_x.h"
-#elif defined(USING_DIRECTX_HEADERS)
-#include "directx/d3dx12.h"
-#else
-#include "d3dx12.h"
-#endif
-#else // !_WIN32
+#elif !defined(_WIN32) || defined(USING_DIRECTX_HEADERS)
 #include "directx/d3dx12.h"
 #include "dxguids/dxguids.h"
+#else
+#include "d3dx12.h"
 #endif
 
 #ifdef __clang__

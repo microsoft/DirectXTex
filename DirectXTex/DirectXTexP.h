@@ -156,7 +156,7 @@
 #include <malloc.h>
 
 #ifdef _WIN32
-#ifdef NTDDI_WIN10_FE
+#if defined(NTDDI_WIN10_FE) || defined(__MINGW32__)
 #include <ole2.h>
 #else
 #include <Ole2.h>
