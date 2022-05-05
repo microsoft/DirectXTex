@@ -20,18 +20,17 @@
 #include <unknwn.h>
 #endif
 
-#ifdef _WIN32
-#ifdef USING_DIRECTX_HEADERS
+#ifndef _WIN32
+#include <wsl/winadapter.h>
+#include <wsl/wrladapter.h>
+#endif
+
+#if !defined(_WIN32) || defined(USING_DIRECTX_HEADERS)
 #include <directx/d3d12.h>
 #include <dxguids/dxguids.h>
 #else
 #include <d3d12.h>
 #pragma comment(lib,"dxguid.lib")
-#endif
-#else
-#include <wsl/winadapter.h>
-#include <wsl/wrladapter.h>
-#include <directx/d3d12.h>
 #endif
 
 #include <cstddef>

@@ -21,14 +21,20 @@
 #include <unknwn.h>
 #endif
 
-#ifdef _WIN32
-#ifdef USING_DIRECTX_HEADERS
+#ifndef _WIN32
+#include <wsl/winadapter.h>
+#include <wsl/wrladapter.h>
+#endif
+
+#if !defined(_WIN32) || defined(USING_DIRECTX_HEADERS)
 #include <directx/d3d12.h>
 #include <dxguids/dxguids.h>
 #else
 #include <d3d12.h>
+#pragma comment(lib,"dxguid.lib")
 #endif
 
+#ifdef _WIN32
 #if defined(NTDDI_WIN10_FE) || defined(__MINGW32__)
 #include <ocidl.h>
 #else
@@ -36,10 +42,6 @@
 #endif
 
 #include <functional>
-#else
-#include <wsl/winadapter.h>
-#include <wsl/wrladapter.h>
-#include <directx/d3d12.h>
 #endif
 
 
