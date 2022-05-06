@@ -63,4 +63,5 @@ echo %FXC%
 @goto end
 :error
 @echo --- ERROR: Shader build failed ---
+exit /b 1
 :end
