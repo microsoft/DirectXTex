@@ -134,8 +134,7 @@ if(BUILD_DX11 AND WIN32)
             MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
             DEPENDS ${SHADER_SOURCES}
             COMMENT "Generating HLSL shaders..."
-            COMMAND set CompileShadersOutput=${COMPILED_SHADERS}
-            COMMAND CompileShaders.cmd > ${COMPILED_SHADERS}/compileshaders.log
+            COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_SHADERS}" CompileShaders.cmd > "${COMPILED_SHADERS}/compileshaders.log"
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
             USES_TERMINAL)
     endif()
@@ -273,8 +272,7 @@ if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
             MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DDSView/hlsl.cmd"
             DEPENDS "${PROJECT_SOURCE_DIR}/DDSView/ddsview.fx"
             COMMENT "Generating HLSL shaders for DDSView..."
-            COMMAND set CompileShadersOutput=${COMPILED_DDSVIEW_SHADERS}
-            COMMAND hlsl.cmd > ${COMPILED_DDSVIEW_SHADERS}/hlsl.log
+            COMMAND COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_DDSVIEW_SHADERS}" hlsl.cmd > "${COMPILED_DDSVIEW_SHADERS}/hlsl.log"
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DDSView"
             USES_TERMINAL)
   endif()
