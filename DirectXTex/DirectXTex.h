@@ -63,6 +63,7 @@ namespace DirectX
     bool __cdecl IsPalettized(_In_ DXGI_FORMAT fmt) noexcept;
     bool __cdecl IsDepthStencil(_In_ DXGI_FORMAT fmt) noexcept;
     bool __cdecl IsSRGB(_In_ DXGI_FORMAT fmt) noexcept;
+    bool __cdecl IsBGR(_In_ DXGI_FORMAT fmt) noexcept;
     bool __cdecl IsTypeless(_In_ DXGI_FORMAT fmt, _In_ bool partialTypeless = true) noexcept;
 
     bool __cdecl HasAlpha(_In_ DXGI_FORMAT fmt) noexcept;
