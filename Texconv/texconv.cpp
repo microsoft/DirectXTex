@@ -2874,7 +2874,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                 case DXGI_FORMAT_BC4_SNORM:
                 case DXGI_FORMAT_BC5_SNORM:
-                    nmfmt = DXGI_FORMAT_R8G8B8A8_SNORM;
+                    nmfmt = (BitsPerColor(format) > 8) ? DXGI_FORMAT_R16G16B16A16_SNORM : DXGI_FORMAT_R8G8B8A8_SNORM;
                     break;
 
                 case DXGI_FORMAT_BC6H_SF16:
@@ -2883,7 +2883,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     break;
 
                 default:
-                    nmfmt = DXGI_FORMAT_R8G8B8A8_UNORM;
+                    nmfmt = (BitsPerColor(format) > 8) ? DXGI_FORMAT_R16G16B16A16_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM;
                     break;
                 }
             }
