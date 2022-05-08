@@ -2242,14 +2242,10 @@ bool DirectX::Internal::StoreScanline(
                 const int u0 = ((-38 * rgb1.x - 74 * rgb1.y + 112 * rgb1.z + 128) >> 8) + 128;
                 const int v0 = ((112 * rgb1.x - 94 * rgb1.y - 18 * rgb1.z + 128) >> 8) + 128;
 
-                XMUBYTEN4 rgb2;
+                XMUBYTEN4 rgb2 = {};
                 if (sPtr < ePtr)
                 {
                     XMStoreUByteN4(&rgb2, *sPtr++);
-                }
-                else
-                {
-                    rgb2.x = rgb2.y = rgb2.z = rgb2.w = 0;
                 }
 
                 const int y1 = ((66 * rgb2.x + 129 * rgb2.y + 25 * rgb2.z + 128) >> 8) + 16;
@@ -2287,14 +2283,10 @@ bool DirectX::Internal::StoreScanline(
                 const int u0 = static_cast<int>((-9683 * r - 19017 * g + 28700 * b + 32768) >> 16) + 512;
                 const int v0 = static_cast<int>((28700 * r - 24033 * g - 4667 * b + 32768) >> 16) + 512;
 
-                XMUDECN4 rgb2;
+                XMUDECN4 rgb2 = {};
                 if (sPtr < ePtr)
                 {
                     XMStoreUDecN4(&rgb2, *sPtr++);
-                }
-                else
-                {
-                    rgb2.x = rgb2.y = rgb2.z = rgb2.w = 0;
                 }
 
                 r = rgb2.x;
@@ -2335,14 +2327,10 @@ bool DirectX::Internal::StoreScanline(
                 const int u0 = static_cast<int>((-9674 * r - 18998 * g + 28672 * b + 32768) >> 16) + 32768;
                 const int v0 = static_cast<int>((28672 * r - 24010 * g - 4662 * b + 32768) >> 16) + 32768;
 
-                XMUSHORTN4 rgb2;
+                XMUSHORTN4 rgb2 = {};
                 if (sPtr < ePtr)
                 {
                     XMStoreUShortN4(&rgb2, *sPtr++);
-                }
-                else
-                {
-                    rgb2.x = rgb2.y = rgb2.z = rgb2.w = 0;
                 }
 
                 r = int64_t(rgb2.x);
