@@ -3293,9 +3293,9 @@ inline bool operator==( const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC &a, const D3D
 //
 //================================================================================================
 #include <list>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 #ifndef D3DX12_USE_ATL
 #include <wrl/client.h>
 #define D3DX12_COM_PTR Microsoft::WRL::ComPtr
@@ -4051,12 +4051,145 @@ private:
     D3D12_NODE_MASK m_Desc;
 };
 
-#endif // #ifndef D3DX12_NO_STATE_OBJECT_HELPERS
+#endif // !D3DX12_NO_STATE_OBJECT_HELPERS
+
+
+#if defined(NTDDI_WIN10_NI) || defined(USING_D3D12_AGILITY_SDK)
+
+//================================================================================================
+// D3DX12 Enhanced Barrier Helpers
+//================================================================================================
+
+class CD3DX12_BARRIER_SUBRESOURCE_RANGE : public D3D12_BARRIER_SUBRESOURCE_RANGE
+{
+public:
+    CD3DX12_BARRIER_SUBRESOURCE_RANGE() = default;
+    CD3DX12_BARRIER_SUBRESOURCE_RANGE(const D3D12_BARRIER_SUBRESOURCE_RANGE &o) noexcept :
+        D3D12_BARRIER_SUBRESOURCE_RANGE(o)
+    {}
+    explicit CD3DX12_BARRIER_SUBRESOURCE_RANGE(UINT Subresource) noexcept :
+        D3D12_BARRIER_SUBRESOURCE_RANGE{ Subresource, 0, 0, 0, 0, 0 }
+    {}
+    CD3DX12_BARRIER_SUBRESOURCE_RANGE(
+        UINT FirstMipLevel,
+        UINT NumMips,
+        UINT FirstArraySlice,
+        UINT NumArraySlices,
+        UINT FirstPlane = 0,
+        UINT NumPlanes = 1) noexcept :
+        D3D12_BARRIER_SUBRESOURCE_RANGE
+        {
+            FirstMipLevel,
+            NumMips,
+            FirstArraySlice,
+            NumArraySlices,
+            FirstPlane,
+            NumPlanes
+        }
+    {}
+};
+
+class CD3DX12_GLOBAL_BARRIER : public D3D12_GLOBAL_BARRIER
+{
+public:
+    CD3DX12_GLOBAL_BARRIER() = default;
+    CD3DX12_GLOBAL_BARRIER(const D3D12_GLOBAL_BARRIER &o) noexcept : D3D12_GLOBAL_BARRIER(o){}
+    CD3DX12_GLOBAL_BARRIER(
+        D3D12_BARRIER_SYNC syncBefore,
+        D3D12_BARRIER_SYNC syncAfter,
+        D3D12_BARRIER_ACCESS accessBefore,
+        D3D12_BARRIER_ACCESS accessAfter) noexcept : D3D12_GLOBAL_BARRIER {
+            syncBefore,
+            syncAfter,
+            accessBefore,
+            accessAfter
+        }
+    {}
+};
+
+class CD3DX12_BUFFER_BARRIER : public D3D12_BUFFER_BARRIER
+{
+public:
+    CD3DX12_BUFFER_BARRIER() = default;
+    CD3DX12_BUFFER_BARRIER(const D3D12_BUFFER_BARRIER &o) noexcept : D3D12_BUFFER_BARRIER(o){}
+    CD3DX12_BUFFER_BARRIER(
+        D3D12_BARRIER_SYNC syncBefore,
+        D3D12_BARRIER_SYNC syncAfter,
+        D3D12_BARRIER_ACCESS accessBefore,
+        D3D12_BARRIER_ACCESS accessAfter,
+        ID3D12Resource *pRes) noexcept : D3D12_BUFFER_BARRIER {
+            syncBefore,
+            syncAfter,
+            accessBefore,
+            accessAfter,
+            pRes,
+            0, ULLONG_MAX
+        }
+    {}
+};
+
+class CD3DX12_TEXTURE_BARRIER : public D3D12_TEXTURE_BARRIER
+{
+public:
+    CD3DX12_TEXTURE_BARRIER() = default;
+    CD3DX12_TEXTURE_BARRIER(const D3D12_TEXTURE_BARRIER &o) noexcept : D3D12_TEXTURE_BARRIER(o){}
+    CD3DX12_TEXTURE_BARRIER(
+        D3D12_BARRIER_SYNC syncBefore,
+        D3D12_BARRIER_SYNC syncAfter,
+        D3D12_BARRIER_ACCESS accessBefore,
+        D3D12_BARRIER_ACCESS accessAfter,
+        D3D12_BARRIER_LAYOUT layoutBefore,
+        D3D12_BARRIER_LAYOUT layoutAfter,
+        ID3D12Resource *pRes,
+        const D3D12_BARRIER_SUBRESOURCE_RANGE &subresources,
+        D3D12_TEXTURE_BARRIER_FLAGS flag = D3D12_TEXTURE_BARRIER_FLAG_NONE) noexcept : D3D12_TEXTURE_BARRIER {
+            syncBefore,
+            syncAfter,
+            accessBefore,
+            accessAfter,
+            layoutBefore,
+            layoutAfter,
+            pRes,
+            subresources,
+            flag
+        }
+    {}
+};
+
+class CD3DX12_BARRIER_GROUP : public D3D12_BARRIER_GROUP
+{
+public:
+    CD3DX12_BARRIER_GROUP() = default;
+    CD3DX12_BARRIER_GROUP(const D3D12_BARRIER_GROUP &o) noexcept : D3D12_BARRIER_GROUP(o){}
+    CD3DX12_BARRIER_GROUP(UINT32 numBarriers, const D3D12_BUFFER_BARRIER *pBarriers) noexcept
+    {
+        Type = D3D12_BARRIER_TYPE_BUFFER;
+        NumBarriers = numBarriers;
+        pBufferBarriers = pBarriers;
+    }
+    CD3DX12_BARRIER_GROUP(UINT32 numBarriers, const D3D12_TEXTURE_BARRIER *pBarriers) noexcept
+    {
+        Type = D3D12_BARRIER_TYPE_TEXTURE;
+        NumBarriers = numBarriers;
+        pTextureBarriers = pBarriers;
+    }
+    CD3DX12_BARRIER_GROUP(UINT32 numBarriers, const D3D12_GLOBAL_BARRIER *pBarriers) noexcept
+    {
+        Type = D3D12_BARRIER_TYPE_GLOBAL;
+        NumBarriers = numBarriers;
+        pGlobalBarriers = pBarriers;
+    }
+};
+
+#endif // NTDDI_WIN10_NI || USING_D3D12_AGILITY_SDK
 
 
 #if (defined(NTDDI_WIN10_CO) || defined(USING_D3D12_AGILITY_SDK)) && !defined(D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS)
 
-//------------------------------------------------------------------------------------------------
+//================================================================================================
+// D3DX12 Check Feature Support
+//================================================================================================
+
 #include <vector>
 
 class CD3DX12FeatureSupport
@@ -4206,6 +4339,22 @@ public: // Function declaration
     // D3D12_OPTIONS11
     BOOL AtomicInt64OnDescriptorHeapResourceSupported() const noexcept;
 
+
+#if defined(NTDDI_WIN10_NI) || defined(USING_D3D12_AGILITY_SDK)
+    // D3D12_OPTIONS12
+    D3D12_TRI_STATE MSPrimitivesPipelineStatisticIncludesCulledPrimitives() const noexcept;
+    BOOL EnhancedBarriersSupported() const noexcept;
+    BOOL RelaxedFormatCastingSupported() const noexcept;
+
+    // D3D12_OPTIONS13
+    BOOL UnrestrictedBufferTextureCopyPitchSupported() const noexcept;
+    BOOL UnrestrictedVertexElementAlignmentSupported() const noexcept;
+    BOOL InvertedViewportHeightFlipsYSupported() const noexcept;
+    BOOL InvertedViewportDepthFlipsZSupported() const noexcept;
+    BOOL TextureCopyBetweenDimensionsSupported() const noexcept;
+    BOOL AlphaBlendFactorSupported() const noexcept;
+#endif
+
 private: // Private structs and helpers declaration
     struct ProtectedResourceSessionTypesLocal : D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES
     {
@@ -4261,6 +4410,10 @@ private: // Member data
     D3D12_FEATURE_DATA_D3D12_OPTIONS9 m_dOptions9;
     D3D12_FEATURE_DATA_D3D12_OPTIONS10 m_dOptions10;
     D3D12_FEATURE_DATA_D3D12_OPTIONS11 m_dOptions11;
+#if defined(NTDDI_WIN10_NI) || defined(USING_D3D12_AGILITY_SDK)
+    D3D12_FEATURE_DATA_D3D12_OPTIONS12 m_dOptions12;
+    D3D12_FEATURE_DATA_D3D12_OPTIONS13 m_dOptions13;
+#endif
 };
 
 // Implementations for CD3DX12FeatureSupport functions
@@ -4321,6 +4474,10 @@ inline CD3DX12FeatureSupport::CD3DX12FeatureSupport() noexcept
 , m_dOptions9{}
 , m_dOptions10{}
 , m_dOptions11{}
+#if defined(NTDDI_WIN10_NI) || defined(USING_D3D12_AGILITY_SDK)
+, m_dOptions12{}
+, m_dOptions13{}
+#endif
 {}
 
 inline HRESULT CD3DX12FeatureSupport::Init(ID3D12Device* pDevice)
@@ -4460,6 +4617,25 @@ inline HRESULT CD3DX12FeatureSupport::Init(ID3D12Device* pDevice)
     {
         m_dOptions11.AtomicInt64OnDescriptorHeapResourceSupported = false;
     }
+
+#if defined(NTDDI_WIN10_NI) || defined(USING_D3D12_AGILITY_SDK)
+    if (FAILED(m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &m_dOptions12, sizeof(m_dOptions12))))
+    {
+        m_dOptions12.MSPrimitivesPipelineStatisticIncludesCulledPrimitives = D3D12_TRI_STATE::D3D12_TRI_STATE_UNKNOWN;
+        m_dOptions12.EnhancedBarriersSupported = false;
+        m_dOptions12.RelaxedFormatCastingSupported = false;
+    }
+
+    if (FAILED(m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS13, &m_dOptions13, sizeof(m_dOptions13))))
+    {
+        m_dOptions13.UnrestrictedBufferTextureCopyPitchSupported = false;
+        m_dOptions13.UnrestrictedVertexElementAlignmentSupported = false;
+        m_dOptions13.InvertedViewportHeightFlipsYSupported = false;
+        m_dOptions13.InvertedViewportDepthFlipsZSupported = false;
+        m_dOptions13.TextureCopyBetweenDimensionsSupported = false;
+        m_dOptions13.AlphaBlendFactorSupported = false;
+    }
+#endif
 
     // Initialize per-node feature support data structures
     const UINT uNodeCount = m_pDevice->GetNodeCount();
@@ -4767,6 +4943,21 @@ FEATURE_SUPPORT_GET(BOOL, m_dOptions10, MeshShaderPerPrimitiveShadingRateSupport
 // 40: Options11
 FEATURE_SUPPORT_GET(BOOL, m_dOptions11, AtomicInt64OnDescriptorHeapResourceSupported);
 
+#if defined(NTDDI_WIN10_NI) || defined(USING_D3D12_AGILITY_SDK)
+// 41: Options12
+FEATURE_SUPPORT_GET(D3D12_TRI_STATE, m_dOptions12, MSPrimitivesPipelineStatisticIncludesCulledPrimitives);
+FEATURE_SUPPORT_GET(BOOL, m_dOptions12, EnhancedBarriersSupported);
+FEATURE_SUPPORT_GET(BOOL, m_dOptions12, RelaxedFormatCastingSupported);
+
+// 42: Options13
+FEATURE_SUPPORT_GET(BOOL, m_dOptions13, UnrestrictedBufferTextureCopyPitchSupported);
+FEATURE_SUPPORT_GET(BOOL, m_dOptions13, UnrestrictedVertexElementAlignmentSupported);
+FEATURE_SUPPORT_GET(BOOL, m_dOptions13, InvertedViewportHeightFlipsYSupported);
+FEATURE_SUPPORT_GET(BOOL, m_dOptions13, InvertedViewportDepthFlipsZSupported);
+FEATURE_SUPPORT_GET(BOOL, m_dOptions13, TextureCopyBetweenDimensionsSupported);
+FEATURE_SUPPORT_GET(BOOL, m_dOptions13, AlphaBlendFactorSupported);
+#endif
+
 // Helper function to decide the highest shader model supported by the system
 // Stores the result in m_dShaderModel
 // Must be updated whenever a new shader model is added to the d3d12.h header
@@ -4914,7 +5105,7 @@ inline HRESULT CD3DX12FeatureSupport::QueryProtectedResourceSessionTypes(UINT No
 
 // end CD3DX12FeatureSupport
 
-#endif // #ifndef D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
+#endif // !D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
 
 #undef D3DX12_COM_PTR
 #undef D3DX12_COM_PTR_GET
