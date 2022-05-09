@@ -34,6 +34,8 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cfloat>
+#include <cmath>
 #include <cstring>
 #include <iterator>
 #include <memory>
@@ -62,16 +64,18 @@ using Microsoft::WRL::ComPtr;
 namespace
 {
     //--------------------------------------------------------------------------------------
+    #if !defined(NO_D3D11_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
     template<UINT TNameLength>
     inline void SetDebugObjectName(_In_ ID3D11DeviceChild* resource, _In_ const char(&name)[TNameLength]) noexcept
     {
-    #if !defined(NO_D3D11_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
         resource->SetPrivateData(WKPDID_D3DDebugObjectName, TNameLength - 1, name);
-    #else
-        UNREFERENCED_PARAMETER(resource);
-        UNREFERENCED_PARAMETER(name);
-    #endif
     }
+    #else
+    template<UINT TNameLength>
+    inline void SetDebugObjectName(_In_ ID3D11DeviceChild*, _In_ const char(&)[TNameLength]) noexcept
+    {
+    }
+    #endif
 
     //-------------------------------------------------------------------------------------
     // WIC Pixel Format Translation Data

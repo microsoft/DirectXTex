@@ -25,6 +25,8 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cfloat>
+#include <cmath>
 #include <cstring>
 #include <iterator>
 #include <new>
@@ -55,7 +57,11 @@
 
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
+#ifdef USING_DIRECTX_HEADERS
+#include "directx/d3dx12.h"
+#else
 #include "d3dx12.h"
+#endif
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -195,16 +201,18 @@ namespace
     }
 
     //---------------------------------------------------------------------------------
+    #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
     template<UINT TNameLength>
     inline void SetDebugObjectName(_In_ ID3D12DeviceChild* resource, _In_z_ const wchar_t(&name)[TNameLength]) noexcept
     {
-    #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
         resource->SetName(name);
-    #else
-        UNREFERENCED_PARAMETER(resource);
-        UNREFERENCED_PARAMETER(name);
-    #endif
     }
+    #else
+    template<UINT TNameLength>
+    inline void SetDebugObjectName(_In_ ID3D12DeviceChild*, _In_z_ const wchar_t(&)[TNameLength]) noexcept
+    {
+    }
+    #endif
 
     inline uint32_t CountMips(uint32_t width, uint32_t height) noexcept
     {

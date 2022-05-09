@@ -448,12 +448,7 @@ HRESULT InitDevice(const TexMetadata& mdata)
     g_pImmediateContext->OMSetRenderTargets(1, &g_pRenderTargetView, g_pDepthStencilView);
 
     // Setup the viewport
-    D3D11_VIEWPORT vp = {};
-    vp.TopLeftX = vp.TopLeftY = 0.f;
-    vp.Width = static_cast<float>(width);
-    vp.Height = static_cast<float>(height);
-    vp.MinDepth = D3D11_MIN_DEPTH;
-    vp.MaxDepth = D3D11_MAX_DEPTH;
+    const D3D11_VIEWPORT vp = { 0.f, 0.f, static_cast<float>(width), static_cast<float>(height), 0.f, 1.f };
     g_pImmediateContext->RSSetViewports(1, &vp);
 
     // Create the vertex shader

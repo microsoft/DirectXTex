@@ -56,6 +56,8 @@ elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Aa][Rr][Mm]64$")
     set(DIRECTX_ARCH arm64)
 endif()
 
+include(GNUInstallDirs)
+
 #--- Library
 set(LIBRARY_HEADERS
     DirectXTex/DirectXTex.h
@@ -141,6 +143,8 @@ if(BUILD_DX11 AND WIN32)
         endif()
         set(COMPILED_SHADERS ${CMAKE_CURRENT_BINARY_DIR}/Shaders/Compiled)
         file(MAKE_DIRECTORY ${COMPILED_SHADERS})
+    else()
+        file(TO_CMAKE_PATH ${COMPILED_SHADERS} COMPILED_SHADERS)
     endif()
 
     set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
@@ -152,8 +156,7 @@ if(BUILD_DX11 AND WIN32)
             MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
             DEPENDS ${SHADER_SOURCES}
             COMMENT "Generating HLSL shaders..."
-            COMMAND set CompileShadersOutput=${COMPILED_SHADERS}
-            COMMAND CompileShaders.cmd
+            COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_SHADERS}" CompileShaders.cmd > "${COMPILED_SHADERS}/compileshaders.log"
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
             USES_TERMINAL)
     endif()
@@ -169,7 +172,7 @@ source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/DirectXTex>
-  $<INSTALL_INTERFACE:include>)
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 if(ENABLE_OPENEXR_SUPPORT)
   find_package(OpenEXR REQUIRED)
@@ -197,7 +200,7 @@ elseif(BUILD_XBOX_EXTS_XBOXONE AND WIN32)
     endif()
 endif()
 
-if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.16")
+if ((${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.16") AND (NOT MINGW))
     target_precompile_headers(${PROJECT_NAME} PRIVATE DirectXTex/DirectXTexP.h)
 endif()
 
@@ -213,7 +216,7 @@ if(MSVC)
     string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
 endif()
 
-if ((NOT WIN32) OR VCPKG_TOOLCHAIN)
+if (MINGW OR (NOT WIN32) OR VCPKG_TOOLCHAIN)
     message("INFO: Using VCPKG for DirectX-Headers and DirectXMath.")
     find_package(directx-headers CONFIG REQUIRED)
     find_package(directxmath CONFIG REQUIRED)
@@ -227,32 +230,32 @@ include(CMakePackageConfigHelpers)
 string(TOLOWER ${PROJECT_NAME} PACKAGE_NAME)
 
 write_basic_package_version_file(
-  ${PROJECT_BINARY_DIR}/cmake/${PACKAGE_NAME}-config-version.cmake
+  ${PACKAGE_NAME}-config-version.cmake
   VERSION ${DIRECTXTEX_VERSION}
   COMPATIBILITY AnyNewerVersion)
 
 install(TARGETS ${PROJECT_NAME}
   EXPORT ${PROJECT_NAME}-targets
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin)
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/.nuget/${PROJECT_NAME}-config.cmake.in
-  ${PROJECT_BINARY_DIR}/cmake/${PACKAGE_NAME}-config.cmake
-  INSTALL_DESTINATION cmake/})
+  ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake
+  INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME}/cmake/)
 
 install(EXPORT ${PROJECT_NAME}-targets
   FILE ${PROJECT_NAME}-targets.cmake
   NAMESPACE Microsoft::
-  DESTINATION cmake/)
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME}/cmake/)
 
 install(FILES ${LIBRARY_HEADERS}
-  DESTINATION include)
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install(FILES
-    ${PROJECT_BINARY_DIR}/cmake/${PACKAGE_NAME}-config.cmake
-    ${PROJECT_BINARY_DIR}/cmake/${PACKAGE_NAME}-config-version.cmake
-  DESTINATION cmake/)
+    ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME}/cmake/)
 
 #--- Command-line tools
 if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
@@ -281,38 +284,47 @@ if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
       target_compile_options(${t} PRIVATE -DUSE_OPENEXR)
     endforeach()
   endif()
-
-  if (VCPKG_TOOLCHAIN)
-    foreach(t IN LISTS TOOL_EXES)
-      target_link_libraries(${t} Microsoft::DirectXMath)
-    endforeach()
-  endif()
 endif()
 
 #--- DDSView sample
 if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
   list(APPEND TOOL_EXES ddsview)
 
+  if (NOT COMPILED_DDSVIEW_SHADERS)
+      if (USE_PREBUILT_SHADERS)
+          message(FATAL_ERROR "ERROR: Using prebuilt shaders requires the COMPILED_DDSVIEW_SHADERS variable is set")
+      endif()
+      set(COMPILED_DDSVIEW_SHADERS ${CMAKE_CURRENT_BINARY_DIR}/Shaders/Compiled)
+      file(MAKE_DIRECTORY ${COMPILED_DDSVIEW_SHADERS})
+  else()
+      file(TO_CMAKE_PATH ${COMPILED_DDSVIEW_SHADERS} COMPILED_DDSVIEW_SHADERS)
+  endif()
+
   add_executable(ddsview WIN32
     DDSView/ddsview.cpp
     DDSView/ddsview.rc
-    ${COMPILED_SHADERS}/ddsview_ps1D.inc)
+    ${COMPILED_DDSVIEW_SHADERS}/ddsview_ps1D.inc)
   target_link_libraries(ddsview ${PROJECT_NAME} d3d11.lib)
   source_group(ddsview REGULAR_EXPRESSION DDSView/*.*)
 
-  target_include_directories(ddsview PRIVATE ${COMPILED_SHADERS})
+  target_include_directories(ddsview PRIVATE ${COMPILED_DDSVIEW_SHADERS})
 
   if (NOT USE_PREBUILT_SHADERS)
       add_custom_command(
-            OUTPUT "${COMPILED_SHADERS}/ddsview_ps1D.inc"
+            OUTPUT "${COMPILED_DDSVIEW_SHADERS}/ddsview_ps1D.inc"
             MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DDSView/hlsl.cmd"
             DEPENDS "${PROJECT_SOURCE_DIR}/DDSView/ddsview.fx"
             COMMENT "Generating HLSL shaders for DDSView..."
-            COMMAND set CompileShadersOutput=${COMPILED_SHADERS}
-            COMMAND hlsl.cmd
+            COMMAND COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_DDSVIEW_SHADERS}" hlsl.cmd > "${COMPILED_DDSVIEW_SHADERS}/hlsl.log"
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DDSView"
             USES_TERMINAL)
   endif()
+endif()
+
+if (MINGW OR (NOT WIN32) OR VCPKG_TOOLCHAIN)
+  foreach(t IN LISTS TOOL_EXES)
+    target_link_libraries(${t} Microsoft::DirectXMath)
+  endforeach()
 endif()
 
 if(MSVC)
@@ -321,12 +333,23 @@ if(MSVC)
       target_link_options(${t} PRIVATE /DYNAMICBASE /NXCOMPAT)
     endforeach()
 
-    if((${CMAKE_SIZEOF_VOID_P} EQUAL 4) AND (NOT ${DIRECTX_ARCH} MATCHES "arm"))
+    if((${CMAKE_SIZEOF_VOID_P} EQUAL 4) AND (NOT ${DIRECTX_ARCH} MATCHES "^arm"))
         foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-          target_compile_options(${t} PRIVATE /arch:SSE2)
           target_link_options(${t} PRIVATE /SAFESEH)
         endforeach()
     endif()
+endif()
+
+if(NOT ${DIRECTX_ARCH} MATCHES "^arm")
+    if (${CMAKE_SIZEOF_VOID_P} EQUAL "4")
+        set(ARCH_SSE2 $<$<CXX_COMPILER_ID:MSVC>:/arch:SSE2> $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-msse2>)
+    else()
+        set(ARCH_SSE2 $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-msse2>)
+    endif()
+
+    foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+      target_compile_options(${t} PRIVATE ${ARCH_SSE2})
+    endforeach()
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -340,9 +363,15 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
       target_compile_options(${t} PRIVATE ${WarningsEXE})
     endforeach()
 endif()
+if(MINGW)
+    foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+      target_compile_options(${t} PRIVATE -Wno-ignored-attributes)
+      target_link_options(${t} PRIVATE -municode)
+    endforeach()
+endif()
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-      target_compile_options(${t} PRIVATE /sdl /permissive- /Zc:__cplusplus)
+      target_compile_options(${t} PRIVATE /sdl /permissive- /JMC- /Zc:__cplusplus)
     endforeach()
 
     if(ENABLE_CODE_ANALYSIS)
@@ -366,8 +395,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         endif()
     endif()
 
-    if ((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.27) AND (NOT (${DIRECTX_ARCH} MATCHES "arm(64)?")))
-        foreach(t IN LISTS TOOL_EXES)
+    if ((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.27) AND (NOT (${DIRECTX_ARCH} MATCHES "^arm")))
+        foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
           target_link_options(${t} PRIVATE /CETCOMPAT)
         endforeach()
     endif()
@@ -386,8 +415,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 
 if(WIN32)
-    foreach(t IN LISTS TOOL_EXES)
-      target_compile_definitions(${t} PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0601)
+    foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+      target_compile_definitions(${t} PRIVATE _UNICODE UNICODE)
     endforeach()
 
     if(WINDOWS_STORE)
@@ -403,6 +432,9 @@ if(WIN32)
         message("INFO: Building with Windows 7 compatibility")
         target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0601 _WIN7_PLATFORM_UPDATE)
     endif()
+    foreach(t IN LISTS TOOL_EXES)
+      target_compile_definitions(${t} PRIVATE _WIN32_WINNT=0x0601)
+    endforeach()
 endif()
 
 if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))

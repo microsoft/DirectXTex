@@ -116,6 +116,27 @@ inline bool __cdecl IsSRGB(DXGI_FORMAT fmt) noexcept
     }
 }
 
+_Use_decl_annotations_
+inline bool __cdecl IsBGR(DXGI_FORMAT fmt) noexcept
+{
+    switch (fmt)
+    {
+    case DXGI_FORMAT_B5G6R5_UNORM:
+    case DXGI_FORMAT_B5G5R5A1_UNORM:
+    case DXGI_FORMAT_B8G8R8A8_UNORM:
+    case DXGI_FORMAT_B8G8R8X8_UNORM:
+    case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8X8_TYPELESS:
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+    case DXGI_FORMAT_B4G4R4A4_UNORM:
+        return true;
+
+    default:
+        return false;
+    }
+}
+
 
 //=====================================================================================
 // Image I/O

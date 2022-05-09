@@ -25,6 +25,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <cwchar>
 #include <cwctype>
 #include <fstream>
@@ -1442,7 +1443,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else if (_wcsicmp(ext, L".tga") == 0)
                 {
-                    hr = LoadFromTGAFile(pConv->szSrc, TGA_FLAGS_NONE, &info, *image);
+                    TGA_FLAGS tgaFlags = (IsBGR(format)) ? TGA_FLAGS_BGR : TGA_FLAGS_NONE;
+
+                    hr = LoadFromTGAFile(pConv->szSrc, tgaFlags, &info, *image);
                     if (FAILED(hr))
                     {
                         wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));

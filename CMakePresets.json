@@ -81,6 +81,17 @@
         "strategy": "external"
       }
     },
+    {
+      "name": "GNUC",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++.exe"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      }
+    },
 
     {
       "name": "Win7",
@@ -112,6 +123,16 @@
       },
       "hidden": true
     },
+    {
+      "name": "VCPKG",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+          "type": "FILEPATH"
+        }
+      },
+      "hidden": true
+    },
 
     { "name": "x64-Debug"    , "description": "MSVC for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "MSVC" ] },
     { "name": "x64-Release"  , "description": "MSVC for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "MSVC" ] },
@@ -134,6 +155,13 @@
     { "name": "x86-Debug-Win7"    , "description": "MSVC for x86 (Debug) for Windows 7", "inherits": [ "base", "x86", "Debug", "MSVC", "Win7" ] },
     { "name": "x86-Release-Win7"  , "description": "MSVC for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "MSVC", "Win7" ] },
 
+    { "name": "x64-Debug-VCPKG"    , "description": "MSVC for x64 (Debug) using VCPKG", "inherits": [ "base", "x64", "Debug", "MSVC", "VCPKG" ] },
+    { "name": "x64-Release-VCPKG"  , "description": "MSVC for x64 (Release) using VCPKG", "inherits": [ "base", "x64", "Release", "MSVC", "VCPKG" ] },
+    { "name": "x86-Debug-VCPKG"    , "description": "MSVC for x86 (Debug) using VCPKG", "inherits": [ "base", "x86", "Debug", "MSVC", "VCPKG" ] },
+    { "name": "x86-Release-VCPKG"  , "description": "MSVC for x86 (Release) using VCPKG", "inherits": [ "base", "x86", "Release", "MSVC", "VCPKG" ] },
+    { "name": "arm64-Debug-VCPKG"  , "description": "MSVC for ARM64 (Debug) using VCPKG", "inherits": [ "base", "ARM64", "Debug", "MSVC", "VCPKG" ] },
+    { "name": "arm64-Release-VCPKG", "description": "MSVC for ARM64 (Release) using VCPKG", "inherits": [ "base", "ARM64", "Release", "MSVC", "VCPKG" ] },
+
     { "name": "x64-Debug-Clang"    , "description": "Clang/LLVM for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "Clang" ] },
     { "name": "x64-Release-Clang"  , "description": "Clang/LLVM for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "Clang" ] },
     { "name": "x86-Debug-Clang"    , "description": "Clang/LLVM for x86 (Debug) with DX12", "inherits": [ "base", "x86", "Debug", "Clang" ], "environment": { "CXXFLAGS": "-m32" } },
@@ -148,15 +176,20 @@
     { "name": "arm64-Debug-UWP-Clang"  , "description": "Clang/LLVM for AArch64 (Debug) for UWP", "inherits": [ "base", "ARM64", "Debug", "Clang", "UWP" ], "environment": { "CXXFLAGS": "--target=arm64-pc-windows-msvc" } },
     { "name": "arm64-Release-UWP-Clang", "description": "Clang/LLVM for AArch64 (Release) for UWP", "inherits": [ "base", "ARM64", "Release", "Clang", "UWP" ], "environment": { "CXXFLAGS": "--target=arm64-pc-windows-msvc" } },
 
-    { "name": "x64-Debug-Win7-Clang"    , "description": "Clang/LLVM for x64 (Debug) for Windows 7", "inherits": [ "base", "x64", "Debug", "Clang", "Win7" ] },
-    { "name": "x64-Release-Win7-Clang"  , "description": "Clang/LLVM for x64 (Release) for Windows 7", "inherits": [ "base", "x64", "Release", "Clang", "Win7" ] },
-    { "name": "x86-Debug-Win7-Clang"    , "description": "Clang/LLVM for x86 (Debug) for Windows 7", "inherits": [ "base", "x86", "Debug", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
-    { "name": "x86-Release-Win7-Clang"  , "description": "Clang/LLVM for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
+    { "name": "x64-Debug-Win7-Clang"  , "description": "Clang/LLVM for x64 (Debug) for Windows 7", "inherits": [ "base", "x64", "Debug", "Clang", "Win7" ] },
+    { "name": "x64-Release-Win7-Clang", "description": "Clang/LLVM for x64 (Release) for Windows 7", "inherits": [ "base", "x64", "Release", "Clang", "Win7" ] },
+    { "name": "x86-Debug-Win7-Clang"  , "description": "Clang/LLVM for x86 (Debug) for Windows 7", "inherits": [ "base", "x86", "Debug", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
+    { "name": "x86-Release-Win7-Clang", "description": "Clang/LLVM for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
 
     { "name": "x64-Debug-XboxOne"    , "description": "MSVC for x64 (Debug) Xbox One Extensions", "inherits": [ "base", "x64", "Debug", "XboxOne", "MSVC" ] },
     { "name": "x64-Release-XboxOne"  , "description": "MSVC for x64 (Release) Xbox One Extensions", "inherits": [ "base", "x64", "Release", "XboxOne", "MSVC" ] },
 
     { "name": "x64-Debug-Scarlett"   , "description": "MSVC for x64 (Debug) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Debug", "Scarlett", "MSVC" ] },
-    { "name": "x64-Release-Scarlett" , "description": "MSVC for x64 (Release) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Release", "Scarlett", "MSVC" ] }
+    { "name": "x64-Release-Scarlett" , "description": "MSVC for x64 (Release) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Release", "Scarlett", "MSVC" ] },
+
+    { "name": "x64-Debug-MinGW"  , "description": "MinG-W64 (Debug)", "inherits": [ "base", "x64", "Debug", "GNUC", "VCPKG" ], "environment": { "PATH": "$penv{PATH};c:/mingw64/bin" } },
+    { "name": "x64-Release-MinGW", "description": "MinG-W64 (Release)", "inherits": [ "base", "x64", "Release", "GNUC", "VCPKG" ], "environment": { "PATH": "$penv{PATH};c:/mingw64/bin" } },
+    { "name": "x86-Debug-MinGW"  , "description": "MinG-W32 (Debug)", "inherits": [ "base", "x86", "Debug", "GNUC", "VCPKG" ], "environment": { "PATH": "$penv{PATH};c:/mingw32/bin" } },
+    { "name": "x86-Release-MinGW", "description": "MinG-W32 (Release)", "inherits": [ "base", "x86", "Release", "GNUC", "VCPKG" ], "environment": { "PATH": "$penv{PATH};c:/mingw32/bin" } }
   ]
 }
