@@ -3,7 +3,7 @@
 
 cmake_minimum_required (VERSION 3.13)
 
-set(DIRECTXTEX_VERSION 1.9.5)
+set(DIRECTXTEX_VERSION 1.9.6)
 
 project (DirectXTex
   VERSION ${DIRECTXTEX_VERSION}
