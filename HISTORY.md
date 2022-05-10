@@ -8,16 +8,16 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ### May 9, 2022
 * TGA reader updated to support 24-bit paletted uncompressed color-mapped images (used by a DCC application)
-* Added IsBGR utility method
-* Workaround for driver issue on some systems using DirectX 11 Capture method
-* Fix for problem with resizing/mipmaps generation for HDR content which should avoid going through WIC code paths
+* Added `IsBGR` utility method
+* Workaround for driver issue on some systems using DirectX 11 `Capture` method
+* Fix for problem with resizing/mipmaps generation for HDR content using box/fant filter which should avoid going through WIC code paths
 * Minor updates for VS 2022 (17.2)
 * CMake project updates (now supports MSVC, clang/LLVM, and MinGW)
 * Updated D3DX12 internal copy with latest changes from DirectX-Headers GitHub
 * Retired VS 2017 projects
 * Code cleanup
 * Reformat source using updated .editorconfig settings
-* texconv: Improve -nmap handling for 16-bit sources going to BC formats
+* texconv: Improve `-nmap` handling for 16-bit sources going to BC formats
 
 ### March 24, 2022
 * Fixed end-point bounds issue with BC6H CPU compressor if none of the pixels are in 0-1 range
