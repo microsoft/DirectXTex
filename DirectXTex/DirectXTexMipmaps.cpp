@@ -264,13 +264,13 @@ namespace
                 XMVECTOR r1 = XMVectorSplatW(*pRow1);
 
                 XMVECTOR v1 = XMVectorSaturate(XMVectorMultiply(r0, scale));
-                XMVECTOR v2 = XMVectorSaturate(XMVectorMultiply(r1, scale));
+                const XMVECTOR v2 = XMVectorSaturate(XMVectorMultiply(r1, scale));
 
                 r0 = XMVectorSplatW(*(++pRow0));
                 r1 = XMVectorSplatW(*(++pRow1));
 
                 XMVECTOR v3 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(r0), scale));
-                XMVECTOR v4 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(r1), scale));
+                const XMVECTOR v4 = XMVectorSaturate(XMVectorMultiply(XMVectorSplatW(r1), scale));
 
                 v1 = XMVectorMergeXY(v1, v2); // [v1.x v2.x --- ---]
                 v3 = XMVectorMergeXY(v3, v4); // [v3.x v4.x --- ---]

@@ -328,7 +328,7 @@ namespace
             return HRESULT_E_NOT_SUPPORTED;
         }
 
-        size_t maxColorMap = size_t(pHeader->wColorMapFirst) + size_t(pHeader->wColorMapLength);
+        const size_t maxColorMap = size_t(pHeader->wColorMapFirst) + size_t(pHeader->wColorMapLength);
         if (maxColorMap > 256)
         {
             return HRESULT_E_NOT_SUPPORTED;
@@ -920,7 +920,7 @@ namespace
         TGA_FLAGS flags,
         _In_ const Image* image,
         _In_ uint32_t convFlags,
-        _In_opt_ uint8_t* palette) noexcept
+        _In_opt_ const uint8_t* palette) noexcept
     {
         assert(pSource && size > 0);
 

@@ -304,7 +304,7 @@ if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
     DDSView/ddsview.cpp
     DDSView/ddsview.rc
     ${COMPILED_DDSVIEW_SHADERS}/ddsview_ps1D.inc)
-  target_link_libraries(ddsview ${PROJECT_NAME} d3d11.lib)
+  target_link_libraries(ddsview ${PROJECT_NAME} d3d11.lib ole32.lib)
   source_group(ddsview REGULAR_EXPRESSION DDSView/*.*)
 
   target_include_directories(ddsview PRIVATE ${COMPILED_DDSVIEW_SHADERS})
