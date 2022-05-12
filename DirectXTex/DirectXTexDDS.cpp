@@ -1944,7 +1944,7 @@ HRESULT DirectX::LoadFromDDSFile(
         }
 
     #ifdef _WIN32
-        auto pixelBytes = static_cast<DWORD>(image.GetPixelsSize());
+        auto const pixelBytes = static_cast<DWORD>(image.GetPixelsSize());
         if (!ReadFile(hFile.get(), image.GetPixels(), pixelBytes, &bytesRead, nullptr))
         {
             image.Release();
