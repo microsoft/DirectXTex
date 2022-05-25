@@ -354,6 +354,11 @@ endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(WarningsLib "-Wpedantic" "-Wextra")
+
+    if((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
+        set(WarningsLib ${WarningsLib} "-Wno-microsoft-enum-value" "-Wno-non-virtual-dtor" "-Wno-ignored-pragmas" "-Wno-reserved-identifier")
+    endif()
+
     target_compile_options(${PROJECT_NAME} PRIVATE ${WarningsLib})
 
     # OpenMP is not supported for clang for Windows by default

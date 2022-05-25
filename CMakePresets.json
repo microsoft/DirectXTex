@@ -183,9 +183,13 @@
 
     { "name": "x64-Debug-XboxOne"    , "description": "MSVC for x64 (Debug) Xbox One Extensions", "inherits": [ "base", "x64", "Debug", "XboxOne", "MSVC" ] },
     { "name": "x64-Release-XboxOne"  , "description": "MSVC for x64 (Release) Xbox One Extensions", "inherits": [ "base", "x64", "Release", "XboxOne", "MSVC" ] },
-
     { "name": "x64-Debug-Scarlett"   , "description": "MSVC for x64 (Debug) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Debug", "Scarlett", "MSVC" ] },
     { "name": "x64-Release-Scarlett" , "description": "MSVC for x64 (Release) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Release", "Scarlett", "MSVC" ] },
+
+    { "name": "x64-Debug-XboxOne-Clang"   , "description": "MSVC for x64 (Debug) Xbox One Extensions", "inherits": [ "base", "x64", "Debug", "XboxOne", "Clang" ] },
+    { "name": "x64-Release-XboxOne-Clang" , "description": "MSVC for x64 (Release) Xbox One Extensions", "inherits": [ "base", "x64", "Release", "XboxOne", "Clang" ] },
+    { "name": "x64-Debug-Scarlett-Clang"  , "description": "MSVC for x64 (Debug) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Debug", "Scarlett", "Clang" ] },
+    { "name": "x64-Release-Scarlett-Clang", "description": "MSVC for x64 (Release) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Release", "Scarlett", "Clang" ] },
 
     { "name": "x64-Debug-MinGW"  , "description": "MinG-W64 (Debug)", "inherits": [ "base", "x64", "Debug", "GNUC", "VCPKG" ], "environment": { "PATH": "$penv{PATH};c:/mingw64/bin" } },
     { "name": "x64-Release-MinGW", "description": "MinG-W64 (Release)", "inherits": [ "base", "x64", "Release", "GNUC", "VCPKG" ], "environment": { "PATH": "$penv{PATH};c:/mingw64/bin" } },
