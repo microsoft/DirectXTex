@@ -152,6 +152,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/DirectXTex>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
+
 if(ENABLE_OPENEXR_SUPPORT)
   find_package(OpenEXR REQUIRED)
   target_include_directories(${PROJECT_NAME} PRIVATE ${OPENEXR_INCLUDE_DIRS}/OpenEXR)
