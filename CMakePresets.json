@@ -119,6 +119,28 @@
       },
       "hidden": true
     },
+    {
+      "name": "MinGW32",
+      "hidden": true,
+      "environment": {
+        "PATH": "$penv{PATH};c:/mingw32/bin"
+      },
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x86-mingw-static",
+        "VCPKG_HOST_TRIPLET": "x86-mingw-static"
+      }
+    },
+    {
+      "name": "MinGW64",
+      "hidden": true,
+      "environment": {
+        "PATH": "$penv{PATH};c:/mingw64/bin"
+      },
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-static",
+        "VCPKG_HOST_TRIPLET": "x64-mingw-static"
+      }
+    },
 
     { "name": "x64-Debug"    , "description": "MSVC for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "MSVC" ] },
     { "name": "x64-Release"  , "description": "MSVC for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "MSVC" ] },
@@ -167,9 +189,9 @@
     { "name": "x86-Debug-Win7-Clang"  , "description": "Clang/LLVM for x86 (Debug) for Windows 7", "inherits": [ "base", "x86", "Debug", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
     { "name": "x86-Release-Win7-Clang", "description": "Clang/LLVM for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
 
-    { "name": "x64-Debug-MinGW"  , "description": "MinG-W64 (Debug)", "inherits": [ "base", "x64", "Debug", "GNUC", "VCPKG" ], "environment": { "PATH": "$penv{PATH};c:/mingw64/bin" } },
-    { "name": "x64-Release-MinGW", "description": "MinG-W64 (Release)", "inherits": [ "base", "x64", "Release", "GNUC", "VCPKG" ], "environment": { "PATH": "$penv{PATH};c:/mingw64/bin" } },
-    { "name": "x86-Debug-MinGW"  , "description": "MinG-W32 (Debug)", "inherits": [ "base", "x86", "Debug", "GNUC", "VCPKG" ], "environment": { "PATH": "$penv{PATH};c:/mingw32/bin" } },
-    { "name": "x86-Release-MinGW", "description": "MinG-W32 (Release)", "inherits": [ "base", "x86", "Release", "GNUC", "VCPKG" ], "environment": { "PATH": "$penv{PATH};c:/mingw32/bin" } }
+    { "name": "x64-Debug-MinGW"  , "description": "MinG-W64 (Debug)", "inherits": [ "base", "x64", "Debug", "GNUC", "VCPKG", "MinGW64" ] },
+    { "name": "x64-Release-MinGW", "description": "MinG-W64 (Release)", "inherits": [ "base", "x64", "Release", "GNUC", "VCPKG", "MinGW64" ] },
+    { "name": "x86-Debug-MinGW"  , "description": "MinG-W32 (Debug)", "inherits": [ "base", "x86", "Debug", "GNUC", "VCPKG", "MinGW32" ] },
+    { "name": "x86-Release-MinGW", "description": "MinG-W32 (Release)", "inherits": [ "base", "x86", "Release", "GNUC", "VCPKG", "MinGW32" ] }
   ]
 }
