@@ -662,7 +662,12 @@ HRESULT DirectX::CaptureTexture(
     ComPtr<ID3D12Device> device;
     pCommandQueue->GetDevice(IID_GRAPHICS_PPV_ARGS(device.GetAddressOf()));
 
+#if defined(_MSC_VER) || !defined(_WIN32)
     auto const desc = pSource->GetDesc();
+#else
+    D3D12_RESOURCE_DESC tmpDesc;
+    const auto& desc = *pSource->GetDesc(&tmpDesc);
+#endif
 
     ComPtr<ID3D12Resource> pStaging;
     std::unique_ptr<uint8_t[]> layoutBuff;
