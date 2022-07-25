@@ -666,7 +666,7 @@ HRESULT DirectX::CaptureTexture(
     auto const desc = pSource->GetDesc();
 #else
     D3D12_RESOURCE_DESC tmpDesc;
-    const auto& desc = *pSource->GetDesc(&tmpDesc);
+    auto const& desc = *pSource->GetDesc(&tmpDesc);
 #endif
 
     ComPtr<ID3D12Resource> pStaging;

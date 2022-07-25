@@ -902,7 +902,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
     auto const desc = pSource->GetDesc();
 #else
     D3D12_RESOURCE_DESC tmpDesc;
-    const auto& desc = *pSource->GetDesc(&tmpDesc);
+    auto const& desc = *pSource->GetDesc(&tmpDesc);
 #endif
 
     if (desc.Width > UINT32_MAX)
@@ -1130,7 +1130,7 @@ HRESULT DirectX::SaveWICTextureToFile(
     auto const desc = pSource->GetDesc();
 #else
     D3D12_RESOURCE_DESC tmpDesc;
-    const auto& desc = *pSource->GetDesc(&tmpDesc);
+    auto const& desc = *pSource->GetDesc(&tmpDesc);
 #endif
 
     if (desc.Width > UINT32_MAX)
