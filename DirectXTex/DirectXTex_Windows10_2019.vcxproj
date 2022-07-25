@@ -363,6 +363,7 @@
       <AdditionalOptions>/Zc:twoPhase- /Zc:__cplusplus /ZH:SHA_256 %(AdditionalOptions)</AdditionalOptions>
       <OpenMPSupport>true</OpenMPSupport>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
+      <GuardEHContMetadata>true</GuardEHContMetadata>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -411,6 +412,7 @@
       <AdditionalOptions>/Zc:twoPhase- /Zc:__cplusplus /ZH:SHA_256 %(AdditionalOptions)</AdditionalOptions>
       <OpenMPSupport>true</OpenMPSupport>
       <ExternalWarningLevel>Level4</ExternalWarningLevel>
+      <GuardEHContMetadata>true</GuardEHContMetadata>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
