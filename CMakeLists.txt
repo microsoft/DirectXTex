@@ -299,7 +299,7 @@ if(MSVC)
     endif()
 
     # Compiling with guard:ehcont allow library consumers to enable guard:ehcont if they want. (Requires VS 2019 16.7 or later)
-    if((MSVC_VERSION GREATER 1928) AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
+    if((MSVC_VERSION GREATER_EQUAL 1928) AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
       target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:RELEASE>:/guard:ehcont>")
       target_link_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:RELEASE>:/guard:ehcont>")
     endif()
