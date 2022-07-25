@@ -76,7 +76,12 @@ struct CD3DX12_VIEWPORT : public D3D12_VIEWPORT
         FLOAT minDepth = D3D12_MIN_DEPTH,
         FLOAT maxDepth = D3D12_MAX_DEPTH ) noexcept
     {
+#if defined(_MSC_VER) || !defined(_WIN32)
         const auto Desc = pResource->GetDesc();
+#else
+        D3D12_RESOURCE_DESC tmpDesc;
+        const auto& Desc = *pResource->GetDesc(&tmpDesc);
+#endif
         const UINT64 SubresourceWidth = Desc.Width >> mipSlice;
         const UINT64 SubresourceHeight = Desc.Height >> mipSlice;
         switch (Desc.Dimension)
@@ -2040,7 +2045,12 @@ inline UINT64 GetRequiredIntermediateSize(
     _In_range_(0,D3D12_REQ_SUBRESOURCES) UINT FirstSubresource,
     _In_range_(0,D3D12_REQ_SUBRESOURCES-FirstSubresource) UINT NumSubresources) noexcept
 {
+#if defined(_MSC_VER) || !defined(_WIN32)
     const auto Desc = pDestinationResource->GetDesc();
+#else
+    D3D12_RESOURCE_DESC tmpDesc;
+    const auto& Desc = *pDestinationResource->GetDesc(&tmpDesc);
+#endif
     UINT64 RequiredSize = 0;
 
     ID3D12Device* pDevice = nullptr;
@@ -2066,8 +2076,14 @@ inline UINT64 UpdateSubresources(
     _In_reads_(NumSubresources) const D3D12_SUBRESOURCE_DATA* pSrcData) noexcept
 {
     // Minor validation
+#if defined(_MSC_VER) || !defined(_WIN32)
     const auto IntermediateDesc = pIntermediate->GetDesc();
     const auto DestinationDesc = pDestinationResource->GetDesc();
+#else
+    D3D12_RESOURCE_DESC tmpDesc1, tmpDesc2;
+    const auto& IntermediateDesc = *pIntermediate->GetDesc(&tmpDesc1);
+    const auto& DestinationDesc = *pDestinationResource->GetDesc(&tmpDesc2);
+#endif
     if (IntermediateDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER ||
         IntermediateDesc.Width < RequiredSize + pLayouts[0].Offset ||
         RequiredSize > SIZE_T(-1) ||
@@ -2125,8 +2141,14 @@ inline UINT64 UpdateSubresources(
     _In_reads_(NumSubresources) const D3D12_SUBRESOURCE_INFO* pSrcData) noexcept
 {
     // Minor validation
+#if defined(_MSC_VER) || !defined(_WIN32)
     const auto IntermediateDesc = pIntermediate->GetDesc();
     const auto DestinationDesc = pDestinationResource->GetDesc();
+#else
+    D3D12_RESOURCE_DESC tmpDesc1, tmpDesc2;
+    const auto& IntermediateDesc = *pIntermediate->GetDesc(&tmpDesc1);
+    const auto& DestinationDesc = *pDestinationResource->GetDesc(&tmpDesc2);
+#endif
     if (IntermediateDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER ||
         IntermediateDesc.Width < RequiredSize + pLayouts[0].Offset ||
         RequiredSize > SIZE_T(-1) ||
@@ -2194,7 +2216,12 @@ inline UINT64 UpdateSubresources(
     auto pRowSizesInBytes = reinterpret_cast<UINT64*>(pLayouts + NumSubresources);
     auto pNumRows = reinterpret_cast<UINT*>(pRowSizesInBytes + NumSubresources);
 
+#if defined(_MSC_VER) || !defined(_WIN32)
     const auto Desc = pDestinationResource->GetDesc();
+#else
+    D3D12_RESOURCE_DESC tmpDesc;
+    const auto& Desc = *pDestinationResource->GetDesc(&tmpDesc);
+#endif
     ID3D12Device* pDevice = nullptr;
     pDestinationResource->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(&pDevice));
     pDevice->GetCopyableFootprints(&Desc, FirstSubresource, NumSubresources, IntermediateOffset, pLayouts, pNumRows, pRowSizesInBytes, &RequiredSize);
@@ -2232,7 +2259,12 @@ inline UINT64 UpdateSubresources(
     auto pRowSizesInBytes = reinterpret_cast<UINT64*>(pLayouts + NumSubresources);
     auto pNumRows = reinterpret_cast<UINT*>(pRowSizesInBytes + NumSubresources);
 
+#if defined(_MSC_VER) || !defined(_WIN32)
     const auto Desc = pDestinationResource->GetDesc();
+#else
+    D3D12_RESOURCE_DESC tmpDesc;
+    const auto& Desc = *pDestinationResource->GetDesc(&tmpDesc);
+#endif
     ID3D12Device* pDevice = nullptr;
     pDestinationResource->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(&pDevice));
     pDevice->GetCopyableFootprints(&Desc, FirstSubresource, NumSubresources, IntermediateOffset, pLayouts, pNumRows, pRowSizesInBytes, &RequiredSize);
@@ -2260,7 +2292,12 @@ inline UINT64 UpdateSubresources(
     UINT NumRows[MaxSubresources];
     UINT64 RowSizesInBytes[MaxSubresources];
 
+#if defined(_MSC_VER) || !defined(_WIN32)
     const auto Desc = pDestinationResource->GetDesc();
+#else
+    D3D12_RESOURCE_DESC tmpDesc;
+    const auto& Desc = *pDestinationResource->GetDesc(&tmpDesc);
+#endif
     ID3D12Device* pDevice = nullptr;
     pDestinationResource->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(&pDevice));
     pDevice->GetCopyableFootprints(&Desc, FirstSubresource, NumSubresources, IntermediateOffset, Layouts, NumRows, RowSizesInBytes, &RequiredSize);
@@ -2287,7 +2324,12 @@ inline UINT64 UpdateSubresources(
     UINT NumRows[MaxSubresources];
     UINT64 RowSizesInBytes[MaxSubresources];
 
+#if defined(_MSC_VER) || !defined(_WIN32)
     const auto Desc = pDestinationResource->GetDesc();
+#else
+    D3D12_RESOURCE_DESC tmpDesc;
+    const auto& Desc = *pDestinationResource->GetDesc(&tmpDesc);
+#endif
     ID3D12Device* pDevice = nullptr;
     pDestinationResource->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(&pDevice));
     pDevice->GetCopyableFootprints(&Desc, FirstSubresource, NumSubresources, IntermediateOffset, Layouts, NumRows, RowSizesInBytes, &RequiredSize);

@@ -898,7 +898,12 @@ HRESULT DirectX::SaveDDSTextureToFile(
     pCommandQ->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(device.GetAddressOf()));
 
     // Get the size of the image
-    const auto desc = pSource->GetDesc();
+#if defined(_MSC_VER) || !defined(_WIN32)
+    auto const desc = pSource->GetDesc();
+#else
+    D3D12_RESOURCE_DESC tmpDesc;
+    auto const& desc = *pSource->GetDesc(&tmpDesc);
+#endif
 
     if (desc.Width > UINT32_MAX)
         return E_INVALIDARG;
@@ -1121,7 +1126,12 @@ HRESULT DirectX::SaveWICTextureToFile(
     pCommandQ->GetDevice(IID_ID3D12Device, reinterpret_cast<void**>(device.GetAddressOf()));
 
     // Get the size of the image
-    const auto desc = pSource->GetDesc();
+#if defined(_MSC_VER) || !defined(_WIN32)
+    auto const desc = pSource->GetDesc();
+#else
+    D3D12_RESOURCE_DESC tmpDesc;
+    auto const& desc = *pSource->GetDesc(&tmpDesc);
+#endif
 
     if (desc.Width > UINT32_MAX)
         return E_INVALIDARG;
