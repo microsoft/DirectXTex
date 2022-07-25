@@ -173,6 +173,12 @@ if(MSVC)
     string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
     string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+
+    # Compiling with guard:ehcont allow library consumers to enable guard:ehcont if they want. (Requires VS 2019 x64)
+    if((MSVC_VERSION GREATER 1920) AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
+        target_compile_options(GLTFSDK PRIVATE "$<$<CONFIG:RELEASE>:/guard:ehcont>")
+        target_link_options(GLTFSDK PRIVATE "$<$<CONFIG:RELEASE>:/guard:ehcont>")
+    endif()
 endif()
 
 if (MINGW OR (NOT WIN32) OR VCPKG_TOOLCHAIN)
