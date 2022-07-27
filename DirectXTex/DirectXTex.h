@@ -124,6 +124,7 @@ namespace DirectX
     size_t __cdecl ComputeScanlines(_In_ DXGI_FORMAT fmt, _In_ size_t height) noexcept;
 
     DXGI_FORMAT __cdecl MakeSRGB(_In_ DXGI_FORMAT fmt) noexcept;
+    DXGI_FORMAT __cdecl MakeLinear(_In_ DXGI_FORMAT fmt) noexcept;
     DXGI_FORMAT __cdecl MakeTypeless(_In_ DXGI_FORMAT fmt) noexcept;
     DXGI_FORMAT __cdecl MakeTypelessUNORM(_In_ DXGI_FORMAT fmt) noexcept;
     DXGI_FORMAT __cdecl MakeTypelessFLOAT(_In_ DXGI_FORMAT fmt) noexcept;
