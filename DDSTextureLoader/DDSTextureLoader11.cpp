@@ -207,7 +207,7 @@ namespace
         *header = hdr;
         auto offset = sizeof(uint32_t)
             + sizeof(DDS_HEADER)
-            + (bDXT10Header ? sizeof(DDS_HEADER_DXT10) : 0);
+            + (bDXT10Header ? sizeof(DDS_HEADER_DXT10) : 0u);
         *bitData = ddsData + offset;
         *bitSize = ddsDataSize - offset;
 
@@ -232,18 +232,16 @@ namespace
 
         // open the file
     #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
-        ScopedHandle hFile(safe_handle(CreateFile2(fileName,
-            GENERIC_READ,
-            FILE_SHARE_READ,
-            OPEN_EXISTING,
+        ScopedHandle hFile(safe_handle(CreateFile2(
+            fileName,
+            GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING,
             nullptr)));
     #else
-        ScopedHandle hFile(safe_handle(CreateFileW(fileName,
-            GENERIC_READ,
-            FILE_SHARE_READ,
+        ScopedHandle hFile(safe_handle(CreateFileW(
+            fileName,
+            GENERIC_READ, FILE_SHARE_READ,
             nullptr,
-            OPEN_EXISTING,
-            FILE_ATTRIBUTE_NORMAL,
+            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
             nullptr)));
     #endif
 
@@ -333,7 +331,7 @@ namespace
         // setup the pointers in the process request
         *header = hdr;
         auto offset = sizeof(uint32_t) + sizeof(DDS_HEADER)
-            + (bDXT10Header ? sizeof(DDS_HEADER_DXT10) : 0);
+            + (bDXT10Header ? sizeof(DDS_HEADER_DXT10) : 0u);
         *bitData = ddsData.get() + offset;
         *bitSize = fileInfo.EndOfFile.LowPart - offset;
 
@@ -909,7 +907,7 @@ namespace
 #undef ISBITMASK
 
 
-//--------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------
     DXGI_FORMAT MakeSRGB(_In_ DXGI_FORMAT format) noexcept
     {
         switch (format)
@@ -934,6 +932,38 @@ namespace
 
         case DXGI_FORMAT_BC7_UNORM:
             return DXGI_FORMAT_BC7_UNORM_SRGB;
+
+        default:
+            return format;
+        }
+    }
+
+
+    //--------------------------------------------------------------------------------------
+    inline DXGI_FORMAT MakeLinear(_In_ DXGI_FORMAT format) noexcept
+    {
+        switch (format)
+        {
+        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+            return DXGI_FORMAT_R8G8B8A8_UNORM;
+
+        case DXGI_FORMAT_BC1_UNORM_SRGB:
+            return DXGI_FORMAT_BC1_UNORM;
+
+        case DXGI_FORMAT_BC2_UNORM_SRGB:
+            return DXGI_FORMAT_BC2_UNORM;
+
+        case DXGI_FORMAT_BC3_UNORM_SRGB:
+            return DXGI_FORMAT_BC3_UNORM;
+
+        case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+            return DXGI_FORMAT_B8G8R8A8_UNORM;
+
+        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+            return DXGI_FORMAT_B8G8R8X8_UNORM;
+
+        case DXGI_FORMAT_BC7_UNORM_SRGB:
+            return DXGI_FORMAT_BC7_UNORM;
 
         default:
             return format;
@@ -1053,7 +1083,8 @@ namespace
         _In_ unsigned int bindFlags,
         _In_ unsigned int cpuAccessFlags,
         _In_ unsigned int miscFlags,
-        _In_ bool forceSRGB,
+        _In_ DDS_LOADER_FLAGS loadFlags,
+
         _In_ bool isCubeMap,
         _In_reads_opt_(mipCount*arraySize) const D3D11_SUBRESOURCE_DATA* initData,
         _Outptr_opt_ ID3D11Resource** texture,
@@ -1064,9 +1095,13 @@ namespace
 
         HRESULT hr = E_FAIL;
 
-        if (forceSRGB)
+        if (loadFlags & DDS_LOADER_FORCE_SRGB)
         {
             format = MakeSRGB(format);
+        }
+        else if (loadFlags & DDS_LOADER_IGNORE_SRGB)
+        {
+            format = MakeLinear(format);
         }
 
         switch (resDim)
@@ -1285,7 +1320,7 @@ namespace
         _In_ unsigned int bindFlags,
         _In_ unsigned int cpuAccessFlags,
         _In_ unsigned int miscFlags,
-        _In_ bool forceSRGB,
+        _In_ DDS_LOADER_FLAGS loadFlags,
         _Outptr_opt_ ID3D11Resource** texture,
         _Outptr_opt_ ID3D11ShaderResourceView** textureView) noexcept
     {
@@ -1485,7 +1520,7 @@ namespace
                 bindFlags | D3D11_BIND_RENDER_TARGET,
                 cpuAccessFlags,
                 miscFlags | D3D11_RESOURCE_MISC_GENERATE_MIPS,
-                forceSRGB,
+                loadFlags,
                 isCubeMap,
                 nullptr,
                 &tex, textureView);
@@ -1588,7 +1623,7 @@ namespace
                     resDim, twidth, theight, tdepth, mipCount - skipMip, arraySize,
                     format,
                     usage, bindFlags, cpuAccessFlags, miscFlags,
-                    forceSRGB,
+                    loadFlags,
                     isCubeMap,
                     initData.get(),
                     texture, textureView);
@@ -1633,7 +1668,7 @@ namespace
                             resDim, twidth, theight, tdepth, mipCount - skipMip, arraySize,
                             format,
                             usage, bindFlags, cpuAccessFlags, miscFlags,
-                            forceSRGB,
+                            loadFlags,
                             isCubeMap,
                             initData.get(),
                             texture, textureView);
@@ -1749,7 +1784,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
         ddsData, ddsDataSize,
         maxsize,
         D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0,
-        false,
+        DDS_LOADER_DEFAULT,
         texture, textureView, alphaMode);
 }
 
@@ -1768,7 +1803,7 @@ HRESULT DirectX::CreateDDSTextureFromMemory(
         ddsData, ddsDataSize,
         maxsize,
         D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0,
-        false,
+        DDS_LOADER_DEFAULT,
         texture, textureView, alphaMode);
 }
 
@@ -1782,7 +1817,7 @@ HRESULT DirectX::CreateDDSTextureFromMemoryEx(
     unsigned int bindFlags,
     unsigned int cpuAccessFlags,
     unsigned int miscFlags,
-    bool forceSRGB,
+    DDS_LOADER_FLAGS loadFlags,
     ID3D11Resource** texture,
     ID3D11ShaderResourceView** textureView,
     DDS_ALPHA_MODE* alphaMode) noexcept
@@ -1791,7 +1826,7 @@ HRESULT DirectX::CreateDDSTextureFromMemoryEx(
         ddsData, ddsDataSize,
         maxsize,
         usage, bindFlags, cpuAccessFlags, miscFlags,
-        forceSRGB,
+        loadFlags,
         texture, textureView, alphaMode);
 }
 
@@ -1806,7 +1841,7 @@ HRESULT DirectX::CreateDDSTextureFromMemoryEx(
     unsigned int bindFlags,
     unsigned int cpuAccessFlags,
     unsigned int miscFlags,
-    bool forceSRGB,
+    DDS_LOADER_FLAGS loadFlags,
     ID3D11Resource** texture,
     ID3D11ShaderResourceView** textureView,
     DDS_ALPHA_MODE* alphaMode) noexcept
@@ -1853,7 +1888,7 @@ HRESULT DirectX::CreateDDSTextureFromMemoryEx(
         header, bitData, bitSize,
         maxsize,
         usage, bindFlags, cpuAccessFlags, miscFlags,
-        forceSRGB,
+        loadFlags,
         texture, textureView);
     if (SUCCEEDED(hr))
     {
@@ -1887,7 +1922,7 @@ HRESULT DirectX::CreateDDSTextureFromFile(
     return CreateDDSTextureFromFileEx(d3dDevice, nullptr,
         fileName, maxsize,
         D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0,
-        false,
+        DDS_LOADER_DEFAULT,
         texture, textureView, alphaMode);
 }
 
@@ -1905,7 +1940,7 @@ HRESULT DirectX::CreateDDSTextureFromFile(
         fileName,
         maxsize,
         D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0, 0,
-        false,
+        DDS_LOADER_DEFAULT,
         texture, textureView, alphaMode);
 }
 
@@ -1918,7 +1953,7 @@ HRESULT DirectX::CreateDDSTextureFromFileEx(
     unsigned int bindFlags,
     unsigned int cpuAccessFlags,
     unsigned int miscFlags,
-    bool forceSRGB,
+    DDS_LOADER_FLAGS loadFlags,
     ID3D11Resource** texture,
     ID3D11ShaderResourceView** textureView,
     DDS_ALPHA_MODE* alphaMode) noexcept
@@ -1927,7 +1962,7 @@ HRESULT DirectX::CreateDDSTextureFromFileEx(
         fileName,
         maxsize,
         usage, bindFlags, cpuAccessFlags, miscFlags,
-        forceSRGB,
+        loadFlags,
         texture, textureView, alphaMode);
 }
 
@@ -1941,7 +1976,7 @@ HRESULT DirectX::CreateDDSTextureFromFileEx(
     unsigned int bindFlags,
     unsigned int cpuAccessFlags,
     unsigned int miscFlags,
-    bool forceSRGB,
+    DDS_LOADER_FLAGS loadFlags,
     ID3D11Resource** texture,
     ID3D11ShaderResourceView** textureView,
     DDS_ALPHA_MODE* alphaMode) noexcept
@@ -1989,7 +2024,7 @@ HRESULT DirectX::CreateDDSTextureFromFileEx(
         header, bitData, bitSize,
         maxsize,
         usage, bindFlags, cpuAccessFlags, miscFlags,
-        forceSRGB,
+        loadFlags,
         texture, textureView);
 
     if (SUCCEEDED(hr))

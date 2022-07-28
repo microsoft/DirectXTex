@@ -38,6 +38,28 @@ namespace DirectX
     };
 #endif
 
+#ifndef DDS_LOADER_FLAGS_DEFINED
+#define DDS_LOADER_FLAGS_DEFINED
+
+    enum DDS_LOADER_FLAGS : uint32_t
+    {
+        DDS_LOADER_DEFAULT = 0,
+        DDS_LOADER_FORCE_SRGB = 0x1,
+        DDS_LOADER_IGNORE_SRGB = 0x2,
+    };
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-dynamic-exception-spec"
+#endif
+
+    DEFINE_ENUM_FLAG_OPERATORS(DDS_LOADER_FLAGS);
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+#endif
+
     // Standard version
     HRESULT CreateDDSTextureFromMemory(
         _In_ ID3D11Device* d3dDevice,
@@ -86,7 +108,7 @@ namespace DirectX
         _In_ unsigned int bindFlags,
         _In_ unsigned int cpuAccessFlags,
         _In_ unsigned int miscFlags,
-        _In_ bool forceSRGB,
+        _In_ DDS_LOADER_FLAGS loadFlags,
         _Outptr_opt_ ID3D11Resource** texture,
         _Outptr_opt_ ID3D11ShaderResourceView** textureView,
         _Out_opt_ DDS_ALPHA_MODE* alphaMode = nullptr) noexcept;
@@ -99,7 +121,7 @@ namespace DirectX
         _In_ unsigned int bindFlags,
         _In_ unsigned int cpuAccessFlags,
         _In_ unsigned int miscFlags,
-        _In_ bool forceSRGB,
+        _In_ DDS_LOADER_FLAGS loadFlags,
         _Outptr_opt_ ID3D11Resource** texture,
         _Outptr_opt_ ID3D11ShaderResourceView** textureView,
         _Out_opt_ DDS_ALPHA_MODE* alphaMode = nullptr) noexcept;
@@ -115,7 +137,7 @@ namespace DirectX
         _In_ unsigned int bindFlags,
         _In_ unsigned int cpuAccessFlags,
         _In_ unsigned int miscFlags,
-        _In_ bool forceSRGB,
+        _In_ DDS_LOADER_FLAGS loadFlags,
         _Outptr_opt_ ID3D11Resource** texture,
         _Outptr_opt_ ID3D11ShaderResourceView** textureView,
         _Out_opt_ DDS_ALPHA_MODE* alphaMode = nullptr) noexcept;
@@ -129,7 +151,7 @@ namespace DirectX
         _In_ unsigned int bindFlags,
         _In_ unsigned int cpuAccessFlags,
         _In_ unsigned int miscFlags,
-        _In_ bool forceSRGB,
+        _In_ DDS_LOADER_FLAGS loadFlags,
         _Outptr_opt_ ID3D11Resource** texture,
         _Outptr_opt_ ID3D11ShaderResourceView** textureView,
         _Out_opt_ DDS_ALPHA_MODE* alphaMode = nullptr) noexcept;

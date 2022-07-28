@@ -61,6 +61,7 @@ namespace DirectX
     {
         DDS_LOADER_DEFAULT = 0,
         DDS_LOADER_FORCE_SRGB = 0x1,
+        DDS_LOADER_IGNORE_SRGB = 0x2,
         DDS_LOADER_MIP_RESERVE = 0x8,
     };
 
