@@ -440,7 +440,7 @@ HRESULT DirectX::CreateTexture(
 {
     return CreateTextureEx(
         pDevice, metadata,
-        D3D12_RESOURCE_FLAG_NONE, false,
+        D3D12_RESOURCE_FLAG_NONE, CREATETEX_DEFAULT,
         ppResource);
 }
 
@@ -449,7 +449,7 @@ HRESULT DirectX::CreateTextureEx(
     ID3D12Device* pDevice,
     const TexMetadata& metadata,
     D3D12_RESOURCE_FLAGS resFlags,
-    bool forceSRGB,
+    CREATETEX_FLAGS flags,
     ID3D12Resource** ppResource) noexcept
 {
     if (!pDevice || !ppResource)
@@ -465,9 +465,13 @@ HRESULT DirectX::CreateTextureEx(
         return E_INVALIDARG;
 
     DXGI_FORMAT format = metadata.format;
-    if (forceSRGB)
+    if (flags & CREATETEX_FORCE_SRGB)
     {
         format = MakeSRGB(format);
+    }
+    else if (flags & CREATETEX_IGNORE_SRGB)
+    {
+        format = MakeLinear(format);
     }
 
     D3D12_RESOURCE_DESC desc = {};
