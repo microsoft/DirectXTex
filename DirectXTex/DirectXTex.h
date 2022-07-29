@@ -124,6 +124,7 @@ namespace DirectX
     size_t __cdecl ComputeScanlines(_In_ DXGI_FORMAT fmt, _In_ size_t height) noexcept;
 
     DXGI_FORMAT __cdecl MakeSRGB(_In_ DXGI_FORMAT fmt) noexcept;
+    DXGI_FORMAT __cdecl MakeLinear(_In_ DXGI_FORMAT fmt) noexcept;
     DXGI_FORMAT __cdecl MakeTypeless(_In_ DXGI_FORMAT fmt) noexcept;
     DXGI_FORMAT __cdecl MakeTypelessUNORM(_In_ DXGI_FORMAT fmt) noexcept;
     DXGI_FORMAT __cdecl MakeTypelessFLOAT(_In_ DXGI_FORMAT fmt) noexcept;
@@ -856,6 +857,15 @@ namespace DirectX
         _Out_ size_t& required) noexcept;
 
     //---------------------------------------------------------------------------------
+    // Direct3D interop
+
+    enum CREATETEX_FLAGS : uint32_t
+    {
+        CREATETEX_DEFAULT = 0,
+        CREATETEX_FORCE_SRGB = 0x1,
+        CREATETEX_IGNORE_SRGB = 0x2,
+    };
+
     // Direct3D 11 functions
 #if defined(__d3d11_h__) || defined(__d3d11_x_h__)
     bool __cdecl IsSupportedTexture(_In_ ID3D11Device* pDevice, _In_ const TexMetadata& metadata) noexcept;
@@ -870,18 +880,17 @@ namespace DirectX
 
     HRESULT __cdecl CreateTextureEx(
         _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ bool forceSRGB,
+        _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ CREATETEX_FLAGS flags,
         _Outptr_ ID3D11Resource** ppResource) noexcept;
 
     HRESULT __cdecl CreateShaderResourceViewEx(
         _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ bool forceSRGB,
+        _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ CREATETEX_FLAGS flags,
         _Outptr_ ID3D11ShaderResourceView** ppSRV) noexcept;
 
     HRESULT __cdecl CaptureTexture(_In_ ID3D11Device* pDevice, _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource* pSource, _Out_ ScratchImage& result) noexcept;
 #endif
 
-    //---------------------------------------------------------------------------------
     // Direct3D 12 functions
 #if defined(__d3d12_h__) || defined(__d3d12_x_h__) || defined(__XBOX_D3D12_X__)
     bool __cdecl IsSupportedTexture(_In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata) noexcept;
@@ -892,7 +901,7 @@ namespace DirectX
 
     HRESULT __cdecl CreateTextureEx(
         _In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata,
-        _In_ D3D12_RESOURCE_FLAGS resFlags, _In_ bool forceSRGB,
+        _In_ D3D12_RESOURCE_FLAGS resFlags, _In_ CREATETEX_FLAGS flags,
         _Outptr_ ID3D12Resource** ppResource) noexcept;
 
     HRESULT __cdecl PrepareUpload(
