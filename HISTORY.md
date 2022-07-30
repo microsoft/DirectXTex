@@ -6,6 +6,14 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### July 29, 2022
+* Added ``MakeLinear`` DXGI_FORMAT utility function.
+* *breaking change* ``CreateTextureEx`` and ``CreateShaderResourceViewEx`` functions now use ``CREATETEX_FLAGS`` instead of a ``bool forceSRGB`` parameter.
+* Updates for MinGW ABI fixes for DirectX12 in the latest DirectX-Headers.
+* CMake and MSBuild project updates
+* Code review
+* `DDSTextureLoader11` and ``DDSTextureLoader12`` sync'd up with *DirectX Tool Kit* July 2022 changes.
+
 ### May 9, 2022
 * TGA reader updated to support 24-bit paletted uncompressed color-mapped images (used by a DCC application)
 * Added `IsBGR` utility method
