@@ -4113,20 +4113,20 @@ public:
         D3D12_BARRIER_SUBRESOURCE_RANGE{ Subresource, 0, 0, 0, 0, 0 }
     {}
     CD3DX12_BARRIER_SUBRESOURCE_RANGE(
-        UINT FirstMipLevel,
-        UINT NumMips,
-        UINT FirstArraySlice,
-        UINT NumArraySlices,
-        UINT FirstPlane = 0,
-        UINT NumPlanes = 1) noexcept :
+        UINT firstMipLevel,
+        UINT numMips,
+        UINT firstArraySlice,
+        UINT numArraySlices,
+        UINT firstPlane = 0,
+        UINT numPlanes = 1) noexcept :
         D3D12_BARRIER_SUBRESOURCE_RANGE
         {
-            FirstMipLevel,
-            NumMips,
-            FirstArraySlice,
-            NumArraySlices,
-            FirstPlane,
-            NumPlanes
+            firstMipLevel,
+            numMips,
+            firstArraySlice,
+            numArraySlices,
+            firstPlane,
+            numPlanes
         }
     {}
 };
