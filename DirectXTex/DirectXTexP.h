@@ -153,9 +153,9 @@
 
 #include "DirectXTex.h"
 
+#ifdef _WIN32
 #include <malloc.h>
 
-#ifdef _WIN32
 #if defined(NTDDI_WIN10_FE) || defined(__MINGW32__)
 #include <ole2.h>
 #else
