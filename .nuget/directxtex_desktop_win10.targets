@@ -2,21 +2,20 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup Label="Debug" Condition="'$(Configuration.ToLower())' == 'debug'">
-    <_NuGetConfiguration>Debug</_NuGetConfiguration>
+    <NuGetConfiguration>Debug</NuGetConfiguration>
   </PropertyGroup>
-  <PropertyGroup Label="Non_Debug" Condition="'$(Configuration.ToLower())' != 'debug'">
-    <_NuGetConfiguration>Release</_NuGetConfiguration>
+  <PropertyGroup Label="Non_Debug" Condition="'$(Configuration.ToLower())' == 'profile'">
+    <NuGetConfiguration>Release</NuGetConfiguration>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(PlatformTarget)' == 'x64'">
-    <_NuGetPlatform>x64</_NuGetPlatform>
+  <PropertyGroup Label="Non_Debug" Condition="'$(Configuration.ToLower())' == 'release'">
+    <NuGetConfiguration>Release</NuGetConfiguration>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(_NuGetPlatform)' == ''">
-    <_NuGetPlatform>$(Platform)</_NuGetPlatform>
+  <PropertyGroup Condition="'$(NuGetConfiguration)' == ''">
+    <NuGetConfiguration>Release</NuGetConfiguration>
   </PropertyGroup>
 
   <PropertyGroup>
-    <directxtex-LibPath>$(MSBuildThisFileDirectory)..\..\native\lib\$(_NuGetPlatform)\$(_NuGetConfiguration)</directxtex-LibPath>
+    <directxtex-LibPath>$(MSBuildThisFileDirectory)..\..\native\lib\$(PlatformTarget)\$(NuGetConfiguration)</directxtex-LibPath>
   </PropertyGroup>
 
   <ItemDefinitionGroup>
@@ -32,10 +31,5 @@
       <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
-
-  <PropertyGroup>
-    <_NuGetConfiguration></_NuGetConfiguration>
-    <_NuGetPlatform></_NuGetPlatform>
-  </PropertyGroup>
 
 </Project>
