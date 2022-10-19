@@ -110,7 +110,6 @@ if(ENABLE_OPENEXR_SUPPORT)
        DirectXTex/DirectXTexEXR.h)
 
    set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
-       DirectXTex/DirectXTexEXR.h
        DirectXTex/DirectXTexEXR.cpp)
 endif()
 
@@ -156,7 +155,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 
 if(ENABLE_OPENEXR_SUPPORT)
   find_package(OpenEXR REQUIRED)
-  target_include_directories(${PROJECT_NAME} PRIVATE ${OPENEXR_INCLUDE_DIRS}/OpenEXR)
+  target_link_libraries(${PROJECT_NAME} PRIVATE OpenEXR::OpenEXR)
 endif()
 
 if ((${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.16") AND (NOT MINGW))
@@ -303,6 +302,7 @@ if(MSVC)
     endif()
 
     if((MSVC_VERSION GREATER_EQUAL 1928) AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
+       AND NOT ENABLE_OPENEXR_SUPPORT
        AND ((NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang")) OR (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13.0)))
       foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
         target_compile_options(${t} PRIVATE "$<$<NOT:$<CONFIG:DEBUG>>:/guard:ehcont>")
