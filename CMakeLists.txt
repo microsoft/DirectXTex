@@ -29,7 +29,6 @@ option(ENABLE_CODE_ANALYSIS "Use Static Code Analysis on build" OFF)
 option(USE_PREBUILT_SHADERS "Use externally built HLSL shaders" OFF)
 
 # Includes the functions for loading/saving OpenEXR files at runtime
-# NOTE requires adding DirectXTexEXR.h/.cpp source files (vcpkg does this automatically)
 option(ENABLE_OPENEXR_SUPPORT "Build with OpenEXR support" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -107,10 +106,10 @@ endif()
 
 if(ENABLE_OPENEXR_SUPPORT)
    set(LIBRARY_HEADERS ${LIBRARY_HEADERS}
-       DirectXTex/DirectXTexEXR.h)
+       Auxiliary/DirectXTexEXR.h)
 
    set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
-       DirectXTex/DirectXTexEXR.cpp)
+       Auxiliary/DirectXTexEXR.cpp)
 endif()
 
 if(BUILD_DX11 AND WIN32)
@@ -242,6 +241,7 @@ if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
 
   if(ENABLE_OPENEXR_SUPPORT)
     foreach(t IN LISTS TOOL_EXES)
+      target_include_directories(${t} PRIVATE Auxiliary)
       target_link_libraries(${t} ${OPENEXR_ILMIMF_LIBRARY})
       target_compile_options(${t} PRIVATE -DUSE_OPENEXR)
     endforeach()
