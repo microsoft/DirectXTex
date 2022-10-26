@@ -655,34 +655,44 @@ namespace
     {
         PrintLogo();
 
-        wprintf(L"Usage: texdiag <command> <options> <files>\n\n");
-        wprintf(L"   info                Output image metadata\n");
-        wprintf(L"   analyze             Analyze and summarize image information\n");
-        wprintf(L"   compare             Compare two images with MSE error metric\n");
-        wprintf(L"   diff                Generate difference image from two images\n");
-        wprintf(L"   dumpbc              Dump out compressed blocks (DDS BC only)\n");
-        wprintf(L"   dumpdds             Dump out all the images in a complex DDS\n\n");
-        wprintf(L"   -r                  wildcard filename search is recursive\n");
-        wprintf(L"   -if <filter>        image filtering\n");
-        wprintf(L"\n                       (DDS input only)\n");
-        wprintf(L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
-        wprintf(L"   -dword              Use DWORD instead of BYTE alignment\n");
-        wprintf(L"   -badtails           Fix for older DXTn with bad mipchain tails\n");
-        wprintf(L"   -xlum               expand legacy L8, L16, and A8P8 formats\n");
-        wprintf(L"\n                       (diff only)\n");
-        wprintf(L"   -f <format>         format\n");
-        wprintf(L"   -o <filename>       output filename\n");
-        wprintf(L"   -l                  force output filename to lower case\n");
-        wprintf(L"   -y                  overwrite existing output file (if any)\n");
-        wprintf(L"   -c <hex-RGB>        highlight difference color (defaults to off)\n");
-        wprintf(L"   -t <threshold>      highlight threshold (defaults to 0.25)\n");
-        wprintf(L"\n                       (dumpbc only)\n");
-        wprintf(L"   -targetx <num>      dump pixels at location x (defaults to all)\n");
-        wprintf(L"   -targety <num>      dump pixels at location y (defaults to all)\n");
-        wprintf(L"\n                       (dumpdds only)\n");
-        wprintf(L"   -ft <filetype>      output file type\n");
-        wprintf(L"\n   -nologo             suppress copyright message\n");
-        wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
+        static const wchar_t* const s_usage =
+            L"Usage: texdiag <command> <options> <files>\n"
+            L"\n"
+            L"   info                Output image metadata\n"
+            L"   analyze             Analyze and summarize image information\n"
+            L"   compare             Compare two images with MSE error metric\n"
+            L"   diff                Generate difference image from two images\n"
+            L"   dumpbc              Dump out compressed blocks (DDS BC only)\n"
+            L"   dumpdds             Dump out all the images in a complex DDS\n"
+            L"\n"
+            L"   -r                  wildcard filename search is recursive\n"
+            L"   -if <filter>        image filtering\n"
+            L"\n"
+            L"                       (DDS input only)\n"
+            L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n"
+            L"   -dword              Use DWORD instead of BYTE alignment\n"
+            L"   -badtails           Fix for older DXTn with bad mipchain tails\n"
+            L"   -xlum               expand legacy L8, L16, and A8P8 formats\n"
+            L"\n"
+            L"                       (diff only)\n"
+            L"   -f <format>         format\n"
+            L"   -o <filename>       output filename\n"
+            L"   -l                  force output filename to lower case\n"
+            L"   -y                  overwrite existing output file (if any)\n"
+            L"   -c <hex-RGB>        highlight difference color (defaults to off)\n"
+            L"   -t <threshold>      highlight threshold (defaults to 0.25)\n"
+            L"\n"
+            L"                       (dumpbc only)\n"
+            L"   -targetx <num>      dump pixels at location x (defaults to all)\n"
+            L"   -targety <num>      dump pixels at location y (defaults to all)\n"
+            L"\n"
+            L"                       (dumpdds only)\n"
+            L"   -ft <filetype>      output file type\n"
+            L"\n"
+            L"   -nologo             suppress copyright message\n"
+            L"   -flist <filename>   use text file with a list of input files (one per line)\n";
+
+        wprintf(L"%ls", s_usage);
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);

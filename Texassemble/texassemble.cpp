@@ -726,40 +726,48 @@ namespace
     {
         PrintLogo();
 
-        wprintf(L"Usage: texassemble <command> <options> <files>\n\n");
-        wprintf(L"   cube                create cubemap\n");
-        wprintf(L"   volume              create volume map\n");
-        wprintf(L"   array               create texture array\n");
-        wprintf(L"   cubearray           create cubemap array\n");
-        wprintf(L"   h-cross or v-cross  create a cross image from a cubemap\n");
-        wprintf(L"   h-strip or v-strip  create a strip image from a cubemap\n");
-        wprintf(L"   array-strip         creates a strip image from a 1D/2D array\n");
-        wprintf(L"   merge               create texture from rgb image and alpha image\n");
-        wprintf(L"   gif                 create array from animated gif\n\n");
-        wprintf(L"   -r                  wildcard filename search is recursive\n");
-        wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
-        wprintf(L"   -w <n>              width\n");
-        wprintf(L"   -h <n>              height\n");
-        wprintf(L"   -f <format>         format\n");
-        wprintf(L"   -if <filter>        image filtering\n");
-        wprintf(L"   -srgb{i|o}          sRGB {input, output}\n");
-        wprintf(L"   -o <filename>       output filename\n");
-        wprintf(L"   -l                  force output filename to lower case\n");
-        wprintf(L"   -y                  overwrite existing output file (if any)\n");
-        wprintf(L"   -sepalpha           resize alpha channel separately from color channels\n");
-        wprintf(L"   -nowic              Force non-WIC filtering\n");
-        wprintf(L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
-        wprintf(L"   -alpha              convert premultiplied alpha to straight alpha\n");
-        wprintf(L"   -dx10               Force use of 'DX10' extended header\n");
-        wprintf(L"   -nologo             suppress copyright message\n");
-        wprintf(L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n");
-        wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
-        wprintf(L"\n                       (gif only)\n");
-        wprintf(L"   -bgcolor            Use background color instead of transparency\n");
-        wprintf(L"\n                       (merge only)\n");
-        wprintf(L"   -swizzle <rgba>     Select channels for merge (defaults to rgbB)\n");
-        wprintf(L"\n                       (cube, volume, array, cubearray, merge only)\n");
-        wprintf(L"   -stripmips          Use only base image from input dds files\n");
+        static const wchar_t* const s_usage =
+            L"Usage: texassemble <command> <options> <files>\n"
+            L"\n"
+            L"   cube                create cubemap\n"
+            L"   volume              create volume map\n"
+            L"   array               create texture array\n"
+            L"   cubearray           create cubemap array\n"
+            L"   h-cross or v-cross  create a cross image from a cubemap\n"
+            L"   h-strip or v-strip  create a strip image from a cubemap\n"
+            L"   array-strip         creates a strip image from a 1D/2D array\n"
+            L"   merge               create texture from rgb image and alpha image\n"
+            L"   gif                 create array from animated gif\n"
+            L"\n"
+            L"   -r                  wildcard filename search is recursive\n"
+            L"   -flist <filename>   use text file with a list of input files (one per line)\n"
+            L"   -w <n>              width\n"
+            L"   -h <n>              height\n"
+            L"   -f <format>         format\n"
+            L"   -if <filter>        image filtering\n"
+            L"   -srgb{i|o}          sRGB {input, output}\n"
+            L"   -o <filename>       output filename\n"
+            L"   -l                  force output filename to lower case\n"
+            L"   -y                  overwrite existing output file (if any)\n"
+            L"   -sepalpha           resize alpha channel separately from color channels\n"
+            L"   -nowic              Force non-WIC filtering\n"
+            L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n"
+            L"   -alpha              convert premultiplied alpha to straight alpha\n"
+            L"   -dx10               Force use of 'DX10' extended header\n"
+            L"   -nologo             suppress copyright message\n"
+            L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n"
+            L"   -tonemap            Apply a tonemap operator based on maximum luminance\n"
+            L"\n"
+            L"                       (gif only)\n"
+            L"   -bgcolor            Use background color instead of transparency\n"
+            L"\n"
+            L"                       (merge only)\n"
+            L"   -swizzle <rgba>     Select channels for merge (defaults to rgbB)\n"
+            L"\n"
+            L"                       (cube, volume, array, cubearray, merge only)\n"
+            L"   -stripmips          Use only base image from input dds files\n";
+
+        wprintf(L"%ls", s_usage);
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);

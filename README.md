@@ -25,6 +25,10 @@ These components are designed to work without requiring any content from the leg
 > The majority of the header files here are intended for internal implementation
     of the library only (``BC.h``, ``BCDirectCompute.h``, ``DDS.h``, ``DirectXTexP.h``, etc.). Only ``DirectXTex.h`` and ``DirectXTex.inl`` are meant as the 'public' header for the library.
 
+* ``Auxiliary\``
+
+  + Contains optional source files for the DirectXTex library, such as adapter loading functions using the OpenEXR library.
+
 * ``Texconv\``
 
   + This DirectXTex sample is an implementation of the [texconv](https://github.com/Microsoft/DirectXTex/wiki/Texconv) command-line texture utility from the DirectX SDK utilizing DirectXTex rather than D3DX.
