@@ -1897,18 +1897,18 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             switch (dwCommand)
             {
             case CMD_H_CROSS:
-                //      posy
-                // negx posz posx negz
-                //      negy
+                //    +Y
+                // -X +Z +X -Z
+                //    -Y
                 twidth = width * 4;
                 theight = height * 3;
                 break;
 
             case CMD_V_CROSS:
-                //      posy
-                // posz posx negz
-                //      negy
-                //      negx
+                //    +Y
+                // -X +Z +X
+                //    -Y
+                //    -Z
                 twidth = width * 3;
                 theight = height * 4;
                 break;
@@ -1958,9 +1958,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                 case CMD_H_CROSS:
                     {
-                        //      posy
-                        // negx posz posx negz
-                        //      negy
+                        //    +Y
+                        // -X +Z +X -Z
+                        //    -Y
 
                         static const size_t s_offsetx[6] = { 2, 0, 1, 1, 1, 3 };
                         static const size_t s_offsety[6] = { 1, 1, 0, 2, 1, 1 };
@@ -1972,13 +1972,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 case CMD_V_CROSS:
                     {
-                        //      posy
-                        // posz posx negz
-                        //      negy
-                        //      negx
-
-                        static const size_t s_offsetx[6] = { 1, 1, 1, 1, 0, 2 };
-                        static const size_t s_offsety[6] = { 1, 3, 0, 2, 1, 1 };
+                        //    +Y
+                        // -X +Z +X
+                        //    -Y
+                        //    -Z
+                        static const size_t s_offsetx[6] = { 2, 0, 1, 1, 1, 1 };
+                        static const size_t s_offsety[6] = { 1, 1, 0, 2, 1, 3 };
 
                         offsetx = s_offsetx[index] * width;
                         offsety = s_offsety[index] * height;
@@ -1986,12 +1985,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }
 
                 case CMD_H_STRIP:
-                    // posx, negx, posy, negy, posz, negz
+                    // +X -X +Y -Y +Z -Z
                     offsetx = index * width;
                     break;
 
                 case CMD_V_STRIP:
-                    // posx, negx, posy, negy, posz, negz
+                    // +X
+                    // -X
+                    // +Y
+                    // -Y
+                    // +Z
+                    // -Z
                     offsety = index * height;
                     break;
 
