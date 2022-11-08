@@ -1034,7 +1034,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         break;
 
     default:
-        wprintf(L"Must use one of: cube, volume, array, cubearray,\n   h-cross, v-cross, v-cross-fnz, h-tee, h-strip, v-strip,\n   array-strip, merge, gif,\n   cube-from-hc, cube-from-vc, cube-from-vc-fnz,\n   cube-from-ht, cube-from-hs, cube-from-vs\n\n");
+        wprintf(L"Must use one of: ");
+        PrintList(4, g_pCommands);
         return 1;
     }
 
@@ -1992,8 +1993,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            memset(result.GetPixels(), 0, result.GetPixelsSize());
-
             auto src = loadedImages.cbegin();
             auto dest = result.GetImage(0, 0, 0);
 
@@ -2225,8 +2224,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            memset(result.GetPixels(), 0, result.GetPixelsSize());
-
             auto src = loadedImages.cbegin();
             auto dest = result.GetImage(0, 0, 0);
 
@@ -2292,35 +2289,41 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             auto src = loadedImages.cbegin();
             auto img = (*src)->GetImage(0, 0, 0);
-            size_t twidth = 0;
-            size_t theight = 0;
+            size_t ratio_w = 1;
+            size_t ratio_h = 1;
 
             switch (dwCommand)
             {
             case CMD_CUBE_FROM_HC:
             case CMD_CUBE_FROM_HT:
-                twidth = width / 4;
-                theight = height / 3;
+                ratio_w = 4;
+                ratio_h = 3;
                 break;
 
             case CMD_CUBE_FROM_VC:
             case CMD_CUBE_FROM_VC_FNZ:
-                twidth = width / 3;
-                theight = height / 4;
+                ratio_w = 3;
+                ratio_h = 4;
                 break;
 
             case CMD_CUBE_FROM_HS:
-                twidth = width / 6;
-                theight = height;
+                ratio_w = 6;
                 break;
 
             case CMD_CUBE_FROM_VS:
-                twidth = width;
-                theight = height / 6;
+                ratio_h = 6;
                 break;
 
             default:
                 break;
+            }
+
+            size_t twidth = width / ratio_w;
+            size_t theight = height / ratio_h;
+
+            if (((width % ratio_w) != 0) || ((height % ratio_h) != 0) || (twidth != theight))
+            {
+                wprintf(L"\nWARNING: %ls expects %d:%d aspect ratio\n", g_pCommands[dwCommand - 1].name, ratio_w, ratio_h);
             }
 
             if (twidth > maxCube || theight > maxCube)
@@ -2335,7 +2338,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 wprintf(L"FAILED setting up result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
-            memset(result.GetPixels(), 0, result.GetPixelsSize());
 
             for (size_t index = 0; index < 6; ++index)
             {
