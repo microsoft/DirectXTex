@@ -1269,16 +1269,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 case CMD_ARRAY:
                 case CMD_CUBEARRAY:
                 case CMD_MERGE:
-                case CMD_CUBE_FROM_HC:
-                case CMD_CUBE_FROM_VC:
-                case CMD_CUBE_FROM_VC_FNZ:
-                case CMD_CUBE_FROM_HT:
-                case CMD_CUBE_FROM_HS:
-                case CMD_CUBE_FROM_VS:
                     break;
 
                 default:
-                    wprintf(L"-stripmips only applies to cube, volume, array, cubearray, merge, or cube-from-* commands\n");
+                    wprintf(L"-stripmips only applies to cube, volume, array, cubearray, or merge commands\n");
                     return 1;
                 }
                 break;
@@ -1498,8 +1492,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }
                     else if ((info.mipLevels > 1) && ((dwOptions & (1 << OPT_STRIP_MIPS)) == 0))
                     {
-                        wprintf(L"\nERROR: Can't assemble using input mips. To ignore mips, try again with -stripmips\n");
-                        return 1;
+                        switch (dwCommand)
+                        {
+                        case CMD_CUBE:
+                        case CMD_VOLUME:
+                        case CMD_ARRAY:
+                        case CMD_CUBEARRAY:
+                        case CMD_MERGE:
+                            wprintf(L"\nERROR: Can't assemble using input mips. To ignore mips, try again with -stripmips\n");
+                            return 1;
+
+                        default:
+                            break;
+                       }
                     }
                 }
                 else if (_wcsicmp(ext, L".tga") == 0)
@@ -2321,7 +2326,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             size_t twidth = width / ratio_w;
             size_t theight = height / ratio_h;
 
-            if (((width % ratio_w) != 0) || ((height % ratio_h) != 0) || (twidth != theight))
+            if (((width % ratio_w) != 0) || ((height % ratio_h) != 0))
             {
                 wprintf(L"\nWARNING: %ls expects %d:%d aspect ratio\n", g_pCommands[dwCommand - 1].name, ratio_w, ratio_h);
             }
