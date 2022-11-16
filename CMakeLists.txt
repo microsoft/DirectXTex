@@ -11,6 +11,8 @@ project (DirectXTex
   HOMEPAGE_URL "https://go.microsoft.com/fwlink/?LinkId=248926"
   LANGUAGES CXX)
 
+option(BUILD_TESTING "Build test suite (if present)" ON)
+
 option(BUILD_TOOLS "Build tex command-line tools" ON)
 
 option(BUILD_SAMPLE "Build DDSView sample" ON)
@@ -396,4 +398,10 @@ endif()
 
 if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
   set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT texconv)
+endif()
+
+#--- Test suite
+if(BUILD_TESTING AND WIN32 AND (NOT WINDOWS_STORE) AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/Tests/CMakeLists.txt"))
+  enable_testing()
+  add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Tests)
 endif()

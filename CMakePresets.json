@@ -208,5 +208,20 @@
     { "name": "x64-Release-Linux",   "description": "WSL Linux x64 (Release)", "inherits": [ "base", "x64", "Release", "VCPKG" ] },
     { "name": "arm64-Debug-Linux",   "description": "WSL Linux ARM64 (Debug)", "inherits": [ "base", "ARM64", "Debug", "VCPKG" ] },
     { "name": "arm64-Release-Linux", "description": "WSL Linux ARM64 (Release)", "inherits": [ "base", "ARM64", "Release", "VCPKG" ] }
+  ],
+  "testPresets": [
+    { "name": "x64-Debug"    , "configurePreset": "x64-Debug" },
+    { "name": "x64-Release"  , "configurePreset": "x64-Release" },
+    { "name": "x86-Debug"    , "configurePreset": "x86-Debug" },
+    { "name": "x86-Release"  , "configurePreset": "x86-Release" },
+    { "name": "arm64-Debug"  , "configurePreset": "arm64-Debug" },
+    { "name": "arm64-Release", "configurePreset": "arm64-Release" },
+
+    { "name": "x64-Debug-Clang"    , "configurePreset": "x64-Debug-Clang" },
+    { "name": "x64-Release-Clang"  , "configurePreset": "x64-Release-Clang" },
+    { "name": "x86-Debug-Clang"    , "configurePreset": "x86-Debug-Clang" },
+    { "name": "x86-Release-Clang"  , "configurePreset": "x86-Release-Clang" },
+    { "name": "arm64-Debug-Clang"  , "configurePreset": "arm64-Debug-Clang" },
+    { "name": "arm64-Release-Clang", "configurePreset": "arm64-Release-Clang" }
   ]
 }
