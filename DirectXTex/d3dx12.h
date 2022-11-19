@@ -528,7 +528,7 @@ struct CD3DX12_RASTERIZER_DESC1 : public D3D12_RASTERIZER_DESC1
         FillMode = o.FillMode;
         CullMode = o.CullMode;
         FrontCounterClockwise = o.FrontCounterClockwise;
-        DepthBias = (FLOAT)o.DepthBias;
+        DepthBias = static_cast<FLOAT>(o.DepthBias);
         DepthBiasClamp = o.DepthBiasClamp;
         SlopeScaledDepthBias = o.SlopeScaledDepthBias;
         DepthClipEnable = o.DepthClipEnable;
@@ -585,7 +585,7 @@ struct CD3DX12_RASTERIZER_DESC1 : public D3D12_RASTERIZER_DESC1
         o.FillMode = FillMode;
         o.CullMode = CullMode;
         o.FrontCounterClockwise = FrontCounterClockwise;
-        o.DepthBias = (INT)DepthBias;
+        o.DepthBias = static_cast<INT>(DepthBias);
         o.DepthBiasClamp = DepthBiasClamp;
         o.SlopeScaledDepthBias = SlopeScaledDepthBias;
         o.DepthClipEnable = DepthClipEnable;
