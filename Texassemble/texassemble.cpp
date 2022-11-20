@@ -2328,7 +2328,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             if (((width % ratio_w) != 0) || ((height % ratio_h) != 0))
             {
-                wprintf(L"\nWARNING: %ls expects %d:%d aspect ratio\n", g_pCommands[dwCommand - 1].name, ratio_w, ratio_h);
+                wprintf(L"\nWARNING: %ls expects %zu:%zu aspect ratio\n", g_pCommands[dwCommand - 1].name, ratio_w, ratio_h);
             }
 
             if (twidth > maxCube || theight > maxCube)
@@ -2363,7 +2363,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                         offsetx = s_offsetx[index] * twidth;
                         offsety = s_offsety[index] * theight;
-
                         break;
                     }
 
@@ -2379,7 +2378,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                         offsetx = s_offsetx[index] * twidth;
                         offsety = s_offsety[index] * theight;
-
                         break;
                     }
 
