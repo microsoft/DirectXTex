@@ -79,6 +79,12 @@ namespace
         CMD_MERGE,
         CMD_GIF,
         CMD_ARRAY_STRIP,
+        CMD_CUBE_FROM_HC,
+        CMD_CUBE_FROM_VC,
+        CMD_CUBE_FROM_VC_FNZ,
+        CMD_CUBE_FROM_HT,
+        CMD_CUBE_FROM_HS,
+        CMD_CUBE_FROM_VS,
         CMD_MAX
     };
 
@@ -130,19 +136,25 @@ namespace
 
     const SValue g_pCommands[] =
     {
-        { L"cube",          CMD_CUBE },
-        { L"volume",        CMD_VOLUME },
-        { L"array",         CMD_ARRAY },
-        { L"cubearray",     CMD_CUBEARRAY },
-        { L"h-cross",       CMD_H_CROSS },
-        { L"v-cross",       CMD_V_CROSS },
-        { L"v-cross-fnz",   CMD_V_CROSS_FNZ },
-        { L"h-tee",         CMD_H_TEE },
-        { L"h-strip",       CMD_H_STRIP },
-        { L"v-strip",       CMD_V_STRIP },
-        { L"merge",         CMD_MERGE },
-        { L"gif",           CMD_GIF },
-        { L"array-strip",   CMD_ARRAY_STRIP },
+        { L"cube",              CMD_CUBE },
+        { L"volume",            CMD_VOLUME },
+        { L"array",             CMD_ARRAY },
+        { L"cubearray",         CMD_CUBEARRAY },
+        { L"h-cross",           CMD_H_CROSS },
+        { L"v-cross",           CMD_V_CROSS },
+        { L"v-cross-fnz",       CMD_V_CROSS_FNZ },
+        { L"h-tee",             CMD_H_TEE },
+        { L"h-strip",           CMD_H_STRIP },
+        { L"v-strip",           CMD_V_STRIP },
+        { L"merge",             CMD_MERGE },
+        { L"gif",               CMD_GIF },
+        { L"array-strip",       CMD_ARRAY_STRIP },
+        { L"cube-from-hc",      CMD_CUBE_FROM_HC },
+        { L"cube-from-vc",      CMD_CUBE_FROM_VC },
+        { L"cube-from-vc-fnz",  CMD_CUBE_FROM_VC_FNZ },
+        { L"cube-from-ht",      CMD_CUBE_FROM_HT },
+        { L"cube-from-hs",      CMD_CUBE_FROM_HS },
+        { L"cube-from-vs",      CMD_CUBE_FROM_VS },
         { nullptr,          0 }
     };
 
@@ -741,9 +753,15 @@ namespace
             L"   v-cross-fnz         create a cross image flipping the -Z face\n"
             L"   h-tee               create a 'T' image from a cubemap\n"
             L"   h-strip or v-strip  create a strip image from a cubemap\n"
-            L"   array-strip         creates a strip image from a 1D/2D array\n"
+            L"   array-strip         create a strip image from a 1D/2D array\n"
             L"   merge               create texture from rgb image and alpha image\n"
             L"   gif                 create array from animated gif\n"
+            L"   cube-from-hc        create cubemap from a h-cross image\n"
+            L"   cube-from-vc        create cubemap from a v-cross image\n"
+            L"   cube-from-vc-fnz    create cubemap from a v-cross image flipping the -Z face\n"
+            L"   cube-from-ht        create cubemap from a h-tee image\n"
+            L"   cube-from-hs        create cubemap from a h-strip image\n"
+            L"   cube-from-vs        create cubemap from a v-strip image\n"
             L"\n"
             L"   -r                  wildcard filename search is recursive\n"
             L"   -flist <filename>   use text file with a list of input files (one per line)\n"
@@ -1007,10 +1025,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_MERGE:
     case CMD_GIF:
     case CMD_ARRAY_STRIP:
+    case CMD_CUBE_FROM_HC:
+    case CMD_CUBE_FROM_VC:
+    case CMD_CUBE_FROM_VC_FNZ:
+    case CMD_CUBE_FROM_HT:
+    case CMD_CUBE_FROM_HS:
+    case CMD_CUBE_FROM_VS:
         break;
 
     default:
-        wprintf(L"Must use one of: cube, volume, array, cubearray,\n   h-cross, v-cross, v-cross-fnz, h-tee, h-strip, v-strip,\n   array-strip, merge, gif\n\n");
+        wprintf(L"Must use one of: ");
+        PrintList(4, g_pCommands);
         return 1;
     }
 
@@ -1294,9 +1319,15 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_V_STRIP:
     case CMD_GIF:
     case CMD_ARRAY_STRIP:
+    case CMD_CUBE_FROM_HC:
+    case CMD_CUBE_FROM_VC:
+    case CMD_CUBE_FROM_VC_FNZ:
+    case CMD_CUBE_FROM_HT:
+    case CMD_CUBE_FROM_HS:
+    case CMD_CUBE_FROM_VS:
         if (conversion.size() > 1)
         {
-            wprintf(L"ERROR: cross/strip/gif output only accepts 1 input file\n");
+            wprintf(L"ERROR: cross/strip/gif/cube-from-* output only accepts 1 input file\n");
             return 1;
         }
         break;
@@ -1461,8 +1492,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }
                     else if ((info.mipLevels > 1) && ((dwOptions & (1 << OPT_STRIP_MIPS)) == 0))
                     {
-                        wprintf(L"\nERROR: Can't assemble using input mips. To ignore mips, try again with -stripmips\n");
-                        return 1;
+                        switch (dwCommand)
+                        {
+                        case CMD_CUBE:
+                        case CMD_VOLUME:
+                        case CMD_ARRAY:
+                        case CMD_CUBEARRAY:
+                        case CMD_MERGE:
+                            wprintf(L"\nERROR: Can't assemble using input mips. To ignore mips, try again with -stripmips\n");
+                            return 1;
+
+                        default:
+                            break;
+                       }
                     }
                 }
                 else if (_wcsicmp(ext, L".tga") == 0)
@@ -1890,6 +1932,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_H_STRIP:
     case CMD_V_STRIP:
     case CMD_GIF:
+    case CMD_CUBE_FROM_HC:
+    case CMD_CUBE_FROM_VC:
+    case CMD_CUBE_FROM_VC_FNZ:
+    case CMD_CUBE_FROM_HT:
+    case CMD_CUBE_FROM_HS:
+    case CMD_CUBE_FROM_VS:
         break;
 
     default:
@@ -1949,8 +1997,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 wprintf(L"FAILED setting up result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
-
-            memset(result.GetPixels(), 0, result.GetPixelsSize());
 
             auto src = loadedImages.cbegin();
             auto dest = result.GetImage(0, 0, 0);
@@ -2183,8 +2229,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            memset(result.GetPixels(), 0, result.GetPixelsSize());
-
             auto src = loadedImages.cbegin();
             auto dest = result.GetImage(0, 0, 0);
 
@@ -2240,6 +2284,210 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             break;
         }
+
+    case CMD_CUBE_FROM_HC:
+    case CMD_CUBE_FROM_VC:
+    case CMD_CUBE_FROM_VC_FNZ:
+    case CMD_CUBE_FROM_HT:
+    case CMD_CUBE_FROM_HS:
+    case CMD_CUBE_FROM_VS:
+        {
+            auto src = loadedImages.cbegin();
+            auto img = (*src)->GetImage(0, 0, 0);
+            size_t ratio_w = 1;
+            size_t ratio_h = 1;
+
+            switch (dwCommand)
+            {
+            case CMD_CUBE_FROM_HC:
+            case CMD_CUBE_FROM_HT:
+                ratio_w = 4;
+                ratio_h = 3;
+                break;
+
+            case CMD_CUBE_FROM_VC:
+            case CMD_CUBE_FROM_VC_FNZ:
+                ratio_w = 3;
+                ratio_h = 4;
+                break;
+
+            case CMD_CUBE_FROM_HS:
+                ratio_w = 6;
+                break;
+
+            case CMD_CUBE_FROM_VS:
+                ratio_h = 6;
+                break;
+
+            default:
+                break;
+            }
+
+            size_t twidth = width / ratio_w;
+            size_t theight = height / ratio_h;
+
+            if (((width % ratio_w) != 0) || ((height % ratio_h) != 0))
+            {
+                wprintf(L"\nWARNING: %ls expects %d:%d aspect ratio\n", g_pCommands[dwCommand - 1].name, ratio_w, ratio_h);
+            }
+
+            if (twidth > maxCube || theight > maxCube)
+            {
+                wprintf(L"\nWARNING: Target size exceeds maximum cube dimensions for feature level (%u)\n", maxCube);
+            }
+
+            ScratchImage result;
+            hr = result.InitializeCube(format, twidth, theight, 1, 1);
+            if (FAILED(hr))
+            {
+                wprintf(L"FAILED setting up result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                return 1;
+            }
+
+            for (size_t index = 0; index < 6; ++index)
+            {
+                size_t offsetx = 0;
+                size_t offsety = 0;
+                TEX_FR_FLAGS flipRotate = TEX_FR_ROTATE0;
+
+                switch (dwCommand)
+                {
+                case CMD_CUBE_FROM_HC:
+                    {
+                        //    +Y
+                        // -X +Z +X -Z
+                        //    -Y
+
+                        static const size_t s_offsetx[6] = { 2, 0, 1, 1, 1, 3 };
+                        static const size_t s_offsety[6] = { 1, 1, 0, 2, 1, 1 };
+
+                        offsetx = s_offsetx[index] * twidth;
+                        offsety = s_offsety[index] * theight;
+
+                        break;
+                    }
+
+                case CMD_CUBE_FROM_VC:
+                    {
+                        //    +Y
+                        // -X +Z +X
+                        //    -Y
+                        //    -Z
+
+                        static const size_t s_offsetx[6] = { 2, 0, 1, 1, 1, 1 };
+                        static const size_t s_offsety[6] = { 1, 1, 0, 2, 1, 3 };
+
+                        offsetx = s_offsetx[index] * twidth;
+                        offsety = s_offsety[index] * theight;
+
+                        break;
+                    }
+
+                case CMD_CUBE_FROM_VC_FNZ:
+                    {
+                        //    +Y
+                        // -X +Z +X
+                        //    -Y
+                        //    -Z (flipped H/V)
+
+                        static const size_t s_offsetx[6] = { 2, 0, 1, 1, 1, 1 };
+                        static const size_t s_offsety[6] = { 1, 1, 0, 2, 1, 3 };
+
+                        offsetx = s_offsetx[index] * twidth;
+                        offsety = s_offsety[index] * theight;
+
+                        if (index == 5)
+                        {
+                            flipRotate = TEX_FR_ROTATE180;
+                        }
+                        break;
+                    }
+
+                case CMD_CUBE_FROM_HT:
+                    {
+                        // +Y
+                        // +Z +X -Z -X
+                        // -Y
+
+                        static const size_t s_offsetx[6] = { 1, 3, 0, 0, 0, 2 };
+                        static const size_t s_offsety[6] = { 1, 1, 0, 2, 1, 1 };
+
+                        offsetx = s_offsetx[index] * twidth;
+                        offsety = s_offsety[index] * theight;
+                        break;
+                    }
+
+                case CMD_CUBE_FROM_HS:
+                    // +X -X +Y -Y +Z -Z
+                    offsetx = index * twidth;
+                    break;
+
+                case CMD_CUBE_FROM_VS:
+                    // +X
+                    // -X
+                    // +Y
+                    // -Y
+                    // +Z
+                    // -Z
+                    offsety = index * theight;
+                    break;
+
+                default:
+                    break;
+                }
+
+                const Rect rect(offsetx, offsety, twidth, theight);
+                const Image* dest = result.GetImage(0, index, 0);
+                hr = CopyRectangle(*img, rect, *dest, dwFilter | dwFilterOpts, 0, 0);
+
+                if (FAILED(hr))
+                {
+                    wprintf(L"FAILED building result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                    return 1;
+                }
+
+                if (flipRotate != TEX_FR_ROTATE0)
+                {
+                    ScratchImage tmp;
+                    hr = FlipRotate(*dest, flipRotate, tmp);
+                    if (SUCCEEDED(hr))
+                    {
+                        hr = CopyRectangle(*tmp.GetImage(0,0,0), Rect(0, 0, twidth, theight), *dest, dwFilter | dwFilterOpts, 0, 0);
+                    }
+                }
+            }
+
+            // Write texture
+            wprintf(L"\nWriting %ls ", szOutputFile);
+            PrintInfo(result.GetMetadata());
+            wprintf(L"\n");
+            fflush(stdout);
+
+            if (dwOptions & (1 << OPT_TOLOWER))
+            {
+                std::ignore = _wcslwr_s(szOutputFile);
+            }
+
+            if (~dwOptions & (1 << OPT_OVERWRITE))
+            {
+                if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+                {
+                    wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
+                    return 1;
+                }
+            }
+
+            hr = SaveToDDSFile(result.GetImages(), result.GetImageCount(), result.GetMetadata(),
+                (dwOptions & (1 << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
+                szOutputFile);
+            if (FAILED(hr))
+            {
+                wprintf(L"\nFAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                return 1;
+            }
+            break;
+        }
+
     default:
         {
             std::vector<Image> imageArray;
