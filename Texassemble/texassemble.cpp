@@ -72,6 +72,8 @@ namespace
         CMD_CUBEARRAY,
         CMD_H_CROSS,
         CMD_V_CROSS,
+        CMD_V_CROSS_FNZ,
+        CMD_H_TEE,
         CMD_H_STRIP,
         CMD_V_STRIP,
         CMD_MERGE,
@@ -134,6 +136,8 @@ namespace
         { L"cubearray",     CMD_CUBEARRAY },
         { L"h-cross",       CMD_H_CROSS },
         { L"v-cross",       CMD_V_CROSS },
+        { L"v-cross-fnz",   CMD_V_CROSS_FNZ },
+        { L"h-tee",         CMD_H_TEE },
         { L"h-strip",       CMD_H_STRIP },
         { L"v-strip",       CMD_V_STRIP },
         { L"merge",         CMD_MERGE },
@@ -734,6 +738,8 @@ namespace
             L"   array               create texture array\n"
             L"   cubearray           create cubemap array\n"
             L"   h-cross or v-cross  create a cross image from a cubemap\n"
+            L"   v-cross-fnz         create a cross image flipping the -Z face\n"
+            L"   h-tee               create a 'T' image from a cubemap\n"
             L"   h-strip or v-strip  create a strip image from a cubemap\n"
             L"   array-strip         creates a strip image from a 1D/2D array\n"
             L"   merge               create texture from rgb image and alpha image\n"
@@ -994,6 +1000,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_CUBEARRAY:
     case CMD_H_CROSS:
     case CMD_V_CROSS:
+    case CMD_V_CROSS_FNZ:
+    case CMD_H_TEE:
     case CMD_H_STRIP:
     case CMD_V_STRIP:
     case CMD_MERGE:
@@ -1002,7 +1010,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         break;
 
     default:
-        wprintf(L"Must use one of: cube, volume, array, cubearray,\n   h-cross, v-cross, h-strip, v-strip, array-strip\n   merge, gif\n\n");
+        wprintf(L"Must use one of: cube, volume, array, cubearray,\n   h-cross, v-cross, v-cross-fnz, h-tee, h-strip, v-strip,\n   array-strip, merge, gif\n\n");
         return 1;
     }
 
@@ -1134,6 +1142,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     {
                     case CMD_H_CROSS:
                     case CMD_V_CROSS:
+                    case CMD_V_CROSS_FNZ:
+                    case CMD_H_TEE:
                     case CMD_H_STRIP:
                     case CMD_V_STRIP:
                     case CMD_MERGE:
@@ -1278,6 +1288,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     {
     case CMD_H_CROSS:
     case CMD_V_CROSS:
+    case CMD_V_CROSS_FNZ:
+    case CMD_H_TEE:
     case CMD_H_STRIP:
     case CMD_V_STRIP:
     case CMD_GIF:
@@ -1344,6 +1356,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                 case CMD_H_CROSS:
                 case CMD_V_CROSS:
+                case CMD_V_CROSS_FNZ:
+                case CMD_H_TEE:
                 case CMD_H_STRIP:
                 case CMD_V_STRIP:
                 case CMD_ARRAY_STRIP:
@@ -1377,6 +1391,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
             case CMD_H_CROSS:
             case CMD_V_CROSS:
+            case CMD_V_CROSS_FNZ:
+            case CMD_H_TEE:
             case CMD_H_STRIP:
             case CMD_V_STRIP:
                 if (_wcsicmp(ext, L".dds") == 0)
@@ -1869,6 +1885,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     case CMD_H_CROSS:
     case CMD_V_CROSS:
+    case CMD_V_CROSS_FNZ:
+    case CMD_H_TEE:
     case CMD_H_STRIP:
     case CMD_V_STRIP:
     case CMD_GIF:
@@ -1888,6 +1906,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     {
     case CMD_H_CROSS:
     case CMD_V_CROSS:
+    case CMD_V_CROSS_FNZ:
+    case CMD_H_TEE:
     case CMD_H_STRIP:
     case CMD_V_STRIP:
         {
@@ -1897,18 +1917,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             switch (dwCommand)
             {
             case CMD_H_CROSS:
-                //      posy
-                // negx posz posx negz
-                //      negy
+            case CMD_H_TEE:
                 twidth = width * 4;
                 theight = height * 3;
                 break;
 
             case CMD_V_CROSS:
-                //      posy
-                // posz posx negz
-                //      negy
-                //      negx
+            case CMD_V_CROSS_FNZ:
                 twidth = width * 3;
                 theight = height * 4;
                 break;
@@ -1953,14 +1968,15 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 size_t offsetx = 0;
                 size_t offsety = 0;
+                TEX_FR_FLAGS flipRotate = TEX_FR_ROTATE0;
 
                 switch (dwCommand)
                 {
                 case CMD_H_CROSS:
                     {
-                        //      posy
-                        // negx posz posx negz
-                        //      negy
+                        //    +Y
+                        // -X +Z +X -Z
+                        //    -Y
 
                         static const size_t s_offsetx[6] = { 2, 0, 1, 1, 1, 3 };
                         static const size_t s_offsety[6] = { 1, 1, 0, 2, 1, 1 };
@@ -1972,13 +1988,45 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 case CMD_V_CROSS:
                     {
-                        //      posy
-                        // posz posx negz
-                        //      negy
-                        //      negx
+                        //    +Y
+                        // -X +Z +X
+                        //    -Y
+                        //    -Z
+                        static const size_t s_offsetx[6] = { 2, 0, 1, 1, 1, 1 };
+                        static const size_t s_offsety[6] = { 1, 1, 0, 2, 1, 3 };
 
-                        static const size_t s_offsetx[6] = { 1, 1, 1, 1, 0, 2 };
-                        static const size_t s_offsety[6] = { 1, 3, 0, 2, 1, 1 };
+                        offsetx = s_offsetx[index] * width;
+                        offsety = s_offsety[index] * height;
+                        break;
+                    }
+
+                case CMD_V_CROSS_FNZ:
+                    {
+                        //    +Y
+                        // -X +Z +X
+                        //    -Y
+                        //    -Z (flipped H/V)
+                        static const size_t s_offsetx[6] = { 2, 0, 1, 1, 1, 1 };
+                        static const size_t s_offsety[6] = { 1, 1, 0, 2, 1, 3 };
+
+                        offsetx = s_offsetx[index] * width;
+                        offsety = s_offsety[index] * height;
+
+                        if (index == 5)
+                        {
+                            flipRotate = TEX_FR_ROTATE180;
+                        }
+                        break;
+                    }
+
+                case CMD_H_TEE:
+                    {
+                        // +Y
+                        // +Z +X -Z -X
+                        // -Y
+
+                        static const size_t s_offsetx[6] = { 1, 3, 0, 0, 0, 2 };
+                        static const size_t s_offsety[6] = { 1, 1, 0, 2, 1, 1 };
 
                         offsetx = s_offsetx[index] * width;
                         offsety = s_offsety[index] * height;
@@ -1986,12 +2034,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }
 
                 case CMD_H_STRIP:
-                    // posx, negx, posy, negy, posz, negz
+                    // +X -X +Y -Y +Z -Z
                     offsetx = index * width;
                     break;
 
                 case CMD_V_STRIP:
-                    // posx, negx, posy, negy, posz, negz
+                    // +X
+                    // -X
+                    // +Y
+                    // -Y
+                    // +Z
+                    // -Z
                     offsety = index * height;
                     break;
 
@@ -1999,7 +2052,20 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     break;
                 }
 
-                hr = CopyRectangle(*img, rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
+                if (flipRotate != TEX_FR_ROTATE0)
+                {
+                    ScratchImage tmp;
+                    hr = FlipRotate(*img, flipRotate, tmp);
+                    if (SUCCEEDED(hr))
+                    {
+                        hr = CopyRectangle(*tmp.GetImage(0,0,0), rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
+                    }
+                }
+                else
+                {
+                    hr = CopyRectangle(*img, rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
+                }
+
                 if (FAILED(hr))
                 {
                     wprintf(L"FAILED building result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));

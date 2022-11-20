@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-cmake_minimum_required (VERSION 3.13)
+cmake_minimum_required (VERSION 3.20)
 
 set(DIRECTXTEX_VERSION 1.9.7)
 
@@ -200,20 +200,8 @@ elseif(BUILD_XBOX_EXTS_XBOXONE AND WIN32)
     endif()
 endif()
 
-if ((${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.16") AND (NOT MINGW))
+if (NOT MINGW)
     target_precompile_headers(${PROJECT_NAME} PRIVATE DirectXTex/DirectXTexP.h)
-endif()
-
-if(MSVC)
-    # Use max Warning Level
-    string(REPLACE "/W3 " "/Wall " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-    string(REPLACE "/W3 " "/Wall " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
-    string(REPLACE "/W3 " "/Wall " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
-
-    # Not using typeid or dynamic_cast, so disable RTTI to save binary size
-    string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-    string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
-    string(REPLACE "/GR " "/GR- " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
 endif()
 
 if (MINGW OR (NOT WIN32) OR VCPKG_TOOLCHAIN)
@@ -334,11 +322,11 @@ endif()
 
 if(MSVC)
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-      target_compile_options(${t} PRIVATE /fp:fast "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
+      target_compile_options(${t} PRIVATE /Wall /GR- /fp:fast "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
       target_link_options(${t} PRIVATE /DYNAMICBASE /NXCOMPAT)
     endforeach()
 
-    if((${CMAKE_SIZEOF_VOID_P} EQUAL 4) AND (NOT ${DIRECTX_ARCH} MATCHES "^arm"))
+    if((${CMAKE_SIZEOF_VOID_P} EQUAL 4) AND (NOT (${DIRECTX_ARCH} MATCHES "^arm")))
         foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
           target_link_options(${t} PRIVATE /SAFESEH)
         endforeach()
@@ -354,7 +342,7 @@ if(MSVC)
     endif()
 endif()
 
-if(NOT ${DIRECTX_ARCH} MATCHES "^arm")
+if(NOT (${DIRECTX_ARCH} MATCHES "^arm"))
     if (${CMAKE_SIZEOF_VOID_P} EQUAL "4")
         set(ARCH_SSE2 $<$<CXX_COMPILER_ID:MSVC>:/arch:SSE2> $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-msse2>)
     else()
@@ -367,7 +355,7 @@ if(NOT ${DIRECTX_ARCH} MATCHES "^arm")
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(WarningsLib "-Wpedantic" "-Wextra")
+    set(WarningsLib -Wall -Wpedantic -Wextra)
 
     if((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
         set(WarningsLib ${WarningsLib} "-Wno-microsoft-enum-value" "-Wno-non-virtual-dtor" "-Wno-ignored-pragmas" "-Wno-reserved-identifier")
@@ -437,25 +425,23 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 
 if(WIN32)
-    foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-      target_compile_definitions(${t} PRIVATE _UNICODE UNICODE)
-    endforeach()
-
     if(WINDOWS_STORE)
       target_compile_definitions(${PROJECT_NAME} PRIVATE WINAPI_FAMILY=WINAPI_FAMILY_APP)
     endif()
 
-    if(BUILD_DX12 OR WINDOWS_STORE)
-        if(BUILD_DX12)
-          message("INFO: Building with DirectX 12 Runtime support")
-        endif()
-        target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0A00)
+    if(BUILD_DX12 OR WINDOWS_STORE OR (${DIRECTX_ARCH} MATCHES "^arm64"))
+        message("INFO: Building with DirectX 12 Runtime support")
+        set(WINVER 0x0A00)
+    elseif(${DIRECTX_ARCH} MATCHES "^arm")
+        set(WINVER 0x0602)
     else()
         message("INFO: Building with Windows 7 compatibility")
-        target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0601 _WIN7_PLATFORM_UPDATE)
+        set(WINVER 0x0601)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN7_PLATFORM_UPDATE)
     endif()
-    foreach(t IN LISTS TOOL_EXES)
-      target_compile_definitions(${t} PRIVATE _WIN32_WINNT=0x0601)
+
+    foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+      target_compile_definitions(${t} PRIVATE _UNICODE UNICODE _WIN32_WINNT=${WINVER})
     endforeach()
 endif()
 
