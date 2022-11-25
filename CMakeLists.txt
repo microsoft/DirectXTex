@@ -297,6 +297,13 @@ if(MSVC)
         target_link_options(${t} PRIVATE "$<$<NOT:$<CONFIG:DEBUG>>:/guard:ehcont>")
       endforeach()
     endif()
+
+    if((MSVC_VERSION GREATER_EQUAL 1913) AND NOT ENABLE_OPENEXR_SUPPORT AND (NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang")))
+      foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+        target_compile_options(${t} PRIVATE "/Qspectre")
+      endforeach()
+    endif()
+
 endif()
 
 if(NOT (${DIRECTX_ARCH} MATCHES "^arm"))
