@@ -772,16 +772,16 @@ namespace
         switch (info.GetAlphaMode())
         {
         case TEX_ALPHA_MODE_OPAQUE:
-            wprintf(L" \x0e0:Opaque");
+            wprintf(L" \x03B1:Opaque");
             break;
         case TEX_ALPHA_MODE_PREMULTIPLIED:
-            wprintf(L" \x0e0:PM");
+            wprintf(L" \x03B1:PM");
             break;
         case TEX_ALPHA_MODE_STRAIGHT:
-            wprintf(L" \x0e0:NonPM");
+            wprintf(L" \x03B1:NonPM");
             break;
         case TEX_ALPHA_MODE_CUSTOM:
-            wprintf(L" \x0e0:Custom");
+            wprintf(L" \x03B1:Custom");
             break;
         case TEX_ALPHA_MODE_UNKNOWN:
             break;
