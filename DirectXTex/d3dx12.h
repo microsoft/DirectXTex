@@ -2611,6 +2611,9 @@ inline HRESULT D3DX12SerializeVersionedRootSignature(
                     return D3D12SerializeRootSignature(&pRootSignatureDesc->Desc_1_0, D3D_ROOT_SIGNATURE_VERSION_1, ppBlob, ppErrorBlob);
 
                 case D3D_ROOT_SIGNATURE_VERSION_1_1:
+#if defined(NTDDI_WIN10_CU)
+                case D3D_ROOT_SIGNATURE_VERSION_1_2:
+#endif
                 {
                     HRESULT hr = S_OK;
                     const D3D12_ROOT_SIGNATURE_DESC1& desc_1_1 = pRootSignatureDesc->Desc_1_1;
@@ -2701,6 +2704,9 @@ inline HRESULT D3DX12SerializeVersionedRootSignature(
             break;
 
         case D3D_ROOT_SIGNATURE_VERSION_1_1:
+#if defined(NTDDI_WIN10_CU)
+        case D3D_ROOT_SIGNATURE_VERSION_1_2:
+#endif
             return D3D12SerializeVersionedRootSignature(pRootSignatureDesc, ppBlob, ppErrorBlob);
     }
 
@@ -5716,6 +5722,9 @@ inline HRESULT CD3DX12FeatureSupport::QueryHighestRootSignatureVersion()
 
     const D3D_ROOT_SIGNATURE_VERSION allRootSignatureVersions[] =
     {
+#if defined(NTDDI_WIN10_CU)
+        D3D_ROOT_SIGNATURE_VERSION_1_2,
+#endif
         D3D_ROOT_SIGNATURE_VERSION_1_1,
         D3D_ROOT_SIGNATURE_VERSION_1_0,
         D3D_ROOT_SIGNATURE_VERSION_1,
