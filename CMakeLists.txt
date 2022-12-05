@@ -362,7 +362,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(WarningsLib -Wall -Wpedantic -Wextra)
 
     if((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
-        set(WarningsLib ${WarningsLib} "-Wno-microsoft-enum-value" "-Wno-non-virtual-dtor" "-Wno-ignored-pragmas" "-Wno-reserved-identifier")
+        set(WarningsLib ${WarningsLib} "-Wno-microsoft-enum-value" "-Wno-non-virtual-dtor" "-Wno-ignored-pragmas" "-Wno-deprecated-dynamic-exception-spec")
+
+        if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13.0)
+            set(WarningsLib ${WarningsLib} "-Wno-reserved-identifier")
+        endif()
     endif()
 
     target_compile_options(${PROJECT_NAME} PRIVATE ${WarningsLib})
