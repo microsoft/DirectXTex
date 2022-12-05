@@ -17,22 +17,21 @@ resources:
   - repository: self
     type: git
     ref: refs/heads/xbox
-    trigger: xbox
+    trigger:
+    - xbox
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
 variables:
   VS_GENERATOR: 'Visual Studio 16 2019'
   WIN10_SDK: '10.0.19041.0'
-
-pool:
-  vmImage: windows-2019
-
-variables:
   EXTRACTED_FOLDER: $(ExtractedFolder)
   GDK_EDITION: $(GDKEditionNumber)
   URL_FEED: $(ADOFeedURL)
   GameDKLatest: '$(ExtractedFolder)\GDK\Microsoft.gdk.xbox.$(GDKEditionNumber)\native\$(GDKEditionNumber)\'
+
+pool:
+  vmImage: windows-2019
 
 jobs:
 - job: CMAKE_BUILD
@@ -74,7 +73,7 @@ jobs:
     displayName: 'CMake (MSVC): Config x64 (Xbox Series X|S)'
     inputs:
       cwd: ''
-      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK) -DBUILD_XBOX_EXTS_SCARLETT=ON -DBUILD_SAMPLE=OFF -DBUILD_TESTING=OFF'
+      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK) -DBUILD_XBOX_EXTS_SCARLETT=ON -DBUILD_SAMPLE=OFF'
   - task: CMake@1
     displayName: 'CMake (MSVC): Build x64 Debug (Xbox Series X|S)'
     inputs:
@@ -89,7 +88,7 @@ jobs:
     displayName: 'CMake (ClangCl): Config x64 (Xbox Series X|S)'
     inputs:
       cwd: ''
-      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -T clangcl -B out2 -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK) -DBUILD_XBOX_EXTS_SCARLETT=ON -DBUILD_SAMPLE=OFF -DBUILD_TESTING=OFF'
+      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -T clangcl -B out2 -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK) -DBUILD_XBOX_EXTS_SCARLETT=ON -DBUILD_SAMPLE=OFF'
   - task: CMake@1
     displayName: 'CMake (ClangCl): Build x64 Debug (Xbox Series X|S)'
     inputs:
@@ -104,7 +103,7 @@ jobs:
     displayName: 'CMake (MSVC): Config x64 (Xbox One)'
     inputs:
       cwd: ''
-      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out3 -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK) -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF -DBUILD_TESTING=OFF'
+      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out3 -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK) -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF'
   - task: CMake@1
     displayName: 'CMake (MSVC): Build x64 Debug (Xbox One)'
     inputs:
@@ -119,7 +118,7 @@ jobs:
     displayName: 'CMake (ClangCl): Config x64 (Xbox One)'
     inputs:
       cwd: ''
-      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -T clangcl -B out4 -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK) -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF -DBUILD_TESTING=OFF'
+      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -T clangcl -B out4 -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK) -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF'
   - task: CMake@1
     displayName: 'CMake (ClangCl): Build x64 Debug (Xbox One)'
     inputs:
