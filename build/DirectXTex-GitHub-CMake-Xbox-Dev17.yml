@@ -18,7 +18,12 @@ resources:
     type: git
     ref: refs/heads/xbox
     trigger:
-    - xbox
+      branches:
+        include:
+        - xbox
+      paths:
+        include:
+        - CMakeLists.txt
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 

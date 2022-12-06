@@ -63,7 +63,11 @@ These components are designed to work without requiring any content from the leg
 
 > DDSTextureLoader12, ScreenGrab12, and WICTextureLoader12 are 'stand-alone' versions of the same modules provided in the [DirectX Tool Kit for DX12](https://github.com/Microsoft/DirectXTK12).
 
-# Documentation
+* ``build\``
+
+  + Contains YAML files for the build pipelines along with some miscellaneous build files and scripts.
+
+## Documentation
 
 Documentation is available on the [GitHub wiki](https://github.com/Microsoft/DirectXTex/wiki).
 
