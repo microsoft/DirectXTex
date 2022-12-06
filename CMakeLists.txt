@@ -39,7 +39,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/CMake")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/CMake")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/CMake")
 
-if (DEFINED VCPKG_TARGET_ARCHITECTURE)
+if(DEFINED VCPKG_TARGET_ARCHITECTURE)
     set(DIRECTX_ARCH ${VCPKG_TARGET_ARCHITECTURE})
 elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Ww][Ii][Nn]32$")
     set(DIRECTX_ARCH x86)
@@ -113,8 +113,8 @@ if(ENABLE_OPENEXR_SUPPORT)
 endif()
 
 if(BUILD_DX11 AND WIN32)
-    if (NOT COMPILED_SHADERS)
-        if (USE_PREBUILT_SHADERS)
+    if(NOT COMPILED_SHADERS)
+        if(USE_PREBUILT_SHADERS)
             message(FATAL_ERROR "ERROR: Using prebuilt shaders requires the COMPILED_SHADERS variable is set")
         endif()
         set(COMPILED_SHADERS ${CMAKE_CURRENT_BINARY_DIR}/Shaders/Compiled)
@@ -126,7 +126,7 @@ if(BUILD_DX11 AND WIN32)
     set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
         ${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc)
 
-    if (NOT USE_PREBUILT_SHADERS)
+    if(NOT USE_PREBUILT_SHADERS)
         add_custom_command(
             OUTPUT "${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc"
             MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
@@ -157,11 +157,11 @@ if(ENABLE_OPENEXR_SUPPORT)
   target_link_libraries(${PROJECT_NAME} PRIVATE OpenEXR::OpenEXR)
 endif()
 
-if (NOT MINGW)
+if(NOT MINGW)
     target_precompile_headers(${PROJECT_NAME} PRIVATE DirectXTex/DirectXTexP.h)
 endif()
 
-if (MINGW OR (NOT WIN32) OR VCPKG_TOOLCHAIN)
+if(MINGW OR (NOT WIN32) OR VCPKG_TOOLCHAIN)
     message("INFO: Using VCPKG for DirectX-Headers and DirectXMath.")
     find_package(directx-headers CONFIG REQUIRED)
     find_package(directxmath CONFIG REQUIRED)
@@ -185,7 +185,7 @@ install(TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/.nuget/${PROJECT_NAME}-config.cmake.in
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/build/${PROJECT_NAME}-config.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake
   INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME})
 
@@ -240,8 +240,8 @@ endif()
 if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
   list(APPEND TOOL_EXES ddsview)
 
-  if (NOT COMPILED_DDSVIEW_SHADERS)
-      if (USE_PREBUILT_SHADERS)
+  if(NOT COMPILED_DDSVIEW_SHADERS)
+      if(USE_PREBUILT_SHADERS)
           message(FATAL_ERROR "ERROR: Using prebuilt shaders requires the COMPILED_DDSVIEW_SHADERS variable is set")
       endif()
       set(COMPILED_DDSVIEW_SHADERS ${CMAKE_CURRENT_BINARY_DIR}/Shaders/Compiled)
@@ -259,7 +259,7 @@ if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
 
   target_include_directories(ddsview PRIVATE ${COMPILED_DDSVIEW_SHADERS})
 
-  if (NOT USE_PREBUILT_SHADERS)
+  if(NOT USE_PREBUILT_SHADERS)
       add_custom_command(
             OUTPUT "${COMPILED_DDSVIEW_SHADERS}/ddsview_ps1D.inc"
             MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DDSView/hlsl.cmd"
@@ -271,7 +271,7 @@ if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
   endif()
 endif()
 
-if (MINGW OR (NOT WIN32) OR VCPKG_TOOLCHAIN)
+if(MINGW OR (NOT WIN32) OR VCPKG_TOOLCHAIN)
   foreach(t IN LISTS TOOL_EXES)
     target_link_libraries(${t} Microsoft::DirectXMath)
   endforeach()
@@ -304,10 +304,14 @@ if(MSVC)
       endforeach()
     endif()
 
+else()
+    foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+      target_compile_definitions(${t} PRIVATE $<IF:$<CONFIG:DEBUG>,_DEBUG,NDEBUG>)
+    endforeach()
 endif()
 
 if(NOT (${DIRECTX_ARCH} MATCHES "^arm"))
-    if (${CMAKE_SIZEOF_VOID_P} EQUAL "4")
+    if(${CMAKE_SIZEOF_VOID_P} EQUAL "4")
         set(ARCH_SSE2 $<$<CXX_COMPILER_ID:MSVC>:/arch:SSE2> $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-msse2>)
     else()
         set(ARCH_SSE2 $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-msse2>)
@@ -318,7 +322,7 @@ if(NOT (${DIRECTX_ARCH} MATCHES "^arm"))
     endforeach()
 endif()
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(WarningsLib -Wall -Wpedantic -Wextra)
     target_compile_options(${PROJECT_NAME} PRIVATE ${WarningsLib})
 
@@ -328,14 +332,12 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     foreach(t IN LISTS TOOL_EXES)
       target_compile_options(${t} PRIVATE ${WarningsEXE})
     endforeach()
-endif()
-if(MINGW)
+elseif(MINGW)
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
       target_compile_options(${t} PRIVATE -Wno-ignored-attributes)
       target_link_options(${t} PRIVATE -municode)
     endforeach()
-endif()
-if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
       target_compile_options(${t} PRIVATE /sdl /permissive- /JMC- /Zc:__cplusplus)
     endforeach()
@@ -346,19 +348,19 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
       endforeach()
     endif()
 
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.24)
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.24)
         foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
           target_compile_options(${t} PRIVATE /ZH:SHA_256)
         endforeach()
     endif()
 
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.26)
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.26)
         foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
           target_compile_options(${t} PRIVATE /Zc:preprocessor /wd5105)
         endforeach()
     endif()
 
-    if ((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.27) AND (NOT (${DIRECTX_ARCH} MATCHES "^arm")))
+    if((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.27) AND (NOT (${DIRECTX_ARCH} MATCHES "^arm")))
         foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
           target_link_options(${t} PRIVATE /CETCOMPAT)
         endforeach()
@@ -372,7 +374,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     endif()
 
     set(WarningsEXE "/wd4061" "/wd4062" "/wd4365" "/wd4514" "/wd4625" "/wd4626" "/wd4627" "/wd4668" "/wd4710" "/wd4751" "/wd4820" "/wd5026" "/wd5027" "/wd5039" "/wd5045" "/wd5219")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.34)
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.34)
         list(APPEND WarningsEXE "/wd5262" "/wd5264")
     endif()
     foreach(t IN LISTS TOOL_EXES)
