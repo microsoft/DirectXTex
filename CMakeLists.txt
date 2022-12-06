@@ -24,6 +24,9 @@ option(BUILD_DX12 "Build with DirectX12 Runtime support" ON)
 # Enable the use of OpenMP for software BC6H/BC7 compression
 option(BC_USE_OPENMP "Build with OpenMP support" ON)
 
+# https://devblogs.microsoft.com/cppblog/spectre-mitigations-in-msvc/
+option(ENABLE_SPECTRE_MITIGATION "Build using /Qspectre for MSVC" OFF)
+
 option(ENABLE_CODE_ANALYSIS "Use Static Code Analysis on build" OFF)
 
 option(USE_PREBUILT_SHADERS "Use externally built HLSL shaders" OFF)
@@ -162,7 +165,7 @@ if(NOT MINGW)
 endif()
 
 if(MINGW OR (NOT WIN32) OR VCPKG_TOOLCHAIN)
-    message("INFO: Using VCPKG for DirectX-Headers and DirectXMath.")
+    message(STATUS "Using VCPKG for DirectX-Headers and DirectXMath")
     find_package(directx-headers CONFIG REQUIRED)
     find_package(directxmath CONFIG REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectX-Headers Microsoft::DirectXMath)
@@ -284,12 +287,24 @@ if(MSVC)
     endforeach()
 
     if((${CMAKE_SIZEOF_VOID_P} EQUAL 4) AND (NOT (${DIRECTX_ARCH} MATCHES "^arm")))
-        foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-          target_link_options(${t} PRIVATE /SAFESEH)
-        endforeach()
+      foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+        target_link_options(${t} PRIVATE /SAFESEH)
+      endforeach()
     endif()
 
-    if((MSVC_VERSION GREATER_EQUAL 1928) AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    if(ENABLE_SPECTRE_MITIGATION
+       AND (MSVC_VERSION GREATER_EQUAL 1913)
+       AND (NOT WINDOWS_STORE)
+       AND (NOT ENABLE_OPENEXR_SUPPORT)
+       AND (NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang")))
+      message(STATUS "Using Spectre-mitigated libraries")
+      foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+        target_compile_options(${t} PRIVATE "/Qspectre")
+      endforeach()
+    endif()
+
+    if((MSVC_VERSION GREATER_EQUAL 1928)
+       AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
        AND NOT ENABLE_OPENEXR_SUPPORT
        AND ((NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang")) OR (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13.0)))
       foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
@@ -381,12 +396,12 @@ if(WIN32)
     endif()
 
     if(BUILD_DX12 OR WINDOWS_STORE OR (${DIRECTX_ARCH} MATCHES "^arm64"))
-        message("INFO: Building with DirectX 12 Runtime support")
+        message(STATUS "Building with DirectX 12 Runtime support")
         set(WINVER 0x0A00)
     elseif(${DIRECTX_ARCH} MATCHES "^arm")
         set(WINVER 0x0602)
     else()
-        message("INFO: Building with Windows 7 compatibility")
+        message(STATUS "Building with Windows 7 compatibility")
         set(WINVER 0x0601)
         target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN7_PLATFORM_UPDATE)
     endif()
