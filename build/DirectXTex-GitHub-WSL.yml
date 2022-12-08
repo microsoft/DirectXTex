@@ -92,10 +92,10 @@ jobs:
   - task: CMake@1
     displayName: CMake DirectXTex
     inputs:
-      cwd: ''
+      cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: -B out -DCMAKE_PREFIX_PATH=$(DEST_DIR)usr/local/share;$(DEST_DIR)usr/local/cmake
   - task: CMake@1
     displayName: CMake DirectXTex (Build)
     inputs:
-      cwd: ''
+      cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out -v

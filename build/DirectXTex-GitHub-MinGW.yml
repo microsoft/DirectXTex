@@ -120,12 +120,12 @@ jobs:
   - task: CMake@1
     displayName: CMake (MinGW32)
     inputs:
-      cwd: ''
+      cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: -B out -DCMAKE_BUILD_TYPE="Debug" -DDIRECTX_ARCH=x86 -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles" -DVCPKG_TARGET_TRIPLET=x86-mingw-static -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.SourcesDirectory)\DirectXTex\Shaders\Compiled -DCOMPILED_DDSVIEW_SHADERS=$(Build.SourcesDirectory)\DDSView\Shaders
   - task: CMake@1
     displayName: CMake (MinGW32) Build
     inputs:
-      cwd: ''
+      cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out
 
 - job: MINGW64_BUILD
@@ -217,10 +217,10 @@ jobs:
   - task: CMake@1
     displayName: CMake (MinGW-W64)
     inputs:
-      cwd: ''
+      cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: -B out -DCMAKE_BUILD_TYPE="Debug" -DDIRECTX_ARCH=x64 -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles"  -DVCPKG_TARGET_TRIPLET=x64-mingw-static -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.SourcesDirectory)\DirectXTex\Shaders\Compiled -DCOMPILED_DDSVIEW_SHADERS=$(Build.SourcesDirectory)\DDSView\Shaders
   - task: CMake@1
     displayName: CMake (MinGW-W64) Build
     inputs:
-      cwd: ''
+      cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out
