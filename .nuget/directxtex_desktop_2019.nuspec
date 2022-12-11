@@ -31,14 +31,26 @@ DirectXTex, a shared source library for reading and writing .DDS files, and perf
         <file target="native\lib\x86\Debug" src="DirectXTex\Bin\Desktop_2019\Win32\Debug\*.lib" />
         <file target="native\lib\x86\Debug" src="DirectXTex\Bin\Desktop_2019\Win32\Debug\*.pdb" />
 
+        <file target="native\lib\x86\Debug" src="DirectXTex\Bin\Desktop_2019\Win32\DebugSpectre\*.lib" />
+        <file target="native\lib\x86\Debug" src="DirectXTex\Bin\Desktop_2019\Win32\DebugSpectre\*.pdb" />
+
         <file target="native\lib\x86\Release" src="DirectXTex\Bin\Desktop_2019\Win32\Release\*.lib" />
         <file target="native\lib\x86\Release" src="DirectXTex\Bin\Desktop_2019\Win32\Release\*.pdb" />
+
+        <file target="native\lib\x86\Release" src="DirectXTex\Bin\Desktop_2019\Win32\ReleaseSpectre\*.lib" />
+        <file target="native\lib\x86\Release" src="DirectXTex\Bin\Desktop_2019\Win32\ReleaseSpectre\*.pdb" />
 
         <file target="native\lib\x64\Debug" src="DirectXTex\Bin\Desktop_2019\x64\Debug\*.lib" />
         <file target="native\lib\x64\Debug" src="DirectXTex\Bin\Desktop_2019\x64\Debug\*.pdb" />
 
+        <file target="native\lib\x64\Debug" src="DirectXTex\Bin\Desktop_2019\x64\DebugSpectre\*.lib" />
+        <file target="native\lib\x64\Debug" src="DirectXTex\Bin\Desktop_2019\x64\DebugSpectre\*.pdb" />
+
         <file target="native\lib\x64\Release" src="DirectXTex\Bin\Desktop_2019\x64\Release\*.lib" />
         <file target="native\lib\x64\Release" src="DirectXTex\Bin\Desktop_2019\x64\Release\*.pdb" />
+
+        <file target="native\lib\x64\Release" src="DirectXTex\Bin\Desktop_2019\x64\ReleaseSpectre\*.lib" />
+        <file target="native\lib\x64\Release" src="DirectXTex\Bin\Desktop_2019\x64\ReleaseSpectre\*.pdb" />
 
         <file src=".nuget/directxtex_desktop_2019.targets" target="build\native" />
 
