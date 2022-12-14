@@ -16,12 +16,18 @@
 
   <PropertyGroup>
     <directxtex-LibPath>$(MSBuildThisFileDirectory)..\..\native\lib\$(PlatformTarget)\$(NuGetConfiguration)</directxtex-LibPath>
+    <directxtex-LibName Condition="'$(SpectreMitigation)'!='' AND '$(SpectreMitigation)'!='false'">DirectXTex_Spectre</directxtex-LibName>
+    <directxtex-LibName Condition="'$(directxtex-LibName)'==''">DirectXTex</directxtex-LibName>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <directxtex-LibPath>$(MSBuildThisFileDirectory)..\..\native\lib\$(PlatformTarget)\$(NuGetConfiguration)</directxtex-LibPath>
   </PropertyGroup>
 
   <ItemDefinitionGroup>
     <Link>
       <AdditionalLibraryDirectories>$(directxtex-LibPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>DirectXTex.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(directxtex-LibName).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 

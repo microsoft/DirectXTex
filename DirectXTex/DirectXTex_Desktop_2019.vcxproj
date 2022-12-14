@@ -124,6 +124,11 @@
     <TargetName>DirectXTex</TargetName>
     <GenerateManifest>true</GenerateManifest>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(SpectreMitigation)'!='' AND '$(SpectreMitigation)'!='false'">
+    <OutDir>Bin\Desktop_2019\$(Platform)\$(Configuration)Spectre\</OutDir>
+    <IntDir>Bin\Desktop_2019\$(Platform)\$(Configuration)Spectre\</IntDir>
+    <TargetName>DirectXTex_Spectre</TargetName>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>EnableAllWarnings</WarningLevel>
