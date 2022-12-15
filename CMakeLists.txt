@@ -374,6 +374,12 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         endforeach()
     endif()
 
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.28)
+        foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+          target_compile_options(${t} PRIVATE /Zc:lambda)
+        endforeach()
+    endif()
+
     if(BC_USE_OPENMP)
         target_compile_options(${PROJECT_NAME} PRIVATE /openmp /Zc:twoPhase-)
         if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
