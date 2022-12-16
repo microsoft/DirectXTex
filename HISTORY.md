@@ -6,6 +6,18 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### December 15, 2022
+* ARM/ARM64 platform fix for 16bpp pixel conversion
+* Updated D3DX12 internal copy with latest changes from DirectX-Headers GitHub
+* CMake project updated to require 3.20 or later
+* CMake and MSBuild project updates
+* Added Azure Dev Ops Pipeline YAML files
+* ``Auxiliary`` folder added with DirectXEXR.h/.cpp optional module
+* Test suite updated with CTest support
+* Spectre-mitigated libraries added to NuGet packages
+* texassemble: added commands *v-cross-fnz*, *h-tee*, and *cube-from-\**
+* texconv: Fixed minor printf output issue
+
 ### October 17, 2022
 * Minor fix for ``CompileShaders.cmd`` to address additional 'paths with spaces' issues
 * Minor CMake and CMakePresets updates
