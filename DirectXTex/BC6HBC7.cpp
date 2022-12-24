@@ -1696,7 +1696,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const noexcept
                 case BZ: aEndPts[1].B.b |= 1 << uint32_t(desc[uCurBit].m_uBit); break;
                 default:
                     {
-                    #ifdef _DEBUG
+                    #if defined(_WIN32) && defined(_DEBUG)
                         OutputDebugStringA("BC6H: Invalid header bits encountered during decoding\n");
                     #endif
                         FillWithErrorColors(pOut);
@@ -1740,7 +1740,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const noexcept
             const size_t uNumBits = IsFixUpOffset(info.uPartitions, uShape, i) ? info.uIndexPrec - 1u : info.uIndexPrec;
             if (uStartBit + uNumBits > 128)
             {
-            #ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC6H: Invalid block encountered during decoding\n");
             #endif
                 FillWithErrorColors(pOut);
@@ -1750,7 +1750,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const noexcept
 
             if (uIndex >= ((info.uPartitions > 0) ? 8 : 16))
             {
-            #ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC6H: Invalid index encountered during decoding\n");
             #endif
                 FillWithErrorColors(pOut);
@@ -1785,7 +1785,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const noexcept
     }
     else
     {
-    #ifdef _DEBUG
+    #if defined(_WIN32) && defined(_DEBUG)
         const char* warnstr = "BC6H: Invalid mode encountered during decoding\n";
         switch (uMode)
         {
@@ -2596,7 +2596,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         {
             if (uStartBit + RGBAPrec.r > 128)
             {
-            #ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
             #endif
                 FillWithErrorColors(pOut);
@@ -2611,7 +2611,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         {
             if (uStartBit + RGBAPrec.g > 128)
             {
-            #ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
             #endif
                 FillWithErrorColors(pOut);
@@ -2626,7 +2626,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         {
             if (uStartBit + RGBAPrec.b > 128)
             {
-            #ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
             #endif
                 FillWithErrorColors(pOut);
@@ -2641,7 +2641,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         {
             if (uStartBit + RGBAPrec.a > 128)
             {
-            #ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
             #endif
                 FillWithErrorColors(pOut);
@@ -2658,7 +2658,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         {
             if (uStartBit > 127)
             {
-            #ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
             #endif
                 FillWithErrorColors(pOut);
@@ -2696,7 +2696,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
             const size_t uNumBits = IsFixUpOffset(ms_aInfo[uMode].uPartitions, uShape, i) ? uIndexPrec - 1u : uIndexPrec;
             if (uStartBit + uNumBits > 128)
             {
-            #ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
             #endif
                 FillWithErrorColors(pOut);
@@ -2713,7 +2713,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
                 const size_t uNumBits = i ? uIndexPrec2 : uIndexPrec2 - 1u;
                 if (uStartBit + uNumBits > 128)
                 {
-                #ifdef _DEBUG
+                #if defined(_WIN32) && defined(_DEBUG)
                     OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
                 #endif
                     FillWithErrorColors(pOut);
@@ -2755,7 +2755,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
     }
     else
     {
-    #ifdef _DEBUG
+    #if defined(_WIN32) && defined(_DEBUG)
         OutputDebugStringA("BC7: Reserved mode 8 encountered during decoding\n");
     #endif
         // Per the BC7 format spec, we must return transparent black
