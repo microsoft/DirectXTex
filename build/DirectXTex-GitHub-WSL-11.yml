@@ -90,12 +90,22 @@ jobs:
         }
 
   - task: CMake@1
-    displayName: CMake DirectXTex
+    displayName: CMake DirectXTex (Config) dbg
     inputs:
       cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: -B out -DCMAKE_PREFIX_PATH=$(DEST_DIR)usr/local/share;$(DEST_DIR)usr/local/cmake
+      cmakeArgs: -B out -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=$(DEST_DIR)usr/local/share;$(DEST_DIR)usr/local/cmake
   - task: CMake@1
-    displayName: CMake DirectXTex (Build)
+    displayName: CMake DirectXTex (Build) dbg
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out -v
+  - task: CMake@1
+    displayName: CMake DirectXTex (Config) rel
+    inputs:
+      cwd: '$(Build.SourcesDirectory)'
+      cmakeArgs: -B out2 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(DEST_DIR)usr/local/share;$(DEST_DIR)usr/local/cmake
+  - task: CMake@1
+    displayName: CMake DirectXTex (Build) rel
+    inputs:
+      cwd: '$(Build.SourcesDirectory)'
+      cmakeArgs: --build out2 -v
