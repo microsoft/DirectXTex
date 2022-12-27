@@ -27,6 +27,8 @@ option(BC_USE_OPENMP "Build with OpenMP support" ON)
 # https://devblogs.microsoft.com/cppblog/spectre-mitigations-in-msvc/
 option(ENABLE_SPECTRE_MITIGATION "Build using /Qspectre for MSVC" OFF)
 
+option(DISABLE_MSVC_ITERATOR_DEBUGGING "Disable iterator debugging in Debug configurations with the MSVC CRT" OFF)
+
 option(ENABLE_CODE_ANALYSIS "Use Static Code Analysis on build" OFF)
 
 option(USE_PREBUILT_SHADERS "Use externally built HLSL shaders" OFF)
@@ -397,6 +399,12 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 
 if(WIN32)
+    if(DISABLE_MSVC_ITERATOR_DEBUGGING)
+      foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+        target_compile_definitions(${t} PRIVATE _ITERATOR_DEBUG_LEVEL=0)
+      endforeach()
+    endif()
+
     if(WINDOWS_STORE)
       target_compile_definitions(${PROJECT_NAME} PRIVATE WINAPI_FAMILY=WINAPI_FAMILY_APP)
     endif()
