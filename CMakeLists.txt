@@ -31,6 +31,8 @@ option(BUILD_XBOX_EXTS_SCARLETT "Build Xbox library extensions for Xbox Series X
 # https://devblogs.microsoft.com/cppblog/spectre-mitigations-in-msvc/
 option(ENABLE_SPECTRE_MITIGATION "Build using /Qspectre for MSVC" OFF)
 
+option(DISABLE_MSVC_ITERATOR_DEBUGGING "Disable iterator debugging in Debug configurations with the MSVC CRT" OFF)
+
 option(ENABLE_CODE_ANALYSIS "Use Static Code Analysis on build" OFF)
 
 option(USE_PREBUILT_SHADERS "Use externally built HLSL shaders" OFF)
@@ -340,7 +342,7 @@ if(MSVC)
        AND (NOT WINDOWS_STORE)
        AND (NOT ENABLE_OPENEXR_SUPPORT)
        AND (NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang")))
-      message(STATUS "Using Spectre-mitigated libraries")
+      message(STATUS "Building Spectre-mitigated libraries")
       foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
         target_compile_options(${t} PRIVATE "/Qspectre")
       endforeach()
@@ -399,7 +401,7 @@ elseif(MINGW)
     endforeach()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-      target_compile_options(${t} PRIVATE /sdl /permissive- /JMC- /Zc:__cplusplus)
+      target_compile_options(${t} PRIVATE /sdl /permissive- /JMC- /Zc:__cplusplus /Zc:inline)
     endforeach()
 
     if(ENABLE_CODE_ANALYSIS)
@@ -426,6 +428,12 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     if((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.27) AND (NOT (${DIRECTX_ARCH} MATCHES "^arm")))
         foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
           target_link_options(${t} PRIVATE /CETCOMPAT)
+        endforeach()
+    endif()
+
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.28)
+        foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+          target_compile_options(${t} PRIVATE /Zc:lambda)
         endforeach()
     endif()
 
@@ -464,6 +472,12 @@ if(WIN32)
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
       target_compile_definitions(${t} PRIVATE _UNICODE UNICODE _WIN32_WINNT=${WINVER})
     endforeach()
+
+    if(DISABLE_MSVC_ITERATOR_DEBUGGING)
+      foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+        target_compile_definitions(${t} PRIVATE _ITERATOR_DEBUG_LEVEL=0)
+      endforeach()
+    endif()
 endif()
 
 if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
