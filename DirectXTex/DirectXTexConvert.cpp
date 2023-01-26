@@ -4799,21 +4799,33 @@ namespace
         {
         case DXGI_FORMAT_NV12:
             assert(destImage.format == DXGI_FORMAT_YUY2);
+            if ((srcImage.width % 2) != 0 || (srcImage.height % 2) != 0)
+                return E_INVALIDARG;
+
             CONVERT_420_TO_422(uint8_t, XMUBYTEN4);
             return S_OK;
 
         case DXGI_FORMAT_P010:
             assert(destImage.format == DXGI_FORMAT_Y210);
+            if ((srcImage.width % 2) != 0 || (srcImage.height % 2) != 0)
+                return E_INVALIDARG;
+
             CONVERT_420_TO_422(uint16_t, XMUSHORTN4);
             return S_OK;
 
         case DXGI_FORMAT_P016:
             assert(destImage.format == DXGI_FORMAT_Y216);
+            if ((srcImage.width % 2) != 0 || (srcImage.height % 2) != 0)
+                return E_INVALIDARG;
+
             CONVERT_420_TO_422(uint16_t, XMUSHORTN4);
             return S_OK;
 
         case DXGI_FORMAT_NV11:
             assert(destImage.format == DXGI_FORMAT_YUY2);
+            if ((srcImage.width % 4) != 0)
+                return E_INVALIDARG;
+
             // Convert 4:1:1 to 4:2:2
             {
                 const size_t rowPitch = srcImage.rowPitch;

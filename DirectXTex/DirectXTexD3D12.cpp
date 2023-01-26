@@ -335,14 +335,64 @@ bool DirectX::IsSupportedTexture(
     if (!IsValid(fmt))
         return false;
 
+    const size_t iWidth = metadata.width;
+    const size_t iHeight = metadata.height;
+
+    switch (fmt)
+    {
+    case DXGI_FORMAT_NV12:
+    case DXGI_FORMAT_P010:
+    case DXGI_FORMAT_P016:
+    case DXGI_FORMAT_420_OPAQUE:
+        if ((metadata.dimension != TEX_DIMENSION_TEXTURE2D)
+            || (iWidth % 2) != 0 || (iHeight % 2) != 0)
+        {
+            return false;
+        }
+        break;
+
+    case DXGI_FORMAT_YUY2:
+    case DXGI_FORMAT_Y210:
+    case DXGI_FORMAT_Y216:
+    case WIN10_DXGI_FORMAT_P208:
+        if ((iWidth % 2) != 0)
+        {
+            return false;
+        }
+        break;
+
+    case DXGI_FORMAT_NV11:
+        if ((iWidth % 4) != 0)
+        {
+            return false;
+        }
+        break;
+
+    case DXGI_FORMAT_AI44:
+    case DXGI_FORMAT_IA44:
+    case DXGI_FORMAT_P8:
+    case DXGI_FORMAT_A8P8:
+        // Legacy video stream formats are not supported by Direct3D.
+        return false;
+
+    case WIN10_DXGI_FORMAT_V208:
+        if ((metadata.dimension != TEX_DIMENSION_TEXTURE2D)
+            || (iHeight % 2) != 0)
+        {
+            return false;
+        }
+        break;
+
+    default:
+        break;
+    }
+
     // Validate miplevel count
     if (metadata.mipLevels > D3D12_REQ_MIP_LEVELS)
         return false;
 
     // Validate array size, dimension, and width/height
     const size_t arraySize = metadata.arraySize;
-    const size_t iWidth = metadata.width;
-    const size_t iHeight = metadata.height;
     const size_t iDepth = metadata.depth;
 
     // Most cases are known apriori based on feature level, but we use this for robustness to handle the few optional cases
