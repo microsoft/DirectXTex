@@ -367,7 +367,9 @@ HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags) noexc
         Release();
         return E_OUTOFMEMORY;
     }
+    memset(m_memory, 0, pixelSize);
     m_size = pixelSize;
+
     if (!SetupImageArray(m_memory, pixelSize, m_metadata, flags, m_image, nimages))
     {
         Release();
@@ -435,7 +437,9 @@ HRESULT ScratchImage::Initialize2D(DXGI_FORMAT fmt, size_t width, size_t height,
         Release();
         return E_OUTOFMEMORY;
     }
+    memset(m_memory, 0, pixelSize);
     m_size = pixelSize;
+
     if (!SetupImageArray(m_memory, pixelSize, m_metadata, flags, m_image, nimages))
     {
         Release();
@@ -489,6 +493,7 @@ HRESULT ScratchImage::Initialize3D(DXGI_FORMAT fmt, size_t width, size_t height,
         Release();
         return E_OUTOFMEMORY;
     }
+    memset(m_memory, 0, pixelSize);
     m_size = pixelSize;
 
     if (!SetupImageArray(m_memory, pixelSize, m_metadata, flags, m_image, nimages))
