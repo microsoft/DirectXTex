@@ -6,6 +6,13 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### January 31, 2023
+* Fixed memory overwrite bug in **ConvertToSinglePlane** that can lead to a potential security issue for untrusted planar video format DDS files
+* Make sure ScratchImage zero-fills image memory
+* Fix DirectX12 GPU-validation warnings for texture loaders
+* Minor fix for non-Win32 builds
+* ddsview: Updated sample app with a ``-forcesrgb`` command-line switch
+
 ### December 15, 2022
 * ARM/ARM64 platform fix for 16bpp pixel conversion
 * Updated D3DX12 internal copy with latest changes from DirectX-Headers GitHub
@@ -277,7 +284,7 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 ### July 26, 2017
 * Support for reading non-standard DDS files written by nVidia Texture Tools (NVTT)
 * Fix for **ComputeMSE** when using ``CMSE_IMAGE2_X2_BIAS``
-* Fix for WIC writer then codec target format requires a palette    
+* Fix for WIC writer then codec target format requires a palette
 * Code cleanup
 
 ### April 24, 2017
