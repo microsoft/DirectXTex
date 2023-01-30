@@ -542,7 +542,11 @@ HRESULT DirectX::CreateTextureEx(
         &defaultHeapProperties,
         D3D12_HEAP_FLAG_NONE,
         &desc,
+    #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+        D3D12_RESOURCE_STATE_COPY_DEST,
+    #else
         D3D12_RESOURCE_STATE_COMMON,
+    #endif
         nullptr,
         IID_GRAPHICS_PPV_ARGS(ppResource));
 
