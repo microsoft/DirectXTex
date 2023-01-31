@@ -973,6 +973,11 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
 
     case DXGI_FORMAT_NV12:
     case DXGI_FORMAT_420_OPAQUE:
+        if ((height % 2) != 0)
+        {
+            // Requires a height alignment of 2.
+            return E_INVALIDARG;
+        }
         assert(IsPlanar(fmt));
         pitch = ((uint64_t(width) + 1u) >> 1) * 2u;
         slice = pitch * (uint64_t(height) + ((uint64_t(height) + 1u) >> 1));
@@ -980,6 +985,20 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
 
     case DXGI_FORMAT_P010:
     case DXGI_FORMAT_P016:
+        if ((height % 2) != 0)
+        {
+            // Requires a height alignment of 2.
+            return E_INVALIDARG;
+        }
+
+        #if (__cplusplus >= 201703L)
+            [[fallthrough]];
+        #elif defined(__clang__)
+            [[clang::fallthrough]];
+        #elif defined(_MSC_VER)
+            __fallthrough;
+        #endif
+
     case XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT:
     case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
     case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:
@@ -1001,6 +1020,11 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
         break;
 
     case WIN10_DXGI_FORMAT_V208:
+        if ((height % 2) != 0)
+        {
+            // Requires a height alignment of 2.
+            return E_INVALIDARG;
+        }
         assert(IsPlanar(fmt));
         pitch = uint64_t(width);
         slice = pitch * (uint64_t(height) + (((uint64_t(height) + 1u) >> 1) * 2u));
