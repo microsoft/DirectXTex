@@ -29,6 +29,8 @@
 
 #include "DirectXTex.h"
 
+#include <shellapi.h>
+
 using namespace DirectX;
 
 //--------------------------------------------------------------------------------------
@@ -69,21 +71,21 @@ namespace
     HWND                        g_hWnd = nullptr;
     D3D_DRIVER_TYPE             g_driverType = D3D_DRIVER_TYPE_NULL;
     D3D_FEATURE_LEVEL           g_featureLevel = D3D_FEATURE_LEVEL_11_0;
-    ID3D11Device* g_pd3dDevice = nullptr;
-    ID3D11DeviceContext* g_pImmediateContext = nullptr;
-    IDXGISwapChain* g_pSwapChain = nullptr;
-    ID3D11RenderTargetView* g_pRenderTargetView = nullptr;
-    ID3D11Texture2D* g_pDepthStencil = nullptr;
-    ID3D11DepthStencilView* g_pDepthStencilView = nullptr;
-    ID3D11VertexShader* g_pVertexShader = nullptr;
-    ID3D11PixelShader* g_pPixelShader = nullptr;
-    ID3D11InputLayout* g_pVertexLayout = nullptr;
-    ID3D11Buffer* g_pVertexBuffer = nullptr;
-    ID3D11Buffer* g_pIndexBuffer = nullptr;
-    ID3D11Buffer* g_pCBArrayControl = nullptr;
-    ID3D11ShaderResourceView* g_pSRV = nullptr;
-    ID3D11BlendState* g_AlphaBlendState = nullptr;
-    ID3D11SamplerState* g_pSamplerLinear = nullptr;
+    ID3D11Device*               g_pd3dDevice = nullptr;
+    ID3D11DeviceContext*        g_pImmediateContext = nullptr;
+    IDXGISwapChain*             g_pSwapChain = nullptr;
+    ID3D11RenderTargetView*     g_pRenderTargetView = nullptr;
+    ID3D11Texture2D*            g_pDepthStencil = nullptr;
+    ID3D11DepthStencilView*     g_pDepthStencilView = nullptr;
+    ID3D11VertexShader*         g_pVertexShader = nullptr;
+    ID3D11PixelShader*          g_pPixelShader = nullptr;
+    ID3D11InputLayout*          g_pVertexLayout = nullptr;
+    ID3D11Buffer*               g_pVertexBuffer = nullptr;
+    ID3D11Buffer*               g_pIndexBuffer = nullptr;
+    ID3D11Buffer*               g_pCBArrayControl = nullptr;
+    ID3D11ShaderResourceView*   g_pSRV = nullptr;
+    ID3D11BlendState*           g_AlphaBlendState = nullptr;
+    ID3D11SamplerState*         g_pSamplerLinear = nullptr;
 
     UINT                        g_iCurrentIndex = 0;
     UINT                        g_iMaxIndex = 1;
@@ -108,31 +110,59 @@ int WINAPI wWinMain(
     _In_ LPWSTR lpCmdLine,
     _In_ int nCmdShow)
 {
+    static const wchar_t* c_usage = L"Usage: ddsview [-forcesrgb] <filename>";
+
     if (!*lpCmdLine)
     {
-        MessageBoxW(nullptr, L"Usage: ddsview <filename>", g_szAppName, MB_OK | MB_ICONEXCLAMATION);
+        MessageBoxW(nullptr, c_usage, g_szAppName, MB_OK | MB_ICONEXCLAMATION);
         return 0;
+    }
+
+    int argc = 0;
+    auto argList = CommandLineToArgvW(lpCmdLine, &argc);
+
+    const wchar_t* filename = nullptr;
+    bool forceSRGB = false;
+    for(int i = 0; i < argc; ++i)
+    {
+        if (*argList[i] == '-' || *argList[i] == '/')
+        {
+            if (_wcsicmp(argList[i]+1, L"forcesrgb") == 0)
+            {
+                forceSRGB = true;
+            }
+        }
+        else if (!filename)
+        {
+            filename = argList[i];
+        }
+    }
+
+    if (!filename)
+    {
+        MessageBoxW(nullptr, c_usage, g_szAppName, MB_OK | MB_ICONEXCLAMATION);
+        return 1;
     }
 
     TexMetadata mdata;
-    HRESULT hr = GetMetadataFromDDSFile(lpCmdLine, DDS_FLAGS_NONE, mdata);
+    HRESULT hr = GetMetadataFromDDSFile(filename, DDS_FLAGS_NONE, mdata);
     if (FAILED(hr))
     {
         wchar_t buff[2048] = {};
-        swprintf_s(buff, L"Failed to open texture file\n\nFilename = %ls\nHRESULT %08X", lpCmdLine, static_cast<unsigned int>(hr));
+        swprintf_s(buff, L"Failed to open texture file\n\nFilename = %ls\nHRESULT %08X", filename, static_cast<unsigned int>(hr));
         MessageBoxW(nullptr, buff, g_szAppName, MB_OK | MB_ICONEXCLAMATION);
-        return 0;
+        return 1;
     }
 
     if (FAILED(InitWindow(hInstance, nCmdShow, mdata)))
-        return 0;
+        return 1;
 
-    SetWindowTextW(g_hWnd, lpCmdLine);
+    SetWindowTextW(g_hWnd, filename);
 
     if (FAILED(InitDevice(mdata)))
     {
         CleanupDevice();
-        return 0;
+        return 1;
     }
 
     if (mdata.dimension == TEX_DIMENSION_TEXTURE3D)
@@ -140,9 +170,9 @@ int WINAPI wWinMain(
         if (mdata.arraySize > 1)
         {
             wchar_t buff[2048] = {};
-            swprintf_s(buff, L"Arrays of volume textures are not supported\n\nFilename = %ls\nArray size %zu", lpCmdLine, mdata.arraySize);
+            swprintf_s(buff, L"Arrays of volume textures are not supported\n\nFilename = %ls\nArray size %zu", filename, mdata.arraySize);
             MessageBoxW(nullptr, buff, g_szAppName, MB_OK | MB_ICONEXCLAMATION);
-            return 0;
+            return 1;
         }
 
         g_iMaxIndex = static_cast<UINT>(mdata.depth);
@@ -152,9 +182,9 @@ int WINAPI wWinMain(
         if (g_featureLevel < D3D_FEATURE_LEVEL_10_0)
         {
             wchar_t buff[2048] = {};
-            swprintf_s(buff, L"Texture arrays require DirectX 10 hardware or later\n\nFilename = %ls\nArray size %zu", lpCmdLine, mdata.arraySize);
+            swprintf_s(buff, L"Texture arrays require DirectX 10 hardware or later\n\nFilename = %ls\nArray size %zu", filename, mdata.arraySize);
             MessageBoxW(nullptr, buff, g_szAppName, MB_OK | MB_ICONEXCLAMATION);
-            return 0;
+            return 1;
         }
 
         g_iMaxIndex = static_cast<UINT>(mdata.arraySize);
@@ -171,9 +201,9 @@ int WINAPI wWinMain(
         if (g_featureLevel < D3D_FEATURE_LEVEL_10_0)
         {
             wchar_t buff[2048] = {};
-            swprintf_s(buff, L"BC4/BC5 requires DirectX 10 hardware or later\n\nFilename = %ls\nDXGI Format %d\nFeature Level %d", lpCmdLine, mdata.format, g_featureLevel);
+            swprintf_s(buff, L"BC4/BC5 requires DirectX 10 hardware or later\n\nFilename = %ls\nDXGI Format %d\nFeature Level %d", filename, mdata.format, g_featureLevel);
             MessageBoxW(nullptr, buff, g_szAppName, MB_OK | MB_ICONEXCLAMATION);
-            return 0;
+            return 1;
         }
         break;
 
@@ -186,9 +216,9 @@ int WINAPI wWinMain(
         if (g_featureLevel < D3D_FEATURE_LEVEL_11_0)
         {
             wchar_t buff[2048] = {};
-            swprintf_s(buff, L"BC6H/BC7 requires DirectX 11 hardware or later\n\nFilename = %ls\nDXGI Format %d\nFeature Level %d", lpCmdLine, mdata.format, g_featureLevel);
+            swprintf_s(buff, L"BC6H/BC7 requires DirectX 11 hardware or later\n\nFilename = %ls\nDXGI Format %d\nFeature Level %d", filename, mdata.format, g_featureLevel);
             MessageBoxW(nullptr, buff, g_szAppName, MB_OK | MB_ICONEXCLAMATION);
-            return 0;
+            return 1;
         }
         break;
 
@@ -200,34 +230,40 @@ int WINAPI wWinMain(
             if (FAILED(hr) || !(flags & required))
             {
                 wchar_t buff[2048] = {};
-                swprintf_s(buff, L"Format not supported by this DirectX hardware\n\nFilename = %ls\nDXGI Format %d\nFeature Level %d\nHRESULT = %08X", lpCmdLine, mdata.format, g_featureLevel, static_cast<unsigned int>(hr));
+                swprintf_s(buff, L"Format not supported by this DirectX hardware\n\nFilename = %ls\nDXGI Format %d\nFeature Level %d\nHRESULT = %08X", filename, mdata.format, g_featureLevel, static_cast<unsigned int>(hr));
                 MessageBoxW(nullptr, buff, g_szAppName, MB_OK | MB_ICONEXCLAMATION);
-                return 0;
+                return 1;
             }
         }
         break;
     }
 
     ScratchImage image;
-    hr = LoadFromDDSFile(lpCmdLine, DDS_FLAGS_NONE, &mdata, image);
+    hr = LoadFromDDSFile(filename, DDS_FLAGS_NONE, &mdata, image);
     if (FAILED(hr))
     {
         wchar_t buff[2048] = {};
-        swprintf_s(buff, L"Failed to load texture file\n\nFilename = %ls\nHRESULT %08X", lpCmdLine, static_cast<unsigned int>(hr));
+        swprintf_s(buff, L"Failed to load texture file\n\nFilename = %ls\nHRESULT %08X", filename, static_cast<unsigned int>(hr));
         MessageBoxW(nullptr, buff, g_szAppName, MB_OK | MB_ICONEXCLAMATION);
-        return 0;
+        return 1;
     }
 
     // Special case to make sure Texture cubes remain arrays
     mdata.miscFlags &= ~TEX_MISC_TEXTURECUBE;
 
+    if (forceSRGB)
+    {
+        mdata.format = MakeSRGB(mdata.format);
+        image.OverrideFormat(mdata.format);
+    }
+
     hr = CreateShaderResourceView(g_pd3dDevice, image.GetImages(), image.GetImageCount(), mdata, &g_pSRV);
     if (FAILED(hr))
     {
         wchar_t buff[2048] = {};
-        swprintf_s(buff, L"Failed creating texture from file\n\nFilename = %ls\nHRESULT = %08X", lpCmdLine, static_cast<unsigned int>(hr));
+        swprintf_s(buff, L"Failed creating texture from file\n\nFilename = %ls\nHRESULT = %08X", filename, static_cast<unsigned int>(hr));
         MessageBoxW(nullptr, buff, g_szAppName, MB_OK | MB_ICONEXCLAMATION);
-        return 0;
+        return 1;
     }
 
     // Main message loop

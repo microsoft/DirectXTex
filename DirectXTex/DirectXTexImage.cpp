@@ -31,7 +31,7 @@ namespace
 // Determines number of image array entries and pixel size
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-bool DirectX::Internal::DetermineImageArray(
+HRESULT DirectX::Internal::DetermineImageArray(
     const TexMetadata& metadata,
     CP_FLAGS cpFlags,
     size_t& nImages,
@@ -56,10 +56,11 @@ bool DirectX::Internal::DetermineImageArray(
             for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
                 size_t rowPitch, slicePitch;
-                if (FAILED(ComputePitch(metadata.format, w, h, rowPitch, slicePitch, cpFlags)))
+                HRESULT hr = ComputePitch(metadata.format, w, h, rowPitch, slicePitch, cpFlags);
+                if (FAILED(hr))
                 {
                     nImages = pixelSize = 0;
-                    return false;
+                    return hr;
                 }
 
                 totalPixelSize += uint64_t(slicePitch);
@@ -83,10 +84,11 @@ bool DirectX::Internal::DetermineImageArray(
             for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
                 size_t rowPitch, slicePitch;
-                if (FAILED(ComputePitch(metadata.format, w, h, rowPitch, slicePitch, cpFlags)))
+                HRESULT hr = ComputePitch(metadata.format, w, h, rowPitch, slicePitch, cpFlags);
+                if (FAILED(hr))
                 {
                     nImages = pixelSize = 0;
-                    return false;
+                    return hr;
                 }
 
                 for (size_t slice = 0; slice < d; ++slice)
@@ -109,7 +111,7 @@ bool DirectX::Internal::DetermineImageArray(
 
     default:
         nImages = pixelSize = 0;
-        return false;
+        return E_INVALIDARG;
     }
 
 #if defined(_M_IX86) || defined(_M_ARM) || defined(_M_HYBRID_X86_ARM64)
@@ -117,7 +119,7 @@ bool DirectX::Internal::DetermineImageArray(
     if (totalPixelSize > UINT32_MAX)
     {
         nImages = pixelSize = 0;
-        return false;
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
     }
 #else
     static_assert(sizeof(size_t) == 8, "Not a 64-bit platform!");
@@ -126,7 +128,7 @@ bool DirectX::Internal::DetermineImageArray(
     nImages = nimages;
     pixelSize = static_cast<size_t>(totalPixelSize);
 
-    return true;
+    return S_OK;
 }
 
 
@@ -348,8 +350,9 @@ HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags) noexc
     m_metadata.dimension = mdata.dimension;
 
     size_t pixelSize, nimages;
-    if (!DetermineImageArray(m_metadata, flags, nimages, pixelSize))
-        return HRESULT_E_ARITHMETIC_OVERFLOW;
+    HRESULT hr = DetermineImageArray(m_metadata, flags, nimages, pixelSize);
+    if (FAILED(hr))
+        return hr;
 
     m_image = new (std::nothrow) Image[nimages];
     if (!m_image)
@@ -364,7 +367,9 @@ HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags) noexc
         Release();
         return E_OUTOFMEMORY;
     }
+    memset(m_memory, 0, pixelSize);
     m_size = pixelSize;
+
     if (!SetupImageArray(m_memory, pixelSize, m_metadata, flags, m_image, nimages))
     {
         Release();
@@ -415,8 +420,9 @@ HRESULT ScratchImage::Initialize2D(DXGI_FORMAT fmt, size_t width, size_t height,
     m_metadata.dimension = TEX_DIMENSION_TEXTURE2D;
 
     size_t pixelSize, nimages;
-    if (!DetermineImageArray(m_metadata, flags, nimages, pixelSize))
-        return HRESULT_E_ARITHMETIC_OVERFLOW;
+    HRESULT hr = DetermineImageArray(m_metadata, flags, nimages, pixelSize);
+    if (FAILED(hr))
+        return hr;
 
     m_image = new (std::nothrow) Image[nimages];
     if (!m_image)
@@ -431,7 +437,9 @@ HRESULT ScratchImage::Initialize2D(DXGI_FORMAT fmt, size_t width, size_t height,
         Release();
         return E_OUTOFMEMORY;
     }
+    memset(m_memory, 0, pixelSize);
     m_size = pixelSize;
+
     if (!SetupImageArray(m_memory, pixelSize, m_metadata, flags, m_image, nimages))
     {
         Release();
@@ -466,8 +474,9 @@ HRESULT ScratchImage::Initialize3D(DXGI_FORMAT fmt, size_t width, size_t height,
     m_metadata.dimension = TEX_DIMENSION_TEXTURE3D;
 
     size_t pixelSize, nimages;
-    if (!DetermineImageArray(m_metadata, flags, nimages, pixelSize))
-        return HRESULT_E_ARITHMETIC_OVERFLOW;
+    HRESULT hr = DetermineImageArray(m_metadata, flags, nimages, pixelSize);
+    if (FAILED(hr))
+        return hr;
 
     m_image = new (std::nothrow) Image[nimages];
     if (!m_image)
@@ -484,6 +493,7 @@ HRESULT ScratchImage::Initialize3D(DXGI_FORMAT fmt, size_t width, size_t height,
         Release();
         return E_OUTOFMEMORY;
     }
+    memset(m_memory, 0, pixelSize);
     m_size = pixelSize;
 
     if (!SetupImageArray(m_memory, pixelSize, m_metadata, flags, m_image, nimages))
