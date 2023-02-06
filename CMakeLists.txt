@@ -56,6 +56,11 @@ elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Aa][Rr][Mm]64$")
     set(DIRECTX_ARCH arm64)
 endif()
 
+if(VCPKG_TARGET_IS_XBOX)
+    set(BUILD_DX11 OFF)
+    set(BUILD_DX12 ON)
+endif()
+
 include(GNUInstallDirs)
 
 #--- Library
@@ -167,11 +172,14 @@ if(NOT MINGW)
 endif()
 
 if(MINGW OR (NOT WIN32) OR VCPKG_TOOLCHAIN)
-    message(STATUS "Using VCPKG for DirectX-Headers and DirectXMath")
-    find_package(directx-headers CONFIG REQUIRED)
     find_package(directxmath CONFIG REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectX-Headers Microsoft::DirectXMath)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE USING_DIRECTX_HEADERS)
+    target_link_libraries(${PROJECT_NAME} PUBLIC Microsoft::DirectXMath)
+
+    if(NOT VCPKG_TARGET_IS_XBOX)
+        find_package(directx-headers CONFIG REQUIRED)
+        target_link_libraries(${PROJECT_NAME} PUBLIC Microsoft::DirectX-Headers)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE USING_DIRECTX_HEADERS)
+    endif()
 endif()
 
 #--- Package
