@@ -24,6 +24,13 @@ resources:
       paths:
         include:
         - CMakeLists.txt
+    pr:
+      branches:
+        include:
+        - main
+      paths:
+        include:
+        - CMakeLists.txt
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
