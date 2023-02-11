@@ -224,7 +224,7 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME})
 
 #--- Command-line tools
-if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
+if(BUILD_TOOLS AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
   set(TOOL_EXES texassemble texconv texdiag)
 
   add_executable(texassemble
@@ -400,7 +400,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
     if(BC_USE_OPENMP)
         target_compile_options(${PROJECT_NAME} PRIVATE /openmp /Zc:twoPhase-)
-        if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
+        if(BUILD_TOOLS AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
           target_compile_options(texconv PRIVATE /openmp /Zc:twoPhase-)
         endif()
     endif()
@@ -441,7 +441,7 @@ if(WIN32)
     endif()
 endif()
 
-if(BUILD_TOOLS AND WIN32 AND (NOT WINDOWS_STORE))
+if(BUILD_TOOLS AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
   set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT texconv)
 endif()
 
