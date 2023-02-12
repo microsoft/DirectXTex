@@ -59,6 +59,8 @@ endif()
 if(DEFINED XBOX_CONSOLE_TARGET)
   set(BUILD_DX11 OFF)
   set(BUILD_DX12 ON)
+  set(BUILD_TOOLS OFF)
+  set(BUILD_SAMPLE OFF)
 endif()
 
 include(GNUInstallDirs)
