@@ -101,14 +101,14 @@
       "hidden": true
     },
     {
-      "name": "XboxOne",
+      "name": "GDKX",
       "cacheVariables": {
         "BUILD_XBOX_EXTS_XBOXONE": true
       },
       "hidden": true
     },
     {
-      "name": "Scarlett",
+      "name": "GDKXS",
       "cacheVariables": {
         "BUILD_XBOX_EXTS_SCARLETT": true
       },
@@ -213,15 +213,15 @@
     { "name": "x86-Debug-Win7-Clang"  , "description": "Clang/LLVM for x86 (Debug) for Windows 7", "inherits": [ "base", "x86", "Debug", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
     { "name": "x86-Release-Win7-Clang", "description": "Clang/LLVM for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
 
-    { "name": "x64-Debug-XboxOne"    , "description": "MSVC for x64 (Debug) Xbox One Extensions", "inherits": [ "base", "x64", "Debug", "XboxOne", "MSVC" ] },
-    { "name": "x64-Release-XboxOne"  , "description": "MSVC for x64 (Release) Xbox One Extensions", "inherits": [ "base", "x64", "Release", "XboxOne", "MSVC" ] },
-    { "name": "x64-Debug-Scarlett"   , "description": "MSVC for x64 (Debug) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Debug", "Scarlett", "MSVC" ] },
-    { "name": "x64-Release-Scarlett" , "description": "MSVC for x64 (Release) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Release", "Scarlett", "MSVC" ] },
+    { "name": "x64-Debug-GDKX"     , "description": "MSVC for x64 (Debug) Xbox One Extensions", "inherits": [ "base", "x64", "Debug", "GDKX", "MSVC" ] },
+    { "name": "x64-Release-GDKX"   , "description": "MSVC for x64 (Release) Xbox One Extensions", "inherits": [ "base", "x64", "Release", "GDKX", "MSVC" ] },
+    { "name": "x64-Debug-GDKX-S"   , "description": "MSVC for x64 (Debug) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Debug", "GDKXS", "MSVC" ] },
+    { "name": "x64-Release-GDKX-S" , "description": "MSVC for x64 (Release) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Release", "GDKXS", "MSVC" ] },
 
-    { "name": "x64-Debug-XboxOne-Clang"   , "description": "MSVC for x64 (Debug) Xbox One Extensions", "inherits": [ "base", "x64", "Debug", "XboxOne", "Clang" ] },
-    { "name": "x64-Release-XboxOne-Clang" , "description": "MSVC for x64 (Release) Xbox One Extensions", "inherits": [ "base", "x64", "Release", "XboxOne", "Clang" ] },
-    { "name": "x64-Debug-Scarlett-Clang"  , "description": "MSVC for x64 (Debug) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Debug", "Scarlett", "Clang" ] },
-    { "name": "x64-Release-Scarlett-Clang", "description": "MSVC for x64 (Release) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Release", "Scarlett", "Clang" ] },
+    { "name": "x64-Debug-GDKX-Clang"     , "description": "MSVC for x64 (Debug) Xbox One Extensions", "inherits": [ "base", "x64", "Debug", "GDKX", "Clang" ] },
+    { "name": "x64-Release-GDKX-Clang"   , "description": "MSVC for x64 (Release) Xbox One Extensions", "inherits": [ "base", "x64", "Release", "GDKX", "Clang" ] },
+    { "name": "x64-Debug-GDKX-S-Clang"   , "description": "MSVC for x64 (Debug) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Debug", "GDKXS", "Clang" ] },
+    { "name": "x64-Release-GDKX-S-Clang" , "description": "MSVC for x64 (Release) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Release", "GDKXS", "Clang" ] },
 
     { "name": "x64-Debug-MinGW"  , "description": "MinG-W64 (Debug)", "inherits": [ "base", "x64", "Debug", "GNUC", "VCPKG", "MinGW64" ] },
     { "name": "x64-Release-MinGW", "description": "MinG-W64 (Release)", "inherits": [ "base", "x64", "Release", "GNUC", "VCPKG", "MinGW64" ] },
