@@ -55,7 +55,11 @@
     },
     {
       "name": "Release",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" },
+      "cacheVariables":
+      {
+          "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+          "CMAKE_INTERPROCEDURAL_OPTIMIZATION": true
+      },
       "hidden": true
     },
 
@@ -106,6 +110,22 @@
         "CMAKE_SYSTEM_NAME": "WindowsStore",
         "CMAKE_SYSTEM_VERSION": "10.0",
         "BUILD_DX12": true
+      },
+      "hidden": true
+    },
+    {
+      "name": "Scarlett",
+      "cacheVariables": {
+        "XBOX_CONSOLE_TARGET": "scarlett",
+        "BUILD_TESTING": false
+      },
+      "hidden": true
+    },
+    {
+      "name": "XboxOne",
+      "cacheVariables": {
+        "XBOX_CONSOLE_TARGET": "xboxone",
+        "BUILD_TESTING": false
       },
       "hidden": true
     },
@@ -169,6 +189,12 @@
     { "name": "x64-Release-Win7"  , "description": "MSVC for x64 (Release) for Windows 7", "inherits": [ "base", "x64", "Release", "MSVC", "Win7" ] },
     { "name": "x86-Debug-Win7"    , "description": "MSVC for x86 (Debug) for Windows 7", "inherits": [ "base", "x86", "Debug", "MSVC", "Win7" ] },
     { "name": "x86-Release-Win7"  , "description": "MSVC for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "MSVC", "Win7" ] },
+
+    { "name": "x64-Debug-Scarlett"    , "description": "MSVC for x64 (Debug) for Xbox Series X|S", "inherits": [ "base", "x64", "Debug", "MSVC", "Scarlett" ] },
+    { "name": "x64-Release-Scarlett"  , "description": "MSVC for x64 (Release) for Xbox Series X|S", "inherits": [ "base", "x64", "Release", "MSVC", "Scarlett" ] },
+
+    { "name": "x64-Debug-XboxOne"    , "description": "MSVC for x64 (Debug) for Xbox One", "inherits": [ "base", "x64", "Debug", "MSVC", "XboxOne" ] },
+    { "name": "x64-Release-XboxOne"  , "description": "MSVC for x64 (Release) for Xbox One", "inherits": [ "base", "x64", "Release", "MSVC", "XboxOne" ] },
 
     { "name": "x64-Debug-VCPKG"    , "description": "MSVC for x64 (Debug) using VCPKG", "inherits": [ "base", "x64", "Debug", "MSVC", "VCPKG" ] },
     { "name": "x64-Release-VCPKG"  , "description": "MSVC for x64 (Release) using VCPKG", "inherits": [ "base", "x64", "Release", "MSVC", "VCPKG" ] },
