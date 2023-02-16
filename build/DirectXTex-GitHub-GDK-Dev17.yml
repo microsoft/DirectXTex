@@ -12,20 +12,14 @@ schedules:
     include:
     - xbox
 
+trigger: none
+pr: none
+
 resources:
   repositories:
   - repository: self
     type: git
     ref: refs/heads/xbox
-    trigger:
-      branches:
-        include:
-        - xbox
-      paths:
-        exclude:
-        - README.md
-        - HISTORY.md
-        - SECURITY.md
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 

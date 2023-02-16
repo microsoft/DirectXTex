@@ -12,18 +12,27 @@ schedules:
     include:
     - xbox
 
+trigger:
+  branches:
+    include:
+    - xbox
+  paths:
+    include:
+    - CMakeLists.txt
+pr:
+  branches:
+    include:
+    - xbox
+  paths:
+    include:
+    - CMakeLists.txt
+  drafts: false
+
 resources:
   repositories:
   - repository: self
     type: git
     ref: refs/heads/xbox
-    trigger:
-      branches:
-        include:
-        - xbox
-      paths:
-        include:
-        - CMakeLists.txt
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
