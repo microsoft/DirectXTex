@@ -13,12 +13,14 @@ schedules:
     - xbox
   always: true
 
+trigger: none
+pr: none
+
 resources:
   repositories:
   - repository: self
     type: git
     ref: refs/heads/xbox
-    trigger: none
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
