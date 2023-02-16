@@ -5,13 +5,15 @@ rem Licensed under the MIT License.
 setlocal
 set error=0
 
+if %PROCESSOR_ARCHITECTURE%.==ARM64. (set FXCARCH=arm64) else (if %PROCESSOR_ARCHITECTURE%.==AMD64. (set FXCARCH=x64) else (set FXCARCH=x86))
+
 set FXCOPTS=/nologo /WX /Ges /Zi /Zpc /Qstrip_reflect /Qstrip_debug
 
-set PCFXC="%WindowsSdkVerBinPath%x86\fxc.exe"
+set PCFXC="%WindowsSdkVerBinPath%%FXCARCH%\fxc.exe"
 if exist %PCFXC% goto continue
-set PCFXC="%WindowsSdkBinPath%%WindowsSDKVersion%\x86\fxc.exe"
+set PCFXC="%WindowsSdkBinPath%%WindowsSDKVersion%\%FXCARCH%\fxc.exe"
 if exist %PCFXC% goto continue
-set PCFXC="%WindowsSdkDir%bin\%WindowsSDKVersion%\x86\fxc.exe"
+set PCFXC="%WindowsSdkDir%bin\%WindowsSDKVersion%\%FXCARCH%\fxc.exe"
 if exist %PCFXC% goto continue
 
 set PCFXC=fxc.exe
