@@ -1184,7 +1184,7 @@ namespace
 
 
     //-------------------------------------------------------------------------------------
-    float OptimizeRGB(
+    void OptimizeRGB(
         _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pPoints,
         _Out_ HDRColorA* pX,
         _Out_ HDRColorA* pY,
@@ -1192,7 +1192,6 @@ namespace
         size_t cPixels,
         _In_reads_(cPixels) const size_t* pIndex) noexcept
     {
-        constexpr float fError = FLT_MAX;
         const float *pC = (3 == cSteps) ? pC3 : pC4;
         const float *pD = (3 == cSteps) ? pD3 : pD4;
 
@@ -1223,7 +1222,7 @@ namespace
         {
             pX->r = X.r; pX->g = X.g; pX->b = X.b;
             pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
-            return 0.0f;
+            return;
         }
 
         // Try all four axis directions, to determine which diagonal best fits data
@@ -1276,7 +1275,7 @@ namespace
         {
             pX->r = X.r; pX->g = X.g; pX->b = X.b;
             pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
-            return 0.0f;
+            return;
         }
 
         // Use Newton's Method to find local minima of sum-of-squares error.
@@ -1375,12 +1374,11 @@ namespace
 
         pX->r = X.r; pX->g = X.g; pX->b = X.b;
         pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
-        return fError;
     }
 
 
     //-------------------------------------------------------------------------------------
-    float OptimizeRGBA(
+    void OptimizeRGBA(
         _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pPoints,
         _Out_ HDRColorA* pX,
         _Out_ HDRColorA* pY,
@@ -1388,7 +1386,6 @@ namespace
         size_t cPixels,
         _In_reads_(cPixels) const size_t* pIndex) noexcept
     {
-        constexpr float fError = FLT_MAX;
         const float *pC = (3 == cSteps) ? pC3 : pC4;
         const float *pD = (3 == cSteps) ? pD3 : pD4;
 
@@ -1417,7 +1414,7 @@ namespace
         {
             *pX = X;
             *pY = Y;
-            return 0.0f;
+            return;
         }
 
         // Try all four axis directions, to determine which diagonal best fits data
@@ -1468,13 +1465,13 @@ namespace
         {
             *pX = X;
             *pY = Y;
-            return 0.0f;
+            return;
         }
 
         // Use Newton's Method to find local minima of sum-of-squares error.
         const auto fSteps = static_cast<float>(cSteps - 1u);
 
-        for (size_t iIteration = 0; iIteration < 8 && fError > 0.0f; iIteration++)
+        for (size_t iIteration = 0; iIteration < 8; iIteration++)
         {
             // Calculate new steps
             HDRColorA pSteps[BC7_MAX_INDICES];
@@ -1544,7 +1541,6 @@ namespace
 
         *pX = X;
         *pY = Y;
-        return fError;
     }
 
 
