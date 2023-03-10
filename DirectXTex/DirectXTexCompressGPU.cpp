@@ -154,9 +154,14 @@ namespace
 
         assert(srcImage.pixels && destImage.pixels);
 
-        const DXGI_FORMAT format = gpubc->GetSourceFormat();
+        DXGI_FORMAT tformat = gpubc->GetSourceFormat();
+        if (compress & TEX_COMPRESS_SRGB_OUT)
+        {
+            tformat = MakeSRGB(tformat);
+        }
+        const DXGI_FORMAT sformat = (compress & TEX_COMPRESS_SRGB_IN) ? MakeSRGB(srcImage.format) : srcImage.format;
 
-        if (srcImage.format == format)
+        if (sformat == tformat)
         {
             // Input is already in our required source format
             return gpubc->Compress(srcImage, destImage);
@@ -169,7 +174,7 @@ namespace
 
             auto const srgb = GetSRGBFlags(compress);
 
-            switch (format)
+            switch (tformat)
             {
             case DXGI_FORMAT_R8G8B8A8_UNORM:
                 hr = ConvertToRGBA32(srcImage, image, false, srgb);
