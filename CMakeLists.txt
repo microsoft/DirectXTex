@@ -56,11 +56,14 @@ elseif(CMAKE_GENERATOR_PLATFORM MATCHES "^[Aa][Rr][Mm]64$")
     set(DIRECTX_ARCH arm64)
 endif()
 
+if(WINDOWS_STORE OR (DEFINED XBOX_CONSOLE_TARGET))
+   set(BUILD_DX12 ON)
+   set(BUILD_TOOLS OFF)
+   set(BUILD_SAMPLE OFF)
+endif()
+
 if(DEFINED XBOX_CONSOLE_TARGET)
   set(BUILD_DX11 OFF)
-  set(BUILD_DX12 ON)
-  set(BUILD_TOOLS OFF)
-  set(BUILD_SAMPLE OFF)
 endif()
 
 include(GNUInstallDirs)
@@ -251,7 +254,7 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME})
 
 #--- Command-line tools
-if(BUILD_TOOLS AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
+if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   set(TOOL_EXES texassemble texconv texdiag)
 
   add_executable(texassemble
@@ -285,7 +288,7 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
 endif()
 
 #--- DDSView sample
-if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
+if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32)
   list(APPEND TOOL_EXES ddsview)
 
   if(NOT COMPILED_DDSVIEW_SHADERS)
@@ -444,7 +447,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
     if(BC_USE_OPENMP)
         target_compile_options(${PROJECT_NAME} PRIVATE /openmp /Zc:twoPhase-)
-        if(BUILD_TOOLS AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
+        if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
           target_compile_options(texconv PRIVATE /openmp /Zc:twoPhase-)
         endif()
     endif()
@@ -463,7 +466,7 @@ if(WIN32)
       target_compile_definitions(${PROJECT_NAME} PRIVATE WINAPI_FAMILY=WINAPI_FAMILY_APP)
     endif()
 
-    if(BUILD_DX12 OR WINDOWS_STORE OR (${DIRECTX_ARCH} MATCHES "^arm64"))
+    if(BUILD_DX12 OR (${DIRECTX_ARCH} MATCHES "^arm64"))
         message(STATUS "Building with DirectX 12 Runtime support")
         set(WINVER 0x0A00)
     elseif(${DIRECTX_ARCH} MATCHES "^arm")
@@ -485,13 +488,14 @@ if(WIN32)
     endif()
 endif()
 
-if(BUILD_TOOLS AND BUILD_DX11 AND WIN32 AND (NOT WINDOWS_STORE))
+if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT texconv)
 endif()
 
 #--- Test suite
 include(CTest)
-if(BUILD_TESTING AND WIN32 AND (NOT WINDOWS_STORE) AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/Tests/CMakeLists.txt"))
+if(BUILD_TESTING AND WIN32 AND (NOT WINDOWS_STORE) AND (NOT (DEFINED XBOX_CONSOLE_TARGET))
+   AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/Tests/CMakeLists.txt"))
   enable_testing()
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Tests)
 endif()
