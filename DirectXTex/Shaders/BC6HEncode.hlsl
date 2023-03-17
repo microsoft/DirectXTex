@@ -173,6 +173,7 @@ void TryModeG10CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
     if (threadInBlock < 16)
     {
         shared_temp[GI].pixel = g_Input.Load(uint3(base_x + threadInBlock % 4, base_y + threadInBlock / 4, 0)).rgb;
+        shared_temp[GI].pixel = max(shared_temp[GI].pixel, float3(0,0,0));
         uint3 pixel_h = float2half(shared_temp[GI].pixel);
         shared_temp[GI].pixel_hr = half2float(pixel_h);
         shared_temp[GI].pixel_lum = dot(shared_temp[GI].pixel_hr, RGB2LUM);
@@ -379,6 +380,7 @@ void TryModeLE10CS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
     if (threadInBlock < 16)
     {
         shared_temp[GI].pixel = g_Input.Load(uint3(base_x + threadInBlock % 4, base_y + threadInBlock / 4, 0)).rgb;
+        shared_temp[GI].pixel = max(shared_temp[GI].pixel, float3(0,0,0));
         uint3 pixel_h = float2half(shared_temp[GI].pixel);
         shared_temp[GI].pixel_hr = half2float(pixel_h);
         shared_temp[GI].pixel_lum = dot(shared_temp[GI].pixel_hr, RGB2LUM);
@@ -603,6 +605,7 @@ void EncodeBlockCS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
     if (threadInBlock < 16)
     {
         shared_temp[GI].pixel = g_Input.Load(uint3(base_x + threadInBlock % 4, base_y + threadInBlock / 4, 0)).rgb;
+        shared_temp[GI].pixel = max(shared_temp[GI].pixel, float3(0,0,0));
         shared_temp[GI].pixel_lum = dot(shared_temp[GI].pixel, RGB2LUM);
         uint3 pixel_h = float2half(shared_temp[GI].pixel);
         shared_temp[GI].pixel_ph = start_quantize(pixel_h);
@@ -1017,8 +1020,8 @@ uint3 float2half(float3 endPoint_f)
     //uint3 sign = asuint(endPoint_f) & 0x80000000;
     //uint3 expo = asuint(endPoint_f) & 0x7F800000;
     //uint3 base = asuint(endPoint_f) & 0x007FFFFF;
-    //return ( expo < 0x33800000 ) ? 0 
-    //                    //0x33800000 indicating 2^-24, which is minimal denormalized number that half can present 
+    //return ( expo < 0x33800000 ) ? 0
+    //                    //0x33800000 indicating 2^-24, which is minimal denormalized number that half can present
     //    : ( ( expo < 0x38800000 ) ? ( sign >> 16 ) | ( ( base + 0x00800000 ) >> ( 23 - ( ( expo - 0x33800000 ) >> 23 ) ) )//fixed a bug in v0.2
     //                    //0x38800000 indicating 2^-14, which is minimal normalized number that half can present, so need to use denormalized half presentation
     //    : ( ( expo == 0x7F800000 || expo > 0x47000000 ) ? ( ( sign >> 16 ) | 0x7bff )
