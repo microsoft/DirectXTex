@@ -575,7 +575,7 @@ namespace DirectX
         TEX_FILTER_FLOAT16_SATURATE_TO_INF = 0x400,
         TEX_FILTER_FLOAT16_KEEP_NANS = 0x800,
         // Float to half16 conversion options
-           
+
         TEX_FILTER_RGB_COPY_RED = 0x1000,
         TEX_FILTER_RGB_COPY_GREEN = 0x2000,
         TEX_FILTER_RGB_COPY_BLUE = 0x4000,
