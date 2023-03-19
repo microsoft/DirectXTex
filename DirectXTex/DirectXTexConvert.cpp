@@ -3721,8 +3721,11 @@ void DirectX::Internal::ConvertScanline(
     }
 
     // Half-float sanitization
-    if (!(out->flags & CONVF_DEPTH) && (out->flags & CONVF_FLOAT) && out->datasize == 16 && (!(flags & TEX_FILTER_FLOAT16_SATURATE_TO_INF) || !(flags & TEX_FILTER_FLOAT16_KEEP_NANS)))
+    if (((out->flags & (CONVF_FLOAT | CONVF_DEPTH)) == CONVF_FLOAT)
+        && (out->datasize == 16)
+        && ((flags & (TEX_FILTER_FLOAT16_SATURATE_TO_INF | TEX_FILTER_FLOAT16_KEEP_NANS)) != (TEX_FILTER_FLOAT16_SATURATE_TO_INF | TEX_FILTER_FLOAT16_KEEP_NANS)))
     {
+        const XMVECTOR zero = XMVectorZero();
         XMVECTOR* ptr = pBuffer;
         for (size_t i = 0; i < count; ++i, ++ptr)
         {
@@ -3732,7 +3735,7 @@ void DirectX::Internal::ConvertScanline(
                 v = XMVectorClamp(v, g_HalfMin, g_HalfMax);
 
             if (!(flags & TEX_FILTER_FLOAT16_KEEP_NANS))
-                v = XMVectorSelect(v, XMVectorZero(), XMVectorIsNaN(v));
+                v = XMVectorSelect(v, zero, XMVectorIsNaN(v));
 
             *ptr = v;
         }
