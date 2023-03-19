@@ -4458,6 +4458,12 @@ namespace
             return false;
         }
 
+        if (filter & (TEX_FILTER_FLOAT16_SATURATE_TO_INF | TEX_FILTER_FLOAT16_KEEP_NANS))
+        {
+            // Float16 specials preservation not supported by WIC code paths
+            return false;
+        }
+
         // Check for special cases
     #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
         if (sformat == DXGI_FORMAT_R16G16B16A16_FLOAT
