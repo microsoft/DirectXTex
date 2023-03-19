@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata minClientVersion="2.8.6">
+        <id>directxtex_desktop_2019</id>
+        <version>0.0.0-SpecifyVersionOnCommandline</version>
+        <title>DirectXTex Library (VS 2019/2022 Win32)</title>
+        <authors>Microsoft</authors>
+        <owners>microsoft,directxtk</owners>
+        <summary>DirectXTex texture processing library</summary>
+        <description>This version is for Windows desktop applications using Visual Studio 2019 or Visual Studio 2022 and supports Windows 7 / DirectX 11.
+
+DirectXTex, a shared source library for reading and writing .DDS files, and performing various texture content processing operations including resizing, format conversion, mip-map generation, block compression for Direct3D runtime texture resources, and height-map to normal-map conversion. This library makes use of the Windows Image Component (WIC) APIs. It also includes simple .TGA and .HDR readers and writers since these image file format are commonly used for texture content processing pipelines, but are not currently supported by a built-in WIC codec.</description>
+        <releaseNotes>Matches the January 31, 2023 release on GitHub.</releaseNotes>
+        <projectUrl>http://go.microsoft.com/fwlink/?LinkId=248926</projectUrl>
+        <repository type="git" url="https://github.com/microsoft/DirectXTex.git" />
+        <icon>images\icon.jpg</icon>
+        <readme>docs\README.md</readme>
+        <license type="expression">MIT</license>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <copyright>&#169; Microsoft Corporation. All rights reserved.</copyright>
+        <tags>DirectX  DirectXTex  native nativepackage</tags>
+    </metadata>
+
+    <files>
+
+        <file target="docs" src="*.md" />
+
+        <file target="include" src="DirectXTex\DirectXTex.h" />
+        <file target="include" src="DirectXTex\DirectXTex.inl" />
+
+        <file target="native\lib\x86\Debug" src="DirectXTex\Bin\Desktop_2019\Win32\Debug\*.lib" />
+        <file target="native\lib\x86\Debug" src="DirectXTex\Bin\Desktop_2019\Win32\Debug\*.pdb" />
+
+        <file target="native\lib\x86\Debug" src="DirectXTex\Bin\Desktop_2019\Win32\DebugSpectre\*.lib" />
+        <file target="native\lib\x86\Debug" src="DirectXTex\Bin\Desktop_2019\Win32\DebugSpectre\*.pdb" />
+
+        <file target="native\lib\x86\Release" src="DirectXTex\Bin\Desktop_2019\Win32\Release\*.lib" />
+        <file target="native\lib\x86\Release" src="DirectXTex\Bin\Desktop_2019\Win32\Release\*.pdb" />
+
+        <file target="native\lib\x86\Release" src="DirectXTex\Bin\Desktop_2019\Win32\ReleaseSpectre\*.lib" />
+        <file target="native\lib\x86\Release" src="DirectXTex\Bin\Desktop_2019\Win32\ReleaseSpectre\*.pdb" />
+
+        <file target="native\lib\x64\Debug" src="DirectXTex\Bin\Desktop_2019\x64\Debug\*.lib" />
+        <file target="native\lib\x64\Debug" src="DirectXTex\Bin\Desktop_2019\x64\Debug\*.pdb" />
+
+        <file target="native\lib\x64\Debug" src="DirectXTex\Bin\Desktop_2019\x64\DebugSpectre\*.lib" />
+        <file target="native\lib\x64\Debug" src="DirectXTex\Bin\Desktop_2019\x64\DebugSpectre\*.pdb" />
+
+        <file target="native\lib\x64\Release" src="DirectXTex\Bin\Desktop_2019\x64\Release\*.lib" />
+        <file target="native\lib\x64\Release" src="DirectXTex\Bin\Desktop_2019\x64\Release\*.pdb" />
+
+        <file target="native\lib\x64\Release" src="DirectXTex\Bin\Desktop_2019\x64\ReleaseSpectre\*.lib" />
+        <file target="native\lib\x64\Release" src="DirectXTex\Bin\Desktop_2019\x64\ReleaseSpectre\*.pdb" />
+
+        <file src=".nuget/directxtex_desktop_2019.targets" target="build\native" />
+
+        <file src=".nuget/icon.jpg" target="images\" />
+
+    </files>
+</package>

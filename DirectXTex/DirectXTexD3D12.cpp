@@ -1,20 +1,37 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexD3D12.cpp
-//  
+//
 // DirectX Texture Library - Direct3D 12 helpers
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexP.h"
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wsign-conversion"
+#pragma clang diagnostic ignored "-Wunused-macros"
+#endif
+
+#define D3DX12_NO_STATE_OBJECT_HELPERS
+#define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
+#ifdef _GAMING_XBOX_SCARLETT
+#include <d3dx12_xs.h>
+#elif (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
 #include "d3dx12_x.h"
+#elif !defined(_WIN32) || defined(USING_DIRECTX_HEADERS)
+#include "directx/d3dx12.h"
+#include "dxguids/dxguids.h"
 #else
 #include "d3dx12.h"
+#endif
+
+#ifdef __clang__
+#pragma clang diagnostic pop
 #endif
 
 #ifndef IID_GRAPHICS_PPV_ARGS
@@ -30,11 +47,11 @@ static_assert(static_cast<int>(TEX_DIMENSION_TEXTURE3D) == static_cast<int>(D3D1
 
 namespace
 {
-    template<typename T> void AdjustPlaneResource(
+    template<typename T, typename PT> void AdjustPlaneResource(
         _In_ DXGI_FORMAT fmt,
         _In_ size_t height,
         _In_ size_t slicePlane,
-        _Inout_ T& res)
+        _Inout_ T& res) noexcept
     {
         switch (static_cast<int>(fmt))
         {
@@ -47,13 +64,13 @@ namespace
             if (!slicePlane)
             {
                 // Plane 0
-                res.SlicePitch = res.RowPitch * height;
+                res.SlicePitch = res.RowPitch * static_cast<PT>(height);
             }
             else
             {
                 // Plane 1
-                res.pData = (uint8_t*)(res.pData) + res.RowPitch * height;
-                res.SlicePitch = res.RowPitch * ((height + 1) >> 1);
+                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * PT(height));
+                res.SlicePitch = res.RowPitch * static_cast<PT>((height + 1) >> 1);
             }
             break;
 
@@ -61,14 +78,14 @@ namespace
             if (!slicePlane)
             {
                 // Plane 0
-                res.SlicePitch = res.RowPitch * height;
+                res.SlicePitch = res.RowPitch * static_cast<PT>(height);
             }
             else
             {
                 // Plane 1
-                res.pData = (uint8_t*)(res.pData) + res.RowPitch * height;
+                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * PT(height));
                 res.RowPitch = (res.RowPitch >> 1);
-                res.SlicePitch = res.RowPitch * height;
+                res.SlicePitch = res.RowPitch * static_cast<PT>(height);
             }
             break;
         }
@@ -82,8 +99,8 @@ namespace
         _In_ D3D12_RESOURCE_STATES stateBefore,
         _In_ D3D12_RESOURCE_STATES stateAfter)
     {
-        assert(commandList != 0);
-        assert(resource != 0);
+        assert(commandList != nullptr);
+        assert(resource != nullptr);
 
         if (stateBefore == stateAfter)
             return;
@@ -109,7 +126,7 @@ namespace
         UINT& numberOfPlanes,
         UINT& numberOfResources,
         D3D12_RESOURCE_STATES beforeState,
-        D3D12_RESOURCE_STATES afterState)
+        D3D12_RESOURCE_STATES afterState) noexcept
     {
         if (!pCommandQ || !pSource)
             return E_INVALIDARG;
@@ -121,28 +138,24 @@ namespace
         if ((numberOfPlanes > 1) && IsDepthStencil(desc.Format))
         {
             // DirectX 12 uses planes for stencil, DirectX 11 does not
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
-        D3D12_HEAP_PROPERTIES sourceHeapProperties;
-        D3D12_HEAP_FLAGS sourceHeapFlags;
-        HRESULT hr = pSource->GetHeapProperties(&sourceHeapProperties, &sourceHeapFlags);
-        if (FAILED(hr))
-            return hr;
-
         numberOfResources = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
-                            ? 1 : desc.DepthOrArraySize;
+            ? 1u : desc.DepthOrArraySize;
         numberOfResources *= desc.MipLevels;
         numberOfResources *= numberOfPlanes;
 
         if (numberOfResources > D3D12_REQ_SUBRESOURCES)
             return E_UNEXPECTED;
 
-        size_t memAlloc = (sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(UINT) + sizeof(UINT64)) * numberOfResources;
+        const size_t memAlloc = (sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(UINT) + sizeof(UINT64)) * numberOfResources;
         if (memAlloc > SIZE_MAX)
             return E_UNEXPECTED;
 
-        layoutBuff.reset(new uint8_t[memAlloc]);
+        layoutBuff.reset(new (std::nothrow) uint8_t[memAlloc]);
+        if (!layoutBuff)
+            return E_OUTOFMEMORY;
 
         auto pLayout = reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(layoutBuff.get());
         auto pRowSizesInBytes = reinterpret_cast<UINT64*>(pLayout + numberOfResources);
@@ -152,7 +165,9 @@ namespace
         device->GetCopyableFootprints(&desc, 0, numberOfResources, 0,
             pLayout, pNumRows, pRowSizesInBytes, &totalResourceSize);
 
-        if (sourceHeapProperties.Type == D3D12_HEAP_TYPE_READBACK)
+        D3D12_HEAP_PROPERTIES sourceHeapProperties;
+        HRESULT hr = pSource->GetHeapProperties(&sourceHeapProperties, nullptr);
+        if (SUCCEEDED(hr) && sourceHeapProperties.Type == D3D12_HEAP_TYPE_READBACK)
         {
             // Handle case where the source is already a staging texture we can use directly
             pStaging = pSource;
@@ -177,12 +192,11 @@ namespace
         if (FAILED(hr))
             return hr;
 
-        CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
-        CD3DX12_HEAP_PROPERTIES readBackHeapProperties(D3D12_HEAP_TYPE_READBACK);
+        const CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
+        const CD3DX12_HEAP_PROPERTIES readBackHeapProperties(D3D12_HEAP_TYPE_READBACK);
 
         // Readback resources must be buffers
         D3D12_RESOURCE_DESC bufferDesc = {};
-        bufferDesc.Alignment = desc.Alignment;
         bufferDesc.DepthOrArraySize = 1;
         bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
         bufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
@@ -192,7 +206,6 @@ namespace
         bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
         bufferDesc.MipLevels = 1;
         bufferDesc.SampleDesc.Count = 1;
-        bufferDesc.SampleDesc.Quality = 0;
 
         ComPtr<ID3D12Resource> copySource(pSource);
         if (desc.SampleDesc.Count > 1)
@@ -201,6 +214,7 @@ namespace
             auto descCopy = desc;
             descCopy.SampleDesc.Count = 1;
             descCopy.SampleDesc.Quality = 0;
+            descCopy.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 
             ComPtr<ID3D12Resource> pTemp;
             hr = device->CreateCommittedResource(
@@ -223,7 +237,7 @@ namespace
                 fmt = MakeTypelessFLOAT(fmt);
             }
 
-            D3D12_FEATURE_DATA_FORMAT_SUPPORT formatInfo = { fmt };
+            D3D12_FEATURE_DATA_FORMAT_SUPPORT formatInfo = { fmt, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
             hr = device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatInfo, sizeof(formatInfo));
             if (FAILED(hr))
                 return hr;
@@ -237,7 +251,7 @@ namespace
                 {
                     for (UINT level = 0; level < desc.MipLevels; ++level)
                     {
-                        UINT index = D3D12CalcSubresource(level, item, plane, desc.MipLevels, desc.DepthOrArraySize);
+                        const UINT index = D3D12CalcSubresource(level, item, plane, desc.MipLevels, desc.DepthOrArraySize);
                         commandList->ResolveSubresource(pTemp.Get(), index, pSource, index, fmt);
                     }
                 }
@@ -265,8 +279,8 @@ namespace
         // Get the copy target location
         for (UINT j = 0; j < numberOfResources; ++j)
         {
-            CD3DX12_TEXTURE_COPY_LOCATION copyDest(pStaging.Get(), pLayout[j]);
-            CD3DX12_TEXTURE_COPY_LOCATION copySrc(copySource.Get(), j);
+            const CD3DX12_TEXTURE_COPY_LOCATION copyDest(pStaging.Get(), pLayout[j]);
+            const CD3DX12_TEXTURE_COPY_LOCATION copySrc(copySource.Get(), j);
             commandList->CopyTextureRegion(&copyDest, 0, 0, 0, &copySrc, nullptr);
         }
 
@@ -278,7 +292,7 @@ namespace
             return hr;
 
         // Execute the command list
-        pCommandQ->ExecuteCommandLists(1, (ID3D12CommandList**)commandList.GetAddressOf());
+        pCommandQ->ExecuteCommandLists(1, CommandListCast(commandList.GetAddressOf()));
 
         // Signal the fence
         hr = pCommandQ->Signal(fence.Get(), 1);
@@ -287,7 +301,13 @@ namespace
 
         // Block until the copy is complete
         while (fence->GetCompletedValue() < 1)
+        {
+        #ifdef _WIN32
             SwitchToThread();
+        #else
+            std::this_thread::yield();
+        #endif
+        }
 
         return S_OK;
     }
@@ -304,29 +324,79 @@ namespace
 _Use_decl_annotations_
 bool DirectX::IsSupportedTexture(
     ID3D12Device* pDevice,
-    const TexMetadata& metadata)
+    const TexMetadata& metadata) noexcept
 {
     if (!pDevice)
         return false;
 
     // Validate format
-    DXGI_FORMAT fmt = metadata.format;
+    const DXGI_FORMAT fmt = metadata.format;
 
     if (!IsValid(fmt))
         return false;
+
+    const size_t iWidth = metadata.width;
+    const size_t iHeight = metadata.height;
+
+    switch (fmt)
+    {
+    case DXGI_FORMAT_NV12:
+    case DXGI_FORMAT_P010:
+    case DXGI_FORMAT_P016:
+    case DXGI_FORMAT_420_OPAQUE:
+        if ((metadata.dimension != TEX_DIMENSION_TEXTURE2D)
+            || (iWidth % 2) != 0 || (iHeight % 2) != 0)
+        {
+            return false;
+        }
+        break;
+
+    case DXGI_FORMAT_YUY2:
+    case DXGI_FORMAT_Y210:
+    case DXGI_FORMAT_Y216:
+    case WIN10_DXGI_FORMAT_P208:
+        if ((iWidth % 2) != 0)
+        {
+            return false;
+        }
+        break;
+
+    case DXGI_FORMAT_NV11:
+        if ((iWidth % 4) != 0)
+        {
+            return false;
+        }
+        break;
+
+    case DXGI_FORMAT_AI44:
+    case DXGI_FORMAT_IA44:
+    case DXGI_FORMAT_P8:
+    case DXGI_FORMAT_A8P8:
+        // Legacy video stream formats are not supported by Direct3D.
+        return false;
+
+    case WIN10_DXGI_FORMAT_V208:
+        if ((metadata.dimension != TEX_DIMENSION_TEXTURE2D)
+            || (iHeight % 2) != 0)
+        {
+            return false;
+        }
+        break;
+
+    default:
+        break;
+    }
 
     // Validate miplevel count
     if (metadata.mipLevels > D3D12_REQ_MIP_LEVELS)
         return false;
 
     // Validate array size, dimension, and width/height
-    size_t arraySize = metadata.arraySize;
-    size_t iWidth = metadata.width;
-    size_t iHeight = metadata.height;
-    size_t iDepth = metadata.depth;
+    const size_t arraySize = metadata.arraySize;
+    const size_t iDepth = metadata.depth;
 
     // Most cases are known apriori based on feature level, but we use this for robustness to handle the few optional cases
-    D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { fmt };
+    D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { fmt, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
     HRESULT hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatSupport, sizeof(formatSupport));
     if (FAILED(hr))
     {
@@ -349,7 +419,7 @@ bool DirectX::IsSupportedTexture(
             return false;
 
         {
-            UINT numberOfResources = static_cast<UINT>(arraySize * metadata.mipLevels);
+            const uint64_t numberOfResources = uint64_t(arraySize) * uint64_t(metadata.mipLevels);
             if (numberOfResources > D3D12_REQ_SUBRESOURCES)
                 return false;
         }
@@ -378,7 +448,7 @@ bool DirectX::IsSupportedTexture(
         }
 
         {
-            UINT numberOfResources = static_cast<UINT>(arraySize * metadata.mipLevels);
+            const uint64_t numberOfResources = uint64_t(arraySize) * uint64_t(metadata.mipLevels);
             if (numberOfResources > D3D12_REQ_SUBRESOURCES)
                 return false;
         }
@@ -395,8 +465,7 @@ bool DirectX::IsSupportedTexture(
             return false;
 
         {
-            UINT numberOfResources = static_cast<UINT>(metadata.mipLevels);
-            if (numberOfResources > D3D12_REQ_SUBRESOURCES)
+            if (metadata.mipLevels > D3D12_REQ_SUBRESOURCES)
                 return false;
         }
         break;
@@ -417,11 +486,11 @@ _Use_decl_annotations_
 HRESULT DirectX::CreateTexture(
     ID3D12Device* pDevice,
     const TexMetadata& metadata,
-    ID3D12Resource** ppResource)
+    ID3D12Resource** ppResource) noexcept
 {
     return CreateTextureEx(
         pDevice, metadata,
-        D3D12_RESOURCE_FLAG_NONE, false,
+        D3D12_RESOURCE_FLAG_NONE, CREATETEX_DEFAULT,
         ppResource);
 }
 
@@ -430,8 +499,8 @@ HRESULT DirectX::CreateTextureEx(
     ID3D12Device* pDevice,
     const TexMetadata& metadata,
     D3D12_RESOURCE_FLAGS resFlags,
-    bool forceSRGB,
-    ID3D12Resource** ppResource)
+    CREATETEX_FLAGS flags,
+    ID3D12Resource** ppResource) noexcept
 {
     if (!pDevice || !ppResource)
         return E_INVALIDARG;
@@ -446,9 +515,13 @@ HRESULT DirectX::CreateTextureEx(
         return E_INVALIDARG;
 
     DXGI_FORMAT format = metadata.format;
-    if (forceSRGB)
+    if (flags & CREATETEX_FORCE_SRGB)
     {
         format = MakeSRGB(format);
+    }
+    else if (flags & CREATETEX_IGNORE_SRGB)
+    {
+        format = MakeLinear(format);
     }
 
     D3D12_RESOURCE_DESC desc = {};
@@ -456,20 +529,24 @@ HRESULT DirectX::CreateTextureEx(
     desc.Height = static_cast<UINT>(metadata.height);
     desc.MipLevels = static_cast<UINT16>(metadata.mipLevels);
     desc.DepthOrArraySize = (metadata.dimension == TEX_DIMENSION_TEXTURE3D)
-                            ? static_cast<UINT16>(metadata.depth)
-                            : static_cast<UINT16>(metadata.arraySize);
+        ? static_cast<UINT16>(metadata.depth)
+        : static_cast<UINT16>(metadata.arraySize);
     desc.Format = format;
     desc.Flags = resFlags;
     desc.SampleDesc.Count = 1;
     desc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);
 
-    CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
+    const CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 
     HRESULT hr = pDevice->CreateCommittedResource(
         &defaultHeapProperties,
         D3D12_HEAP_FLAG_NONE,
         &desc,
+    #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
         D3D12_RESOURCE_STATE_COPY_DEST,
+    #else
+        D3D12_RESOURCE_STATE_COMMON,
+    #endif
         nullptr,
         IID_GRAPHICS_PPV_ARGS(ppResource));
 
@@ -478,7 +555,7 @@ HRESULT DirectX::CreateTextureEx(
 
 
 //-------------------------------------------------------------------------------------
-// Prepares a texture resource for upload 
+// Prepares a texture resource for upload
 //-------------------------------------------------------------------------------------
 
 _Use_decl_annotations_
@@ -492,18 +569,18 @@ HRESULT DirectX::PrepareUpload(
     if (!pDevice || !srcImages || !nimages || !metadata.mipLevels || !metadata.arraySize)
         return E_INVALIDARG;
 
-    UINT numberOfPlanes = D3D12GetFormatPlaneCount(pDevice, metadata.format);
+    const UINT numberOfPlanes = D3D12GetFormatPlaneCount(pDevice, metadata.format);
     if (!numberOfPlanes)
         return E_INVALIDARG;
 
     if ((numberOfPlanes > 1) && IsDepthStencil(metadata.format))
     {
         // DirectX 12 uses planes for stencil, DirectX 11 does not
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     size_t numberOfResources = (metadata.dimension == TEX_DIMENSION_TEXTURE3D)
-                               ? 1 : metadata.arraySize;
+        ? 1u : metadata.arraySize;
     numberOfResources *= metadata.mipLevels;
     numberOfResources *= numberOfPlanes;
 
@@ -525,7 +602,7 @@ HRESULT DirectX::PrepareUpload(
 
         if (metadata.arraySize > 1)
             // Direct3D 12 doesn't support arrays of 3D textures
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
 
         for (size_t plane = 0; plane < numberOfPlanes; ++plane)
         {
@@ -533,7 +610,7 @@ HRESULT DirectX::PrepareUpload(
 
             for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
-                size_t index = metadata.ComputeIndex(level, 0, 0);
+                const size_t index = metadata.ComputeIndex(level, 0, 0);
                 if (index >= nimages)
                     return E_FAIL;
 
@@ -551,7 +628,7 @@ HRESULT DirectX::PrepareUpload(
                 const uint8_t* pSlice = img.pixels + img.slicePitch;
                 for (size_t slice = 1; slice < depth; ++slice)
                 {
-                    size_t tindex = metadata.ComputeIndex(level, 0, slice);
+                    const size_t tindex = metadata.ComputeIndex(level, 0, slice);
                     if (tindex >= nimages)
                         return E_FAIL;
 
@@ -576,7 +653,7 @@ HRESULT DirectX::PrepareUpload(
                     static_cast<LONG_PTR>(img.slicePitch)
                 };
 
-                AdjustPlaneResource(metadata.format, img.height, plane, res);
+                AdjustPlaneResource<D3D12_SUBRESOURCE_DATA, intptr_t>(metadata.format, img.height, plane, res);
 
                 subresources.emplace_back(res);
 
@@ -594,7 +671,7 @@ HRESULT DirectX::PrepareUpload(
             {
                 for (size_t level = 0; level < metadata.mipLevels; ++level)
                 {
-                    size_t index = metadata.ComputeIndex(level, item, 0);
+                    const size_t index = metadata.ComputeIndex(level, item, 0);
                     if (index >= nimages)
                         return E_FAIL;
 
@@ -613,7 +690,7 @@ HRESULT DirectX::PrepareUpload(
                         static_cast<LONG_PTR>(img.slicePitch)
                     };
 
-                    AdjustPlaneResource(metadata.format, img.height, plane, res);
+                    AdjustPlaneResource<D3D12_SUBRESOURCE_DATA, intptr_t>(metadata.format, img.height, plane, res);
 
                     subresources.emplace_back(res);
                 }
@@ -635,7 +712,7 @@ HRESULT DirectX::CaptureTexture(
     bool isCubeMap,
     ScratchImage& result,
     D3D12_RESOURCE_STATES beforeState,
-    D3D12_RESOURCE_STATES afterState)
+    D3D12_RESOURCE_STATES afterState) noexcept
 {
     if (!pCommandQueue || !pSource)
         return E_INVALIDARG;
@@ -643,7 +720,12 @@ HRESULT DirectX::CaptureTexture(
     ComPtr<ID3D12Device> device;
     pCommandQueue->GetDevice(IID_GRAPHICS_PPV_ARGS(device.GetAddressOf()));
 
-    auto desc = pSource->GetDesc();
+#if defined(_MSC_VER) || !defined(_WIN32)
+    auto const desc = pSource->GetDesc();
+#else
+    D3D12_RESOURCE_DESC tmpDesc;
+    auto const& desc = *pSource->GetDesc(&tmpDesc);
+#endif
 
     ComPtr<ID3D12Resource> pStaging;
     std::unique_ptr<uint8_t[]> layoutBuff;
@@ -670,7 +752,7 @@ HRESULT DirectX::CaptureTexture(
 
     switch (desc.Dimension)
     {
-        case D3D12_RESOURCE_DIMENSION_TEXTURE1D:
+    case D3D12_RESOURCE_DIMENSION_TEXTURE1D:
         {
             TexMetadata mdata;
             mdata.width = static_cast<size_t>(desc.Width);
@@ -696,7 +778,7 @@ HRESULT DirectX::CaptureTexture(
             mdata.depth = 1;
             mdata.arraySize = desc.DepthOrArraySize;
             mdata.mipLevels = desc.MipLevels;
-            mdata.miscFlags = isCubeMap ? TEX_MISC_TEXTURECUBE : 0;
+            mdata.miscFlags = isCubeMap ? TEX_MISC_TEXTURECUBE : 0u;
             mdata.miscFlags2 = 0;
             mdata.format = desc.Format;
             mdata.dimension = TEX_DIMENSION_TEXTURE2D;
@@ -738,17 +820,9 @@ HRESULT DirectX::CaptureTexture(
         return E_FAIL;
     }
 
-    UINT arraySize, depth;
-    if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
-    {
-        arraySize = 1;
-        depth = desc.DepthOrArraySize;
-    }
-    else
-    {
-        arraySize = desc.DepthOrArraySize;
-        depth = 1;
-    }
+    const UINT arraySize = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+        ? 1u
+        : desc.DepthOrArraySize;
 
     for (UINT plane = 0; plane < numberOfPlanes; ++plane)
     {
@@ -756,7 +830,7 @@ HRESULT DirectX::CaptureTexture(
         {
             for (UINT level = 0; level < desc.MipLevels; ++level)
             {
-                UINT dindex = D3D12CalcSubresource(level, item, plane, desc.MipLevels, arraySize);
+                const UINT dindex = D3D12CalcSubresource(level, item, plane, desc.MipLevels, arraySize);
                 assert(dindex < numberOfResources);
 
                 const Image* img = result.GetImage(level, item, 0);
@@ -776,16 +850,16 @@ HRESULT DirectX::CaptureTexture(
 
                 D3D12_MEMCPY_DEST destData = { img->pixels, img->rowPitch, img->slicePitch };
 
-                AdjustPlaneResource(img->format, img->height, plane, destData);
+                AdjustPlaneResource<D3D12_MEMCPY_DEST, uintptr_t>(img->format, img->height, plane, destData);
 
                 D3D12_SUBRESOURCE_DATA srcData =
                 {
                     pData + pLayout[dindex].Offset,
                     static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch),
-                    static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch * pNumRows[dindex])
+                    static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch) * static_cast<LONG_PTR>(pNumRows[dindex])
                 };
 
-                if (pRowSizesInBytes[dindex] > (SIZE_T)-1)
+                if (pRowSizesInBytes[dindex] > SIZE_T(-1))
                 {
                     pStaging->Unmap(0, nullptr);
                     result.Release();
@@ -793,7 +867,7 @@ HRESULT DirectX::CaptureTexture(
                 }
 
                 MemcpySubresource(&destData, &srcData,
-                    (SIZE_T)pRowSizesInBytes[dindex],
+                    static_cast<SIZE_T>(pRowSizesInBytes[dindex]),
                     pNumRows[dindex],
                     pLayout[dindex].Footprint.Depth);
             }

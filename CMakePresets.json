@@ -1,0 +1,258 @@
+﻿{
+  "version": 2,
+  "configurePresets": [
+    {
+      "name": "base",
+      "displayName": "Basic Config",
+      "description": "Basic build using Ninja generator",
+      "generator": "Ninja",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": { "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}" }
+    },
+
+    {
+      "name": "x64",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": { "DIRECTX_ARCH": "x64" },
+      "hidden": true
+    },
+    {
+      "name": "x86",
+      "architecture": {
+        "value": "x86",
+        "strategy": "external"
+      },
+      "cacheVariables": { "DIRECTX_ARCH": "x86" },
+      "hidden": true
+    },
+    {
+      "name": "ARM",
+      "architecture": {
+        "value": "arm",
+        "strategy": "external"
+      },
+      "cacheVariables": { "DIRECTX_ARCH": "arm" },
+      "hidden": true
+    },
+    {
+      "name": "ARM64",
+      "architecture": {
+        "value": "arm64",
+        "strategy": "external"
+      },
+      "cacheVariables": { "DIRECTX_ARCH": "arm64" },
+      "hidden": true
+    },
+
+    {
+      "name": "Debug",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" },
+      "hidden": true
+    },
+    {
+      "name": "Release",
+      "cacheVariables":
+      {
+          "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+          "CMAKE_INTERPROCEDURAL_OPTIMIZATION": true
+      },
+      "hidden": true
+    },
+
+    {
+      "name": "MSVC",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "cl.exe"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      }
+    },
+    {
+      "name": "Clang",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang-cl.exe"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      }
+    },
+    {
+      "name": "GNUC",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++.exe"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      }
+    },
+
+    {
+      "name": "Win7",
+      "cacheVariables": {
+        "BUILD_DX12": false
+      },
+      "hidden": true
+    },
+    {
+      "name": "UWP",
+      "cacheVariables": {
+        "CMAKE_SYSTEM_NAME": "WindowsStore",
+        "CMAKE_SYSTEM_VERSION": "10.0",
+        "BUILD_DX12": true
+      },
+      "hidden": true
+    },
+    {
+      "name": "Scarlett",
+      "cacheVariables": {
+        "XBOX_CONSOLE_TARGET": "scarlett",
+        "BUILD_TESTING": false
+      },
+      "hidden": true
+    },
+    {
+      "name": "XboxOne",
+      "cacheVariables": {
+        "XBOX_CONSOLE_TARGET": "xboxone",
+        "BUILD_TESTING": false
+      },
+      "hidden": true
+    },
+    {
+      "name": "VCPKG",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+          "type": "FILEPATH"
+        }
+      },
+      "hidden": true
+    },
+    {
+      "name": "EXR",
+      "cacheVariables": {
+        "ENABLE_OPENEXR_SUPPORT": true
+      },
+      "hidden": true
+    },
+    {
+      "name": "MinGW32",
+      "hidden": true,
+      "environment": {
+        "PATH": "$penv{PATH};c:/mingw32/bin;c:/mingw32/libexec/gcc/i686-w64-mingw32/12.2.0"
+      },
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x86-mingw-static",
+        "VCPKG_HOST_TRIPLET": "x86-mingw-static"
+      }
+    },
+    {
+      "name": "MinGW64",
+      "hidden": true,
+      "environment": {
+        "PATH": "$penv{PATH};c:/mingw64/bin;c:/mingw64/libexec/gcc/x86_64-w64-mingw32/12.2.0"
+      },
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-static",
+        "VCPKG_HOST_TRIPLET": "x64-mingw-static"
+      }
+    },
+
+    { "name": "x64-Debug"    , "description": "MSVC for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "MSVC" ] },
+    { "name": "x64-Release"  , "description": "MSVC for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "MSVC" ] },
+    { "name": "x86-Debug"    , "description": "MSVC for x86 (Debug) with DX12", "inherits": [ "base", "x86", "Debug", "MSVC" ] },
+    { "name": "x86-Release"  , "description": "MSVC for x86 (Release) with DX12", "inherits": [ "base", "x86", "Release", "MSVC" ] },
+    { "name": "arm64-Debug"  , "description": "MSVC for ARM64 (Debug) with DX12", "inherits": [ "base", "ARM64", "Debug", "MSVC" ] },
+    { "name": "arm64-Release", "description": "MSVC for ARM64 (Release) with DX12", "inherits": [ "base", "ARM64", "Release", "MSVC" ] },
+
+    { "name": "x64-Debug-UWP"    , "description": "MSVC for x64 (Debug) for UWP", "inherits": [ "base", "x64", "Debug", "MSVC", "UWP" ] },
+    { "name": "x64-Release-UWP"  , "description": "MSVC for x64 (Release) for UWP", "inherits": [ "base", "x64", "Release", "MSVC", "UWP" ] },
+    { "name": "x86-Debug-UWP"    , "description": "MSVC for x86 (Debug) for UWP", "inherits": [ "base", "x86", "Debug", "MSVC", "UWP" ] },
+    { "name": "x86-Release-UWP"  , "description": "MSVC for x86 (Release) for UWP", "inherits": [ "base", "x86", "Release", "MSVC", "UWP" ] },
+    { "name": "arm-Debug-UWP"    , "description": "MSVC for ARM (Debug) for UWP", "inherits": [ "base", "ARM", "Debug", "MSVC", "UWP" ] },
+    { "name": "arm-Release-UWP"  , "description": "MSVC for ARM (Release) for UWP", "inherits": [ "base", "ARM", "Release", "MSVC", "UWP" ] },
+    { "name": "arm64-Debug-UWP"  , "description": "MSVC for ARM64 (Debug) for UWP", "inherits": [ "base", "ARM64", "Debug", "MSVC", "UWP" ] },
+    { "name": "arm64-Release-UWP", "description": "MSVC for ARM64 (Release) for UWP", "inherits": [ "base", "ARM64", "Release", "MSVC", "UWP" ] },
+
+    { "name": "x64-Debug-Win7"    , "description": "MSVC for x64 (Debug) for Windows 7", "inherits": [ "base", "x64", "Debug", "MSVC", "Win7" ] },
+    { "name": "x64-Release-Win7"  , "description": "MSVC for x64 (Release) for Windows 7", "inherits": [ "base", "x64", "Release", "MSVC", "Win7" ] },
+    { "name": "x86-Debug-Win7"    , "description": "MSVC for x86 (Debug) for Windows 7", "inherits": [ "base", "x86", "Debug", "MSVC", "Win7" ] },
+    { "name": "x86-Release-Win7"  , "description": "MSVC for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "MSVC", "Win7" ] },
+
+    { "name": "x64-Debug-Scarlett"    , "description": "MSVC for x64 (Debug) for Xbox Series X|S", "inherits": [ "base", "x64", "Debug", "MSVC", "Scarlett" ] },
+    { "name": "x64-Release-Scarlett"  , "description": "MSVC for x64 (Release) for Xbox Series X|S", "inherits": [ "base", "x64", "Release", "MSVC", "Scarlett" ] },
+
+    { "name": "x64-Debug-XboxOne"    , "description": "MSVC for x64 (Debug) for Xbox One", "inherits": [ "base", "x64", "Debug", "MSVC", "XboxOne" ] },
+    { "name": "x64-Release-XboxOne"  , "description": "MSVC for x64 (Release) for Xbox One", "inherits": [ "base", "x64", "Release", "MSVC", "XboxOne" ] },
+
+    { "name": "x64-Debug-VCPKG"    , "description": "MSVC for x64 (Debug) using VCPKG", "inherits": [ "base", "x64", "Debug", "MSVC", "VCPKG" ] },
+    { "name": "x64-Release-VCPKG"  , "description": "MSVC for x64 (Release) using VCPKG", "inherits": [ "base", "x64", "Release", "MSVC", "VCPKG" ] },
+    { "name": "x86-Debug-VCPKG"    , "description": "MSVC for x86 (Debug) using VCPKG", "inherits": [ "base", "x86", "Debug", "MSVC", "VCPKG" ] },
+    { "name": "x86-Release-VCPKG"  , "description": "MSVC for x86 (Release) using VCPKG", "inherits": [ "base", "x86", "Release", "MSVC", "VCPKG" ] },
+    { "name": "arm64-Debug-VCPKG"  , "description": "MSVC for ARM64 (Debug) using VCPKG", "inherits": [ "base", "ARM64", "Debug", "MSVC", "VCPKG" ] },
+    { "name": "arm64-Release-VCPKG", "description": "MSVC for ARM64 (Release) using VCPKG", "inherits": [ "base", "ARM64", "Release", "MSVC", "VCPKG" ] },
+
+    { "name": "x64-Debug-EXR"      , "description": "MSVC for x64 (Debug) using VCPKG/OpenEXR", "inherits": [ "base", "x64", "Debug", "MSVC", "VCPKG", "EXR" ] },
+    { "name": "x64-Release-EXR"    , "description": "MSVC for x64 (Release) using VCPKG/OpenEXR", "inherits": [ "base", "x64", "Release", "MSVC", "VCPKG", "EXR" ] },
+
+    { "name": "x64-Debug-Clang"    , "description": "Clang/LLVM for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "Clang" ] },
+    { "name": "x64-Release-Clang"  , "description": "Clang/LLVM for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "Clang" ] },
+    { "name": "x86-Debug-Clang"    , "description": "Clang/LLVM for x86 (Debug) with DX12", "inherits": [ "base", "x86", "Debug", "Clang" ], "environment": { "CXXFLAGS": "-m32" } },
+    { "name": "x86-Release-Clang"  , "description": "Clang/LLVM for x86 (Release) with DX12", "inherits": [ "base", "x86", "Release", "Clang" ], "environment": { "CXXFLAGS": "-m32" } },
+    { "name": "arm64-Debug-Clang"  , "description": "Clang/LLVM for AArch64 (Debug) with DX12", "inherits": [ "base", "ARM64", "Debug", "Clang" ], "environment": { "CXXFLAGS": "--target=arm64-pc-windows-msvc" } },
+    { "name": "arm64-Release-Clang", "description": "Clang/LLVM for AArch64 (Release) with DX12", "inherits": [ "base", "ARM64", "Release", "Clang" ], "environment": { "CXXFLAGS": "--target=arm64-pc-windows-msvc" } },
+
+    { "name": "x64-Debug-UWP-Clang"    , "description": "Clang/LLVM for x64 (Debug) for UWP", "inherits": [ "base", "x64", "Debug", "Clang", "UWP" ] },
+    { "name": "x64-Release-UWP-Clang"  , "description": "Clang/LLVM for x64 (Release) for UWP", "inherits": [ "base", "x64", "Release", "Clang", "UWP" ] },
+    { "name": "x86-Debug-UWP-Clang"    , "description": "Clang/LLVM for x86 (Debug) for UWP", "inherits": [ "base", "x86", "Debug", "Clang", "UWP" ], "environment": { "CXXFLAGS": "-m32" } },
+    { "name": "x86-Release-UWP-Clang"  , "description": "Clang/LLVM for x86 (Release) for UWP", "inherits": [ "base", "x86", "Release", "Clang", "UWP" ], "environment": { "CXXFLAGS": "-m32" } },
+    { "name": "arm64-Debug-UWP-Clang"  , "description": "Clang/LLVM for AArch64 (Debug) for UWP", "inherits": [ "base", "ARM64", "Debug", "Clang", "UWP" ], "environment": { "CXXFLAGS": "--target=arm64-pc-windows-msvc" } },
+    { "name": "arm64-Release-UWP-Clang", "description": "Clang/LLVM for AArch64 (Release) for UWP", "inherits": [ "base", "ARM64", "Release", "Clang", "UWP" ], "environment": { "CXXFLAGS": "--target=arm64-pc-windows-msvc" } },
+
+    { "name": "x64-Debug-Win7-Clang"  , "description": "Clang/LLVM for x64 (Debug) for Windows 7", "inherits": [ "base", "x64", "Debug", "Clang", "Win7" ] },
+    { "name": "x64-Release-Win7-Clang", "description": "Clang/LLVM for x64 (Release) for Windows 7", "inherits": [ "base", "x64", "Release", "Clang", "Win7" ] },
+    { "name": "x86-Debug-Win7-Clang"  , "description": "Clang/LLVM for x86 (Debug) for Windows 7", "inherits": [ "base", "x86", "Debug", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
+    { "name": "x86-Release-Win7-Clang", "description": "Clang/LLVM for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
+
+    { "name": "x64-Debug-MinGW"  , "description": "MinG-W64 (Debug)", "inherits": [ "base", "x64", "Debug", "GNUC", "VCPKG", "MinGW64" ] },
+    { "name": "x64-Release-MinGW", "description": "MinG-W64 (Release)", "inherits": [ "base", "x64", "Release", "GNUC", "VCPKG", "MinGW64" ] },
+    { "name": "x86-Debug-MinGW"  , "description": "MinG-W32 (Debug)", "inherits": [ "base", "x86", "Debug", "GNUC", "VCPKG", "MinGW32" ] },
+    { "name": "x86-Release-MinGW", "description": "MinG-W32 (Release)", "inherits": [ "base", "x86", "Release", "GNUC", "VCPKG", "MinGW32" ] },
+
+    { "name": "x64-Debug-Linux",     "description": "WSL Linux x64 (Debug)", "inherits": [ "base", "x64", "Debug", "VCPKG" ] },
+    { "name": "x64-Release-Linux",   "description": "WSL Linux x64 (Release)", "inherits": [ "base", "x64", "Release", "VCPKG" ] },
+    { "name": "arm64-Debug-Linux",   "description": "WSL Linux ARM64 (Debug)", "inherits": [ "base", "ARM64", "Debug", "VCPKG" ] },
+    { "name": "arm64-Release-Linux", "description": "WSL Linux ARM64 (Release)", "inherits": [ "base", "ARM64", "Release", "VCPKG" ] }
+  ],
+  "testPresets": [
+    { "name": "x64-Debug"    , "configurePreset": "x64-Debug" },
+    { "name": "x64-Release"  , "configurePreset": "x64-Release" },
+    { "name": "x86-Debug"    , "configurePreset": "x86-Debug" },
+    { "name": "x86-Release"  , "configurePreset": "x86-Release" },
+    { "name": "arm64-Debug"  , "configurePreset": "arm64-Debug" },
+    { "name": "arm64-Release", "configurePreset": "arm64-Release" },
+
+    { "name": "x64-Debug-Clang"    , "configurePreset": "x64-Debug-Clang" },
+    { "name": "x64-Release-Clang"  , "configurePreset": "x64-Release-Clang" },
+    { "name": "x86-Debug-Clang"    , "configurePreset": "x86-Debug-Clang" },
+    { "name": "x86-Release-Clang"  , "configurePreset": "x86-Release-Clang" },
+    { "name": "arm64-Debug-Clang"  , "configurePreset": "arm64-Debug-Clang" },
+    { "name": "arm64-Release-Clang", "configurePreset": "arm64-Release-Clang" },
+
+    { "name": "x64-Debug-MinGW"    , "configurePreset": "x64-Debug-MinGW" },
+    { "name": "x64-Release-MinGW"  , "configurePreset": "x64-Release-MinGW" },
+    { "name": "x86-Debug-MinGW"    , "configurePreset": "x86-Debug-MinGW" },
+    { "name": "x86-Release-MinGW"  , "configurePreset": "x86-Release-MinGW" }
+  ]
+}

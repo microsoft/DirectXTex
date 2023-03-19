@@ -1,15 +1,15 @@
 //-------------------------------------------------------------------------------------
 // BC6HBC7.cpp
-//  
+//
 // Block-compression (BC) functionality for BC6H and BC7 (DirectX 11 texture compression)
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexP.h"
 
 #include "BC.h"
 
@@ -20,7 +20,7 @@ using namespace DirectX::PackedVector;
 // Macros
 //-------------------------------------------------------------------------------------
 
-#define SIGN_EXTEND(x,nb) ((((x)&(1<<((nb)-1)))?((~0)<<(nb)):0)|(x))
+#define SIGN_EXTEND(x,nb) ((((x)&(1<<((nb)-1)))?((~0)^((1<<(nb))-1)):0)|(x))
 
 // Because these are used in SAL annotations, they need to remain macros rather than const values
 #define BC6H_MAX_REGIONS 2
@@ -34,25 +34,25 @@ namespace
     // Constants
     //-------------------------------------------------------------------------------------
 
-    const uint16_t F16S_MASK = 0x8000;   // f16 sign mask
-    const uint16_t F16EM_MASK = 0x7fff;   // f16 exp & mantissa mask
-    const uint16_t F16MAX = 0x7bff;   // MAXFLT bit pattern for XMHALF
+    constexpr uint16_t F16S_MASK = 0x8000;   // f16 sign mask
+    constexpr uint16_t F16EM_MASK = 0x7fff;   // f16 exp & mantissa mask
+    constexpr uint16_t F16MAX = 0x7bff;   // MAXFLT bit pattern for XMHALF
 
-    const size_t BC6H_NUM_CHANNELS = 3;
-    const size_t BC6H_MAX_SHAPES = 32;
+    constexpr size_t BC6H_NUM_CHANNELS = 3;
+    constexpr size_t BC6H_MAX_SHAPES = 32;
 
-    const size_t BC7_NUM_CHANNELS = 4;
-    const size_t BC7_MAX_SHAPES = 64;
+    constexpr size_t BC7_NUM_CHANNELS = 4;
+    constexpr size_t BC7_MAX_SHAPES = 64;
 
-    const int32_t BC67_WEIGHT_MAX = 64;
-    const uint32_t BC67_WEIGHT_SHIFT = 6;
-    const int32_t BC67_WEIGHT_ROUND = 32;
+    constexpr int32_t BC67_WEIGHT_MAX = 64;
+    constexpr uint32_t BC67_WEIGHT_SHIFT = 6;
+    constexpr int32_t BC67_WEIGHT_ROUND = 32;
 
-    const float fEpsilon = (0.25f / 64.0f) * (0.25f / 64.0f);
-    const float pC3[] = { 2.0f / 2.0f, 1.0f / 2.0f, 0.0f / 2.0f };
-    const float pD3[] = { 0.0f / 2.0f, 1.0f / 2.0f, 2.0f / 2.0f };
-    const float pC4[] = { 3.0f / 3.0f, 2.0f / 3.0f, 1.0f / 3.0f, 0.0f / 3.0f };
-    const float pD4[] = { 0.0f / 3.0f, 1.0f / 3.0f, 2.0f / 3.0f, 3.0f / 3.0f };
+    constexpr float fEpsilon = (0.25f / 64.0f) * (0.25f / 64.0f);
+    constexpr float pC3[] = { 2.0f / 2.0f, 1.0f / 2.0f, 0.0f / 2.0f };
+    constexpr float pD3[] = { 0.0f / 2.0f, 1.0f / 2.0f, 2.0f / 2.0f };
+    constexpr float pC4[] = { 3.0f / 3.0f, 2.0f / 3.0f, 1.0f / 3.0f, 0.0f / 3.0f };
+    constexpr float pD4[] = { 0.0f / 3.0f, 1.0f / 3.0f, 2.0f / 3.0f, 3.0f / 3.0f };
 
     // Partition, Shape, Pixel (index into 4x4 block)
     const uint8_t g_aPartitionTable[3][64][16] =
@@ -337,9 +337,9 @@ namespace DirectX
         uint8_t r, g, b, a;
 
         LDRColorA() = default;
-        LDRColorA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a) : r(_r), g(_g), b(_b), a(_a) {}
+        LDRColorA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a) noexcept : r(_r), g(_g), b(_b), a(_a) {}
 
-        const uint8_t& operator [] (_In_range_(0, 3) size_t uElement) const
+        const uint8_t& operator [] (_In_range_(0, 3) size_t uElement) const noexcept
         {
             switch (uElement)
             {
@@ -351,7 +351,7 @@ namespace DirectX
             }
         }
 
-        uint8_t& operator [] (_In_range_(0, 3) size_t uElement)
+        uint8_t& operator [] (_In_range_(0, 3) size_t uElement) noexcept
         {
             switch (uElement)
             {
@@ -363,7 +363,7 @@ namespace DirectX
             }
         }
 
-        LDRColorA operator = (_In_ const HDRColorA& c)
+        LDRColorA operator = (_In_ const HDRColorA& c) noexcept
         {
             LDRColorA ret;
             HDRColorA tmp(c);
@@ -375,7 +375,7 @@ namespace DirectX
             return ret;
         }
 
-        static void InterpolateRGB(_In_ const LDRColorA& c0, _In_ const LDRColorA& c1, _In_ size_t wc, _In_ _In_range_(2, 4) size_t wcprec, _Out_ LDRColorA& out)
+        static void InterpolateRGB(_In_ const LDRColorA& c0, _In_ const LDRColorA& c1, _In_ size_t wc, _In_ _In_range_(2, 4) size_t wcprec, _Out_ LDRColorA& out) noexcept
         {
             const int* aWeights = nullptr;
             switch (wcprec)
@@ -390,7 +390,7 @@ namespace DirectX
             out.b = uint8_t((uint32_t(c0.b) * uint32_t(BC67_WEIGHT_MAX - aWeights[wc]) + uint32_t(c1.b) * uint32_t(aWeights[wc]) + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT);
         }
 
-        static void InterpolateA(_In_ const LDRColorA& c0, _In_ const LDRColorA& c1, _In_ size_t wa, _In_range_(2, 4) _In_ size_t waprec, _Out_ LDRColorA& out)
+        static void InterpolateA(_In_ const LDRColorA& c0, _In_ const LDRColorA& c1, _In_ size_t wa, _In_range_(2, 4) _In_ size_t waprec, _Out_ LDRColorA& out) noexcept
         {
             const int* aWeights = nullptr;
             switch (waprec)
@@ -403,7 +403,7 @@ namespace DirectX
             out.a = uint8_t((uint32_t(c0.a) * uint32_t(BC67_WEIGHT_MAX - aWeights[wa]) + uint32_t(c1.a) * uint32_t(aWeights[wa]) + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT);
         }
 
-        static void Interpolate(_In_ const LDRColorA& c0, _In_ const LDRColorA& c1, _In_ size_t wc, _In_ size_t wa, _In_ _In_range_(2, 4) size_t wcprec, _In_ _In_range_(2, 4) size_t waprec, _Out_ LDRColorA& out)
+        static void Interpolate(_In_ const LDRColorA& c0, _In_ const LDRColorA& c1, _In_ size_t wc, _In_ size_t wa, _In_ _In_range_(2, 4) size_t wcprec, _In_ _In_range_(2, 4) size_t waprec, _Out_ LDRColorA& out) noexcept
         {
             InterpolateRGB(c0, c1, wc, wcprec, out);
             InterpolateA(c0, c1, wa, waprec, out);
@@ -418,7 +418,7 @@ namespace DirectX
         LDRColorA B;
     };
 
-    inline HDRColorA::HDRColorA(const LDRColorA& c)
+    inline HDRColorA::HDRColorA(const LDRColorA& c) noexcept
     {
         r = float(c.r) * (1.0f / 255.0f);
         g = float(c.g) * (1.0f / 255.0f);
@@ -426,18 +426,18 @@ namespace DirectX
         a = float(c.a) * (1.0f / 255.0f);
     }
 
-    inline HDRColorA& HDRColorA::operator = (const LDRColorA& c)
+    inline HDRColorA& HDRColorA::operator = (const LDRColorA& c) noexcept
     {
-        r = (float)c.r;
-        g = (float)c.g;
-        b = (float)c.b;
-        a = (float)c.a;
+        r = static_cast<float>(c.r);
+        g = static_cast<float>(c.g);
+        b = static_cast<float>(c.b);
+        a = static_cast<float>(c.a);
         return *this;
     }
 
-    inline LDRColorA HDRColorA::ToLDRColorA() const
+    inline LDRColorA HDRColorA::ToLDRColorA() const noexcept
     {
-        return LDRColorA((uint8_t)(r + 0.01f), (uint8_t)(g + 0.01f), (uint8_t)(b + 0.01f), (uint8_t)(a + 0.01f));
+        return LDRColorA(static_cast<uint8_t>(r + 0.01f), static_cast<uint8_t>(g + 0.01f), static_cast<uint8_t>(b + 0.01f), static_cast<uint8_t>(a + 0.01f));
     }
 }
 
@@ -451,15 +451,9 @@ namespace
 
     public:
         INTColor() = default;
-        INTColor(int nr, int ng, int nb) : pad(0) { r = nr; g = ng; b = nb; }
-        INTColor(const INTColor& c) : pad(0) { r = c.r; g = c.g; b = c.b; }
+        INTColor(int nr, int ng, int nb) noexcept : r(nr), g(ng), b(nb), pad(0) {}
 
-        INTColor operator - (_In_ const INTColor& c) const
-        {
-            return INTColor(r - c.r, g - c.g, b - c.b);
-        }
-
-        INTColor& operator += (_In_ const INTColor& c)
+        INTColor& operator += (_In_ const INTColor& c) noexcept
         {
             r += c.r;
             g += c.g;
@@ -467,7 +461,7 @@ namespace
             return *this;
         }
 
-        INTColor& operator -= (_In_ const INTColor& c)
+        INTColor& operator -= (_In_ const INTColor& c) noexcept
         {
             r -= c.r;
             g -= c.g;
@@ -475,7 +469,7 @@ namespace
             return *this;
         }
 
-        INTColor& operator &= (_In_ const INTColor& c)
+        INTColor& operator &= (_In_ const INTColor& c) noexcept
         {
             r &= c.r;
             g &= c.g;
@@ -483,18 +477,18 @@ namespace
             return *this;
         }
 
-        int& operator [] (_In_ uint8_t i)
+        int& operator [] (_In_ uint8_t i) noexcept
         {
             assert(i < sizeof(INTColor) / sizeof(int));
             _Analysis_assume_(i < sizeof(INTColor) / sizeof(int));
-            return ((int*) this)[i];
+            return reinterpret_cast<int*>(this)[i];
         }
 
-        void Set(_In_ const HDRColorA& c, _In_ bool bSigned)
+        void Set(_In_ const HDRColorA& c, _In_ bool bSigned) noexcept
         {
             PackedVector::XMHALF4 aF16;
 
-            XMVECTOR v = XMLoadFloat4((const XMFLOAT4*)& c);
+            const XMVECTOR v = XMLoadFloat4(reinterpret_cast<const XMFLOAT4*>(&c));
             XMStoreHalf4(&aF16, v);
 
             r = F16ToINT(aF16.x, bSigned);
@@ -502,7 +496,7 @@ namespace
             b = F16ToINT(aF16.z, bSigned);
         }
 
-        INTColor& Clamp(_In_ int iMin, _In_ int iMax)
+        INTColor& Clamp(_In_ int iMin, _In_ int iMax) noexcept
         {
             r = std::min<int>(iMax, std::max<int>(iMin, r));
             g = std::min<int>(iMax, std::max<int>(iMin, g));
@@ -510,7 +504,7 @@ namespace
             return *this;
         }
 
-        INTColor& SignExtend(_In_ const LDRColorA& Prec)
+        INTColor& SignExtend(_In_ const LDRColorA& Prec) noexcept
         {
             r = SIGN_EXTEND(r, int(Prec.r));
             g = SIGN_EXTEND(g, int(Prec.g));
@@ -518,7 +512,7 @@ namespace
             return *this;
         }
 
-        void ToF16(_Out_writes_(3) PackedVector::HALF aF16[3], _In_ bool bSigned) const
+        void ToF16(_Out_writes_(3) PackedVector::HALF aF16[3], _In_ bool bSigned) const noexcept
         {
             aF16[0] = INT2F16(r, bSigned);
             aF16[1] = INT2F16(g, bSigned);
@@ -526,9 +520,9 @@ namespace
         }
 
     private:
-        static int F16ToINT(_In_ const PackedVector::HALF& f, _In_ bool bSigned)
+        static int F16ToINT(_In_ const PackedVector::HALF& f, _In_ bool bSigned) noexcept
         {
-            uint16_t input = *((const uint16_t*)&f);
+            uint16_t input = *reinterpret_cast<const uint16_t*>(&f);
             int out, s;
             if (bSigned)
             {
@@ -546,7 +540,7 @@ namespace
             return out;
         }
 
-        static PackedVector::HALF INT2F16(_In_ int input, _In_ bool bSigned)
+        static PackedVector::HALF INT2F16(_In_ int input, _In_ bool bSigned) noexcept
         {
             PackedVector::HALF h;
             uint16_t out;
@@ -563,10 +557,10 @@ namespace
             else
             {
                 assert(input >= 0 && input <= F16MAX);
-                out = (uint16_t)input;
+                out = static_cast<uint16_t>(input);
             }
 
-            *((uint16_t*)&h) = out;
+            *reinterpret_cast<uint16_t*>(&h) = out;
             return h;
         }
     };
@@ -583,51 +577,51 @@ namespace
     class CBits
     {
     public:
-        uint8_t GetBit(_Inout_ size_t& uStartBit) const
+        uint8_t GetBit(_Inout_ size_t& uStartBit) const noexcept
         {
             assert(uStartBit < 128);
             _Analysis_assume_(uStartBit < 128);
-            size_t uIndex = uStartBit >> 3;
-            uint8_t ret = (m_uBits[uIndex] >> (uStartBit - (uIndex << 3))) & 0x01;
+            const size_t uIndex = uStartBit >> 3;
+            auto const ret = static_cast<uint8_t>((m_uBits[uIndex] >> (uStartBit - (uIndex << 3))) & 0x01);
             uStartBit++;
             return ret;
         }
 
-        uint8_t GetBits(_Inout_ size_t& uStartBit, _In_ size_t uNumBits) const
+        uint8_t GetBits(_Inout_ size_t& uStartBit, _In_ size_t uNumBits) const noexcept
         {
             if (uNumBits == 0) return 0;
             assert(uStartBit + uNumBits <= 128 && uNumBits <= 8);
             _Analysis_assume_(uStartBit + uNumBits <= 128 && uNumBits <= 8);
             uint8_t ret;
-            size_t uIndex = uStartBit >> 3;
-            size_t uBase = uStartBit - (uIndex << 3);
+            const size_t uIndex = uStartBit >> 3;
+            const size_t uBase = uStartBit - (uIndex << 3);
             if (uBase + uNumBits > 8)
             {
-                size_t uFirstIndexBits = 8 - uBase;
-                size_t uNextIndexBits = uNumBits - uFirstIndexBits;
-                ret = (m_uBits[uIndex] >> uBase) | ((m_uBits[uIndex + 1] & ((1 << uNextIndexBits) - 1)) << uFirstIndexBits);
+                const size_t uFirstIndexBits = 8 - uBase;
+                const size_t uNextIndexBits = uNumBits - uFirstIndexBits;
+                ret = static_cast<uint8_t>((unsigned(m_uBits[uIndex]) >> uBase) | ((unsigned(m_uBits[uIndex + 1]) & ((1u << uNextIndexBits) - 1)) << uFirstIndexBits));
             }
             else
             {
-                ret = (m_uBits[uIndex] >> uBase) & ((1 << uNumBits) - 1);
+                ret = static_cast<uint8_t>((m_uBits[uIndex] >> uBase) & ((1 << uNumBits) - 1));
             }
             assert(ret < (1 << uNumBits));
             uStartBit += uNumBits;
             return ret;
         }
 
-        void SetBit(_Inout_ size_t& uStartBit, _In_ uint8_t uValue)
+        void SetBit(_Inout_ size_t& uStartBit, _In_ uint8_t uValue) noexcept
         {
             assert(uStartBit < 128 && uValue < 2);
             _Analysis_assume_(uStartBit < 128 && uValue < 2);
             size_t uIndex = uStartBit >> 3;
-            size_t uBase = uStartBit - (uIndex << 3);
+            const size_t uBase = uStartBit - (uIndex << 3);
             m_uBits[uIndex] &= ~(1 << uBase);
             m_uBits[uIndex] |= uValue << uBase;
             uStartBit++;
         }
 
-        void SetBits(_Inout_ size_t& uStartBit, _In_ size_t uNumBits, _In_ uint8_t uValue)
+        void SetBits(_Inout_ size_t& uStartBit, _In_ size_t uNumBits, _In_ uint8_t uValue) noexcept
         {
             if (uNumBits == 0)
                 return;
@@ -635,11 +629,11 @@ namespace
             _Analysis_assume_(uStartBit + uNumBits <= 128 && uNumBits <= 8);
             assert(uValue < (1 << uNumBits));
             size_t uIndex = uStartBit >> 3;
-            size_t uBase = uStartBit - (uIndex << 3);
+            const size_t uBase = uStartBit - (uIndex << 3);
             if (uBase + uNumBits > 8)
             {
-                size_t uFirstIndexBits = 8 - uBase;
-                size_t uNextIndexBits = uNumBits - uFirstIndexBits;
+                const size_t uFirstIndexBits = 8 - uBase;
+                const size_t uNextIndexBits = uNumBits - uFirstIndexBits;
                 m_uBits[uIndex] &= ~(((1 << uFirstIndexBits) - 1) << uBase);
                 m_uBits[uIndex] |= uValue << uBase;
                 m_uBits[uIndex + 1] &= ~((1 << uNextIndexBits) - 1);
@@ -661,12 +655,12 @@ namespace
     class D3DX_BC6H : private CBits< 16 >
     {
     public:
-        void Decode(_In_ bool bSigned, _Out_writes_(NUM_PIXELS_PER_BLOCK) HDRColorA* pOut) const;
-        void Encode(_In_ bool bSigned, _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pIn);
+        void Decode(_In_ bool bSigned, _Out_writes_(NUM_PIXELS_PER_BLOCK) HDRColorA* pOut) const noexcept;
+        void Encode(_In_ bool bSigned, _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pIn) noexcept;
 
     private:
-#pragma warning(push)
-#pragma warning(disable : 4480)
+    #pragma warning(push)
+    #pragma warning(disable : 4480)
         enum EField : uint8_t
         {
             NA, // N/A
@@ -685,7 +679,7 @@ namespace
             BY,
             BZ,
         };
-#pragma warning(pop)
+    #pragma warning(pop)
 
         struct ModeDescriptor
         {
@@ -702,8 +696,8 @@ namespace
             LDRColorA RGBAPrec[BC6H_MAX_REGIONS][2];
         };
 
-#pragma warning(push)
-#pragma warning(disable : 4512)
+    #pragma warning(push)
+    #pragma warning(disable : 4512)
         struct EncodeParams
         {
             float fBestErr;
@@ -714,7 +708,7 @@ namespace
             INTEndPntPair aUnqEndPts[BC6H_MAX_SHAPES][BC6H_MAX_REGIONS];
             INTColor aIPixels[NUM_PIXELS_PER_BLOCK];
 
-            EncodeParams(const HDRColorA* const aOriginal, bool bSignedFormat) :
+            EncodeParams(const HDRColorA* const aOriginal, bool bSignedFormat) noexcept :
                 fBestErr(FLT_MAX), bSigned(bSignedFormat), uMode(0), uShape(0), aHDRPixels(aOriginal), aUnqEndPts{}, aIPixels{}
             {
                 for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
@@ -723,50 +717,53 @@ namespace
                 }
             }
         };
-#pragma warning(pop)
+    #pragma warning(pop)
 
-        static int Quantize(_In_ int iValue, _In_ int prec, _In_ bool bSigned);
-        static int Unquantize(_In_ int comp, _In_ uint8_t uBitsPerComp, _In_ bool bSigned);
-        static int FinishUnquantize(_In_ int comp, _In_ bool bSigned);
+        static int Quantize(_In_ int iValue, _In_ int prec, _In_ bool bSigned) noexcept;
+        static int Unquantize(_In_ int comp, _In_ uint8_t uBitsPerComp, _In_ bool bSigned) noexcept;
+        static int FinishUnquantize(_In_ int comp, _In_ bool bSigned) noexcept;
 
-        static bool EndPointsFit(_In_ const EncodeParams* pEP, _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aEndPts[]);
+        static bool EndPointsFit(_In_ const EncodeParams* pEP, _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aEndPts[]) noexcept;
 
         void GeneratePaletteQuantized(_In_ const EncodeParams* pEP, _In_ const INTEndPntPair& endPts,
-            _Out_writes_(BC6H_MAX_INDICES) INTColor aPalette[]) const;
-        float MapColorsQuantized(_In_ const EncodeParams* pEP, _In_reads_(np) const INTColor aColors[], _In_ size_t np, _In_ const INTEndPntPair &endPts) const;
+            _Out_writes_(BC6H_MAX_INDICES) INTColor aPalette[]) const noexcept;
+        float MapColorsQuantized(_In_ const EncodeParams* pEP, _In_reads_(np) const INTColor aColors[], _In_ size_t np, _In_ const INTEndPntPair &endPts) const noexcept;
         float PerturbOne(_In_ const EncodeParams* pEP, _In_reads_(np) const INTColor aColors[], _In_ size_t np, _In_ uint8_t ch,
-            _In_ const INTEndPntPair& oldEndPts, _Out_ INTEndPntPair& newEndPts, _In_ float fOldErr, _In_ int do_b) const;
+            _In_ const INTEndPntPair& oldEndPts, _Out_ INTEndPntPair& newEndPts, _In_ float fOldErr, _In_ int do_b) const noexcept;
         void OptimizeOne(_In_ const EncodeParams* pEP, _In_reads_(np) const INTColor aColors[], _In_ size_t np, _In_ float aOrgErr,
-            _In_ const INTEndPntPair &aOrgEndPts, _Out_ INTEndPntPair &aOptEndPts) const;
+            _In_ const INTEndPntPair &aOrgEndPts, _Out_ INTEndPntPair &aOptEndPts) const noexcept;
         void OptimizeEndPoints(_In_ const EncodeParams* pEP, _In_reads_(BC6H_MAX_REGIONS) const float aOrgErr[],
             _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aOrgEndPts[],
-            _Out_writes_all_(BC6H_MAX_REGIONS) INTEndPntPair aOptEndPts[]) const;
+            _Out_writes_all_(BC6H_MAX_REGIONS) INTEndPntPair aOptEndPts[]) const noexcept;
         static void SwapIndices(_In_ const EncodeParams* pEP, _Inout_updates_all_(BC6H_MAX_REGIONS) INTEndPntPair aEndPts[],
-            _In_reads_(NUM_PIXELS_PER_BLOCK) size_t aIndices[]);
+            _In_reads_(NUM_PIXELS_PER_BLOCK) size_t aIndices[]) noexcept;
         void AssignIndices(_In_ const EncodeParams* pEP, _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aEndPts[],
             _Out_writes_(NUM_PIXELS_PER_BLOCK) size_t aIndices[],
-            _Out_writes_(BC6H_MAX_REGIONS) float aTotErr[]) const;
-        void QuantizeEndPts(_In_ const EncodeParams* pEP, _Out_writes_(BC6H_MAX_REGIONS) INTEndPntPair* qQntEndPts) const;
+            _Out_writes_(BC6H_MAX_REGIONS) float aTotErr[]) const noexcept;
+        void QuantizeEndPts(_In_ const EncodeParams* pEP, _Out_writes_(BC6H_MAX_REGIONS) INTEndPntPair* qQntEndPts) const noexcept;
         void EmitBlock(_In_ const EncodeParams* pEP, _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aEndPts[],
-            _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t aIndices[]);
-        void Refine(_Inout_ EncodeParams* pEP);
+            _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t aIndices[]) noexcept;
+        void Refine(_Inout_ EncodeParams* pEP) noexcept;
 
-        static void GeneratePaletteUnquantized(_In_ const EncodeParams* pEP, _In_ size_t uRegion, _Out_writes_(BC6H_MAX_INDICES) INTColor aPalette[]);
-        float MapColors(_In_ const EncodeParams* pEP, _In_ size_t uRegion, _In_ size_t np, _In_reads_(np) const size_t* auIndex) const;
-        float RoughMSE(_Inout_ EncodeParams* pEP) const;
+        static void GeneratePaletteUnquantized(_In_ const EncodeParams* pEP, _In_ size_t uRegion, _Out_writes_(BC6H_MAX_INDICES) INTColor aPalette[]) noexcept;
+        float MapColors(_In_ const EncodeParams* pEP, _In_ size_t uRegion, _In_ size_t np, _In_reads_(np) const size_t* auIndex) const noexcept;
+        float RoughMSE(_Inout_ EncodeParams* pEP) const noexcept;
 
     private:
-        const static ModeDescriptor ms_aDesc[][82];
-        const static ModeInfo ms_aInfo[];
-        const static int ms_aModeToInfo[];
+        static constexpr uint8_t c_NumModes = 14;
+        static constexpr uint8_t c_NumModeInfo = 32;
+
+        static const ModeDescriptor ms_aDesc[c_NumModes][82];
+        static const ModeInfo ms_aInfo[c_NumModes];
+        static const int ms_aModeToInfo[c_NumModeInfo];
     };
 
     // BC67 compression (16b bits per texel)
     class D3DX_BC7 : private CBits< 16 >
     {
     public:
-        void Decode(_Out_writes_(NUM_PIXELS_PER_BLOCK) HDRColorA* pOut) const;
-        void Encode(DWORD flags, _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pIn);
+        void Decode(_Out_writes_(NUM_PIXELS_PER_BLOCK) HDRColorA* pOut) const noexcept;
+        void Encode(uint32_t flags, _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pIn) noexcept;
 
     private:
         struct ModeInfo
@@ -782,8 +779,8 @@ namespace
             LDRColorA RGBAPrecWithP;
         };
 
-#pragma warning(push)
-#pragma warning(disable : 4512)
+    #pragma warning(push)
+    #pragma warning(disable : 4512)
         struct EncodeParams
         {
             uint8_t uMode;
@@ -791,18 +788,18 @@ namespace
             LDRColorA aLDRPixels[NUM_PIXELS_PER_BLOCK];
             const HDRColorA* const aHDRPixels;
 
-            EncodeParams(const HDRColorA* const aOriginal) : uMode(0), aEndPts{}, aLDRPixels{}, aHDRPixels(aOriginal) {}
+            EncodeParams(const HDRColorA* const aOriginal) noexcept : uMode(0), aEndPts{}, aLDRPixels{}, aHDRPixels(aOriginal) {}
         };
-#pragma warning(pop)
+    #pragma warning(pop)
 
-        static uint8_t Quantize(_In_ uint8_t comp, _In_ uint8_t uPrec)
+        static uint8_t Quantize(_In_ uint8_t comp, _In_ uint8_t uPrec) noexcept
         {
             assert(0 < uPrec && uPrec <= 8);
-            uint8_t rnd = (uint8_t)std::min<uint16_t>(255, uint16_t(comp) + (1 << (7 - uPrec)));
-            return rnd >> (8 - uPrec);
+            const uint8_t rnd = std::min<uint8_t>(255u, static_cast<uint8_t>(unsigned(comp) + (1u << (7 - uPrec))));
+            return uint8_t(rnd >> (8u - uPrec));
         }
 
-        static LDRColorA Quantize(_In_ const LDRColorA& c, _In_ const LDRColorA& RGBAPrec)
+        static LDRColorA Quantize(_In_ const LDRColorA& c, _In_ const LDRColorA& RGBAPrec) noexcept
         {
             LDRColorA q;
             q.r = Quantize(c.r, RGBAPrec.r);
@@ -815,57 +812,60 @@ namespace
             return q;
         }
 
-        static uint8_t Unquantize(_In_ uint8_t comp, _In_ size_t uPrec)
+        static uint8_t Unquantize(_In_ uint8_t comp, _In_ size_t uPrec) noexcept
         {
             assert(0 < uPrec && uPrec <= 8);
-            comp = comp << (8 - uPrec);
-            return comp | (comp >> uPrec);
+            comp = static_cast<uint8_t>(unsigned(comp) << (8 - uPrec));
+            return uint8_t(comp | (comp >> uPrec));
         }
 
-        static LDRColorA Unquantize(_In_ const LDRColorA& c, _In_ const LDRColorA& RGBAPrec)
+        static LDRColorA Unquantize(_In_ const LDRColorA& c, _In_ const LDRColorA& RGBAPrec) noexcept
         {
             LDRColorA q;
             q.r = Unquantize(c.r, RGBAPrec.r);
             q.g = Unquantize(c.g, RGBAPrec.g);
             q.b = Unquantize(c.b, RGBAPrec.b);
-            q.a = RGBAPrec.a > 0 ? Unquantize(c.a, RGBAPrec.a) : 255;
+            q.a = RGBAPrec.a > 0 ? Unquantize(c.a, RGBAPrec.a) : 255u;
             return q;
         }
 
         void GeneratePaletteQuantized(_In_ const EncodeParams* pEP, _In_ size_t uIndexMode, _In_ const LDREndPntPair& endpts,
-            _Out_writes_(BC7_MAX_INDICES) LDRColorA aPalette[]) const;
+            _Out_writes_(BC7_MAX_INDICES) LDRColorA aPalette[]) const noexcept;
         float PerturbOne(_In_ const EncodeParams* pEP, _In_reads_(np) const LDRColorA colors[], _In_ size_t np, _In_ size_t uIndexMode,
             _In_ size_t ch, _In_ const LDREndPntPair &old_endpts,
-            _Out_ LDREndPntPair &new_endpts, _In_ float old_err, _In_ uint8_t do_b) const;
+            _Out_ LDREndPntPair &new_endpts, _In_ float old_err, _In_ uint8_t do_b) const noexcept;
         void Exhaustive(_In_ const EncodeParams* pEP, _In_reads_(np) const LDRColorA aColors[], _In_ size_t np, _In_ size_t uIndexMode,
-            _In_ size_t ch, _Inout_ float& fOrgErr, _Inout_ LDREndPntPair& optEndPt) const;
+            _In_ size_t ch, _Inout_ float& fOrgErr, _Inout_ LDREndPntPair& optEndPt) const noexcept;
         void OptimizeOne(_In_ const EncodeParams* pEP, _In_reads_(np) const LDRColorA colors[], _In_ size_t np, _In_ size_t uIndexMode,
-            _In_ float orig_err, _In_ const LDREndPntPair &orig_endpts, _Out_ LDREndPntPair &opt_endpts) const;
+            _In_ float orig_err, _In_ const LDREndPntPair &orig_endpts, _Out_ LDREndPntPair &opt_endpts) const noexcept;
         void OptimizeEndPoints(_In_ const EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uIndexMode,
             _In_reads_(BC7_MAX_REGIONS) const float orig_err[],
             _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair orig_endpts[],
-            _Out_writes_(BC7_MAX_REGIONS) LDREndPntPair opt_endpts[]) const;
+            _Out_writes_(BC7_MAX_REGIONS) LDREndPntPair opt_endpts[]) const noexcept;
         void AssignIndices(_In_ const EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uIndexMode,
             _In_reads_(BC7_MAX_REGIONS) LDREndPntPair endpts[],
             _Out_writes_(NUM_PIXELS_PER_BLOCK) size_t aIndices[], _Out_writes_(NUM_PIXELS_PER_BLOCK) size_t aIndices2[],
-            _Out_writes_(BC7_MAX_REGIONS) float afTotErr[]) const;
+            _Out_writes_(BC7_MAX_REGIONS) float afTotErr[]) const noexcept;
         void EmitBlock(_In_ const EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uRotation, _In_ size_t uIndexMode,
             _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair aEndPts[],
             _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t aIndex[],
-            _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t aIndex2[]);
-        float Refine(_In_ const EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uRotation, _In_ size_t uIndexMode);
+            _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t aIndex2[]) noexcept;
+        void FixEndpointPBits(_In_ const EncodeParams* pEP, _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair *pOrigEndpoints, _Out_writes_(BC7_MAX_REGIONS) LDREndPntPair *pFixedEndpoints) noexcept;
+        float Refine(_In_ const EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uRotation, _In_ size_t uIndexMode) noexcept;
 
         float MapColors(_In_ const EncodeParams* pEP, _In_reads_(np) const LDRColorA aColors[], _In_ size_t np, _In_ size_t uIndexMode,
-            _In_ const LDREndPntPair& endPts, _In_ float fMinErr) const;
-        static float RoughMSE(_Inout_ EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uIndexMode);
+            _In_ const LDREndPntPair& endPts, _In_ float fMinErr) const noexcept;
+        static float RoughMSE(_Inout_ EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uIndexMode) noexcept;
 
     private:
-        const static ModeInfo ms_aInfo[];
+        static constexpr uint8_t c_NumModes = 8;
+
+        static const ModeInfo ms_aInfo[c_NumModes];
     };
 }
 
 // BC6H Compression
-const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
+const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[D3DX_BC6H::c_NumModes][82] =
 {
     {   // Mode 1 (0x00) - 10 5 5 5
         { M, 0}, { M, 1}, {GY, 4}, {BY, 4}, {BZ, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
@@ -876,7 +876,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 2 (0x01) - 7 6 6 6
@@ -888,7 +888,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GX, 5}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BX, 5}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {RY, 5}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 3 (0x02) - 11 5 4 4
@@ -900,7 +900,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BW,10},
         {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 4 (0x06) - 11 4 5 4
@@ -912,7 +912,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GW,10}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BW,10},
         {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {BZ, 0},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {GY, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 5 (0x0a) - 11 4 4 5
@@ -924,7 +924,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BW,10}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {BZ, 1},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {BZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 6 (0x0e) - 9 5 5 5
@@ -936,7 +936,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 7 (0x12) - 8 6 5 5
@@ -948,7 +948,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {RY, 5}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 8 (0x16) - 8 5 6 5
@@ -960,7 +960,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GX, 5}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 9 (0x1a) - 8 5 5 6
@@ -972,7 +972,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BX, 5}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 10 (0x1e) - 6 6 6 6
@@ -984,7 +984,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GX, 5}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BX, 5}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
         {RY, 5}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4}, 
+        { D, 3}, { D, 4},
     },
 
     {   // Mode 11 (0x03) - 10 10
@@ -996,7 +996,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GX, 5}, {GX, 6}, {GX, 7}, {GX, 8}, {GX, 9}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BX, 5}, {BX, 6}, {BX, 7}, {BX, 8}, {BX, 9}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
         {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0}, 
+        {NA, 0}, {NA, 0},
     },
 
     {   // Mode 12 (0x07) - 11 9
@@ -1008,7 +1008,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GX, 5}, {GX, 6}, {GX, 7}, {GX, 8}, {GW,10}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BX, 5}, {BX, 6}, {BX, 7}, {BX, 8}, {BW,10}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
         {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0}, 
+        {NA, 0}, {NA, 0},
     },
 
     {   // Mode 13 (0x0b) - 12 8
@@ -1020,7 +1020,7 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GX, 5}, {GX, 6}, {GX, 7}, {GW,11}, {GW,10}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
         {BX, 5}, {BX, 6}, {BX, 7}, {BW,11}, {BW,10}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
         {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0}, 
+        {NA, 0}, {NA, 0},
     },
 
     {   // Mode 14 (0x0f) - 16 4
@@ -1032,30 +1032,30 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[14][82] =
         {GW,14}, {GW,13}, {GW,12}, {GW,11}, {GW,10}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BW,15},
         {BW,14}, {BW,13}, {BW,12}, {BW,11}, {BW,10}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
         {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0}, 
+        {NA, 0}, {NA, 0},
     },
 };
 
 // Mode, Partitions, Transformed, IndexPrec, RGBAPrec
-const D3DX_BC6H::ModeInfo D3DX_BC6H::ms_aInfo[] =
+const D3DX_BC6H::ModeInfo D3DX_BC6H::ms_aInfo[D3DX_BC6H::c_NumModes] =
 {
-    {0x00, 1, true,  3, { { LDRColorA(10,10,10,0), LDRColorA( 5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 1
-    {0x01, 1, true,  3, { { LDRColorA( 7, 7, 7,0), LDRColorA( 6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 2
-    {0x02, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA( 5, 4, 4,0) }, { LDRColorA(5,4,4,0), LDRColorA(5,4,4,0) } } }, // Mode 3
-    {0x06, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA( 4, 5, 4,0) }, { LDRColorA(4,5,4,0), LDRColorA(4,5,4,0) } } }, // Mode 4
-    {0x0a, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA( 4, 4, 5,0) }, { LDRColorA(4,4,5,0), LDRColorA(4,4,5,0) } } }, // Mode 5
-    {0x0e, 1, true,  3, { { LDRColorA( 9, 9, 9,0), LDRColorA( 5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 6
-    {0x12, 1, true,  3, { { LDRColorA( 8, 8, 8,0), LDRColorA( 6, 5, 5,0) }, { LDRColorA(6,5,5,0), LDRColorA(6,5,5,0) } } }, // Mode 7
-    {0x16, 1, true,  3, { { LDRColorA( 8, 8, 8,0), LDRColorA( 5, 6, 5,0) }, { LDRColorA(5,6,5,0), LDRColorA(5,6,5,0) } } }, // Mode 8
-    {0x1a, 1, true,  3, { { LDRColorA( 8, 8, 8,0), LDRColorA( 5, 5, 6,0) }, { LDRColorA(5,5,6,0), LDRColorA(5,5,6,0) } } }, // Mode 9
-    {0x1e, 1, false, 3, { { LDRColorA( 6, 6, 6,0), LDRColorA( 6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 10
+    {0x00, 1, true,  3, { { LDRColorA(10,10,10,0), LDRColorA(5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 1
+    {0x01, 1, true,  3, { { LDRColorA(7, 7, 7,0), LDRColorA(6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 2
+    {0x02, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(5, 4, 4,0) }, { LDRColorA(5,4,4,0), LDRColorA(5,4,4,0) } } }, // Mode 3
+    {0x06, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(4, 5, 4,0) }, { LDRColorA(4,5,4,0), LDRColorA(4,5,4,0) } } }, // Mode 4
+    {0x0a, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(4, 4, 5,0) }, { LDRColorA(4,4,5,0), LDRColorA(4,4,5,0) } } }, // Mode 5
+    {0x0e, 1, true,  3, { { LDRColorA(9, 9, 9,0), LDRColorA(5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 6
+    {0x12, 1, true,  3, { { LDRColorA(8, 8, 8,0), LDRColorA(6, 5, 5,0) }, { LDRColorA(6,5,5,0), LDRColorA(6,5,5,0) } } }, // Mode 7
+    {0x16, 1, true,  3, { { LDRColorA(8, 8, 8,0), LDRColorA(5, 6, 5,0) }, { LDRColorA(5,6,5,0), LDRColorA(5,6,5,0) } } }, // Mode 8
+    {0x1a, 1, true,  3, { { LDRColorA(8, 8, 8,0), LDRColorA(5, 5, 6,0) }, { LDRColorA(5,5,6,0), LDRColorA(5,5,6,0) } } }, // Mode 9
+    {0x1e, 1, false, 3, { { LDRColorA(6, 6, 6,0), LDRColorA(6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 10
     {0x03, 0, false, 4, { { LDRColorA(10,10,10,0), LDRColorA(10,10,10,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 11
-    {0x07, 0, true,  4, { { LDRColorA(11,11,11,0), LDRColorA( 9, 9, 9,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 12
-    {0x0b, 0, true,  4, { { LDRColorA(12,12,12,0), LDRColorA( 8, 8, 8,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 13
-    {0x0f, 0, true,  4, { { LDRColorA(16,16,16,0), LDRColorA( 4, 4, 4,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 14
+    {0x07, 0, true,  4, { { LDRColorA(11,11,11,0), LDRColorA(9, 9, 9,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 12
+    {0x0b, 0, true,  4, { { LDRColorA(12,12,12,0), LDRColorA(8, 8, 8,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 13
+    {0x0f, 0, true,  4, { { LDRColorA(16,16,16,0), LDRColorA(4, 4, 4,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 14
 };
 
-const int D3DX_BC6H::ms_aModeToInfo[] =
+const int D3DX_BC6H::ms_aModeToInfo[D3DX_BC6H::c_NumModeInfo] =
 {
      0, // Mode 1   - 0x00
      1, // Mode 2   - 0x01
@@ -1092,7 +1092,7 @@ const int D3DX_BC6H::ms_aModeToInfo[] =
 };
 
 // BC7 compression: uPartitions, uPartitionBits, uPBits, uRotationBits, uIndexModeBits, uIndexPrec, uIndexPrec2, RGBAPrec, RGBAPrecWithP
-const D3DX_BC7::ModeInfo D3DX_BC7::ms_aInfo[] =
+const D3DX_BC7::ModeInfo D3DX_BC7::ms_aInfo[D3DX_BC7::c_NumModes] =
 {
     {2, 4, 6, 0, 0, 3, 0, LDRColorA(4,4,4,0), LDRColorA(5,5,5,0)},
         // Mode 0: Color only, 3 Subsets, RGBP 4441 (unique P-bit), 3-bit indecies, 16 partitions
@@ -1118,7 +1118,7 @@ namespace
     //-------------------------------------------------------------------------------------
     // Helper functions
     //-------------------------------------------------------------------------------------
-    inline bool IsFixUpOffset(_In_range_(0, 2) size_t uPartitions, _In_range_(0, 63) size_t uShape, _In_range_(0, 15) size_t uOffset)
+    inline bool IsFixUpOffset(_In_range_(0, 2) size_t uPartitions, _In_range_(0, 63) size_t uShape, _In_range_(0, 15) size_t uOffset) noexcept
     {
         assert(uPartitions < 3 && uShape < 64 && uOffset < 16);
         _Analysis_assume_(uPartitions < 3 && uShape < 64 && uOffset < 16);
@@ -1132,16 +1132,16 @@ namespace
         return false;
     }
 
-    inline void TransformForward(_Inout_updates_all_(BC6H_MAX_REGIONS) INTEndPntPair aEndPts[])
+    inline void TransformForward(_Inout_updates_all_(BC6H_MAX_REGIONS) INTEndPntPair aEndPts[]) noexcept
     {
         aEndPts[0].B -= aEndPts[0].A;
         aEndPts[1].A -= aEndPts[0].A;
         aEndPts[1].B -= aEndPts[0].A;
     }
 
-    inline void TransformInverse(_Inout_updates_all_(BC6H_MAX_REGIONS) INTEndPntPair aEndPts[], _In_ const LDRColorA& Prec, _In_ bool bSigned)
+    inline void TransformInverse(_Inout_updates_all_(BC6H_MAX_REGIONS) INTEndPntPair aEndPts[], _In_ const LDRColorA& Prec, _In_ bool bSigned) noexcept
     {
-        INTColor WrapMask((1 << Prec.r) - 1, (1 << Prec.g) - 1, (1 << Prec.b) - 1);
+        const INTColor WrapMask((1 << Prec.r) - 1, (1 << Prec.g) - 1, (1 << Prec.b) - 1);
         aEndPts[0].B += aEndPts[0].A; aEndPts[0].B &= WrapMask;
         aEndPts[1].A += aEndPts[0].A; aEndPts[1].A &= WrapMask;
         aEndPts[1].B += aEndPts[0].A; aEndPts[1].B &= WrapMask;
@@ -1153,16 +1153,16 @@ namespace
         }
     }
 
-    inline float Norm(_In_ const INTColor& a, _In_ const INTColor& b)
+    inline float Norm(_In_ const INTColor& a, _In_ const INTColor& b) noexcept
     {
-        float dr = float(a.r) - float(b.r);
-        float dg = float(a.g) - float(b.g);
-        float db = float(a.b) - float(b.b);
+        const float dr = float(a.r) - float(b.r);
+        const float dg = float(a.g) - float(b.g);
+        const float db = float(a.b) - float(b.b);
         return dr * dr + dg * dg + db * db;
     }
 
     // return # of bits needed to store n. handle signed or unsigned cases properly
-    inline int NBits(_In_ int n, _In_ bool bIsSigned)
+    inline int NBits(_In_ int n, _In_ bool bIsSigned) noexcept
     {
         int nb;
         if (n == 0)
@@ -1184,21 +1184,20 @@ namespace
 
 
     //-------------------------------------------------------------------------------------
-    float OptimizeRGB(
+    void OptimizeRGB(
         _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pPoints,
         _Out_ HDRColorA* pX,
         _Out_ HDRColorA* pY,
         _In_range_(3, 4) uint32_t cSteps,
         size_t cPixels,
-        _In_reads_(cPixels) const size_t* pIndex)
+        _In_reads_(cPixels) const size_t* pIndex) noexcept
     {
-        float fError = FLT_MAX;
         const float *pC = (3 == cSteps) ? pC3 : pC4;
         const float *pD = (3 == cSteps) ? pD3 : pD4;
 
         // Find Min and Max points, as starting point
-        HDRColorA X(1.0f, 1.0f, 1.0f, 0.0f);
-        HDRColorA Y(0.0f, 0.0f, 0.0f, 0.0f);
+        HDRColorA X(FLT_MAX, FLT_MAX, FLT_MAX, 0.0f);
+        HDRColorA Y(-FLT_MAX, -FLT_MAX, -FLT_MAX, 0.0f);
 
         for (size_t iPoint = 0; iPoint < cPixels; iPoint++)
         {
@@ -1216,18 +1215,18 @@ namespace
         AB.g = Y.g - X.g;
         AB.b = Y.b - X.b;
 
-        float fAB = AB.r * AB.r + AB.g * AB.g + AB.b * AB.b;
+        const float fAB = AB.r * AB.r + AB.g * AB.g + AB.b * AB.b;
 
         // Single color block.. no need to root-find
         if (fAB < FLT_MIN)
         {
             pX->r = X.r; pX->g = X.g; pX->b = X.b;
             pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
-            return 0.0f;
+            return;
         }
 
         // Try all four axis directions, to determine which diagonal best fits data
-        float fABInv = 1.0f / fAB;
+        const float fABInv = 1.0f / fAB;
 
         HDRColorA Dir;
         Dir.r = AB.r * fABInv;
@@ -1276,11 +1275,11 @@ namespace
         {
             pX->r = X.r; pX->g = X.g; pX->b = X.b;
             pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
-            return 0.0f;
+            return;
         }
 
         // Use Newton's Method to find local minima of sum-of-squares error.
-        float fSteps = (float)(cSteps - 1);
+        auto const fSteps = static_cast<float>(cSteps - 1);
 
         for (size_t iIteration = 0; iIteration < 8; iIteration++)
         {
@@ -1299,12 +1298,12 @@ namespace
             Dir.g = Y.g - X.g;
             Dir.b = Y.b - X.b;
 
-            float fLen = (Dir.r * Dir.r + Dir.g * Dir.g + Dir.b * Dir.b);
+            const float fLen = (Dir.r * Dir.r + Dir.g * Dir.g + Dir.b * Dir.b);
 
             if (fLen < (1.0f / 4096.0f))
                 break;
 
-            float fScale = fSteps / fLen;
+            const float fScale = fSteps / fLen;
 
             Dir.r *= fScale;
             Dir.g *= fScale;
@@ -1316,14 +1315,14 @@ namespace
 
             for (size_t iPoint = 0; iPoint < cPixels; iPoint++)
             {
-                float fDot = (pPoints[pIndex[iPoint]].r - X.r) * Dir.r +
+                const float fDot = (pPoints[pIndex[iPoint]].r - X.r) * Dir.r +
                     (pPoints[pIndex[iPoint]].g - X.g) * Dir.g +
                     (pPoints[pIndex[iPoint]].b - X.b) * Dir.b;
 
                 uint32_t iStep;
                 if (fDot <= 0.0f)
                     iStep = 0;
-                if (fDot >= fSteps)
+                else if (fDot >= fSteps)
                     iStep = cSteps - 1;
                 else
                     iStep = uint32_t(fDot + 0.5f);
@@ -1333,8 +1332,8 @@ namespace
                 Diff.g = pSteps[iStep].g - pPoints[pIndex[iPoint]].g;
                 Diff.b = pSteps[iStep].b - pPoints[pIndex[iPoint]].b;
 
-                float fC = pC[iStep] * (1.0f / 8.0f);
-                float fD = pD[iStep] * (1.0f / 8.0f);
+                const float fC = pC[iStep] * (1.0f / 8.0f);
+                const float fD = pD[iStep] * (1.0f / 8.0f);
 
                 d2X += fC * pC[iStep];
                 dX.r += fC * Diff.r;
@@ -1350,7 +1349,7 @@ namespace
             // Move endpoints
             if (d2X > 0.0f)
             {
-                float f = -1.0f / d2X;
+                const float f = -1.0f / d2X;
 
                 X.r += dX.r * f;
                 X.g += dX.g * f;
@@ -1359,7 +1358,7 @@ namespace
 
             if (d2Y > 0.0f)
             {
-                float f = -1.0f / d2Y;
+                const float f = -1.0f / d2Y;
 
                 Y.r += dY.r * f;
                 Y.g += dY.g * f;
@@ -1375,20 +1374,18 @@ namespace
 
         pX->r = X.r; pX->g = X.g; pX->b = X.b;
         pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
-        return fError;
     }
 
 
     //-------------------------------------------------------------------------------------
-    float OptimizeRGBA(
+    void OptimizeRGBA(
         _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* const pPoints,
         _Out_ HDRColorA* pX,
         _Out_ HDRColorA* pY,
         _In_range_(3, 4) uint32_t cSteps,
         size_t cPixels,
-        _In_reads_(cPixels) const size_t* pIndex)
+        _In_reads_(cPixels) const size_t* pIndex) noexcept
     {
-        float fError = FLT_MAX;
         const float *pC = (3 == cSteps) ? pC3 : pC4;
         const float *pD = (3 == cSteps) ? pD3 : pD4;
 
@@ -1409,21 +1406,21 @@ namespace
         }
 
         // Diagonal axis
-        HDRColorA AB = Y - X;
-        float fAB = AB * AB;
+        const HDRColorA AB = Y - X;
+        const float fAB = AB * AB;
 
         // Single color block.. no need to root-find
         if (fAB < FLT_MIN)
         {
             *pX = X;
             *pY = Y;
-            return 0.0f;
+            return;
         }
 
         // Try all four axis directions, to determine which diagonal best fits data
-        float fABInv = 1.0f / fAB;
+        const float fABInv = 1.0f / fAB;
         HDRColorA Dir = AB * fABInv;
-        HDRColorA Mid = (X + Y) * 0.5f;
+        const HDRColorA Mid = (X + Y) * 0.5f;
 
         float fDir[8];
         fDir[0] = fDir[1] = fDir[2] = fDir[3] = fDir[4] = fDir[5] = fDir[6] = fDir[7] = 0.0f;
@@ -1468,13 +1465,13 @@ namespace
         {
             *pX = X;
             *pY = Y;
-            return 0.0f;
+            return;
         }
 
         // Use Newton's Method to find local minima of sum-of-squares error.
-        float fSteps = (float)(cSteps - 1);
+        const auto fSteps = static_cast<float>(cSteps - 1u);
 
-        for (size_t iIteration = 0; iIteration < 8 && fError > 0.0f; iIteration++)
+        for (size_t iIteration = 0; iIteration < 8; iIteration++)
         {
             // Calculate new steps
             HDRColorA pSteps[BC7_MAX_INDICES];
@@ -1491,11 +1488,11 @@ namespace
 
             // Calculate color direction
             Dir = Y - X;
-            float fLen = Dir * Dir;
+            const float fLen = Dir * Dir;
             if (fLen < (1.0f / 4096.0f))
                 break;
 
-            float fScale = fSteps / fLen;
+            const float fScale = fSteps / fLen;
             Dir *= fScale;
 
             // Evaluate function, and derivatives
@@ -1504,19 +1501,19 @@ namespace
 
             for (size_t iPoint = 0; iPoint < cPixels; ++iPoint)
             {
-                float fDot = (pPoints[pIndex[iPoint]] - X) * Dir;
+                const float fDot = (pPoints[pIndex[iPoint]] - X) * Dir;
 
                 uint32_t iStep;
                 if (fDot <= 0.0f)
                     iStep = 0;
-                if (fDot >= fSteps)
+                else if (fDot >= fSteps)
                     iStep = cSteps - 1;
                 else
                     iStep = uint32_t(fDot + 0.5f);
 
-                HDRColorA Diff = pSteps[iStep] - pPoints[pIndex[iPoint]];
-                float fC = pC[iStep] * (1.0f / 8.0f);
-                float fD = pD[iStep] * (1.0f / 8.0f);
+                const HDRColorA Diff = pSteps[iStep] - pPoints[pIndex[iPoint]];
+                const float fC = pC[iStep] * (1.0f / 8.0f);
+                const float fD = pD[iStep] * (1.0f / 8.0f);
 
                 d2X += fC * pC[iStep];
                 dX += Diff * fC;
@@ -1528,13 +1525,13 @@ namespace
             // Move endpoints
             if (d2X > 0.0f)
             {
-                float f = -1.0f / d2X;
+                const float f = -1.0f / d2X;
                 X += dX * f;
             }
 
             if (d2Y > 0.0f)
             {
-                float f = -1.0f / d2Y;
+                const float f = -1.0f / d2Y;
                 Y += dY * f;
             }
 
@@ -1544,7 +1541,6 @@ namespace
 
         *pX = X;
         *pY = Y;
-        return fError;
     }
 
 
@@ -1555,7 +1551,7 @@ namespace
         uint8_t uIndexPrec,
         uint8_t uIndexPrec2,
         _Out_opt_ size_t* pBestIndex = nullptr,
-        _Out_opt_ size_t* pBestIndex2 = nullptr)
+        _Out_opt_ size_t* pBestIndex2 = nullptr) noexcept
     {
         const size_t uNumIndices = size_t(1) << uIndexPrec;
         const size_t uNumIndices2 = size_t(1) << uIndexPrec2;
@@ -1567,7 +1563,7 @@ namespace
         if (pBestIndex2)
             *pBestIndex2 = 0;
 
-        XMVECTOR vpixel = XMLoadUByte4(reinterpret_cast<const XMUBYTE4*>(&pixel));
+        const XMVECTOR vpixel = XMLoadUByte4(reinterpret_cast<const XMUBYTE4*>(&pixel));
 
         if (uIndexPrec2 == 0)
         {
@@ -1576,7 +1572,7 @@ namespace
                 XMVECTOR tpixel = XMLoadUByte4(reinterpret_cast<const XMUBYTE4*>(&aPalette[i]));
                 // Compute ErrorMetric
                 tpixel = XMVectorSubtract(vpixel, tpixel);
-                float fErr = XMVectorGetX(XMVector4Dot(tpixel, tpixel));
+                const float fErr = XMVectorGetX(XMVector4Dot(tpixel, tpixel));
                 if (fErr > fBestErr)	// error increased, so we're done searching
                     break;
                 if (fErr < fBestErr)
@@ -1595,7 +1591,7 @@ namespace
                 XMVECTOR tpixel = XMLoadUByte4(reinterpret_cast<const XMUBYTE4*>(&aPalette[i]));
                 // Compute ErrorMetricRGB
                 tpixel = XMVectorSubtract(vpixel, tpixel);
-                float fErr = XMVectorGetX(XMVector3Dot(tpixel, tpixel));
+                const float fErr = XMVectorGetX(XMVector3Dot(tpixel, tpixel));
                 if (fErr > fBestErr)	// error increased, so we're done searching
                     break;
                 if (fErr < fBestErr)
@@ -1610,8 +1606,8 @@ namespace
             for (size_t i = 0; i < uNumIndices2 && fBestErr > 0; i++)
             {
                 // Compute ErrorMetricAlpha
-                float ea = float(pixel.a) - float(aPalette[i].a);
-                float fErr = ea*ea;
+                const float ea = float(pixel.a) - float(aPalette[i].a);
+                const float fErr = ea*ea;
                 if (fErr > fBestErr)	// error increased, so we're done searching
                     break;
                 if (fErr < fBestErr)
@@ -1628,17 +1624,17 @@ namespace
     }
 
 
-    void FillWithErrorColors(_Out_writes_(NUM_PIXELS_PER_BLOCK) HDRColorA* pOut)
+    void FillWithErrorColors(_Out_writes_(NUM_PIXELS_PER_BLOCK) HDRColorA* pOut) noexcept
     {
         for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
-#ifdef _DEBUG
+        #ifdef _DEBUG
             // Use Magenta in debug as a highly-visible error color
             pOut[i] = HDRColorA(1.0f, 0.0f, 1.0f, 1.0f);
-#else
+        #else
             // In production use, default to black
             pOut[i] = HDRColorA(0.0f, 0.0f, 0.0f, 1.0f);
-#endif
+        #endif
         }
     }
 }
@@ -1648,38 +1644,35 @@ namespace
 // BC6H Compression
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const
+void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const noexcept
 {
     assert(pOut);
 
     size_t uStartBit = 0;
-    uint8_t uMode = GetBits(uStartBit, 2);
+    uint8_t uMode = GetBits(uStartBit, 2u);
     if (uMode != 0x00 && uMode != 0x01)
     {
-        uMode = (GetBits(uStartBit, 3) << 2) | uMode;
+        uMode = static_cast<uint8_t>((unsigned(GetBits(uStartBit, 3)) << 2) | uMode);
     }
 
-    assert(uMode < 32);
-    _Analysis_assume_(uMode < 32);
+    assert(uMode < c_NumModeInfo);
+    _Analysis_assume_(uMode < c_NumModeInfo);
 
     if (ms_aModeToInfo[uMode] >= 0)
     {
-        assert(ms_aModeToInfo[uMode] < ARRAYSIZE(ms_aInfo));
-        _Analysis_assume_(ms_aModeToInfo[uMode] < ARRAYSIZE(ms_aInfo));
+        assert(static_cast<unsigned int>(ms_aModeToInfo[uMode]) < c_NumModes);
+        _Analysis_assume_(ms_aModeToInfo[uMode] < c_NumModes);
         const ModeDescriptor* desc = ms_aDesc[ms_aModeToInfo[uMode]];
-
-        assert(ms_aModeToInfo[uMode] < ARRAYSIZE(ms_aDesc));
-        _Analysis_assume_(ms_aModeToInfo[uMode] < ARRAYSIZE(ms_aDesc));
         const ModeInfo& info = ms_aInfo[ms_aModeToInfo[uMode]];
 
         INTEndPntPair aEndPts[BC6H_MAX_REGIONS] = {};
         uint32_t uShape = 0;
 
         // Read header
-        const size_t uHeaderBits = info.uPartitions > 0 ? 82 : 65;
+        const size_t uHeaderBits = info.uPartitions > 0 ? 82u : 65u;
         while (uStartBit < uHeaderBits)
         {
-            size_t uCurBit = uStartBit;
+            const size_t uCurBit = uStartBit;
             if (GetBit(uStartBit))
             {
                 switch (desc[uCurBit].m_eField)
@@ -1698,13 +1691,13 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const
                 case BY: aEndPts[1].A.b |= 1 << uint32_t(desc[uCurBit].m_uBit); break;
                 case BZ: aEndPts[1].B.b |= 1 << uint32_t(desc[uCurBit].m_uBit); break;
                 default:
-                {
-#ifdef _DEBUG
-                    OutputDebugStringA("BC6H: Invalid header bits encountered during decoding\n");
-#endif
-                    FillWithErrorColors(pOut);
-                    return;
-                }
+                    {
+                    #if defined(_WIN32) && defined(_DEBUG)
+                        OutputDebugStringA("BC6H: Invalid header bits encountered during decoding\n");
+                    #endif
+                        FillWithErrorColors(pOut);
+                        return;
+                    }
                 }
             }
         }
@@ -1740,37 +1733,37 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const
         // Read indices
         for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
-            size_t uNumBits = IsFixUpOffset(info.uPartitions, uShape, i) ? info.uIndexPrec - 1 : info.uIndexPrec;
+            const size_t uNumBits = IsFixUpOffset(info.uPartitions, uShape, i) ? info.uIndexPrec - 1u : info.uIndexPrec;
             if (uStartBit + uNumBits > 128)
             {
-#ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC6H: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
-            uint8_t uIndex = GetBits(uStartBit, uNumBits);
+            const uint8_t uIndex = GetBits(uStartBit, uNumBits);
 
             if (uIndex >= ((info.uPartitions > 0) ? 8 : 16))
             {
-#ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC6H: Invalid index encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
 
-            size_t uRegion = g_aPartitionTable[info.uPartitions][uShape][i];
+            const size_t uRegion = g_aPartitionTable[info.uPartitions][uShape][i];
             assert(uRegion < BC6H_MAX_REGIONS);
             _Analysis_assume_(uRegion < BC6H_MAX_REGIONS);
 
             // Unquantize endpoints and interpolate
-            int r1 = Unquantize(aEndPts[uRegion].A.r, info.RGBAPrec[0][0].r, bSigned);
-            int g1 = Unquantize(aEndPts[uRegion].A.g, info.RGBAPrec[0][0].g, bSigned);
-            int b1 = Unquantize(aEndPts[uRegion].A.b, info.RGBAPrec[0][0].b, bSigned);
-            int r2 = Unquantize(aEndPts[uRegion].B.r, info.RGBAPrec[0][0].r, bSigned);
-            int g2 = Unquantize(aEndPts[uRegion].B.g, info.RGBAPrec[0][0].g, bSigned);
-            int b2 = Unquantize(aEndPts[uRegion].B.b, info.RGBAPrec[0][0].b, bSigned);
+            const int r1 = Unquantize(aEndPts[uRegion].A.r, info.RGBAPrec[0][0].r, bSigned);
+            const int g1 = Unquantize(aEndPts[uRegion].A.g, info.RGBAPrec[0][0].g, bSigned);
+            const int b1 = Unquantize(aEndPts[uRegion].A.b, info.RGBAPrec[0][0].b, bSigned);
+            const int r2 = Unquantize(aEndPts[uRegion].B.r, info.RGBAPrec[0][0].r, bSigned);
+            const int g2 = Unquantize(aEndPts[uRegion].B.g, info.RGBAPrec[0][0].g, bSigned);
+            const int b2 = Unquantize(aEndPts[uRegion].B.b, info.RGBAPrec[0][0].b, bSigned);
             const int* aWeights = info.uPartitions > 0 ? g_aWeights3 : g_aWeights4;
             INTColor fc;
             fc.r = FinishUnquantize((r1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + r2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
@@ -1788,7 +1781,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const
     }
     else
     {
-#ifdef _DEBUG
+    #if defined(_WIN32) && defined(_DEBUG)
         const char* warnstr = "BC6H: Invalid mode encountered during decoding\n";
         switch (uMode)
         {
@@ -1798,7 +1791,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const
         case 0x1F:  warnstr = "BC6H: Reserved mode 11111 encountered during decoding\n"; break;
         }
         OutputDebugStringA(warnstr);
-#endif
+    #endif
         // Per the BC6H format spec, we must return opaque black
         for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
@@ -1809,18 +1802,18 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const
 
 
 _Use_decl_annotations_
-void D3DX_BC6H::Encode(bool bSigned, const HDRColorA* const pIn)
+void D3DX_BC6H::Encode(bool bSigned, const HDRColorA* const pIn) noexcept
 {
     assert(pIn);
 
     EncodeParams EP(pIn, bSigned);
 
-    for (EP.uMode = 0; EP.uMode < ARRAYSIZE(ms_aInfo) && EP.fBestErr > 0; ++EP.uMode)
+    for (EP.uMode = 0; EP.uMode < c_NumModes && EP.fBestErr > 0; ++EP.uMode)
     {
-        const uint8_t uShapes = ms_aInfo[EP.uMode].uPartitions ? 32 : 1;
+        const uint8_t uShapes = ms_aInfo[EP.uMode].uPartitions ? 32u : 1u;
         // Number of rough cases to look at. reasonable values of this are 1, uShapes/4, and uShapes
         // uShapes/4 gets nearly all the cases; you can increase that a bit (say by 3 or 4) if you really want to squeeze the last bit out
-        const size_t uItems = std::max<size_t>(1, uShapes >> 2);
+        const size_t uItems = std::max<size_t>(1u, size_t(uShapes >> 2));
         float afRoughMSE[BC6H_MAX_SHAPES];
         uint8_t auShape[BC6H_MAX_SHAPES];
 
@@ -1856,7 +1849,7 @@ void D3DX_BC6H::Encode(bool bSigned, const HDRColorA* const pIn)
 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-int D3DX_BC6H::Quantize(int iValue, int prec, bool bSigned)
+int D3DX_BC6H::Quantize(int iValue, int prec, bool bSigned) noexcept
 {
     assert(prec > 1);	// didn't bother to make it work for 1
     int q, s = 0;
@@ -1885,7 +1878,7 @@ int D3DX_BC6H::Quantize(int iValue, int prec, bool bSigned)
 
 
 _Use_decl_annotations_
-int D3DX_BC6H::Unquantize(int comp, uint8_t uBitsPerComp, bool bSigned)
+int D3DX_BC6H::Unquantize(int comp, uint8_t uBitsPerComp, bool bSigned) noexcept
 {
     int unq = 0, s = 0;
     if (bSigned)
@@ -1922,7 +1915,7 @@ int D3DX_BC6H::Unquantize(int comp, uint8_t uBitsPerComp, bool bSigned)
 
 
 _Use_decl_annotations_
-int D3DX_BC6H::FinishUnquantize(int comp, bool bSigned)
+int D3DX_BC6H::FinishUnquantize(int comp, bool bSigned) noexcept
 {
     if (bSigned)
     {
@@ -1937,9 +1930,12 @@ int D3DX_BC6H::FinishUnquantize(int comp, bool bSigned)
 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-bool D3DX_BC6H::EndPointsFit(const EncodeParams* pEP, const INTEndPntPair aEndPts[])
+bool D3DX_BC6H::EndPointsFit(const EncodeParams* pEP, const INTEndPntPair aEndPts[]) noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const bool bTransformed = ms_aInfo[pEP->uMode].bTransformed;
     const bool bIsSigned = pEP->bSigned;
     const LDRColorA& Prec0 = ms_aInfo[pEP->uMode].RGBAPrec[0][0];
@@ -1979,9 +1975,12 @@ bool D3DX_BC6H::EndPointsFit(const EncodeParams* pEP, const INTEndPntPair aEndPt
 
 
 _Use_decl_annotations_
-void D3DX_BC6H::GeneratePaletteQuantized(const EncodeParams* pEP, const INTEndPntPair& endPts, INTColor aPalette[]) const
+void D3DX_BC6H::GeneratePaletteQuantized(const EncodeParams* pEP, const INTEndPntPair& endPts, INTColor aPalette[]) const noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const size_t uIndexPrec = ms_aInfo[pEP->uMode].uIndexPrec;
     const size_t uNumIndices = size_t(1) << uIndexPrec;
     assert(uNumIndices > 0);
@@ -2007,7 +2006,7 @@ void D3DX_BC6H::GeneratePaletteQuantized(const EncodeParams* pEP, const INTEndPn
         assert(false);
         for (size_t i = 0; i < uNumIndices; ++i)
         {
-#pragma prefast(suppress:22102 22103, "writing blocks in two halves confuses tool")
+        #pragma prefast(suppress:22102 22103, "writing blocks in two halves confuses tool")
             aPalette[i] = INTColor(0, 0, 0);
         }
         return;
@@ -2030,19 +2029,21 @@ void D3DX_BC6H::GeneratePaletteQuantized(const EncodeParams* pEP, const INTEndPn
 
 // given a collection of colors and quantized endpoints, generate a palette, choose best entries, and return a single toterr
 _Use_decl_annotations_
-float D3DX_BC6H::MapColorsQuantized(const EncodeParams* pEP, const INTColor aColors[], size_t np, const INTEndPntPair &endPts) const
+float D3DX_BC6H::MapColorsQuantized(const EncodeParams* pEP, const INTColor aColors[], size_t np, const INTEndPntPair &endPts) const noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
 
     const uint8_t uIndexPrec = ms_aInfo[pEP->uMode].uIndexPrec;
-    const uint8_t uNumIndices = 1 << uIndexPrec;
+    auto const uNumIndices = static_cast<const uint8_t>(1u << uIndexPrec);
     INTColor aPalette[BC6H_MAX_INDICES];
     GeneratePaletteQuantized(pEP, endPts, aPalette);
 
     float fTotErr = 0;
     for (size_t i = 0; i < np; ++i)
     {
-        XMVECTOR vcolors = XMLoadSInt4(reinterpret_cast<const XMINT4*>(&aColors[i]));
+        const XMVECTOR vcolors = XMLoadSInt4(reinterpret_cast<const XMINT4*>(&aColors[i]));
 
         // Compute ErrorMetricRGB
         XMVECTOR tpal = XMLoadSInt4(reinterpret_cast<const XMINT4*>(&aPalette[0]));
@@ -2054,7 +2055,7 @@ float D3DX_BC6H::MapColorsQuantized(const EncodeParams* pEP, const INTColor aCol
             // Compute ErrorMetricRGB
             tpal = XMLoadSInt4(reinterpret_cast<const XMINT4*>(&aPalette[j]));
             tpal = XMVectorSubtract(vcolors, tpal);
-            float fErr = XMVectorGetX(XMVector3Dot(tpal, tpal));
+            const float fErr = XMVectorGetX(XMVector3Dot(tpal, tpal));
             if (fErr > fBestErr) break;     // error increased, so we're done searching
             if (fErr < fBestErr) fBestErr = fErr;
         }
@@ -2066,9 +2067,12 @@ float D3DX_BC6H::MapColorsQuantized(const EncodeParams* pEP, const INTColor aCol
 
 _Use_decl_annotations_
 float D3DX_BC6H::PerturbOne(const EncodeParams* pEP, const INTColor aColors[], size_t np, uint8_t ch,
-    const INTEndPntPair& oldEndPts, INTEndPntPair& newEndPts, float fOldErr, int do_b) const
+    const INTEndPntPair& oldEndPts, INTEndPntPair& newEndPts, float fOldErr, int do_b) const noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     uint8_t uPrec;
     switch (ch)
     {
@@ -2103,7 +2107,7 @@ float D3DX_BC6H::PerturbOne(const EncodeParams* pEP, const INTColor aColors[], s
                     continue;
             }
 
-            float fErr = MapColorsQuantized(pEP, aColors, np, tmpEndPts);
+            const float fErr = MapColorsQuantized(pEP, aColors, np, tmpEndPts);
 
             if (fErr < fMinErr)
             {
@@ -2127,7 +2131,7 @@ float D3DX_BC6H::PerturbOne(const EncodeParams* pEP, const INTColor aColors[], s
 
 _Use_decl_annotations_
 void D3DX_BC6H::OptimizeOne(const EncodeParams* pEP, const INTColor aColors[], size_t np, float aOrgErr,
-    const INTEndPntPair &aOrgEndPts, INTEndPntPair &aOptEndPts) const
+    const INTEndPntPair &aOrgEndPts, INTEndPntPair &aOptEndPts) const noexcept
 {
     assert(pEP);
     float aOptErr = aOrgErr;
@@ -2143,8 +2147,8 @@ void D3DX_BC6H::OptimizeOne(const EncodeParams* pEP, const INTColor aColors[], s
     {
         // figure out which endpoint when perturbed gives the most improvement and start there
         // if we just alternate, we can easily end up in a local minima
-        float fErr0 = PerturbOne(pEP, aColors, np, ch, aOptEndPts, new_a, aOptErr, 0);	// perturb endpt A
-        float fErr1 = PerturbOne(pEP, aColors, np, ch, aOptEndPts, new_b, aOptErr, 1);	// perturb endpt B
+        const float fErr0 = PerturbOne(pEP, aColors, np, ch, aOptEndPts, new_a, aOptErr, 0);	// perturb endpt A
+        const float fErr1 = PerturbOne(pEP, aColors, np, ch, aOptEndPts, new_b, aOptErr, 1);	// perturb endpt B
 
         if (fErr0 < fErr1)
         {
@@ -2164,7 +2168,7 @@ void D3DX_BC6H::OptimizeOne(const EncodeParams* pEP, const INTColor aColors[], s
         // now alternate endpoints and keep trying until there is no improvement
         for (;;)
         {
-            float fErr = PerturbOne(pEP, aColors, np, ch, aOptEndPts, newEndPts, aOptErr, do_b);
+            const float fErr = PerturbOne(pEP, aColors, np, ch, aOptEndPts, newEndPts, aOptErr, do_b);
             if (fErr >= aOptErr)
                 break;
             if (do_b == 0)
@@ -2179,9 +2183,12 @@ void D3DX_BC6H::OptimizeOne(const EncodeParams* pEP, const INTColor aColors[], s
 
 
 _Use_decl_annotations_
-void D3DX_BC6H::OptimizeEndPoints(const EncodeParams* pEP, const float aOrgErr[], const INTEndPntPair aOrgEndPts[], INTEndPntPair aOptEndPts[]) const
+void D3DX_BC6H::OptimizeEndPoints(const EncodeParams* pEP, const float aOrgErr[], const INTEndPntPair aOrgEndPts[], INTEndPntPair aOptEndPts[]) const noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const uint8_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
     assert(uPartitions < BC6H_MAX_REGIONS);
     _Analysis_assume_(uPartitions < BC6H_MAX_REGIONS);
@@ -2206,9 +2213,12 @@ void D3DX_BC6H::OptimizeEndPoints(const EncodeParams* pEP, const float aOrgErr[]
 
 // Swap endpoints as needed to ensure that the indices at fix up have a 0 high-order bit
 _Use_decl_annotations_
-void D3DX_BC6H::SwapIndices(const EncodeParams* pEP, INTEndPntPair aEndPts[], size_t aIndices[])
+void D3DX_BC6H::SwapIndices(const EncodeParams* pEP, INTEndPntPair aEndPts[], size_t aIndices[]) noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const size_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
     const size_t uNumIndices = size_t(1) << ms_aInfo[pEP->uMode].uIndexPrec;
     const size_t uHighIndexBit = uNumIndices >> 1;
@@ -2218,7 +2228,7 @@ void D3DX_BC6H::SwapIndices(const EncodeParams* pEP, INTEndPntPair aEndPts[], si
 
     for (size_t p = 0; p <= uPartitions; ++p)
     {
-        size_t i = g_aFixUp[uPartitions][pEP->uShape][p];
+        const size_t i = g_aFixUp[uPartitions][pEP->uShape][p];
         assert(g_aPartitionTable[uPartitions][pEP->uShape][i] == p);
         if (aIndices[i] & uHighIndexBit)
         {
@@ -2235,11 +2245,14 @@ void D3DX_BC6H::SwapIndices(const EncodeParams* pEP, INTEndPntPair aEndPts[], si
 
 // assign indices given a tile, shape, and quantized endpoints, return toterr for each region
 _Use_decl_annotations_
-void D3DX_BC6H::AssignIndices(const EncodeParams* pEP, const INTEndPntPair aEndPts[], size_t aIndices[], float aTotErr[]) const
+void D3DX_BC6H::AssignIndices(const EncodeParams* pEP, const INTEndPntPair aEndPts[], size_t aIndices[], float aTotErr[]) const noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const uint8_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
-    const uint8_t uNumIndices = 1 << ms_aInfo[pEP->uMode].uIndexPrec;
+    auto const uNumIndices = static_cast<const uint8_t>(1u << ms_aInfo[pEP->uMode].uIndexPrec);
 
     assert(uPartitions < BC6H_MAX_REGIONS && pEP->uShape < BC6H_MAX_SHAPES);
     _Analysis_assume_(uPartitions < BC6H_MAX_REGIONS && pEP->uShape < BC6H_MAX_SHAPES);
@@ -2263,7 +2276,7 @@ void D3DX_BC6H::AssignIndices(const EncodeParams* pEP, const INTEndPntPair aEndP
 
         for (uint8_t j = 1; j < uNumIndices && fBestErr > 0; ++j)
         {
-            float fErr = Norm(pEP->aIPixels[i], aPalette[uRegion][j]);
+            const float fErr = Norm(pEP->aIPixels[i], aPalette[uRegion][j]);
             if (fErr > fBestErr) break;	// error increased, so we're done searching
             if (fErr < fBestErr)
             {
@@ -2277,9 +2290,12 @@ void D3DX_BC6H::AssignIndices(const EncodeParams* pEP, const INTEndPntPair aEndP
 
 
 _Use_decl_annotations_
-void D3DX_BC6H::QuantizeEndPts(const EncodeParams* pEP, INTEndPntPair* aQntEndPts) const
+void D3DX_BC6H::QuantizeEndPts(const EncodeParams* pEP, INTEndPntPair* aQntEndPts) const noexcept
 {
     assert(pEP && aQntEndPts);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const INTEndPntPair* aUnqEndPts = pEP->aUnqEndPts[pEP->uShape];
     const LDRColorA& Prec = ms_aInfo[pEP->uMode].RGBAPrec[0][0];
     const uint8_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
@@ -2299,13 +2315,16 @@ void D3DX_BC6H::QuantizeEndPts(const EncodeParams* pEP, INTEndPntPair* aQntEndPt
 
 
 _Use_decl_annotations_
-void D3DX_BC6H::EmitBlock(const EncodeParams* pEP, const INTEndPntPair aEndPts[], const size_t aIndices[])
+void D3DX_BC6H::EmitBlock(const EncodeParams* pEP, const INTEndPntPair aEndPts[], const size_t aIndices[]) noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const uint8_t uRealMode = ms_aInfo[pEP->uMode].uMode;
     const uint8_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
     const uint8_t uIndexPrec = ms_aInfo[pEP->uMode].uIndexPrec;
-    const size_t uHeaderBits = uPartitions > 0 ? 82 : 65;
+    const size_t uHeaderBits = uPartitions > 0 ? 82u : 65u;
     const ModeDescriptor* desc = ms_aDesc[pEP->uMode];
     size_t uStartBit = 0;
 
@@ -2313,20 +2332,20 @@ void D3DX_BC6H::EmitBlock(const EncodeParams* pEP, const INTEndPntPair aEndPts[]
     {
         switch (desc[uStartBit].m_eField)
         {
-        case M:  SetBit(uStartBit, uint8_t(uRealMode >> desc[uStartBit].m_uBit) & 0x01); break;
-        case D:  SetBit(uStartBit, uint8_t(pEP->uShape >> desc[uStartBit].m_uBit) & 0x01); break;
-        case RW: SetBit(uStartBit, uint8_t(aEndPts[0].A.r >> desc[uStartBit].m_uBit) & 0x01); break;
-        case RX: SetBit(uStartBit, uint8_t(aEndPts[0].B.r >> desc[uStartBit].m_uBit) & 0x01); break;
-        case RY: SetBit(uStartBit, uint8_t(aEndPts[1].A.r >> desc[uStartBit].m_uBit) & 0x01); break;
-        case RZ: SetBit(uStartBit, uint8_t(aEndPts[1].B.r >> desc[uStartBit].m_uBit) & 0x01); break;
-        case GW: SetBit(uStartBit, uint8_t(aEndPts[0].A.g >> desc[uStartBit].m_uBit) & 0x01); break;
-        case GX: SetBit(uStartBit, uint8_t(aEndPts[0].B.g >> desc[uStartBit].m_uBit) & 0x01); break;
-        case GY: SetBit(uStartBit, uint8_t(aEndPts[1].A.g >> desc[uStartBit].m_uBit) & 0x01); break;
-        case GZ: SetBit(uStartBit, uint8_t(aEndPts[1].B.g >> desc[uStartBit].m_uBit) & 0x01); break;
-        case BW: SetBit(uStartBit, uint8_t(aEndPts[0].A.b >> desc[uStartBit].m_uBit) & 0x01); break;
-        case BX: SetBit(uStartBit, uint8_t(aEndPts[0].B.b >> desc[uStartBit].m_uBit) & 0x01); break;
-        case BY: SetBit(uStartBit, uint8_t(aEndPts[1].A.b >> desc[uStartBit].m_uBit) & 0x01); break;
-        case BZ: SetBit(uStartBit, uint8_t(aEndPts[1].B.b >> desc[uStartBit].m_uBit) & 0x01); break;
+        case M:  SetBit(uStartBit, uint8_t(uRealMode >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case D:  SetBit(uStartBit, uint8_t(pEP->uShape >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case RW: SetBit(uStartBit, uint8_t(aEndPts[0].A.r >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case RX: SetBit(uStartBit, uint8_t(aEndPts[0].B.r >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case RY: SetBit(uStartBit, uint8_t(aEndPts[1].A.r >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case RZ: SetBit(uStartBit, uint8_t(aEndPts[1].B.r >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case GW: SetBit(uStartBit, uint8_t(aEndPts[0].A.g >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case GX: SetBit(uStartBit, uint8_t(aEndPts[0].B.g >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case GY: SetBit(uStartBit, uint8_t(aEndPts[1].A.g >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case GZ: SetBit(uStartBit, uint8_t(aEndPts[1].B.g >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case BW: SetBit(uStartBit, uint8_t(aEndPts[0].A.b >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case BX: SetBit(uStartBit, uint8_t(aEndPts[0].B.b >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case BY: SetBit(uStartBit, uint8_t(aEndPts[1].A.b >> desc[uStartBit].m_uBit) & 0x01u); break;
+        case BZ: SetBit(uStartBit, uint8_t(aEndPts[1].B.b >> desc[uStartBit].m_uBit) & 0x01u); break;
         default: assert(false);
         }
     }
@@ -2334,7 +2353,7 @@ void D3DX_BC6H::EmitBlock(const EncodeParams* pEP, const INTEndPntPair aEndPts[]
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
         if (IsFixUpOffset(ms_aInfo[pEP->uMode].uPartitions, pEP->uShape, i))
-            SetBits(uStartBit, uIndexPrec - 1, static_cast<uint8_t>(aIndices[i]));
+            SetBits(uStartBit, uIndexPrec - 1u, static_cast<uint8_t>(aIndices[i]));
         else
             SetBits(uStartBit, uIndexPrec, static_cast<uint8_t>(aIndices[i]));
     }
@@ -2343,9 +2362,12 @@ void D3DX_BC6H::EmitBlock(const EncodeParams* pEP, const INTEndPntPair aEndPts[]
 
 
 _Use_decl_annotations_
-void D3DX_BC6H::Refine(EncodeParams* pEP)
+void D3DX_BC6H::Refine(EncodeParams* pEP) noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const uint8_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
     assert(uPartitions < BC6H_MAX_REGIONS);
     _Analysis_assume_(uPartitions < BC6H_MAX_REGIONS);
@@ -2393,14 +2415,17 @@ void D3DX_BC6H::Refine(EncodeParams* pEP)
 
 
 _Use_decl_annotations_
-void D3DX_BC6H::GeneratePaletteUnquantized(const EncodeParams* pEP, size_t uRegion, INTColor aPalette[])
+void D3DX_BC6H::GeneratePaletteUnquantized(const EncodeParams* pEP, size_t uRegion, INTColor aPalette[]) noexcept
 {
     assert(pEP);
     assert(uRegion < BC6H_MAX_REGIONS && pEP->uShape < BC6H_MAX_SHAPES);
     _Analysis_assume_(uRegion < BC6H_MAX_REGIONS && pEP->uShape < BC6H_MAX_SHAPES);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const INTEndPntPair& endPts = pEP->aUnqEndPts[pEP->uShape][uRegion];
     const uint8_t uIndexPrec = ms_aInfo[pEP->uMode].uIndexPrec;
-    const uint8_t uNumIndices = 1 << uIndexPrec;
+    auto const uNumIndices = static_cast<const uint8_t>(1u << uIndexPrec);
     assert(uNumIndices > 0);
     _Analysis_assume_(uNumIndices > 0);
 
@@ -2413,7 +2438,7 @@ void D3DX_BC6H::GeneratePaletteUnquantized(const EncodeParams* pEP, size_t uRegi
         assert(false);
         for (size_t i = 0; i < uNumIndices; ++i)
         {
-#pragma prefast(suppress:22102 22103, "writing blocks in two halves confuses tool")
+        #pragma prefast(suppress:22102 22103, "writing blocks in two halves confuses tool")
             aPalette[i] = INTColor(0, 0, 0);
         }
         return;
@@ -2429,11 +2454,14 @@ void D3DX_BC6H::GeneratePaletteUnquantized(const EncodeParams* pEP, size_t uRegi
 
 
 _Use_decl_annotations_
-float D3DX_BC6H::MapColors(const EncodeParams* pEP, size_t uRegion, size_t np, const size_t* auIndex) const
+float D3DX_BC6H::MapColors(const EncodeParams* pEP, size_t uRegion, size_t np, const size_t* auIndex) const noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const uint8_t uIndexPrec = ms_aInfo[pEP->uMode].uIndexPrec;
-    const uint8_t uNumIndices = 1 << uIndexPrec;
+    auto const uNumIndices = static_cast<const uint8_t>(1u << uIndexPrec);
     INTColor aPalette[BC6H_MAX_INDICES];
     GeneratePaletteUnquantized(pEP, uRegion, aPalette);
 
@@ -2443,7 +2471,7 @@ float D3DX_BC6H::MapColors(const EncodeParams* pEP, size_t uRegion, size_t np, c
         float fBestErr = Norm(pEP->aIPixels[auIndex[i]], aPalette[0]);
         for (uint8_t j = 1; j < uNumIndices && fBestErr > 0.0f; ++j)
         {
-            float fErr = Norm(pEP->aIPixels[auIndex[i]], aPalette[j]);
+            const float fErr = Norm(pEP->aIPixels[auIndex[i]], aPalette[j]);
             if (fErr > fBestErr) break;      // error increased, so we're done searching
             if (fErr < fBestErr) fBestErr = fErr;
         }
@@ -2454,11 +2482,13 @@ float D3DX_BC6H::MapColors(const EncodeParams* pEP, size_t uRegion, size_t np, c
 }
 
 _Use_decl_annotations_
-float D3DX_BC6H::RoughMSE(EncodeParams* pEP) const
+float D3DX_BC6H::RoughMSE(EncodeParams* pEP) const noexcept
 {
     assert(pEP);
     assert(pEP->uShape < BC6H_MAX_SHAPES);
     _Analysis_assume_(pEP->uShape < BC6H_MAX_SHAPES);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
 
     INTEndPntPair* aEndPts = pEP->aUnqEndPts[pEP->uShape];
 
@@ -2521,13 +2551,13 @@ float D3DX_BC6H::RoughMSE(EncodeParams* pEP) const
 // BC7 Compression
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-void D3DX_BC7::Decode(HDRColorA* pOut) const
+void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
 {
     assert(pOut);
 
     size_t uFirst = 0;
     while (uFirst < 128 && !GetBit(uFirst)) {}
-    uint8_t uMode = uint8_t(uFirst - 1);
+    const uint8_t uMode = uint8_t(uFirst - 1);
 
     if (uMode < 8)
     {
@@ -2535,20 +2565,20 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
         assert(uPartitions < BC7_MAX_REGIONS);
         _Analysis_assume_(uPartitions < BC7_MAX_REGIONS);
 
-        const uint8_t uNumEndPts = (uPartitions + 1) << 1;
+        auto const uNumEndPts = static_cast<const uint8_t>((unsigned(uPartitions) + 1u) << 1);
         const uint8_t uIndexPrec = ms_aInfo[uMode].uIndexPrec;
         const uint8_t uIndexPrec2 = ms_aInfo[uMode].uIndexPrec2;
         size_t i;
         size_t uStartBit = size_t(uMode) + 1;
         uint8_t P[6];
-        uint8_t uShape = GetBits(uStartBit, ms_aInfo[uMode].uPartitionBits);
+        const uint8_t uShape = GetBits(uStartBit, ms_aInfo[uMode].uPartitionBits);
         assert(uShape < BC7_MAX_SHAPES);
         _Analysis_assume_(uShape < BC7_MAX_SHAPES);
 
-        uint8_t uRotation = GetBits(uStartBit, ms_aInfo[uMode].uRotationBits);
+        const uint8_t uRotation = GetBits(uStartBit, ms_aInfo[uMode].uRotationBits);
         assert(uRotation < 4);
 
-        uint8_t uIndexMode = GetBits(uStartBit, ms_aInfo[uMode].uIndexModeBits);
+        const uint8_t uIndexMode = GetBits(uStartBit, ms_aInfo[uMode].uIndexModeBits);
         assert(uIndexMode < 2);
 
         LDRColorA c[BC7_MAX_REGIONS << 1];
@@ -2562,9 +2592,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
         {
             if (uStartBit + RGBAPrec.r > 128)
             {
-#ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -2577,9 +2607,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
         {
             if (uStartBit + RGBAPrec.g > 128)
             {
-#ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -2592,9 +2622,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
         {
             if (uStartBit + RGBAPrec.b > 128)
             {
-#ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -2607,14 +2637,14 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
         {
             if (uStartBit + RGBAPrec.a > 128)
             {
-#ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
 
-            c[i].a = RGBAPrec.a ? GetBits(uStartBit, RGBAPrec.a) : 255;
+            c[i].a = RGBAPrec.a ? GetBits(uStartBit, RGBAPrec.a) : 255u;
         }
 
         // P-bits
@@ -2624,9 +2654,9 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
         {
             if (uStartBit > 127)
             {
-#ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -2643,7 +2673,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
                 {
                     if (RGBAPrec[ch] != RGBAPrecWithP[ch])
                     {
-                        c[i][ch] = (c[i][ch] << 1) | P[pi];
+                        c[i][ch] = static_cast<uint8_t>((unsigned(c[i][ch]) << 1) | P[pi]);
                     }
                 }
             }
@@ -2659,12 +2689,12 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
         // read color indices
         for (i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
         {
-            size_t uNumBits = IsFixUpOffset(ms_aInfo[uMode].uPartitions, uShape, i) ? uIndexPrec - 1 : uIndexPrec;
+            const size_t uNumBits = IsFixUpOffset(ms_aInfo[uMode].uPartitions, uShape, i) ? uIndexPrec - 1u : uIndexPrec;
             if (uStartBit + uNumBits > 128)
             {
-#ifdef _DEBUG
+            #if defined(_WIN32) && defined(_DEBUG)
                 OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+            #endif
                 FillWithErrorColors(pOut);
                 return;
             }
@@ -2676,12 +2706,12 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
         {
             for (i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
             {
-                size_t uNumBits = i ? uIndexPrec2 : uIndexPrec2 - 1;
+                const size_t uNumBits = i ? uIndexPrec2 : uIndexPrec2 - 1u;
                 if (uStartBit + uNumBits > 128)
                 {
-#ifdef _DEBUG
+                #if defined(_WIN32) && defined(_DEBUG)
                     OutputDebugStringA("BC7: Invalid block encountered during decoding\n");
-#endif
+                #endif
                     FillWithErrorColors(pOut);
                     return;
                 }
@@ -2691,7 +2721,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
 
         for (i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
-            uint8_t uRegion = g_aPartitionTable[uPartitions][uShape][i];
+            const uint8_t uRegion = g_aPartitionTable[uPartitions][uShape][i];
             LDRColorA outPixel;
             if (uIndexPrec2 == 0)
             {
@@ -2721,22 +2751,23 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const
     }
     else
     {
-#ifdef _DEBUG
+    #if defined(_WIN32) && defined(_DEBUG)
         OutputDebugStringA("BC7: Reserved mode 8 encountered during decoding\n");
-#endif
+    #endif
         // Per the BC7 format spec, we must return transparent black
         memset(pOut, 0, sizeof(HDRColorA) * NUM_PIXELS_PER_BLOCK);
     }
 }
 
 _Use_decl_annotations_
-void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
+void D3DX_BC7::Encode(uint32_t flags, const HDRColorA* const pIn) noexcept
 {
     assert(pIn);
 
     D3DX_BC7 final = *this;
     EncodeParams EP(pIn);
     float fMSEBest = FLT_MAX;
+    uint32_t alphaMask = 0xFF;
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
@@ -2744,7 +2775,10 @@ void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
         EP.aLDRPixels[i].g = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].g * 255.0f + 0.01f)));
         EP.aLDRPixels[i].b = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].b * 255.0f + 0.01f)));
         EP.aLDRPixels[i].a = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].a * 255.0f + 0.01f)));
+        alphaMask &= EP.aLDRPixels[i].a;
     }
+
+    const bool bHasAlpha = (alphaMask != 0xFF);
 
     for (EP.uMode = 0; EP.uMode < 8 && fMSEBest > 0; ++EP.uMode)
     {
@@ -2757,6 +2791,12 @@ void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
         if ((flags & TEX_COMPRESS_BC7_QUICK) && (EP.uMode != 6))
         {
             // Use only mode 6
+            continue;
+        }
+
+        if ((!bHasAlpha) && (EP.uMode == 7))
+        {
+            // There is no value in using mode 7 for completely opaque blocks (the other 2 subset modes handle this case for opaque blocks), so skip it for a small perf win.
             continue;
         }
 
@@ -2805,7 +2845,7 @@ void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
 
                 for (size_t i = 0; i < uItems && fMSEBest > 0; i++)
                 {
-                    float fMSE = Refine(&EP, auShape[i], r, im);
+                    const float fMSE = Refine(&EP, auShape[i], r, im);
                     if (fMSE < fMSEBest)
                     {
                         final = *this;
@@ -2829,9 +2869,12 @@ void D3DX_BC7::Encode(DWORD flags, const HDRColorA* const pIn)
 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-void D3DX_BC7::GeneratePaletteQuantized(const EncodeParams* pEP, size_t uIndexMode, const LDREndPntPair& endPts, LDRColorA aPalette[]) const
+void D3DX_BC7::GeneratePaletteQuantized(const EncodeParams* pEP, size_t uIndexMode, const LDREndPntPair& endPts, LDRColorA aPalette[]) const noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const size_t uIndexPrec = uIndexMode ? ms_aInfo[pEP->uMode].uIndexPrec2 : ms_aInfo[pEP->uMode].uIndexPrec;
     const size_t uIndexPrec2 = uIndexMode ? ms_aInfo[pEP->uMode].uIndexPrec : ms_aInfo[pEP->uMode].uIndexPrec2;
     const size_t uNumIndices = size_t(1) << uIndexPrec;
@@ -2841,8 +2884,8 @@ void D3DX_BC7::GeneratePaletteQuantized(const EncodeParams* pEP, size_t uIndexMo
     assert((uNumIndices <= BC7_MAX_INDICES) && (uNumIndices2 <= BC7_MAX_INDICES));
     _Analysis_assume_((uNumIndices <= BC7_MAX_INDICES) && (uNumIndices2 <= BC7_MAX_INDICES));
 
-    LDRColorA a = Unquantize(endPts.A, ms_aInfo[pEP->uMode].RGBAPrecWithP);
-    LDRColorA b = Unquantize(endPts.B, ms_aInfo[pEP->uMode].RGBAPrecWithP);
+    const LDRColorA a = Unquantize(endPts.A, ms_aInfo[pEP->uMode].RGBAPrecWithP);
+    const LDRColorA b = Unquantize(endPts.B, ms_aInfo[pEP->uMode].RGBAPrecWithP);
     if (uIndexPrec2 == 0)
     {
         for (size_t i = 0; i < uNumIndices; i++)
@@ -2859,9 +2902,12 @@ void D3DX_BC7::GeneratePaletteQuantized(const EncodeParams* pEP, size_t uIndexMo
 
 _Use_decl_annotations_
 float D3DX_BC7::PerturbOne(const EncodeParams* pEP, const LDRColorA aColors[], size_t np, size_t uIndexMode, size_t ch,
-    const LDREndPntPair &oldEndPts, LDREndPntPair &newEndPts, float fOldErr, uint8_t do_b) const
+    const LDREndPntPair &oldEndPts, LDREndPntPair &newEndPts, float fOldErr, uint8_t do_b) const noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const int prec = ms_aInfo[pEP->uMode].RGBAPrecWithP[ch];
     LDREndPntPair tmp_endPts = newEndPts = oldEndPts;
     float fMinErr = fOldErr;
@@ -2879,9 +2925,9 @@ float D3DX_BC7::PerturbOne(const EncodeParams* pEP, const LDRColorA aColors[], s
             if (tmp < 0 || tmp >= (1 << prec))
                 continue;
             else
-                *ptmp_c = (uint8_t)tmp;
+                *ptmp_c = static_cast<uint8_t>(tmp);
 
-            float fTotalErr = MapColors(pEP, aColors, np, uIndexMode, tmp_endPts, fMinErr);
+            const float fTotalErr = MapColors(pEP, aColors, np, uIndexMode, tmp_endPts, fMinErr);
             if (fTotalErr < fMinErr)
             {
                 bImproved = true;
@@ -2901,22 +2947,25 @@ float D3DX_BC7::PerturbOne(const EncodeParams* pEP, const LDRColorA aColors[], s
 // always ensure endpoint ordering is preserved (no need to overlap the scan)
 _Use_decl_annotations_
 void D3DX_BC7::Exhaustive(const EncodeParams* pEP, const LDRColorA aColors[], size_t np, size_t uIndexMode, size_t ch,
-    float& fOrgErr, LDREndPntPair& optEndPt) const
+    float& fOrgErr, LDREndPntPair& optEndPt) const noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const uint8_t uPrec = ms_aInfo[pEP->uMode].RGBAPrecWithP[ch];
     LDREndPntPair tmpEndPt;
     if (fOrgErr == 0)
         return;
 
-    int delta = 5;
+    constexpr int delta = 5;
 
     // ok figure out the range of A and B
     tmpEndPt = optEndPt;
-    int alow = std::max<int>(0, int(optEndPt.A[ch]) - delta);
-    int ahigh = std::min<int>((1 << uPrec) - 1, int(optEndPt.A[ch]) + delta);
-    int blow = std::max<int>(0, int(optEndPt.B[ch]) - delta);
-    int bhigh = std::min<int>((1 << uPrec) - 1, int(optEndPt.B[ch]) + delta);
+    const int alow = std::max<int>(0, int(optEndPt.A[ch]) - delta);
+    const int ahigh = std::min<int>((1 << uPrec) - 1, int(optEndPt.A[ch]) + delta);
+    const int blow = std::max<int>(0, int(optEndPt.B[ch]) - delta);
+    const int bhigh = std::min<int>((1 << uPrec) - 1, int(optEndPt.B[ch]) + delta);
     int amin = 0;
     int bmin = 0;
 
@@ -2928,10 +2977,10 @@ void D3DX_BC7::Exhaustive(const EncodeParams* pEP, const LDRColorA aColors[], si
         {
             for (int b = std::max<int>(a, blow); b < bhigh; ++b)
             {
-                tmpEndPt.A[ch] = (uint8_t)a;
-                tmpEndPt.B[ch] = (uint8_t)b;
+                tmpEndPt.A[ch] = static_cast<uint8_t>(a);
+                tmpEndPt.B[ch] = static_cast<uint8_t>(b);
 
-                float fErr = MapColors(pEP, aColors, np, uIndexMode, tmpEndPt, fBestErr);
+                const float fErr = MapColors(pEP, aColors, np, uIndexMode, tmpEndPt, fBestErr);
                 if (fErr < fBestErr)
                 {
                     amin = a;
@@ -2948,10 +2997,10 @@ void D3DX_BC7::Exhaustive(const EncodeParams* pEP, const LDRColorA aColors[], si
         {
             for (int a = std::max<int>(b, alow); a <= ahigh; ++a)
             {
-                tmpEndPt.A[ch] = (uint8_t)a;
-                tmpEndPt.B[ch] = (uint8_t)b;
+                tmpEndPt.A[ch] = static_cast<uint8_t>(a);
+                tmpEndPt.B[ch] = static_cast<uint8_t>(b);
 
-                float fErr = MapColors(pEP, aColors, np, uIndexMode, tmpEndPt, fBestErr);
+                const float fErr = MapColors(pEP, aColors, np, uIndexMode, tmpEndPt, fBestErr);
                 if (fErr < fBestErr)
                 {
                     amin = a;
@@ -2964,17 +3013,19 @@ void D3DX_BC7::Exhaustive(const EncodeParams* pEP, const LDRColorA aColors[], si
 
     if (fBestErr < fOrgErr)
     {
-        optEndPt.A[ch] = (uint8_t)amin;
-        optEndPt.B[ch] = (uint8_t)bmin;
+        optEndPt.A[ch] = static_cast<uint8_t>(amin);
+        optEndPt.B[ch] = static_cast<uint8_t>(bmin);
         fOrgErr = fBestErr;
     }
 }
 
 _Use_decl_annotations_
 void D3DX_BC7::OptimizeOne(const EncodeParams* pEP, const LDRColorA aColors[], size_t np, size_t uIndexMode,
-    float fOrgErr, const LDREndPntPair& org, LDREndPntPair& opt) const
+    float fOrgErr, const LDREndPntPair& org, LDREndPntPair& opt) const noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
 
     float fOptErr = fOrgErr;
     opt = org;
@@ -2991,8 +3042,8 @@ void D3DX_BC7::OptimizeOne(const EncodeParams* pEP, const LDRColorA aColors[], s
 
         // figure out which endpoint when perturbed gives the most improvement and start there
         // if we just alternate, we can easily end up in a local minima
-        float fErr0 = PerturbOne(pEP, aColors, np, uIndexMode, ch, opt, new_a, fOptErr, 0);	// perturb endpt A
-        float fErr1 = PerturbOne(pEP, aColors, np, uIndexMode, ch, opt, new_b, fOptErr, 1);	// perturb endpt B
+        const float fErr0 = PerturbOne(pEP, aColors, np, uIndexMode, ch, opt, new_a, fOptErr, 0);	// perturb endpt A
+        const float fErr1 = PerturbOne(pEP, aColors, np, uIndexMode, ch, opt, new_b, fOptErr, 1);	// perturb endpt B
 
         uint8_t& copt_a = opt.A[ch];
         uint8_t& copt_b = opt.B[ch];
@@ -3019,7 +3070,7 @@ void D3DX_BC7::OptimizeOne(const EncodeParams* pEP, const LDRColorA aColors[], s
         // now alternate endpoints and keep trying until there is no improvement
         for (; ; )
         {
-            float fErr = PerturbOne(pEP, aColors, np, uIndexMode, ch, opt, newEndPts, fOptErr, do_b);
+            const float fErr = PerturbOne(pEP, aColors, np, uIndexMode, ch, opt, newEndPts, fOptErr, do_b);
             if (fErr >= fOptErr)
                 break;
             if (do_b == 0)
@@ -3027,7 +3078,7 @@ void D3DX_BC7::OptimizeOne(const EncodeParams* pEP, const LDRColorA aColors[], s
             else
                 copt_b = cnew_b;
             fOptErr = fErr;
-            do_b = 1 - do_b;	// now move the other endpoint
+            do_b = 1u - do_b;	// now move the other endpoint
         }
     }
 
@@ -3038,9 +3089,12 @@ void D3DX_BC7::OptimizeOne(const EncodeParams* pEP, const LDRColorA aColors[], s
 
 _Use_decl_annotations_
 void D3DX_BC7::OptimizeEndPoints(const EncodeParams* pEP, size_t uShape, size_t uIndexMode, const float afOrgErr[],
-    const LDREndPntPair aOrgEndPts[], LDREndPntPair aOptEndPts[]) const
+    const LDREndPntPair aOrgEndPts[], LDREndPntPair aOptEndPts[]) const noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const uint8_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
     assert(uPartitions < BC7_MAX_REGIONS && uShape < BC7_MAX_SHAPES);
     _Analysis_assume_(uPartitions < BC7_MAX_REGIONS && uShape < BC7_MAX_SHAPES);
@@ -3061,11 +3115,13 @@ void D3DX_BC7::OptimizeEndPoints(const EncodeParams* pEP, size_t uShape, size_t 
 
 _Use_decl_annotations_
 void D3DX_BC7::AssignIndices(const EncodeParams* pEP, size_t uShape, size_t uIndexMode, LDREndPntPair endPts[], size_t aIndices[], size_t aIndices2[],
-    float afTotErr[]) const
+    float afTotErr[]) const noexcept
 {
     assert(pEP);
     assert(uShape < BC7_MAX_SHAPES);
     _Analysis_assume_(uShape < BC7_MAX_SHAPES);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
 
     const uint8_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
     assert(uPartitions < BC7_MAX_REGIONS);
@@ -3073,14 +3129,14 @@ void D3DX_BC7::AssignIndices(const EncodeParams* pEP, size_t uShape, size_t uInd
 
     const uint8_t uIndexPrec = uIndexMode ? ms_aInfo[pEP->uMode].uIndexPrec2 : ms_aInfo[pEP->uMode].uIndexPrec;
     const uint8_t uIndexPrec2 = uIndexMode ? ms_aInfo[pEP->uMode].uIndexPrec : ms_aInfo[pEP->uMode].uIndexPrec2;
-    const uint8_t uNumIndices = 1 << uIndexPrec;
-    const uint8_t uNumIndices2 = 1 << uIndexPrec2;
+    auto const uNumIndices = static_cast<const uint8_t>(1u << uIndexPrec);
+    auto const uNumIndices2 = static_cast<const uint8_t>(1u << uIndexPrec2);
 
     assert((uNumIndices <= BC7_MAX_INDICES) && (uNumIndices2 <= BC7_MAX_INDICES));
     _Analysis_assume_((uNumIndices <= BC7_MAX_INDICES) && (uNumIndices2 <= BC7_MAX_INDICES));
 
-    const uint8_t uHighestIndexBit = uNumIndices >> 1;
-    const uint8_t uHighestIndexBit2 = uNumIndices2 >> 1;
+    const uint8_t uHighestIndexBit = uint8_t(uNumIndices >> 1);
+    const uint8_t uHighestIndexBit2 = uint8_t(uNumIndices2 >> 1);
     LDRColorA aPalette[BC7_MAX_REGIONS][BC7_MAX_INDICES];
 
     // build list of possibles
@@ -3140,9 +3196,12 @@ void D3DX_BC7::AssignIndices(const EncodeParams* pEP, size_t uShape, size_t uInd
 }
 
 _Use_decl_annotations_
-void D3DX_BC7::EmitBlock(const EncodeParams* pEP, size_t uShape, size_t uRotation, size_t uIndexMode, const LDREndPntPair aEndPts[], const size_t aIndex[], const size_t aIndex2[])
+void D3DX_BC7::EmitBlock(const EncodeParams* pEP, size_t uShape, size_t uRotation, size_t uIndexMode, const LDREndPntPair aEndPts[], const size_t aIndex[], const size_t aIndex2[]) noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const uint8_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
     assert(uPartitions < BC7_MAX_REGIONS);
     _Analysis_assume_(uPartitions < BC7_MAX_REGIONS);
@@ -3177,8 +3236,8 @@ void D3DX_BC7::EmitBlock(const EncodeParams* pEP, size_t uShape, size_t uRotatio
                 }
                 else
                 {
-                    SetBits(uStartBit, RGBAPrec[ch], aEndPts[i].A[ch] >> 1);
-                    SetBits(uStartBit, RGBAPrec[ch], aEndPts[i].B[ch] >> 1);
+                    SetBits(uStartBit, RGBAPrec[ch], uint8_t(aEndPts[i].A[ch] >> 1));
+                    SetBits(uStartBit, RGBAPrec[ch], uint8_t(aEndPts[i].B[ch] >> 1));
                     size_t idx = ep++ * uPBits / uNumEP;
                     assert(idx < (BC7_MAX_REGIONS << 1));
                     _Analysis_assume_(idx < (BC7_MAX_REGIONS << 1));
@@ -3195,7 +3254,7 @@ void D3DX_BC7::EmitBlock(const EncodeParams* pEP, size_t uShape, size_t uRotatio
 
         for (i = 0; i < uPBits; i++)
         {
-            SetBits(uStartBit, 1, aPVote[i] > (aCount[i] >> 1) ? 1 : 0);
+            SetBits(uStartBit, 1, (aPVote[i] >(aCount[i] >> 1)) ? 1u : 0u);
         }
     }
     else
@@ -3227,12 +3286,101 @@ void D3DX_BC7::EmitBlock(const EncodeParams* pEP, size_t uShape, size_t uRotatio
 }
 
 _Use_decl_annotations_
-float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation, size_t uIndexMode)
+void D3DX_BC7::FixEndpointPBits(const EncodeParams* pEP, const LDREndPntPair *pOrigEndpoints, LDREndPntPair *pFixedEndpoints) noexcept
+{
+    assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
+    const size_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
+    assert(uPartitions < BC7_MAX_REGIONS);
+    _Analysis_assume_(uPartitions < BC7_MAX_REGIONS);
+
+    pFixedEndpoints[0] = pOrigEndpoints[0];
+    pFixedEndpoints[1] = pOrigEndpoints[1];
+    pFixedEndpoints[2] = pOrigEndpoints[2];
+
+    const size_t uPBits = ms_aInfo[pEP->uMode].uPBits;
+
+    if (uPBits)
+    {
+        const size_t uNumEP = size_t(1 + uPartitions) << 1;
+        uint8_t aPVote[BC7_MAX_REGIONS << 1] = { 0,0,0,0,0,0 };
+        uint8_t aCount[BC7_MAX_REGIONS << 1] = { 0,0,0,0,0,0 };
+
+        const LDRColorA RGBAPrec = ms_aInfo[pEP->uMode].RGBAPrec;
+        const LDRColorA RGBAPrecWithP = ms_aInfo[pEP->uMode].RGBAPrecWithP;
+
+        for (uint8_t ch = 0; ch < BC7_NUM_CHANNELS; ch++)
+        {
+            uint8_t ep = 0;
+            for (size_t i = 0; i <= uPartitions; i++)
+            {
+                if (RGBAPrec[ch] == RGBAPrecWithP[ch])
+                {
+                    pFixedEndpoints[i].A[ch] = pOrigEndpoints[i].A[ch];
+                    pFixedEndpoints[i].B[ch] = pOrigEndpoints[i].B[ch];
+                }
+                else
+                {
+                    pFixedEndpoints[i].A[ch] = uint8_t(pOrigEndpoints[i].A[ch] >> 1);
+                    pFixedEndpoints[i].B[ch] = uint8_t(pOrigEndpoints[i].B[ch] >> 1);
+
+                    size_t idx = ep++ * uPBits / uNumEP;
+                    assert(idx < (BC7_MAX_REGIONS << 1));
+                    _Analysis_assume_(idx < (BC7_MAX_REGIONS << 1));
+                    aPVote[idx] += pOrigEndpoints[i].A[ch] & 0x01;
+                    aCount[idx]++;
+                    idx = ep++ * uPBits / uNumEP;
+                    assert(idx < (BC7_MAX_REGIONS << 1));
+                    _Analysis_assume_(idx < (BC7_MAX_REGIONS << 1));
+                    aPVote[idx] += pOrigEndpoints[i].B[ch] & 0x01;
+                    aCount[idx]++;
+                }
+            }
+        }
+
+        // Compute the actual pbits we'll use when we encode block. Note this is not
+        // rounding the component indices correctly in cases the pbits != a component's LSB.
+        int pbits[BC7_MAX_REGIONS << 1];
+        for (size_t i = 0; i < uPBits; i++)
+            pbits[i] = aPVote[i] >(aCount[i] >> 1) ? 1 : 0;
+
+        // Now calculate the actual endpoints with proper pbits, so error calculations are accurate.
+        if (pEP->uMode == 1)
+        {
+            // shared pbits
+            for (uint8_t ch = 0; ch < BC7_NUM_CHANNELS; ch++)
+            {
+                for (size_t i = 0; i <= uPartitions; i++)
+                {
+                    pFixedEndpoints[i].A[ch] = static_cast<uint8_t>((pFixedEndpoints[i].A[ch] << 1) | pbits[i]);
+                    pFixedEndpoints[i].B[ch] = static_cast<uint8_t>((pFixedEndpoints[i].B[ch] << 1) | pbits[i]);
+                }
+            }
+        }
+        else
+        {
+            for (uint8_t ch = 0; ch < BC7_NUM_CHANNELS; ch++)
+            {
+                for (size_t i = 0; i <= uPartitions; i++)
+                {
+                    pFixedEndpoints[i].A[ch] = static_cast<uint8_t>((pFixedEndpoints[i].A[ch] << 1) | pbits[i * 2 + 0]);
+                    pFixedEndpoints[i].B[ch] = static_cast<uint8_t>((pFixedEndpoints[i].B[ch] << 1) | pbits[i * 2 + 1]);
+                }
+            }
+        }
+    }
+}
+
+_Use_decl_annotations_
+float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation, size_t uIndexMode) noexcept
 {
     assert(pEP);
     assert(uShape < BC7_MAX_SHAPES);
     _Analysis_assume_(uShape < BC7_MAX_SHAPES);
-    const LDREndPntPair* aEndPts = pEP->aEndPts[uShape];
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
 
     const size_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
     assert(uPartitions < BC7_MAX_REGIONS);
@@ -3247,15 +3395,25 @@ float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation,
     float aOrgErr[BC7_MAX_REGIONS];
     float aOptErr[BC7_MAX_REGIONS];
 
+    const LDREndPntPair* aEndPts = &pEP->aEndPts[uShape][0];
+
     for (size_t p = 0; p <= uPartitions; p++)
     {
         aOrgEndPts[p].A = Quantize(aEndPts[p].A, ms_aInfo[pEP->uMode].RGBAPrecWithP);
         aOrgEndPts[p].B = Quantize(aEndPts[p].B, ms_aInfo[pEP->uMode].RGBAPrecWithP);
     }
 
-    AssignIndices(pEP, uShape, uIndexMode, aOrgEndPts, aOrgIdx, aOrgIdx2, aOrgErr);
-    OptimizeEndPoints(pEP, uShape, uIndexMode, aOrgErr, aOrgEndPts, aOptEndPts);
-    AssignIndices(pEP, uShape, uIndexMode, aOptEndPts, aOptIdx, aOptIdx2, aOptErr);
+    LDREndPntPair newEndPts1[BC7_MAX_REGIONS];
+    FixEndpointPBits(pEP, aOrgEndPts, newEndPts1);
+
+    AssignIndices(pEP, uShape, uIndexMode, newEndPts1, aOrgIdx, aOrgIdx2, aOrgErr);
+
+    OptimizeEndPoints(pEP, uShape, uIndexMode, aOrgErr, newEndPts1, aOptEndPts);
+
+    LDREndPntPair newEndPts2[BC7_MAX_REGIONS];
+    FixEndpointPBits(pEP, aOptEndPts, newEndPts2);
+
+    AssignIndices(pEP, uShape, uIndexMode, newEndPts2, aOptIdx, aOptIdx2, aOptErr);
 
     float fOrgTotErr = 0, fOptTotErr = 0;
     for (size_t p = 0; p <= uPartitions; p++)
@@ -3265,20 +3423,23 @@ float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation,
     }
     if (fOptTotErr < fOrgTotErr)
     {
-        EmitBlock(pEP, uShape, uRotation, uIndexMode, aOptEndPts, aOptIdx, aOptIdx2);
+        EmitBlock(pEP, uShape, uRotation, uIndexMode, newEndPts2, aOptIdx, aOptIdx2);
         return fOptTotErr;
     }
     else
     {
-        EmitBlock(pEP, uShape, uRotation, uIndexMode, aOrgEndPts, aOrgIdx, aOrgIdx2);
+        EmitBlock(pEP, uShape, uRotation, uIndexMode, newEndPts1, aOrgIdx, aOrgIdx2);
         return fOrgTotErr;
     }
 }
 
 _Use_decl_annotations_
-float D3DX_BC7::MapColors(const EncodeParams* pEP, const LDRColorA aColors[], size_t np, size_t uIndexMode, const LDREndPntPair& endPts, float fMinErr) const
+float D3DX_BC7::MapColors(const EncodeParams* pEP, const LDRColorA aColors[], size_t np, size_t uIndexMode, const LDREndPntPair& endPts, float fMinErr) const noexcept
 {
     assert(pEP);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     const uint8_t uIndexPrec = uIndexMode ? ms_aInfo[pEP->uMode].uIndexPrec2 : ms_aInfo[pEP->uMode].uIndexPrec;
     const uint8_t uIndexPrec2 = uIndexMode ? ms_aInfo[pEP->uMode].uIndexPrec : ms_aInfo[pEP->uMode].uIndexPrec2;
     LDRColorA aPalette[BC7_MAX_INDICES];
@@ -3299,11 +3460,14 @@ float D3DX_BC7::MapColors(const EncodeParams* pEP, const LDRColorA aColors[], si
 }
 
 _Use_decl_annotations_
-float D3DX_BC7::RoughMSE(EncodeParams* pEP, size_t uShape, size_t uIndexMode)
+float D3DX_BC7::RoughMSE(EncodeParams* pEP, size_t uShape, size_t uIndexMode) noexcept
 {
     assert(pEP);
     assert(uShape < BC7_MAX_SHAPES);
     _Analysis_assume_(uShape < BC7_MAX_SHAPES);
+    assert(pEP->uMode < c_NumModes);
+    _Analysis_assume_(pEP->uMode < c_NumModes);
+
     LDREndPntPair* aEndPts = pEP->aEndPts[uShape];
 
     const uint8_t uPartitions = ms_aInfo[pEP->uMode].uPartitions;
@@ -3312,8 +3476,8 @@ float D3DX_BC7::RoughMSE(EncodeParams* pEP, size_t uShape, size_t uIndexMode)
 
     const uint8_t uIndexPrec = uIndexMode ? ms_aInfo[pEP->uMode].uIndexPrec2 : ms_aInfo[pEP->uMode].uIndexPrec;
     const uint8_t uIndexPrec2 = uIndexMode ? ms_aInfo[pEP->uMode].uIndexPrec : ms_aInfo[pEP->uMode].uIndexPrec2;
-    const uint8_t uNumIndices = 1 << uIndexPrec;
-    const uint8_t uNumIndices2 = 1 << uIndexPrec2;
+    auto const uNumIndices = static_cast<const uint8_t>(1u << uIndexPrec);
+    auto const uNumIndices2 = static_cast<const uint8_t>(1u << uIndexPrec2);
     size_t auPixIdx[NUM_PIXELS_PER_BLOCK];
     LDRColorA aPalette[BC7_MAX_REGIONS][BC7_MAX_INDICES];
 
@@ -3396,7 +3560,7 @@ float D3DX_BC7::RoughMSE(EncodeParams* pEP, size_t uShape, size_t uIndexMode)
     float fTotalErr = 0;
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
     {
-        uint8_t uRegion = g_aPartitionTable[uPartitions][uShape][i];
+        const uint8_t uRegion = g_aPartitionTable[uPartitions][uShape][i];
         fTotalErr += ComputeError(pEP->aLDRPixels[i], aPalette[uRegion], uIndexPrec, uIndexPrec2);
     }
 
@@ -3412,7 +3576,7 @@ float D3DX_BC7::RoughMSE(EncodeParams* pEP, size_t uShape, size_t uIndexMode)
 // BC6H Compression
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-void DirectX::D3DXDecodeBC6HU(XMVECTOR *pColor, const uint8_t *pBC)
+void DirectX::D3DXDecodeBC6HU(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 {
     assert(pColor && pBC);
     static_assert(sizeof(D3DX_BC6H) == 16, "D3DX_BC6H should be 16 bytes");
@@ -3420,7 +3584,7 @@ void DirectX::D3DXDecodeBC6HU(XMVECTOR *pColor, const uint8_t *pBC)
 }
 
 _Use_decl_annotations_
-void DirectX::D3DXDecodeBC6HS(XMVECTOR *pColor, const uint8_t *pBC)
+void DirectX::D3DXDecodeBC6HS(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 {
     assert(pColor && pBC);
     static_assert(sizeof(D3DX_BC6H) == 16, "D3DX_BC6H should be 16 bytes");
@@ -3428,7 +3592,7 @@ void DirectX::D3DXDecodeBC6HS(XMVECTOR *pColor, const uint8_t *pBC)
 }
 
 _Use_decl_annotations_
-void DirectX::D3DXEncodeBC6HU(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
+void DirectX::D3DXEncodeBC6HU(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
 {
     UNREFERENCED_PARAMETER(flags);
     assert(pBC && pColor);
@@ -3437,7 +3601,7 @@ void DirectX::D3DXEncodeBC6HU(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
 }
 
 _Use_decl_annotations_
-void DirectX::D3DXEncodeBC6HS(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
+void DirectX::D3DXEncodeBC6HS(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
 {
     UNREFERENCED_PARAMETER(flags);
     assert(pBC && pColor);
@@ -3450,7 +3614,7 @@ void DirectX::D3DXEncodeBC6HS(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
 // BC7 Compression
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-void DirectX::D3DXDecodeBC7(XMVECTOR *pColor, const uint8_t *pBC)
+void DirectX::D3DXDecodeBC7(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 {
     assert(pColor && pBC);
     static_assert(sizeof(D3DX_BC7) == 16, "D3DX_BC7 should be 16 bytes");
@@ -3458,7 +3622,7 @@ void DirectX::D3DXDecodeBC7(XMVECTOR *pColor, const uint8_t *pBC)
 }
 
 _Use_decl_annotations_
-void DirectX::D3DXEncodeBC7(uint8_t *pBC, const XMVECTOR *pColor, DWORD flags)
+void DirectX::D3DXEncodeBC7(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
 {
     assert(pBC && pColor);
     static_assert(sizeof(D3DX_BC7) == 16, "D3DX_BC7 should be 16 bytes");

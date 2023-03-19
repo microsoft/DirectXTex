@@ -3,7 +3,7 @@
 //
 // DirectX Texture diagnostic tool
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926
@@ -15,24 +15,37 @@
 #define NOMINMAX
 #define NODRAWTEXT
 #define NOGDI
-#define NOBITMAP
 #define NOMCX
 #define NOSERVICE
 #define NOHELP
 #pragma warning(pop)
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cwchar>
+#include <cwctype>
 #include <fstream>
-#include <memory>
+#include <iterator>
 #include <list>
+#include <locale>
+#include <memory>
+#include <new>
+#include <set>
+#include <string>
+#include <tuple>
 #include <vector>
 
 #include <dxgiformat.h>
 
-#include "directxtex.h"
+#pragma warning(disable : 4619 4616 26812)
+
+#include "DirectXTex.h"
+
+#include <DirectXPackedVector.h>
 
 //Uncomment to add support for OpenEXR (.exr)
 //#define USE_OPENEXR
@@ -44,7 +57,7 @@
 
 using namespace DirectX;
 
-enum COMMANDS
+enum COMMANDS : uint32_t
 {
     CMD_INFO = 1,
     CMD_ANALYZE,
@@ -55,7 +68,7 @@ enum COMMANDS
     CMD_MAX
 };
 
-enum OPTIONS
+enum OPTIONS : uint32_t
 {
     OPT_RECURSIVE = 1,
     OPT_FORMAT,
@@ -63,6 +76,7 @@ enum OPTIONS
     OPT_DDS_DWORD_ALIGN,
     OPT_DDS_BAD_DXTN_TAILS,
     OPT_OUTPUTFILE,
+    OPT_TOLOWER,
     OPT_OVERWRITE,
     OPT_FILETYPE,
     OPT_NOLOGO,
@@ -71,11 +85,13 @@ enum OPTIONS
     OPT_EXPAND_LUMINANCE,
     OPT_TARGET_PIXELX,
     OPT_TARGET_PIXELY,
+    OPT_DIFF_COLOR,
+    OPT_THRESHOLD,
     OPT_FILELIST,
     OPT_MAX
 };
 
-static_assert(OPT_MAX <= 32, "dwOptions is a DWORD bitfield");
+static_assert(OPT_MAX <= 32, "dwOptions is a unsigned int bitfield");
 
 struct SConversion
 {
@@ -84,8 +100,8 @@ struct SConversion
 
 struct SValue
 {
-    LPCWSTR pName;
-    DWORD dwValue;
+    const wchar_t*  name;
+    uint32_t        value;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -112,6 +128,7 @@ const SValue g_pOptions[] =
     { L"badtails",  OPT_DDS_BAD_DXTN_TAILS },
     { L"nologo",    OPT_NOLOGO },
     { L"o",         OPT_OUTPUTFILE },
+    { L"l",         OPT_TOLOWER },
     { L"y",         OPT_OVERWRITE },
     { L"ft",        OPT_FILETYPE },
     { L"tu",        OPT_TYPELESS_UNORM },
@@ -119,11 +136,13 @@ const SValue g_pOptions[] =
     { L"xlum",      OPT_EXPAND_LUMINANCE },
     { L"targetx",   OPT_TARGET_PIXELX },
     { L"targety",   OPT_TARGET_PIXELY },
+    { L"c",         OPT_DIFF_COLOR },
+    { L"t",         OPT_THRESHOLD },
     { L"flist",     OPT_FILELIST },
     { nullptr,      0 }
 };
 
-#define DEFFMT(fmt) { L#fmt, DXGI_FORMAT_ ## fmt }
+#define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
 
 const SValue g_pFormats[] =
 {
@@ -197,10 +216,11 @@ const SValue g_pFormats[] =
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
 
-const SValue g_pFormatAliases [] =
+const SValue g_pFormatAliases[] =
 {
     { L"RGBA", DXGI_FORMAT_R8G8B8A8_UNORM },
     { L"BGRA", DXGI_FORMAT_B8G8R8A8_UNORM },
+    { L"BGR",  DXGI_FORMAT_B8G8R8X8_UNORM },
 
     { L"FP16", DXGI_FORMAT_R16G16B16A16_FLOAT },
     { L"FP32", DXGI_FORMAT_R32G32B32A32_FLOAT },
@@ -307,44 +327,47 @@ const SValue g_pFilters[] =
     { nullptr,                      TEX_FILTER_DEFAULT }
 };
 
-#define CODEC_DDS 0xFFFF0001 
+#define CODEC_DDS 0xFFFF0001
 #define CODEC_TGA 0xFFFF0002
 #define CODEC_HDR 0xFFFF0005
+
+#ifdef USE_OPENEXR
 #define CODEC_EXR 0xFFFF0006
+#endif
 
 const SValue g_pDumpFileTypes[] =
 {
-    { L"BMP",   WIC_CODEC_BMP  },
-    { L"JPG",   WIC_CODEC_JPEG },
-    { L"JPEG",  WIC_CODEC_JPEG },
-    { L"PNG",   WIC_CODEC_PNG  },
-    { L"TGA",   CODEC_TGA      },
-    { L"HDR",   CODEC_HDR      },
-    { L"TIF",   WIC_CODEC_TIFF },
-    { L"TIFF",  WIC_CODEC_TIFF },
-    { L"JXR",   WIC_CODEC_WMP  },
+    { L"bmp",   WIC_CODEC_BMP  },
+    { L"jpg",   WIC_CODEC_JPEG },
+    { L"jpeg",  WIC_CODEC_JPEG },
+    { L"png",   WIC_CODEC_PNG  },
+    { L"tga",   CODEC_TGA      },
+    { L"hdr",   CODEC_HDR      },
+    { L"tif",   WIC_CODEC_TIFF },
+    { L"tiff",  WIC_CODEC_TIFF },
+    { L"jxr",   WIC_CODEC_WMP  },
 #ifdef USE_OPENEXR
-    { L"EXR",   CODEC_EXR      },
+    { L"exr",   CODEC_EXR      },
 #endif
     { nullptr,  CODEC_DDS      }
 };
 
 const SValue g_pExtFileTypes[] =
 {
-    { L".BMP",  WIC_CODEC_BMP },
-    { L".JPG",  WIC_CODEC_JPEG },
-    { L".JPEG", WIC_CODEC_JPEG },
-    { L".PNG",  WIC_CODEC_PNG },
-    { L".DDS",  CODEC_DDS },
-    { L".TGA",  CODEC_TGA },
-    { L".HDR",  CODEC_HDR },
-    { L".TIF",  WIC_CODEC_TIFF },
-    { L".TIFF", WIC_CODEC_TIFF },
-    { L".WDP",  WIC_CODEC_WMP },
-    { L".HDP",  WIC_CODEC_WMP },
-    { L".JXR",  WIC_CODEC_WMP },
+    { L".bmp",  WIC_CODEC_BMP },
+    { L".jpg",  WIC_CODEC_JPEG },
+    { L".jpeg", WIC_CODEC_JPEG },
+    { L".png",  WIC_CODEC_PNG },
+    { L".dds",  CODEC_DDS },
+    { L".tga",  CODEC_TGA },
+    { L".hdr",  CODEC_HDR },
+    { L".tif",  WIC_CODEC_TIFF },
+    { L".tiff", WIC_CODEC_TIFF },
+    { L".wdp",  WIC_CODEC_WMP },
+    { L".hdp",  WIC_CODEC_WMP },
+    { L".jxr",  WIC_CODEC_WMP },
 #ifdef USE_OPENEXR
-    { L"EXR",   CODEC_EXR },
+    { L"exr",   CODEC_EXR },
 #endif
     { nullptr,  CODEC_DDS }
 };
@@ -355,20 +378,22 @@ const SValue g_pExtFileTypes[] =
 
 namespace
 {
-    inline HANDLE safe_handle(HANDLE h) { return (h == INVALID_HANDLE_VALUE) ? 0 : h; }
+    inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
-    struct find_closer { void operator()(HANDLE h) { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
+    struct find_closer { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
 
-    typedef public std::unique_ptr<void, find_closer> ScopedFindHandle;
+    using ScopedFindHandle = std::unique_ptr<void, find_closer>;
 
+#ifdef _PREFAST_
 #pragma prefast(disable : 26018, "Only used with static internal arrays")
+#endif
 
-    DWORD LookupByName(const wchar_t *pName, const SValue *pArray)
+    uint32_t LookupByName(const wchar_t *pName, const SValue *pArray)
     {
-        while (pArray->pName)
+        while (pArray->name)
         {
-            if (!_wcsicmp(pName, pArray->pName))
-                return pArray->dwValue;
+            if (!_wcsicmp(pName, pArray->name))
+                return pArray->value;
 
             pArray++;
         }
@@ -376,13 +401,12 @@ namespace
         return 0;
     }
 
-
-    const wchar_t* LookupByValue(DWORD pValue, const SValue *pArray)
+    const wchar_t* LookupByValue(uint32_t pValue, const SValue *pArray)
     {
-        while (pArray->pName)
+        while (pArray->name)
         {
-            if (pValue == pArray->dwValue)
-                return pArray->pName;
+            if (pValue == pArray->value)
+                return pArray->name;
 
             pArray++;
         }
@@ -390,11 +414,10 @@ namespace
         return L"";
     }
 
-
     void SearchForFiles(const wchar_t* path, std::list<SConversion>& files, bool recursive)
     {
         // Process files
-        WIN32_FIND_DATA findData = {};
+        WIN32_FIND_DATAW findData = {};
         ScopedFindHandle hFile(safe_handle(FindFirstFileExW(path,
             FindExInfoBasic, &findData,
             FindExSearchNameMatch, nullptr,
@@ -409,12 +432,12 @@ namespace
                     wchar_t dir[_MAX_DIR] = {};
                     _wsplitpath_s(path, drive, _MAX_DRIVE, dir, _MAX_DIR, nullptr, 0, nullptr, 0);
 
-                    SConversion conv;
+                    SConversion conv = {};
                     _wmakepath_s(conv.szSrc, drive, dir, findData.cFileName, nullptr);
                     files.push_back(conv);
                 }
 
-                if (!FindNextFile(hFile.get(), &findData))
+                if (!FindNextFileW(hFile.get(), &findData))
                     break;
             }
         }
@@ -459,29 +482,112 @@ namespace
                     }
                 }
 
-                if (!FindNextFile(hFile.get(), &findData))
+                if (!FindNextFileW(hFile.get(), &findData))
                     break;
             }
         }
     }
 
+    void ProcessFileList(std::wifstream& inFile, std::list<SConversion>& files)
+    {
+        std::list<SConversion> flist;
+        std::set<std::wstring> excludes;
+        wchar_t fname[1024] = {};
+        for (;;)
+        {
+            inFile >> fname;
+            if (!inFile)
+                break;
+
+            if (*fname == L'#')
+            {
+                // Comment
+            }
+            else if (*fname == L'-')
+            {
+                if (flist.empty())
+                {
+                    wprintf(L"WARNING: Ignoring the line '%ls' in -flist\n", fname);
+                }
+                else
+                {
+                    if (wcspbrk(fname, L"?*") != nullptr)
+                    {
+                        std::list<SConversion> removeFiles;
+                        SearchForFiles(&fname[1], removeFiles, false);
+
+                        for (auto it : removeFiles)
+                        {
+                            _wcslwr_s(it.szSrc);
+                            excludes.insert(it.szSrc);
+                        }
+                    }
+                    else
+                    {
+                        std::wstring name = (fname + 1);
+                        std::transform(name.begin(), name.end(), name.begin(), towlower);
+                        excludes.insert(name);
+                    }
+                }
+            }
+            else if (wcspbrk(fname, L"?*") != nullptr)
+            {
+                SearchForFiles(fname, flist, false);
+            }
+            else
+            {
+                SConversion conv = {};
+                wcscpy_s(conv.szSrc, MAX_PATH, fname);
+                flist.push_back(conv);
+            }
+
+            inFile.ignore(1000, '\n');
+        }
+
+        inFile.close();
+
+        if (!excludes.empty())
+        {
+            // Remove any excluded files
+            for (auto it = flist.begin(); it != flist.end();)
+            {
+                std::wstring name = it->szSrc;
+                std::transform(name.begin(), name.end(), name.begin(), towlower);
+                auto item = it;
+                ++it;
+                if (excludes.find(name) != excludes.end())
+                {
+                    flist.erase(item);
+                }
+            }
+        }
+
+        if (flist.empty())
+        {
+            wprintf(L"WARNING: No file names found in -flist\n");
+        }
+        else
+        {
+            files.splice(files.end(), flist);
+        }
+    }
 
     void PrintFormat(DXGI_FORMAT Format)
     {
-        for (const SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
+        for (auto pFormat = g_pFormats; pFormat->name; pFormat++)
         {
-            if ((DXGI_FORMAT)pFormat->dwValue == Format)
+            if (static_cast<DXGI_FORMAT>(pFormat->value) == Format)
             {
-                wprintf(pFormat->pName);
+                wprintf(L"%ls", pFormat->name);
                 return;
             }
         }
 
-        for (const SValue *pFormat = g_pReadOnlyFormats; pFormat->pName; pFormat++)
+        for (auto pFormat = g_pReadOnlyFormats; pFormat->name; pFormat++)
         {
-            if ((DXGI_FORMAT)pFormat->dwValue == Format)
+            if (static_cast<DXGI_FORMAT>(pFormat->value) == Format)
             {
-                wprintf(pFormat->pName);
+                wprintf(L"%ls", pFormat->name);
                 return;
             }
         }
@@ -489,12 +595,11 @@ namespace
         wprintf(L"*UNKNOWN*");
     }
 
-
     void PrintList(size_t cch, const SValue *pValue)
     {
-        while (pValue->pName)
+        while (pValue->name)
         {
-            size_t cchName = wcslen(pValue->pName);
+            const size_t cchName = wcslen(pValue->name);
 
             if (cch + cchName + 2 >= 80)
             {
@@ -502,7 +607,7 @@ namespace
                 cch = 6;
             }
 
-            wprintf(L"%ls ", pValue->pName);
+            wprintf(L"%ls ", pValue->name);
             cch += cchName + 2;
             pValue++;
         }
@@ -510,47 +615,84 @@ namespace
         wprintf(L"\n");
     }
 
-
     void PrintLogo()
     {
-        wprintf(L"Microsoft (R) DirectX Texture Diagnostic Tool\n");
-        wprintf(L"Copyright (C) Microsoft Corp. All rights reserved.\n");
-#ifdef _DEBUG
+        wchar_t version[32] = {};
+
+        wchar_t appName[_MAX_PATH] = {};
+        if (GetModuleFileNameW(nullptr, appName, static_cast<DWORD>(std::size(appName))))
+        {
+            const DWORD size = GetFileVersionInfoSizeW(appName, nullptr);
+            if (size > 0)
+            {
+                auto verInfo = std::make_unique<uint8_t[]>(size);
+                if (GetFileVersionInfoW(appName, 0, size, verInfo.get()))
+                {
+                    LPVOID lpstr = nullptr;
+                    UINT strLen = 0;
+                    if (VerQueryValueW(verInfo.get(), L"\\StringFileInfo\\040904B0\\ProductVersion", &lpstr, &strLen))
+                    {
+                        wcsncpy_s(version, reinterpret_cast<const wchar_t*>(lpstr), strLen);
+                    }
+                }
+            }
+        }
+
+        if (!*version || wcscmp(version, L"1.0.0.0") == 0)
+        {
+            swprintf_s(version, L"%03d (library)", DIRECTX_TEX_VERSION);
+        }
+
+        wprintf(L"Microsoft (R) DirectX Texture Diagnostic Tool [DirectXTex] Version %ls\n", version);
+        wprintf(L"Copyright (C) Microsoft Corp.\n");
+    #ifdef _DEBUG
         wprintf(L"*** Debug build ***\n");
-#endif
+    #endif
         wprintf(L"\n");
     }
-
 
     void PrintUsage()
     {
         PrintLogo();
 
-        wprintf(L"Usage: texdiag <command> <options> <files>\n\n");
-        wprintf(L"   info                Output image metadata\n");
-        wprintf(L"   analyze             Analyze and summarize image information\n");
-        wprintf(L"   compare             Compare two images with MSE error metric\n");
-        wprintf(L"   diff                Generate difference image from two images\n");
-        wprintf(L"   dumpbc              Dump out compressed blocks (DDS BC only)\n");
-        wprintf(L"   dumpdds             Dump out all the images in a complex DDS\n\n");
-        wprintf(L"   -r                  wildcard filename search is recursive\n");
-        wprintf(L"   -if <filter>        image filtering\n");
-        wprintf(L"\n                       (DDS input only)\n");
-        wprintf(L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
-        wprintf(L"   -dword              Use DWORD instead of BYTE alignment\n");
-        wprintf(L"   -badtails           Fix for older DXTn with bad mipchain tails\n");
-        wprintf(L"   -xlum               expand legacy L8, L16, and A8P8 formats\n");
-        wprintf(L"\n                       (diff only)\n");
-        wprintf(L"   -f <format>         format\n");
-        wprintf(L"   -o <filename>       output filename\n");
-        wprintf(L"   -y                  overwrite existing output file (if any)\n");
-        wprintf(L"\n                       (dumpbc only)\n");
-        wprintf(L"   -targetx <num>      dump pixels at location x (defaults to all)\n");
-        wprintf(L"   -targety <num>      dump pixels at location y (defaults to all)\n");
-        wprintf(L"\n                       (dumpdds only)\n");
-        wprintf(L"   -ft <filetype>      output file type\n");
-        wprintf(L"\n   -nologo             suppress copyright message\n");
-        wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
+        static const wchar_t* const s_usage =
+            L"Usage: texdiag <command> <options> <files>\n"
+            L"\n"
+            L"   info                Output image metadata\n"
+            L"   analyze             Analyze and summarize image information\n"
+            L"   compare             Compare two images with MSE error metric\n"
+            L"   diff                Generate difference image from two images\n"
+            L"   dumpbc              Dump out compressed blocks (DDS BC only)\n"
+            L"   dumpdds             Dump out all the images in a complex DDS\n"
+            L"\n"
+            L"   -r                  wildcard filename search is recursive\n"
+            L"   -if <filter>        image filtering\n"
+            L"\n"
+            L"                       (DDS input only)\n"
+            L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n"
+            L"   -dword              Use DWORD instead of BYTE alignment\n"
+            L"   -badtails           Fix for older DXTn with bad mipchain tails\n"
+            L"   -xlum               expand legacy L8, L16, and A8P8 formats\n"
+            L"\n"
+            L"                       (diff only)\n"
+            L"   -f <format>         format\n"
+            L"   -o <filename>       output filename\n"
+            L"   -l                  force output filename to lower case\n"
+            L"   -y                  overwrite existing output file (if any)\n"
+            L"   -c <hex-RGB>        highlight difference color (defaults to off)\n"
+            L"   -t <threshold>      highlight threshold (defaults to 0.25)\n"
+            L"\n"
+            L"                       (dumpbc only)\n"
+            L"   -targetx <num>      dump pixels at location x (defaults to all)\n"
+            L"   -targety <num>      dump pixels at location y (defaults to all)\n"
+            L"\n"
+            L"                       (dumpdds only)\n"
+            L"   -ft <filetype>      output file type\n"
+            L"\n"
+            L"   -nologo             suppress copyright message\n"
+            L"   -flist <filename>   use text file with a list of input files (one per line)\n";
+
+        wprintf(L"%ls", s_usage);
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -564,7 +706,41 @@ namespace
         PrintList(15, g_pDumpFileTypes);
     }
 
-    HRESULT LoadImage(const wchar_t *fileName, DWORD dwOptions, DWORD dwFilter, TexMetadata& info, std::unique_ptr<ScratchImage>& image)
+    const wchar_t* GetErrorDesc(HRESULT hr)
+    {
+        static wchar_t desc[1024] = {};
+
+        LPWSTR errorText = nullptr;
+
+        const DWORD result = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+            nullptr, static_cast<DWORD>(hr),
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&errorText), 0, nullptr);
+
+        *desc = 0;
+
+        if (result > 0 && errorText)
+        {
+            swprintf_s(desc, L": %ls", errorText);
+
+            size_t len = wcslen(desc);
+            if (len >= 1)
+            {
+                desc[len - 1] = 0;
+            }
+
+            if (errorText)
+                LocalFree(errorText);
+        }
+
+        return desc;
+    }
+
+    HRESULT LoadImage(
+        const wchar_t *fileName,
+        uint32_t dwOptions,
+        TEX_FILTER_FLAGS dwFilter,
+        TexMetadata& info,
+        std::unique_ptr<ScratchImage>& image)
     {
         if (!fileName)
             return E_INVALIDARG;
@@ -573,12 +749,12 @@ namespace
         if (!image)
             return E_OUTOFMEMORY;
 
-        wchar_t ext[_MAX_EXT];
+        wchar_t ext[_MAX_EXT] = {};
         _wsplitpath_s(fileName, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
 
         if (_wcsicmp(ext, L".dds") == 0)
         {
-            DWORD ddsFlags = DDS_FLAGS_NONE;
+            DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES;
             if (dwOptions & (1 << OPT_DDS_DWORD_ALIGN))
                 ddsFlags |= DDS_FLAGS_LEGACY_DWORD;
             if (dwOptions & (1 << OPT_EXPAND_LUMINANCE))
@@ -611,33 +787,45 @@ namespace
         }
         else if (_wcsicmp(ext, L".tga") == 0)
         {
-            return LoadFromTGAFile(fileName, &info, *image);
+            return LoadFromTGAFile(fileName, TGA_FLAGS_NONE, &info, *image);
         }
         else if (_wcsicmp(ext, L".hdr") == 0)
         {
             return LoadFromHDRFile(fileName, &info, *image);
         }
-#ifdef USE_OPENEXR
+    #ifdef USE_OPENEXR
         else if (_wcsicmp(ext, L".exr") == 0)
         {
             return LoadFromEXRFile(fileName, &info, *image);
         }
-#endif
+    #endif
         else
         {
             // WIC shares the same filter values for mode and dither
-            static_assert(WIC_FLAGS_DITHER == TEX_FILTER_DITHER, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_DITHER_DIFFUSION == TEX_FILTER_DITHER_DIFFUSION, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_POINT == TEX_FILTER_POINT, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_LINEAR == TEX_FILTER_LINEAR, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_DITHER) == static_cast<int>(TEX_FILTER_DITHER), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_DITHER_DIFFUSION) == static_cast<int>(TEX_FILTER_DITHER_DIFFUSION), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_POINT) == static_cast<int>(TEX_FILTER_POINT), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_LINEAR) == static_cast<int>(TEX_FILTER_LINEAR), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_CUBIC) == static_cast<int>(TEX_FILTER_CUBIC), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_FANT) == static_cast<int>(TEX_FILTER_FANT), "WIC_FLAGS_* & TEX_FILTER_* should match");
 
-            return LoadFromWICFile(fileName, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image);
+            HRESULT hr = LoadFromWICFile(fileName, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image);
+            if (hr == static_cast<HRESULT>(0xc00d5212) /* MF_E_TOPO_CODEC_NOT_FOUND */)
+            {
+                if (_wcsicmp(ext, L".heic") == 0 || _wcsicmp(ext, L".heif") == 0)
+                {
+                    wprintf(L"\nINFO: This format requires installing the HEIF Image Extensions - https://aka.ms/heif\n");
+                }
+                else if (_wcsicmp(ext, L".webp") == 0)
+                {
+                    wprintf(L"\nINFO: This format requires installing the WEBP Image Extensions - https://www.microsoft.com/p/webp-image-extensions/9pg2dk419drg\n");
+                }
+            }
+            return hr;
         }
     }
 
-    HRESULT SaveImage(const Image* image, const wchar_t *fileName, DWORD codec)
+    HRESULT SaveImage(const Image* image, const wchar_t *fileName, uint32_t codec)
     {
         switch (codec)
         {
@@ -645,15 +833,15 @@ namespace
             return SaveToDDSFile(*image, DDS_FLAGS_NONE, fileName);
 
         case CODEC_TGA:
-            return SaveToTGAFile(*image, fileName);
+            return SaveToTGAFile(*image, TGA_FLAGS_NONE, fileName);
 
         case CODEC_HDR:
             return SaveToHDRFile(*image, fileName);
 
-#ifdef USE_OPENEXR
+        #ifdef USE_OPENEXR
         case CODEC_EXR:
             return SaveToEXRFile(*image, fileName);
-#endif
+        #endif
 
         default:
             return SaveToWICFile(*image, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(codec)), fileName);
@@ -704,43 +892,43 @@ namespace
         size_t totalPixels = 0;
 
         HRESULT hr = EvaluateImage(image, [&](const XMVECTOR * pixels, size_t width, size_t y)
-        {
-            static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
-
-            UNREFERENCED_PARAMETER(y);
-
-            for (size_t x = 0; x < width; ++x)
             {
-                XMVECTOR v = *pixels++;
-                luminance = XMVectorMax(luminance, XMVector3Dot(v, s_luminance) );
-                minv = XMVectorMin(minv, v);
-                maxv = XMVectorMax(maxv, v);
-                acc = XMVectorAdd(v, acc);
-                ++totalPixels;
+                static const XMVECTORF32 s_luminance = { { {  0.3f, 0.59f, 0.11f, 0.f } } };
 
-                XMFLOAT4 f;
-                XMStoreFloat4(&f, v);
-                if (!_finite(f.x))
-                {
-                    ++result.specials_x;
-                }
+                UNREFERENCED_PARAMETER(y);
 
-                if (!_finite(f.y))
+                for (size_t x = 0; x < width; ++x)
                 {
-                    ++result.specials_y;
-                }
+                    const XMVECTOR v = *pixels++;
+                    luminance = XMVectorMax(luminance, XMVector3Dot(v, s_luminance));
+                    minv = XMVectorMin(minv, v);
+                    maxv = XMVectorMax(maxv, v);
+                    acc = XMVectorAdd(v, acc);
+                    ++totalPixels;
 
-                if (!_finite(f.z))
-                {
-                    ++result.specials_z;
-                }
+                    XMFLOAT4 f;
+                    XMStoreFloat4(&f, v);
+                    if (!isfinite(f.x))
+                    {
+                        ++result.specials_x;
+                    }
 
-                if (!_finite(f.w))
-                {
-                    ++result.specials_w;
+                    if (!isfinite(f.y))
+                    {
+                        ++result.specials_y;
+                    }
+
+                    if (!isfinite(f.z))
+                    {
+                        ++result.specials_z;
+                    }
+
+                    if (!isfinite(f.w))
+                    {
+                        ++result.specials_w;
+                    }
                 }
-            }
-        });
+            });
         if (FAILED(hr))
             return hr;
 
@@ -751,7 +939,7 @@ namespace
         XMStoreFloat4(&result.imageMin, minv);
         XMStoreFloat4(&result.imageMax, maxv);
 
-        XMVECTOR pixelv = XMVectorReplicate(float(totalPixels));
+        const XMVECTOR pixelv = XMVectorReplicate(float(totalPixels));
         XMVECTOR avgv = XMVectorDivide(acc, pixelv);
         XMStoreFloat4(&result.imageAvg, avgv);
 
@@ -759,29 +947,28 @@ namespace
         acc = g_XMZero;
 
         hr = EvaluateImage(image, [&](const XMVECTOR * pixels, size_t width, size_t y)
-        {
-            UNREFERENCED_PARAMETER(y);
-
-            for (size_t x = 0; x < width; ++x)
             {
-                XMVECTOR v = *pixels++;
+                UNREFERENCED_PARAMETER(y);
 
-                XMVECTOR diff = XMVectorSubtract(v, avgv);
-                acc = XMVectorMultiplyAdd(diff, diff, acc);
-            }
-        });
+                for (size_t x = 0; x < width; ++x)
+                {
+                    const XMVECTOR v = *pixels++;
+
+                    const XMVECTOR diff = XMVectorSubtract(v, avgv);
+                    acc = XMVectorMultiplyAdd(diff, diff, acc);
+                }
+            });
         if (FAILED(hr))
             return hr;
 
         XMStoreFloat4(&result.imageVariance, acc);
 
-        XMVECTOR stddev = XMVectorSqrt(acc);
+        const XMVECTOR stddev = XMVectorSqrt(acc);
 
         XMStoreFloat4(&result.imageStdDev, stddev);
 
         return S_OK;
     }
-
 
     //--------------------------------------------------------------------------------------
     struct AnalyzeBCData
@@ -830,7 +1017,7 @@ namespace
                 for (size_t j = 1; j <= 14; ++j)
                 {
                     if (blockHist[j] > 0)
-                        wprintf(L"\t     Mode %02Iu blocks - %zu\n", j, blockHist[j]);
+                        wprintf(L"\t     Mode %02zu blocks - %zu\n", j, blockHist[j]);
                 }
                 if (blockHist[0] > 0)
                     wprintf(L"\tReserved mode blcks - %zu\n", blockHist[0]);
@@ -841,10 +1028,13 @@ namespace
                 for (size_t j = 0; j <= 7; ++j)
                 {
                     if (blockHist[j] > 0)
-                        wprintf(L"\t     Mode %02Iu blocks - %zu\n", j, blockHist[j]);
+                        wprintf(L"\t     Mode %02zu blocks - %zu\n", j, blockHist[j]);
                 }
                 if (blockHist[8] > 0)
                     wprintf(L"\tReserved mode blcks - %zu\n", blockHist[8]);
+                break;
+
+            default:
                 break;
             }
         }
@@ -941,131 +1131,131 @@ namespace
                 {
                 case DXGI_FORMAT_BC1_UNORM:
                 case DXGI_FORMAT_BC1_UNORM_SRGB:
-                {
-                    auto block = reinterpret_cast<const BC1Block*>(sptr);
-
-                    if (block->rgb[0] <= block->rgb[1])
                     {
-                        // Transparent block
-                        ++result.blockHist[1];
-                    }
-                    else
-                    {
-                        // Opaque block
-                        ++result.blockHist[0];
-                    }
-                }
-                break;
+                        auto block = reinterpret_cast<const BC1Block*>(sptr);
 
-                // BC2 only has a single 'type' of block
+                        if (block->rgb[0] <= block->rgb[1])
+                        {
+                            // Transparent block
+                            ++result.blockHist[1];
+                        }
+                        else
+                        {
+                            // Opaque block
+                            ++result.blockHist[0];
+                        }
+                    }
+                    break;
+
+                    // BC2 only has a single 'type' of block
 
                 case DXGI_FORMAT_BC3_UNORM:
                 case DXGI_FORMAT_BC3_UNORM_SRGB:
-                {
-                    auto block = reinterpret_cast<const BC3Block*>(sptr);
+                    {
+                        auto block = reinterpret_cast<const BC3Block*>(sptr);
 
-                    if (block->alpha[0] > block->alpha[1])
-                    {
-                        // 8 alpha block
-                        ++result.blockHist[0];
+                        if (block->alpha[0] > block->alpha[1])
+                        {
+                            // 8 alpha block
+                            ++result.blockHist[0];
+                        }
+                        else
+                        {
+                            // 6 alpha block
+                            ++result.blockHist[1];
+                        }
                     }
-                    else
-                    {
-                        // 6 alpha block
-                        ++result.blockHist[1];
-                    }
-                }
-                break;
+                    break;
 
                 case DXGI_FORMAT_BC4_UNORM:
-                {
-                    auto block = reinterpret_cast<const BC4UBlock*>(sptr);
+                    {
+                        auto block = reinterpret_cast<const BC4UBlock*>(sptr);
 
-                    if (block->red_0 > block->red_1)
-                    {
-                        // 8 red block
-                        ++result.blockHist[0];
+                        if (block->red_0 > block->red_1)
+                        {
+                            // 8 red block
+                            ++result.blockHist[0];
+                        }
+                        else
+                        {
+                            // 6 red block
+                            ++result.blockHist[1];
+                        }
                     }
-                    else
-                    {
-                        // 6 red block
-                        ++result.blockHist[1];
-                    }
-                }
-                break;
+                    break;
 
                 case DXGI_FORMAT_BC4_SNORM:
-                {
-                    auto block = reinterpret_cast<const BC4SBlock*>(sptr);
+                    {
+                        auto block = reinterpret_cast<const BC4SBlock*>(sptr);
 
-                    if (block->red_0 > block->red_1)
-                    {
-                        // 8 red block
-                        ++result.blockHist[0];
+                        if (block->red_0 > block->red_1)
+                        {
+                            // 8 red block
+                            ++result.blockHist[0];
+                        }
+                        else
+                        {
+                            // 6 red block
+                            ++result.blockHist[1];
+                        }
                     }
-                    else
-                    {
-                        // 6 red block
-                        ++result.blockHist[1];
-                    }
-                }
-                break;
+                    break;
 
                 case DXGI_FORMAT_BC5_UNORM:
-                {
-                    auto block = reinterpret_cast<const BC5UBlock*>(sptr);
+                    {
+                        auto block = reinterpret_cast<const BC5UBlock*>(sptr);
 
-                    if (block->u.red_0 > block->u.red_1)
-                    {
-                        // 8 red block
-                        ++result.blockHist[0];
-                    }
-                    else
-                    {
-                        // 6 red block
-                        ++result.blockHist[1];
-                    }
+                        if (block->u.red_0 > block->u.red_1)
+                        {
+                            // 8 red block
+                            ++result.blockHist[0];
+                        }
+                        else
+                        {
+                            // 6 red block
+                            ++result.blockHist[1];
+                        }
 
-                    if (block->v.red_0 > block->v.red_1)
-                    {
-                        // 8 green block
-                        ++result.blockHist[2];
+                        if (block->v.red_0 > block->v.red_1)
+                        {
+                            // 8 green block
+                            ++result.blockHist[2];
+                        }
+                        else
+                        {
+                            // 6 green block
+                            ++result.blockHist[3];
+                        }
                     }
-                    else
-                    {
-                        // 6 green block
-                        ++result.blockHist[3];
-                    }
-                }
-                break;
+                    break;
 
                 case DXGI_FORMAT_BC5_SNORM:
-                {
-                    auto block = reinterpret_cast<const BC5SBlock*>(sptr);
+                    {
+                        auto block = reinterpret_cast<const BC5SBlock*>(sptr);
 
-                    if (block->u.red_0 > block->u.red_1)
-                    {
-                        // 8 red block
-                        ++result.blockHist[0];
-                    }
-                    else
-                    {
-                        // 6 red block
-                        ++result.blockHist[1];
-                    }
+                        if (block->u.red_0 > block->u.red_1)
+                        {
+                            // 8 red block
+                            ++result.blockHist[0];
+                        }
+                        else
+                        {
+                            // 6 red block
+                            ++result.blockHist[1];
+                        }
 
-                    if (block->v.red_0 > block->v.red_1)
-                    {
-                        // 8 green block
-                        ++result.blockHist[2];
+                        if (block->v.red_0 > block->v.red_1)
+                        {
+                            // 8 green block
+                            ++result.blockHist[2];
+                        }
+                        else
+                        {
+                            // 6 green block
+                            ++result.blockHist[3];
+                        }
                     }
-                    else
-                    {
-                        // 6 green block
-                        ++result.blockHist[3];
-                    }
-                }
-                break;
+                    break;
 
                 case DXGI_FORMAT_BC6H_UF16:
                 case DXGI_FORMAT_BC6H_SF16:
@@ -1204,6 +1394,9 @@ namespace
                         ++result.blockHist[8];
                     }
                     break;
+
+                default:
+                    break;
                 }
 
                 sptr += sbpp;
@@ -1216,9 +1409,15 @@ namespace
         return S_OK;
     }
 
-
     //--------------------------------------------------------------------------------------
-    HRESULT Difference(const Image& image1, const Image& image2, DWORD dwFilter, DXGI_FORMAT format, ScratchImage& result)
+    HRESULT Difference(
+        const Image& image1,
+        const Image& image2,
+        TEX_FILTER_FLAGS dwFilter,
+        DXGI_FORMAT format,
+        uint32_t diffColor,
+        float threshold,
+        ScratchImage& result)
     {
         if (!image1.pixels || !image2.pixels)
             return E_POINTER;
@@ -1248,7 +1447,7 @@ namespace
                 if (FAILED(hr))
                     return hr;
 
-                imageB = tempB.GetImage(0,0,0);
+                imageB = tempB.GetImage(0, 0, 0);
             }
             else
             {
@@ -1263,34 +1462,48 @@ namespace
         if (!imageA || !imageB)
             return E_POINTER;
 
+        XMVECTOR colorValue = PackedVector::XMLoadColor(reinterpret_cast<const PackedVector::XMCOLOR*>(&diffColor));
+        colorValue = XMVectorSelect(g_XMIdentityR3, colorValue, g_XMSelect1110);
+
         ScratchImage diffImage;
         HRESULT hr = TransformImage(*imageA, [&](XMVECTOR* outPixels, const XMVECTOR * inPixels, size_t width, size_t y)
-        {
-            auto *inPixelsB = reinterpret_cast<XMVECTOR*>(imageB->pixels + (y*imageB->rowPitch));
-
-            for (size_t x = 0; x < width; ++x)
             {
-                XMVECTOR v1 = *inPixels++;
-                XMVECTOR v2 = *inPixelsB++;
+                const XMVECTOR tolerance = XMVectorReplicate(threshold);
 
-                v1 = XMVectorSubtract(v1, v2);
-                v1 = XMVectorAbs(v1);
+                auto *inPixelsB = reinterpret_cast<XMVECTOR*>(imageB->pixels + (y*imageB->rowPitch));
 
-                v1 = XMVectorSelect( g_XMIdentityR3, v1, g_XMSelect1110);
+                for (size_t x = 0; x < width; ++x)
+                {
+                    XMVECTOR v1 = *inPixels++;
+                    const XMVECTOR v2 = *inPixelsB++;
 
-                *outPixels++ = v1;
-            }
-        }, (format == DXGI_FORMAT_R32G32B32A32_FLOAT) ? result : diffImage);
+                    v1 = XMVectorSubtract(v1, v2);
+                    v1 = XMVectorAbs(v1);
+                    v1 = XMVectorSelect(g_XMIdentityR3, v1, g_XMSelect1110);
+
+                    if (diffColor && XMVector3GreaterOrEqual(v1, tolerance))
+                    {
+                        *outPixels++ = colorValue;
+                    }
+                    else
+                    {
+                        *outPixels++ = v1;
+                    }
+                }
+            }, (format == DXGI_FORMAT_R32G32B32A32_FLOAT) ? result : diffImage);
         if (FAILED(hr))
             return hr;
 
-        if (format == DXGI_FORMAT_R32G32B32A32_FLOAT)
+        if (format == diffImage.GetMetadata().format)
+        {
+            std::swap(diffImage, result);
             return S_OK;
+        }
 
         return Convert(diffImage.GetImages(), diffImage.GetImageCount(), diffImage.GetMetadata(), format, dwFilter, TEX_THRESHOLD_DEFAULT, result);
     }
 
-
+#pragma region DumpBC
     //--------------------------------------------------------------------------------------
     // Partition, Shape, Fixup
     const uint8_t g_aFixUp[3][64][3] =
@@ -1355,7 +1568,10 @@ namespace
         }
     };
 
-    inline static bool IsFixUpOffset(_In_range_(0, 2) size_t uPartitions, _In_range_(0, 63) uint64_t uShape, _In_range_(0, 15) size_t uOffset)
+    inline static bool IsFixUpOffset(
+        _In_range_(0, 2) size_t uPartitions,
+        _In_range_(0, 63) uint64_t uShape,
+        _In_range_(0, 15) size_t uOffset)
     {
         for (size_t p = 0; p <= uPartitions; p++)
         {
@@ -1368,15 +1584,15 @@ namespace
     }
 
     //--------------------------------------------------------------------------------------
-#define SIGN_EXTEND(x,nb) ((((x)&(1<<((nb)-1)))?((~0)<<(nb)):0)|(x))
+#define SIGN_EXTEND(x,nb) ((((x)&(1<<((nb)-1)))?((~0)^((1<<(nb))-1)):0)|(x))
 
-#define NUM_PIXELS_PER_BLOCK 16 
+#define NUM_PIXELS_PER_BLOCK 16
 
     void Print565(uint16_t rgb)
     {
-        float r = (float)((rgb >> 11) & 31) * (1.0f / 31.0f);
-        float g = (float)((rgb >> 5) & 63) * (1.0f / 63.0f);
-        float b = (float)((rgb >> 0) & 31) * (1.0f / 31.0f);
+        auto const r = float(((rgb >> 11) & 31) * (1.0f / 31.0f));
+        auto const g = float(((rgb >> 5) & 63) * (1.0f / 63.0f));
+        auto const b = float(((rgb >> 0) & 31) * (1.0f / 31.0f));
 
         wprintf(L"(R: %.3f, G: %.3f, B: %.3f)", r, g, b);
     }
@@ -1442,7 +1658,7 @@ namespace
 
     void PrintIndex3bpp(const uint8_t data[6])
     {
-        uint32_t bitmap = data[0] | (data[1] << 8) | (data[2] << 16);
+        uint32_t bitmap = uint32_t(data[0]) | (uint32_t(data[1]) << 8) | (uint32_t(data[2]) << 16);
 
         size_t j = 0;
         for (; j < (NUM_PIXELS_PER_BLOCK / 2); ++j, bitmap >>= 3)
@@ -1450,7 +1666,7 @@ namespace
             wprintf(L"%u%ls", bitmap & 0x7, ((j % 4) == 3) ? L" | " : L" ");
         }
 
-        bitmap = data[3] | (data[4] << 8) | (data[5] << 16);
+        bitmap = uint32_t(data[3]) | (uint32_t(data[4]) << 8) | (uint32_t(data[5]) << 16);
 
         for (; j < NUM_PIXELS_PER_BLOCK; ++j, bitmap >>= 3)
         {
@@ -1526,155 +1742,155 @@ namespace
                 {
                 case DXGI_FORMAT_BC1_UNORM:
                 case DXGI_FORMAT_BC1_UNORM_SRGB:
-                {
-                    auto block = reinterpret_cast<const BC1Block*>(sptr);
-
-                    if (block->rgb[0] <= block->rgb[1])
                     {
-                        // Transparent block
-                        wprintf(L"\tTransparent - E0: ");
-                    }
-                    else
-                    {
-                        // Opaque block
-                        wprintf(L"\t     Opaque - E0: ");
-                    }
+                        auto block = reinterpret_cast<const BC1Block*>(sptr);
 
-                    Print565(block->rgb[0]);
-                    wprintf(L"\n\t              E1: ");
-                    Print565(block->rgb[1]);
-                    wprintf(L"\n\t           Index: ");
-                    PrintIndex2bpp(block->bitmap);
-                    wprintf(L"\n");
-                }
-                break;
+                        if (block->rgb[0] <= block->rgb[1])
+                        {
+                            // Transparent block
+                            wprintf(L"\tTransparent - E0: ");
+                        }
+                        else
+                        {
+                            // Opaque block
+                            wprintf(L"\t     Opaque - E0: ");
+                        }
+
+                        Print565(block->rgb[0]);
+                        wprintf(L"\n\t              E1: ");
+                        Print565(block->rgb[1]);
+                        wprintf(L"\n\t           Index: ");
+                        PrintIndex2bpp(block->bitmap);
+                        wprintf(L"\n");
+                    }
+                    break;
 
                 case DXGI_FORMAT_BC2_UNORM:
                 case DXGI_FORMAT_BC2_UNORM_SRGB:
-                {
-                    auto block = reinterpret_cast<const BC2Block*>(sptr);
-
-                    wprintf(L"\tColor - E0: ");
-                    Print565(block->bc1.rgb[0]);
-                    wprintf(L"\n\t        E1: ");
-                    Print565(block->bc1.rgb[1]);
-                    wprintf(L"\n\t     Index: ");
-                    PrintIndex2bpp(block->bc1.bitmap);
-                    wprintf(L"\n");
-
-                    wprintf(L"\tAlpha - ");
-
-                    size_t j = 0;
-                    uint32_t bitmap = block->bitmap[0];
-                    for (; j < (NUM_PIXELS_PER_BLOCK / 2); ++j, bitmap >>= 4)
                     {
-                        wprintf(L"%X%ls", bitmap & 0xF, ((j % 4) == 3) ? L" | " : L" ");
-                    }
+                        auto block = reinterpret_cast<const BC2Block*>(sptr);
 
-                    bitmap = block->bitmap[1];
-                    for (; j < NUM_PIXELS_PER_BLOCK; ++j, bitmap >>= 4)
-                    {
-                        wprintf(L"%X%ls", bitmap & 0xF, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
-                    }
+                        wprintf(L"\tColor - E0: ");
+                        Print565(block->bc1.rgb[0]);
+                        wprintf(L"\n\t        E1: ");
+                        Print565(block->bc1.rgb[1]);
+                        wprintf(L"\n\t     Index: ");
+                        PrintIndex2bpp(block->bc1.bitmap);
+                        wprintf(L"\n");
 
-                    wprintf(L"\n");
-                }
-                break;
+                        wprintf(L"\tAlpha - ");
+
+                        size_t j = 0;
+                        uint32_t bitmap = block->bitmap[0];
+                        for (; j < (NUM_PIXELS_PER_BLOCK / 2); ++j, bitmap >>= 4)
+                        {
+                            wprintf(L"%X%ls", bitmap & 0xF, ((j % 4) == 3) ? L" | " : L" ");
+                        }
+
+                        bitmap = block->bitmap[1];
+                        for (; j < NUM_PIXELS_PER_BLOCK; ++j, bitmap >>= 4)
+                        {
+                            wprintf(L"%X%ls", bitmap & 0xF, ((j < (NUM_PIXELS_PER_BLOCK - 1)) && ((j % 4) == 3)) ? L" | " : L" ");
+                        }
+
+                        wprintf(L"\n");
+                    }
+                    break;
 
                 case DXGI_FORMAT_BC3_UNORM:
                 case DXGI_FORMAT_BC3_UNORM_SRGB:
-                {
-                    auto block = reinterpret_cast<const BC3Block*>(sptr);
+                    {
+                        auto block = reinterpret_cast<const BC3Block*>(sptr);
 
-                    wprintf(L"\tColor - E0: ");
-                    Print565(block->bc1.rgb[0]);
-                    wprintf(L"\n\t        E1: ");
-                    Print565(block->bc1.rgb[1]);
-                    wprintf(L"\n\t     Index: ");
-                    PrintIndex2bpp(block->bc1.bitmap);
-                    wprintf(L"\n");
+                        wprintf(L"\tColor - E0: ");
+                        Print565(block->bc1.rgb[0]);
+                        wprintf(L"\n\t        E1: ");
+                        Print565(block->bc1.rgb[1]);
+                        wprintf(L"\n\t     Index: ");
+                        PrintIndex2bpp(block->bc1.bitmap);
+                        wprintf(L"\n");
 
-                    wprintf(L"\tAlpha - E0: %0.3f  E1: %0.3f (%u)\n\t     Index: ",
-                        float((float)block->alpha[0] / 255.f),
-                        float((float)block->alpha[1] / 255.f), (block->alpha[0] > block->alpha[1]) ? 8 : 6);
+                        wprintf(L"\tAlpha - E0: %0.3f  E1: %0.3f (%u)\n\t     Index: ",
+                            (float(block->alpha[0]) / 255.f),
+                            (float(block->alpha[1]) / 255.f), (block->alpha[0] > block->alpha[1]) ? 8u : 6u);
 
-                    PrintIndex3bpp(block->bitmap);
+                        PrintIndex3bpp(block->bitmap);
 
-                    wprintf(L"\n");
-                }
-                break;
+                        wprintf(L"\n");
+                    }
+                    break;
 
                 case DXGI_FORMAT_BC4_UNORM:
-                {
-                    auto block = reinterpret_cast<const BC4UBlock*>(sptr);
+                    {
+                        auto block = reinterpret_cast<const BC4UBlock*>(sptr);
 
-                    wprintf(L"\t   E0: %0.3f  E1: %0.3f (%u)\n\tIndex: ",
-                        float((float)block->red_0 / 255.f),
-                        float((float)block->red_1 / 255.f), (block->red_0 > block->red_1) ? 8 : 6);
+                        wprintf(L"\t   E0: %0.3f  E1: %0.3f (%u)\n\tIndex: ",
+                            (float(block->red_0) / 255.f),
+                            (float(block->red_1) / 255.f), (block->red_0 > block->red_1) ? 8u : 6u);
 
-                    PrintIndex3bpp(block->indices);
+                        PrintIndex3bpp(block->indices);
 
-                    wprintf(L"\n");
-                }
-                break;
+                        wprintf(L"\n");
+                    }
+                    break;
 
                 case DXGI_FORMAT_BC4_SNORM:
-                {
-                    auto block = reinterpret_cast<const BC4SBlock*>(sptr);
+                    {
+                        auto block = reinterpret_cast<const BC4SBlock*>(sptr);
 
-                    wprintf(L"\t   E0: %0.3f  E1: %0.3f (%u)\n\tIndex: ",
-                        float((float)block->red_0 / 127.f),
-                        float((float)block->red_1 / 127.f), (block->red_0 > block->red_1) ? 8 : 6);
+                        wprintf(L"\t   E0: %0.3f  E1: %0.3f (%u)\n\tIndex: ",
+                            (float(block->red_0) / 127.f),
+                            (float(block->red_1) / 127.f), (block->red_0 > block->red_1) ? 8u : 6u);
 
-                    PrintIndex3bpp(block->indices);
+                        PrintIndex3bpp(block->indices);
 
-                    wprintf(L"\n");
-                }
-                break;
+                        wprintf(L"\n");
+                    }
+                    break;
 
                 case DXGI_FORMAT_BC5_UNORM:
-                {
-                    auto block = reinterpret_cast<const BC5UBlock*>(sptr);
+                    {
+                        auto block = reinterpret_cast<const BC5UBlock*>(sptr);
 
-                    wprintf(L"\tU -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
-                        float((float)block->u.red_0 / 255.f),
-                        float((float)block->u.red_1 / 255.f), (block->u.red_0 > block->u.red_1) ? 8 : 6);
+                        wprintf(L"\tU -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
+                            (float(block->u.red_0) / 255.f),
+                            (float(block->u.red_1) / 255.f), (block->u.red_0 > block->u.red_1) ? 8u : 6u);
 
-                    PrintIndex3bpp(block->u.indices);
+                        PrintIndex3bpp(block->u.indices);
 
-                    wprintf(L"\n");
+                        wprintf(L"\n");
 
-                    wprintf(L"\tV -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
-                        float((float)block->v.red_0 / 255.f),
-                        float((float)block->v.red_1 / 255.f), (block->v.red_0 > block->v.red_1) ? 8 : 6);
+                        wprintf(L"\tV -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
+                            (float(block->v.red_0) / 255.f),
+                            (float(block->v.red_1) / 255.f), (block->v.red_0 > block->v.red_1) ? 8u : 6u);
 
-                    PrintIndex3bpp(block->v.indices);
+                        PrintIndex3bpp(block->v.indices);
 
-                    wprintf(L"\n");
-                }
-                break;
+                        wprintf(L"\n");
+                    }
+                    break;
 
                 case DXGI_FORMAT_BC5_SNORM:
-                {
-                    auto block = reinterpret_cast<const BC5SBlock*>(sptr);
+                    {
+                        auto block = reinterpret_cast<const BC5SBlock*>(sptr);
 
-                    wprintf(L"\tU -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
-                        float((float)block->u.red_0 / 127.f),
-                        float((float)block->u.red_1 / 127.f), (block->u.red_0 > block->u.red_1) ? 8 : 6);
+                        wprintf(L"\tU -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
+                            (float(block->u.red_0) / 127.f),
+                            (float(block->u.red_1) / 127.f), (block->u.red_0 > block->u.red_1) ? 8u : 6u);
 
-                    PrintIndex3bpp(block->u.indices);
+                        PrintIndex3bpp(block->u.indices);
 
-                    wprintf(L"\n");
+                        wprintf(L"\n");
 
-                    wprintf(L"\tV -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
-                        float((float)block->v.red_0 / 127.f),
-                        float((float)block->v.red_1 / 127.f), (block->v.red_0 > block->v.red_1) ? 8 : 6);
+                        wprintf(L"\tV -   E0: %0.3f  E1: %0.3f (%u)\n\t   Index: ",
+                            (float(block->v.red_0) / 127.f),
+                            (float(block->v.red_1) / 127.f), (block->v.red_0 > block->v.red_1) ? 8u : 6u);
 
-                    PrintIndex3bpp(block->v.indices);
+                        PrintIndex3bpp(block->v.indices);
 
-                    wprintf(L"\n");
-                }
-                break;
+                        wprintf(L"\n");
+                    }
+                    break;
 
                 case DXGI_FORMAT_BC6H_UF16:
                 case DXGI_FORMAT_BC6H_SF16:
@@ -1684,550 +1900,21 @@ namespace
                     {
                     case 0x00:
                         // Mode 1 (2 bits, 00)
-                    {
-                        struct bc6h_mode1
                         {
-                            uint64_t mode : 2; // { M, 0}, { M, 1}
-                            uint64_t gy4 : 1;  // {GY, 4}
-                            uint64_t by4 : 1;  // {BY, 4}
-                            uint64_t bz4 : 1;  // {BZ, 4}
-                            uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
-                            uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
-                            uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
-                            uint64_t rx : 5;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}
-                            uint64_t gz4 : 1;  // {GZ, 4}
-                            uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
-                            uint64_t gx : 5;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}
-                            uint64_t bz0 : 1;  // {BZ, 0},
-                            uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
-                            uint64_t bx : 5;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}
-                            uint64_t bz1 : 1;  // {BZ, 1}
-                            uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
-                            uint64_t by3 : 1;  // {BY, 3}
-                            uint64_t ry : 5;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4}
-                            uint64_t bz2 : 1;  // {BZ, 2}
-                            uint64_t rz : 5;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}
-                            uint64_t bz3 : 1;  // {BZ, 3}
-                            uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
-                            uint64_t indices : 46;
-                        };
-                        static_assert(sizeof(bc6h_mode1) == 16, "Block size must be 16 bytes");
-
-                        bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
-
-                        auto m = reinterpret_cast<const bc6h_mode1*>(sptr);
-
-                        XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
-                        XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
-                        XMINT3 e1_A(int(m->ry),
-                            int(m->gy | (m->gy4 << 4)),
-                            int(m->by | (m->by3 << 3) | (m->by4 << 4)));
-                        XMINT3 e1_B(int(m->rz),
-                            int(m->gz | (m->gz4 << 4)),
-                            int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4)));
-
-                        if (bSigned)
-                        {
-                            e0_A.x = SIGN_EXTEND(e0_A.x, 10);
-                            e0_A.y = SIGN_EXTEND(e0_A.y, 10);
-                            e0_A.z = SIGN_EXTEND(e0_A.z, 10);
-
-                            e0_B.x = SIGN_EXTEND(e0_B.x, 5);
-                            e0_B.y = SIGN_EXTEND(e0_B.y, 5);
-                            e0_B.z = SIGN_EXTEND(e0_B.z, 5);
-
-                            e1_A.x = SIGN_EXTEND(e1_A.x, 5);
-                            e1_A.y = SIGN_EXTEND(e1_A.y, 5);
-                            e1_A.z = SIGN_EXTEND(e1_A.z, 5);
-
-                            e1_B.x = SIGN_EXTEND(e1_B.x, 5);
-                            e1_B.y = SIGN_EXTEND(e1_B.y, 5);
-                            e1_B.z = SIGN_EXTEND(e1_B.z, 5);
-                        }
-
-                        wprintf(L"\tMode 1 - [10 5 5 5] shape %llu\n", m->d);
-                        wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                        wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                        wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
-                        wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
-                        wprintf(L"\t         Index: ");
-                        PrintIndex3bpp(m->indices, 1, m->d);
-                        wprintf(L"\n");
-                    }
-                    break;
-
-                    case 0x01:
-                        // Mode 2 (2 bits, 01)
-                    {
-                        struct bc6h_mode2
-                        {
-                            uint64_t mode : 2; // { M, 0}, { M, 1}
-                            uint64_t gy5 : 1;  // {GY, 5}
-                            uint64_t gz45 : 2; // {GZ, 4}, {GZ, 5}
-                            uint64_t rw : 7;   // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}
-                            uint64_t bz : 2;   // {BZ, 0}, {BZ, 1}
-                            uint64_t by4 : 1;  // {BY, 4},
-                            uint64_t gw : 7;   // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}
-                            uint64_t by5 : 1;  // {BY, 5}
-                            uint64_t bz2 : 1;  // {BZ, 2}
-                            uint64_t gy4 : 1;  // {GY, 4}
-                            uint64_t bw : 7;   // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}
-                            uint64_t bz3 : 1;  // {BZ, 3}
-                            uint64_t bz5 : 1;  // {BZ, 5}
-                            uint64_t bz4 : 1;  // {BZ, 4}
-                            uint64_t rx : 6;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}, {RX, 5}
-                            uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
-                            uint64_t gx : 6;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}, {GX, 5}
-                            uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
-                            uint64_t bx : 5;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}, {BX, 5}
-                            uint64_t by : 4;   // {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}
-                            uint64_t ry : 6;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4}, {RY, 5}
-                            uint64_t rz : 6;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5},
-                            uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
-                            uint64_t indices : 46;
-
-                        };
-                        static_assert(sizeof(bc6h_mode2) == 16, "Block size must be 16 bytes");
-
-                        bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
-
-                        auto m = reinterpret_cast<const bc6h_mode2*>(sptr);
-
-                        XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
-                        XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
-                        XMINT3 e1_A(int(m->ry),
-                            int(m->gy | (m->gy4 << 4) | (m->gy5 << 5)),
-                            int(m->by | (m->by4 << 4) | (m->by5 << 5)));
-                        XMINT3 e1_B(int(m->rz),
-                            int(m->gz | (m->gz45 << 4)),
-                            int(m->bz | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4) | (m->bz5 << 5)));
-
-                        if (bSigned)
-                        {
-                            e0_A.x = SIGN_EXTEND(e0_A.x, 7);
-                            e0_A.y = SIGN_EXTEND(e0_A.y, 7);
-                            e0_A.z = SIGN_EXTEND(e0_A.z, 7);
-
-                            e0_B.x = SIGN_EXTEND(e0_B.x, 6);
-                            e0_B.y = SIGN_EXTEND(e0_B.y, 6);
-                            e0_B.z = SIGN_EXTEND(e0_B.z, 6);
-
-                            e1_A.x = SIGN_EXTEND(e1_A.x, 6);
-                            e1_A.y = SIGN_EXTEND(e1_A.y, 6);
-                            e1_A.z = SIGN_EXTEND(e1_A.z, 6);
-
-                            e1_B.x = SIGN_EXTEND(e1_B.x, 6);
-                            e1_B.y = SIGN_EXTEND(e1_B.y, 6);
-                            e1_B.z = SIGN_EXTEND(e1_B.z, 6);
-                        }
-
-                        wprintf(L"\tMode 2 - [7 6 6 6] shape %llu\n", m->d);
-                        wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                        wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                        wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
-                        wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
-                        wprintf(L"\t         Index: ");
-                        PrintIndex3bpp(m->indices, 1, m->d);
-                        wprintf(L"\n");
-                    }
-                    break;
-
-                    default:
-                        switch (*sptr & 0x1F)
-                        {
-                        case 0x02:
-                            // Mode 3 (5 bits, 00010)
-                        {
-                            struct bc6h_mode3
+                            struct bc6h_mode1
                             {
-                                uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                uint64_t mode : 2; // { M, 0}, { M, 1}
+                                uint64_t gy4 : 1;  // {GY, 4}
+                                uint64_t by4 : 1;  // {BY, 4}
+                                uint64_t bz4 : 1;  // {BZ, 4}
                                 uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
                                 uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
                                 uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
                                 uint64_t rx : 5;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}
-                                uint64_t rw10 : 1; // {RW,10}
-                                uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
-                                uint64_t gx : 4;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}
-                                uint64_t gw10 : 1; // {GW,10}
-                                uint64_t bz0 : 1;  // {BZ, 0}
-                                uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
-                                uint64_t bx : 4;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}
-                                uint64_t bw10 : 1; // {BW,10}
-                                uint64_t bz1 : 1;  // {BZ, 1}
-                                uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
-                                uint64_t by3 : 1;  // {BY, 3}
-                                uint64_t ry : 5;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4}
-                                uint64_t bz2 : 1;  // {BZ, 2}
-                                uint64_t rz : 5;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}
-                                uint64_t bz3 : 1;  // {BZ, 3}
-                                uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
-                                uint64_t indices : 46;
-
-                            };
-                            static_assert(sizeof(bc6h_mode3) == 16, "Block size must be 16 bytes");
-
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
-
-                            auto m = reinterpret_cast<const bc6h_mode3*>(sptr);
-
-                            XMINT3 e0_A(int(m->rw | (m->rw10 << 10)),
-                                int(m->gw | (m->gw10 << 10)),
-                                int(m->bw | (m->bw10 << 10)));
-                            XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
-                            XMINT3 e1_A(int(m->ry), int(m->gy),
-                                int(m->by | (m->by3 << 3)));
-                            XMINT3 e1_B(int(m->rz),
-                                int(m->gz),
-                                int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3)));
-
-                            if (bSigned)
-                            {
-                                e0_A.x = SIGN_EXTEND(e0_A.x, 11);
-                                e0_A.y = SIGN_EXTEND(e0_A.y, 11);
-                                e0_A.z = SIGN_EXTEND(e0_A.z, 11);
-
-                                e0_B.x = SIGN_EXTEND(e0_B.x, 5);
-                                e0_B.y = SIGN_EXTEND(e0_B.y, 4);
-                                e0_B.z = SIGN_EXTEND(e0_B.z, 4);
-
-                                e1_A.x = SIGN_EXTEND(e1_A.x, 5);
-                                e1_A.y = SIGN_EXTEND(e1_A.y, 4);
-                                e1_A.z = SIGN_EXTEND(e1_A.z, 4);
-
-                                e1_B.x = SIGN_EXTEND(e1_B.x, 5);
-                                e1_B.y = SIGN_EXTEND(e1_B.y, 4);
-                                e1_B.z = SIGN_EXTEND(e1_B.z, 4);
-                            }
-
-                            wprintf(L"\tMode 3 - [11 5 4 4] shape %llu\n", m->d);
-                            wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                            wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                            wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
-                            wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
-                            wprintf(L"\t         Index: ");
-                            PrintIndex3bpp(m->indices, 1, m->d);
-                            wprintf(L"\n");
-                        }
-                        break;
-
-                        case 0x06:
-                            // Mode 4 (5 bits, 00110)
-                        {
-                            struct bc6h_mode4
-                            {
-                                uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
-                                uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
-                                uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
-                                uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
-                                uint64_t rx : 4;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}
-                                uint64_t rw10 : 1; // {RW,10}
                                 uint64_t gz4 : 1;  // {GZ, 4}
                                 uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
                                 uint64_t gx : 5;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}
-                                uint64_t gw10 : 1; // {GW,10}
-                                uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
-                                uint64_t bx : 4;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}
-                                uint64_t bw10 : 1; // {BW,10}
-                                uint64_t bz1 : 1;  // {BZ, 1}
-                                uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
-                                uint64_t by3 : 1;  // {BY, 3}
-                                uint64_t ry : 4;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}
-                                uint64_t bz0 : 1;  // {BZ, 0}
-                                uint64_t bz2 : 1;  // {BZ, 2}
-                                uint64_t rz : 4;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}
-                                uint64_t gy4 : 1;  // {GY, 4}
-                                uint64_t bz3 : 1;  // {BZ, 3}
-                                uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
-                                uint64_t indices : 46;
-
-                            };
-                            static_assert(sizeof(bc6h_mode4) == 16, "Block size must be 16 bytes");
-
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
-
-                            auto m = reinterpret_cast<const bc6h_mode4*>(sptr);
-
-                            XMINT3 e0_A(int(m->rw | (m->rw10 << 10)),
-                                int(m->gw | (m->gw10 << 10)),
-                                int(m->bw | (m->bw10 << 10)));
-                            XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
-                            XMINT3 e1_A(int(m->ry),
-                                int(m->gy | (m->gy4 << 4)),
-                                int(m->by | (m->by3 << 3)));
-                            XMINT3 e1_B(int(m->rz),
-                                int(m->gz | (m->gz4 << 4)),
-                                int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3)));
-
-                            if (bSigned)
-                            {
-                                e0_A.x = SIGN_EXTEND(e0_A.x, 11);
-                                e0_A.y = SIGN_EXTEND(e0_A.y, 11);
-                                e0_A.z = SIGN_EXTEND(e0_A.z, 11);
-
-                                e0_B.x = SIGN_EXTEND(e0_B.x, 4);
-                                e0_B.y = SIGN_EXTEND(e0_B.y, 5);
-                                e0_B.z = SIGN_EXTEND(e0_B.z, 4);
-
-                                e1_A.x = SIGN_EXTEND(e1_A.x, 4);
-                                e1_A.y = SIGN_EXTEND(e1_A.y, 5);
-                                e1_A.z = SIGN_EXTEND(e1_A.z, 4);
-
-                                e1_B.x = SIGN_EXTEND(e1_B.x, 4);
-                                e1_B.y = SIGN_EXTEND(e1_B.y, 5);
-                                e1_B.z = SIGN_EXTEND(e1_B.z, 4);
-                            }
-
-                            wprintf(L"\tMode 4 - [11 4 5 4] shape %llu\n", m->d);
-                            wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                            wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                            wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
-                            wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
-                            wprintf(L"\t         Index: ");
-                            PrintIndex3bpp(m->indices, 1, m->d);
-                            wprintf(L"\n");
-                        }
-                        break;
-
-                        case 0x0A:
-                            // Mode 5 (5 bits, 01010)
-                        {
-                            struct bc6h_mode5
-                            {
-                                uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
-                                uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
-                                uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
-                                uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
-                                uint64_t rx : 4;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}
-                                uint64_t rw10 : 1; // {RW,10}
-                                uint64_t by4 : 1;  // {BY, 4}
-                                uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
-                                uint64_t gx : 4;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}
-                                uint64_t gw10 : 1; // {GW,10}
-                                uint64_t bz0 : 1;  // {BZ, 0}
-                                uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
-                                uint64_t bx : 5;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}
-                                uint64_t bw10 : 1; // {BW,10}
-                                uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
-                                uint64_t by3 : 1;  // {BY, 3}
-                                uint64_t ry : 4;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}
-                                uint64_t bz12 : 2; // {BZ, 1}, {BZ, 2}
-                                uint64_t rz : 5;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {BZ, 4}
-                                uint64_t bz3 : 1;  // {BZ, 3}
-                                uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
-                                uint64_t indices : 46;
-                            };
-                            static_assert(sizeof(bc6h_mode5) == 16, "Block size must be 16 bytes");
-
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
-
-                            auto m = reinterpret_cast<const bc6h_mode5*>(sptr);
-
-                            XMINT3 e0_A(int(m->rw | (m->rw10 << 10)),
-                                int(m->gw | (m->gw10 << 10)),
-                                int(m->bw | (m->bw10 << 10)));
-                            XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
-                            XMINT3 e1_A(int(m->ry), int(m->gy),
-                                int(m->by | (m->by3 << 3) | (m->by4 << 4)));
-                            XMINT3 e1_B(int(m->rz), int(m->gz),
-                                int(m->bz0 | (m->bz12 << 1) | (m->bz3 << 3)));
-
-                            if (bSigned)
-                            {
-                                e0_A.x = SIGN_EXTEND(e0_A.x, 11);
-                                e0_A.y = SIGN_EXTEND(e0_A.y, 11);
-                                e0_A.z = SIGN_EXTEND(e0_A.z, 11);
-
-                                e0_B.x = SIGN_EXTEND(e0_B.x, 4);
-                                e0_B.y = SIGN_EXTEND(e0_B.y, 4);
-                                e0_B.z = SIGN_EXTEND(e0_B.z, 5);
-
-                                e1_A.x = SIGN_EXTEND(e1_A.x, 4);
-                                e1_A.y = SIGN_EXTEND(e1_A.y, 4);
-                                e1_A.z = SIGN_EXTEND(e1_A.z, 5);
-
-                                e1_B.x = SIGN_EXTEND(e1_B.x, 4);
-                                e1_B.y = SIGN_EXTEND(e1_B.y, 4);
-                                e1_B.z = SIGN_EXTEND(e1_B.z, 5);
-                            }
-
-                            wprintf(L"\tMode 5 - [11 4 4 5] shape %llu\n", m->d);
-                            wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                            wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                            wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
-                            wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
-                            wprintf(L"\t         Index: ");
-                            PrintIndex3bpp(m->indices, 1, m->d);
-                            wprintf(L"\n");
-                        }
-                        break;
-
-                        case 0x0E:
-                            // Mode 6 (5 bits, 01110)
-                        {
-                            struct bc6h_mode6
-                            {
-                                uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
-                                uint64_t rw : 9;   // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}
-                                uint64_t by4 : 1;  // {BY, 4}
-                                uint64_t gw : 9;   // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}
-                                uint64_t gy4 : 1;  // {GY, 4}
-                                uint64_t bw : 9;   // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}
-                                uint64_t bz4 : 1;  // {BZ, 4}
-                                uint64_t rx : 5;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}
-                                uint64_t gz4 : 1;  // {GZ, 4}
-                                uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
-                                uint64_t gx : 5;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}
-                                uint64_t bz0 : 1;  // {BZ, 0}
-                                uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
-                                uint64_t bx : 5;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}
-                                uint64_t bz1 : 1;  // {BZ, 1}
-                                uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
-                                uint64_t by3 : 1;  // {BY, 3}
-                                uint64_t ry : 5;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
-                                uint64_t bz2 : 1;  // {BZ, 2}
-                                uint64_t rz : 5;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {BZ, 4}
-                                uint64_t bz3 : 1;  // {BZ, 3}
-                                uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
-                                uint64_t indices : 46;
-                            };
-                            static_assert(sizeof(bc6h_mode6) == 16, "Block size must be 16 bytes");
-
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
-
-                            auto m = reinterpret_cast<const bc6h_mode6*>(sptr);
-
-                            XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
-                            XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
-                            XMINT3 e1_A(int(m->ry),
-                                int(m->gy | (m->gy4 << 4)),
-                                int(m->by | (m->by3 << 3) | (m->by4 << 4)));
-                            XMINT3 e1_B(int(m->rz),
-                                int(m->gz | (m->gz4 << 4)),
-                                int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4)));
-
-                            if (bSigned)
-                            {
-                                e0_A.x = SIGN_EXTEND(e0_A.x, 9);
-                                e0_A.y = SIGN_EXTEND(e0_A.y, 9);
-                                e0_A.z = SIGN_EXTEND(e0_A.z, 9);
-
-                                e0_B.x = SIGN_EXTEND(e0_B.x, 5);
-                                e0_B.y = SIGN_EXTEND(e0_B.y, 5);
-                                e0_B.z = SIGN_EXTEND(e0_B.z, 5);
-
-                                e1_A.x = SIGN_EXTEND(e1_A.x, 5);
-                                e1_A.y = SIGN_EXTEND(e1_A.y, 5);
-                                e1_A.z = SIGN_EXTEND(e1_A.z, 5);
-
-                                e1_B.x = SIGN_EXTEND(e1_B.x, 5);
-                                e1_B.y = SIGN_EXTEND(e1_B.y, 5);
-                                e1_B.z = SIGN_EXTEND(e1_B.z, 5);
-                            }
-
-                            wprintf(L"\tMode 6 - [9 5 5 5] shape %llu\n", m->d);
-                            wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                            wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                            wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
-                            wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
-                            wprintf(L"\t         Index: ");
-                            PrintIndex3bpp(m->indices, 1, m->d);
-                            wprintf(L"\n");
-                        }
-                        break;
-
-                        case 0x12:
-                            // Mode 7 (5 bits, 10010)
-                        {
-                            struct bc6h_mode7
-                            {
-                                uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
-                                uint64_t rw : 8;   // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}
-                                uint64_t gz4 : 1;  // {GZ, 4}
-                                uint64_t by4 : 1;  // {BY, 4}
-                                uint64_t gw : 8;   // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}
-                                uint64_t bz2 : 1;  // {BZ, 2}
-                                uint64_t gy4 : 1;  // {GY, 4}
-                                uint64_t bw : 8;   // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}
-                                uint64_t bz3 : 1;  // {BZ, 3}
-                                uint64_t bz4 : 1;  // {BZ, 4}
-                                uint64_t rx : 6;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}, {RX, 5}
-                                uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
-                                uint64_t gx : 5;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}
-                                uint64_t bz0 : 1;  // {BZ, 0}
-                                uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
-                                uint64_t bx : 5;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}
-                                uint64_t bz1 : 1;  // {BZ, 1}
-                                uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
-                                uint64_t by3 : 1;  // {BY, 3}
-                                uint64_t ry : 6;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4}, {RY, 5}
-                                uint64_t rz : 6;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}
-                                uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
-                                uint64_t indices : 46;
-                            };
-                            static_assert(sizeof(bc6h_mode7) == 16, "Block size must be 16 bytes");
-
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
-
-                            auto m = reinterpret_cast<const bc6h_mode7*>(sptr);
-
-                            XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
-                            XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
-                            XMINT3 e1_A(int(m->ry),
-                                int(m->gy | (m->gy4 << 4)),
-                                int(m->by | (m->by3 << 3) | (m->by4 << 4)));
-                            XMINT3 e1_B(int(m->rz),
-                                int(m->gz | (m->gz4 << 4)),
-                                int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4)));
-
-                            if (bSigned)
-                            {
-                                e0_A.x = SIGN_EXTEND(e0_A.x, 8);
-                                e0_A.y = SIGN_EXTEND(e0_A.y, 8);
-                                e0_A.z = SIGN_EXTEND(e0_A.z, 8);
-
-                                e0_B.x = SIGN_EXTEND(e0_B.x, 6);
-                                e0_B.y = SIGN_EXTEND(e0_B.y, 5);
-                                e0_B.z = SIGN_EXTEND(e0_B.z, 5);
-
-                                e1_A.x = SIGN_EXTEND(e1_A.x, 6);
-                                e1_A.y = SIGN_EXTEND(e1_A.y, 5);
-                                e1_A.z = SIGN_EXTEND(e1_A.z, 5);
-
-                                e1_B.x = SIGN_EXTEND(e1_B.x, 6);
-                                e1_B.y = SIGN_EXTEND(e1_B.y, 5);
-                                e1_B.z = SIGN_EXTEND(e1_B.z, 5);
-                            }
-
-                            wprintf(L"\tMode 7 - [8 6 5 5] shape %llu\n", m->d);
-                            wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                            wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                            wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
-                            wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
-                            wprintf(L"\t         Index: ");
-                            PrintIndex3bpp(m->indices, 1, m->d);
-                            wprintf(L"\n");
-                        }
-                        break;
-
-                        case 0x16:
-                            // Mode 8 (5 bits, 10110)
-                        {
-                            struct bc6h_mode8
-                            {
-                                uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
-                                uint64_t rw : 8;   // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}
-                                uint64_t bz0 : 1;  // {BZ, 0}
-                                uint64_t by4 : 1;  // {BY, 4}
-                                uint64_t gw : 8;   // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}
-                                uint64_t gy5 : 1;  // {GY, 5}
-                                uint64_t gy4 : 1;  // {GY, 4}
-                                uint64_t bw : 8;   // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}
-                                uint64_t gz5 : 1;  // {GZ, 5}
-                                uint64_t bz4 : 1;  // {BZ, 4}
-                                uint64_t rx : 5;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}
-                                uint64_t gz4 : 1;  // {GZ, 4}
-                                uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
-                                uint64_t gx : 6;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}, {GX, 5}
+                                uint64_t bz0 : 1;  // {BZ, 0},
                                 uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
                                 uint64_t bx : 5;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}
                                 uint64_t bz1 : 1;  // {BZ, 1}
@@ -2240,227 +1927,20 @@ namespace
                                 uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
                                 uint64_t indices : 46;
                             };
-                            static_assert(sizeof(bc6h_mode8) == 16, "Block size must be 16 bytes");
+                            static_assert(sizeof(bc6h_mode1) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
-                            auto m = reinterpret_cast<const bc6h_mode8*>(sptr);
-
-                            XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
-                            XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
-                            XMINT3 e1_A(int(m->ry),
-                                int(m->gy | (m->gy4 << 4) | (m->gy5 << 5)),
-                                int(m->by | (m->by3 << 3) | (m->by4 << 4)));
-                            XMINT3 e1_B(int(m->rz),
-                                int(m->gz | (m->gz4 << 4) | (m->gz5 << 5)),
-                                int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4)));
-
-                            if (bSigned)
-                            {
-                                e0_A.x = SIGN_EXTEND(e0_A.x, 8);
-                                e0_A.y = SIGN_EXTEND(e0_A.y, 8);
-                                e0_A.z = SIGN_EXTEND(e0_A.z, 8);
-
-                                e0_B.x = SIGN_EXTEND(e0_B.x, 5);
-                                e0_B.y = SIGN_EXTEND(e0_B.y, 6);
-                                e0_B.z = SIGN_EXTEND(e0_B.z, 5);
-
-                                e1_A.x = SIGN_EXTEND(e1_A.x, 5);
-                                e1_A.y = SIGN_EXTEND(e1_A.y, 6);
-                                e1_A.z = SIGN_EXTEND(e1_A.z, 5);
-
-                                e1_B.x = SIGN_EXTEND(e1_B.x, 5);
-                                e1_B.y = SIGN_EXTEND(e1_B.y, 6);
-                                e1_B.z = SIGN_EXTEND(e1_B.z, 5);
-                            }
-
-                            wprintf(L"\tMode 8 - [8 5 6 5] shape %llu\n", m->d);
-                            wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                            wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                            wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
-                            wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
-                            wprintf(L"\t         Index: ");
-                            PrintIndex3bpp(m->indices, 1, m->d);
-                            wprintf(L"\n");
-                        }
-                        break;
-
-                        case 0x1A:
-                            // Mode 9 (5 bits, 11010)
-                        {
-                            struct bc6h_mode9
-                            {
-                                uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
-                                uint64_t rw : 8;   // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}
-                                uint64_t bz1 : 1;  // {BZ, 1}
-                                uint64_t by4 : 1;  // {BY, 4}
-                                uint64_t gw : 8;   // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}
-                                uint64_t by5 : 1;  // {BY, 5}
-                                uint64_t gy4 : 1;  // {GY, 4}
-                                uint64_t bw : 8;   // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}
-                                uint64_t bz5 : 1;  // {BZ, 5}
-                                uint64_t bz4 : 1;  // {BZ, 4}
-                                uint64_t rx : 5;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}
-                                uint64_t gz4 : 1;  // {GZ, 4}
-                                uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
-                                uint64_t gx : 5;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}
-                                uint64_t bz0 : 1;  // {BZ, 0}
-                                uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
-                                uint64_t bx : 6;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}, {BX, 5}
-                                uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
-                                uint64_t by3 : 1;  // {BY, 3}
-                                uint64_t ry : 5;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4}
-                                uint64_t bz2 : 1;  // {BZ, 2}
-                                uint64_t rz : 5;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}
-                                uint64_t bz3 : 1;  // {BZ, 3}
-                                uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
-                                uint64_t indices : 46;
-                            };
-                            static_assert(sizeof(bc6h_mode9) == 16, "Block size must be 16 bytes");
-
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
-
-                            auto m = reinterpret_cast<const bc6h_mode9*>(sptr);
+                            auto m = reinterpret_cast<const bc6h_mode1*>(sptr);
 
                             XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
                             XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
                             XMINT3 e1_A(int(m->ry),
                                 int(m->gy | (m->gy4 << 4)),
-                                int(m->by | (m->by3 << 3) | (m->by4 << 4) | (m->by5 << 5)));
+                                int(m->by | (m->by3 << 3) | (m->by4 << 4)));
                             XMINT3 e1_B(int(m->rz),
                                 int(m->gz | (m->gz4 << 4)),
-                                int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4) | (m->bz5 << 5)));
-
-                            if (bSigned)
-                            {
-                                e0_A.x = SIGN_EXTEND(e0_A.x, 8);
-                                e0_A.y = SIGN_EXTEND(e0_A.y, 8);
-                                e0_A.z = SIGN_EXTEND(e0_A.z, 8);
-
-                                e0_B.x = SIGN_EXTEND(e0_B.x, 5);
-                                e0_B.y = SIGN_EXTEND(e0_B.y, 5);
-                                e0_B.z = SIGN_EXTEND(e0_B.z, 6);
-
-                                e1_A.x = SIGN_EXTEND(e1_A.x, 5);
-                                e1_A.y = SIGN_EXTEND(e1_A.y, 5);
-                                e1_A.z = SIGN_EXTEND(e1_A.z, 6);
-
-                                e1_B.x = SIGN_EXTEND(e1_B.x, 5);
-                                e1_B.y = SIGN_EXTEND(e1_B.y, 5);
-                                e1_B.z = SIGN_EXTEND(e1_B.z, 6);
-                            }
-
-                            wprintf(L"\tMode 9 - [8 5 5 6] shape %llu\n", m->d);
-                            wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                            wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                            wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
-                            wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
-                            wprintf(L"\t         Index: ");
-                            PrintIndex3bpp(m->indices, 1, m->d);
-                            wprintf(L"\n");
-                        }
-                        break;
-
-                        case 0x1E:
-                            // Mode 10 (5 bits, 11110)
-                        {
-                            struct bc6h_mode10
-                            {
-                                uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
-                                uint64_t rw : 6;   // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}
-                                uint64_t gz4 : 1;  // {GZ, 4}
-                                uint64_t bz : 2;  // {BZ, 0}, {BZ, 1}
-                                uint64_t by4 : 1;  // {BY, 4}
-                                uint64_t gw : 6;   // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}
-                                uint64_t gy5 : 1;  // {GY, 5}
-                                uint64_t by5 : 1;  // {BY, 5}
-                                uint64_t bz2 : 1;  // {BZ, 2}
-                                uint64_t gy4 : 1;  // {GY, 4}
-                                uint64_t bw : 6;   // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {GZ, 5}
-                                uint64_t bz3 : 1;  // {BZ, 3}
-                                uint64_t bz5 : 1;  // {BZ, 5}
-                                uint64_t bz4 : 1;  // {BZ, 4}
-                                uint64_t rx : 6;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}, {RX, 5}
-                                uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
-                                uint64_t gx : 6;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}, {GX, 5}
-                                uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
-                                uint64_t bx : 6;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}, {BX, 5}
-                                uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
-                                uint64_t by3 : 1;  // {BY, 3}
-                                uint64_t ry : 6;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4}, {RY, 5}
-                                uint64_t rz : 6;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}
-                                uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
-                                uint64_t indices : 46;
-                            };
-                            static_assert(sizeof(bc6h_mode10) == 16, "Block size must be 16 bytes");
-
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
-
-                            auto m = reinterpret_cast<const bc6h_mode10*>(sptr);
-
-                            XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
-                            XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
-                            XMINT3 e1_A(int(m->ry),
-                                int(m->gy | (m->gy4 << 4) | (m->gy5 << 5)),
-                                int(m->by | (m->by3 << 3) | (m->by4 << 4) | (m->by5 << 5)));
-                            XMINT3 e1_B(int(m->rz),
-                                int(m->gz | (m->gz4 << 4)),
-                                int(m->bz | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4) | (m->bz5 << 5)));
-
-                            if (bSigned)
-                            {
-                                e0_A.x = SIGN_EXTEND(e0_A.x, 6);
-                                e0_A.y = SIGN_EXTEND(e0_A.y, 6);
-                                e0_A.z = SIGN_EXTEND(e0_A.z, 6);
-
-                                e0_B.x = SIGN_EXTEND(e0_B.x, 6);
-                                e0_B.y = SIGN_EXTEND(e0_B.y, 6);
-                                e0_B.z = SIGN_EXTEND(e0_B.z, 6);
-
-                                e1_A.x = SIGN_EXTEND(e1_A.x, 6);
-                                e1_A.y = SIGN_EXTEND(e1_A.y, 6);
-                                e1_A.z = SIGN_EXTEND(e1_A.z, 6);
-
-                                e1_B.x = SIGN_EXTEND(e1_B.x, 6);
-                                e1_B.y = SIGN_EXTEND(e1_B.y, 6);
-                                e1_B.z = SIGN_EXTEND(e1_B.z, 6);
-                            }
-
-                            wprintf(L"\tMode 10 - [6 6 6 6] shape %llu\n", m->d);
-                            wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                            wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                            wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
-                            wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
-                            wprintf(L"\t         Index: ");
-                            PrintIndex3bpp(m->indices, 1, m->d);
-                            wprintf(L"\n");
-                        }
-                        break;
-
-                        case 0x03:
-                            // Mode 11 (5 bits, 00011)
-                        {
-                            struct bc6h_mode11
-                            {
-                                uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
-                                uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
-                                uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
-                                uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
-                                uint64_t rx : 10;  // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}, {RX, 5}, {RX, 6}, {RX, 7}, {RX, 8}, {RX, 9}
-                                uint64_t gx : 10;  // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}, {GX, 5}, {GX, 6}, {GX, 7}, {GX, 8}, {GX, 9}
-                                uint64_t bx : 9;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}, {BX, 5}, {BX, 6}, {BX, 7}, {BX, 8}
-                                uint64_t bx9 : 1;  // {BX, 9}
-                                uint64_t indices : 63;
-                            };
-                            static_assert(sizeof(bc6h_mode11) == 16, "Block size must be 16 bytes");
-
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
-
-                            auto m = reinterpret_cast<const bc6h_mode11*>(sptr);
-
-                            XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
-                            XMINT3 e0_B(int(m->rx), int(m->gx),
-                                int(m->bx | (m->bx9 << 9)));
+                                int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4)));
 
                             if (bSigned)
                             {
@@ -2468,181 +1948,917 @@ namespace
                                 e0_A.y = SIGN_EXTEND(e0_A.y, 10);
                                 e0_A.z = SIGN_EXTEND(e0_A.z, 10);
 
-                                e0_B.x = SIGN_EXTEND(e0_B.x, 10);
-                                e0_B.y = SIGN_EXTEND(e0_B.y, 10);
-                                e0_B.z = SIGN_EXTEND(e0_B.z, 10);
+                                e0_B.x = SIGN_EXTEND(e0_B.x, 5);
+                                e0_B.y = SIGN_EXTEND(e0_B.y, 5);
+                                e0_B.z = SIGN_EXTEND(e0_B.z, 5);
+
+                                e1_A.x = SIGN_EXTEND(e1_A.x, 5);
+                                e1_A.y = SIGN_EXTEND(e1_A.y, 5);
+                                e1_A.z = SIGN_EXTEND(e1_A.z, 5);
+
+                                e1_B.x = SIGN_EXTEND(e1_B.x, 5);
+                                e1_B.y = SIGN_EXTEND(e1_B.y, 5);
+                                e1_B.z = SIGN_EXTEND(e1_B.z, 5);
                             }
 
-                            wprintf(L"\tMode 11 - [10 10]\n");
-                            wprintf(L"\t         E(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                            wprintf(L"\t         E(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                            wprintf(L"\tMode 1 - [10 5 5 5] shape %llu\n", m->d);
+                            wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                            wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                            wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
+                            wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
                             wprintf(L"\t         Index: ");
-                            PrintIndex4bpp(m->indices, 0, 0);
+                            PrintIndex3bpp(m->indices, 1, m->d);
                             wprintf(L"\n");
                         }
                         break;
+
+                    case 0x01:
+                        // Mode 2 (2 bits, 01)
+                        {
+                            struct bc6h_mode2
+                            {
+                                uint64_t mode : 2; // { M, 0}, { M, 1}
+                                uint64_t gy5 : 1;  // {GY, 5}
+                                uint64_t gz45 : 2; // {GZ, 4}, {GZ, 5}
+                                uint64_t rw : 7;   // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}
+                                uint64_t bz : 2;   // {BZ, 0}, {BZ, 1}
+                                uint64_t by4 : 1;  // {BY, 4},
+                                uint64_t gw : 7;   // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}
+                                uint64_t by5 : 1;  // {BY, 5}
+                                uint64_t bz2 : 1;  // {BZ, 2}
+                                uint64_t gy4 : 1;  // {GY, 4}
+                                uint64_t bw : 7;   // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}
+                                uint64_t bz3 : 1;  // {BZ, 3}
+                                uint64_t bz5 : 1;  // {BZ, 5}
+                                uint64_t bz4 : 1;  // {BZ, 4}
+                                uint64_t rx : 6;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}, {RX, 5}
+                                uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
+                                uint64_t gx : 6;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}, {GX, 5}
+                                uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
+                                uint64_t bx : 5;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}, {BX, 5}
+                                uint64_t by : 4;   // {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}
+                                uint64_t ry : 6;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4}, {RY, 5}
+                                uint64_t rz : 6;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5},
+                                uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
+                                uint64_t indices : 46;
+
+                            };
+                            static_assert(sizeof(bc6h_mode2) == 16, "Block size must be 16 bytes");
+
+                            const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+
+                            auto m = reinterpret_cast<const bc6h_mode2*>(sptr);
+
+                            XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
+                            XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
+                            XMINT3 e1_A(int(m->ry),
+                                int(m->gy | (m->gy4 << 4) | (m->gy5 << 5)),
+                                int(m->by | (m->by4 << 4) | (m->by5 << 5)));
+                            XMINT3 e1_B(int(m->rz),
+                                int(m->gz | (m->gz45 << 4)),
+                                int(m->bz | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4) | (m->bz5 << 5)));
+
+                            if (bSigned)
+                            {
+                                e0_A.x = SIGN_EXTEND(e0_A.x, 7);
+                                e0_A.y = SIGN_EXTEND(e0_A.y, 7);
+                                e0_A.z = SIGN_EXTEND(e0_A.z, 7);
+
+                                e0_B.x = SIGN_EXTEND(e0_B.x, 6);
+                                e0_B.y = SIGN_EXTEND(e0_B.y, 6);
+                                e0_B.z = SIGN_EXTEND(e0_B.z, 6);
+
+                                e1_A.x = SIGN_EXTEND(e1_A.x, 6);
+                                e1_A.y = SIGN_EXTEND(e1_A.y, 6);
+                                e1_A.z = SIGN_EXTEND(e1_A.z, 6);
+
+                                e1_B.x = SIGN_EXTEND(e1_B.x, 6);
+                                e1_B.y = SIGN_EXTEND(e1_B.y, 6);
+                                e1_B.z = SIGN_EXTEND(e1_B.z, 6);
+                            }
+
+                            wprintf(L"\tMode 2 - [7 6 6 6] shape %llu\n", m->d);
+                            wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                            wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                            wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
+                            wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
+                            wprintf(L"\t         Index: ");
+                            PrintIndex3bpp(m->indices, 1, m->d);
+                            wprintf(L"\n");
+                        }
+                        break;
+
+                    default:
+                        switch (*sptr & 0x1F)
+                        {
+                        case 0x02:
+                            // Mode 3 (5 bits, 00010)
+                            {
+                                struct bc6h_mode3
+                                {
+                                    uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                    uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
+                                    uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
+                                    uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
+                                    uint64_t rx : 5;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}
+                                    uint64_t rw10 : 1; // {RW,10}
+                                    uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
+                                    uint64_t gx : 4;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}
+                                    uint64_t gw10 : 1; // {GW,10}
+                                    uint64_t bz0 : 1;  // {BZ, 0}
+                                    uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
+                                    uint64_t bx : 4;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}
+                                    uint64_t bw10 : 1; // {BW,10}
+                                    uint64_t bz1 : 1;  // {BZ, 1}
+                                    uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
+                                    uint64_t by3 : 1;  // {BY, 3}
+                                    uint64_t ry : 5;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4}
+                                    uint64_t bz2 : 1;  // {BZ, 2}
+                                    uint64_t rz : 5;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}
+                                    uint64_t bz3 : 1;  // {BZ, 3}
+                                    uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
+                                    uint64_t indices : 46;
+
+                                };
+                                static_assert(sizeof(bc6h_mode3) == 16, "Block size must be 16 bytes");
+
+                                const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+
+                                auto m = reinterpret_cast<const bc6h_mode3*>(sptr);
+
+                                XMINT3 e0_A(int(m->rw | (m->rw10 << 10)),
+                                    int(m->gw | (m->gw10 << 10)),
+                                    int(m->bw | (m->bw10 << 10)));
+                                XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
+                                XMINT3 e1_A(int(m->ry), int(m->gy),
+                                    int(m->by | (m->by3 << 3)));
+                                XMINT3 e1_B(int(m->rz),
+                                    int(m->gz),
+                                    int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3)));
+
+                                if (bSigned)
+                                {
+                                    e0_A.x = SIGN_EXTEND(e0_A.x, 11);
+                                    e0_A.y = SIGN_EXTEND(e0_A.y, 11);
+                                    e0_A.z = SIGN_EXTEND(e0_A.z, 11);
+
+                                    e0_B.x = SIGN_EXTEND(e0_B.x, 5);
+                                    e0_B.y = SIGN_EXTEND(e0_B.y, 4);
+                                    e0_B.z = SIGN_EXTEND(e0_B.z, 4);
+
+                                    e1_A.x = SIGN_EXTEND(e1_A.x, 5);
+                                    e1_A.y = SIGN_EXTEND(e1_A.y, 4);
+                                    e1_A.z = SIGN_EXTEND(e1_A.z, 4);
+
+                                    e1_B.x = SIGN_EXTEND(e1_B.x, 5);
+                                    e1_B.y = SIGN_EXTEND(e1_B.y, 4);
+                                    e1_B.z = SIGN_EXTEND(e1_B.z, 4);
+                                }
+
+                                wprintf(L"\tMode 3 - [11 5 4 4] shape %llu\n", m->d);
+                                wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                                wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                                wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
+                                wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
+                                wprintf(L"\t         Index: ");
+                                PrintIndex3bpp(m->indices, 1, m->d);
+                                wprintf(L"\n");
+                            }
+                            break;
+
+                        case 0x06:
+                            // Mode 4 (5 bits, 00110)
+                            {
+                                struct bc6h_mode4
+                                {
+                                    uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                    uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
+                                    uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
+                                    uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
+                                    uint64_t rx : 4;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}
+                                    uint64_t rw10 : 1; // {RW,10}
+                                    uint64_t gz4 : 1;  // {GZ, 4}
+                                    uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
+                                    uint64_t gx : 5;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}
+                                    uint64_t gw10 : 1; // {GW,10}
+                                    uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
+                                    uint64_t bx : 4;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}
+                                    uint64_t bw10 : 1; // {BW,10}
+                                    uint64_t bz1 : 1;  // {BZ, 1}
+                                    uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
+                                    uint64_t by3 : 1;  // {BY, 3}
+                                    uint64_t ry : 4;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}
+                                    uint64_t bz0 : 1;  // {BZ, 0}
+                                    uint64_t bz2 : 1;  // {BZ, 2}
+                                    uint64_t rz : 4;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}
+                                    uint64_t gy4 : 1;  // {GY, 4}
+                                    uint64_t bz3 : 1;  // {BZ, 3}
+                                    uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
+                                    uint64_t indices : 46;
+
+                                };
+                                static_assert(sizeof(bc6h_mode4) == 16, "Block size must be 16 bytes");
+
+                                const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+
+                                auto m = reinterpret_cast<const bc6h_mode4*>(sptr);
+
+                                XMINT3 e0_A(int(m->rw | (m->rw10 << 10)),
+                                    int(m->gw | (m->gw10 << 10)),
+                                    int(m->bw | (m->bw10 << 10)));
+                                XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
+                                XMINT3 e1_A(int(m->ry),
+                                    int(m->gy | (m->gy4 << 4)),
+                                    int(m->by | (m->by3 << 3)));
+                                XMINT3 e1_B(int(m->rz),
+                                    int(m->gz | (m->gz4 << 4)),
+                                    int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3)));
+
+                                if (bSigned)
+                                {
+                                    e0_A.x = SIGN_EXTEND(e0_A.x, 11);
+                                    e0_A.y = SIGN_EXTEND(e0_A.y, 11);
+                                    e0_A.z = SIGN_EXTEND(e0_A.z, 11);
+
+                                    e0_B.x = SIGN_EXTEND(e0_B.x, 4);
+                                    e0_B.y = SIGN_EXTEND(e0_B.y, 5);
+                                    e0_B.z = SIGN_EXTEND(e0_B.z, 4);
+
+                                    e1_A.x = SIGN_EXTEND(e1_A.x, 4);
+                                    e1_A.y = SIGN_EXTEND(e1_A.y, 5);
+                                    e1_A.z = SIGN_EXTEND(e1_A.z, 4);
+
+                                    e1_B.x = SIGN_EXTEND(e1_B.x, 4);
+                                    e1_B.y = SIGN_EXTEND(e1_B.y, 5);
+                                    e1_B.z = SIGN_EXTEND(e1_B.z, 4);
+                                }
+
+                                wprintf(L"\tMode 4 - [11 4 5 4] shape %llu\n", m->d);
+                                wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                                wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                                wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
+                                wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
+                                wprintf(L"\t         Index: ");
+                                PrintIndex3bpp(m->indices, 1, m->d);
+                                wprintf(L"\n");
+                            }
+                            break;
+
+                        case 0x0A:
+                            // Mode 5 (5 bits, 01010)
+                            {
+                                struct bc6h_mode5
+                                {
+                                    uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                    uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
+                                    uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
+                                    uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
+                                    uint64_t rx : 4;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}
+                                    uint64_t rw10 : 1; // {RW,10}
+                                    uint64_t by4 : 1;  // {BY, 4}
+                                    uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
+                                    uint64_t gx : 4;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}
+                                    uint64_t gw10 : 1; // {GW,10}
+                                    uint64_t bz0 : 1;  // {BZ, 0}
+                                    uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
+                                    uint64_t bx : 5;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}
+                                    uint64_t bw10 : 1; // {BW,10}
+                                    uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
+                                    uint64_t by3 : 1;  // {BY, 3}
+                                    uint64_t ry : 4;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}
+                                    uint64_t bz12 : 2; // {BZ, 1}, {BZ, 2}
+                                    uint64_t rz : 5;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {BZ, 4}
+                                    uint64_t bz3 : 1;  // {BZ, 3}
+                                    uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
+                                    uint64_t indices : 46;
+                                };
+                                static_assert(sizeof(bc6h_mode5) == 16, "Block size must be 16 bytes");
+
+                                const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+
+                                auto m = reinterpret_cast<const bc6h_mode5*>(sptr);
+
+                                XMINT3 e0_A(int(m->rw | (m->rw10 << 10)),
+                                    int(m->gw | (m->gw10 << 10)),
+                                    int(m->bw | (m->bw10 << 10)));
+                                XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
+                                XMINT3 e1_A(int(m->ry), int(m->gy),
+                                    int(m->by | (m->by3 << 3) | (m->by4 << 4)));
+                                XMINT3 e1_B(int(m->rz), int(m->gz),
+                                    int(m->bz0 | (m->bz12 << 1) | (m->bz3 << 3)));
+
+                                if (bSigned)
+                                {
+                                    e0_A.x = SIGN_EXTEND(e0_A.x, 11);
+                                    e0_A.y = SIGN_EXTEND(e0_A.y, 11);
+                                    e0_A.z = SIGN_EXTEND(e0_A.z, 11);
+
+                                    e0_B.x = SIGN_EXTEND(e0_B.x, 4);
+                                    e0_B.y = SIGN_EXTEND(e0_B.y, 4);
+                                    e0_B.z = SIGN_EXTEND(e0_B.z, 5);
+
+                                    e1_A.x = SIGN_EXTEND(e1_A.x, 4);
+                                    e1_A.y = SIGN_EXTEND(e1_A.y, 4);
+                                    e1_A.z = SIGN_EXTEND(e1_A.z, 5);
+
+                                    e1_B.x = SIGN_EXTEND(e1_B.x, 4);
+                                    e1_B.y = SIGN_EXTEND(e1_B.y, 4);
+                                    e1_B.z = SIGN_EXTEND(e1_B.z, 5);
+                                }
+
+                                wprintf(L"\tMode 5 - [11 4 4 5] shape %llu\n", m->d);
+                                wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                                wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                                wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
+                                wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
+                                wprintf(L"\t         Index: ");
+                                PrintIndex3bpp(m->indices, 1, m->d);
+                                wprintf(L"\n");
+                            }
+                            break;
+
+                        case 0x0E:
+                            // Mode 6 (5 bits, 01110)
+                            {
+                                struct bc6h_mode6
+                                {
+                                    uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                    uint64_t rw : 9;   // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}
+                                    uint64_t by4 : 1;  // {BY, 4}
+                                    uint64_t gw : 9;   // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}
+                                    uint64_t gy4 : 1;  // {GY, 4}
+                                    uint64_t bw : 9;   // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}
+                                    uint64_t bz4 : 1;  // {BZ, 4}
+                                    uint64_t rx : 5;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}
+                                    uint64_t gz4 : 1;  // {GZ, 4}
+                                    uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
+                                    uint64_t gx : 5;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}
+                                    uint64_t bz0 : 1;  // {BZ, 0}
+                                    uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
+                                    uint64_t bx : 5;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}
+                                    uint64_t bz1 : 1;  // {BZ, 1}
+                                    uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
+                                    uint64_t by3 : 1;  // {BY, 3}
+                                    uint64_t ry : 5;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
+                                    uint64_t bz2 : 1;  // {BZ, 2}
+                                    uint64_t rz : 5;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {BZ, 4}
+                                    uint64_t bz3 : 1;  // {BZ, 3}
+                                    uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
+                                    uint64_t indices : 46;
+                                };
+                                static_assert(sizeof(bc6h_mode6) == 16, "Block size must be 16 bytes");
+
+                                const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+
+                                auto m = reinterpret_cast<const bc6h_mode6*>(sptr);
+
+                                XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
+                                XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
+                                XMINT3 e1_A(int(m->ry),
+                                    int(m->gy | (m->gy4 << 4)),
+                                    int(m->by | (m->by3 << 3) | (m->by4 << 4)));
+                                XMINT3 e1_B(int(m->rz),
+                                    int(m->gz | (m->gz4 << 4)),
+                                    int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4)));
+
+                                if (bSigned)
+                                {
+                                    e0_A.x = SIGN_EXTEND(e0_A.x, 9);
+                                    e0_A.y = SIGN_EXTEND(e0_A.y, 9);
+                                    e0_A.z = SIGN_EXTEND(e0_A.z, 9);
+
+                                    e0_B.x = SIGN_EXTEND(e0_B.x, 5);
+                                    e0_B.y = SIGN_EXTEND(e0_B.y, 5);
+                                    e0_B.z = SIGN_EXTEND(e0_B.z, 5);
+
+                                    e1_A.x = SIGN_EXTEND(e1_A.x, 5);
+                                    e1_A.y = SIGN_EXTEND(e1_A.y, 5);
+                                    e1_A.z = SIGN_EXTEND(e1_A.z, 5);
+
+                                    e1_B.x = SIGN_EXTEND(e1_B.x, 5);
+                                    e1_B.y = SIGN_EXTEND(e1_B.y, 5);
+                                    e1_B.z = SIGN_EXTEND(e1_B.z, 5);
+                                }
+
+                                wprintf(L"\tMode 6 - [9 5 5 5] shape %llu\n", m->d);
+                                wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                                wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                                wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
+                                wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
+                                wprintf(L"\t         Index: ");
+                                PrintIndex3bpp(m->indices, 1, m->d);
+                                wprintf(L"\n");
+                            }
+                            break;
+
+                        case 0x12:
+                            // Mode 7 (5 bits, 10010)
+                            {
+                                struct bc6h_mode7
+                                {
+                                    uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                    uint64_t rw : 8;   // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}
+                                    uint64_t gz4 : 1;  // {GZ, 4}
+                                    uint64_t by4 : 1;  // {BY, 4}
+                                    uint64_t gw : 8;   // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}
+                                    uint64_t bz2 : 1;  // {BZ, 2}
+                                    uint64_t gy4 : 1;  // {GY, 4}
+                                    uint64_t bw : 8;   // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}
+                                    uint64_t bz3 : 1;  // {BZ, 3}
+                                    uint64_t bz4 : 1;  // {BZ, 4}
+                                    uint64_t rx : 6;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}, {RX, 5}
+                                    uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
+                                    uint64_t gx : 5;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}
+                                    uint64_t bz0 : 1;  // {BZ, 0}
+                                    uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
+                                    uint64_t bx : 5;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}
+                                    uint64_t bz1 : 1;  // {BZ, 1}
+                                    uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
+                                    uint64_t by3 : 1;  // {BY, 3}
+                                    uint64_t ry : 6;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4}, {RY, 5}
+                                    uint64_t rz : 6;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}
+                                    uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
+                                    uint64_t indices : 46;
+                                };
+                                static_assert(sizeof(bc6h_mode7) == 16, "Block size must be 16 bytes");
+
+                                const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+
+                                auto m = reinterpret_cast<const bc6h_mode7*>(sptr);
+
+                                XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
+                                XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
+                                XMINT3 e1_A(int(m->ry),
+                                    int(m->gy | (m->gy4 << 4)),
+                                    int(m->by | (m->by3 << 3) | (m->by4 << 4)));
+                                XMINT3 e1_B(int(m->rz),
+                                    int(m->gz | (m->gz4 << 4)),
+                                    int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4)));
+
+                                if (bSigned)
+                                {
+                                    e0_A.x = SIGN_EXTEND(e0_A.x, 8);
+                                    e0_A.y = SIGN_EXTEND(e0_A.y, 8);
+                                    e0_A.z = SIGN_EXTEND(e0_A.z, 8);
+
+                                    e0_B.x = SIGN_EXTEND(e0_B.x, 6);
+                                    e0_B.y = SIGN_EXTEND(e0_B.y, 5);
+                                    e0_B.z = SIGN_EXTEND(e0_B.z, 5);
+
+                                    e1_A.x = SIGN_EXTEND(e1_A.x, 6);
+                                    e1_A.y = SIGN_EXTEND(e1_A.y, 5);
+                                    e1_A.z = SIGN_EXTEND(e1_A.z, 5);
+
+                                    e1_B.x = SIGN_EXTEND(e1_B.x, 6);
+                                    e1_B.y = SIGN_EXTEND(e1_B.y, 5);
+                                    e1_B.z = SIGN_EXTEND(e1_B.z, 5);
+                                }
+
+                                wprintf(L"\tMode 7 - [8 6 5 5] shape %llu\n", m->d);
+                                wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                                wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                                wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
+                                wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
+                                wprintf(L"\t         Index: ");
+                                PrintIndex3bpp(m->indices, 1, m->d);
+                                wprintf(L"\n");
+                            }
+                            break;
+
+                        case 0x16:
+                            // Mode 8 (5 bits, 10110)
+                            {
+                                struct bc6h_mode8
+                                {
+                                    uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                    uint64_t rw : 8;   // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}
+                                    uint64_t bz0 : 1;  // {BZ, 0}
+                                    uint64_t by4 : 1;  // {BY, 4}
+                                    uint64_t gw : 8;   // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}
+                                    uint64_t gy5 : 1;  // {GY, 5}
+                                    uint64_t gy4 : 1;  // {GY, 4}
+                                    uint64_t bw : 8;   // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}
+                                    uint64_t gz5 : 1;  // {GZ, 5}
+                                    uint64_t bz4 : 1;  // {BZ, 4}
+                                    uint64_t rx : 5;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}
+                                    uint64_t gz4 : 1;  // {GZ, 4}
+                                    uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
+                                    uint64_t gx : 6;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}, {GX, 5}
+                                    uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
+                                    uint64_t bx : 5;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}
+                                    uint64_t bz1 : 1;  // {BZ, 1}
+                                    uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
+                                    uint64_t by3 : 1;  // {BY, 3}
+                                    uint64_t ry : 5;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4}
+                                    uint64_t bz2 : 1;  // {BZ, 2}
+                                    uint64_t rz : 5;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}
+                                    uint64_t bz3 : 1;  // {BZ, 3}
+                                    uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
+                                    uint64_t indices : 46;
+                                };
+                                static_assert(sizeof(bc6h_mode8) == 16, "Block size must be 16 bytes");
+
+                                const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+
+                                auto m = reinterpret_cast<const bc6h_mode8*>(sptr);
+
+                                XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
+                                XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
+                                XMINT3 e1_A(int(m->ry),
+                                    int(m->gy | (m->gy4 << 4) | (m->gy5 << 5)),
+                                    int(m->by | (m->by3 << 3) | (m->by4 << 4)));
+                                XMINT3 e1_B(int(m->rz),
+                                    int(m->gz | (m->gz4 << 4) | (m->gz5 << 5)),
+                                    int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4)));
+
+                                if (bSigned)
+                                {
+                                    e0_A.x = SIGN_EXTEND(e0_A.x, 8);
+                                    e0_A.y = SIGN_EXTEND(e0_A.y, 8);
+                                    e0_A.z = SIGN_EXTEND(e0_A.z, 8);
+
+                                    e0_B.x = SIGN_EXTEND(e0_B.x, 5);
+                                    e0_B.y = SIGN_EXTEND(e0_B.y, 6);
+                                    e0_B.z = SIGN_EXTEND(e0_B.z, 5);
+
+                                    e1_A.x = SIGN_EXTEND(e1_A.x, 5);
+                                    e1_A.y = SIGN_EXTEND(e1_A.y, 6);
+                                    e1_A.z = SIGN_EXTEND(e1_A.z, 5);
+
+                                    e1_B.x = SIGN_EXTEND(e1_B.x, 5);
+                                    e1_B.y = SIGN_EXTEND(e1_B.y, 6);
+                                    e1_B.z = SIGN_EXTEND(e1_B.z, 5);
+                                }
+
+                                wprintf(L"\tMode 8 - [8 5 6 5] shape %llu\n", m->d);
+                                wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                                wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                                wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
+                                wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
+                                wprintf(L"\t         Index: ");
+                                PrintIndex3bpp(m->indices, 1, m->d);
+                                wprintf(L"\n");
+                            }
+                            break;
+
+                        case 0x1A:
+                            // Mode 9 (5 bits, 11010)
+                            {
+                                struct bc6h_mode9
+                                {
+                                    uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                    uint64_t rw : 8;   // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}
+                                    uint64_t bz1 : 1;  // {BZ, 1}
+                                    uint64_t by4 : 1;  // {BY, 4}
+                                    uint64_t gw : 8;   // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}
+                                    uint64_t by5 : 1;  // {BY, 5}
+                                    uint64_t gy4 : 1;  // {GY, 4}
+                                    uint64_t bw : 8;   // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}
+                                    uint64_t bz5 : 1;  // {BZ, 5}
+                                    uint64_t bz4 : 1;  // {BZ, 4}
+                                    uint64_t rx : 5;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}
+                                    uint64_t gz4 : 1;  // {GZ, 4}
+                                    uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
+                                    uint64_t gx : 5;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}
+                                    uint64_t bz0 : 1;  // {BZ, 0}
+                                    uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
+                                    uint64_t bx : 6;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}, {BX, 5}
+                                    uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
+                                    uint64_t by3 : 1;  // {BY, 3}
+                                    uint64_t ry : 5;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4}
+                                    uint64_t bz2 : 1;  // {BZ, 2}
+                                    uint64_t rz : 5;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}
+                                    uint64_t bz3 : 1;  // {BZ, 3}
+                                    uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
+                                    uint64_t indices : 46;
+                                };
+                                static_assert(sizeof(bc6h_mode9) == 16, "Block size must be 16 bytes");
+
+                                const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+
+                                auto m = reinterpret_cast<const bc6h_mode9*>(sptr);
+
+                                XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
+                                XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
+                                XMINT3 e1_A(int(m->ry),
+                                    int(m->gy | (m->gy4 << 4)),
+                                    int(m->by | (m->by3 << 3) | (m->by4 << 4) | (m->by5 << 5)));
+                                XMINT3 e1_B(int(m->rz),
+                                    int(m->gz | (m->gz4 << 4)),
+                                    int(m->bz0 | (m->bz1 << 1) | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4) | (m->bz5 << 5)));
+
+                                if (bSigned)
+                                {
+                                    e0_A.x = SIGN_EXTEND(e0_A.x, 8);
+                                    e0_A.y = SIGN_EXTEND(e0_A.y, 8);
+                                    e0_A.z = SIGN_EXTEND(e0_A.z, 8);
+
+                                    e0_B.x = SIGN_EXTEND(e0_B.x, 5);
+                                    e0_B.y = SIGN_EXTEND(e0_B.y, 5);
+                                    e0_B.z = SIGN_EXTEND(e0_B.z, 6);
+
+                                    e1_A.x = SIGN_EXTEND(e1_A.x, 5);
+                                    e1_A.y = SIGN_EXTEND(e1_A.y, 5);
+                                    e1_A.z = SIGN_EXTEND(e1_A.z, 6);
+
+                                    e1_B.x = SIGN_EXTEND(e1_B.x, 5);
+                                    e1_B.y = SIGN_EXTEND(e1_B.y, 5);
+                                    e1_B.z = SIGN_EXTEND(e1_B.z, 6);
+                                }
+
+                                wprintf(L"\tMode 9 - [8 5 5 6] shape %llu\n", m->d);
+                                wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                                wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                                wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
+                                wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
+                                wprintf(L"\t         Index: ");
+                                PrintIndex3bpp(m->indices, 1, m->d);
+                                wprintf(L"\n");
+                            }
+                            break;
+
+                        case 0x1E:
+                            // Mode 10 (5 bits, 11110)
+                            {
+                                struct bc6h_mode10
+                                {
+                                    uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                    uint64_t rw : 6;   // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}
+                                    uint64_t gz4 : 1;  // {GZ, 4}
+                                    uint64_t bz : 2;  // {BZ, 0}, {BZ, 1}
+                                    uint64_t by4 : 1;  // {BY, 4}
+                                    uint64_t gw : 6;   // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}
+                                    uint64_t gy5 : 1;  // {GY, 5}
+                                    uint64_t by5 : 1;  // {BY, 5}
+                                    uint64_t bz2 : 1;  // {BZ, 2}
+                                    uint64_t gy4 : 1;  // {GY, 4}
+                                    uint64_t bw : 6;   // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {GZ, 5}
+                                    uint64_t bz3 : 1;  // {BZ, 3}
+                                    uint64_t bz5 : 1;  // {BZ, 5}
+                                    uint64_t bz4 : 1;  // {BZ, 4}
+                                    uint64_t rx : 6;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}, {RX, 5}
+                                    uint64_t gy : 4;   // {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}
+                                    uint64_t gx : 6;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}, {GX, 5}
+                                    uint64_t gz : 4;   // {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}
+                                    uint64_t bx : 6;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}, {BX, 5}
+                                    uint64_t by : 3;   // {BY, 0}, {BY, 1}, {BY, 2}
+                                    uint64_t by3 : 1;  // {BY, 3}
+                                    uint64_t ry : 6;   // {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4}, {RY, 5}
+                                    uint64_t rz : 6;   // {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}
+                                    uint64_t d : 5;    // { D, 0}, { D, 1}, { D, 2}, { D, 3}, { D, 4}
+                                    uint64_t indices : 46;
+                                };
+                                static_assert(sizeof(bc6h_mode10) == 16, "Block size must be 16 bytes");
+
+                                const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+
+                                auto m = reinterpret_cast<const bc6h_mode10*>(sptr);
+
+                                XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
+                                XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
+                                XMINT3 e1_A(int(m->ry),
+                                    int(m->gy | (m->gy4 << 4) | (m->gy5 << 5)),
+                                    int(m->by | (m->by3 << 3) | (m->by4 << 4) | (m->by5 << 5)));
+                                XMINT3 e1_B(int(m->rz),
+                                    int(m->gz | (m->gz4 << 4)),
+                                    int(m->bz | (m->bz2 << 2) | (m->bz3 << 3) | (m->bz4 << 4) | (m->bz5 << 5)));
+
+                                if (bSigned)
+                                {
+                                    e0_A.x = SIGN_EXTEND(e0_A.x, 6);
+                                    e0_A.y = SIGN_EXTEND(e0_A.y, 6);
+                                    e0_A.z = SIGN_EXTEND(e0_A.z, 6);
+
+                                    e0_B.x = SIGN_EXTEND(e0_B.x, 6);
+                                    e0_B.y = SIGN_EXTEND(e0_B.y, 6);
+                                    e0_B.z = SIGN_EXTEND(e0_B.z, 6);
+
+                                    e1_A.x = SIGN_EXTEND(e1_A.x, 6);
+                                    e1_A.y = SIGN_EXTEND(e1_A.y, 6);
+                                    e1_A.z = SIGN_EXTEND(e1_A.z, 6);
+
+                                    e1_B.x = SIGN_EXTEND(e1_B.x, 6);
+                                    e1_B.y = SIGN_EXTEND(e1_B.y, 6);
+                                    e1_B.z = SIGN_EXTEND(e1_B.z, 6);
+                                }
+
+                                wprintf(L"\tMode 10 - [6 6 6 6] shape %llu\n", m->d);
+                                wprintf(L"\t         E0(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                                wprintf(L"\t         E0(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                                wprintf(L"\t         E1(A): (%04X, %04X, %04X)\n", e1_A.x & 0xFFFF, e1_A.y & 0xFFFF, e1_A.z & 0xFFFF);
+                                wprintf(L"\t         E1(B): (%04X, %04X, %04X)\n", e1_B.x & 0xFFFF, e1_B.y & 0xFFFF, e1_B.z & 0xFFFF);
+                                wprintf(L"\t         Index: ");
+                                PrintIndex3bpp(m->indices, 1, m->d);
+                                wprintf(L"\n");
+                            }
+                            break;
+
+                        case 0x03:
+                            // Mode 11 (5 bits, 00011)
+                            {
+                                struct bc6h_mode11
+                                {
+                                    uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                    uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
+                                    uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
+                                    uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
+                                    uint64_t rx : 10;  // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}, {RX, 5}, {RX, 6}, {RX, 7}, {RX, 8}, {RX, 9}
+                                    uint64_t gx : 10;  // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}, {GX, 5}, {GX, 6}, {GX, 7}, {GX, 8}, {GX, 9}
+                                    uint64_t bx : 9;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}, {BX, 5}, {BX, 6}, {BX, 7}, {BX, 8}
+                                    uint64_t bx9 : 1;  // {BX, 9}
+                                    uint64_t indices : 63;
+                                };
+                                static_assert(sizeof(bc6h_mode11) == 16, "Block size must be 16 bytes");
+
+                                const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+
+                                auto m = reinterpret_cast<const bc6h_mode11*>(sptr);
+
+                                XMINT3 e0_A(int(m->rw), int(m->gw), int(m->bw));
+                                XMINT3 e0_B(int(m->rx), int(m->gx),
+                                    int(m->bx | (m->bx9 << 9)));
+
+                                if (bSigned)
+                                {
+                                    e0_A.x = SIGN_EXTEND(e0_A.x, 10);
+                                    e0_A.y = SIGN_EXTEND(e0_A.y, 10);
+                                    e0_A.z = SIGN_EXTEND(e0_A.z, 10);
+
+                                    e0_B.x = SIGN_EXTEND(e0_B.x, 10);
+                                    e0_B.y = SIGN_EXTEND(e0_B.y, 10);
+                                    e0_B.z = SIGN_EXTEND(e0_B.z, 10);
+                                }
+
+                                wprintf(L"\tMode 11 - [10 10]\n");
+                                wprintf(L"\t         E(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                                wprintf(L"\t         E(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                                wprintf(L"\t         Index: ");
+                                PrintIndex4bpp(m->indices, 0, 0);
+                                wprintf(L"\n");
+                            }
+                            break;
 
                         case 0x07:
                             // Mode 12 (5 bits, 00111)
-                        {
-                            struct bc6h_mode12
                             {
-                                uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
-                                uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
-                                uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
-                                uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
-                                uint64_t rx : 9;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}, {RX, 5}, {RX, 6}, {RX, 7}, {RX, 8}
-                                uint64_t rw10 : 1; // {RW,10}
-                                uint64_t gx : 9;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}, {GX, 5}, {GX, 6}, {GX, 7}, {GX, 8}
-                                uint64_t gw10 : 1; // {GW,10}
-                                uint64_t bx : 9;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}, {BX, 5}, {BX, 6}, {BX, 7}, {BX, 8}
-                                uint64_t bw10 : 1; // {BW,10}
-                                uint64_t indices : 63;
-                            };
-                            static_assert(sizeof(bc6h_mode12) == 16, "Block size must be 16 bytes");
+                                struct bc6h_mode12
+                                {
+                                    uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                    uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
+                                    uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
+                                    uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
+                                    uint64_t rx : 9;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}, {RX, 5}, {RX, 6}, {RX, 7}, {RX, 8}
+                                    uint64_t rw10 : 1; // {RW,10}
+                                    uint64_t gx : 9;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}, {GX, 5}, {GX, 6}, {GX, 7}, {GX, 8}
+                                    uint64_t gw10 : 1; // {GW,10}
+                                    uint64_t bx : 9;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}, {BX, 5}, {BX, 6}, {BX, 7}, {BX, 8}
+                                    uint64_t bw10 : 1; // {BW,10}
+                                    uint64_t indices : 63;
+                                };
+                                static_assert(sizeof(bc6h_mode12) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                                const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
-                            auto m = reinterpret_cast<const bc6h_mode12*>(sptr);
+                                auto m = reinterpret_cast<const bc6h_mode12*>(sptr);
 
-                            XMINT3 e0_A(int(m->rw | (m->rw10 << 10)),
-                                int(m->gw | (m->gw10 << 10)),
-                                int(m->bw | (m->bw10 << 10)));
-                            XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
+                                XMINT3 e0_A(int(m->rw | (m->rw10 << 10)),
+                                    int(m->gw | (m->gw10 << 10)),
+                                    int(m->bw | (m->bw10 << 10)));
+                                XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
 
-                            if (bSigned)
-                            {
-                                e0_A.x = SIGN_EXTEND(e0_A.x, 11);
-                                e0_A.y = SIGN_EXTEND(e0_A.y, 11);
-                                e0_A.z = SIGN_EXTEND(e0_A.z, 11);
+                                if (bSigned)
+                                {
+                                    e0_A.x = SIGN_EXTEND(e0_A.x, 11);
+                                    e0_A.y = SIGN_EXTEND(e0_A.y, 11);
+                                    e0_A.z = SIGN_EXTEND(e0_A.z, 11);
 
-                                e0_B.x = SIGN_EXTEND(e0_B.x, 9);
-                                e0_B.y = SIGN_EXTEND(e0_B.y, 9);
-                                e0_B.z = SIGN_EXTEND(e0_B.z, 9);
+                                    e0_B.x = SIGN_EXTEND(e0_B.x, 9);
+                                    e0_B.y = SIGN_EXTEND(e0_B.y, 9);
+                                    e0_B.z = SIGN_EXTEND(e0_B.z, 9);
+                                }
+
+                                wprintf(L"\tMode 12 - [11 9]\n");
+                                wprintf(L"\t         E(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                                wprintf(L"\t         E(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                                wprintf(L"\t         Index: ");
+                                PrintIndex4bpp(m->indices, 0, 0);
+                                wprintf(L"\n");
                             }
-
-                            wprintf(L"\tMode 12 - [11 9]\n");
-                            wprintf(L"\t         E(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                            wprintf(L"\t         E(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                            wprintf(L"\t         Index: ");
-                            PrintIndex4bpp(m->indices, 0, 0);
-                            wprintf(L"\n");
-                        }
-                        break;
+                            break;
 
                         case 0x0B:
                             // Mode 13 (5 bits, 01011)
-                        {
-                            struct bc6h_mode13
                             {
-                                uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
-                                uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
-                                uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
-                                uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
-                                uint64_t rx : 8;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}, {RX, 5}, {RX, 6}, {RX, 7}
-                                uint64_t rw11 : 1; // {RW,11}
-                                uint64_t rw10 : 1; // {RW,10}
-                                uint64_t gx : 8;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}, {GX, 5}, {GX, 6}, {GX, 7}
-                                uint64_t gw11 : 1; // {GW,11}
-                                uint64_t gw10 : 1; // {GW,10}
-                                uint64_t bx : 8;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}, {BX, 5}, {BX, 6}, {BX, 7}
-                                uint64_t bw11 : 1; // {BW,11}
-                                uint64_t bw10 : 1; // {BW,10}
-                                uint64_t indices : 63;
-                            };
-                            static_assert(sizeof(bc6h_mode13) == 16, "Block size must be 16 bytes");
+                                struct bc6h_mode13
+                                {
+                                    uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                    uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
+                                    uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
+                                    uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
+                                    uint64_t rx : 8;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4}, {RX, 5}, {RX, 6}, {RX, 7}
+                                    uint64_t rw11 : 1; // {RW,11}
+                                    uint64_t rw10 : 1; // {RW,10}
+                                    uint64_t gx : 8;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4}, {GX, 5}, {GX, 6}, {GX, 7}
+                                    uint64_t gw11 : 1; // {GW,11}
+                                    uint64_t gw10 : 1; // {GW,10}
+                                    uint64_t bx : 8;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4}, {BX, 5}, {BX, 6}, {BX, 7}
+                                    uint64_t bw11 : 1; // {BW,11}
+                                    uint64_t bw10 : 1; // {BW,10}
+                                    uint64_t indices : 63;
+                                };
+                                static_assert(sizeof(bc6h_mode13) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                                const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
-                            auto m = reinterpret_cast<const bc6h_mode13*>(sptr);
+                                auto m = reinterpret_cast<const bc6h_mode13*>(sptr);
 
-                            XMINT3 e0_A(int(m->rw | (m->rw10 << 10) | (m->rw11 << 11)),
-                                int(m->gw | (m->gw10 << 10) | (m->gw11 << 11)),
-                                int(m->bw | (m->bw10 << 10) | (m->bw11 << 11)));
-                            XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
+                                XMINT3 e0_A(int(m->rw | (m->rw10 << 10) | (m->rw11 << 11)),
+                                    int(m->gw | (m->gw10 << 10) | (m->gw11 << 11)),
+                                    int(m->bw | (m->bw10 << 10) | (m->bw11 << 11)));
+                                XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
 
-                            if (bSigned)
-                            {
-                                e0_A.x = SIGN_EXTEND(e0_A.x, 12);
-                                e0_A.y = SIGN_EXTEND(e0_A.y, 12);
-                                e0_A.z = SIGN_EXTEND(e0_A.z, 12);
+                                if (bSigned)
+                                {
+                                    e0_A.x = SIGN_EXTEND(e0_A.x, 12);
+                                    e0_A.y = SIGN_EXTEND(e0_A.y, 12);
+                                    e0_A.z = SIGN_EXTEND(e0_A.z, 12);
 
-                                e0_B.x = SIGN_EXTEND(e0_B.x, 8);
-                                e0_B.y = SIGN_EXTEND(e0_B.y, 8);
-                                e0_B.z = SIGN_EXTEND(e0_B.z, 8);
+                                    e0_B.x = SIGN_EXTEND(e0_B.x, 8);
+                                    e0_B.y = SIGN_EXTEND(e0_B.y, 8);
+                                    e0_B.z = SIGN_EXTEND(e0_B.z, 8);
+                                }
+
+                                wprintf(L"\tMode 13 - [12 8]\n");
+                                wprintf(L"\t         E(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                                wprintf(L"\t         E(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                                wprintf(L"\t         Index: ");
+                                PrintIndex4bpp(m->indices, 0, 0);
+                                wprintf(L"\n");
                             }
-
-                            wprintf(L"\tMode 13 - [12 8]\n");
-                            wprintf(L"\t         E(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                            wprintf(L"\t         E(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                            wprintf(L"\t         Index: ");
-                            PrintIndex4bpp(m->indices, 0, 0);
-                            wprintf(L"\n");
-                        }
-                        break;
+                            break;
 
                         case 0x0F:
                             // Mode 14 (5 bits, 01111)
-                        {
-                            struct bc6h_mode14
                             {
-                                uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
-                                uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
-                                uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
-                                uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
-                                uint64_t rx : 4;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}
-                                uint64_t rw15 : 1; // {RW,15}
-                                uint64_t rw14 : 1; // {RW,14}
-                                uint64_t rw13 : 1; // {RW,13}
-                                uint64_t rw12 : 1; // {RW,12}
-                                uint64_t rw11 : 1; // {RW,11}
-                                uint64_t rw10 : 1; // {RW,10}
-                                uint64_t gx : 4;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}
-                                uint64_t gw15 : 1; // {GW,15}
-                                uint64_t gw14 : 1; // {GW,14}
-                                uint64_t gw13 : 1; // {GW,13}
-                                uint64_t gw12 : 1; // {GW,12}
-                                uint64_t gw11 : 1; // {GW,11}
-                                uint64_t gw10 : 1; // {GW,10}
-                                uint64_t bx : 4;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}
-                                uint64_t bw15 : 1; // {BW,15}
-                                uint64_t bw14 : 1; // {BW,14}
-                                uint64_t bw13 : 1; // {BW,13}
-                                uint64_t bw12 : 1; // {BW,12}
-                                uint64_t bw11 : 1; // {BW,11}
-                                uint64_t bw10 : 1; // {BW,10}
-                                uint64_t indices : 63;
-                            };
-                            static_assert(sizeof(bc6h_mode14) == 16, "Block size must be 16 bytes");
+                                struct bc6h_mode14
+                                {
+                                    uint64_t mode : 5; // { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}
+                                    uint64_t rw : 10;  // {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4}, {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}
+                                    uint64_t gw : 10;  // {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4}, {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}
+                                    uint64_t bw : 10;  // {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4}, {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}
+                                    uint64_t rx : 4;   // {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}
+                                    uint64_t rw15 : 1; // {RW,15}
+                                    uint64_t rw14 : 1; // {RW,14}
+                                    uint64_t rw13 : 1; // {RW,13}
+                                    uint64_t rw12 : 1; // {RW,12}
+                                    uint64_t rw11 : 1; // {RW,11}
+                                    uint64_t rw10 : 1; // {RW,10}
+                                    uint64_t gx : 4;   // {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}
+                                    uint64_t gw15 : 1; // {GW,15}
+                                    uint64_t gw14 : 1; // {GW,14}
+                                    uint64_t gw13 : 1; // {GW,13}
+                                    uint64_t gw12 : 1; // {GW,12}
+                                    uint64_t gw11 : 1; // {GW,11}
+                                    uint64_t gw10 : 1; // {GW,10}
+                                    uint64_t bx : 4;   // {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}
+                                    uint64_t bw15 : 1; // {BW,15}
+                                    uint64_t bw14 : 1; // {BW,14}
+                                    uint64_t bw13 : 1; // {BW,13}
+                                    uint64_t bw12 : 1; // {BW,12}
+                                    uint64_t bw11 : 1; // {BW,11}
+                                    uint64_t bw10 : 1; // {BW,10}
+                                    uint64_t indices : 63;
+                                };
+                                static_assert(sizeof(bc6h_mode14) == 16, "Block size must be 16 bytes");
 
-                            bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
+                                const bool bSigned = (image.format == DXGI_FORMAT_BC6H_SF16) ? true : false;
 
-                            auto m = reinterpret_cast<const bc6h_mode14*>(sptr);
+                                auto m = reinterpret_cast<const bc6h_mode14*>(sptr);
 
-                            XMINT3 e0_A(int(m->rw | (m->rw10 << 10) | (m->rw11 << 11) | (m->rw12 << 12) | (m->rw13 << 13) | (m->rw14 << 14) | (m->rw15 << 15)),
-                                int(m->gw | (m->gw10 << 10) | (m->gw11 << 11) | (m->gw12 << 12) | (m->gw13 << 13) | (m->gw14 << 14) | (m->gw15 << 15)),
-                                int(m->bw | (m->bw10 << 10) | (m->bw11 << 11) | (m->bw12 << 12) | (m->bw13 << 13) | (m->bw14 << 14) | (m->bw15 << 15)));
-                            XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
+                                XMINT3 e0_A(int(m->rw | (m->rw10 << 10) | (m->rw11 << 11) | (m->rw12 << 12) | (m->rw13 << 13) | (m->rw14 << 14) | (m->rw15 << 15)),
+                                    int(m->gw | (m->gw10 << 10) | (m->gw11 << 11) | (m->gw12 << 12) | (m->gw13 << 13) | (m->gw14 << 14) | (m->gw15 << 15)),
+                                    int(m->bw | (m->bw10 << 10) | (m->bw11 << 11) | (m->bw12 << 12) | (m->bw13 << 13) | (m->bw14 << 14) | (m->bw15 << 15)));
+                                XMINT3 e0_B(int(m->rx), int(m->gx), int(m->bx));
 
-                            if (bSigned)
-                            {
-                                e0_A.x = SIGN_EXTEND(e0_A.x, 16);
-                                e0_A.y = SIGN_EXTEND(e0_A.y, 16);
-                                e0_A.z = SIGN_EXTEND(e0_A.z, 16);
+                                if (bSigned)
+                                {
+                                    e0_A.x = SIGN_EXTEND(e0_A.x, 16);
+                                    e0_A.y = SIGN_EXTEND(e0_A.y, 16);
+                                    e0_A.z = SIGN_EXTEND(e0_A.z, 16);
 
-                                e0_B.x = SIGN_EXTEND(e0_B.x, 4);
-                                e0_B.y = SIGN_EXTEND(e0_B.y, 4);
-                                e0_B.z = SIGN_EXTEND(e0_B.z, 4);
+                                    e0_B.x = SIGN_EXTEND(e0_B.x, 4);
+                                    e0_B.y = SIGN_EXTEND(e0_B.y, 4);
+                                    e0_B.z = SIGN_EXTEND(e0_B.z, 4);
+                                }
+
+                                wprintf(L"\tMode 14 - [16 4]\n");
+                                wprintf(L"\t         E(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
+                                wprintf(L"\t         E(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
+                                wprintf(L"\t         Index: ");
+                                PrintIndex4bpp(m->indices, 0, 0);
+                                wprintf(L"\n");
                             }
-
-                            wprintf(L"\tMode 14 - [16 4]\n");
-                            wprintf(L"\t         E(A): (%04X, %04X, %04X)\n", e0_A.x & 0xFFFF, e0_A.y & 0xFFFF, e0_A.z & 0xFFFF);
-                            wprintf(L"\t         E(B): (%04X, %04X, %04X)\n", e0_B.x & 0xFFFF, e0_B.y & 0xFFFF, e0_B.z & 0xFFFF);
-                            wprintf(L"\t         Index: ");
-                            PrintIndex4bpp(m->indices, 0, 0);
-                            wprintf(L"\n");
-                        }
-                        break;
+                            break;
 
                         case 0x13: // Reserved mode (5 bits, 10011)
                             wprintf(L"\tERROR - Reserved mode 10011\n");
@@ -2658,6 +2874,9 @@ namespace
 
                         case 0x1F: // Reserved mode (5 bits, 11111)
                             wprintf(L"\tERROR - Reserved mode 11111\n");
+                            break;
+
+                        default:
                             break;
                         }
                         break;
@@ -2866,7 +3085,7 @@ namespace
                         wprintf(L"\t         A1:(%0.3f)\n", float(m->a1) / 63.f);
                         wprintf(L"\t    Colors: ");
 
-                        uint64_t color_index = m->color_index | (m->color_indexn << 14);
+                        const uint64_t color_index = uint64_t(m->color_index) | uint64_t(m->color_indexn << 14);
                         if (m->idx)
                             PrintIndex3bpp(color_index, 0, 0);
                         else
@@ -3002,29 +3221,37 @@ namespace
 
         return S_OK;
     }
+#pragma endregion
 }
 
 
 //--------------------------------------------------------------------------------------
 // Entry-point
 //--------------------------------------------------------------------------------------
+#ifdef _PREFAST_
 #pragma prefast(disable : 28198, "Command-line tool, frees all memory on exit")
+#endif
 
 int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 {
     // Parameters and defaults
-    DWORD dwFilter = TEX_FILTER_DEFAULT;
+    TEX_FILTER_FLAGS dwFilter = TEX_FILTER_DEFAULT;
     int pixelx = -1;
     int pixely = -1;
+    uint32_t diffColor = 0;
+    float threshold = 0.25f;
     DXGI_FORMAT diffFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
-    DWORD fileType = WIC_CODEC_BMP;
+    uint32_t fileType = WIC_CODEC_BMP;
     wchar_t szOutputFile[MAX_PATH] = {};
+
+    // Set locale for output since GetErrorDesc can get localized strings.
+    std::locale::global(std::locale(""));
 
     // Initialize COM (needed for WIC)
     HRESULT hr = hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr))
     {
-        wprintf(L"Failed to initialize COM (%08X)\n", hr);
+        wprintf(L"Failed to initialize COM (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
         return 1;
     }
 
@@ -3035,7 +3262,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
-    DWORD dwCommand = LookupByName(argv[1], g_pCommands);
+    const uint32_t dwCommand = LookupByName(argv[1], g_pCommands);
     switch (dwCommand)
     {
     case CMD_INFO:
@@ -3051,7 +3278,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 1;
     }
 
-    DWORD dwOptions = 0;
+    uint32_t dwOptions = 0;
     std::list<SConversion> conversion;
 
     for (int iArg = 2; iArg < argc; iArg++)
@@ -3068,7 +3295,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (*pValue)
                 *pValue++ = 0;
 
-            DWORD dwOption = LookupByName(pArg, g_pOptions);
+            const uint32_t dwOption = LookupByName(pArg, g_pOptions);
 
             if (!dwOption || (dwOptions & (1 << dwOption)))
             {
@@ -3087,6 +3314,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_OUTPUTFILE:
             case OPT_TARGET_PIXELX:
             case OPT_TARGET_PIXELY:
+            case OPT_DIFF_COLOR:
+            case OPT_THRESHOLD:
             case OPT_FILELIST:
                 if (!*pValue)
                 {
@@ -3099,6 +3328,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     iArg++;
                     pValue = argv[iArg];
                 }
+                break;
+
+            default:
                 break;
             }
 
@@ -3126,7 +3358,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_FILTER:
-                dwFilter = LookupByName(pValue, g_pFilters);
+                dwFilter = static_cast<TEX_FILTER_FLAGS>(LookupByName(pValue, g_pFilters));
                 if (!dwFilter)
                 {
                     wprintf(L"Invalid value specified with -if (%ls)\n", pValue);
@@ -3144,7 +3376,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     wcscpy_s(szOutputFile, MAX_PATH, pValue);
 
-                    wchar_t ext[_MAX_EXT];
+                    wchar_t ext[_MAX_EXT] = {};
                     _wsplitpath_s(szOutputFile, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
 
                     fileType = LookupByName(ext, g_pExtFileTypes);
@@ -3196,6 +3428,27 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 break;
 
+            case OPT_DIFF_COLOR:
+                if (swscanf_s(pValue, L"%x", &diffColor) != 1)
+                {
+                    printf("Invalid value specified with -c (%ls)\n", pValue);
+                    printf("\n");
+                    PrintUsage();
+                    return 1;
+                }
+                diffColor &= 0xFFFFFF;
+                break;
+
+            case OPT_THRESHOLD:
+                if (swscanf_s(pValue, L"%f", &threshold) != 1)
+                {
+                    printf("Invalid value specified with -t (%ls)\n", pValue);
+                    printf("\n");
+                    PrintUsage();
+                    return 1;
+                }
+                break;
+
             case OPT_FILELIST:
                 {
                     std::wifstream inFile(pValue);
@@ -3204,44 +3457,20 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         wprintf(L"Error opening -flist file %ls\n", pValue);
                         return 1;
                     }
-                    wchar_t fname[1024] = {};
-                    for (;;)
-                    {
-                        inFile >> fname;
-                        if (!inFile)
-                            break;
 
-                        if (*fname == L'#')
-                        {
-                            // Comment
-                        }
-                        else if (*fname == L'-')
-                        {
-                            wprintf(L"Command-line arguments not supported in -flist file\n");
-                            return 1;
-                        }
-                        else if (wcspbrk(fname, L"?*") != nullptr)
-                        {
-                            wprintf(L"Wildcards not supported in -flist file\n");
-                            return 1;
-                        }
-                        else
-                        {
-                            SConversion conv;
-                            wcscpy_s(conv.szSrc, MAX_PATH, fname);
-                            conversion.push_back(conv);
-                        }
+                    inFile.imbue(std::locale::classic());
 
-                        inFile.ignore(1000, '\n');
-                    }
-                    inFile.close();
+                    ProcessFileList(inFile, conversion);
                 }
+                break;
+
+            default:
                 break;
             }
         }
         else if (wcspbrk(pArg, L"?*") != nullptr)
         {
-            size_t count = conversion.size();
+            const size_t count = conversion.size();
             SearchForFiles(pArg, conversion, (dwOptions & (1 << OPT_RECURSIVE)) != 0);
             if (conversion.size() <= count)
             {
@@ -3251,7 +3480,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else
         {
-            SConversion conv;
+            SConversion conv = {};
             wcscpy_s(conv.szSrc, MAX_PATH, pArg);
 
             conversion.push_back(conv);
@@ -3289,7 +3518,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = LoadImage(pImage1->szSrc, dwOptions, dwFilter, info1, image1);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
@@ -3304,7 +3533,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = LoadImage(pImage2->szSrc, dwOptions, dwFilter, info2, image2);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
@@ -3322,8 +3551,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 if (!*szOutputFile)
                 {
-                    wchar_t ext[_MAX_EXT];
-                    wchar_t fname[_MAX_FNAME];
+                    wchar_t ext[_MAX_EXT] = {};
+                    wchar_t fname[_MAX_FNAME] = {};
                     _wsplitpath_s(pImage1->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT);
                     if (_wcsicmp(ext, L".bmp") == 0)
                     {
@@ -3338,11 +3567,16 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     wprintf(L"WARNING: ignoring all images but first one in each file\n");
 
                 ScratchImage diffImage;
-                hr = Difference(*image1->GetImage(0, 0, 0), *image2->GetImage(0, 0, 0), dwFilter, diffFormat, diffImage);
+                hr = Difference(*image1->GetImage(0, 0, 0), *image2->GetImage(0, 0, 0), dwFilter, diffFormat, diffColor, threshold, diffImage);
                 if (FAILED(hr))
                 {
-                    wprintf(L"Failed diffing images (%08X)\n", hr);
+                    wprintf(L"Failed diffing images (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
+                }
+
+                if (dwOptions & (1 << OPT_TOLOWER))
+                {
+                    std::ignore = _wcslwr_s(szOutputFile);
                 }
 
                 if (~dwOptions & (1 << OPT_OVERWRITE))
@@ -3357,7 +3591,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = SaveImage(diffImage.GetImage(0, 0, 0), szOutputFile, fileType);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED (%x)\n", hr);
+                    wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -3379,7 +3613,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = ComputeMSE(*image1->GetImage(0, 0, 0), *image2->GetImage(0, 0, 0), mse, mseV);
                 if (FAILED(hr))
                 {
-                    wprintf(L"Failed comparing images (%08X)\n", hr);
+                    wprintf(L"Failed comparing images (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -3402,7 +3636,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 if (info1.depth > 1)
                 {
-                    wprintf(L"Results by mip (%3Iu) and slice (%3Iu)\n\n", info1.mipLevels, info1.depth);
+                    wprintf(L"Results by mip (%3zu) and slice (%3zu)\n\n", info1.mipLevels, info1.depth);
 
                     size_t depth = info1.depth;
                     for (size_t mip = 0; mip < info1.mipLevels; ++mip)
@@ -3417,7 +3651,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 || img1->height != img2->height
                                 || img1->width != img2->width)
                             {
-                                wprintf(L"ERROR: Unexpected mismatch at slice %3Iu, mip %3Iu\n", slice, mip);
+                                wprintf(L"ERROR: Unexpected mismatch at slice %3zu, mip %3zu\n", slice, mip);
                                 return 1;
                             }
                             else
@@ -3426,24 +3660,24 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = ComputeMSE(*img1, *img2, mse, mseV);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"Failed comparing images at slice %3Iu, mip %3Iu (%08X)\n", slice, mip, hr);
+                                    wprintf(L"Failed comparing images at slice %3zu, mip %3zu (%08X%ls)\n", slice, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
 
                                 min_mse = std::min(min_mse, mse);
                                 max_mse = std::max(max_mse, mse);
-                                sum_mse += mse;
+                                sum_mse += double(mse);
 
                                 for (size_t j = 0; j < 4; ++j)
                                 {
                                     min_mseV[j] = std::min(min_mseV[j], mseV[j]);
                                     max_mseV[j] = std::max(max_mseV[j], mseV[j]);
-                                    sum_mseV[j] += mseV[j];
+                                    sum_mseV[j] += double(mseV[j]);
                                 }
 
                                 ++total_images;
 
-                                wprintf(L"[%3Iu,%3Iu]: %f (%f %f %f %f) PSNR %f dB\n", mip, slice, mse, mseV[0], mseV[1], mseV[2], mseV[3],
+                                wprintf(L"[%3zu,%3zu]: %f (%f %f %f %f) PSNR %f dB\n", mip, slice, mse, mseV[0], mseV[1], mseV[2], mseV[3],
                                     10.0 * log10(3.0 / (double(mseV[0]) + double(mseV[1]) + double(mseV[2]))));
                             }
                         }
@@ -3454,7 +3688,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else
                 {
-                    wprintf(L"Results by item (%3Iu) and mip (%3Iu)\n\n", info1.arraySize, info1.mipLevels);
+                    wprintf(L"Results by item (%3zu) and mip (%3zu)\n\n", info1.arraySize, info1.mipLevels);
 
                     for (size_t item = 0; item < info1.arraySize; ++item)
                     {
@@ -3468,7 +3702,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 || img1->height != img2->height
                                 || img1->width != img2->width)
                             {
-                                wprintf(L"ERROR: Unexpected mismatch at item %3Iu, mip %3Iu\n", item, mip);
+                                wprintf(L"ERROR: Unexpected mismatch at item %3zu, mip %3zu\n", item, mip);
                                 return 1;
                             }
                             else
@@ -3477,24 +3711,24 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = ComputeMSE(*img1, *img2, mse, mseV);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"Failed comparing images at item %3Iu, mip %3Iu (%08X)\n", item, mip, hr);
+                                    wprintf(L"Failed comparing images at item %3zu, mip %3zu (%08X%ls)\n", item, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
 
                                 min_mse = std::min(min_mse, mse);
                                 max_mse = std::max(max_mse, mse);
-                                sum_mse += mse;
+                                sum_mse += double(mse);
 
                                 for (size_t j = 0; j < 4; ++j)
                                 {
                                     min_mseV[j] = std::min(min_mseV[j], mseV[j]);
                                     max_mseV[j] = std::max(max_mseV[j], mseV[j]);
-                                    sum_mseV[j] += mseV[j];
+                                    sum_mseV[j] += double(mseV[j]);
                                 }
 
                                 ++total_images;
 
-                                wprintf(L"[%3Iu,%3Iu]: %f (%f %f %f %f) PSNR %f dB\n", item, mip, mse, mseV[0], mseV[1], mseV[2], mseV[3],
+                                wprintf(L"[%3zu,%3zu]: %f (%f %f %f %f) PSNR %f dB\n", item, mip, mse, mseV[0], mseV[1], mseV[2], mseV[3],
                                     10.0 * log10(3.0 / (double(mseV[0]) + double(mseV[1]) + double(mseV[2]))));
                             }
                         }
@@ -3506,9 +3740,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     wprintf(L"\n    Minimum MSE: %f (%f %f %f %f) PSNR %f dB\n", min_mse, min_mseV[0], min_mseV[1], min_mseV[2], min_mseV[3],
                         10.0 * log10(3.0 / (double(min_mseV[0]) + double(min_mseV[1]) + double(min_mseV[2]))));
-                    double total_mseV0 = sum_mseV[0] / double(total_images);
-                    double total_mseV1 = sum_mseV[1] / double(total_images);
-                    double total_mseV2 = max_mseV[2] / double(total_images);
+                    const double total_mseV0 = sum_mseV[0] / double(total_images);
+                    const double total_mseV1 = sum_mseV[1] / double(total_images);
+                    const double total_mseV2 = sum_mseV[2] / double(total_images);
                     wprintf(L"    Average MSE: %f (%f %f %f %f) PSNR %f dB\n", sum_mse / double(total_images),
                         total_mseV0,
                         total_mseV1,
@@ -3521,7 +3755,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
         }
         break;
-    
+
     default:
         for (auto pConv = conversion.cbegin(); pConv != conversion.cend(); ++pConv)
         {
@@ -3537,7 +3771,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = LoadImage(pConv->szSrc, dwOptions, dwFilter, info, image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
@@ -3558,17 +3792,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 switch (info.dimension)
                 {
                 case TEX_DIMENSION_TEXTURE1D:
-                    wprintf((info.arraySize > 1) ? L"1DArray\n" : L"1D\n");
+                    wprintf(L"%ls", (info.arraySize > 1) ? L"1DArray\n" : L"1D\n");
                     break;
 
                 case TEX_DIMENSION_TEXTURE2D:
                     if (info.IsCubemap())
                     {
-                        wprintf((info.arraySize > 6) ? L"CubeArray\n" : L"Cube\n");
+                        wprintf(L"%ls", (info.arraySize > 6) ? L"CubeArray\n" : L"Cube\n");
                     }
                     else
                     {
-                        wprintf((info.arraySize > 1) ? L"2DArray\n" : L"2D\n");
+                        wprintf(L"%ls", (info.arraySize > 1) ? L"2DArray\n" : L"2D\n");
                     }
                     break;
 
@@ -3589,14 +3823,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 case TEX_ALPHA_MODE_STRAIGHT:
                     wprintf(L"Straight");
                     break;
-                default:
+                case TEX_ALPHA_MODE_CUSTOM:
+                    wprintf(L"Custom");
+                    break;
+                case TEX_ALPHA_MODE_UNKNOWN:
                     wprintf(L"Unknown");
                     break;
                 }
 
                 wprintf(L"\n       images = %zu\n", image->GetImageCount());
 
-                auto sizeInKb = static_cast<uint32_t>(image->GetPixelsSize() / 1024);
+                auto const sizeInKb = static_cast<uint32_t>(image->GetPixelsSize() / 1024);
 
                 wprintf(L"   pixel size = %u (KB)\n\n", sizeInKb);
             }
@@ -3609,15 +3846,15 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                wchar_t ext[_MAX_EXT];
-                wchar_t fname[_MAX_FNAME];
+                wchar_t ext[_MAX_EXT] = {};
+                wchar_t fname[_MAX_FNAME] = {};
                 _wsplitpath_s(pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, nullptr, 0);
 
                 wcscpy_s(ext, LookupByValue(fileType, g_pDumpFileTypes));
 
                 if (info.depth > 1)
                 {
-                    wprintf(L"Writing by mip (%3Iu) and slice (%3Iu)...", info.mipLevels, info.depth);
+                    wprintf(L"Writing by mip (%3zu) and slice (%3zu)...", info.mipLevels, info.depth);
 
                     size_t depth = info.depth;
                     for (size_t mip = 0; mip < info.mipLevels; ++mip)
@@ -3628,19 +3865,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                             if (!img)
                             {
-                                wprintf(L"ERROR: Unexpected error at slice %3Iu, mip %3Iu\n", slice, mip);
+                                wprintf(L"ERROR: Unexpected error at slice %3zu, mip %3zu\n", slice, mip);
                                 return 1;
                             }
                             else
                             {
-                                wchar_t subFname[_MAX_FNAME];
+                                wchar_t subFname[_MAX_FNAME] = {};
                                 if (info.mipLevels > 1)
                                 {
-                                    swprintf_s(subFname, L"%ls_slice%03Iu_mip%03Iu", fname, slice, mip);
+                                    swprintf_s(subFname, L"%ls_slice%03zu_mip%03zu", fname, slice, mip);
                                 }
                                 else
                                 {
-                                    swprintf_s(subFname, L"%ls_slice%03Iu", fname, slice);
+                                    swprintf_s(subFname, L"%ls_slice%03zu", fname, slice);
                                 }
 
                                 _wmakepath_s(szOutputFile, nullptr, nullptr, subFname, ext);
@@ -3648,7 +3885,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = SaveImage(img, szOutputFile, fileType);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L" FAILED (%x)\n", hr);
+                                    wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
                             }
@@ -3661,7 +3898,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else
                 {
-                    wprintf(L"Writing by item (%3Iu) and mip (%3Iu)...", info.arraySize, info.mipLevels);
+                    wprintf(L"Writing by item (%3zu) and mip (%3zu)...", info.arraySize, info.mipLevels);
 
                     for (size_t item = 0; item < info.arraySize; ++item)
                     {
@@ -3671,7 +3908,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                             if (!img)
                             {
-                                wprintf(L"ERROR: Unexpected error at item %3Iu, mip %3Iu\n", item, mip);
+                                wprintf(L"ERROR: Unexpected error at item %3zu, mip %3zu\n", item, mip);
                                 return 1;
                             }
                             else
@@ -3679,11 +3916,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 wchar_t subFname[_MAX_FNAME];
                                 if (info.mipLevels > 1)
                                 {
-                                    swprintf_s(subFname, L"%ls_item%03Iu_mip%03Iu", fname, item, mip);
+                                    swprintf_s(subFname, L"%ls_item%03zu_mip%03zu", fname, item, mip);
                                 }
                                 else
                                 {
-                                    swprintf_s(subFname, L"%ls_item%03Iu", fname, item);
+                                    swprintf_s(subFname, L"%ls_item%03zu", fname, item);
                                 }
 
                                 _wmakepath_s(szOutputFile, nullptr, nullptr, subFname, ext);
@@ -3691,7 +3928,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = SaveImage(img, szOutputFile, fileType);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L" FAILED (%x)\n", hr);
+                                    wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
                             }
@@ -3710,8 +3947,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                if (pixelx >= (int)info.width
-                    || pixely >= (int)info.height)
+                if (pixelx >= int(info.width)
+                    || pixely >= int(info.height))
                 {
                     wprintf(L"WARNING: Specified pixel location (%d x %d) is out of range for image (%zu x %zu)\n", pixelx, pixely, info.width, info.height);
                     continue;
@@ -3723,7 +3960,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 if (info.depth > 1)
                 {
-                    wprintf(L"Results by mip (%3Iu) and slice (%3Iu)\n", info.mipLevels, info.depth);
+                    wprintf(L"Results by mip (%3zu) and slice (%3zu)\n", info.mipLevels, info.depth);
 
                     size_t depth = info.depth;
                     for (size_t mip = 0; mip < info.mipLevels; ++mip)
@@ -3734,17 +3971,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                             if (!img)
                             {
-                                wprintf(L"ERROR: Unexpected error at slice %3Iu, mip %3Iu\n", slice, mip);
+                                wprintf(L"ERROR: Unexpected error at slice %3zu, mip %3zu\n", slice, mip);
                                 return 1;
                             }
                             else
                             {
-                                wprintf(L"\n[%3Iu, %3Iu]:\n", mip, slice);
+                                wprintf(L"\n[%3zu, %3zu]:\n", mip, slice);
 
                                 hr = DumpBCImage(*img, pixelx, pixely);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"ERROR: Failed dumping image at slice %3Iu, mip %3Iu (%08X)\n", slice, mip, hr);
+                                    wprintf(L"ERROR: Failed dumping image at slice %3zu, mip %3zu (%08X%ls)\n", slice, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
                             }
@@ -3762,7 +3999,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else
                 {
-                    wprintf(L"Results by item (%3Iu) and mip (%3Iu)\n", info.arraySize, info.mipLevels);
+                    wprintf(L"Results by item (%3zu) and mip (%3zu)\n", info.arraySize, info.mipLevels);
 
                     for (size_t item = 0; item < info.arraySize; ++item)
                     {
@@ -3775,19 +4012,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                             if (!img)
                             {
-                                wprintf(L"ERROR: Unexpected error at item %3Iu, mip %3Iu\n", item, mip);
+                                wprintf(L"ERROR: Unexpected error at item %3zu, mip %3zu\n", item, mip);
                                 return 1;
                             }
                             else
                             {
                                 if (image->GetImageCount() > 1)
                                 {
-                                    wprintf(L"\n[%3Iu, %3Iu]:\n", item, mip);
+                                    wprintf(L"\n[%3zu, %3zu]:\n", item, mip);
                                 }
                                 hr = DumpBCImage(*img, tpixelx, tpixely);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"ERROR: Failed dumping image at item %3Iu, mip %3Iu (%08X)\n", item, mip, hr);
+                                    wprintf(L"ERROR: Failed dumping image at item %3zu, mip %3zu (%08X%ls)\n", item, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
                             }
@@ -3808,7 +4045,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     auto img = image->GetImage(0, 0, 0);
                     assert(img);
-                    size_t nimg = image->GetImageCount();
+                    const size_t nimg = image->GetImageCount();
 
                     std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                     if (!timage)
@@ -3820,8 +4057,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = ConvertToSinglePlane(img, nimg, info, *timage);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED [converttosingleplane] (%x)\n", hr);
-                        continue;
+                        wprintf(L" FAILED [converttosingleplane] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                        return 1;
                     }
 
                     auto& tinfo = timage->GetMetadata();
@@ -3841,7 +4078,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 if (info.depth > 1)
                 {
-                    wprintf(L"Results by mip (%3Iu) and slice (%3Iu)\n\n", info.mipLevels, info.depth);
+                    wprintf(L"Results by mip (%3zu) and slice (%3zu)\n\n", info.mipLevels, info.depth);
 
                     size_t depth = info.depth;
                     for (size_t mip = 0; mip < info.mipLevels; ++mip)
@@ -3852,7 +4089,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                             if (!img)
                             {
-                                wprintf(L"ERROR: Unexpected error at slice %3Iu, mip %3Iu\n", slice, mip);
+                                wprintf(L"ERROR: Unexpected error at slice %3zu, mip %3zu\n", slice, mip);
                                 return 1;
                             }
                             else
@@ -3861,11 +4098,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = Analyze(*img, data);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"ERROR: Failed analyzing image at slice %3Iu, mip %3Iu (%08X)\n", slice, mip, hr);
+                                    wprintf(L"ERROR: Failed analyzing image at slice %3zu, mip %3zu (%08X%ls)\n", slice, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
 
-                                wprintf(L"Result slice %3Iu, mip %3Iu:\n", slice, mip);
+                                wprintf(L"Result slice %3zu, mip %3zu:\n", slice, mip);
                                 data.Print();
                             }
 
@@ -3875,7 +4112,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = AnalyzeBC(*img, data);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"ERROR: Failed analyzing BC image at slice %3Iu, mip %3Iu (%08X)\n", slice, mip, hr);
+                                    wprintf(L"ERROR: Failed analyzing BC image at slice %3zu, mip %3zu (%08X%ls)\n", slice, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
 
@@ -3890,7 +4127,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else
                 {
-                    wprintf(L"Results by item (%3Iu) and mip (%3Iu)\n\n", info.arraySize, info.mipLevels);
+                    wprintf(L"Results by item (%3zu) and mip (%3zu)\n\n", info.arraySize, info.mipLevels);
 
                     for (size_t item = 0; item < info.arraySize; ++item)
                     {
@@ -3900,7 +4137,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                             if (!img)
                             {
-                                wprintf(L"ERROR: Unexpected error at item %3Iu, mip %3Iu\n", item, mip);
+                                wprintf(L"ERROR: Unexpected error at item %3zu, mip %3zu\n", item, mip);
                                 return 1;
                             }
                             else
@@ -3909,13 +4146,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = Analyze(*img, data);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"ERROR: Failed analyzing image at item %3Iu, mip %3Iu (%08X)\n", item, mip, hr);
+                                    wprintf(L"ERROR: Failed analyzing image at item %3zu, mip %3zu (%08X%ls)\n", item, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
 
                                 if (image->GetImageCount() > 1)
                                 {
-                                    wprintf(L"Result item %3Iu, mip %3Iu:\n", item, mip);
+                                    wprintf(L"Result item %3zu, mip %3zu:\n", item, mip);
                                 }
                                 data.Print();
                             }
@@ -3926,7 +4163,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 hr = AnalyzeBC(*img, data);
                                 if (FAILED(hr))
                                 {
-                                    wprintf(L"ERROR: Failed analyzing BC image at item %3Iu, mip %3Iu (%08X)\n", item, mip, hr);
+                                    wprintf(L"ERROR: Failed analyzing BC image at item %3zu, mip %3zu (%08X%ls)\n", item, mip, static_cast<unsigned int>(hr), GetErrorDesc(hr));
                                     return 1;
                                 }
 

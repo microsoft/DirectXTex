@@ -3,7 +3,7 @@
 //
 // DirectX Texture Converter
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926
@@ -19,13 +19,25 @@
 #define NOHELP
 #pragma warning(pop)
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+#include <ShlObj.h>
 
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cwchar>
+#include <cwctype>
 #include <fstream>
-#include <memory>
+#include <iterator>
 #include <list>
+#include <locale>
+#include <memory>
+#include <new>
+#include <set>
+#include <string>
+#include <tuple>
 
 #include <wrl\client.h>
 
@@ -35,7 +47,9 @@
 
 #include <wincodec.h>
 
-#include "directxtex.h"
+#pragma warning(disable : 4619 4616 26812)
+
+#include "DirectXTex.h"
 
 #include "DirectXPackedVector.h"
 
@@ -51,374 +65,433 @@ using namespace DirectX;
 using namespace DirectX::PackedVector;
 using Microsoft::WRL::ComPtr;
 
-enum OPTIONS
+namespace
 {
-    OPT_RECURSIVE = 1,
-    OPT_WIDTH,
-    OPT_HEIGHT,
-    OPT_MIPLEVELS,
-    OPT_FORMAT,
-    OPT_FILTER,
-    OPT_SRGBI,
-    OPT_SRGBO,
-    OPT_SRGB,
-    OPT_PREFIX,
-    OPT_SUFFIX,
-    OPT_OUTPUTDIR,
-    OPT_OVERWRITE,
-    OPT_FILETYPE,
-    OPT_HFLIP,
-    OPT_VFLIP,
-    OPT_DDS_DWORD_ALIGN,
-    OPT_DDS_BAD_DXTN_TAILS,
-    OPT_USE_DX10,
-    OPT_NOLOGO,
-    OPT_TIMING,
-    OPT_SEPALPHA,
-    OPT_TYPELESS_UNORM,
-    OPT_TYPELESS_FLOAT,
-    OPT_PREMUL_ALPHA,
-    OPT_DEMUL_ALPHA,
-    OPT_EXPAND_LUMINANCE,
-    OPT_TA_WRAP,
-    OPT_TA_MIRROR,
-    OPT_FORCE_SINGLEPROC,
-    OPT_GPU,
-    OPT_NOGPU,
-    OPT_FEATURE_LEVEL,
-    OPT_FIT_POWEROF2,
-    OPT_ALPHA_WEIGHT,
-    OPT_NORMAL_MAP,
-    OPT_NORMAL_MAP_AMPLITUDE,
-    OPT_COMPRESS_UNIFORM,
-    OPT_COMPRESS_MAX,
-    OPT_COMPRESS_QUICK,
-    OPT_COMPRESS_DITHER,
-    OPT_WIC_QUALITY,
-    OPT_WIC_LOSSLESS,
-    OPT_WIC_MULTIFRAME,
-    OPT_COLORKEY,
-    OPT_TONEMAP,
-    OPT_X2_BIAS,
-    OPT_FILELIST,
-    OPT_ROTATE_COLOR,
-    OPT_PAPER_WHITE_NITS,
-    OPT_MAX
-};
+    enum OPTIONS : uint64_t
+    {
+        OPT_RECURSIVE = 1,
+        OPT_FILELIST,
+        OPT_WIDTH,
+        OPT_HEIGHT,
+        OPT_MIPLEVELS,
+        OPT_FORMAT,
+        OPT_FILTER,
+        OPT_SRGBI,
+        OPT_SRGBO,
+        OPT_SRGB,
+        OPT_PREFIX,
+        OPT_SUFFIX,
+        OPT_OUTPUTDIR,
+        OPT_TOLOWER,
+        OPT_OVERWRITE,
+        OPT_FILETYPE,
+        OPT_HFLIP,
+        OPT_VFLIP,
+        OPT_DDS_DWORD_ALIGN,
+        OPT_DDS_BAD_DXTN_TAILS,
+        OPT_USE_DX10,
+        OPT_USE_DX9,
+        OPT_TGA20,
+        OPT_WIC_QUALITY,
+        OPT_WIC_LOSSLESS,
+        OPT_WIC_MULTIFRAME,
+        OPT_NOLOGO,
+        OPT_TIMING,
+        OPT_SEPALPHA,
+        OPT_NO_WIC,
+        OPT_TYPELESS_UNORM,
+        OPT_TYPELESS_FLOAT,
+        OPT_PREMUL_ALPHA,
+        OPT_DEMUL_ALPHA,
+        OPT_EXPAND_LUMINANCE,
+        OPT_TA_WRAP,
+        OPT_TA_MIRROR,
+        OPT_FORCE_SINGLEPROC,
+        OPT_GPU,
+        OPT_NOGPU,
+        OPT_FEATURE_LEVEL,
+        OPT_FIT_POWEROF2,
+        OPT_ALPHA_THRESHOLD,
+        OPT_ALPHA_WEIGHT,
+        OPT_NORMAL_MAP,
+        OPT_NORMAL_MAP_AMPLITUDE,
+        OPT_BC_COMPRESS,
+        OPT_COLORKEY,
+        OPT_TONEMAP,
+        OPT_X2_BIAS,
+        OPT_PRESERVE_ALPHA_COVERAGE,
+        OPT_INVERT_Y,
+        OPT_RECONSTRUCT_Z,
+        OPT_ROTATE_COLOR,
+        OPT_PAPER_WHITE_NITS,
+        OPT_BCNONMULT4FIX,
+        OPT_SWIZZLE,
+        OPT_MAX
+    };
 
-enum
-{
-    ROTATE_709_TO_HDR10 = 1,
-    ROTATE_HDR10_TO_709,
-    ROTATE_709_TO_2020,
-    ROTATE_2020_TO_709,
-    ROTATE_P3_TO_HDR10,
-    ROTATE_P3_TO_2020,
-};
+    enum
+    {
+        ROTATE_709_TO_HDR10 = 1,
+        ROTATE_HDR10_TO_709,
+        ROTATE_709_TO_2020,
+        ROTATE_2020_TO_709,
+        ROTATE_P3D65_TO_HDR10,
+        ROTATE_P3D65_TO_2020,
+        ROTATE_709_TO_P3D65,
+        ROTATE_P3D65_TO_709,
+    };
 
-static_assert(OPT_MAX <= 64, "dwOptions is a DWORD64 bitfield");
+    static_assert(OPT_MAX <= 64, "dwOptions is a unsigned int bitfield");
 
-struct SConversion
-{
-    wchar_t szSrc[MAX_PATH];
-    wchar_t szDest[MAX_PATH];
-};
+    struct SConversion
+    {
+        wchar_t szSrc[MAX_PATH];
+        wchar_t szFolder[MAX_PATH];
+    };
 
-struct SValue
-{
-    LPCWSTR pName;
-    DWORD dwValue;
-};
+    template<typename T>
+    struct SValue
+    {
+        const wchar_t*  name;
+        T               value;
+    };
 
+    const SValue<uint64_t> g_pOptions[] =
+    {
+        { L"r",             OPT_RECURSIVE },
+        { L"flist",         OPT_FILELIST },
+        { L"w",             OPT_WIDTH },
+        { L"h",             OPT_HEIGHT },
+        { L"m",             OPT_MIPLEVELS },
+        { L"f",             OPT_FORMAT },
+        { L"if",            OPT_FILTER },
+        { L"srgbi",         OPT_SRGBI },
+        { L"srgbo",         OPT_SRGBO },
+        { L"srgb",          OPT_SRGB },
+        { L"px",            OPT_PREFIX },
+        { L"sx",            OPT_SUFFIX },
+        { L"o",             OPT_OUTPUTDIR },
+        { L"l",             OPT_TOLOWER },
+        { L"y",             OPT_OVERWRITE },
+        { L"ft",            OPT_FILETYPE },
+        { L"hflip",         OPT_HFLIP },
+        { L"vflip",         OPT_VFLIP },
+        { L"dword",         OPT_DDS_DWORD_ALIGN },
+        { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
+        { L"dx10",          OPT_USE_DX10 },
+        { L"dx9",           OPT_USE_DX9 },
+        { L"tga20",         OPT_TGA20 },
+        { L"wicq",          OPT_WIC_QUALITY },
+        { L"wiclossless",   OPT_WIC_LOSSLESS },
+        { L"wicmulti",      OPT_WIC_MULTIFRAME },
+        { L"nologo",        OPT_NOLOGO },
+        { L"timing",        OPT_TIMING },
+        { L"sepalpha",      OPT_SEPALPHA },
+        { L"keepcoverage",  OPT_PRESERVE_ALPHA_COVERAGE },
+        { L"nowic",         OPT_NO_WIC },
+        { L"tu",            OPT_TYPELESS_UNORM },
+        { L"tf",            OPT_TYPELESS_FLOAT },
+        { L"pmalpha",       OPT_PREMUL_ALPHA },
+        { L"alpha",         OPT_DEMUL_ALPHA },
+        { L"xlum",          OPT_EXPAND_LUMINANCE },
+        { L"wrap",          OPT_TA_WRAP },
+        { L"mirror",        OPT_TA_MIRROR },
+        { L"singleproc",    OPT_FORCE_SINGLEPROC },
+        { L"gpu",           OPT_GPU },
+        { L"nogpu",         OPT_NOGPU },
+        { L"fl",            OPT_FEATURE_LEVEL },
+        { L"pow2",          OPT_FIT_POWEROF2 },
+        { L"at",            OPT_ALPHA_THRESHOLD },
+        { L"aw",            OPT_ALPHA_WEIGHT },
+        { L"nmap",          OPT_NORMAL_MAP },
+        { L"nmapamp",       OPT_NORMAL_MAP_AMPLITUDE },
+        { L"bc",            OPT_BC_COMPRESS },
+        { L"c",             OPT_COLORKEY },
+        { L"tonemap",       OPT_TONEMAP },
+        { L"x2bias",        OPT_X2_BIAS },
+        { L"inverty",       OPT_INVERT_Y },
+        { L"reconstructz",  OPT_RECONSTRUCT_Z },
+        { L"rotatecolor",   OPT_ROTATE_COLOR },
+        { L"nits",          OPT_PAPER_WHITE_NITS },
+        { L"fixbc4x4",      OPT_BCNONMULT4FIX },
+        { L"swizzle",       OPT_SWIZZLE },
+        { nullptr,          0 }
+    };
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
+#define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
 
-const SValue g_pOptions[] =
-{
-    { L"r",             OPT_RECURSIVE },
-    { L"w",             OPT_WIDTH },
-    { L"h",             OPT_HEIGHT },
-    { L"m",             OPT_MIPLEVELS },
-    { L"f",             OPT_FORMAT },
-    { L"if",            OPT_FILTER },
-    { L"srgbi",         OPT_SRGBI },
-    { L"srgbo",         OPT_SRGBO },
-    { L"srgb",          OPT_SRGB },
-    { L"px",            OPT_PREFIX },
-    { L"sx",            OPT_SUFFIX },
-    { L"o",             OPT_OUTPUTDIR },
-    { L"y",             OPT_OVERWRITE },
-    { L"ft",            OPT_FILETYPE },
-    { L"hflip",         OPT_HFLIP },
-    { L"vflip",         OPT_VFLIP },
-    { L"dword",         OPT_DDS_DWORD_ALIGN },
-    { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
-    { L"dx10",          OPT_USE_DX10 },
-    { L"nologo",        OPT_NOLOGO },
-    { L"timing",        OPT_TIMING },
-    { L"sepalpha",      OPT_SEPALPHA },
-    { L"tu",            OPT_TYPELESS_UNORM },
-    { L"tf",            OPT_TYPELESS_FLOAT },
-    { L"pmalpha",       OPT_PREMUL_ALPHA },
-    { L"alpha",         OPT_DEMUL_ALPHA },
-    { L"xlum",          OPT_EXPAND_LUMINANCE },
-    { L"wrap",          OPT_TA_WRAP },
-    { L"mirror",        OPT_TA_MIRROR },
-    { L"singleproc",    OPT_FORCE_SINGLEPROC },
-    { L"gpu",           OPT_GPU },
-    { L"nogpu",         OPT_NOGPU },
-    { L"fl",            OPT_FEATURE_LEVEL },
-    { L"pow2",          OPT_FIT_POWEROF2 },
-    { L"aw",            OPT_ALPHA_WEIGHT },
-    { L"nmap",          OPT_NORMAL_MAP },
-    { L"nmapamp",       OPT_NORMAL_MAP_AMPLITUDE },
-    { L"bcuniform",     OPT_COMPRESS_UNIFORM },
-    { L"bcmax",         OPT_COMPRESS_MAX },
-    { L"bcquick",       OPT_COMPRESS_QUICK },
-    { L"bcdither",      OPT_COMPRESS_DITHER },
-    { L"wicq",          OPT_WIC_QUALITY },
-    { L"wiclossless",   OPT_WIC_LOSSLESS },
-    { L"wicmulti",      OPT_WIC_MULTIFRAME },
-    { L"c",             OPT_COLORKEY },
-    { L"tonemap",       OPT_TONEMAP },
-    { L"x2bias",        OPT_X2_BIAS },
-    { L"flist",         OPT_FILELIST },
-    { L"rotatecolor",   OPT_ROTATE_COLOR },
-    { L"nits",          OPT_PAPER_WHITE_NITS },
-    { nullptr,          0 }
-};
+    const SValue<uint32_t> g_pFormats[] =
+    {
+        // List does not include _TYPELESS or depth/stencil formats
+        DEFFMT(R32G32B32A32_FLOAT),
+        DEFFMT(R32G32B32A32_UINT),
+        DEFFMT(R32G32B32A32_SINT),
+        DEFFMT(R32G32B32_FLOAT),
+        DEFFMT(R32G32B32_UINT),
+        DEFFMT(R32G32B32_SINT),
+        DEFFMT(R16G16B16A16_FLOAT),
+        DEFFMT(R16G16B16A16_UNORM),
+        DEFFMT(R16G16B16A16_UINT),
+        DEFFMT(R16G16B16A16_SNORM),
+        DEFFMT(R16G16B16A16_SINT),
+        DEFFMT(R32G32_FLOAT),
+        DEFFMT(R32G32_UINT),
+        DEFFMT(R32G32_SINT),
+        DEFFMT(R10G10B10A2_UNORM),
+        DEFFMT(R10G10B10A2_UINT),
+        DEFFMT(R11G11B10_FLOAT),
+        DEFFMT(R8G8B8A8_UNORM),
+        DEFFMT(R8G8B8A8_UNORM_SRGB),
+        DEFFMT(R8G8B8A8_UINT),
+        DEFFMT(R8G8B8A8_SNORM),
+        DEFFMT(R8G8B8A8_SINT),
+        DEFFMT(R16G16_FLOAT),
+        DEFFMT(R16G16_UNORM),
+        DEFFMT(R16G16_UINT),
+        DEFFMT(R16G16_SNORM),
+        DEFFMT(R16G16_SINT),
+        DEFFMT(R32_FLOAT),
+        DEFFMT(R32_UINT),
+        DEFFMT(R32_SINT),
+        DEFFMT(R8G8_UNORM),
+        DEFFMT(R8G8_UINT),
+        DEFFMT(R8G8_SNORM),
+        DEFFMT(R8G8_SINT),
+        DEFFMT(R16_FLOAT),
+        DEFFMT(R16_UNORM),
+        DEFFMT(R16_UINT),
+        DEFFMT(R16_SNORM),
+        DEFFMT(R16_SINT),
+        DEFFMT(R8_UNORM),
+        DEFFMT(R8_UINT),
+        DEFFMT(R8_SNORM),
+        DEFFMT(R8_SINT),
+        DEFFMT(A8_UNORM),
+        DEFFMT(R9G9B9E5_SHAREDEXP),
+        DEFFMT(R8G8_B8G8_UNORM),
+        DEFFMT(G8R8_G8B8_UNORM),
+        DEFFMT(BC1_UNORM),
+        DEFFMT(BC1_UNORM_SRGB),
+        DEFFMT(BC2_UNORM),
+        DEFFMT(BC2_UNORM_SRGB),
+        DEFFMT(BC3_UNORM),
+        DEFFMT(BC3_UNORM_SRGB),
+        DEFFMT(BC4_UNORM),
+        DEFFMT(BC4_SNORM),
+        DEFFMT(BC5_UNORM),
+        DEFFMT(BC5_SNORM),
+        DEFFMT(B5G6R5_UNORM),
+        DEFFMT(B5G5R5A1_UNORM),
 
-#define DEFFMT(fmt) { L#fmt, DXGI_FORMAT_ ## fmt }
+        // DXGI 1.1 formats
+        DEFFMT(B8G8R8A8_UNORM),
+        DEFFMT(B8G8R8X8_UNORM),
+        DEFFMT(R10G10B10_XR_BIAS_A2_UNORM),
+        DEFFMT(B8G8R8A8_UNORM_SRGB),
+        DEFFMT(B8G8R8X8_UNORM_SRGB),
+        DEFFMT(BC6H_UF16),
+        DEFFMT(BC6H_SF16),
+        DEFFMT(BC7_UNORM),
+        DEFFMT(BC7_UNORM_SRGB),
 
-const SValue g_pFormats[] =
-{
-    // List does not include _TYPELESS or depth/stencil formats
-    DEFFMT(R32G32B32A32_FLOAT),
-    DEFFMT(R32G32B32A32_UINT),
-    DEFFMT(R32G32B32A32_SINT),
-    DEFFMT(R32G32B32_FLOAT),
-    DEFFMT(R32G32B32_UINT),
-    DEFFMT(R32G32B32_SINT),
-    DEFFMT(R16G16B16A16_FLOAT),
-    DEFFMT(R16G16B16A16_UNORM),
-    DEFFMT(R16G16B16A16_UINT),
-    DEFFMT(R16G16B16A16_SNORM),
-    DEFFMT(R16G16B16A16_SINT),
-    DEFFMT(R32G32_FLOAT),
-    DEFFMT(R32G32_UINT),
-    DEFFMT(R32G32_SINT),
-    DEFFMT(R10G10B10A2_UNORM),
-    DEFFMT(R10G10B10A2_UINT),
-    DEFFMT(R11G11B10_FLOAT),
-    DEFFMT(R8G8B8A8_UNORM),
-    DEFFMT(R8G8B8A8_UNORM_SRGB),
-    DEFFMT(R8G8B8A8_UINT),
-    DEFFMT(R8G8B8A8_SNORM),
-    DEFFMT(R8G8B8A8_SINT),
-    DEFFMT(R16G16_FLOAT),
-    DEFFMT(R16G16_UNORM),
-    DEFFMT(R16G16_UINT),
-    DEFFMT(R16G16_SNORM),
-    DEFFMT(R16G16_SINT),
-    DEFFMT(R32_FLOAT),
-    DEFFMT(R32_UINT),
-    DEFFMT(R32_SINT),
-    DEFFMT(R8G8_UNORM),
-    DEFFMT(R8G8_UINT),
-    DEFFMT(R8G8_SNORM),
-    DEFFMT(R8G8_SINT),
-    DEFFMT(R16_FLOAT),
-    DEFFMT(R16_UNORM),
-    DEFFMT(R16_UINT),
-    DEFFMT(R16_SNORM),
-    DEFFMT(R16_SINT),
-    DEFFMT(R8_UNORM),
-    DEFFMT(R8_UINT),
-    DEFFMT(R8_SNORM),
-    DEFFMT(R8_SINT),
-    DEFFMT(A8_UNORM),
-    DEFFMT(R9G9B9E5_SHAREDEXP),
-    DEFFMT(R8G8_B8G8_UNORM),
-    DEFFMT(G8R8_G8B8_UNORM),
-    DEFFMT(BC1_UNORM),
-    DEFFMT(BC1_UNORM_SRGB),
-    DEFFMT(BC2_UNORM),
-    DEFFMT(BC2_UNORM_SRGB),
-    DEFFMT(BC3_UNORM),
-    DEFFMT(BC3_UNORM_SRGB),
-    DEFFMT(BC4_UNORM),
-    DEFFMT(BC4_SNORM),
-    DEFFMT(BC5_UNORM),
-    DEFFMT(BC5_SNORM),
-    DEFFMT(B5G6R5_UNORM),
-    DEFFMT(B5G5R5A1_UNORM),
+        // DXGI 1.2 formats
+        DEFFMT(AYUV),
+        DEFFMT(Y410),
+        DEFFMT(Y416),
+        DEFFMT(YUY2),
+        DEFFMT(Y210),
+        DEFFMT(Y216),
+        // No support for legacy paletted video formats (AI44, IA44, P8, A8P8)
+        DEFFMT(B4G4R4A4_UNORM),
 
-    // DXGI 1.1 formats
-    DEFFMT(B8G8R8A8_UNORM),
-    DEFFMT(B8G8R8X8_UNORM),
-    DEFFMT(R10G10B10_XR_BIAS_A2_UNORM),
-    DEFFMT(B8G8R8A8_UNORM_SRGB),
-    DEFFMT(B8G8R8X8_UNORM_SRGB),
-    DEFFMT(BC6H_UF16),
-    DEFFMT(BC6H_SF16),
-    DEFFMT(BC7_UNORM),
-    DEFFMT(BC7_UNORM_SRGB),
+        { nullptr, DXGI_FORMAT_UNKNOWN }
+    };
 
-    // DXGI 1.2 formats
-    DEFFMT(AYUV),
-    DEFFMT(Y410),
-    DEFFMT(Y416),
-    DEFFMT(YUY2),
-    DEFFMT(Y210),
-    DEFFMT(Y216),
-    // No support for legacy paletted video formats (AI44, IA44, P8, A8P8)
-    DEFFMT(B4G4R4A4_UNORM),
+    const SValue<uint32_t> g_pFormatAliases[] =
+    {
+        { L"DXT1", DXGI_FORMAT_BC1_UNORM },
+        { L"DXT2", DXGI_FORMAT_BC2_UNORM },
+        { L"DXT3", DXGI_FORMAT_BC2_UNORM },
+        { L"DXT4", DXGI_FORMAT_BC3_UNORM },
+        { L"DXT5", DXGI_FORMAT_BC3_UNORM },
 
-    { nullptr, DXGI_FORMAT_UNKNOWN }
-};
+        { L"RGBA", DXGI_FORMAT_R8G8B8A8_UNORM },
+        { L"BGRA", DXGI_FORMAT_B8G8R8A8_UNORM },
+        { L"BGR",  DXGI_FORMAT_B8G8R8X8_UNORM },
 
-const SValue g_pFormatAliases[] =
-{
-    { L"DXT1", DXGI_FORMAT_BC1_UNORM },
-    { L"DXT2", DXGI_FORMAT_BC2_UNORM },
-    { L"DXT3", DXGI_FORMAT_BC2_UNORM },
-    { L"DXT4", DXGI_FORMAT_BC3_UNORM },
-    { L"DXT5", DXGI_FORMAT_BC3_UNORM },
+        { L"FP16", DXGI_FORMAT_R16G16B16A16_FLOAT },
+        { L"FP32", DXGI_FORMAT_R32G32B32A32_FLOAT },
 
-    { L"RGBA", DXGI_FORMAT_R8G8B8A8_UNORM },
-    { L"BGRA", DXGI_FORMAT_B8G8R8A8_UNORM },
+        { L"BPTC", DXGI_FORMAT_BC7_UNORM },
+        { L"BPTC_FLOAT", DXGI_FORMAT_BC6H_UF16 },
 
-    { L"FP16", DXGI_FORMAT_R16G16B16A16_FLOAT },
-    { L"FP32", DXGI_FORMAT_R32G32B32A32_FLOAT },
+        { nullptr, DXGI_FORMAT_UNKNOWN }
+    };
 
-    { nullptr, DXGI_FORMAT_UNKNOWN }
-};
+    const SValue<uint32_t> g_pReadOnlyFormats[] =
+    {
+        DEFFMT(R32G32B32A32_TYPELESS),
+        DEFFMT(R32G32B32_TYPELESS),
+        DEFFMT(R16G16B16A16_TYPELESS),
+        DEFFMT(R32G32_TYPELESS),
+        DEFFMT(R32G8X24_TYPELESS),
+        DEFFMT(D32_FLOAT_S8X24_UINT),
+        DEFFMT(R32_FLOAT_X8X24_TYPELESS),
+        DEFFMT(X32_TYPELESS_G8X24_UINT),
+        DEFFMT(R10G10B10A2_TYPELESS),
+        DEFFMT(R8G8B8A8_TYPELESS),
+        DEFFMT(R16G16_TYPELESS),
+        DEFFMT(R32_TYPELESS),
+        DEFFMT(D32_FLOAT),
+        DEFFMT(R24G8_TYPELESS),
+        DEFFMT(D24_UNORM_S8_UINT),
+        DEFFMT(R24_UNORM_X8_TYPELESS),
+        DEFFMT(X24_TYPELESS_G8_UINT),
+        DEFFMT(R8G8_TYPELESS),
+        DEFFMT(R16_TYPELESS),
+        DEFFMT(R8_TYPELESS),
+        DEFFMT(BC1_TYPELESS),
+        DEFFMT(BC2_TYPELESS),
+        DEFFMT(BC3_TYPELESS),
+        DEFFMT(BC4_TYPELESS),
+        DEFFMT(BC5_TYPELESS),
 
-const SValue g_pReadOnlyFormats[] =
-{
-    DEFFMT(R32G32B32A32_TYPELESS),
-    DEFFMT(R32G32B32_TYPELESS),
-    DEFFMT(R16G16B16A16_TYPELESS),
-    DEFFMT(R32G32_TYPELESS),
-    DEFFMT(R32G8X24_TYPELESS),
-    DEFFMT(D32_FLOAT_S8X24_UINT),
-    DEFFMT(R32_FLOAT_X8X24_TYPELESS),
-    DEFFMT(X32_TYPELESS_G8X24_UINT),
-    DEFFMT(R10G10B10A2_TYPELESS),
-    DEFFMT(R8G8B8A8_TYPELESS),
-    DEFFMT(R16G16_TYPELESS),
-    DEFFMT(R32_TYPELESS),
-    DEFFMT(D32_FLOAT),
-    DEFFMT(R24G8_TYPELESS),
-    DEFFMT(D24_UNORM_S8_UINT),
-    DEFFMT(R24_UNORM_X8_TYPELESS),
-    DEFFMT(X24_TYPELESS_G8_UINT),
-    DEFFMT(R8G8_TYPELESS),
-    DEFFMT(R16_TYPELESS),
-    DEFFMT(R8_TYPELESS),
-    DEFFMT(BC1_TYPELESS),
-    DEFFMT(BC2_TYPELESS),
-    DEFFMT(BC3_TYPELESS),
-    DEFFMT(BC4_TYPELESS),
-    DEFFMT(BC5_TYPELESS),
+        // DXGI 1.1 formats
+        DEFFMT(B8G8R8A8_TYPELESS),
+        DEFFMT(B8G8R8X8_TYPELESS),
+        DEFFMT(BC6H_TYPELESS),
+        DEFFMT(BC7_TYPELESS),
 
-    // DXGI 1.1 formats
-    DEFFMT(B8G8R8A8_TYPELESS),
-    DEFFMT(B8G8R8X8_TYPELESS),
-    DEFFMT(BC6H_TYPELESS),
-    DEFFMT(BC7_TYPELESS),
+        // DXGI 1.2 formats
+        DEFFMT(NV12),
+        DEFFMT(P010),
+        DEFFMT(P016),
+        DEFFMT(420_OPAQUE),
+        DEFFMT(NV11),
 
-    // DXGI 1.2 formats
-    DEFFMT(NV12),
-    DEFFMT(P010),
-    DEFFMT(P016),
-    DEFFMT(420_OPAQUE),
-    DEFFMT(NV11),
+        // DXGI 1.3 formats
+        { L"P208", DXGI_FORMAT(130) },
+        { L"V208", DXGI_FORMAT(131) },
+        { L"V408", DXGI_FORMAT(132) },
 
-    // DXGI 1.3 formats
-    { L"P208", DXGI_FORMAT(130) },
-    { L"V208", DXGI_FORMAT(131) },
-    { L"V408", DXGI_FORMAT(132) },
+        { nullptr, DXGI_FORMAT_UNKNOWN }
+    };
 
-    { nullptr, DXGI_FORMAT_UNKNOWN }
-};
+    const SValue<uint32_t> g_pFilters[] =
+    {
+        { L"POINT",                     TEX_FILTER_POINT },
+        { L"LINEAR",                    TEX_FILTER_LINEAR },
+        { L"CUBIC",                     TEX_FILTER_CUBIC },
+        { L"FANT",                      TEX_FILTER_FANT },
+        { L"BOX",                       TEX_FILTER_BOX },
+        { L"TRIANGLE",                  TEX_FILTER_TRIANGLE },
+        { L"POINT_DITHER",              TEX_FILTER_POINT | TEX_FILTER_DITHER },
+        { L"LINEAR_DITHER",             TEX_FILTER_LINEAR | TEX_FILTER_DITHER },
+        { L"CUBIC_DITHER",              TEX_FILTER_CUBIC | TEX_FILTER_DITHER },
+        { L"FANT_DITHER",               TEX_FILTER_FANT | TEX_FILTER_DITHER },
+        { L"BOX_DITHER",                TEX_FILTER_BOX | TEX_FILTER_DITHER },
+        { L"TRIANGLE_DITHER",           TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER },
+        { L"POINT_DITHER_DIFFUSION",    TEX_FILTER_POINT | TEX_FILTER_DITHER_DIFFUSION },
+        { L"LINEAR_DITHER_DIFFUSION",   TEX_FILTER_LINEAR | TEX_FILTER_DITHER_DIFFUSION },
+        { L"CUBIC_DITHER_DIFFUSION",    TEX_FILTER_CUBIC | TEX_FILTER_DITHER_DIFFUSION },
+        { L"FANT_DITHER_DIFFUSION",     TEX_FILTER_FANT | TEX_FILTER_DITHER_DIFFUSION },
+        { L"BOX_DITHER_DIFFUSION",      TEX_FILTER_BOX | TEX_FILTER_DITHER_DIFFUSION },
+        { L"TRIANGLE_DITHER_DIFFUSION", TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER_DIFFUSION },
+        { nullptr,                      TEX_FILTER_DEFAULT                              }
+    };
 
-const SValue g_pFilters[] =
-{
-    { L"POINT",                     TEX_FILTER_POINT },
-    { L"LINEAR",                    TEX_FILTER_LINEAR },
-    { L"CUBIC",                     TEX_FILTER_CUBIC },
-    { L"FANT",                      TEX_FILTER_FANT },
-    { L"BOX",                       TEX_FILTER_BOX },
-    { L"TRIANGLE",                  TEX_FILTER_TRIANGLE },
-    { L"POINT_DITHER",              TEX_FILTER_POINT | TEX_FILTER_DITHER },
-    { L"LINEAR_DITHER",             TEX_FILTER_LINEAR | TEX_FILTER_DITHER },
-    { L"CUBIC_DITHER",              TEX_FILTER_CUBIC | TEX_FILTER_DITHER },
-    { L"FANT_DITHER",               TEX_FILTER_FANT | TEX_FILTER_DITHER },
-    { L"BOX_DITHER",                TEX_FILTER_BOX | TEX_FILTER_DITHER },
-    { L"TRIANGLE_DITHER",           TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER },
-    { L"POINT_DITHER_DIFFUSION",    TEX_FILTER_POINT | TEX_FILTER_DITHER_DIFFUSION },
-    { L"LINEAR_DITHER_DIFFUSION",   TEX_FILTER_LINEAR | TEX_FILTER_DITHER_DIFFUSION },
-    { L"CUBIC_DITHER_DIFFUSION",    TEX_FILTER_CUBIC | TEX_FILTER_DITHER_DIFFUSION },
-    { L"FANT_DITHER_DIFFUSION",     TEX_FILTER_FANT | TEX_FILTER_DITHER_DIFFUSION },
-    { L"BOX_DITHER_DIFFUSION",      TEX_FILTER_BOX | TEX_FILTER_DITHER_DIFFUSION },
-    { L"TRIANGLE_DITHER_DIFFUSION", TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER_DIFFUSION },
-    { nullptr,                      TEX_FILTER_DEFAULT                              }
-};
+    const SValue<uint32_t> g_pRotateColor[] =
+    {
+        { L"709to2020",     ROTATE_709_TO_2020 },
+        { L"2020to709",     ROTATE_2020_TO_709 },
+        { L"709toHDR10",    ROTATE_709_TO_HDR10 },
+        { L"HDR10to709",    ROTATE_HDR10_TO_709 },
+        { L"P3D65to2020",   ROTATE_P3D65_TO_2020 },
+        { L"P3D65toHDR10",  ROTATE_P3D65_TO_HDR10 },
+        { L"709toP3D65",    ROTATE_709_TO_P3D65 },
+        { L"P3D65to709",    ROTATE_P3D65_TO_709 },
+        { nullptr, 0 },
+    };
 
-const SValue g_pRotateColor[] =
-{
-    { L"709to2020", ROTATE_709_TO_2020 },
-    { L"2020to709", ROTATE_2020_TO_709 },
-    { L"709toHDR10", ROTATE_709_TO_HDR10 },
-    { L"HDR10to709", ROTATE_HDR10_TO_709 },
-    { L"P3to2020", ROTATE_P3_TO_2020 },
-    { L"P3toHDR10", ROTATE_P3_TO_HDR10 },
-    { nullptr, 0 },
-};
-
-#define CODEC_DDS 0xFFFF0001 
+#define CODEC_DDS 0xFFFF0001
 #define CODEC_TGA 0xFFFF0002
 #define CODEC_HDP 0xFFFF0003
 #define CODEC_JXR 0xFFFF0004
 #define CODEC_HDR 0xFFFF0005
-#define CODEC_EXR 0xFFFF0006
+#define CODEC_PPM 0xFFFF0006
+#define CODEC_PFM 0xFFFF0007
 
-const SValue g_pSaveFileTypes[] =   // valid formats to write to
-{
-    { L"BMP",   WIC_CODEC_BMP  },
-    { L"JPG",   WIC_CODEC_JPEG },
-    { L"JPEG",  WIC_CODEC_JPEG },
-    { L"PNG",   WIC_CODEC_PNG  },
-    { L"DDS",   CODEC_DDS      },
-    { L"TGA",   CODEC_TGA      },
-    { L"HDR",   CODEC_HDR      },
-    { L"TIF",   WIC_CODEC_TIFF },
-    { L"TIFF",  WIC_CODEC_TIFF },
-    { L"WDP",   WIC_CODEC_WMP  },
-    { L"HDP",   CODEC_HDP      },
-    { L"JXR",   CODEC_JXR      },
 #ifdef USE_OPENEXR
-    { L"EXR",   CODEC_EXR      },
+#define CODEC_EXR 0xFFFF0008
 #endif
-    { nullptr,  CODEC_DDS      }
-};
 
-const SValue g_pFeatureLevels[] =   // valid feature levels for -fl for maximimum size
-{
-    { L"9.1",  2048 },
-    { L"9.2",  2048 },
-    { L"9.3",  4096 },
-    { L"10.0", 8192 },
-    { L"10.1", 8192 },
-    { L"11.0", 16384 },
-    { L"11.1", 16384 },
-    { L"12.0", 16384 },
-    { L"12.1", 16384 },
-    { nullptr, 0 },
-};
+    const SValue<uint32_t> g_pSaveFileTypes[] =   // valid formats to write to
+    {
+        { L"bmp",   WIC_CODEC_BMP  },
+        { L"jpg",   WIC_CODEC_JPEG },
+        { L"jpeg",  WIC_CODEC_JPEG },
+        { L"png",   WIC_CODEC_PNG  },
+        { L"dds",   CODEC_DDS      },
+        { L"tga",   CODEC_TGA      },
+        { L"hdr",   CODEC_HDR      },
+        { L"tif",   WIC_CODEC_TIFF },
+        { L"tiff",  WIC_CODEC_TIFF },
+        { L"wdp",   WIC_CODEC_WMP  },
+        { L"hdp",   CODEC_HDP      },
+        { L"jxr",   CODEC_JXR      },
+        { L"ppm",   CODEC_PPM      },
+        { L"pfm",   CODEC_PFM      },
+    #ifdef USE_OPENEXR
+        { L"exr",   CODEC_EXR      },
+    #endif
+        { L"heic",  WIC_CODEC_HEIF },
+        { L"heif",  WIC_CODEC_HEIF },
+        { nullptr,  CODEC_DDS      }
+    };
+
+    const SValue<uint32_t> g_pFeatureLevels[] =   // valid feature levels for -fl for maximimum size
+    {
+        { L"9.1",  2048 },
+        { L"9.2",  2048 },
+        { L"9.3",  4096 },
+        { L"10.0", 8192 },
+        { L"10.1", 8192 },
+        { L"11.0", 16384 },
+        { L"11.1", 16384 },
+        { L"12.0", 16384 },
+        { L"12.1", 16384 },
+        { L"12.2", 16384 },
+        { nullptr, 0 },
+    };
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+HRESULT __cdecl LoadFromBMPEx(
+    _In_z_ const wchar_t* szFile,
+    _In_ WIC_FLAGS flags,
+    _Out_opt_ TexMetadata* metadata,
+    _Out_ ScratchImage& image) noexcept;
+
+HRESULT __cdecl LoadFromPortablePixMap(
+    _In_z_ const wchar_t* szFile,
+    _Out_opt_ TexMetadata* metadata,
+    _Out_ ScratchImage& image) noexcept;
+
+HRESULT __cdecl SaveToPortablePixMap(
+    _In_ const Image& image,
+    _In_z_ const wchar_t* szFile) noexcept;
+
+HRESULT __cdecl LoadFromPortablePixMapHDR(
+    _In_z_ const wchar_t* szFile,
+    _Out_opt_ TexMetadata* metadata,
+    _Out_ ScratchImage& image) noexcept;
+
+HRESULT __cdecl SaveToPortablePixMapHDR(
+    _In_ const Image& image,
+    _In_z_ const wchar_t* szFile) noexcept;
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -428,29 +501,28 @@ const SValue g_pFeatureLevels[] =   // valid feature levels for -fl for maximimu
 
 namespace
 {
-    inline HANDLE safe_handle(HANDLE h) { return (h == INVALID_HANDLE_VALUE) ? 0 : h; }
+    inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
-    struct handle_closer { void operator()(HANDLE h) { assert(h != INVALID_HANDLE_VALUE); if (h) CloseHandle(h); } };
+    struct find_closer { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
 
-    typedef std::unique_ptr<void, handle_closer> ScopedHandle;
+    using ScopedFindHandle = std::unique_ptr<void, find_closer>;
 
-    struct find_closer { void operator()(HANDLE h) { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
-
-    typedef public std::unique_ptr<void, find_closer> ScopedFindHandle;
-
-    inline static bool ispow2(size_t x)
+    constexpr static bool ispow2(size_t x)
     {
         return ((x != 0) && !(x & (x - 1)));
     }
 
+#ifdef _PREFAST_
 #pragma prefast(disable : 26018, "Only used with static internal arrays")
+#endif
 
-    DWORD LookupByName(const wchar_t *pName, const SValue *pArray)
+    template<typename T>
+    T LookupByName(const wchar_t *pName, const SValue<T> *pArray)
     {
-        while (pArray->pName)
+        while (pArray->name)
         {
-            if (!_wcsicmp(pName, pArray->pName))
-                return pArray->dwValue;
+            if (!_wcsicmp(pName, pArray->name))
+                return pArray->value;
 
             pArray++;
         }
@@ -458,13 +530,13 @@ namespace
         return 0;
     }
 
-
-    const wchar_t* LookupByValue(DWORD pValue, const SValue *pArray)
+    template<typename T>
+    const wchar_t* LookupByValue(T value, const SValue<T> *pArray)
     {
-        while (pArray->pName)
+        while (pArray->name)
         {
-            if (pValue == pArray->dwValue)
-                return pArray->pName;
+            if (value == pArray->value)
+                return pArray->name;
 
             pArray++;
         }
@@ -472,11 +544,10 @@ namespace
         return L"";
     }
 
-
-    void SearchForFiles(const wchar_t* path, std::list<SConversion>& files, bool recursive)
+    void SearchForFiles(const wchar_t* path, std::list<SConversion>& files, bool recursive, const wchar_t* folder)
     {
         // Process files
-        WIN32_FIND_DATA findData = {};
+        WIN32_FIND_DATAW findData = {};
         ScopedFindHandle hFile(safe_handle(FindFirstFileExW(path,
             FindExInfoBasic, &findData,
             FindExSearchNameMatch, nullptr,
@@ -491,12 +562,16 @@ namespace
                     wchar_t dir[_MAX_DIR] = {};
                     _wsplitpath_s(path, drive, _MAX_DRIVE, dir, _MAX_DIR, nullptr, 0, nullptr, 0);
 
-                    SConversion conv;
+                    SConversion conv = {};
                     _wmakepath_s(conv.szSrc, drive, dir, findData.cFileName, nullptr);
+                    if (folder)
+                    {
+                        wcscpy_s(conv.szFolder, folder);
+                    }
                     files.push_back(conv);
                 }
 
-                if (!FindNextFile(hFile.get(), &findData))
+                if (!FindNextFileW(hFile.get(), &findData))
                     break;
             }
         }
@@ -526,7 +601,9 @@ namespace
                     if (findData.cFileName[0] != L'.')
                     {
                         wchar_t subdir[MAX_PATH] = {};
-
+                        auto subfolder = (folder)
+                            ? (std::wstring(folder) + std::wstring(findData.cFileName) + L"\\")
+                            : (std::wstring(findData.cFileName) + L"\\");
                         {
                             wchar_t drive[_MAX_DRIVE] = {};
                             wchar_t dir[_MAX_DIR] = {};
@@ -537,40 +614,122 @@ namespace
                             _wmakepath_s(subdir, drive, dir, fname, ext);
                         }
 
-                        SearchForFiles(subdir, files, recursive);
+                        SearchForFiles(subdir, files, recursive, subfolder.c_str());
                     }
                 }
 
-                if (!FindNextFile(hFile.get(), &findData))
+                if (!FindNextFileW(hFile.get(), &findData))
                     break;
             }
         }
     }
 
+    void ProcessFileList(std::wifstream& inFile, std::list<SConversion>& files)
+    {
+        std::list<SConversion> flist;
+        std::set<std::wstring> excludes;
+        wchar_t fname[1024] = {};
+        for (;;)
+        {
+            inFile >> fname;
+            if (!inFile)
+                break;
+
+            if (*fname == L'#')
+            {
+                // Comment
+            }
+            else if (*fname == L'-')
+            {
+                if (flist.empty())
+                {
+                    wprintf(L"WARNING: Ignoring the line '%ls' in -flist\n", fname);
+                }
+                else
+                {
+                    if (wcspbrk(fname, L"?*") != nullptr)
+                    {
+                        std::list<SConversion> removeFiles;
+                        SearchForFiles(&fname[1], removeFiles, false, nullptr);
+
+                        for (auto it : removeFiles)
+                        {
+                            _wcslwr_s(it.szSrc);
+                            excludes.insert(it.szSrc);
+                        }
+                    }
+                    else
+                    {
+                        std::wstring name = (fname + 1);
+                        std::transform(name.begin(), name.end(), name.begin(), towlower);
+                        excludes.insert(name);
+                    }
+                }
+            }
+            else if (wcspbrk(fname, L"?*") != nullptr)
+            {
+                SearchForFiles(fname, flist, false, nullptr);
+            }
+            else
+            {
+                SConversion conv = {};
+                wcscpy_s(conv.szSrc, MAX_PATH, fname);
+                flist.push_back(conv);
+            }
+
+            inFile.ignore(1000, '\n');
+        }
+
+        inFile.close();
+
+        if (!excludes.empty())
+        {
+            // Remove any excluded files
+            for (auto it = flist.begin(); it != flist.end();)
+            {
+                std::wstring name = it->szSrc;
+                std::transform(name.begin(), name.end(), name.begin(), towlower);
+                auto item = it;
+                ++it;
+                if (excludes.find(name) != excludes.end())
+                {
+                    flist.erase(item);
+                }
+            }
+        }
+
+        if (flist.empty())
+        {
+            wprintf(L"WARNING: No file names found in -flist\n");
+        }
+        else
+        {
+            files.splice(files.end(), flist);
+        }
+    }
 
     void PrintFormat(DXGI_FORMAT Format)
     {
-        for (const SValue *pFormat = g_pFormats; pFormat->pName; pFormat++)
+        for (auto pFormat = g_pFormats; pFormat->name; pFormat++)
         {
-            if ((DXGI_FORMAT)pFormat->dwValue == Format)
+            if (static_cast<DXGI_FORMAT>(pFormat->value) == Format)
             {
-                wprintf(pFormat->pName);
+                wprintf(L"%ls", pFormat->name);
                 return;
             }
         }
 
-        for (const SValue *pFormat = g_pReadOnlyFormats; pFormat->pName; pFormat++)
+        for (auto pFormat = g_pReadOnlyFormats; pFormat->name; pFormat++)
         {
-            if ((DXGI_FORMAT)pFormat->dwValue == Format)
+            if (static_cast<DXGI_FORMAT>(pFormat->value) == Format)
             {
-                wprintf(pFormat->pName);
+                wprintf(L"%ls", pFormat->name);
                 return;
             }
         }
 
         wprintf(L"*UNKNOWN*");
     }
-
 
     void PrintInfo(const TexMetadata& info)
     {
@@ -591,17 +750,17 @@ namespace
         switch (info.dimension)
         {
         case TEX_DIMENSION_TEXTURE1D:
-            wprintf((info.arraySize > 1) ? L" 1DArray" : L" 1D");
+            wprintf(L"%ls", (info.arraySize > 1) ? L" 1DArray" : L" 1D");
             break;
 
         case TEX_DIMENSION_TEXTURE2D:
             if (info.IsCubemap())
             {
-                wprintf((info.arraySize > 6) ? L" CubeArray" : L" Cube");
+                wprintf(L"%ls", (info.arraySize > 6) ? L" CubeArray" : L" Cube");
             }
             else
             {
-                wprintf((info.arraySize > 1) ? L" 2DArray" : L" 2D");
+                wprintf(L"%ls", (info.arraySize > 1) ? L" 2DArray" : L" 2D");
             }
             break;
 
@@ -613,25 +772,29 @@ namespace
         switch (info.GetAlphaMode())
         {
         case TEX_ALPHA_MODE_OPAQUE:
-            wprintf(L" \x0e0:Opaque");
+            wprintf(L" \x03B1:Opaque");
             break;
         case TEX_ALPHA_MODE_PREMULTIPLIED:
-            wprintf(L" \x0e0:PM");
+            wprintf(L" \x03B1:PM");
             break;
         case TEX_ALPHA_MODE_STRAIGHT:
-            wprintf(L" \x0e0:NonPM");
+            wprintf(L" \x03B1:NonPM");
+            break;
+        case TEX_ALPHA_MODE_CUSTOM:
+            wprintf(L" \x03B1:Custom");
+            break;
+        case TEX_ALPHA_MODE_UNKNOWN:
             break;
         }
 
         wprintf(L")");
     }
 
-
-    void PrintList(size_t cch, const SValue *pValue)
+    void PrintList(size_t cch, const SValue<uint32_t> *pValue)
     {
-        while (pValue->pName)
+        while (pValue->name)
         {
-            size_t cchName = wcslen(pValue->pName);
+            const size_t cchName = wcslen(pValue->name);
 
             if (cch + cchName + 2 >= 80)
             {
@@ -639,7 +802,7 @@ namespace
                 cch = 6;
             }
 
-            wprintf(L"%ls ", pValue->pName);
+            wprintf(L"%ls ", pValue->name);
             cch += cchName + 2;
             pValue++;
         }
@@ -647,19 +810,43 @@ namespace
         wprintf(L"\n");
     }
 
-
     void PrintLogo()
     {
-        wprintf(L"Microsoft (R) DirectX Texture Converter (DirectXTex version)\n");
-        wprintf(L"Copyright (C) Microsoft Corp. All rights reserved.\n");
-#ifdef _DEBUG
+        wchar_t version[32] = {};
+
+        wchar_t appName[_MAX_PATH] = {};
+        if (GetModuleFileNameW(nullptr, appName, static_cast<UINT>(std::size(appName))))
+        {
+            const DWORD size = GetFileVersionInfoSizeW(appName, nullptr);
+            if (size > 0)
+            {
+                auto verInfo = std::make_unique<uint8_t[]>(size);
+                if (GetFileVersionInfoW(appName, 0, size, verInfo.get()))
+                {
+                    LPVOID lpstr = nullptr;
+                    UINT strLen = 0;
+                    if (VerQueryValueW(verInfo.get(), L"\\StringFileInfo\\040904B0\\ProductVersion", &lpstr, &strLen))
+                    {
+                        wcsncpy_s(version, reinterpret_cast<const wchar_t*>(lpstr), strLen);
+                    }
+                }
+            }
+        }
+
+        if (!*version || wcscmp(version, L"1.0.0.0") == 0)
+        {
+            swprintf_s(version, L"%03d (library)", DIRECTX_TEX_VERSION);
+        }
+
+        wprintf(L"Microsoft (R) DirectX Texture Converter [DirectXTex] Version %ls\n", version);
+        wprintf(L"Copyright (C) Microsoft Corp.\n");
+    #ifdef _DEBUG
         wprintf(L"*** Debug build ***\n");
-#endif
+    #endif
         wprintf(L"\n");
     }
 
-
-    _Success_(return != false)
+    _Success_(return)
         bool GetDXGIFactory(_Outptr_ IDXGIFactory1** pFactory)
     {
         if (!pFactory)
@@ -673,7 +860,7 @@ namespace
 
         if (!s_CreateDXGIFactory1)
         {
-            HMODULE hModDXGI = LoadLibrary(L"dxgi.dll");
+            HMODULE hModDXGI = LoadLibraryW(L"dxgi.dll");
             if (!hModDXGI)
                 return false;
 
@@ -685,68 +872,99 @@ namespace
         return SUCCEEDED(s_CreateDXGIFactory1(IID_PPV_ARGS(pFactory)));
     }
 
-
     void PrintUsage()
     {
         PrintLogo();
 
-        wprintf(L"Usage: texconv <options> <files>\n\n");
-        wprintf(L"   -r                  wildcard filename search is recursive\n");
-        wprintf(L"   -w <n>              width\n");
-        wprintf(L"   -h <n>              height\n");
-        wprintf(L"   -m <n>              miplevels\n");
-        wprintf(L"   -f <format>         format\n");
-        wprintf(L"   -if <filter>        image filtering\n");
-        wprintf(L"   -srgb{i|o}          sRGB {input, output}\n");
-        wprintf(L"   -px <string>        name prefix\n");
-        wprintf(L"   -sx <string>        name suffix\n");
-        wprintf(L"   -o <directory>      output directory\n");
-        wprintf(L"   -y                  overwrite existing output file (if any)\n");
-        wprintf(L"   -ft <filetype>      output file type\n");
-        wprintf(L"   -hflip              horizonal flip of source image\n");
-        wprintf(L"   -vflip              vertical flip of source image\n");
-        wprintf(L"   -sepalpha           resize/generate mips alpha channel separately\n");
-        wprintf(L"                       from color channels\n");
-        wprintf(L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n");
-        wprintf(L"   -pmalpha            convert final texture to use premultiplied alpha\n");
-        wprintf(L"   -alpha              convert premultiplied alpha to straight alpha\n");
-        wprintf(L"   -pow2               resize to fit a power-of-2, respecting aspect ratio\n");
-        wprintf(
+        static const wchar_t* const s_usage =
+            L"Usage: texconv <options> <files>\n"
+            L"\n"
+            L"   -r                  wildcard filename search is recursive\n"
+            L"     -r:flatten        flatten the directory structure (default)\n"
+            L"     -r:keep           keep the directory structure\n"
+            L"   -flist <filename>   use text file with a list of input files (one per line)\n"
+            L"\n"
+            L"   -w <n>              width\n"
+            L"   -h <n>              height\n"
+            L"   -m <n>              miplevels\n"
+            L"   -f <format>         format\n"
+            L"\n"
+            L"   -if <filter>        image filtering\n"
+            L"   -srgb{i|o}          sRGB {input, output}\n"
+            L"\n"
+            L"   -px <string>        name prefix\n"
+            L"   -sx <string>        name suffix\n"
+            L"   -o <directory>      output directory\n"
+            L"   -l                  force output filename to lower case\n"
+            L"   -y                  overwrite existing output file (if any)\n"
+            L"   -ft <filetype>      output file type\n"
+            L"\n"
+            L"   -hflip              horizonal flip of source image\n"
+            L"   -vflip              vertical flip of source image\n"
+            L"\n"
+            L"   -sepalpha           resize/generate mips alpha channel separately\n"
+            L"                       from color channels\n"
+            L"   -keepcoverage <ref> Preserve alpha coverage in mips for alpha test ref\n"
+            L"\n"
+            L"   -nowic              Force non-WIC filtering\n"
+            L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n"
+            L"   -pmalpha            convert final texture to use premultiplied alpha\n"
+            L"   -alpha              convert premultiplied alpha to straight alpha\n"
+            L"   -at <threshold>     Alpha threshold used for BC1, RGBA5551, and WIC\n"
+            L"                       (defaults to 0.5)\n"
+            L"\n"
+            L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n"
+            L"   -pow2               resize to fit a power-of-2, respecting aspect ratio\n"
+            L"\n"
             L"   -nmap <options>     converts height-map to normal-map\n"
             L"                       options must be one or more of\n"
-            L"                          r, g, b, a, l, m, u, v, i, o\n");
-        wprintf(L"   -nmapamp <weight>   normal map amplitude (defaults to 1.0)\n");
-        wprintf(L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n");
-        wprintf(L"\n                       (DDS input only)\n");
-        wprintf(L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n");
-        wprintf(L"   -dword              Use DWORD instead of BYTE alignment\n");
-        wprintf(L"   -badtails           Fix for older DXTn with bad mipchain tails\n");
-        wprintf(L"   -xlum               expand legacy L8, L16, and A8P8 formats\n");
-        wprintf(L"\n                       (DDS output only)\n");
-        wprintf(L"   -dx10               Force use of 'DX10' extended header\n");
-        wprintf(L"\n   -nologo             suppress copyright message\n");
-        wprintf(L"   -timing             Display elapsed processing time\n\n");
+            L"                          r, g, b, a, l, m, u, v, i, o\n"
+            L"   -nmapamp <weight>   normal map amplitude (defaults to 1.0)\n"
+            L"\n"
+            L"                       (DDS input only)\n"
+            L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n"
+            L"   -dword              Use DWORD instead of BYTE alignment\n"
+            L"   -badtails           Fix for older DXTn with bad mipchain tails\n"
+            L"   -fixbc4x4           Fix for odd-sized BC files that Direct3D can't load\n"
+            L"   -xlum               expand legacy L8, L16, and A8P8 formats\n"
+            L"\n"
+            L"                       (DDS output only)\n"
+            L"   -dx10               Force use of 'DX10' extended header\n"
+            L"   -dx9                Force use of legacy DX9 header\n"
+            L"\n"
+            L"                       (TGA output only)\n"
+            L"   -tga20              Write file including TGA 2.0 extension area\n"
+            L"\n"
+            L"                       (BMP, PNG, JPG, TIF, WDP output only)\n"
+            L"   -wicq <quality>     When writing images with WIC use quality (0.0 to 1.0)\n"
+            L"   -wiclossless        When writing images with WIC use lossless mode\n"
+            L"   -wicmulti           When writing images with WIC encode multiframe images\n"
+            L"\n"
+            L"   -nologo             suppress copyright message\n"
+            L"   -timing             Display elapsed processing time\n"
+            L"\n"
 #ifdef _OPENMP
-        wprintf(L"   -singleproc         Do not use multi-threaded compression\n");
+            L"   -singleproc         Do not use multi-threaded compression\n"
 #endif
-        wprintf(L"   -gpu <adapter>      Select GPU for DirectCompute-based codecs (0 is default)\n");
-        wprintf(L"   -nogpu              Do not use DirectCompute-based codecs\n");
-        wprintf(L"   -bcuniform          Use uniform rather than perceptual weighting for BC1-3\n");
-        wprintf(L"   -bcdither           Use dithering for BC1-3\n");
-        wprintf(L"   -bcmax              Use exhaustive compression (BC7 only)\n");
-        wprintf(L"   -bcquick            Use quick compression (BC7 only)\n");
-        wprintf(L"   -wicq <quality>     When writing images with WIC use quality (0.0 to 1.0)\n");
-        wprintf(L"   -wiclossless        When writing images with WIC use lossless mode\n");
-        wprintf(L"   -wicmulti           When writing images with WIC encode multiframe images\n");
-        wprintf(
+            L"   -gpu <adapter>      Select GPU for DirectCompute-based codecs (0 is default)\n"
+            L"   -nogpu              Do not use DirectCompute-based codecs\n"
+            L"\n"
+            L"   -bc <options>       Sets options for BC compression\n"
+            L"                       options must be one or more of\n"
+            L"                          d, u, q, x\n"
             L"   -aw <weight>        BC7 GPU compressor weighting for alpha error metric\n"
-            L"                       (defaults to 1.0)\n");
-        wprintf(L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n");
-        wprintf(L"   -rotatecolor <rot>  rotates color primaries and/or applies a curve\n");
-        wprintf(L"   -nits <value>       paper-white value in nits to use for HDR10 (defaults to 200.0)\n");
-        wprintf(L"   -tonemap            Apply a tonemap operator based on maximum luminance\n");
-        wprintf(L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n");
-        wprintf(L"   -flist <filename>   use text file with a list of input files (one per line)\n");
+            L"                       (defaults to 1.0)\n"
+            L"\n"
+            L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n"
+            L"   -rotatecolor <rot>  rotates color primaries and/or applies a curve\n"
+            L"   -nits <value>       paper-white value in nits to use for HDR10 (def: 200.0)\n"
+            L"   -tonemap            Apply a tonemap operator based on maximum luminance\n"
+            L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n"
+            L"   -inverty            Invert Y (i.e. green) channel values\n"
+            L"   -reconstructz       Rebuild Z (blue) channel assuming X/Y are normals\n"
+            L"   -swizzle <rgba>     Swizzle image channels using HLSL-style mask\n";
+
+        wprintf(L"%ls", s_usage);
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -771,7 +989,9 @@ namespace
             wprintf(L"\n   <adapter>:\n");
 
             ComPtr<IDXGIAdapter> adapter;
-            for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != dxgiFactory->EnumAdapters(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
+            for (UINT adapterIndex = 0;
+                SUCCEEDED(dxgiFactory->EnumAdapters(adapterIndex, adapter.ReleaseAndGetAddressOf()));
+                ++adapterIndex)
             {
                 DXGI_ADAPTER_DESC desc;
                 if (SUCCEEDED(adapter->GetDesc(&desc)))
@@ -782,8 +1002,36 @@ namespace
         }
     }
 
+    const wchar_t* GetErrorDesc(HRESULT hr)
+    {
+        static wchar_t desc[1024] = {};
 
-    _Success_(return != false)
+        LPWSTR errorText = nullptr;
+
+        const DWORD result = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+            nullptr, static_cast<DWORD>(hr),
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&errorText), 0, nullptr);
+
+        *desc = 0;
+
+        if (result > 0 && errorText)
+        {
+            swprintf_s(desc, L": %ls", errorText);
+
+            size_t len = wcslen(desc);
+            if (len >= 1)
+            {
+                desc[len - 1] = 0;
+            }
+
+            if (errorText)
+                LocalFree(errorText);
+        }
+
+        return desc;
+    }
+
+    _Success_(return)
         bool CreateDevice(int adapter, _Outptr_ ID3D11Device** pDevice)
     {
         if (!pDevice)
@@ -795,7 +1043,7 @@ namespace
 
         if (!s_DynamicD3D11CreateDevice)
         {
-            HMODULE hModD3D11 = LoadLibrary(L"d3d11.dll");
+            HMODULE hModD3D11 = LoadLibraryW(L"d3d11.dll");
             if (!hModD3D11)
                 return false;
 
@@ -804,7 +1052,7 @@ namespace
                 return false;
         }
 
-        D3D_FEATURE_LEVEL featureLevels[] =
+        const D3D_FEATURE_LEVEL featureLevels[] =
         {
             D3D_FEATURE_LEVEL_11_0,
             D3D_FEATURE_LEVEL_10_1,
@@ -812,9 +1060,9 @@ namespace
         };
 
         UINT createDeviceFlags = 0;
-#ifdef _DEBUG
+    #ifdef _DEBUG
         createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
+    #endif
 
         ComPtr<IDXGIAdapter> pAdapter;
         if (adapter >= 0)
@@ -822,7 +1070,7 @@ namespace
             ComPtr<IDXGIFactory1> dxgiFactory;
             if (GetDXGIFactory(dxgiFactory.GetAddressOf()))
             {
-                if (FAILED(dxgiFactory->EnumAdapters(adapter, pAdapter.GetAddressOf())))
+                if (FAILED(dxgiFactory->EnumAdapters(static_cast<UINT>(adapter), pAdapter.GetAddressOf())))
                 {
                     wprintf(L"\nERROR: Invalid GPU adapter index (%d)!\n", adapter);
                     return false;
@@ -833,7 +1081,7 @@ namespace
         D3D_FEATURE_LEVEL fl;
         HRESULT hr = s_DynamicD3D11CreateDevice(pAdapter.Get(),
             (pAdapter) ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE,
-            nullptr, createDeviceFlags, featureLevels, _countof(featureLevels),
+            nullptr, createDeviceFlags, featureLevels, static_cast<UINT>(std::size(featureLevels)),
             D3D11_SDK_VERSION, pDevice, &fl, nullptr);
         if (SUCCEEDED(hr))
         {
@@ -880,21 +1128,20 @@ namespace
             return false;
     }
 
-
-    void FitPowerOf2(size_t origx, size_t origy, size_t& targetx, size_t& targety, size_t maxsize)
+    void FitPowerOf2(size_t origx, size_t origy, _Inout_ size_t& targetx, _Inout_ size_t& targety, size_t maxsize)
     {
-        float origAR = float(origx) / float(origy);
+        const float origAR = float(origx) / float(origy);
 
         if (origx > origy)
         {
             size_t x;
-            for (x = maxsize; x > 1; x >>= 1) { if (x <= targetx) break; };
+            for (x = maxsize; x > 1; x >>= 1) { if (x <= targetx) break; }
             targetx = x;
 
             float bestScore = FLT_MAX;
             for (size_t y = maxsize; y > 0; y >>= 1)
             {
-                float score = fabs((float(x) / float(y)) - origAR);
+                const float score = fabsf((float(x) / float(y)) - origAR);
                 if (score < bestScore)
                 {
                     bestScore = score;
@@ -905,13 +1152,13 @@ namespace
         else
         {
             size_t y;
-            for (y = maxsize; y > 1; y >>= 1) { if (y <= targety) break; };
+            for (y = maxsize; y > 1; y >>= 1) { if (y <= targety) break; }
             targety = y;
 
             float bestScore = FLT_MAX;
             for (size_t x = maxsize; x > 0; x >>= 1)
             {
-                float score = fabs((float(x) / float(y)) - origAR);
+                const float score = fabsf((float(x) / float(y)) - origAR);
                 if (score < bestScore)
                 {
                     bestScore = score;
@@ -921,172 +1168,204 @@ namespace
         }
     }
 
-    const XMVECTORF32 c_MaxNitsFor2084 = { 10000.0f, 10000.0f, 10000.0f, 1.f };
+    constexpr size_t CountMips(_In_ size_t width, _In_ size_t height) noexcept
+    {
+        size_t mipLevels = 1;
 
+        while (height > 1 || width > 1)
+        {
+            if (height > 1)
+                height >>= 1;
+
+            if (width > 1)
+                width >>= 1;
+
+            ++mipLevels;
+        }
+
+        return mipLevels;
+    }
+
+    constexpr size_t CountMips3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth) noexcept
+    {
+        size_t mipLevels = 1;
+
+        while (height > 1 || width > 1 || depth > 1)
+        {
+            if (height > 1)
+                height >>= 1;
+
+            if (width > 1)
+                width >>= 1;
+
+            if (depth > 1)
+                depth >>= 1;
+
+            ++mipLevels;
+        }
+
+        return mipLevels;
+    }
+
+    const XMVECTORF32 c_MaxNitsFor2084 = { { { 10000.0f, 10000.0f, 10000.0f, 1.f } } };
+
+    // HDTV to UHDTV (Rec.709 color primaries into Rec.2020)
     const XMMATRIX c_from709to2020 =
     {
-        { 0.6274040f, 0.0690970f, 0.0163916f, 0.f },
-        { 0.3292820f, 0.9195400f, 0.0880132f, 0.f },
-        { 0.0433136f, 0.0113612f, 0.8955950f, 0.f },
-        { 0.f,        0.f,        0.f,        1.f }
+        0.6274040f, 0.0690970f, 0.0163916f, 0.f,
+        0.3292820f, 0.9195400f, 0.0880132f, 0.f,
+        0.0433136f, 0.0113612f, 0.8955950f, 0.f,
+        0.f,        0.f,        0.f,        1.f
     };
 
+    // UHDTV to HDTV
     const XMMATRIX c_from2020to709 =
     {
-        { 1.6604910f,  -0.1245505f, -0.0181508f, 0.f },
-        { -0.5876411f,  1.1328999f, -0.1005789f, 0.f },
-        { -0.0728499f, -0.0083494f,  1.1187297f, 0.f },
-        { 0.f,          0.f,         0.f,        1.f }
+        1.6604910f,  -0.1245505f, -0.0181508f, 0.f,
+        -0.5876411f,  1.1328999f, -0.1005789f, 0.f,
+        -0.0728499f, -0.0083494f,  1.1187297f, 0.f,
+        0.f,          0.f,         0.f,        1.f
     };
 
-    const XMMATRIX c_fromP3to2020 =
+    // DCI-P3-D65 https://en.wikipedia.org/wiki/DCI-P3 to UHDTV (DCI-P3-D65 color primaries into Rec.2020)
+    const XMMATRIX c_fromP3D65to2020 =
     {
-        { 0.753845f, 0.0457456f, -0.00121055f, 0.f },
-        { 0.198593f, 0.941777f,   0.0176041f,  0.f },
-        { 0.047562f, 0.0124772f,  0.983607f,   0.f },
-        { 0.f,       0.f,         0.f,         1.f }
+        0.753845f, 0.0457456f, -0.00121055f, 0.f,
+        0.198593f, 0.941777f,   0.0176041f,  0.f,
+        0.047562f, 0.0124772f,  0.983607f,   0.f,
+        0.f,       0.f,         0.f,         1.f
+    };
+
+    // HDTV to DCI-P3-D65 (a.k.a. Display P3 or P3D65)
+    const XMMATRIX c_from709toP3D65 =
+    {
+        0.822461969f, 0.033194199f, 0.017082631f, 0.f,
+        0.1775380f,   0.9668058f,   0.0723974f,   0.f,
+        0.0000000f,   0.0000000f,   0.9105199f,   0.f,
+        0.f,          0.f,          0.f,          1.f
+    };
+
+    // DCI-P3-D65 to HDTV
+    const XMMATRIX c_fromP3D65to709 =
+    {
+        1.224940176f,  -0.042056955f, -0.019637555f, 0.f,
+        -0.224940176f,  1.042056955f, -0.078636046f, 0.f,
+        0.0000000f,     0.0000000f,    1.098273600f, 0.f,
+        0.f,            0.f,           0.f,          1.f
     };
 
     inline float LinearToST2084(float normalizedLinearValue)
     {
-        float ST2084 = pow((0.8359375f + 18.8515625f * pow(abs(normalizedLinearValue), 0.1593017578f)) / (1.0f + 18.6875f * pow(abs(normalizedLinearValue), 0.1593017578f)), 78.84375f);
+        const float ST2084 = pow((0.8359375f + 18.8515625f * pow(abs(normalizedLinearValue), 0.1593017578f)) / (1.0f + 18.6875f * pow(abs(normalizedLinearValue), 0.1593017578f)), 78.84375f);
         return ST2084;  // Don't clamp between [0..1], so we can still perform operations on scene values higher than 10,000 nits
     }
 
     inline float ST2084ToLinear(float ST2084)
     {
-        float normalizedLinear = pow(std::max(pow(abs(ST2084), 1.0f / 78.84375f) - 0.8359375f, 0.0f) / (18.8515625f - 18.6875f * pow(abs(ST2084), 1.0f / 78.84375f)), 1.0f / 0.1593017578f);
+        const float normalizedLinear = pow(std::max(pow(abs(ST2084), 1.0f / 78.84375f) - 0.8359375f, 0.0f) / (18.8515625f - 18.6875f * pow(abs(ST2084), 1.0f / 78.84375f)), 1.0f / 0.1593017578f);
         return normalizedLinear;
     }
 
-
-    HRESULT ReadData(_In_z_ const wchar_t* szFile, std::unique_ptr<uint8_t []>& blob, size_t& bmpSize)
+    bool ParseSwizzleMask(
+        _In_reads_(4) const wchar_t* mask,
+        _Out_writes_(4) uint32_t* swizzleElements,
+        _Out_writes_(4) uint32_t* zeroElements,
+        _Out_writes_(4) uint32_t* oneElements)
     {
-        blob.reset();
+        if (!mask || !swizzleElements || !zeroElements || !oneElements)
+            return false;
 
-        ScopedHandle hFile(safe_handle(CreateFileW(szFile, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
-            FILE_FLAG_SEQUENTIAL_SCAN, nullptr)));
-        if (!hFile)
+        if (!mask[0])
+            return false;
+
+        for (uint32_t j = 0; j < 4; ++j)
         {
-            return HRESULT_FROM_WIN32(GetLastError());
+            if (!mask[j])
+                break;
+
+            switch (mask[j])
+            {
+            case L'R':
+            case L'X':
+            case L'r':
+            case L'x':
+                for (uint32_t k = j; k < 4; ++k)
+                {
+                    swizzleElements[k] = 0;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
+                break;
+
+            case L'G':
+            case L'Y':
+            case L'g':
+            case L'y':
+                for (uint32_t k = j; k < 4; ++k)
+                {
+                    swizzleElements[k] = 1;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
+                break;
+
+            case L'B':
+            case L'Z':
+            case L'b':
+            case L'z':
+                for (uint32_t k = j; k < 4; ++k)
+                {
+                    swizzleElements[k] = 2;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
+                break;
+
+            case L'A':
+            case L'W':
+            case L'a':
+            case L'w':
+                for (size_t k = j; k < 4; ++k)
+                {
+                    swizzleElements[k] = 3;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 0;
+                }
+                break;
+
+            case L'0':
+                for (uint32_t k = j; k < 4; ++k)
+                {
+                    swizzleElements[k] = k;
+                    zeroElements[k] = 1;
+                    oneElements[k] = 0;
+                }
+                break;
+
+            case L'1':
+                for (uint32_t k = j; k < 4; ++k)
+                {
+                    swizzleElements[k] = k;
+                    zeroElements[k] = 0;
+                    oneElements[k] = 1;
+                }
+                break;
+
+            default:
+                return false;
+            }
         }
 
-        // Get the file size
-        FILE_STANDARD_INFO fileInfo;
-        if (!GetFileInformationByHandleEx(hFile.get(), FileStandardInfo, &fileInfo, sizeof(fileInfo)))
-        {
-            return HRESULT_FROM_WIN32(GetLastError());
-        }
-
-        // File is too big for 32-bit allocation, so reject read (4 GB should be plenty large enough)
-        if (fileInfo.EndOfFile.HighPart > 0)
-        {
-            return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
-        }
-
-        // Zero-sized files assumed to be invalid
-        if (fileInfo.EndOfFile.LowPart < 1)
-        {
-            return E_FAIL;
-        }
-
-        // Read file
-        blob.reset(new (std::nothrow) uint8_t[fileInfo.EndOfFile.LowPart]);
-        if (!blob)
-        {
-            return E_OUTOFMEMORY;
-        }
-
-        DWORD bytesRead = 0;
-        if (!ReadFile(hFile.get(), blob.get(), fileInfo.EndOfFile.LowPart, &bytesRead, nullptr))
-        {
-            return HRESULT_FROM_WIN32(GetLastError());
-        }
-
-        if (bytesRead != fileInfo.EndOfFile.LowPart)
-        {
-            return E_FAIL;
-        }
-
-        bmpSize = fileInfo.EndOfFile.LowPart;
-
-        return S_OK;
-    }
-
-    HRESULT LoadFromExtendedBMPMemory(_In_reads_bytes_(size) const void* pSource, _In_ size_t size, _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image)
-    {
-        // This loads from non-standard BMP files that are not supported by WIC
-        image.Release();
-
-        if (size < (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER)))
-            return E_FAIL;
-
-        // Valid BMP files always start with 'BM' at the top
-        auto filehdr = reinterpret_cast<const BITMAPFILEHEADER*>(pSource);
-        if (filehdr->bfType != 0x4D42)
-            return E_FAIL;
-
-        if (size < filehdr->bfOffBits)
-            return E_FAIL;
-
-        auto header = reinterpret_cast<const BITMAPINFOHEADER*>(reinterpret_cast<const uint8_t*>(pSource) + sizeof(BITMAPFILEHEADER));
-        if (header->biSize != sizeof(BITMAPINFOHEADER))
-            return E_FAIL;
-
-        if (header->biWidth < 1 || header->biHeight < 1 || header->biPlanes != 1 || header->biBitCount != 16)
-        {
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
-        }
-
-        DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
-        switch (header->biCompression)
-        {
-        case 0x31545844: // FourCC "DXT1"
-            format = DXGI_FORMAT_BC1_UNORM;
-            break;
-        case 0x33545844: // FourCC "DXT3"
-            format = DXGI_FORMAT_BC2_UNORM;
-            break;
-        case 0x35545844: // FourCC "DXT5"
-            format = DXGI_FORMAT_BC3_UNORM;
-            break;
-
-        default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
-        }
-
-        HRESULT hr = image.Initialize2D(format, header->biWidth, header->biHeight, 1, 1);
-        if (FAILED(hr))
-            return hr;
-
-        if (header->biSizeImage != image.GetPixelsSize())
-            return E_UNEXPECTED;
-
-        size_t remaining = size - filehdr->bfOffBits;
-        if (!remaining)
-            return E_FAIL;
-
-        if (remaining < image.GetPixelsSize())
-            return E_UNEXPECTED;
-
-        auto pixels = reinterpret_cast<const uint8_t*>(pSource) + filehdr->bfOffBits;
-
-        memcpy(image.GetPixels(), pixels, image.GetPixelsSize());
-
-        if (metadata)
-        {
-            *metadata = image.GetMetadata();
-        }
-
-        return S_OK;
+        return true;
     }
 }
-
 
 //--------------------------------------------------------------------------------------
 // Entry-point
 //--------------------------------------------------------------------------------------
+#ifdef _PREFAST_
 #pragma prefast(disable : 28198, "Command-line tool, frees all memory on exit")
+#endif
 
 int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 {
@@ -1095,40 +1374,45 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     size_t height = 0;
     size_t mipLevels = 0;
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
-    DWORD dwFilter = TEX_FILTER_DEFAULT;
-    DWORD dwSRGB = 0;
-    DWORD dwConvert = 0;
-    DWORD dwCompress = TEX_COMPRESS_DEFAULT;
-    DWORD dwFilterOpts = 0;
-    DWORD FileType = CODEC_DDS;
-    DWORD maxSize = 16384;
+    TEX_FILTER_FLAGS dwFilter = TEX_FILTER_DEFAULT;
+    TEX_FILTER_FLAGS dwSRGB = TEX_FILTER_DEFAULT;
+    TEX_FILTER_FLAGS dwConvert = TEX_FILTER_DEFAULT;
+    TEX_COMPRESS_FLAGS dwCompress = TEX_COMPRESS_DEFAULT;
+    TEX_FILTER_FLAGS dwFilterOpts = TEX_FILTER_DEFAULT;
+    uint32_t FileType = CODEC_DDS;
+    uint32_t maxSize = 16384;
     int adapter = -1;
+    float alphaThreshold = TEX_THRESHOLD_DEFAULT;
     float alphaWeight = 1.f;
-    DWORD dwNormalMap = 0;
+    CNMAP_FLAGS dwNormalMap = CNMAP_DEFAULT;
     float nmapAmplitude = 1.f;
     float wicQuality = -1.f;
-    DWORD colorKey = 0;
-    DWORD dwRotateColor = 0;
+    uint32_t colorKey = 0;
+    uint32_t dwRotateColor = 0;
     float paperWhiteNits = 200.f;
+    float preserveAlphaCoverageRef = 0.0f;
+    bool keepRecursiveDirs = false;
+    uint32_t swizzleElements[4] = { 0, 1, 2, 3 };
+    uint32_t zeroElements[4] = {};
+    uint32_t oneElements[4] = {};
 
-    wchar_t szPrefix[MAX_PATH];
-    wchar_t szSuffix[MAX_PATH];
-    wchar_t szOutputDir[MAX_PATH];
+    wchar_t szPrefix[MAX_PATH] = {};
+    wchar_t szSuffix[MAX_PATH] = {};
+    wchar_t szOutputDir[MAX_PATH] = {};
 
-    szPrefix[0] = 0;
-    szSuffix[0] = 0;
-    szOutputDir[0] = 0;
+    // Set locale for output since GetErrorDesc can get localized strings.
+    std::locale::global(std::locale(""));
 
     // Initialize COM (needed for WIC)
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr))
     {
-        wprintf(L"Failed to initialize COM (%08X)\n", hr);
+        wprintf(L"Failed to initialize COM (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
         return 1;
     }
 
     // Process command line
-    DWORD64 dwOptions = 0;
+    uint64_t dwOptions = 0;
     std::list<SConversion> conversion;
 
     for (int iArg = 1; iArg < argc; iArg++)
@@ -1145,15 +1429,15 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (*pValue)
                 *pValue++ = 0;
 
-            DWORD dwOption = LookupByName(pArg, g_pOptions);
+            const uint64_t dwOption = LookupByName(pArg, g_pOptions);
 
-            if (!dwOption || (dwOptions & (DWORD64(1) << dwOption)))
+            if (!dwOption || (dwOptions & (uint64_t(1) << dwOption)))
             {
                 PrintUsage();
                 return 1;
             }
 
-            dwOptions |= (DWORD64(1) << dwOption);
+            dwOptions |= (uint64_t(1) << dwOption);
 
             // Handle options with additional value parameter
             switch (dwOption)
@@ -1169,14 +1453,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_FILETYPE:
             case OPT_GPU:
             case OPT_FEATURE_LEVEL:
+            case OPT_ALPHA_THRESHOLD:
             case OPT_ALPHA_WEIGHT:
             case OPT_NORMAL_MAP:
             case OPT_NORMAL_MAP_AMPLITUDE:
             case OPT_WIC_QUALITY:
+            case OPT_BC_COMPRESS:
             case OPT_COLORKEY:
             case OPT_FILELIST:
             case OPT_ROTATE_COLOR:
             case OPT_PAPER_WHITE_NITS:
+            case OPT_PRESERVE_ALPHA_COVERAGE:
+            case OPT_SWIZZLE:
+                // These support either "-arg:value" or "-arg value"
                 if (!*pValue)
                 {
                     if ((iArg + 1 >= argc))
@@ -1239,7 +1528,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_FILTER:
-                dwFilter = LookupByName(pValue, g_pFilters);
+                dwFilter = static_cast<TEX_FILTER_FLAGS>(LookupByName(pValue, g_pFilters));
                 if (!dwFilter)
                 {
                     wprintf(L"Invalid value specified with -if (%ls)\n", pValue);
@@ -1276,6 +1565,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 dwFilterOpts |= TEX_FILTER_SEPARATE_ALPHA;
                 break;
 
+            case OPT_NO_WIC:
+                dwFilterOpts |= TEX_FILTER_FORCE_NON_WIC;
+                break;
+
             case OPT_PREFIX:
                 wcscpy_s(szPrefix, MAX_PATH, pValue);
                 break;
@@ -1300,7 +1593,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_PREMUL_ALPHA:
-                if (dwOptions & (DWORD64(1) << OPT_DEMUL_ALPHA))
+                if (dwOptions & (uint64_t(1) << OPT_DEMUL_ALPHA))
                 {
                     wprintf(L"Can't use -pmalpha and -alpha at same time\n\n");
                     PrintUsage();
@@ -1309,7 +1602,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_DEMUL_ALPHA:
-                if (dwOptions & (DWORD64(1) << OPT_PREMUL_ALPHA))
+                if (dwOptions & (uint64_t(1) << OPT_PREMUL_ALPHA))
                 {
                     wprintf(L"Can't use -pmalpha and -alpha at same time\n\n");
                     PrintUsage();
@@ -1338,63 +1631,62 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_NORMAL_MAP:
-            {
-                dwNormalMap = 0;
+                {
+                    dwNormalMap = CNMAP_DEFAULT;
 
-                if (wcschr(pValue, L'l'))
-                {
-                    dwNormalMap |= CNMAP_CHANNEL_LUMINANCE;
-                }
-                else if (wcschr(pValue, L'r'))
-                {
-                    dwNormalMap |= CNMAP_CHANNEL_RED;
-                }
-                else if (wcschr(pValue, L'g'))
-                {
-                    dwNormalMap |= CNMAP_CHANNEL_GREEN;
-                }
-                else if (wcschr(pValue, L'b'))
-                {
-                    dwNormalMap |= CNMAP_CHANNEL_BLUE;
-                }
-                else if (wcschr(pValue, L'a'))
-                {
-                    dwNormalMap |= CNMAP_CHANNEL_ALPHA;
-                }
-                else
-                {
-                    wprintf(L"Invalid value specified for -nmap (%ls), missing l, r, g, b, or a\n\n", pValue);
-                    PrintUsage();
-                    return 1;
-                }
-
-                if (wcschr(pValue, L'm'))
-                {
-                    dwNormalMap |= CNMAP_MIRROR;
-                }
-                else
-                {
-                    if (wcschr(pValue, L'u'))
+                    if (wcschr(pValue, L'l'))
                     {
-                        dwNormalMap |= CNMAP_MIRROR_U;
+                        dwNormalMap |= CNMAP_CHANNEL_LUMINANCE;
                     }
-                    if (wcschr(pValue, L'v'))
+                    else if (wcschr(pValue, L'r'))
                     {
-                        dwNormalMap |= CNMAP_MIRROR_V;
+                        dwNormalMap |= CNMAP_CHANNEL_RED;
+                    }
+                    else if (wcschr(pValue, L'g'))
+                    {
+                        dwNormalMap |= CNMAP_CHANNEL_GREEN;
+                    }
+                    else if (wcschr(pValue, L'b'))
+                    {
+                        dwNormalMap |= CNMAP_CHANNEL_BLUE;
+                    }
+                    else if (wcschr(pValue, L'a'))
+                    {
+                        dwNormalMap |= CNMAP_CHANNEL_ALPHA;
+                    }
+                    else
+                    {
+                        wprintf(L"Invalid value specified for -nmap (%ls), missing l, r, g, b, or a\n\n", pValue);
+                        return 1;
+                    }
+
+                    if (wcschr(pValue, L'm'))
+                    {
+                        dwNormalMap |= CNMAP_MIRROR;
+                    }
+                    else
+                    {
+                        if (wcschr(pValue, L'u'))
+                        {
+                            dwNormalMap |= CNMAP_MIRROR_U;
+                        }
+                        if (wcschr(pValue, L'v'))
+                        {
+                            dwNormalMap |= CNMAP_MIRROR_V;
+                        }
+                    }
+
+                    if (wcschr(pValue, L'i'))
+                    {
+                        dwNormalMap |= CNMAP_INVERT_SIGN;
+                    }
+
+                    if (wcschr(pValue, L'o'))
+                    {
+                        dwNormalMap |= CNMAP_COMPUTE_OCCLUSION;
                     }
                 }
-
-                if (wcschr(pValue, L'i'))
-                {
-                    dwNormalMap |= CNMAP_INVERT_SIGN;
-                }
-
-                if (wcschr(pValue, L'o'))
-                {
-                    dwNormalMap |= CNMAP_COMPUTE_OCCLUSION;
-                }
-            }
-            break;
+                break;
 
             case OPT_NORMAL_MAP_AMPLITUDE:
                 if (!dwNormalMap)
@@ -1412,7 +1704,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 else if (nmapAmplitude < 0.f)
                 {
                     wprintf(L"Normal map amplitude must be positive (%ls)\n\n", pValue);
-                    PrintUsage();
                     return 1;
                 }
                 break;
@@ -1426,7 +1717,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else if (adapter < 0)
                 {
-                    wprintf(L"Adapter index (%ls)\n\n", pValue);
+                    wprintf(L"Invalid adapter index (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
@@ -1439,6 +1730,22 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     wprintf(L"Invalid value specified with -fl (%ls)\n", pValue);
                     wprintf(L"\n");
                     PrintUsage();
+                    return 1;
+                }
+                break;
+
+            case OPT_ALPHA_THRESHOLD:
+                if (swscanf_s(pValue, L"%f", &alphaThreshold) != 1)
+                {
+                    wprintf(L"Invalid value specified with -at (%ls)\n", pValue);
+                    wprintf(L"\n");
+                    PrintUsage();
+                    return 1;
+                }
+                else if (alphaThreshold < 0.f)
+                {
+                    wprintf(L"-at (%ls) parameter must be positive\n", pValue);
+                    wprintf(L"\n");
                     return 1;
                 }
                 break;
@@ -1459,32 +1766,48 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 break;
 
-            case OPT_COMPRESS_UNIFORM:
-                dwCompress |= TEX_COMPRESS_UNIFORM;
-                break;
-
-            case OPT_COMPRESS_MAX:
-                if (dwCompress & TEX_COMPRESS_BC7_QUICK)
+            case OPT_BC_COMPRESS:
                 {
-                    wprintf(L"Can't use -bcmax and -bcquick at same time\n\n");
-                    PrintUsage();
-                    return 1;
-                }
-                dwCompress |= TEX_COMPRESS_BC7_USE_3SUBSETS;
-                break;
+                    dwCompress = TEX_COMPRESS_DEFAULT;
 
-            case OPT_COMPRESS_QUICK:
-                if (dwCompress & TEX_COMPRESS_BC7_USE_3SUBSETS)
-                {
-                    wprintf(L"Can't use -bcmax and -bcquick at same time\n\n");
-                    PrintUsage();
-                    return 1;
-                }
-                dwCompress |= TEX_COMPRESS_BC7_QUICK;
-                break;
+                    bool found = false;
+                    if (wcschr(pValue, L'u'))
+                    {
+                        dwCompress |= TEX_COMPRESS_UNIFORM;
+                        found = true;
+                    }
 
-            case OPT_COMPRESS_DITHER:
-                dwCompress |= TEX_COMPRESS_DITHER;
+                    if (wcschr(pValue, L'd'))
+                    {
+                        dwCompress |= TEX_COMPRESS_DITHER;
+                        found = true;
+                    }
+
+                    if (wcschr(pValue, L'q'))
+                    {
+                        dwCompress |= TEX_COMPRESS_BC7_QUICK;
+                        found = true;
+                    }
+
+                    if (wcschr(pValue, L'x'))
+                    {
+                        dwCompress |= TEX_COMPRESS_BC7_USE_3SUBSETS;
+                        found = true;
+                    }
+
+                    if ((dwCompress & (TEX_COMPRESS_BC7_QUICK | TEX_COMPRESS_BC7_USE_3SUBSETS)) == (TEX_COMPRESS_BC7_QUICK | TEX_COMPRESS_BC7_USE_3SUBSETS))
+                    {
+                        wprintf(L"Can't use -bc x (max) and -bc q (quick) at same time\n\n");
+                        PrintUsage();
+                        return 1;
+                    }
+
+                    if (!found)
+                    {
+                        wprintf(L"Invalid value specified for -bc (%ls), missing d, u, q, or x\n\n", pValue);
+                        return 1;
+                    }
+                }
                 break;
 
             case OPT_WIC_QUALITY:
@@ -1514,6 +1837,41 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 dwConvert |= TEX_FILTER_FLOAT_X2BIAS;
                 break;
 
+            case OPT_USE_DX10:
+                if (dwOptions & (uint64_t(1) << OPT_USE_DX9))
+                {
+                    wprintf(L"Can't use -dx9 and -dx10 at same time\n\n");
+                    PrintUsage();
+                    return 1;
+                }
+                break;
+
+            case OPT_USE_DX9:
+                if (dwOptions & (uint64_t(1) << OPT_USE_DX10))
+                {
+                    wprintf(L"Can't use -dx9 and -dx10 at same time\n\n");
+                    PrintUsage();
+                    return 1;
+                }
+                break;
+
+            case OPT_RECURSIVE:
+                if (*pValue)
+                {
+                    // This option takes 'flatten' or 'keep' with ':' syntax
+                    if (!_wcsicmp(pValue, L"keep"))
+                    {
+                        keepRecursiveDirs = true;
+                    }
+                    else if (_wcsicmp(pValue, L"flatten") != 0)
+                    {
+                        wprintf(L"For recursive use -r, -r:flatten, or -r:keep\n\n");
+                        PrintUsage();
+                        return 1;
+                    }
+                }
+                break;
+
             case OPT_FILELIST:
                 {
                     std::wifstream inFile(pValue);
@@ -1522,52 +1880,51 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         wprintf(L"Error opening -flist file %ls\n", pValue);
                         return 1;
                     }
-                    wchar_t fname[1024] = {};
-                    for (;;)
-                    {
-                        inFile >> fname;
-                        if (!inFile)
-                            break;
 
-                        if (*fname == L'#')
-                        {
-                            // Comment
-                        }
-                        else if (*fname == L'-')
-                        {
-                            wprintf(L"Command-line arguments not supported in -flist file\n");
-                            return 1;
-                        }
-                        else if (wcspbrk(fname, L"?*") != nullptr)
-                        {
-                            wprintf(L"Wildcards not supported in -flist file\n");
-                            return 1;
-                        }
-                        else
-                        {
-                            SConversion conv;
-                            wcscpy_s(conv.szSrc, MAX_PATH, fname);
-                            conversion.push_back(conv);
-                        }
+                    inFile.imbue(std::locale::classic());
 
-                        inFile.ignore(1000, '\n');
-                    }
-                    inFile.close();
+                    ProcessFileList(inFile, conversion);
                 }
                 break;
 
             case OPT_PAPER_WHITE_NITS:
                 if (swscanf_s(pValue, L"%f", &paperWhiteNits) != 1)
                 {
-                    wprintf(L"Invalid value specified with -nits (%ls)\n", pValue);
-                    wprintf(L"\n");
+                    wprintf(L"Invalid value specified with -nits (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
                 else if (paperWhiteNits > 10000.f || paperWhiteNits <= 0.f)
                 {
-                    wprintf(L"-nits (%ls) parameter must be between 0 and 10000\n", pValue);
-                    wprintf(L"\n");
+                    wprintf(L"-nits (%ls) parameter must be between 0 and 10000\n\n", pValue);
+                    return 1;
+                }
+                break;
+
+            case OPT_PRESERVE_ALPHA_COVERAGE:
+                if (swscanf_s(pValue, L"%f", &preserveAlphaCoverageRef) != 1)
+                {
+                    wprintf(L"Invalid value specified with -keepcoverage (%ls)\n\n", pValue);
+                    PrintUsage();
+                    return 1;
+                }
+                else if (preserveAlphaCoverageRef < 0.0f || preserveAlphaCoverageRef > 1.0f)
+                {
+                    wprintf(L"-keepcoverage (%ls) parameter must be between 0.0 and 1.0\n\n", pValue);
+                    return 1;
+                }
+                break;
+
+            case OPT_SWIZZLE:
+                if (!*pValue || wcslen(pValue) > 4)
+                {
+                    wprintf(L"Invalid value specified with -swizzle (%ls)\n\n", pValue);
+                    PrintUsage();
+                    return 1;
+                }
+                else if (!ParseSwizzleMask(pValue, swizzleElements, zeroElements, oneElements))
+                {
+                    wprintf(L"-swizzle requires a 1 to 4 character mask composed of these letters: r, g, b, a, x, y, w, z, 0, 1\n");
                     return 1;
                 }
                 break;
@@ -1575,8 +1932,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else if (wcspbrk(pArg, L"?*") != nullptr)
         {
-            size_t count = conversion.size();
-            SearchForFiles(pArg, conversion, (dwOptions & (DWORD64(1) << OPT_RECURSIVE)) != 0);
+            const size_t count = conversion.size();
+            SearchForFiles(pArg, conversion, (dwOptions & (uint64_t(1) << OPT_RECURSIVE)) != 0, nullptr);
             if (conversion.size() <= count)
             {
                 wprintf(L"No matching files found for %ls\n", pArg);
@@ -1585,10 +1942,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else
         {
-            SConversion conv;
+            SConversion conv = {};
             wcscpy_s(conv.szSrc, MAX_PATH, pArg);
-
-            conv.szDest[0] = 0;
 
             conversion.push_back(conv);
         }
@@ -1600,19 +1955,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
-    if (~dwOptions & (DWORD64(1) << OPT_NOLOGO))
+    if (~dwOptions & (uint64_t(1) << OPT_NOLOGO))
         PrintLogo();
 
     // Work out out filename prefix and suffix
     if (szOutputDir[0] && (L'\\' != szOutputDir[wcslen(szOutputDir) - 1]))
         wcscat_s(szOutputDir, MAX_PATH, L"\\");
 
-    if (szPrefix[0])
-        wcscat_s(szOutputDir, MAX_PATH, szPrefix);
-
-    wcscpy_s(szPrefix, MAX_PATH, szOutputDir);
-
-    const wchar_t* fileTypeName = LookupByValue(FileType, g_pSaveFileTypes);
+    auto fileTypeName = LookupByValue(FileType, g_pSaveFileTypes);
 
     if (fileTypeName)
     {
@@ -1629,35 +1979,32 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         mipLevels = 1;
     }
 
-    LARGE_INTEGER qpcFreq;
-    if (!QueryPerformanceFrequency(&qpcFreq))
-    {
-        qpcFreq.QuadPart = 0;
-    }
+    LARGE_INTEGER qpcFreq = {};
+    std::ignore = QueryPerformanceFrequency(&qpcFreq);
 
-
-    LARGE_INTEGER qpcStart;
-    if (!QueryPerformanceCounter(&qpcStart))
-    {
-        qpcStart.QuadPart = 0;
-    }
+    LARGE_INTEGER qpcStart = {};
+    std::ignore = QueryPerformanceCounter(&qpcStart);
 
     // Convert images
+    bool sizewarn = false;
     bool nonpow2warn = false;
     bool non4bc = false;
+    bool preserveAlphaCoverage = false;
     ComPtr<ID3D11Device> pDevice;
+
+    int retVal = 0;
 
     for (auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv)
     {
         if (pConv != conversion.begin())
             wprintf(L"\n");
 
-        // Load source image
+        // --- Load source image -------------------------------------------------------
         wprintf(L"reading %ls", pConv->szSrc);
         fflush(stdout);
 
-        wchar_t ext[_MAX_EXT];
-        wchar_t fname[_MAX_FNAME];
+        wchar_t ext[_MAX_EXT] = {};
+        wchar_t fname[_MAX_FNAME] = {};
         _wsplitpath_s(pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT);
 
         TexMetadata info;
@@ -1671,28 +2018,29 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
         if (_wcsicmp(ext, L".dds") == 0)
         {
-            DWORD ddsFlags = DDS_FLAGS_NONE;
-            if (dwOptions & (DWORD64(1) << OPT_DDS_DWORD_ALIGN))
+            DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES;
+            if (dwOptions & (uint64_t(1) << OPT_DDS_DWORD_ALIGN))
                 ddsFlags |= DDS_FLAGS_LEGACY_DWORD;
-            if (dwOptions & (DWORD64(1) << OPT_EXPAND_LUMINANCE))
+            if (dwOptions & (uint64_t(1) << OPT_EXPAND_LUMINANCE))
                 ddsFlags |= DDS_FLAGS_EXPAND_LUMINANCE;
-            if (dwOptions & (DWORD64(1) << OPT_DDS_BAD_DXTN_TAILS))
+            if (dwOptions & (uint64_t(1) << OPT_DDS_BAD_DXTN_TAILS))
                 ddsFlags |= DDS_FLAGS_BAD_DXTN_TAILS;
 
             hr = LoadFromDDSFile(pConv->szSrc, ddsFlags, &info, *image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
                 continue;
             }
 
             if (IsTypeless(info.format))
             {
-                if (dwOptions & (DWORD64(1) << OPT_TYPELESS_UNORM))
+                if (dwOptions & (uint64_t(1) << OPT_TYPELESS_UNORM))
                 {
                     info.format = MakeTypelessUNORM(info.format);
                 }
-                else if (dwOptions & (DWORD64(1) << OPT_TYPELESS_FLOAT))
+                else if (dwOptions & (uint64_t(1) << OPT_TYPELESS_FLOAT))
                 {
                     info.format = MakeTypelessFLOAT(info.format);
                 }
@@ -1700,6 +2048,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (IsTypeless(info.format))
                 {
                     wprintf(L" FAILED due to Typeless format %d\n", info.format);
+                    retVal = 1;
                     continue;
                 }
 
@@ -1708,32 +2057,23 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else if (_wcsicmp(ext, L".bmp") == 0)
         {
-            std::unique_ptr<uint8_t []> bmpData;
-            size_t bmpSize;
-            hr = ReadData(pConv->szSrc, bmpData, bmpSize);
-            if (SUCCEEDED(hr))
-            {
-                hr = LoadFromWICMemory(bmpData.get(), bmpSize, dwFilter, &info, *image);
-                if (FAILED(hr))
-                {
-                    if (SUCCEEDED(LoadFromExtendedBMPMemory(bmpData.get(), bmpSize, &info, *image)))
-                    {
-                        hr = S_OK;
-                    }
-                }
-            }
+            hr = LoadFromBMPEx(pConv->szSrc, WIC_FLAGS_NONE | dwFilter, &info, *image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
                 continue;
             }
         }
         else if (_wcsicmp(ext, L".tga") == 0)
         {
-            hr = LoadFromTGAFile(pConv->szSrc, &info, *image);
+            TGA_FLAGS tgaFlags = (IsBGR(format)) ? TGA_FLAGS_BGR : TGA_FLAGS_NONE;
+
+            hr = LoadFromTGAFile(pConv->szSrc, tgaFlags, &info, *image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
                 continue;
             }
         }
@@ -1742,39 +2082,73 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = LoadFromHDRFile(pConv->szSrc, &info, *image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
                 continue;
             }
         }
-#ifdef USE_OPENEXR
+        else if (_wcsicmp(ext, L".ppm") == 0)
+        {
+            hr = LoadFromPortablePixMap(pConv->szSrc, &info, *image);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
+                continue;
+            }
+        }
+        else if (_wcsicmp(ext, L".pfm") == 0)
+        {
+            hr = LoadFromPortablePixMapHDR(pConv->szSrc, &info, *image);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
+                continue;
+            }
+        }
+    #ifdef USE_OPENEXR
         else if (_wcsicmp(ext, L".exr") == 0)
         {
             hr = LoadFromEXRFile(pConv->szSrc, &info, *image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
                 continue;
             }
         }
-#endif
+    #endif
         else
         {
             // WIC shares the same filter values for mode and dither
-            static_assert(WIC_FLAGS_DITHER == TEX_FILTER_DITHER, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_DITHER_DIFFUSION == TEX_FILTER_DITHER_DIFFUSION, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_POINT == TEX_FILTER_POINT, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_LINEAR == TEX_FILTER_LINEAR, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_CUBIC == TEX_FILTER_CUBIC, "WIC_FLAGS_* & TEX_FILTER_* should match");
-            static_assert(WIC_FLAGS_FILTER_FANT == TEX_FILTER_FANT, "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_DITHER) == static_cast<int>(TEX_FILTER_DITHER), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_DITHER_DIFFUSION) == static_cast<int>(TEX_FILTER_DITHER_DIFFUSION), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_POINT) == static_cast<int>(TEX_FILTER_POINT), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_LINEAR) == static_cast<int>(TEX_FILTER_LINEAR), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_CUBIC) == static_cast<int>(TEX_FILTER_CUBIC), "WIC_FLAGS_* & TEX_FILTER_* should match");
+            static_assert(static_cast<int>(WIC_FLAGS_FILTER_FANT) == static_cast<int>(TEX_FILTER_FANT), "WIC_FLAGS_* & TEX_FILTER_* should match");
 
-            DWORD wicFlags = dwFilter;
+            WIC_FLAGS wicFlags = WIC_FLAGS_NONE | dwFilter;
             if (FileType == CODEC_DDS)
                 wicFlags |= WIC_FLAGS_ALL_FRAMES;
 
             hr = LoadFromWICFile(pConv->szSrc, wicFlags, &info, *image);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
+                if (hr == static_cast<HRESULT>(0xc00d5212) /* MF_E_TOPO_CODEC_NOT_FOUND */)
+                {
+                    if (_wcsicmp(ext, L".heic") == 0 || _wcsicmp(ext, L".heif") == 0)
+                    {
+                        wprintf(L"INFO: This format requires installing the HEIF Image Extensions - https://aka.ms/heif\n");
+                    }
+                    else if (_wcsicmp(ext, L".webp") == 0)
+                    {
+                        wprintf(L"INFO: This format requires installing the WEBP Image Extensions - https://www.microsoft.com/p/webp-image-extensions/9pg2dk419drg\n");
+                    }
+                }
                 continue;
             }
         }
@@ -1782,36 +2156,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         PrintInfo(info);
 
         size_t tMips = (!mipLevels && info.mipLevels > 1) ? info.mipLevels : mipLevels;
-
-        bool sizewarn = false;
-
-        size_t twidth = (!width) ? info.width : width;
-        if (twidth > maxSize)
-        {
-            if (!width)
-                twidth = maxSize;
-            else
-                sizewarn = true;
-        }
-
-        size_t theight = (!height) ? info.height : height;
-        if (theight > maxSize)
-        {
-            if (!height)
-                theight = maxSize;
-            else
-                sizewarn = true;
-        }
-
-        if (sizewarn)
-        {
-            wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (%u)\n", maxSize);
-        }
-
-        if (dwOptions & (DWORD64(1) << OPT_FIT_POWEROF2))
-        {
-            FitPowerOf2(info.width, info.height, twidth, theight, maxSize);
-        }
 
         // Convert texture
         wprintf(L" as");
@@ -1822,7 +2166,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             auto img = image->GetImage(0, 0, 0);
             assert(img);
-            size_t nimg = image->GetImageCount();
+            const size_t nimg = image->GetImageCount();
 
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -1834,7 +2178,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = ConvertToSinglePlane(img, nimg, info, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [converttosingleplane] (%x)\n", hr);
+                wprintf(L" FAILED [converttosingleplane] (%08X%ls)\n",
+                    static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
                 continue;
             }
 
@@ -1853,15 +2199,78 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             image.swap(timage);
         }
 
-        DXGI_FORMAT tformat = (format == DXGI_FORMAT_UNKNOWN) ? info.format : format;
+        const DXGI_FORMAT tformat = (format == DXGI_FORMAT_UNKNOWN) ? info.format : format;
 
         // --- Decompress --------------------------------------------------------------
         std::unique_ptr<ScratchImage> cimage;
         if (IsCompressed(info.format))
         {
+            // Direct3D can only create BC resources with multiple-of-4 top levels
+            if ((info.width % 4) != 0 || (info.height % 4) != 0)
+            {
+                if (dwOptions & (uint64_t(1) << OPT_BCNONMULT4FIX))
+                {
+                    std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                    if (!timage)
+                    {
+                        wprintf(L"\nERROR: Memory allocation failed\n");
+                        return 1;
+                    }
+
+                    // If we started with < 4x4 then no need to generate mips
+                    if (info.width < 4 && info.height < 4)
+                    {
+                        tMips = 1;
+                    }
+
+                    // Fix by changing size but also have to trim any mip-levels which can be invalid
+                    TexMetadata mdata = image->GetMetadata();
+                    mdata.width = (info.width + 3u) & ~0x3u;
+                    mdata.height = (info.height + 3u) & ~0x3u;
+                    mdata.mipLevels = 1;
+                    hr = timage->Initialize(mdata);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED [BC non-multiple-of-4 fixup] (%08X%ls)\n",
+                            static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                        return 1;
+                    }
+
+                    if (mdata.dimension == TEX_DIMENSION_TEXTURE3D)
+                    {
+                        for (size_t d = 0; d < mdata.depth; ++d)
+                        {
+                            auto simg = image->GetImage(0, 0, d);
+                            auto dimg = timage->GetImage(0, 0, d);
+
+                            memcpy_s(dimg->pixels, dimg->slicePitch, simg->pixels, simg->slicePitch);
+                        }
+                    }
+                    else
+                    {
+                        for (size_t i = 0; i < mdata.arraySize; ++i)
+                        {
+                            auto simg = image->GetImage(0, i, 0);
+                            auto dimg = timage->GetImage(0, i, 0);
+
+                            memcpy_s(dimg->pixels, dimg->slicePitch, simg->pixels, simg->slicePitch);
+                        }
+                    }
+
+                    info.width = mdata.width;
+                    info.height = mdata.height;
+                    info.mipLevels = mdata.mipLevels;
+                    image.swap(timage);
+                }
+                else if (IsCompressed(tformat))
+                {
+                    non4bc = true;
+                }
+            }
+
             auto img = image->GetImage(0, 0, 0);
             assert(img);
-            size_t nimg = image->GetImageCount();
+            const size_t nimg = image->GetImageCount();
 
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -1873,7 +2282,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = Decompress(img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [decompress] (%x)\n", hr);
+                wprintf(L" FAILED [decompress] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
                 continue;
             }
 
@@ -1902,7 +2312,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Undo Premultiplied Alpha (if requested) ---------------------------------
-        if ((dwOptions & (DWORD64(1) << OPT_DEMUL_ALPHA))
+        if ((dwOptions & (uint64_t(1) << OPT_DEMUL_ALPHA))
             && HasAlpha(info.format)
             && info.format != DXGI_FORMAT_A8_UNORM)
         {
@@ -1918,7 +2328,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 auto img = image->GetImage(0, 0, 0);
                 assert(img);
-                size_t nimg = image->GetImageCount();
+                const size_t nimg = image->GetImageCount();
 
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                 if (!timage)
@@ -1930,7 +2340,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = PremultiplyAlpha(img, nimg, info, TEX_PMALPHA_REVERSE | dwSRGB, *timage);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [demultiply alpha] (%x)\n", hr);
+                    wprintf(L" FAILED [demultiply alpha] (%08X%ls)\n",
+                        static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                    retVal = 1;
                     continue;
                 }
 
@@ -1951,7 +2363,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Flip/Rotate -------------------------------------------------------------
-        if (dwOptions & ((DWORD64(1) << OPT_HFLIP) | (DWORD64(1) << OPT_VFLIP)))
+        if (dwOptions & ((uint64_t(1) << OPT_HFLIP) | (uint64_t(1) << OPT_VFLIP)))
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -1960,12 +2372,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            DWORD dwFlags = 0;
+            TEX_FR_FLAGS dwFlags = TEX_FR_ROTATE0;
 
-            if (dwOptions & (DWORD64(1) << OPT_HFLIP))
+            if (dwOptions & (uint64_t(1) << OPT_HFLIP))
                 dwFlags |= TEX_FR_FLIP_HORIZONTAL;
 
-            if (dwOptions & (DWORD64(1) << OPT_VFLIP))
+            if (dwOptions & (uint64_t(1) << OPT_VFLIP))
                 dwFlags |= TEX_FR_FLIP_VERTICAL;
 
             assert(dwFlags != 0);
@@ -1973,13 +2385,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = FlipRotate(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwFlags, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [fliprotate] (%x)\n", hr);
+                wprintf(L" FAILED [fliprotate] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
             auto& tinfo = timage->GetMetadata();
-
-            assert(tinfo.width == twidth && tinfo.height == theight);
 
             info.width = tinfo.width;
             info.height = tinfo.height;
@@ -1996,6 +2406,29 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Resize ------------------------------------------------------------------
+        size_t twidth = (!width) ? info.width : width;
+        if (twidth > maxSize)
+        {
+            if (!width)
+                twidth = maxSize;
+            else
+                sizewarn = true;
+        }
+
+        size_t theight = (!height) ? info.height : height;
+        if (theight > maxSize)
+        {
+            if (!height)
+                theight = maxSize;
+            else
+                sizewarn = true;
+        }
+
+        if (dwOptions & (uint64_t(1) << OPT_FIT_POWEROF2))
+        {
+            FitPowerOf2(info.width, info.height, twidth, theight, maxSize);
+        }
+
         if (info.width != twidth || info.height != theight)
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
@@ -2008,7 +2441,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = Resize(image->GetImages(), image->GetImageCount(), image->GetMetadata(), twidth, theight, dwFilter | dwFilterOpts, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [resize] (%x)\n", hr);
+                wprintf(L" FAILED [resize] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
@@ -2027,12 +2460,75 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             image.swap(timage);
             cimage.reset();
+
+            if (tMips > 0)
+            {
+                const size_t maxMips = (info.depth > 1)
+                    ? CountMips3D(info.width, info.height, info.depth)
+                    : CountMips(info.width, info.height);
+
+                if (tMips > maxMips)
+                {
+                    tMips = maxMips;
+                }
+            }
+        }
+
+        // --- Swizzle (if requested) --------------------------------------------------
+        if (swizzleElements[0] != 0 || swizzleElements[1] != 1 || swizzleElements[2] != 2 || swizzleElements[3] != 3
+            || zeroElements[0] != 0 || zeroElements[1] != 0 || zeroElements[2] != 0 || zeroElements[3] != 0
+            || oneElements[0] != 0 || oneElements[1] != 0 || oneElements[2] != 0 || oneElements[3] != 0)
+        {
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
+            const XMVECTOR zc = XMVectorSelectControl(zeroElements[0], zeroElements[1], zeroElements[2], zeroElements[3]);
+            const XMVECTOR oc = XMVectorSelectControl(oneElements[0], oneElements[1], oneElements[2], oneElements[3]);
+
+            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                [&, zc, oc](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+                {
+                    UNREFERENCED_PARAMETER(y);
+
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        XMVECTOR pixel = XMVectorSwizzle(inPixels[j],
+                            swizzleElements[0], swizzleElements[1], swizzleElements[2], swizzleElements[3]);
+                        pixel = XMVectorSelect(pixel, g_XMZero, zc);
+                        outPixels[j] = XMVectorSelect(pixel, g_XMOne, oc);
+                    }
+                }, *timage);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [swizzle] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                return 1;
+            }
+
+        #ifndef NDEBUG
+            auto& tinfo = timage->GetMetadata();
+        #endif
+
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.format == tinfo.format);
+            assert(info.dimension == tinfo.dimension);
+
+            image.swap(timage);
+            cimage.reset();
         }
 
         // --- Color rotation (if requested) -------------------------------------------
         if (dwRotateColor)
         {
-            if (dwRotateColor == ROTATE_HDR10_TO_709)
+            if (dwRotateColor == ROTATE_HDR10_TO_709 || dwRotateColor == ROTATE_P3D65_TO_709)
             {
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                 if (!timage)
@@ -2042,15 +2538,16 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
 
                 hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), DXGI_FORMAT_R16G16B16A16_FLOAT,
-                             dwFilter | dwFilterOpts | dwSRGB | dwConvert, TEX_THRESHOLD_DEFAULT, *timage);
+                    dwFilter | dwFilterOpts | dwSRGB | dwConvert, alphaThreshold, *timage);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [convert] (%x)\n", hr);
+                    wprintf(L" FAILED [convert] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
+            #ifndef NDEBUG
                 auto& tinfo = timage->GetMetadata();
-                tinfo;
+            #endif
 
                 assert(tinfo.format == DXGI_FORMAT_R16G16B16A16_FLOAT);
                 info.format = DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -2078,158 +2575,196 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
             case ROTATE_709_TO_HDR10:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
-
-                    for (size_t j = 0; j < width; ++j)
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                     {
-                        XMVECTOR value = inPixels[j];
+                        UNREFERENCED_PARAMETER(y);
 
-                        XMVECTOR nvalue = XMVector3Transform(value, c_from709to2020);
+                        const XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
 
-                        // Convert to ST.2084
-                        nvalue = XMVectorDivide(XMVectorMultiply(nvalue, paperWhite), c_MaxNitsFor2084);
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
 
-                        XMFLOAT4A tmp;
-                        XMStoreFloat4A(&tmp, nvalue);
+                            XMVECTOR nvalue = XMVector3Transform(value, c_from709to2020);
 
-                        tmp.x = LinearToST2084(tmp.x);
-                        tmp.y = LinearToST2084(tmp.y);
-                        tmp.z = LinearToST2084(tmp.z);
+                            // Convert to ST.2084
+                            nvalue = XMVectorDivide(XMVectorMultiply(nvalue, paperWhite), c_MaxNitsFor2084);
 
-                        nvalue = XMLoadFloat4A(&tmp);
+                            XMFLOAT4A tmp;
+                            XMStoreFloat4A(&tmp, nvalue);
 
-                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                            tmp.x = LinearToST2084(tmp.x);
+                            tmp.y = LinearToST2084(tmp.y);
+                            tmp.z = LinearToST2084(tmp.z);
 
-                        outPixels[j] = value;
-                    }
-                }, *timage);
+                            nvalue = XMLoadFloat4A(&tmp);
+
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
                 break;
 
             case ROTATE_709_TO_2020:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    for (size_t j = 0; j < width; ++j)
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                     {
-                        XMVECTOR value = inPixels[j];
+                        UNREFERENCED_PARAMETER(y);
 
-                        XMVECTOR nvalue = XMVector3Transform(value, c_from709to2020);
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
 
-                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                            const XMVECTOR nvalue = XMVector3Transform(value, c_from709to2020);
 
-                        outPixels[j] = value;
-                    }
-                }, *timage);
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
                 break;
 
             case ROTATE_HDR10_TO_709:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
-
-                    for (size_t j = 0; j < width; ++j)
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                     {
-                        XMVECTOR value = inPixels[j];
+                        UNREFERENCED_PARAMETER(y);
 
-                        // Convert from ST.2084
-                        XMFLOAT4A tmp;
-                        XMStoreFloat4A(&tmp, value);
+                        const XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
 
-                        tmp.x = ST2084ToLinear(tmp.x);
-                        tmp.y = ST2084ToLinear(tmp.y);
-                        tmp.z = ST2084ToLinear(tmp.z);
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
 
-                        XMVECTOR nvalue = XMLoadFloat4A(&tmp);
+                            // Convert from ST.2084
+                            XMFLOAT4A tmp;
+                            XMStoreFloat4A(&tmp, value);
 
-                        nvalue = XMVectorDivide(XMVectorMultiply(nvalue, c_MaxNitsFor2084), paperWhite);
+                            tmp.x = ST2084ToLinear(tmp.x);
+                            tmp.y = ST2084ToLinear(tmp.y);
+                            tmp.z = ST2084ToLinear(tmp.z);
 
-                        nvalue = XMVector3Transform(nvalue, c_from2020to709);
+                            XMVECTOR nvalue = XMLoadFloat4A(&tmp);
 
-                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                            nvalue = XMVectorDivide(XMVectorMultiply(nvalue, c_MaxNitsFor2084), paperWhite);
 
-                        outPixels[j] = value;
-                    }
-                }, *timage);
+                            nvalue = XMVector3Transform(nvalue, c_from2020to709);
+
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
                 break;
 
             case ROTATE_2020_TO_709:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    for (size_t j = 0; j < width; ++j)
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                     {
-                        XMVECTOR value = inPixels[j];
+                        UNREFERENCED_PARAMETER(y);
 
-                        XMVECTOR nvalue = XMVector3Transform(value, c_from2020to709);
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
 
-                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                            const XMVECTOR nvalue = XMVector3Transform(value, c_from2020to709);
 
-                        outPixels[j] = value;
-                    }
-                }, *timage);
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
                 break;
 
-            case ROTATE_P3_TO_HDR10:
+            case ROTATE_P3D65_TO_HDR10:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
-
-                    for (size_t j = 0; j < width; ++j)
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                     {
-                        XMVECTOR value = inPixels[j];
+                        UNREFERENCED_PARAMETER(y);
 
-                        XMVECTOR nvalue = XMVector3Transform(value, c_fromP3to2020);
+                        const XMVECTOR paperWhite = XMVectorReplicate(paperWhiteNits);
 
-                        // Convert to ST.2084
-                        nvalue = XMVectorDivide(XMVectorMultiply(nvalue, paperWhite), c_MaxNitsFor2084);
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
 
-                        XMFLOAT4A tmp;
-                        XMStoreFloat4A(&tmp, nvalue);
+                            XMVECTOR nvalue = XMVector3Transform(value, c_fromP3D65to2020);
 
-                        tmp.x = LinearToST2084(tmp.x);
-                        tmp.y = LinearToST2084(tmp.y);
-                        tmp.z = LinearToST2084(tmp.z);
+                            // Convert to ST.2084
+                            nvalue = XMVectorDivide(XMVectorMultiply(nvalue, paperWhite), c_MaxNitsFor2084);
 
-                        nvalue = XMLoadFloat4A(&tmp);
+                            XMFLOAT4A tmp;
+                            XMStoreFloat4A(&tmp, nvalue);
 
-                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                            tmp.x = LinearToST2084(tmp.x);
+                            tmp.y = LinearToST2084(tmp.y);
+                            tmp.z = LinearToST2084(tmp.z);
 
-                        outPixels[j] = value;
-                    }
-                }, *timage);
+                            nvalue = XMLoadFloat4A(&tmp);
+
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
                 break;
 
-            case ROTATE_P3_TO_2020:
+            case ROTATE_P3D65_TO_2020:
                 hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    for (size_t j = 0; j < width; ++j)
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                     {
-                        XMVECTOR value = inPixels[j];
+                        UNREFERENCED_PARAMETER(y);
 
-                        XMVECTOR nvalue = XMVector3Transform(value, c_fromP3to2020);
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
 
-                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                            const XMVECTOR nvalue = XMVector3Transform(value, c_fromP3D65to2020);
 
-                        outPixels[j] = value;
-                    }
-                }, *timage);
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
+                break;
+
+            case ROTATE_709_TO_P3D65:
+                hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+                    {
+                        UNREFERENCED_PARAMETER(y);
+
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
+
+                            const XMVECTOR nvalue = XMVector3Transform(value, c_from709toP3D65);
+
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
+                break;
+
+            case ROTATE_P3D65_TO_709:
+                hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                    [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+                    {
+                        UNREFERENCED_PARAMETER(y);
+
+                        for (size_t j = 0; j < w; ++j)
+                        {
+                            XMVECTOR value = inPixels[j];
+
+                            const XMVECTOR nvalue = XMVector3Transform(value, c_fromP3D65to709);
+
+                            value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                            outPixels[j] = value;
+                        }
+                    }, *timage);
                 break;
 
             default:
@@ -2238,12 +2773,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [rotate color apply] (%x)\n", hr);
+                wprintf(L" FAILED [rotate color apply] (%08X%ls)\n",
+                    static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
+        #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+        #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2259,7 +2796,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Tonemap (if requested) --------------------------------------------------
-        if (dwOptions & DWORD64(1) << OPT_TONEMAP)
+        if (dwOptions & uint64_t(1) << OPT_TONEMAP)
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -2271,58 +2808,59 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             // Compute max luminosity across all images
             XMVECTOR maxLum = XMVectorZero();
             hr = EvaluateImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [&](const XMVECTOR* pixels, size_t width, size_t y)
-            {
-                UNREFERENCED_PARAMETER(y);
-
-                for (size_t j = 0; j < width; ++j)
+                [&](const XMVECTOR* pixels, size_t w, size_t y)
                 {
-                    static const XMVECTORF32 s_luminance = { 0.3f, 0.59f, 0.11f, 0.f };
+                    UNREFERENCED_PARAMETER(y);
 
-                    XMVECTOR v = *pixels++;
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        static const XMVECTORF32 s_luminance = { { { 0.3f, 0.59f, 0.11f, 0.f } } };
 
-                    v = XMVector3Dot(v, s_luminance);
+                        XMVECTOR v = *pixels++;
 
-                    maxLum = XMVectorMax(v, maxLum);
-                }
-            });
+                        v = XMVector3Dot(v, s_luminance);
+
+                        maxLum = XMVectorMax(v, maxLum);
+                    }
+                });
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [tonemap maxlum] (%x)\n", hr);
+                wprintf(L" FAILED [tonemap maxlum] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
-            // Reinhard et al, "Photographic Tone Reproduction for Digital Images" 
+            // Reinhard et al, "Photographic Tone Reproduction for Digital Images"
             // http://www.cs.utah.edu/~reinhard/cdrom/
             maxLum = XMVectorMultiply(maxLum, maxLum);
 
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
-            {
-                UNREFERENCED_PARAMETER(y);
-
-                for (size_t j = 0; j < width; ++j)
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                 {
-                    XMVECTOR value = inPixels[j];
+                    UNREFERENCED_PARAMETER(y);
 
-                    XMVECTOR scale = XMVectorDivide(
-                        XMVectorAdd(g_XMOne, XMVectorDivide(value, maxLum)),
-                        XMVectorAdd(g_XMOne, value));
-                    XMVECTOR nvalue = XMVectorMultiply(value, scale);
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        XMVECTOR value = inPixels[j];
 
-                    value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+                        const XMVECTOR scale = XMVectorDivide(
+                            XMVectorAdd(g_XMOne, XMVectorDivide(value, maxLum)),
+                            XMVectorAdd(g_XMOne, value));
+                        const XMVECTOR nvalue = XMVectorMultiply(value, scale);
 
-                    outPixels[j] = value;
-                }
-            }, *timage);
+                        value = XMVectorSelect(value, nvalue, g_XMSelect1110);
+
+                        outPixels[j] = value;
+                    }
+                }, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [tonemap apply] (%x)\n", hr);
+                wprintf(L" FAILED [tonemap apply] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
+        #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+        #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2338,7 +2876,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Convert -----------------------------------------------------------------
-        if (dwOptions & (DWORD64(1) << OPT_NORMAL_MAP))
+        if (dwOptions & (uint64_t(1) << OPT_NORMAL_MAP))
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -2350,13 +2888,28 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             DXGI_FORMAT nmfmt = tformat;
             if (IsCompressed(tformat))
             {
-                nmfmt = (dwNormalMap & CNMAP_COMPUTE_OCCLUSION) ? DXGI_FORMAT_R32G32B32A32_FLOAT : DXGI_FORMAT_R32G32B32_FLOAT;
+                switch (tformat)
+                {
+                case DXGI_FORMAT_BC4_SNORM:
+                case DXGI_FORMAT_BC5_SNORM:
+                    nmfmt = (BitsPerColor(info.format) > 8) ? DXGI_FORMAT_R16G16B16A16_SNORM : DXGI_FORMAT_R8G8B8A8_SNORM;
+                    break;
+
+                case DXGI_FORMAT_BC6H_SF16:
+                case DXGI_FORMAT_BC6H_UF16:
+                    nmfmt = DXGI_FORMAT_R32G32B32_FLOAT;
+                    break;
+
+                default:
+                    nmfmt = (BitsPerColor(info.format) > 8) ? DXGI_FORMAT_R16G16B16A16_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM;
+                    break;
+                }
             }
 
             hr = ComputeNormalMap(image->GetImages(), image->GetImageCount(), image->GetMetadata(), dwNormalMap, nmapAmplitude, nmfmt, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [normalmap] (%x)\n", hr);
+                wprintf(L" FAILED [normalmap] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
@@ -2386,10 +2939,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             hr = Convert(image->GetImages(), image->GetImageCount(), image->GetMetadata(), tformat,
-                dwFilter | dwFilterOpts | dwSRGB | dwConvert, TEX_THRESHOLD_DEFAULT, *timage);
+                dwFilter | dwFilterOpts | dwSRGB | dwConvert, alphaThreshold, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [convert] (%x)\n", hr);
+                wprintf(L" FAILED [convert] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
@@ -2411,7 +2964,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- ColorKey/ChromaKey ------------------------------------------------------
-        if ((dwOptions & (DWORD64(1) << OPT_COLORKEY))
+        if ((dwOptions & (uint64_t(1) << OPT_COLORKEY))
             && HasAlpha(info.format))
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
@@ -2424,36 +2977,37 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             XMVECTOR colorKeyValue = XMLoadColor(reinterpret_cast<const XMCOLOR*>(&colorKey));
 
             hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t width, size_t y)
-            {
-                static const XMVECTORF32 s_tolerance = { 0.2f, 0.2f, 0.2f, 0.f };
-
-                UNREFERENCED_PARAMETER(y);
-
-                for (size_t j = 0; j < width; ++j)
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                 {
-                    XMVECTOR value = inPixels[j];
+                    static const XMVECTORF32 s_tolerance = { { { 0.2f, 0.2f, 0.2f, 0.f } } };
 
-                    if (XMVector3NearEqual(value, colorKeyValue, s_tolerance))
-                    {
-                        value = g_XMZero;
-                    }
-                    else
-                    {
-                        value = XMVectorSelect(g_XMOne, value, g_XMSelect1110);
-                    }
+                    UNREFERENCED_PARAMETER(y);
 
-                    outPixels[j] = value;
-                }
-            }, *timage);
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        XMVECTOR value = inPixels[j];
+
+                        if (XMVector3NearEqual(value, colorKeyValue, s_tolerance))
+                        {
+                            value = g_XMZero;
+                        }
+                        else
+                        {
+                            value = XMVectorSelect(g_XMOne, value, g_XMSelect1110);
+                        }
+
+                        outPixels[j] = value;
+                    }
+                }, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [colorkey] (%x)\n", hr);
+                wprintf(L" FAILED [colorkey] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
+        #ifndef NDEBUG
             auto& tinfo = timage->GetMetadata();
-            tinfo;
+        #endif
 
             assert(info.width == tinfo.width);
             assert(info.height == tinfo.height);
@@ -2468,8 +3022,124 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             cimage.reset();
         }
 
+        // --- Invert Y Channel --------------------------------------------------------
+        if (dwOptions & (uint64_t(1) << OPT_INVERT_Y))
+        {
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
+            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+                {
+                    static const XMVECTORU32 s_selecty = { { { XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_0 } } };
+
+                    UNREFERENCED_PARAMETER(y);
+
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        const XMVECTOR value = inPixels[j];
+
+                        const XMVECTOR inverty = XMVectorSubtract(g_XMOne, value);
+
+                        outPixels[j] = XMVectorSelect(value, inverty, s_selecty);
+                    }
+                }, *timage);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [inverty] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                return 1;
+            }
+
+        #ifndef NDEBUG
+            auto& tinfo = timage->GetMetadata();
+        #endif
+
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.format == tinfo.format);
+            assert(info.dimension == tinfo.dimension);
+
+            image.swap(timage);
+            cimage.reset();
+        }
+
+        // --- Reconstruct Z Channel ---------------------------------------------------
+        if (dwOptions & (uint64_t(1) << OPT_RECONSTRUCT_Z))
+        {
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
+            bool isunorm = (FormatDataType(info.format) == FORMAT_TYPE_UNORM) != 0;
+
+            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                [&](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+                {
+                    static const XMVECTORU32 s_selectz = { { { XM_SELECT_0, XM_SELECT_0, XM_SELECT_1, XM_SELECT_0 } } };
+
+                    UNREFERENCED_PARAMETER(y);
+
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        const XMVECTOR value = inPixels[j];
+
+                        XMVECTOR z;
+                        if (isunorm)
+                        {
+                            XMVECTOR x2 = XMVectorMultiplyAdd(value, g_XMTwo, g_XMNegativeOne);
+                            x2 = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(x2, x2)));
+                            z = XMVectorMultiplyAdd(x2, g_XMOneHalf, g_XMOneHalf);
+                        }
+                        else
+                        {
+                            z = XMVectorSqrt(XMVectorSubtract(g_XMOne, XMVector2Dot(value, value)));
+                        }
+
+                        outPixels[j] = XMVectorSelect(value, z, s_selectz);
+                    }
+                }, *timage);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [reconstructz] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                return 1;
+            }
+
+        #ifndef NDEBUG
+            auto& tinfo = timage->GetMetadata();
+        #endif
+
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.format == tinfo.format);
+            assert(info.dimension == tinfo.dimension);
+
+            image.swap(timage);
+            cimage.reset();
+        }
+
+        // --- Determine whether preserve alpha coverage is required (if requested) ----
+        if (preserveAlphaCoverageRef > 0.0f && HasAlpha(info.format) && !image->IsAlphaAllOpaque())
+        {
+            preserveAlphaCoverage = true;
+        }
+
         // --- Generate mips -----------------------------------------------------------
-        DWORD dwFilter3D = dwFilter;
+        TEX_FILTER_FLAGS dwFilter3D = dwFilter;
         if (!ispow2(info.width) || !ispow2(info.height) || !ispow2(info.depth))
         {
             if (!tMips || info.mipLevels != 1)
@@ -2484,9 +3154,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
         }
 
-        if ((!tMips || info.mipLevels != tMips) && (info.mipLevels != 1))
+        if ((!tMips || info.mipLevels != tMips || preserveAlphaCoverage) && (info.mipLevels != 1))
         {
             // Mips generation only works on a single base image, so strip off existing mip levels
+            // Also required for preserve alpha coverage so that existing mips are regenerated
+
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
             {
@@ -2499,7 +3171,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = timage->Initialize(mdata);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [copy to single level] (%x)\n", hr);
+                wprintf(L" FAILED [copy to single level] (%08X%ls)\n",
+                    static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
@@ -2511,7 +3184,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         *timage->GetImage(0, 0, d), TEX_FILTER_DEFAULT, 0, 0);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED [copy to single level] (%x)\n", hr);
+                        wprintf(L" FAILED [copy to single level] (%08X%ls)\n",
+                            static_cast<unsigned int>(hr), GetErrorDesc(hr));
                         return 1;
                     }
                 }
@@ -2524,14 +3198,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         *timage->GetImage(0, i, 0), TEX_FILTER_DEFAULT, 0, 0);
                     if (FAILED(hr))
                     {
-                        wprintf(L" FAILED [copy to single level] (%x)\n", hr);
+                        wprintf(L" FAILED [copy to single level] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                         return 1;
                     }
                 }
             }
 
             image.swap(timage);
-            info.mipLevels = image->GetMetadata().mipLevels;
+            info.mipLevels = 1;
 
             if (cimage && (tMips == 1))
             {
@@ -2541,7 +3215,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 hr = timage->Initialize(mdata);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [copy compressed to single level] (%x)\n", hr);
+                    wprintf(L" FAILED [copy compressed to single level] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
@@ -2593,7 +3267,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [mipmaps] (%x)\n", hr);
+                wprintf(L" FAILED [mipmaps] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
@@ -2612,8 +3286,55 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             cimage.reset();
         }
 
+        // --- Preserve mipmap alpha coverage (if requested) ---------------------------
+        if (preserveAlphaCoverage && info.mipLevels != 1 && (info.dimension != TEX_DIMENSION_TEXTURE3D))
+        {
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
+            hr = timage->Initialize(image->GetMetadata());
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [keepcoverage] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                return 1;
+            }
+
+            const size_t items = image->GetMetadata().arraySize;
+            for (size_t item = 0; item < items; ++item)
+            {
+                auto img = image->GetImage(0, item, 0);
+                assert(img);
+
+                hr = ScaleMipMapsAlphaForCoverage(img, info.mipLevels, info, item, preserveAlphaCoverageRef, *timage);
+                if (FAILED(hr))
+                {
+                    wprintf(L" FAILED [keepcoverage] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                    return 1;
+                }
+            }
+
+        #ifndef NDEBUG
+            auto& tinfo = timage->GetMetadata();
+        #endif
+
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.dimension == tinfo.dimension);
+
+            image.swap(timage);
+            cimage.reset();
+        }
+
         // --- Premultiplied alpha (if requested) --------------------------------------
-        if ((dwOptions & (DWORD64(1) << OPT_PREMUL_ALPHA))
+        if ((dwOptions & (uint64_t(1) << OPT_PREMUL_ALPHA))
             && HasAlpha(info.format)
             && info.format != DXGI_FORMAT_A8_UNORM)
         {
@@ -2625,7 +3346,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 auto img = image->GetImage(0, 0, 0);
                 assert(img);
-                size_t nimg = image->GetImageCount();
+                const size_t nimg = image->GetImageCount();
 
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                 if (!timage)
@@ -2634,10 +3355,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                hr = PremultiplyAlpha(img, nimg, info, dwSRGB, *timage);
+                hr = PremultiplyAlpha(img, nimg, info, TEX_PMALPHA_DEFAULT | dwSRGB, *timage);
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [premultiply alpha] (%x)\n", hr);
+                    wprintf(L" FAILED [premultiply alpha] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                    retVal = 1;
                     continue;
                 }
 
@@ -2687,7 +3409,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 auto img = image->GetImage(0, 0, 0);
                 assert(img);
-                size_t nimg = image->GetImageCount();
+                const size_t nimg = image->GetImageCount();
 
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                 if (!timage)
@@ -2714,7 +3436,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         {
                             s_tryonce = true;
 
-                            if (!(dwOptions & (DWORD64(1) << OPT_NOGPU)))
+                            if (!(dwOptions & (uint64_t(1) << OPT_NOGPU)))
                             {
                                 if (!CreateDevice(adapter, pDevice.GetAddressOf()))
                                     wprintf(L"\nWARNING: DirectCompute is not available, using BC6H / BC7 CPU codec\n");
@@ -2726,15 +3448,18 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         }
                     }
                     break;
+
+                default:
+                    break;
                 }
 
-                DWORD cflags = dwCompress;
-#ifdef _OPENMP
-                if (!(dwOptions & (DWORD64(1) << OPT_FORCE_SINGLEPROC)))
+                TEX_COMPRESS_FLAGS cflags = dwCompress;
+            #ifdef _OPENMP
+                if (!(dwOptions & (uint64_t(1) << OPT_FORCE_SINGLEPROC)))
                 {
                     cflags |= TEX_COMPRESS_PARALLEL;
                 }
-#endif
+            #endif
 
                 if ((img->width % 4) != 0 || (img->height % 4) != 0)
                 {
@@ -2747,11 +3472,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else
                 {
-                    hr = Compress(img, nimg, info, tformat, cflags | dwSRGB, TEX_THRESHOLD_DEFAULT, *timage);
+                    hr = Compress(img, nimg, info, tformat, cflags | dwSRGB, alphaThreshold, *timage);
                 }
                 if (FAILED(hr))
                 {
-                    wprintf(L" FAILED [compress] (%x)\n", hr);
+                    wprintf(L" FAILED [compress] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                    retVal = 1;
                     continue;
                 }
 
@@ -2786,7 +3512,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 // Aleady set TEX_ALPHA_MODE_PREMULTIPLIED
             }
-            else if (dwOptions & (DWORD64(1) << OPT_SEPALPHA))
+            else if (dwOptions & (uint64_t(1) << OPT_SEPALPHA))
             {
                 info.SetAlphaMode(TEX_ALPHA_MODE_CUSTOM);
             }
@@ -2804,7 +3530,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             auto img = image->GetImage(0, 0, 0);
             assert(img);
-            size_t nimg = image->GetImageCount();
+            const size_t nimg = image->GetImageCount();
 
             PrintInfo(info);
             wprintf(L"\n");
@@ -2812,31 +3538,72 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             // Figure out dest filename
             wchar_t *pchSlash, *pchDot;
 
-            wcscpy_s(pConv->szDest, MAX_PATH, szPrefix);
+            wchar_t szDest[1024] = {};
+            wcscpy_s(szDest, szOutputDir);
+
+            if (keepRecursiveDirs && *pConv->szFolder)
+            {
+                wcscat_s(szDest, pConv->szFolder);
+
+                wchar_t szPath[MAX_PATH] = {};
+                if (!GetFullPathNameW(szDest, MAX_PATH, szPath, nullptr))
+                {
+                    wprintf(L" get full path FAILED (%08X%ls)\n",
+                        static_cast<unsigned int>(HRESULT_FROM_WIN32(GetLastError())), GetErrorDesc(HRESULT_FROM_WIN32(GetLastError())));
+                    retVal = 1;
+                    continue;
+                }
+
+                auto const err = static_cast<DWORD>(SHCreateDirectoryExW(nullptr, szPath, nullptr));
+                if (err != ERROR_SUCCESS && err != ERROR_ALREADY_EXISTS)
+                {
+                    wprintf(L" directory creation FAILED (%08X%ls)\n",
+                        static_cast<unsigned int>(HRESULT_FROM_WIN32(err)), GetErrorDesc(HRESULT_FROM_WIN32(err)));
+                    retVal = 1;
+                    continue;
+                }
+            }
+
+            if (*szPrefix)
+                wcscat_s(szDest, szPrefix);
 
             pchSlash = wcsrchr(pConv->szSrc, L'\\');
-            if (pchSlash != 0)
-                wcscat_s(pConv->szDest, MAX_PATH, pchSlash + 1);
+            if (pchSlash)
+                wcscat_s(szDest, pchSlash + 1);
             else
-                wcscat_s(pConv->szDest, MAX_PATH, pConv->szSrc);
+                wcscat_s(szDest, pConv->szSrc);
 
-            pchSlash = wcsrchr(pConv->szDest, '\\');
-            pchDot = wcsrchr(pConv->szDest, '.');
+            pchSlash = wcsrchr(szDest, '\\');
+            pchDot = wcsrchr(szDest, '.');
 
             if (pchDot > pchSlash)
                 *pchDot = 0;
 
-            wcscat_s(pConv->szDest, MAX_PATH, szSuffix);
+            if (*szSuffix)
+                wcscat_s(szDest, szSuffix);
+
+            if (dwOptions & (uint64_t(1) << OPT_TOLOWER))
+            {
+                std::ignore = _wcslwr_s(szDest);
+            }
+
+            if (wcslen(szDest) > _MAX_PATH)
+            {
+                wprintf(L"\nERROR: Output filename exceeds max-path, skipping!\n");
+                retVal = 1;
+                continue;
+            }
 
             // Write texture
-            wprintf(L"writing %ls", pConv->szDest);
+            wprintf(L"writing %ls", szDest);
             fflush(stdout);
 
-            if (~dwOptions & (DWORD64(1) << OPT_OVERWRITE))
+            if (~dwOptions & (uint64_t(1) << OPT_OVERWRITE))
             {
-                if (GetFileAttributesW(pConv->szDest) != INVALID_FILE_ATTRIBUTES)
+                if (GetFileAttributesW(szDest) != INVALID_FILE_ATTRIBUTES)
                 {
                     wprintf(L"\nERROR: Output file already exists, use -y to overwrite:\n");
+                    retVal = 1;
                     continue;
                 }
             }
@@ -2844,102 +3611,130 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             switch (FileType)
             {
             case CODEC_DDS:
-                hr = SaveToDDSFile(img, nimg, info,
-                    (dwOptions & (DWORD64(1) << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
-                    pConv->szDest);
-                break;
+                {
+                    DDS_FLAGS ddsFlags = DDS_FLAGS_NONE;
+                    if (dwOptions & (uint64_t(1) << OPT_USE_DX10))
+                    {
+                        ddsFlags |= DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2;
+                    }
+                    else if (dwOptions & (uint64_t(1) << OPT_USE_DX9))
+                    {
+                        ddsFlags |= DDS_FLAGS_FORCE_DX9_LEGACY;
+                    }
+
+                    hr = SaveToDDSFile(img, nimg, info, ddsFlags, szDest);
+                    break;
+                }
 
             case CODEC_TGA:
-                hr = SaveToTGAFile(img[0], pConv->szDest);
+                hr = SaveToTGAFile(img[0], TGA_FLAGS_NONE, szDest, (dwOptions & (uint64_t(1) << OPT_TGA20)) ? &info : nullptr);
                 break;
 
             case CODEC_HDR:
-                hr = SaveToHDRFile(img[0], pConv->szDest);
+                hr = SaveToHDRFile(img[0], szDest);
                 break;
 
-#ifdef USE_OPENEXR
-            case CODEC_EXR:
-                hr = SaveToEXRFile(img[0], pConv->szDest);
+            case CODEC_PPM:
+                hr = SaveToPortablePixMap(img[0], szDest);
                 break;
-#endif
+
+            case CODEC_PFM:
+                hr = SaveToPortablePixMapHDR(img[0], szDest);
+                break;
+
+            #ifdef USE_OPENEXR
+            case CODEC_EXR:
+                hr = SaveToEXRFile(img[0], szDest);
+                break;
+            #endif
 
             default:
-            {
-                WICCodecs codec = (FileType == CODEC_HDP || FileType == CODEC_JXR) ? WIC_CODEC_WMP : static_cast<WICCodecs>(FileType);
-                size_t nimages = (dwOptions & (DWORD64(1) << OPT_WIC_MULTIFRAME)) ? nimg : 1;
-                hr = SaveToWICFile(img, nimages, WIC_FLAGS_NONE, GetWICCodec(codec), pConv->szDest, nullptr,
-                    [&](IPropertyBag2* props)
                 {
-                    bool wicLossless = (dwOptions & (DWORD64(1) << OPT_WIC_LOSSLESS)) != 0;
+                    const WICCodecs codec = (FileType == CODEC_HDP || FileType == CODEC_JXR) ? WIC_CODEC_WMP : static_cast<WICCodecs>(FileType);
+                    const size_t nimages = (dwOptions & (uint64_t(1) << OPT_WIC_MULTIFRAME)) ? nimg : 1;
+                    hr = SaveToWICFile(img, nimages, WIC_FLAGS_NONE, GetWICCodec(codec), szDest, nullptr,
+                        [&](IPropertyBag2* props)
+                        {
+                            const bool wicLossless = (dwOptions & (uint64_t(1) << OPT_WIC_LOSSLESS)) != 0;
 
-                    switch (FileType)
-                    {
-                    case WIC_CODEC_JPEG:
-                        if (wicLossless || wicQuality >= 0.f)
-                        {
-                            PROPBAG2 options = {};
-                            VARIANT varValues = {};
-                            options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
-                            varValues.vt = VT_R4;
-                            varValues.fltVal = (wicLossless) ? 1.f : wicQuality;
-                            (void)props->Write(1, &options, &varValues);
-                        }
-                        break;
+                            switch (FileType)
+                            {
+                            case WIC_CODEC_JPEG:
+                                if (wicLossless || wicQuality >= 0.f)
+                                {
+                                    PROPBAG2 options = {};
+                                    VARIANT varValues = {};
+                                    options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
+                                    varValues.vt = VT_R4;
+                                    varValues.fltVal = (wicLossless) ? 1.f : wicQuality;
+                                    std::ignore = props->Write(1, &options, &varValues);
+                                }
+                                break;
 
-                    case WIC_CODEC_TIFF:
-                    {
-                        PROPBAG2 options = {};
-                        VARIANT varValues = {};
-                        if (wicLossless)
-                        {
-                            options.pstrName = const_cast<wchar_t*>(L"TiffCompressionMethod");
-                            varValues.vt = VT_UI1;
-                            varValues.bVal = WICTiffCompressionNone;
-                        }
-                        else if (wicQuality >= 0.f)
-                        {
-                            options.pstrName = const_cast<wchar_t*>(L"CompressionQuality");
-                            varValues.vt = VT_R4;
-                            varValues.fltVal = wicQuality;
-                        }
-                        (void)props->Write(1, &options, &varValues);
-                    }
-                    break;
+                            case WIC_CODEC_TIFF:
+                                {
+                                    PROPBAG2 options = {};
+                                    VARIANT varValues = {};
+                                    if (wicLossless)
+                                    {
+                                        options.pstrName = const_cast<wchar_t*>(L"TiffCompressionMethod");
+                                        varValues.vt = VT_UI1;
+                                        varValues.bVal = WICTiffCompressionNone;
+                                    }
+                                    else if (wicQuality >= 0.f)
+                                    {
+                                        options.pstrName = const_cast<wchar_t*>(L"CompressionQuality");
+                                        varValues.vt = VT_R4;
+                                        varValues.fltVal = wicQuality;
+                                    }
+                                    std::ignore = props->Write(1, &options, &varValues);
+                                }
+                                break;
 
-                    case WIC_CODEC_WMP:
-                    case CODEC_HDP:
-                    case CODEC_JXR:
-                    {
-                        PROPBAG2 options = {};
-                        VARIANT varValues = {};
-                        if (wicLossless)
-                        {
-                            options.pstrName = const_cast<wchar_t*>(L"Lossless");
-                            varValues.vt = VT_BOOL;
-                            varValues.bVal = TRUE;
-                        }
-                        else if (wicQuality >= 0.f)
-                        {
-                            options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
-                            varValues.vt = VT_R4;
-                            varValues.fltVal = wicQuality;
-                        }
-                        (void)props->Write(1, &options, &varValues);
-                    }
-                    break;
-                    }
-                });
-            }
-            break;
+                            case WIC_CODEC_WMP:
+                            case CODEC_HDP:
+                            case CODEC_JXR:
+                                {
+                                    PROPBAG2 options = {};
+                                    VARIANT varValues = {};
+                                    if (wicLossless)
+                                    {
+                                        options.pstrName = const_cast<wchar_t*>(L"Lossless");
+                                        varValues.vt = VT_BOOL;
+                                        varValues.bVal = TRUE;
+                                    }
+                                    else if (wicQuality >= 0.f)
+                                    {
+                                        options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
+                                        varValues.vt = VT_R4;
+                                        varValues.fltVal = wicQuality;
+                                    }
+                                    std::ignore = props->Write(1, &options, &varValues);
+                                }
+                                break;
+                            }
+                        });
+                }
+                break;
             }
 
             if (FAILED(hr))
             {
-                wprintf(L" FAILED (%x)\n", hr);
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
+                if ((hr == static_cast<HRESULT>(0xc00d5212) /* MF_E_TOPO_CODEC_NOT_FOUND */) && (FileType == WIC_CODEC_HEIF))
+                {
+                    wprintf(L"INFO: This format requires installing the HEIF Image Extensions - https://aka.ms/heif\n");
+                }
                 continue;
             }
             wprintf(L"\n");
         }
+    }
+
+    if (sizewarn)
+    {
+        wprintf(L"\nWARNING: Target size exceeds maximum size for feature level (%u)\n", maxSize);
     }
 
     if (nonpow2warn && maxSize <= 4096)
@@ -2951,15 +3746,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     if (non4bc)
         wprintf(L"\nWARNING: Direct3D requires BC image to be multiple of 4 in width & height\n");
 
-    if (dwOptions & (DWORD64(1) << OPT_TIMING))
+    if (dwOptions & (uint64_t(1) << OPT_TIMING))
     {
-        LARGE_INTEGER qpcEnd;
-        if (QueryPerformanceCounter(&qpcEnd))
-        {
-            LONGLONG delta = qpcEnd.QuadPart - qpcStart.QuadPart;
-            wprintf(L"\n Processing time: %f seconds\n", double(delta) / double(qpcFreq.QuadPart));
-        }
+        LARGE_INTEGER qpcEnd = {};
+        std::ignore = QueryPerformanceCounter(&qpcEnd);
+
+        const LONGLONG delta = qpcEnd.QuadPart - qpcStart.QuadPart;
+        wprintf(L"\n Processing time: %f seconds\n", double(delta) / double(qpcFreq.QuadPart));
     }
 
-    return 0;
+    return retVal;
 }

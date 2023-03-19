@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup Label="Debug" Condition="'$(Configuration.ToLower())' == 'debug'">
+    <NuGetConfiguration>Debug</NuGetConfiguration>
+  </PropertyGroup>
+  <PropertyGroup Label="Non_Debug" Condition="'$(Configuration.ToLower())' == 'profile'">
+    <NuGetConfiguration>Release</NuGetConfiguration>
+  </PropertyGroup>
+  <PropertyGroup Label="Non_Debug" Condition="'$(Configuration.ToLower())' == 'release'">
+    <NuGetConfiguration>Release</NuGetConfiguration>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(NuGetConfiguration)' == ''">
+    <NuGetConfiguration>Release</NuGetConfiguration>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <directxtex-LibPath>$(MSBuildThisFileDirectory)..\..\native\lib\$(PlatformTarget)\$(NuGetConfiguration)</directxtex-LibPath>
+    <directxtex-LibName Condition="'$(SpectreMitigation)'!='' AND '$(SpectreMitigation)'!='false'">DirectXTex_Spectre</directxtex-LibName>
+    <directxtex-LibName Condition="'$(directxtex-LibName)'==''">DirectXTex</directxtex-LibName>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <directxtex-LibPath>$(MSBuildThisFileDirectory)..\..\native\lib\$(PlatformTarget)\$(NuGetConfiguration)</directxtex-LibPath>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalLibraryDirectories>$(directxtex-LibPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(directxtex-LibName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>HAS_DIRECTXTEX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+</Project>

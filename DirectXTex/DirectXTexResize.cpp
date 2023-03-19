@@ -1,35 +1,31 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexResize.cpp
-//  
+//
 // DirectX Texture Library - Image resizing operations
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexP.h"
 
 #include "filters.h"
 
 using namespace DirectX;
+using namespace DirectX::Internal;
 using Microsoft::WRL::ComPtr;
-
-namespace DirectX
-{
-    extern HRESULT _ResizeSeparateColorAndAlpha(_In_ IWICImagingFactory* pWIC, _In_ bool iswic2, _In_ IWICBitmap* original,
-        _In_ size_t newWidth, _In_ size_t newHeight, _In_ DWORD filter, _Inout_ const Image* img);
-}
 
 namespace
 {
+#ifdef _WIN32
     //--- Do image resize using WIC ---
     HRESULT PerformResizeUsingWIC(
         const Image& srcImage,
-        DWORD filter,
+        TEX_FILTER_FLAGS filter,
         const WICPixelFormatGUID& pfGUID,
-        const Image& destImage)
+        const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -37,7 +33,7 @@ namespace
         assert(srcImage.format == destImage.format);
 
         bool iswic2 = false;
-        IWICImagingFactory* pWIC = GetWICFactory(iswic2);
+        auto pWIC = GetWICFactory(iswic2);
         if (!pWIC)
             return E_NOINTERFACE;
 
@@ -56,6 +52,10 @@ namespace
         if (FAILED(hr))
             return hr;
 
+        if (srcImage.rowPitch > UINT32_MAX || srcImage.slicePitch > UINT32_MAX
+            || destImage.rowPitch > UINT32_MAX || destImage.slicePitch > UINT32_MAX)
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+
         ComPtr<IWICBitmap> source;
         hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height), pfGUID,
             static_cast<UINT>(srcImage.rowPitch), static_cast<UINT>(srcImage.slicePitch),
@@ -65,7 +65,7 @@ namespace
 
         if ((filter & TEX_FILTER_SEPARATE_ALPHA) && supportsTransparency)
         {
-            hr = _ResizeSeparateColorAndAlpha(pWIC, iswic2, source.Get(), destImage.width, destImage.height, filter, &destImage);
+            hr = ResizeSeparateColorAndAlpha(pWIC, iswic2, source.Get(), destImage.width, destImage.height, filter, &destImage);
             if (FAILED(hr))
                 return hr;
         }
@@ -76,7 +76,9 @@ namespace
             if (FAILED(hr))
                 return hr;
 
-            hr = scaler->Initialize(source.Get(), static_cast<UINT>(destImage.width), static_cast<UINT>(destImage.height), _GetWICInterp(filter));
+            hr = scaler->Initialize(source.Get(),
+                static_cast<UINT>(destImage.width), static_cast<UINT>(destImage.height),
+                GetWICInterp(filter));
             if (FAILED(hr))
                 return hr;
 
@@ -87,7 +89,7 @@ namespace
 
             if (memcmp(&pfScaler, &pfGUID, sizeof(WICPixelFormatGUID)) == 0)
             {
-                hr = scaler->CopyPixels(0, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
+                hr = scaler->CopyPixels(nullptr, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
                 if (FAILED(hr))
                     return hr;
             }
@@ -107,11 +109,12 @@ namespace
                     return E_UNEXPECTED;
                 }
 
-                hr = FC->Initialize(scaler.Get(), pfGUID, _GetWICDither(filter), nullptr, 0, WICBitmapPaletteTypeMedianCut);
+                hr = FC->Initialize(scaler.Get(), pfGUID, GetWICDither(filter), nullptr,
+                    0, WICBitmapPaletteTypeMedianCut);
                 if (FAILED(hr))
                     return hr;
 
-                hr = FC->CopyPixels(0, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
+                hr = FC->CopyPixels(nullptr, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
                 if (FAILED(hr))
                     return hr;
             }
@@ -124,8 +127,8 @@ namespace
     //--- Do conversion, resize using WIC, conversion cycle ---
     HRESULT PerformResizeViaF32(
         const Image& srcImage,
-        DWORD filter,
-        const Image& destImage)
+        TEX_FILTER_FLAGS filter,
+        const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -134,7 +137,7 @@ namespace
         assert(srcImage.format == destImage.format);
 
         ScratchImage temp;
-        HRESULT hr = _ConvertToR32G32B32A32(srcImage, temp);
+        HRESULT hr = ConvertToR32G32B32A32(srcImage, temp);
         if (FAILED(hr))
             return hr;
 
@@ -157,7 +160,7 @@ namespace
 
         temp.Release();
 
-        hr = _ConvertFromR32G32B32A32(*tdest, destImage);
+        hr = ConvertFromR32G32B32A32(*tdest, destImage);
         if (FAILED(hr))
             return hr;
 
@@ -166,7 +169,7 @@ namespace
 
 
     //--- determine when to use WIC vs. non-WIC paths ---
-    bool UseWICFiltering(_In_ DXGI_FORMAT format, _In_ DWORD filter)
+    bool UseWICFiltering(_In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter) noexcept
     {
         if (filter & TEX_FILTER_FORCE_NON_WIC)
         {
@@ -186,18 +189,18 @@ namespace
             return false;
         }
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+    #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
         if (format == DXGI_FORMAT_R16G16B16A16_FLOAT
             || format == DXGI_FORMAT_R16_FLOAT)
         {
-            // Use non-WIC code paths as these conversions are not supported by Xbox One XDK
+            // Use non-WIC code paths as these conversions are not supported by Xbox version of WIC
             return false;
         }
-#endif
+    #endif
 
         static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
-        switch (filter & TEX_FILTER_MASK)
+        switch (filter & TEX_FILTER_MODE_MASK)
         {
         case TEX_FILTER_LINEAR:
             if (filter & TEX_FILTER_WRAP)
@@ -230,25 +233,32 @@ namespace
         case TEX_FILTER_TRIANGLE:
             // WIC does not implement this filter
             return false;
+
+        default:
+            if (BitsPerColor(format) > 8)
+            {
+                // Avoid the WIC bitmap scaler when doing filtering of XR/HDR formats
+                return false;
+            }
+            break;
         }
 
         return true;
     }
-
+#endif // WIN32
 
     //-------------------------------------------------------------------------------------
     // Resize custom filters
     //-------------------------------------------------------------------------------------
 
     //--- Point Filter ---
-    HRESULT ResizePointFilter(const Image& srcImage, const Image& destImage)
+    HRESULT ResizePointFilter(const Image& srcImage, const Image& destImage) noexcept
     {
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
 
         // Allocate temporary space (2 scanlines)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(
-            (sizeof(XMVECTOR) * (srcImage.width + destImage.width)), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(srcImage.width) + destImage.width);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -256,17 +266,17 @@ namespace
 
         XMVECTOR* row = target + destImage.width;
 
-#ifdef _DEBUG
+    #ifdef _DEBUG
         memset(row, 0xCD, sizeof(XMVECTOR)*srcImage.width);
-#endif
+    #endif
 
         const uint8_t* pSrc = srcImage.pixels;
         uint8_t* pDest = destImage.pixels;
 
-        size_t rowPitch = srcImage.rowPitch;
+        const size_t rowPitch = srcImage.rowPitch;
 
-        size_t xinc = (srcImage.width << 16) / destImage.width;
-        size_t yinc = (srcImage.height << 16) / destImage.height;
+        const size_t xinc = (srcImage.width << 16) / destImage.width;
+        const size_t yinc = (srcImage.height << 16) / destImage.height;
 
         size_t lasty = size_t(-1);
 
@@ -275,7 +285,7 @@ namespace
         {
             if ((lasty ^ sy) >> 16)
             {
-                if (!_LoadScanline(row, srcImage.width, pSrc + (rowPitch * (sy >> 16)), rowPitch, srcImage.format))
+                if (!LoadScanline(row, srcImage.width, pSrc + (rowPitch * (sy >> 16)), rowPitch, srcImage.format))
                     return E_FAIL;
                 lasty = sy;
             }
@@ -287,7 +297,7 @@ namespace
                 sx += xinc;
             }
 
-            if (!_StoreScanline(pDest, destImage.rowPitch, destImage.format, target, destImage.width))
+            if (!StoreScanline(pDest, destImage.rowPitch, destImage.format, target, destImage.width))
                 return E_FAIL;
             pDest += destImage.rowPitch;
 
@@ -299,8 +309,10 @@ namespace
 
 
     //--- Box Filter ---
-    HRESULT ResizeBoxFilter(const Image& srcImage, DWORD filter, const Image& destImage)
+    HRESULT ResizeBoxFilter(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
+        using namespace DirectX::Filters;
+
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
 
@@ -308,8 +320,7 @@ namespace
             return E_FAIL;
 
         // Allocate temporary space (3 scanlines)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(
-            (sizeof(XMVECTOR) * (srcImage.width * 2 + destImage.width)), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(srcImage.width) * 2 + destImage.width);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -318,10 +329,10 @@ namespace
         XMVECTOR* urow0 = target + destImage.width;
         XMVECTOR* urow1 = urow0 + srcImage.width;
 
-#ifdef _DEBUG
+    #ifdef _DEBUG
         memset(urow0, 0xCD, sizeof(XMVECTOR)*srcImage.width);
         memset(urow1, 0xDD, sizeof(XMVECTOR)*srcImage.width);
-#endif
+    #endif
 
         const XMVECTOR* urow2 = urow0 + 1;
         const XMVECTOR* urow3 = urow1 + 1;
@@ -329,29 +340,29 @@ namespace
         const uint8_t* pSrc = srcImage.pixels;
         uint8_t* pDest = destImage.pixels;
 
-        size_t rowPitch = srcImage.rowPitch;
+        const size_t rowPitch = srcImage.rowPitch;
 
         for (size_t y = 0; y < destImage.height; ++y)
         {
-            if (!_LoadScanlineLinear(urow0, srcImage.width, pSrc, rowPitch, srcImage.format, filter))
+            if (!LoadScanlineLinear(urow0, srcImage.width, pSrc, rowPitch, srcImage.format, filter))
                 return E_FAIL;
             pSrc += rowPitch;
 
             if (urow0 != urow1)
             {
-                if (!_LoadScanlineLinear(urow1, srcImage.width, pSrc, rowPitch, srcImage.format, filter))
+                if (!LoadScanlineLinear(urow1, srcImage.width, pSrc, rowPitch, srcImage.format, filter))
                     return E_FAIL;
                 pSrc += rowPitch;
             }
 
             for (size_t x = 0; x < destImage.width; ++x)
             {
-                size_t x2 = x << 1;
+                const size_t x2 = x << 1;
 
-                AVERAGE4(target[x], urow0[x2], urow1[x2], urow2[x2], urow3[x2]);
+                AVERAGE4(target[x], urow0[x2], urow1[x2], urow2[x2], urow3[x2])
             }
 
-            if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter))
+            if (!StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter))
                 return E_FAIL;
             pDest += destImage.rowPitch;
         }
@@ -361,14 +372,15 @@ namespace
 
 
     //--- Linear Filter ---
-    HRESULT ResizeLinearFilter(const Image& srcImage, DWORD filter, const Image& destImage)
+    HRESULT ResizeLinearFilter(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
+        using namespace DirectX::Filters;
+
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
 
         // Allocate temporary space (3 scanlines, plus X and Y filters)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(
-            (sizeof(XMVECTOR) * (srcImage.width * 2 + destImage.width)), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(srcImage.width) * 2 + destImage.width);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -379,30 +391,30 @@ namespace
         LinearFilter* lfX = lf.get();
         LinearFilter* lfY = lf.get() + destImage.width;
 
-        _CreateLinearFilter(srcImage.width, destImage.width, (filter & TEX_FILTER_WRAP_U) != 0, lfX);
-        _CreateLinearFilter(srcImage.height, destImage.height, (filter & TEX_FILTER_WRAP_V) != 0, lfY);
+        CreateLinearFilter(srcImage.width, destImage.width, (filter & TEX_FILTER_WRAP_U) != 0, lfX);
+        CreateLinearFilter(srcImage.height, destImage.height, (filter & TEX_FILTER_WRAP_V) != 0, lfY);
 
         XMVECTOR* target = scanline.get();
 
         XMVECTOR* row0 = target + destImage.width;
         XMVECTOR* row1 = row0 + srcImage.width;
 
-#ifdef _DEBUG
+    #ifdef _DEBUG
         memset(row0, 0xCD, sizeof(XMVECTOR)*srcImage.width);
         memset(row1, 0xDD, sizeof(XMVECTOR)*srcImage.width);
-#endif
+    #endif
 
         const uint8_t* pSrc = srcImage.pixels;
         uint8_t* pDest = destImage.pixels;
 
-        size_t rowPitch = srcImage.rowPitch;
+        const size_t rowPitch = srcImage.rowPitch;
 
         size_t u0 = size_t(-1);
         size_t u1 = size_t(-1);
 
         for (size_t y = 0; y < destImage.height; ++y)
         {
-            auto& toY = lfY[y];
+            auto const& toY = lfY[y];
 
             if (toY.u0 != u0)
             {
@@ -410,7 +422,7 @@ namespace
                 {
                     u0 = toY.u0;
 
-                    if (!_LoadScanlineLinear(row0, srcImage.width, pSrc + (rowPitch * u0), rowPitch, srcImage.format, filter))
+                    if (!LoadScanlineLinear(row0, srcImage.width, pSrc + (rowPitch * u0), rowPitch, srcImage.format, filter))
                         return E_FAIL;
                 }
                 else
@@ -426,18 +438,18 @@ namespace
             {
                 u1 = toY.u1;
 
-                if (!_LoadScanlineLinear(row1, srcImage.width, pSrc + (rowPitch * u1), rowPitch, srcImage.format, filter))
+                if (!LoadScanlineLinear(row1, srcImage.width, pSrc + (rowPitch * u1), rowPitch, srcImage.format, filter))
                     return E_FAIL;
             }
 
             for (size_t x = 0; x < destImage.width; ++x)
             {
-                auto& toX = lfX[x];
+                auto const& toX = lfX[x];
 
-                BILINEAR_INTERPOLATE(target[x], toX, toY, row0, row1);
+                BILINEAR_INTERPOLATE(target[x], toX, toY, row0, row1)
             }
 
-            if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter))
+            if (!StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter))
                 return E_FAIL;
             pDest += destImage.rowPitch;
         }
@@ -447,14 +459,19 @@ namespace
 
 
     //--- Cubic Filter ---
-    HRESULT ResizeCubicFilter(const Image& srcImage, DWORD filter, const Image& destImage)
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wextra-semi-stmt"
+#endif
+
+    HRESULT ResizeCubicFilter(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
+        using namespace DirectX::Filters;
+
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
 
         // Allocate temporary space (5 scanlines, plus X and Y filters)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(
-            (sizeof(XMVECTOR) * (srcImage.width * 4 + destImage.width)), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(srcImage.width) * 4 + destImage.width);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -465,8 +482,8 @@ namespace
         CubicFilter* cfX = cf.get();
         CubicFilter* cfY = cf.get() + destImage.width;
 
-        _CreateCubicFilter(srcImage.width, destImage.width, (filter & TEX_FILTER_WRAP_U) != 0, (filter & TEX_FILTER_MIRROR_U) != 0, cfX);
-        _CreateCubicFilter(srcImage.height, destImage.height, (filter & TEX_FILTER_WRAP_V) != 0, (filter & TEX_FILTER_MIRROR_V) != 0, cfY);
+        CreateCubicFilter(srcImage.width, destImage.width, (filter & TEX_FILTER_WRAP_U) != 0, (filter & TEX_FILTER_MIRROR_U) != 0, cfX);
+        CreateCubicFilter(srcImage.height, destImage.height, (filter & TEX_FILTER_WRAP_V) != 0, (filter & TEX_FILTER_MIRROR_V) != 0, cfY);
 
         XMVECTOR* target = scanline.get();
 
@@ -475,17 +492,17 @@ namespace
         XMVECTOR* row2 = row0 + srcImage.width * 2;
         XMVECTOR* row3 = row0 + srcImage.width * 3;
 
-#ifdef _DEBUG
+    #ifdef _DEBUG
         memset(row0, 0xCD, sizeof(XMVECTOR)*srcImage.width);
         memset(row1, 0xDD, sizeof(XMVECTOR)*srcImage.width);
         memset(row2, 0xED, sizeof(XMVECTOR)*srcImage.width);
         memset(row3, 0xFD, sizeof(XMVECTOR)*srcImage.width);
-#endif
+    #endif
 
         const uint8_t* pSrc = srcImage.pixels;
         uint8_t* pDest = destImage.pixels;
 
-        size_t rowPitch = srcImage.rowPitch;
+        const size_t rowPitch = srcImage.rowPitch;
 
         size_t u0 = size_t(-1);
         size_t u1 = size_t(-1);
@@ -494,7 +511,7 @@ namespace
 
         for (size_t y = 0; y < destImage.height; ++y)
         {
-            auto& toY = cfY[y];
+            auto const& toY = cfY[y];
 
             // Scanline 1
             if (toY.u0 != u0)
@@ -503,7 +520,7 @@ namespace
                 {
                     u0 = toY.u0;
 
-                    if (!_LoadScanlineLinear(row0, srcImage.width, pSrc + (rowPitch * u0), rowPitch, srcImage.format, filter))
+                    if (!LoadScanlineLinear(row0, srcImage.width, pSrc + (rowPitch * u0), rowPitch, srcImage.format, filter))
                         return E_FAIL;
                 }
                 else if (toY.u0 == u1)
@@ -536,7 +553,7 @@ namespace
                 {
                     u1 = toY.u1;
 
-                    if (!_LoadScanlineLinear(row1, srcImage.width, pSrc + (rowPitch * u1), rowPitch, srcImage.format, filter))
+                    if (!LoadScanlineLinear(row1, srcImage.width, pSrc + (rowPitch * u1), rowPitch, srcImage.format, filter))
                         return E_FAIL;
                 }
                 else if (toY.u1 == u2)
@@ -562,7 +579,7 @@ namespace
                 {
                     u2 = toY.u2;
 
-                    if (!_LoadScanlineLinear(row2, srcImage.width, pSrc + (rowPitch * u2), rowPitch, srcImage.format, filter))
+                    if (!LoadScanlineLinear(row2, srcImage.width, pSrc + (rowPitch * u2), rowPitch, srcImage.format, filter))
                         return E_FAIL;
                 }
                 else
@@ -579,13 +596,13 @@ namespace
             {
                 u3 = toY.u3;
 
-                if (!_LoadScanlineLinear(row3, srcImage.width, pSrc + (rowPitch * u3), rowPitch, srcImage.format, filter))
+                if (!LoadScanlineLinear(row3, srcImage.width, pSrc + (rowPitch * u3), rowPitch, srcImage.format, filter))
                     return E_FAIL;
             }
 
             for (size_t x = 0; x < destImage.width; ++x)
             {
-                auto& toX = cfX[x];
+                auto const& toX = cfX[x];
 
                 XMVECTOR C0, C1, C2, C3;
 
@@ -597,7 +614,7 @@ namespace
                 CUBIC_INTERPOLATE(target[x], toY.x, C0, C1, C2, C3);
             }
 
-            if (!_StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter))
+            if (!StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, target, destImage.width, filter))
                 return E_FAIL;
             pDest += destImage.rowPitch;
         }
@@ -607,15 +624,15 @@ namespace
 
 
     //--- Triangle Filter ---
-    HRESULT ResizeTriangleFilter(const Image& srcImage, DWORD filter, const Image& destImage)
+    HRESULT ResizeTriangleFilter(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
+        using namespace DirectX::Filters;
+
         assert(srcImage.pixels && destImage.pixels);
         assert(srcImage.format == destImage.format);
 
-        using namespace TriangleFilter;
-
         // Allocate initial temporary space (1 scanline, accumulation rows, plus X and Y filters)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * srcImage.width, 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(srcImage.width);
         if (!scanline)
             return E_OUTOFMEMORY;
 
@@ -626,20 +643,20 @@ namespace
         TriangleRow * rowFree = nullptr;
 
         std::unique_ptr<Filter> tfX;
-        HRESULT hr = _Create(srcImage.width, destImage.width, (filter & TEX_FILTER_WRAP_U) != 0, tfX);
+        HRESULT hr = CreateTriangleFilter(srcImage.width, destImage.width, (filter & TEX_FILTER_WRAP_U) != 0, tfX);
         if (FAILED(hr))
             return hr;
 
         std::unique_ptr<Filter> tfY;
-        hr = _Create(srcImage.height, destImage.height, (filter & TEX_FILTER_WRAP_V) != 0, tfY);
+        hr = CreateTriangleFilter(srcImage.height, destImage.height, (filter & TEX_FILTER_WRAP_V) != 0, tfY);
         if (FAILED(hr))
             return hr;
 
         XMVECTOR* row = scanline.get();
 
-#ifdef _DEBUG
+    #ifdef _DEBUG
         memset(row, 0xCD, sizeof(XMVECTOR)*srcImage.width);
-#endif
+    #endif
 
         auto xFromEnd = reinterpret_cast<const FilterFrom*>(reinterpret_cast<const uint8_t*>(tfX.get()) + tfX->sizeInBytes);
         auto yFromEnd = reinterpret_cast<const FilterFrom*>(reinterpret_cast<const uint8_t*>(tfY.get()) + tfY->sizeInBytes);
@@ -649,7 +666,7 @@ namespace
         {
             for (size_t j = 0; j < yFrom->count; ++j)
             {
-                size_t v = yFrom->to[j].u;
+                const size_t v = yFrom->to[j].u;
                 assert(v < destImage.height);
                 ++rowActive[v].remaining;
             }
@@ -659,7 +676,7 @@ namespace
 
         // Filter image
         const uint8_t* pSrc = srcImage.pixels;
-        size_t rowPitch = srcImage.rowPitch;
+        const size_t rowPitch = srcImage.rowPitch;
         const uint8_t* pEndSrc = pSrc + rowPitch * srcImage.height;
 
         uint8_t* pDest = destImage.pixels;
@@ -669,7 +686,7 @@ namespace
             // Create accumulation rows as needed
             for (size_t j = 0; j < yFrom->count; ++j)
             {
-                size_t v = yFrom->to[j].u;
+                const size_t v = yFrom->to[j].u;
                 assert(v < destImage.height);
                 TriangleRow* rowAcc = &rowActive[v];
 
@@ -678,15 +695,16 @@ namespace
                     if (rowFree)
                     {
                         // Steal and reuse scanline from 'free row' list
-                        assert(rowFree->scanline != 0);
+                        assert(rowFree->scanline != nullptr);
                         rowAcc->scanline.reset(rowFree->scanline.release());
                         rowFree = rowFree->next;
                     }
                     else
                     {
-                        rowAcc->scanline.reset(static_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * destImage.width, 16)));
-                        if (!rowAcc->scanline)
+                        auto nscanline = make_AlignedArrayXMVECTOR(destImage.width);
+                        if (!nscanline)
                             return E_OUTOFMEMORY;
+                        rowAcc->scanline.swap(nscanline);
                     }
 
                     memset(rowAcc->scanline.get(), 0, sizeof(XMVECTOR) * destImage.width);
@@ -697,7 +715,7 @@ namespace
             if ((pSrc + rowPitch) > pEndSrc)
                 return E_FAIL;
 
-            if (!_LoadScanlineLinear(row, srcImage.width, pSrc, rowPitch, srcImage.format, filter))
+            if (!LoadScanlineLinear(row, srcImage.width, pSrc, rowPitch, srcImage.format, filter))
                 return E_FAIL;
 
             pSrc += rowPitch;
@@ -708,9 +726,9 @@ namespace
             {
                 for (size_t j = 0; j < yFrom->count; ++j)
                 {
-                    size_t v = yFrom->to[j].u;
+                    const size_t v = yFrom->to[j].u;
                     assert(v < destImage.height);
-                    float yweight = yFrom->to[j].weight;
+                    const float yweight = yFrom->to[j].weight;
 
                     XMVECTOR* accPtr = rowActive[v].scanline.get();
                     if (!accPtr)
@@ -721,7 +739,7 @@ namespace
                         size_t u = xFrom->to[k].u;
                         assert(u < destImage.width);
 
-                        XMVECTOR weight = XMVectorReplicate(yweight * xFrom->to[k].weight);
+                        const XMVECTOR weight = XMVectorReplicate(yweight * xFrom->to[k].weight);
 
                         assert(x < srcImage.width);
                         accPtr[u] = XMVectorMultiplyAdd(row[x], weight, accPtr[u]);
@@ -751,25 +769,25 @@ namespace
                     {
                     case DXGI_FORMAT_R10G10B10A2_UNORM:
                     case DXGI_FORMAT_R10G10B10A2_UINT:
-                    {
-                        // Need to slightly bias results for floating-point error accumulation which can
-                        // be visible with harshly quantized values
-                        static const XMVECTORF32 Bias = { { { 0.f, 0.f, 0.f, 0.1f } } };
-
-                        XMVECTOR* ptr = pAccSrc;
-                        for (size_t i = 0; i < destImage.width; ++i, ++ptr)
                         {
-                            *ptr = XMVectorAdd(*ptr, Bias);
+                            // Need to slightly bias results for floating-point error accumulation which can
+                            // be visible with harshly quantized values
+                            static const XMVECTORF32 Bias = { { { 0.f, 0.f, 0.f, 0.1f } } };
+
+                            XMVECTOR* ptr = pAccSrc;
+                            for (size_t i = 0; i < destImage.width; ++i, ++ptr)
+                            {
+                                *ptr = XMVectorAdd(*ptr, Bias);
+                            }
                         }
-                    }
-                    break;
+                        break;
 
                     default:
                         break;
                     }
 
                     // This performs any required clamping
-                    if (!_StoreScanlineLinear(pDest + (destImage.rowPitch * v), destImage.rowPitch, destImage.format, pAccSrc, destImage.width, filter))
+                    if (!StoreScanlineLinear(pDest + (destImage.rowPitch * v), destImage.rowPitch, destImage.format, pAccSrc, destImage.width, filter))
                         return E_FAIL;
 
                     // Put row on freelist to reuse it's allocated scanline
@@ -786,14 +804,14 @@ namespace
 
 
     //--- Custom filter resize ---
-    HRESULT PerformResizeUsingCustomFilters(const Image& srcImage, DWORD filter, const Image& destImage)
+    HRESULT PerformResizeUsingCustomFilters(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
 
         static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
-        DWORD filter_select = (filter & TEX_FILTER_MASK);
+        unsigned long filter_select = filter & TEX_FILTER_MODE_MASK;
         if (!filter_select)
         {
             // Default filter choice
@@ -819,7 +837,7 @@ namespace
             return ResizeTriangleFilter(srcImage, filter, destImage);
 
         default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
     }
 }
@@ -837,8 +855,8 @@ HRESULT DirectX::Resize(
     const Image& srcImage,
     size_t width,
     size_t height,
-    DWORD filter,
-    ScratchImage& image)
+    TEX_FILTER_FLAGS filter,
+    ScratchImage& image) noexcept
 {
     if (width == 0 || height == 0)
         return E_INVALIDARG;
@@ -855,8 +873,29 @@ HRESULT DirectX::Resize(
     if (IsCompressed(srcImage.format))
     {
         // We don't support resizing compressed images
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
     }
+
+#ifdef _WIN32
+    bool usewic = UseWICFiltering(srcImage.format, filter);
+
+    WICPixelFormatGUID pfGUID = {};
+    const bool wicpf = (usewic) ? DXGIToWIC(srcImage.format, pfGUID, true) : false;
+
+    if (usewic && !wicpf)
+    {
+        // Check to see if the source and/or result size is too big for WIC
+        const uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
+        const uint64_t expandedSize2 = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
+        {
+            if (filter & TEX_FILTER_FORCE_WIC)
+                return HRESULT_E_ARITHMETIC_OVERFLOW;
+
+            usewic = false;
+        }
+    }
+#endif // WIN32
 
     HRESULT hr = image.Initialize2D(srcImage.format, width, height, 1, 1);
     if (FAILED(hr))
@@ -866,10 +905,10 @@ HRESULT DirectX::Resize(
     if (!rimage)
         return E_POINTER;
 
-    if (UseWICFiltering(srcImage.format, filter))
+#ifdef _WIN32
+    if (usewic)
     {
-        WICPixelFormatGUID pfGUID;
-        if (_DXGIToWIC(srcImage.format, pfGUID, true))
+        if (wicpf)
         {
             // Case 1: Source format is supported by Windows Imaging Component
             hr = PerformResizeUsingWIC(srcImage, filter, pfGUID, *rimage);
@@ -881,7 +920,9 @@ HRESULT DirectX::Resize(
         }
     }
     else
+    #endif
     {
+        // Case 3: not using WIC resizing
         hr = PerformResizeUsingCustomFilters(srcImage, filter, *rimage);
     }
 
@@ -905,8 +946,8 @@ HRESULT DirectX::Resize(
     const TexMetadata& metadata,
     size_t width,
     size_t height,
-    DWORD filter,
-    ScratchImage& result)
+    TEX_FILTER_FLAGS filter,
+    ScratchImage& result) noexcept
 {
     if (!srcImages || !nimages || width == 0 || height == 0)
         return E_INVALIDARG;
@@ -922,10 +963,26 @@ HRESULT DirectX::Resize(
     if (FAILED(hr))
         return hr;
 
+#ifdef _WIN32
     bool usewic = !metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
-    bool wicpf = (usewic) ? _DXGIToWIC(metadata.format, pfGUID, true) : false;
+    const bool wicpf = (usewic) ? DXGIToWIC(metadata.format, pfGUID, true) : false;
+
+    if (usewic && !wicpf)
+    {
+        // Check to see if the source and/or result size is too big for WIC
+        const uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
+        const uint64_t expandedSize2 = uint64_t(metadata.width) * uint64_t(metadata.height) * sizeof(float) * 4;
+        if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
+        {
+            if (filter & TEX_FILTER_FORCE_WIC)
+                return HRESULT_E_ARITHMETIC_OVERFLOW;
+
+            usewic = false;
+        }
+    }
+#endif
 
     switch (metadata.dimension)
     {
@@ -935,7 +992,7 @@ HRESULT DirectX::Resize(
 
         for (size_t item = 0; item < metadata.arraySize; ++item)
         {
-            size_t srcIndex = metadata.ComputeIndex(0, item, 0);
+            const size_t srcIndex = metadata.ComputeIndex(0, item, 0);
             if (srcIndex >= nimages)
             {
                 result.Release();
@@ -962,6 +1019,7 @@ HRESULT DirectX::Resize(
                 return E_FAIL;
             }
 
+        #ifdef _WIN32
             if (usewic)
             {
                 if (wicpf)
@@ -976,6 +1034,7 @@ HRESULT DirectX::Resize(
                 }
             }
             else
+            #endif
             {
                 // Case 3: not using WIC resizing
                 hr = PerformResizeUsingCustomFilters(*srcimg, filter, *destimg);
@@ -994,7 +1053,7 @@ HRESULT DirectX::Resize(
 
         for (size_t slice = 0; slice < metadata.depth; ++slice)
         {
-            size_t srcIndex = metadata.ComputeIndex(0, 0, slice);
+            const size_t srcIndex = metadata.ComputeIndex(0, 0, slice);
             if (srcIndex >= nimages)
             {
                 result.Release();
@@ -1021,6 +1080,7 @@ HRESULT DirectX::Resize(
                 return E_FAIL;
             }
 
+        #ifdef _WIN32
             if (usewic)
             {
                 if (wicpf)
@@ -1035,6 +1095,7 @@ HRESULT DirectX::Resize(
                 }
             }
             else
+            #endif
             {
                 // Case 3: not using WIC resizing
                 hr = PerformResizeUsingCustomFilters(*srcimg, filter, *destimg);

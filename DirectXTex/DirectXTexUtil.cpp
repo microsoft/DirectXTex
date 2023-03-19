@@ -1,24 +1,24 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexUtil.cpp
-//  
+//
 // DirectX Texture Library - Utilities
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexP.h"
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
-static_assert(XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT == DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT, "Xbox One XDK mismatch detected");
-static_assert(XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT == DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT, "Xbox One XDK mismatch detected");
-static_assert(XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT == DXGI_FORMAT_D16_UNORM_S8_UINT, "Xbox One XDK mismatch detected");
-static_assert(XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS == DXGI_FORMAT_R16_UNORM_X8_TYPELESS, "Xbox One XDK mismatch detected");
-static_assert(XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT == DXGI_FORMAT_X16_TYPELESS_G8_UINT, "Xbox One XDK mismatch detected");
-static_assert(XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM == DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM, "Xbox One XDK mismatch detected");
-static_assert(XBOX_DXGI_FORMAT_R4G4_UNORM == DXGI_FORMAT_R4G4_UNORM, "Xbox One XDK mismatch detected");
+#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+static_assert(XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT == DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT, "Xbox mismatch detected");
+static_assert(XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT == DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT, "Xbox mismatch detected");
+static_assert(XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT == DXGI_FORMAT_D16_UNORM_S8_UINT, "Xbox mismatch detected");
+static_assert(XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS == DXGI_FORMAT_R16_UNORM_X8_TYPELESS, "Xbox mismatch detected");
+static_assert(XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT == DXGI_FORMAT_X16_TYPELESS_G8_UINT, "Xbox mismatch detected");
+static_assert(XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM == DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM, "Xbox mismatch detected");
+static_assert(XBOX_DXGI_FORMAT_R4G4_UNORM == DXGI_FORMAT_R4G4_UNORM, "Xbox mismatch detected");
 #endif
 
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN10)
@@ -32,17 +32,18 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
+#ifdef _WIN32
     //-------------------------------------------------------------------------------------
     // WIC Pixel Format Translation Data
     //-------------------------------------------------------------------------------------
     struct WICTranslate
     {
-        GUID        wic;
+        const GUID& wic;
         DXGI_FORMAT format;
         bool        srgb;
     };
 
-    const WICTranslate g_WICFormats[] =
+    constexpr WICTranslate g_WICFormats[] =
     {
         { GUID_WICPixelFormat128bppRGBAFloat,       DXGI_FORMAT_R32G32B32A32_FLOAT,         false },
 
@@ -71,17 +72,70 @@ namespace
 
     bool g_WIC2 = false;
     IWICImagingFactory* g_Factory = nullptr;
+
+    BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID *ifactory) noexcept
+    {
+    #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+        HRESULT hr = CoCreateInstance(
+            CLSID_WICImagingFactory2,
+            nullptr,
+            CLSCTX_INPROC_SERVER,
+            __uuidof(IWICImagingFactory2),
+            ifactory
+        );
+
+        if (SUCCEEDED(hr))
+        {
+            // WIC2 is available on Windows 10, Windows 8.x, and Windows 7 SP1 with KB 2670838 installed
+            g_WIC2 = true;
+            return TRUE;
+        }
+        else
+        {
+            g_WIC2 = false;
+
+            hr = CoCreateInstance(
+                CLSID_WICImagingFactory1,
+                nullptr,
+                CLSCTX_INPROC_SERVER,
+                __uuidof(IWICImagingFactory),
+                ifactory
+            );
+            return SUCCEEDED(hr) ? TRUE : FALSE;
+        }
+    #else
+        g_WIC2 = false;
+
+        return SUCCEEDED(CoCreateInstance(
+            CLSID_WICImagingFactory,
+            nullptr,
+            CLSCTX_INPROC_SERVER,
+            __uuidof(IWICImagingFactory),
+            ifactory)) ? TRUE : FALSE;
+    #endif
+    }
+
+#else // !WIN32
+    inline void * _aligned_malloc(size_t size, size_t alignment)
+    {
+        size = (size + alignment - 1) & ~(alignment - 1);
+        return std::aligned_alloc(alignment, size);
+    }
+
+#define _aligned_free free
+#endif
 }
 
 
+#ifdef _WIN32
 //=====================================================================================
 // WIC Utilities
 //=====================================================================================
 
 _Use_decl_annotations_
-DXGI_FORMAT DirectX::_WICToDXGI(const GUID& guid)
+DXGI_FORMAT DirectX::Internal::WICToDXGI(const GUID& guid) noexcept
 {
-    for (size_t i = 0; i < _countof(g_WICFormats); ++i)
+    for (size_t i = 0; i < std::size(g_WICFormats); ++i)
     {
         if (memcmp(&g_WICFormats[i].wic, &guid, sizeof(GUID)) == 0)
             return g_WICFormats[i].format;
@@ -99,71 +153,71 @@ DXGI_FORMAT DirectX::_WICToDXGI(const GUID& guid)
 }
 
 _Use_decl_annotations_
-bool DirectX::_DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR)
+bool DirectX::Internal::DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR) noexcept
 {
     switch (format)
     {
-        case DXGI_FORMAT_R8G8B8A8_UNORM:
-        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-            if (ignoreRGBvsBGR)
-            {
-                // If we are not doing conversion so don't really care about BGR vs RGB color-order,
-                // we can use the canonical WIC 32bppBGRA format which avoids an extra format conversion when using the WIC scaler
-                memcpy(&guid, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID));
-            }
-            else
-            {
-                memcpy(&guid, &GUID_WICPixelFormat32bppRGBA, sizeof(GUID));
-            }
-            return true;
-
-        case DXGI_FORMAT_D32_FLOAT:
-            memcpy(&guid, &GUID_WICPixelFormat32bppGrayFloat, sizeof(GUID));
-            return true;
-
-        case DXGI_FORMAT_D16_UNORM:
-            memcpy(&guid, &GUID_WICPixelFormat16bppGray, sizeof(GUID));
-            return true;
-
-        case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+    case DXGI_FORMAT_R8G8B8A8_UNORM:
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+        if (ignoreRGBvsBGR)
+        {
+            // If we are not doing conversion so don't really care about BGR vs RGB color-order,
+            // we can use the canonical WIC 32bppBGRA format which avoids an extra format conversion when using the WIC scaler
             memcpy(&guid, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID));
-            return true;
+        }
+        else
+        {
+            memcpy(&guid, &GUID_WICPixelFormat32bppRGBA, sizeof(GUID));
+        }
+        return true;
 
-        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-            memcpy(&guid, &GUID_WICPixelFormat32bppBGR, sizeof(GUID));
-            return true;
+    case DXGI_FORMAT_D32_FLOAT:
+        memcpy(&guid, &GUID_WICPixelFormat32bppGrayFloat, sizeof(GUID));
+        return true;
 
-        #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
-        case DXGI_FORMAT_R32G32B32_FLOAT:
-            if (g_WIC2)
+    case DXGI_FORMAT_D16_UNORM:
+        memcpy(&guid, &GUID_WICPixelFormat16bppGray, sizeof(GUID));
+        return true;
+
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        memcpy(&guid, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID));
+        return true;
+
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+        memcpy(&guid, &GUID_WICPixelFormat32bppBGR, sizeof(GUID));
+        return true;
+
+    #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+    case DXGI_FORMAT_R32G32B32_FLOAT:
+        if (g_WIC2)
+        {
+            memcpy(&guid, &GUID_WICPixelFormat96bppRGBFloat, sizeof(GUID));
+            return true;
+        }
+        break;
+    #endif
+
+    default:
+        for (size_t i = 0; i < std::size(g_WICFormats); ++i)
+        {
+            if (g_WICFormats[i].format == format)
             {
-                memcpy(&guid, &GUID_WICPixelFormat96bppRGBFloat, sizeof(GUID));
+                memcpy(&guid, &g_WICFormats[i].wic, sizeof(GUID));
                 return true;
             }
-            break;
-        #endif
-
-        default:
-            for (size_t i = 0; i < _countof(g_WICFormats); ++i)
-            {
-                if (g_WICFormats[i].format == format)
-                {
-                    memcpy(&guid, &g_WICFormats[i].wic, sizeof(GUID));
-                    return true;
-                }
-            }
-            break;
+        }
+        break;
     }
 
-    memcpy(&guid, &GUID_NULL, sizeof(GUID));
+    memset(&guid, 0, sizeof(GUID));
     return false;
 }
 
-DWORD DirectX::_CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID& targetGUID)
+TEX_FILTER_FLAGS DirectX::Internal::CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID& targetGUID) noexcept
 {
-    DWORD srgb = 0;
+    TEX_FILTER_FLAGS srgb = TEX_FILTER_DEFAULT;
 
-    for (size_t i = 0; i < _countof(g_WICFormats); ++i)
+    for (size_t i = 0; i < std::size(g_WICFormats); ++i)
     {
         if (memcmp(&g_WICFormats[i].wic, &sourceGUID, sizeof(GUID)) == 0)
         {
@@ -191,7 +245,7 @@ DWORD DirectX::_CheckWICColorSpace(_In_ const GUID& sourceGUID, _In_ const GUID&
 // Public helper function to get common WIC codec GUIDs
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-REFGUID DirectX::GetWICCodec(WICCodecs codec)
+REFGUID DirectX::GetWICCodec(WICCodecs codec) noexcept
 {
     switch (codec)
     {
@@ -216,6 +270,12 @@ REFGUID DirectX::GetWICCodec(WICCodecs codec)
     case WIC_CODEC_ICO:
         return GUID_ContainerFormatIco;
 
+#ifdef NTDDI_WIN10_RS4
+    case WIC_CODEC_HEIF:
+        // This requires installing https://aka.ms/heif
+        return GUID_ContainerFormatHeif;
+#endif
+
     default:
         return GUID_NULL;
     }
@@ -225,7 +285,7 @@ REFGUID DirectX::GetWICCodec(WICCodecs codec)
 //-------------------------------------------------------------------------------------
 // Singleton function for WIC factory
 //-------------------------------------------------------------------------------------
-IWICImagingFactory* DirectX::GetWICFactory(bool& iswic2)
+IWICImagingFactory* DirectX::GetWICFactory(bool& iswic2) noexcept
 {
     if (g_Factory)
     {
@@ -235,48 +295,13 @@ IWICImagingFactory* DirectX::GetWICFactory(bool& iswic2)
 
     static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
-    InitOnceExecuteOnce(&s_initOnce,
-        [](PINIT_ONCE, PVOID, LPVOID *factory) noexcept -> BOOL
+    if (!InitOnceExecuteOnce(&s_initOnce,
+        InitializeWICFactory,
+        nullptr,
+        reinterpret_cast<LPVOID*>(&g_Factory)))
     {
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
-        HRESULT hr = CoCreateInstance(
-            CLSID_WICImagingFactory2,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            __uuidof(IWICImagingFactory2),
-            factory
-        );
-
-        if (SUCCEEDED(hr))
-        {
-            // WIC2 is available on Windows 10, Windows 8.x, and Windows 7 SP1 with KB 2670838 installed
-            g_WIC2 = true;
-            return TRUE;
-        }
-        else
-        {
-            g_WIC2 = false;
-
-            hr = CoCreateInstance(
-                CLSID_WICImagingFactory1,
-                nullptr,
-                CLSCTX_INPROC_SERVER,
-                __uuidof(IWICImagingFactory),
-                factory
-            );
-            return SUCCEEDED(hr) ? TRUE : FALSE;
-        }
-#else
-        g_WIC2 = false;
-
-        return SUCCEEDED(CoCreateInstance(
-            CLSID_WICImagingFactory,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            __uuidof(IWICImagingFactory),
-            factory)) ? TRUE : FALSE;
-#endif
-    }, nullptr, reinterpret_cast<LPVOID*>(&g_Factory));
+        return nullptr;
+    }
 
     iswic2 = g_WIC2;
     return g_Factory;
@@ -286,7 +311,7 @@ IWICImagingFactory* DirectX::GetWICFactory(bool& iswic2)
 //-------------------------------------------------------------------------------------
 // Optional initializer for WIC factory
 //-------------------------------------------------------------------------------------
-void DirectX::SetWICFactory(_In_opt_ IWICImagingFactory* pWIC)
+void DirectX::SetWICFactory(_In_opt_ IWICImagingFactory* pWIC) noexcept
 {
     if (pWIC == g_Factory)
         return;
@@ -294,14 +319,14 @@ void DirectX::SetWICFactory(_In_opt_ IWICImagingFactory* pWIC)
     bool iswic2 = false;
     if (pWIC)
     {
-#if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
+    #if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
         ComPtr<IWICImagingFactory2> wic2;
         HRESULT hr = pWIC->QueryInterface(IID_PPV_ARGS(wic2.GetAddressOf()));
         if (SUCCEEDED(hr))
         {
             iswic2 = true;
         }
-#endif
+    #endif
         pWIC->AddRef();
     }
 
@@ -310,7 +335,7 @@ void DirectX::SetWICFactory(_In_opt_ IWICImagingFactory* pWIC)
     if (pWIC)
         pWIC->Release();
 }
-
+#endif // WIN32
 
 
 //=====================================================================================
@@ -319,7 +344,7 @@ void DirectX::SetWICFactory(_In_opt_ IWICImagingFactory* pWIC)
 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-bool DirectX::IsPacked(DXGI_FORMAT fmt)
+bool DirectX::IsPacked(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -338,7 +363,7 @@ bool DirectX::IsPacked(DXGI_FORMAT fmt)
 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-bool DirectX::IsVideo(DXGI_FORMAT fmt)
+bool DirectX::IsVideo(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -375,7 +400,7 @@ bool DirectX::IsVideo(DXGI_FORMAT fmt)
 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-bool DirectX::IsPlanar(DXGI_FORMAT fmt)
+bool DirectX::IsPlanar(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -404,7 +429,7 @@ bool DirectX::IsPlanar(DXGI_FORMAT fmt)
 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-bool DirectX::IsDepthStencil(DXGI_FORMAT fmt)
+bool DirectX::IsDepthStencil(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -431,7 +456,7 @@ bool DirectX::IsDepthStencil(DXGI_FORMAT fmt)
 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-bool DirectX::IsTypeless(DXGI_FORMAT fmt, bool partialTypeless)
+bool DirectX::IsTypeless(DXGI_FORMAT fmt, bool partialTypeless) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -475,7 +500,7 @@ bool DirectX::IsTypeless(DXGI_FORMAT fmt, bool partialTypeless)
 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-bool DirectX::HasAlpha(DXGI_FORMAT fmt)
+bool DirectX::HasAlpha(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -538,7 +563,7 @@ bool DirectX::HasAlpha(DXGI_FORMAT fmt)
 // Returns bits-per-pixel for a given DXGI format, or 0 on failure
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-size_t DirectX::BitsPerPixel(DXGI_FORMAT fmt)
+size_t DirectX::BitsPerPixel(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -655,6 +680,21 @@ size_t DirectX::BitsPerPixel(DXGI_FORMAT fmt)
     case DXGI_FORMAT_R8_SNORM:
     case DXGI_FORMAT_R8_SINT:
     case DXGI_FORMAT_A8_UNORM:
+    case DXGI_FORMAT_BC2_TYPELESS:
+    case DXGI_FORMAT_BC2_UNORM:
+    case DXGI_FORMAT_BC2_UNORM_SRGB:
+    case DXGI_FORMAT_BC3_TYPELESS:
+    case DXGI_FORMAT_BC3_UNORM:
+    case DXGI_FORMAT_BC3_UNORM_SRGB:
+    case DXGI_FORMAT_BC5_TYPELESS:
+    case DXGI_FORMAT_BC5_UNORM:
+    case DXGI_FORMAT_BC5_SNORM:
+    case DXGI_FORMAT_BC6H_TYPELESS:
+    case DXGI_FORMAT_BC6H_UF16:
+    case DXGI_FORMAT_BC6H_SF16:
+    case DXGI_FORMAT_BC7_TYPELESS:
+    case DXGI_FORMAT_BC7_UNORM:
+    case DXGI_FORMAT_BC7_UNORM_SRGB:
     case DXGI_FORMAT_AI44:
     case DXGI_FORMAT_IA44:
     case DXGI_FORMAT_P8:
@@ -672,23 +712,6 @@ size_t DirectX::BitsPerPixel(DXGI_FORMAT fmt)
     case DXGI_FORMAT_BC4_SNORM:
         return 4;
 
-    case DXGI_FORMAT_BC2_TYPELESS:
-    case DXGI_FORMAT_BC2_UNORM:
-    case DXGI_FORMAT_BC2_UNORM_SRGB:
-    case DXGI_FORMAT_BC3_TYPELESS:
-    case DXGI_FORMAT_BC3_UNORM:
-    case DXGI_FORMAT_BC3_UNORM_SRGB:
-    case DXGI_FORMAT_BC5_TYPELESS:
-    case DXGI_FORMAT_BC5_UNORM:
-    case DXGI_FORMAT_BC5_SNORM:
-    case DXGI_FORMAT_BC6H_TYPELESS:
-    case DXGI_FORMAT_BC6H_UF16:
-    case DXGI_FORMAT_BC6H_SF16:
-    case DXGI_FORMAT_BC7_TYPELESS:
-    case DXGI_FORMAT_BC7_UNORM:
-    case DXGI_FORMAT_BC7_UNORM_SRGB:
-        return 8;
-
     default:
         return 0;
     }
@@ -700,7 +723,7 @@ size_t DirectX::BitsPerPixel(DXGI_FORMAT fmt)
 // For mixed formats, it returns the largest color-depth in the format
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-size_t DirectX::BitsPerColor(DXGI_FORMAT fmt)
+size_t DirectX::BitsPerColor(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -866,9 +889,12 @@ size_t DirectX::BitsPerColor(DXGI_FORMAT fmt)
 // based on DXGI format, width, and height
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-void DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
-    size_t& rowPitch, size_t& slicePitch, DWORD flags)
+HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
+    size_t& rowPitch, size_t& slicePitch, CP_FLAGS flags) noexcept
 {
+    uint64_t pitch = 0;
+    uint64_t slice = 0;
+
     switch (static_cast<int>(fmt))
     {
     case DXGI_FORMAT_BC1_TYPELESS:
@@ -881,17 +907,17 @@ void DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
         {
             if (flags & CP_FLAGS_BAD_DXTN_TAILS)
             {
-                size_t nbw = width >> 2;
-                size_t nbh = height >> 2;
-                rowPitch = std::max<size_t>(1, nbw * 8);
-                slicePitch = std::max<size_t>(1, rowPitch * nbh);
+                const size_t nbw = width >> 2;
+                const size_t nbh = height >> 2;
+                pitch = std::max<uint64_t>(1u, uint64_t(nbw) * 8u);
+                slice = std::max<uint64_t>(1u, pitch * uint64_t(nbh));
             }
             else
             {
-                size_t nbw = std::max<size_t>(1, (width + 3) / 4);
-                size_t nbh = std::max<size_t>(1, (height + 3) / 4);
-                rowPitch = nbw * 8;
-                slicePitch = rowPitch * nbh;
+                const uint64_t nbw = std::max<uint64_t>(1u, (uint64_t(width) + 3u) / 4u);
+                const uint64_t nbh = std::max<uint64_t>(1u, (uint64_t(height) + 3u) / 4u);
+                pitch = nbw * 8u;
+                slice = pitch * nbh;
             }
         }
         break;
@@ -915,17 +941,17 @@ void DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
         {
             if (flags & CP_FLAGS_BAD_DXTN_TAILS)
             {
-                size_t nbw = width >> 2;
-                size_t nbh = height >> 2;
-                rowPitch = std::max<size_t>(1, nbw * 16);
-                slicePitch = std::max<size_t>(1, rowPitch * nbh);
+                const size_t nbw = width >> 2;
+                const size_t nbh = height >> 2;
+                pitch = std::max<uint64_t>(1u, uint64_t(nbw) * 16u);
+                slice = std::max<uint64_t>(1u, pitch * uint64_t(nbh));
             }
             else
             {
-                size_t nbw = std::max<size_t>(1, (width + 3) / 4);
-                size_t nbh = std::max<size_t>(1, (height + 3) / 4);
-                rowPitch = nbw * 16;
-                slicePitch = rowPitch * nbh;
+                const uint64_t nbw = std::max<uint64_t>(1u, (uint64_t(width) + 3u) / 4u);
+                const uint64_t nbh = std::max<uint64_t>(1u, (uint64_t(height) + 3u) / 4u);
+                pitch = nbw * 16u;
+                slice = pitch * nbh;
             }
         }
         break;
@@ -934,63 +960,85 @@ void DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
     case DXGI_FORMAT_G8R8_G8B8_UNORM:
     case DXGI_FORMAT_YUY2:
         assert(IsPacked(fmt));
-        rowPitch = ((width + 1) >> 1) * 4;
-        slicePitch = rowPitch * height;
+        pitch = ((uint64_t(width) + 1u) >> 1) * 4u;
+        slice = pitch * uint64_t(height);
         break;
 
     case DXGI_FORMAT_Y210:
     case DXGI_FORMAT_Y216:
         assert(IsPacked(fmt));
-        rowPitch = ((width + 1) >> 1) * 8;
-        slicePitch = rowPitch * height;
+        pitch = ((uint64_t(width) + 1u) >> 1) * 8u;
+        slice = pitch * uint64_t(height);
         break;
 
     case DXGI_FORMAT_NV12:
     case DXGI_FORMAT_420_OPAQUE:
+        if ((height % 2) != 0)
+        {
+            // Requires a height alignment of 2.
+            return E_INVALIDARG;
+        }
         assert(IsPlanar(fmt));
-        rowPitch = ((width + 1) >> 1) * 2;
-        slicePitch = rowPitch * (height + ((height + 1) >> 1));
+        pitch = ((uint64_t(width) + 1u) >> 1) * 2u;
+        slice = pitch * (uint64_t(height) + ((uint64_t(height) + 1u) >> 1));
         break;
 
     case DXGI_FORMAT_P010:
     case DXGI_FORMAT_P016:
+        if ((height % 2) != 0)
+        {
+            // Requires a height alignment of 2.
+            return E_INVALIDARG;
+        }
+
+        #if (__cplusplus >= 201703L)
+            [[fallthrough]];
+        #elif defined(__clang__)
+            [[clang::fallthrough]];
+        #elif defined(_MSC_VER)
+            __fallthrough;
+        #endif
+
     case XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT:
     case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
     case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:
         assert(IsPlanar(fmt));
-        rowPitch = ((width + 1) >> 1) * 4;
-        slicePitch = rowPitch * (height + ((height + 1) >> 1));
+        pitch = ((uint64_t(width) + 1u) >> 1) * 4u;
+        slice = pitch * (uint64_t(height) + ((uint64_t(height) + 1u) >> 1));
         break;
 
     case DXGI_FORMAT_NV11:
         assert(IsPlanar(fmt));
-        rowPitch = ((width + 3) >> 2) * 4;
-        slicePitch = rowPitch * height * 2;
+        pitch = ((uint64_t(width) + 3u) >> 2) * 4u;
+        slice = pitch * uint64_t(height) * 2u;
         break;
 
     case WIN10_DXGI_FORMAT_P208:
         assert(IsPlanar(fmt));
-        rowPitch = ((width + 1) >> 1) * 2;
-        slicePitch = rowPitch * height * 2;
+        pitch = ((uint64_t(width) + 1u) >> 1) * 2u;
+        slice = pitch * uint64_t(height) * 2u;
         break;
 
     case WIN10_DXGI_FORMAT_V208:
+        if ((height % 2) != 0)
+        {
+            // Requires a height alignment of 2.
+            return E_INVALIDARG;
+        }
         assert(IsPlanar(fmt));
-        rowPitch = width;
-        slicePitch = rowPitch * (height + (((height + 1) >> 1) * 2));
+        pitch = uint64_t(width);
+        slice = pitch * (uint64_t(height) + (((uint64_t(height) + 1u) >> 1) * 2u));
         break;
 
     case WIN10_DXGI_FORMAT_V408:
         assert(IsPlanar(fmt));
-        rowPitch = width;
-        slicePitch = rowPitch * (height + ((height >> 1) * 4));
+        pitch = uint64_t(width);
+        slice = pitch * (uint64_t(height) + (uint64_t(height >> 1) * 4u));
         break;
 
     default:
-        assert(IsValid(fmt));
         assert(!IsCompressed(fmt) && !IsPacked(fmt) && !IsPlanar(fmt));
         {
-
             size_t bpp;
 
             if (flags & CP_FLAGS_24BPP)
@@ -1002,51 +1050,70 @@ void DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
             else
                 bpp = BitsPerPixel(fmt);
 
+            if (!bpp)
+                return E_INVALIDARG;
+
             if (flags & (CP_FLAGS_LEGACY_DWORD | CP_FLAGS_PARAGRAPH | CP_FLAGS_YMM | CP_FLAGS_ZMM | CP_FLAGS_PAGE4K))
             {
                 if (flags & CP_FLAGS_PAGE4K)
                 {
-                    rowPitch = ((width * bpp + 32767) / 32768) * 4096;
-                    slicePitch = rowPitch * height;
+                    pitch = ((uint64_t(width) * bpp + 32767u) / 32768u) * 4096u;
+                    slice = pitch * uint64_t(height);
                 }
                 else if (flags & CP_FLAGS_ZMM)
                 {
-                    rowPitch = ((width * bpp + 511) / 512) * 64;
-                    slicePitch = rowPitch * height;
+                    pitch = ((uint64_t(width) * bpp + 511u) / 512u) * 64u;
+                    slice = pitch * uint64_t(height);
                 }
                 else if (flags & CP_FLAGS_YMM)
                 {
-                    rowPitch = ((width * bpp + 255) / 256) * 32;
-                    slicePitch = rowPitch * height;
+                    pitch = ((uint64_t(width) * bpp + 255u) / 256u) * 32u;
+                    slice = pitch * uint64_t(height);
                 }
                 else if (flags & CP_FLAGS_PARAGRAPH)
                 {
-                    rowPitch = ((width * bpp + 127) / 128) * 16;
-                    slicePitch = rowPitch * height;
+                    pitch = ((uint64_t(width) * bpp + 127u) / 128u) * 16u;
+                    slice = pitch * uint64_t(height);
                 }
                 else // DWORD alignment
                 {
                     // Special computation for some incorrectly created DDS files based on
                     // legacy DirectDraw assumptions about pitch alignment
-                    rowPitch = ((width * bpp + 31) / 32) * sizeof(uint32_t);
-                    slicePitch = rowPitch * height;
+                    pitch = ((uint64_t(width) * bpp + 31u) / 32u) * sizeof(uint32_t);
+                    slice = pitch * uint64_t(height);
                 }
             }
             else
             {
                 // Default byte alignment
-                rowPitch = (width * bpp + 7) / 8;
-                slicePitch = rowPitch * height;
+                pitch = (uint64_t(width) * bpp + 7u) / 8u;
+                slice = pitch * uint64_t(height);
             }
         }
         break;
     }
+
+#if defined(_M_IX86) || defined(_M_ARM) || defined(_M_HYBRID_X86_ARM64)
+    static_assert(sizeof(size_t) == 4, "Not a 32-bit platform!");
+    if (pitch > UINT32_MAX || slice > UINT32_MAX)
+    {
+        rowPitch = slicePitch = 0;
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
+    }
+#else
+    static_assert(sizeof(size_t) == 8, "Not a 64-bit platform!");
+#endif
+
+    rowPitch = static_cast<size_t>(pitch);
+    slicePitch = static_cast<size_t>(slice);
+
+    return S_OK;
 }
 
 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-size_t DirectX::ComputeScanlines(DXGI_FORMAT fmt, size_t height)
+size_t DirectX::ComputeScanlines(DXGI_FORMAT fmt, size_t height) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -1109,7 +1176,7 @@ size_t DirectX::ComputeScanlines(DXGI_FORMAT fmt, size_t height)
 // Converts to an SRGB equivalent type if available
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-DXGI_FORMAT DirectX::MakeSRGB(DXGI_FORMAT fmt)
+DXGI_FORMAT DirectX::MakeSRGB(DXGI_FORMAT fmt) noexcept
 {
     switch (fmt)
     {
@@ -1141,10 +1208,45 @@ DXGI_FORMAT DirectX::MakeSRGB(DXGI_FORMAT fmt)
 
 
 //-------------------------------------------------------------------------------------
+// Converts to an non-SRGB equivalent type
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
+DXGI_FORMAT DirectX::MakeLinear(DXGI_FORMAT fmt) noexcept
+{
+    switch (fmt)
+    {
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+        return DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    case DXGI_FORMAT_BC1_UNORM_SRGB:
+        return DXGI_FORMAT_BC1_UNORM;
+
+    case DXGI_FORMAT_BC2_UNORM_SRGB:
+        return DXGI_FORMAT_BC2_UNORM;
+
+    case DXGI_FORMAT_BC3_UNORM_SRGB:
+        return DXGI_FORMAT_BC3_UNORM;
+
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        return DXGI_FORMAT_B8G8R8A8_UNORM;
+
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+        return DXGI_FORMAT_B8G8R8X8_UNORM;
+
+    case DXGI_FORMAT_BC7_UNORM_SRGB:
+        return DXGI_FORMAT_BC7_UNORM;
+
+    default:
+        return fmt;
+    }
+}
+
+
+//-------------------------------------------------------------------------------------
 // Converts to a format to an equivalent TYPELESS format if available
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-DXGI_FORMAT DirectX::MakeTypeless(DXGI_FORMAT fmt)
+DXGI_FORMAT DirectX::MakeTypeless(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -1264,7 +1366,7 @@ DXGI_FORMAT DirectX::MakeTypeless(DXGI_FORMAT fmt)
 // Converts to a TYPELESS format to an equivalent UNORM format if available
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-DXGI_FORMAT DirectX::MakeTypelessUNORM(DXGI_FORMAT fmt)
+DXGI_FORMAT DirectX::MakeTypelessUNORM(DXGI_FORMAT fmt) noexcept
 {
     switch (fmt)
     {
@@ -1323,7 +1425,7 @@ DXGI_FORMAT DirectX::MakeTypelessUNORM(DXGI_FORMAT fmt)
 // Converts to a TYPELESS format to an equivalent FLOAT format if available
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-DXGI_FORMAT DirectX::MakeTypelessFLOAT(DXGI_FORMAT fmt)
+DXGI_FORMAT DirectX::MakeTypelessFLOAT(DXGI_FORMAT fmt) noexcept
 {
     switch (fmt)
     {
@@ -1359,7 +1461,7 @@ DXGI_FORMAT DirectX::MakeTypelessFLOAT(DXGI_FORMAT fmt)
 //=====================================================================================
 
 _Use_decl_annotations_
-size_t TexMetadata::ComputeIndex(size_t mip, size_t item, size_t slice) const
+size_t TexMetadata::ComputeIndex(size_t mip, size_t item, size_t slice) const noexcept
 {
     if (mip >= mipLevels)
         return size_t(-1);
@@ -1401,7 +1503,6 @@ size_t TexMetadata::ComputeIndex(size_t mip, size_t item, size_t slice) const
 
             return index;
         }
-        break;
 
     default:
         return size_t(-1);
@@ -1428,7 +1529,7 @@ Blob& Blob::operator= (Blob&& moveFrom) noexcept
     return *this;
 }
 
-void Blob::Release()
+void Blob::Release() noexcept
 {
     if (m_buffer)
     {
@@ -1440,7 +1541,7 @@ void Blob::Release()
 }
 
 _Use_decl_annotations_
-HRESULT Blob::Initialize(size_t size)
+HRESULT Blob::Initialize(size_t size) noexcept
 {
     if (!size)
         return E_INVALIDARG;
@@ -1459,7 +1560,7 @@ HRESULT Blob::Initialize(size_t size)
     return S_OK;
 }
 
-HRESULT Blob::Trim(size_t size)
+HRESULT Blob::Trim(size_t size) noexcept
 {
     if (!size)
         return E_INVALIDARG;
@@ -1470,6 +1571,28 @@ HRESULT Blob::Trim(size_t size)
     if (size > m_size)
         return E_INVALIDARG;
 
+    m_size = size;
+
+    return S_OK;
+}
+
+HRESULT Blob::Resize(size_t size) noexcept
+{
+    if (!size)
+        return E_INVALIDARG;
+
+    if (!m_buffer || !m_size)
+        return E_UNEXPECTED;
+
+    void *tbuffer = _aligned_malloc(size, 16);
+    if (!tbuffer)
+        return E_OUTOFMEMORY;
+
+    memcpy(tbuffer, m_buffer, std::min(m_size, size));
+
+    Release();
+
+    m_buffer = tbuffer;
     m_size = size;
 
     return S_OK;

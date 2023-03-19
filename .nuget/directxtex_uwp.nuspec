@@ -7,44 +7,54 @@
         <authors>Microsoft</authors>
         <owners>microsoft,directxtk</owners>
         <summary>DirectXTex texture processing library</summary>
-        <description>This version is for Universal Windows apps on Windows 10 using Visual Studio 2015 Update 3 or Visual Studio 2017.
+        <description>This version is for Universal Windows Platform apps on Windows 10 / Windows 11 using Visual Studio 2019 or Visual Studio 2022.
 
 DirectXTex, a shared source library for reading and writing .DDS files, and performing various texture content processing operations including resizing, format conversion, mip-map generation, block compression for Direct3D runtime texture resources, and height-map to normal-map conversion. This library makes use of the Windows Image Component (WIC) APIs. It also includes simple .TGA and .HDR readers and writers since these image file format are commonly used for texture content processing pipelines, but are not currently supported by a built-in WIC codec.</description>
-        <releaseNotes>Matches the April 23, 2018 release on GitHub.</releaseNotes>
+        <releaseNotes>Matches the January 31, 2023 release on GitHub.</releaseNotes>
         <projectUrl>http://go.microsoft.com/fwlink/?LinkId=248926</projectUrl>
-        <iconUrl>https://github.com/Microsoft/DirectXTex/wiki/X_jpg.jpg</iconUrl>
-        <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
+        <repository type="git" url="https://github.com/microsoft/DirectXTex.git" />
+        <icon>images\icon.jpg</icon>
+        <readme>docs\README.md</readme>
+        <license type="expression">MIT</license>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <copyright>© Microsoft Corporation. All rights reserved.</copyright>
+        <copyright>&#169; Microsoft Corporation. All rights reserved.</copyright>
         <tags>DirectX  DirectXTex  native nativepackage</tags>
     </metadata>
 
     <files>
 
-        <file target="docs" src="Readme.*" />
+        <file target="docs" src="*.md" />
 
         <file target="include" src="DirectXTex\DirectXTex.h" />
         <file target="include" src="DirectXTex\DirectXTex.inl" />
 
-        <file target="lib\ARM\Debug" src="DirectXTex\Bin\Windows10\ARM\Debug\*.lib" />
-        <file target="lib\ARM\Debug" src="DirectXTex\Bin\Windows10\ARM\Debug\*.pdb" />
+        <file target="native\lib\ARM\Debug" src="DirectXTex\Bin\Windows10_2019\ARM\Debug\*.lib" />
+        <file target="native\lib\ARM\Debug" src="DirectXTex\Bin\Windows10_2019\ARM\Debug\*.pdb" />
 
-        <file target="lib\ARM\Release" src="DirectXTex\Bin\Windows10\ARM\Release\*.lib" />
-        <file target="lib\ARM\Release" src="DirectXTex\Bin\Windows10\ARM\Release\*.pdb" />
-      
-        <file target="lib\Win32\Debug" src="DirectXTex\Bin\Windows10\Win32\Debug\*.lib" />
-        <file target="lib\Win32\Debug" src="DirectXTex\Bin\Windows10\Win32\Debug\*.pdb" />
+        <file target="native\lib\ARM\Release" src="DirectXTex\Bin\Windows10_2019\ARM\Release\*.lib" />
+        <file target="native\lib\ARM\Release" src="DirectXTex\Bin\Windows10_2019\ARM\Release\*.pdb" />
 
-        <file target="lib\Win32\Release" src="DirectXTex\Bin\Windows10\Win32\Release\*.lib" />
-        <file target="lib\Win32\Release" src="DirectXTex\Bin\Windows10\Win32\Release\*.pdb" />
+        <file target="native\lib\ARM64\Debug" src="DirectXTex\Bin\Windows10_2019\ARM64\Debug\*.lib" />
+        <file target="native\lib\ARM64\Debug" src="DirectXTex\Bin\Windows10_2019\ARM64\Debug\*.pdb" />
 
-        <file target="lib\x64\Debug" src="DirectXTex\Bin\Windows10\x64\Debug\*.lib" />
-        <file target="lib\x64\Debug" src="DirectXTex\Bin\Windows10\x64\Debug\*.pdb" />
+        <file target="native\lib\ARM64\Release" src="DirectXTex\Bin\Windows10_2019\ARM64\Release\*.lib" />
+        <file target="native\lib\ARM64\Release" src="DirectXTex\Bin\Windows10_2019\ARM64\Release\*.pdb" />
 
-        <file target="lib\x64\Release" src="DirectXTex\Bin\Windows10\x64\Release\*.lib" />
-        <file target="lib\x64\Release" src="DirectXTex\Bin\Windows10\x64\Release\*.pdb" />
+        <file target="native\lib\x86\Debug" src="DirectXTex\Bin\Windows10_2019\Win32\Debug\*.lib" />
+        <file target="native\lib\x86\Debug" src="DirectXTex\Bin\Windows10_2019\Win32\Debug\*.pdb" />
+
+        <file target="native\lib\x86\Release" src="DirectXTex\Bin\Windows10_2019\Win32\Release\*.lib" />
+        <file target="native\lib\x86\Release" src="DirectXTex\Bin\Windows10_2019\Win32\Release\*.pdb" />
+
+        <file target="native\lib\x64\Debug" src="DirectXTex\Bin\Windows10_2019\x64\Debug\*.lib" />
+        <file target="native\lib\x64\Debug" src="DirectXTex\Bin\Windows10_2019\x64\Debug\*.pdb" />
+
+        <file target="native\lib\x64\Release" src="DirectXTex\Bin\Windows10_2019\x64\Release\*.lib" />
+        <file target="native\lib\x64\Release" src="DirectXTex\Bin\Windows10_2019\x64\Release\*.pdb" />
 
         <file src=".nuget/directxtex_uwp.targets" target="build\native" />
-      
+
+        <file src=".nuget/icon.jpg" target="images\" />
+
     </files>
 </package>

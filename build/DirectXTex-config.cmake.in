@@ -1,0 +1,16 @@
+@PACKAGE_INIT@
+
+include(${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@-targets.cmake)
+include(CMakeFindDependencyMacro)
+
+set(ENABLE_OPENEXR_SUPPORT @ENABLE_OPENEXR_SUPPORT@)
+if(ENABLE_OPENEXR_SUPPORT)
+    find_dependency(OpenEXR)
+endif()
+
+if(MINGW OR (NOT WIN32) OR VCPKG_TOOLCHAIN)
+    find_dependency(directx-headers CONFIG)
+    find_dependency(directxmath CONFIG)
+endif()
+
+check_required_components("@PROJECT_NAME@")

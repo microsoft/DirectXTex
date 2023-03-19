@@ -1,0 +1,279 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+#
+# http://go.microsoft.com/fwlink/?LinkId=248926
+
+# Builds the library for Windows Desktop and UWP.
+
+schedules:
+- cron: "0 3 * * *"
+  displayName: 'Nightly build'
+  branches:
+    include:
+    - main
+
+trigger: none
+pr: none
+
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: refs/heads/main
+
+name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
+
+pool:
+  vmImage: windows-2022
+
+jobs:
+- job: DESKTOP_BUILD
+  displayName: 'Win32 Desktop'
+  timeoutInMinutes: 120
+  cancelTimeoutInMinutes: 1
+  steps:
+  - checkout: self
+    clean: true
+    fetchTags: false
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022.sln 32dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x86
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022.sln 32rel
+    inputs:
+      solution: DirectXTex_Desktop_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x86
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022.sln 64dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x64
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022.sln 64rel
+    inputs:
+      solution: DirectXTex_Desktop_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x64
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 32dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x86
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 32rel
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x86
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 64dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x64
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 64rel
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x64
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln arm64dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: ARM64
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln arm64rel
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: ARM64
+      configuration: Release
+      msbuildArchitecture: x64
+
+- job: DESKTOP_BUILD_SPECTRE
+  displayName: 'Win32 Desktop (Spectre-mitigated)'
+  timeoutInMinutes: 120
+  cancelTimeoutInMinutes: 1
+  steps:
+  - checkout: self
+    clean: true
+    fetchTags: false
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022.sln 32dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=Spectre
+      platform: x86
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022.sln 32rel
+    inputs:
+      solution: DirectXTex_Desktop_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=Spectre
+      platform: x86
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022.sln 64dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=Spectre
+      platform: x64
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022.sln 64rel
+    inputs:
+      solution: DirectXTex_Desktop_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=Spectre
+      platform: x64
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 32dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=Spectre
+      platform: x86
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 32rel
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=Spectre
+      platform: x86
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 64dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=Spectre
+      platform: x64
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 64rel
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=Spectre
+      platform: x64
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln arm64dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=Spectre
+      platform: ARM64
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln arm64rel
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=Spectre
+      platform: ARM64
+      configuration: Release
+      msbuildArchitecture: x64
+
+- job: UWP_BUILD
+  displayName: 'Universal Windows Platform (UWP)'
+  timeoutInMinutes: 120
+  cancelTimeoutInMinutes: 1
+  steps:
+  - checkout: self
+    clean: true
+    fetchTags: false
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln 32dbg
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x86
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln 32rel
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x86
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln 64dbg
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x64
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln 64rel
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x64
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln armdbg
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: ARM
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln armrel
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: ARM
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln arm64dbg
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: ARM64
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln arm64rel
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: ARM64
+      configuration: Release
+      msbuildArchitecture: x64

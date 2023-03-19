@@ -1,23 +1,24 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexNormalMaps.cpp
-//  
+//
 // DirectX Texture Library - Normal map operations
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 
-#include "directxtexp.h"
+#include "DirectXTexP.h"
 
 using namespace DirectX;
+using namespace DirectX::Internal;
 
 namespace
 {
 
 #pragma prefast(suppress : 25000, "FXMVECTOR is 16 bytes")
-    inline float EvaluateColor(_In_ FXMVECTOR val, _In_ DWORD flags)
+    inline float EvaluateColor(_In_ FXMVECTOR val, _In_ CNMAP_FLAGS flags) noexcept
     {
         XMFLOAT4A f;
 
@@ -33,12 +34,11 @@ namespace
         case CNMAP_CHANNEL_ALPHA:   return XMVectorGetW(val);
 
         case CNMAP_CHANNEL_LUMINANCE:
-        {
-            XMVECTOR v = XMVectorMultiply(val, lScale);
-            XMStoreFloat4A(&f, v);
-            return f.x + f.y + f.z;
-        }
-        break;
+            {
+                const XMVECTOR v = XMVectorMultiply(val, lScale);
+                XMStoreFloat4A(&f, v);
+                return f.x + f.y + f.z;
+            }
 
         default:
             assert(false);
@@ -50,7 +50,7 @@ namespace
         _In_reads_(width) const XMVECTOR* pSource,
         _Out_writes_(width + 2) float* pDest,
         size_t width,
-        DWORD flags)
+        CNMAP_FLAGS flags) noexcept
     {
         assert(pSource && pDest);
         assert(width > 0);
@@ -74,18 +74,18 @@ namespace
         }
     }
 
-    HRESULT ComputeNMap(_In_ const Image& srcImage, _In_ DWORD flags, _In_ float amplitude,
-        _In_ DXGI_FORMAT format, _In_ const Image& normalMap)
+    HRESULT ComputeNMap(_In_ const Image& srcImage, _In_ CNMAP_FLAGS flags, _In_ float amplitude,
+        _In_ DXGI_FORMAT format, _In_ const Image& normalMap) noexcept
     {
         if (!srcImage.pixels || !normalMap.pixels)
             return E_INVALIDARG;
 
-        const DWORD convFlags = _GetConvertFlags(format);
+        const uint32_t convFlags = GetConvertFlags(format);
         if (!convFlags)
             return E_FAIL;
 
         if (!(convFlags & (CONVF_UNORM | CONVF_SNORM | CONVF_FLOAT)))
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
 
         const size_t width = srcImage.width;
         const size_t height = srcImage.height;
@@ -93,11 +93,11 @@ namespace
             return E_FAIL;
 
         // Allocate temporary space (4 scanlines and 3 evaluated rows)
-        ScopedAlignedArrayXMVECTOR scanline(static_cast<XMVECTOR*>(_aligned_malloc((sizeof(XMVECTOR)*width * 4), 16)));
+        auto scanline = make_AlignedArrayXMVECTOR(uint64_t(width) * 4);
         if (!scanline)
             return E_OUTOFMEMORY;
 
-        ScopedAlignedArrayFloat buffer(static_cast<float*>(_aligned_malloc(((sizeof(float) * (width + 2)) * 3), 16)));
+        auto buffer = make_AlignedArrayFloat((uint64_t(width) + 2) * 3);
         if (!buffer)
             return E_OUTOFMEMORY;
 
@@ -118,19 +118,19 @@ namespace
         const uint8_t* pSrc = srcImage.pixels;
 
         // Read first scanline row into 'row1'
-        if (!_LoadScanline(row1, width, pSrc, rowPitch, srcImage.format))
+        if (!LoadScanline(row1, width, pSrc, rowPitch, srcImage.format))
             return E_FAIL;
 
         // Setup 'row0'
         if (flags & CNMAP_MIRROR_V)
         {
             // Mirror first row
-            memcpy_s(row0, rowPitch, row1, rowPitch);
+            memcpy(row0, row1, rowPitch);
         }
         else
         {
             // Read last row (Wrap V)
-            if (!_LoadScanline(row0, width, pSrc + (rowPitch * (height - 1)), rowPitch, srcImage.format))
+            if (!LoadScanline(row0, width, pSrc + (rowPitch * (height - 1)), rowPitch, srcImage.format))
                 return E_FAIL;
         }
 
@@ -145,7 +145,7 @@ namespace
             // Load next scanline of source image
             if (y < (height - 1))
             {
-                if (!_LoadScanline(row2, width, pSrc, rowPitch, srcImage.format))
+                if (!LoadScanline(row2, width, pSrc, rowPitch, srcImage.format))
                     return E_FAIL;
             }
             else
@@ -153,13 +153,13 @@ namespace
                 if (flags & CNMAP_MIRROR_V)
                 {
                     // Use last row of source image
-                    if (!_LoadScanline(row2, width, srcImage.pixels + (rowPitch * (height - 1)), rowPitch, srcImage.format))
+                    if (!LoadScanline(row2, width, srcImage.pixels + (rowPitch * (height - 1)), rowPitch, srcImage.format))
                         return E_FAIL;
                 }
                 else
                 {
                     // Use first row of source image (Wrap V)
-                    if (!_LoadScanline(row2, width, srcImage.pixels, rowPitch, srcImage.format))
+                    if (!LoadScanline(row2, width, srcImage.pixels, rowPitch, srcImage.format))
                         return E_FAIL;
                 }
             }
@@ -173,15 +173,15 @@ namespace
             {
                 // Compute normal via central differencing
                 float totDelta = (val0[x] - val0[x + 2]) + (val1[x] - val1[x + 2]) + (val2[x] - val2[x + 2]);
-                float deltaZX = totDelta * amplitude / 6.f;
+                const float deltaZX = totDelta * amplitude / 6.f;
 
                 totDelta = (val0[x] - val2[x]) + (val0[x + 1] - val2[x + 1]) + (val0[x + 2] - val2[x + 2]);
-                float deltaZY = totDelta * amplitude / 6.f;
+                const float deltaZY = totDelta * amplitude / 6.f;
 
-                XMVECTOR vx = XMVectorSetZ(g_XMNegIdentityR0, deltaZX);   // (-1.0f, 0.0f, deltaZX)
-                XMVECTOR vy = XMVectorSetZ(g_XMNegIdentityR1, deltaZY);   // (0.0f, -1.0f, deltaZY)
+                const XMVECTOR vx = XMVectorSetZ(g_XMNegIdentityR0, deltaZX);   // (-1.0f, 0.0f, deltaZX)
+                const XMVECTOR vy = XMVectorSetZ(g_XMNegIdentityR1, deltaZY);   // (0.0f, -1.0f, deltaZY)
 
-                XMVECTOR normal = XMVector3Normalize(XMVector3Cross(vx, vy));
+                const XMVECTOR normal = XMVector3Normalize(XMVector3Cross(vx, vy));
 
                 // Compute alpha (1.0 or an occlusion term)
                 float alpha = 1.f;
@@ -189,7 +189,7 @@ namespace
                 if (flags & CNMAP_COMPUTE_OCCLUSION)
                 {
                     float delta = 0.f;
-                    float c = val1[x + 1];
+                    const float c = val1[x + 1];
 
                     float t = val0[x] - c;  if (t > 0.f) delta += t;
                     t = val0[x + 1] - c;    if (t > 0.f) delta += t;
@@ -206,7 +206,7 @@ namespace
                     if (delta > 0.f)
                     {
                         // If < 0, then no occlusion
-                        float r = sqrtf(1.f + delta*delta);
+                        const float r = sqrtf(1.f + delta*delta);
                         alpha = (r - delta) / r;
                     }
                 }
@@ -215,7 +215,7 @@ namespace
                 if (convFlags & CONVF_UNORM)
                 {
                     // 0.5f*normal + 0.5f -or- invert sign case: -0.5f*normal + 0.5f
-                    XMVECTOR n1 = XMVectorMultiplyAdd((flags & CNMAP_INVERT_SIGN) ? g_XMNegativeOneHalf : g_XMOneHalf, normal, g_XMOneHalf);
+                    const XMVECTOR n1 = XMVectorMultiplyAdd((flags & CNMAP_INVERT_SIGN) ? g_XMNegativeOneHalf : g_XMOneHalf, normal, g_XMOneHalf);
                     *dptr++ = XMVectorSetW(n1, alpha);
                 }
                 else if (flags & CNMAP_INVERT_SIGN)
@@ -228,7 +228,7 @@ namespace
                 }
             }
 
-            if (!_StoreScanline(pDest, normalMap.rowPitch, format, target, width))
+            if (!StoreScanline(pDest, normalMap.rowPitch, format, target, width))
                 return E_FAIL;
 
             // Cycle buffers
@@ -249,17 +249,17 @@ namespace
 //=====================================================================================
 // Entry points
 //=====================================================================================
-        
+
 //-------------------------------------------------------------------------------------
 // Generates a normal map from a height-map
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT DirectX::ComputeNormalMap(
     const Image& srcImage,
-    DWORD flags,
+    CNMAP_FLAGS flags,
     float amplitude,
     DXGI_FORMAT format,
-    ScratchImage& normalMap)
+    ScratchImage& normalMap) noexcept
 {
     if (!srcImage.pixels || !IsValid(format))
         return E_INVALIDARG;
@@ -283,7 +283,7 @@ HRESULT DirectX::ComputeNormalMap(
         || IsTypeless(format) || IsTypeless(srcImage.format)
         || IsPlanar(format) || IsPlanar(srcImage.format)
         || IsPalettized(format) || IsPalettized(srcImage.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     // Setup target image
     normalMap.Release();
@@ -314,10 +314,10 @@ HRESULT DirectX::ComputeNormalMap(
     const Image* srcImages,
     size_t nimages,
     const TexMetadata& metadata,
-    DWORD flags,
+    CNMAP_FLAGS flags,
     float amplitude,
     DXGI_FORMAT format,
-    ScratchImage& normalMaps)
+    ScratchImage& normalMaps) noexcept
 {
     if (!srcImages || !nimages || !IsValid(format))
         return E_INVALIDARG;
@@ -326,7 +326,7 @@ HRESULT DirectX::ComputeNormalMap(
         || IsTypeless(format) || IsTypeless(metadata.format)
         || IsPlanar(format) || IsPlanar(metadata.format)
         || IsPalettized(format) || IsPalettized(metadata.format))
-        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        return HRESULT_E_NOT_SUPPORTED;
 
     static_assert(CNMAP_CHANNEL_RED == 0x1, "CNMAP_CHANNEL_ flag values don't match mask");
     switch (flags & 0xf)
@@ -372,7 +372,7 @@ HRESULT DirectX::ComputeNormalMap(
         if (IsCompressed(src.format) || IsTypeless(src.format))
         {
             normalMaps.Release();
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         if (src.width != dest[index].width || src.height != dest[index].height)
