@@ -672,7 +672,7 @@ namespace
         PrintLogo(false);
 
         static const wchar_t* const s_usage =
-            L"Usage: texdiag <command> <options> <files>\n"
+            L"Usage: texdiag <command> <options> [--] <files>\n"
             L"\n"
             L"   info                Output image metadata\n"
             L"   analyze             Analyze and summarize image information\n"
@@ -706,7 +706,9 @@ namespace
             L"   -ft <filetype>      output file type\n"
             L"\n"
             L"   -nologo             suppress copyright message\n"
-            L"   -flist <filename>   use text file with a list of input files (one per line)\n";
+            L"   -flist <filename>   use text file with a list of input files (one per line)\n"
+            L"\n"
+            L"   '-- ' is needed if any input filepath starts with the '-' or '/' character\n";
 
         wprintf(L"%ls", s_usage);
 

@@ -759,7 +759,7 @@ namespace
         PrintLogo(false);
 
         static const wchar_t* const s_usage =
-            L"Usage: texassemble <command> <options> <files>\n"
+            L"Usage: texassemble <command> <options> [--] <files>\n"
             L"\n"
             L"   cube                create cubemap\n"
             L"   volume              create volume map\n"
@@ -805,7 +805,9 @@ namespace
             L"   -swizzle <rgba>     Select channels for merge (defaults to rgbB)\n"
             L"\n"
             L"                       (cube, volume, array, cubearray, merge only)\n"
-            L"   -stripmips          Use only base image from input dds files\n";
+            L"   -stripmips          Use only base image from input dds files\n"
+            L"\n"
+            L"   '-- ' is needed if any input filepath starts with the '-' or '/' character\n";
 
         wprintf(L"%ls", s_usage);
 
