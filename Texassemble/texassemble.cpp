@@ -1214,7 +1214,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case OPT_OUTPUTFILE:
                 {
-                    wcscpy_s(szOutputFile, MAX_PATH, pValue);
+                    std::filesystem::path path(pValue);
+                    wcscpy_s(szOutputFile, path.make_preferred().c_str());
 
                     wchar_t ext[_MAX_EXT] = {};
                     _wsplitpath_s(szOutputFile, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
