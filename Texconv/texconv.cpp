@@ -21,6 +21,10 @@
 
 #include <ShlObj.h>
 
+#if __cplusplus < 201703L
+#error Requires C++17 (and /Zc:__cplusplus with MSVC)
+#endif
+
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -29,6 +33,7 @@
 #include <cstring>
 #include <cwchar>
 #include <cwctype>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <list>
@@ -602,8 +607,8 @@ namespace
                     {
                         wchar_t subdir[MAX_PATH] = {};
                         auto subfolder = (folder)
-                            ? (std::wstring(folder) + std::wstring(findData.cFileName) + L"\\")
-                            : (std::wstring(findData.cFileName) + L"\\");
+                            ? (std::wstring(folder) + std::wstring(findData.cFileName) + std::filesystem::path::preferred_separator)
+                            : (std::wstring(findData.cFileName) + std::filesystem::path::preferred_separator);
                         {
                             wchar_t drive[_MAX_DRIVE] = {};
                             wchar_t dir[_MAX_DIR] = {};
@@ -647,12 +652,14 @@ namespace
                 }
                 else
                 {
+                    std::filesystem::path path(fname + 1);
+                    auto& npath = path.make_preferred();
                     if (wcspbrk(fname, L"?*") != nullptr)
                     {
                         std::list<SConversion> removeFiles;
-                        SearchForFiles(&fname[1], removeFiles, false, nullptr);
+                        SearchForFiles(npath.c_str(), removeFiles, false, nullptr);
 
-                        for (auto it : removeFiles)
+                        for (auto& it : removeFiles)
                         {
                             _wcslwr_s(it.szSrc);
                             excludes.insert(it.szSrc);
@@ -660,7 +667,7 @@ namespace
                     }
                     else
                     {
-                        std::wstring name = (fname + 1);
+                        std::wstring name = npath.c_str();
                         std::transform(name.begin(), name.end(), name.begin(), towlower);
                         excludes.insert(name);
                     }
@@ -668,12 +675,14 @@ namespace
             }
             else if (wcspbrk(fname, L"?*") != nullptr)
             {
-                SearchForFiles(fname, flist, false, nullptr);
+                std::filesystem::path path(fname);
+                SearchForFiles(path.make_preferred().c_str(), flist, false, nullptr);
             }
             else
             {
                 SConversion conv = {};
-                wcscpy_s(conv.szSrc, MAX_PATH, fname);
+                std::filesystem::path path(fname);
+                wcscpy_s(conv.szSrc, path.make_preferred().c_str());
                 flist.push_back(conv);
             }
 
@@ -810,7 +819,7 @@ namespace
         wprintf(L"\n");
     }
 
-    void PrintLogo()
+    void PrintLogo(bool versionOnly)
     {
         wchar_t version[32] = {};
 
@@ -838,12 +847,19 @@ namespace
             swprintf_s(version, L"%03d (library)", DIRECTX_TEX_VERSION);
         }
 
-        wprintf(L"Microsoft (R) DirectX Texture Converter [DirectXTex] Version %ls\n", version);
-        wprintf(L"Copyright (C) Microsoft Corp.\n");
-    #ifdef _DEBUG
-        wprintf(L"*** Debug build ***\n");
-    #endif
-        wprintf(L"\n");
+        if (versionOnly)
+        {
+            wprintf(L"texconv version %ls\n", version);
+        }
+        else
+        {
+            wprintf(L"Microsoft (R) DirectX Texture Converter [DirectXTex] Version %ls\n", version);
+            wprintf(L"Copyright (C) Microsoft Corp.\n");
+        #ifdef _DEBUG
+            wprintf(L"*** Debug build ***\n");
+        #endif
+            wprintf(L"\n");
+        }
     }
 
     _Success_(return)
@@ -874,10 +890,10 @@ namespace
 
     void PrintUsage()
     {
-        PrintLogo();
+        PrintLogo(false);
 
         static const wchar_t* const s_usage =
-            L"Usage: texconv <options> <files>\n"
+            L"Usage: texconv <options> [--] <files>\n"
             L"\n"
             L"   -r                  wildcard filename search is recursive\n"
             L"     -r:flatten        flatten the directory structure (default)\n"
@@ -943,9 +959,9 @@ namespace
             L"   -nologo             suppress copyright message\n"
             L"   -timing             Display elapsed processing time\n"
             L"\n"
-#ifdef _OPENMP
+        #ifdef _OPENMP
             L"   -singleproc         Do not use multi-threaded compression\n"
-#endif
+        #endif
             L"   -gpu <adapter>      Select GPU for DirectCompute-based codecs (0 is default)\n"
             L"   -nogpu              Do not use DirectCompute-based codecs\n"
             L"\n"
@@ -962,7 +978,9 @@ namespace
             L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n"
             L"   -inverty            Invert Y (i.e. green) channel values\n"
             L"   -reconstructz       Rebuild Z (blue) channel assuming X/Y are normals\n"
-            L"   -swizzle <rgba>     Swizzle image channels using HLSL-style mask\n";
+            L"   -swizzle <rgba>     Swizzle image channels using HLSL-style mask\n"
+            L"\n"
+            L"   '-- ' is needed if any input filepath starts with the '-' or '/' character\n";
 
         wprintf(L"%ls", s_usage);
 
@@ -1415,12 +1433,38 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     // Process command line
     uint64_t dwOptions = 0;
     std::list<SConversion> conversion;
+    bool allowOpts = true;
 
     for (int iArg = 1; iArg < argc; iArg++)
     {
         PWSTR pArg = argv[iArg];
 
-        if (('-' == pArg[0]) || ('/' == pArg[0]))
+        if (allowOpts
+            && ('-' == pArg[0]) && ('-' == pArg[1]))
+        {
+            if (pArg[2] == 0)
+            {
+                // "-- " is the POSIX standard for "end of options" marking to escape the '-' and '/' characters at the start of filepaths.
+                allowOpts = false;
+            }
+            else if (!_wcsicmp(pArg,L"--version"))
+            {
+                PrintLogo(true);
+                return 0;
+            }
+            else if (!_wcsicmp(pArg, L"--help"))
+            {
+                PrintUsage();
+                return 0;
+            }
+            else
+            {
+                wprintf(L"Unknown option: %ls\n", pArg);
+                return 1;
+            }
+        }
+        else if (allowOpts
+            && (('-' == pArg[0]) || ('/' == pArg[0])))
         {
             pArg++;
             PWSTR pValue;
@@ -1579,7 +1623,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_OUTPUTDIR:
-                wcscpy_s(szOutputDir, MAX_PATH, pValue);
+                {
+                    std::filesystem::path path(pValue);
+                    wcscpy_s(szOutputDir, path.make_preferred().c_str());
+                }
                 break;
 
             case OPT_FILETYPE:
@@ -1875,7 +1922,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case OPT_FILELIST:
                 {
-                    std::wifstream inFile(pValue);
+                    std::filesystem::path path(pValue);
+                    std::wifstream inFile(path.make_preferred().c_str());
                     if (!inFile)
                     {
                         wprintf(L"Error opening -flist file %ls\n", pValue);
@@ -1934,7 +1982,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         else if (wcspbrk(pArg, L"?*") != nullptr)
         {
             const size_t count = conversion.size();
-            SearchForFiles(pArg, conversion, (dwOptions & (uint64_t(1) << OPT_RECURSIVE)) != 0, nullptr);
+            std::filesystem::path path(pArg);
+            SearchForFiles(path.make_preferred().c_str(), conversion, (dwOptions & (uint64_t(1) << OPT_RECURSIVE)) != 0, nullptr);
             if (conversion.size() <= count)
             {
                 wprintf(L"No matching files found for %ls\n", pArg);
@@ -1944,8 +1993,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         else
         {
             SConversion conv = {};
-            wcscpy_s(conv.szSrc, MAX_PATH, pArg);
-
+            std::filesystem::path path(pArg);
+            wcscpy_s(conv.szSrc, path.make_preferred().c_str());
             conversion.push_back(conv);
         }
     }
@@ -1957,11 +2006,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     }
 
     if (~dwOptions & (uint64_t(1) << OPT_NOLOGO))
-        PrintLogo();
+        PrintLogo(false);
 
     // Work out out filename prefix and suffix
-    if (szOutputDir[0] && (L'\\' != szOutputDir[wcslen(szOutputDir) - 1]))
-        wcscat_s(szOutputDir, MAX_PATH, L"\\");
+    if (szOutputDir[0] && (std::filesystem::path::preferred_separator != szOutputDir[wcslen(szOutputDir) - 1]))
+    {
+        wchar_t pSeparator[2] = { std::filesystem::path::preferred_separator, 0 };
+        wcscat_s(szOutputDir, MAX_PATH, pSeparator);
+    }
 
     auto fileTypeName = LookupByValue(FileType, g_pSaveFileTypes);
 
@@ -3568,13 +3620,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (*szPrefix)
                 wcscat_s(szDest, szPrefix);
 
-            pchSlash = wcsrchr(pConv->szSrc, L'\\');
+            pchSlash = wcsrchr(pConv->szSrc, std::filesystem::path::preferred_separator);
             if (pchSlash)
                 wcscat_s(szDest, pchSlash + 1);
             else
                 wcscat_s(szDest, pConv->szSrc);
 
-            pchSlash = wcsrchr(szDest, '\\');
+            pchSlash = wcsrchr(szDest, std::filesystem::path::preferred_separator);
             pchDot = wcsrchr(szDest, '.');
 
             if (pchDot > pchSlash)
