@@ -437,6 +437,7 @@ namespace
         { L"jpeg",  WIC_CODEC_JPEG },
         { L"png",   WIC_CODEC_PNG  },
         { L"dds",   CODEC_DDS      },
+        { L"ddx",   CODEC_DDS      },
         { L"tga",   CODEC_TGA      },
         { L"hdr",   CODEC_HDR      },
         { L"tif",   WIC_CODEC_TIFF },
@@ -2069,7 +2070,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             return 1;
         }
 
-        if (_wcsicmp(ext, L".dds") == 0)
+        if (_wcsicmp(ext, L".dds") == 0 || _wcsicmp(ext, L".ddx") == 0)
         {
             DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES;
             if (dwOptions & (uint64_t(1) << OPT_DDS_DWORD_ALIGN))
