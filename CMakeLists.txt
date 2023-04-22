@@ -167,9 +167,18 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 
+if(BC_USE_OPENMP)
+  find_package(OpenMP)
+  if(OpenMP_CXX_FOUND)
+    target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+  else()
+    set(BC_USE_OPENMP OFF)
+  endif()
+endif()
+
 if(ENABLE_OPENEXR_SUPPORT)
   find_package(OpenEXR REQUIRED)
-  target_link_libraries(${PROJECT_NAME} PRIVATE OpenEXR::OpenEXR)
+  target_link_libraries(${PROJECT_NAME} PUBLIC OpenEXR::OpenEXR)
 endif()
 
 if(NOT MINGW)
@@ -277,6 +286,10 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
     Texdiag/texdiag.rc)
   target_link_libraries(texdiag ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
+
+  if(BC_USE_OPENMP)
+    target_link_libraries(texconv OpenMP::OpenMP_CXX)
+  endif()
 
   if(ENABLE_OPENEXR_SUPPORT)
     foreach(t IN LISTS TOOL_EXES)
@@ -386,8 +399,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(WarningsLib -Wall -Wpedantic -Wextra)
     target_compile_options(${PROJECT_NAME} PRIVATE ${WarningsLib})
 
-    # OpenMP is not supported for clang for Windows by default
-
     set(WarningsEXE ${WarningsLib} "-Wno-c++98-compat" "-Wno-c++98-compat-pedantic" "-Wno-switch" "-Wno-switch-enum" "-Wno-covered-switch-default" "-Wno-language-extension-token" "-Wno-missing-prototypes" "-Wno-global-constructors" "-Wno-double-promotion")
     foreach(t IN LISTS TOOL_EXES)
       target_compile_options(${t} PRIVATE ${WarningsEXE})
@@ -446,9 +457,10 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     endif()
 
     if(BC_USE_OPENMP)
-        target_compile_options(${PROJECT_NAME} PRIVATE /openmp /Zc:twoPhase-)
+        # OpenMP in MSVC is not compatible with /permissive unless you disable two-phase lookup
+        target_compile_options(${PROJECT_NAME} PRIVATE /Zc:twoPhase-)
         if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
-          target_compile_options(texconv PRIVATE /openmp /Zc:twoPhase-)
+          target_compile_options(texconv PRIVATE /Zc:twoPhase-)
         endif()
     endif()
 
