@@ -167,9 +167,18 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 
+if(BC_USE_OPENMP)
+  find_package(OpenMP)
+  if(OpenMP_CXX_FOUND)
+    target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+  else()
+    set(BC_USE_OPENMP OFF)
+  endif()
+endif()
+
 if(ENABLE_OPENEXR_SUPPORT)
   find_package(OpenEXR REQUIRED)
-  target_link_libraries(${PROJECT_NAME} PRIVATE OpenEXR::OpenEXR)
+  target_link_libraries(${PROJECT_NAME} PUBLIC OpenEXR::OpenEXR)
 endif()
 
 if(NOT MINGW)
@@ -278,6 +287,10 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   target_link_libraries(texdiag ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
 
+  if(BC_USE_OPENMP)
+    target_link_libraries(texconv OpenMP::OpenMP_CXX)
+  endif()
+
   if(ENABLE_OPENEXR_SUPPORT)
     foreach(t IN LISTS TOOL_EXES)
       target_include_directories(${t} PRIVATE Auxiliary)
@@ -334,7 +347,7 @@ if(MSVC)
       target_link_options(${t} PRIVATE /DYNAMICBASE /NXCOMPAT)
     endforeach()
 
-    if((${CMAKE_SIZEOF_VOID_P} EQUAL 4) AND (NOT (${DIRECTX_ARCH} MATCHES "^arm")))
+    if((CMAKE_SIZEOF_VOID_P EQUAL 4) AND (NOT (${DIRECTX_ARCH} MATCHES "^arm")))
       foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
         target_link_options(${t} PRIVATE /SAFESEH)
       endforeach()
@@ -371,7 +384,7 @@ if(XBOX_CONSOLE_TARGET STREQUAL "scarlett")
 elseif(XBOX_CONSOLE_TARGET STREQUAL "xboxone")
     target_compile_options(${PROJECT_NAME} PRIVATE $<IF:$<CXX_COMPILER_ID:MSVC>,/favor:AMD64 /arch:AVX,-march=btver2>)
 elseif(NOT (${DIRECTX_ARCH} MATCHES "^arm"))
-    if(${CMAKE_SIZEOF_VOID_P} EQUAL "4")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
         set(ARCH_SSE2 $<$<CXX_COMPILER_ID:MSVC>:/arch:SSE2> $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-msse2>)
     else()
         set(ARCH_SSE2 $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-msse2>)
@@ -385,8 +398,6 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(WarningsLib -Wall -Wpedantic -Wextra)
     target_compile_options(${PROJECT_NAME} PRIVATE ${WarningsLib})
-
-    # OpenMP is not supported for clang for Windows by default
 
     set(WarningsEXE ${WarningsLib} "-Wno-c++98-compat" "-Wno-c++98-compat-pedantic" "-Wno-switch" "-Wno-switch-enum" "-Wno-covered-switch-default" "-Wno-language-extension-token" "-Wno-missing-prototypes" "-Wno-global-constructors" "-Wno-double-promotion")
     foreach(t IN LISTS TOOL_EXES)
@@ -446,9 +457,10 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     endif()
 
     if(BC_USE_OPENMP)
-        target_compile_options(${PROJECT_NAME} PRIVATE /openmp /Zc:twoPhase-)
+        # OpenMP in MSVC is not compatible with /permissive unless you disable two-phase lookup
+        target_compile_options(${PROJECT_NAME} PRIVATE /Zc:twoPhase-)
         if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
-          target_compile_options(texconv PRIVATE /openmp /Zc:twoPhase-)
+          target_compile_options(texconv PRIVATE /Zc:twoPhase-)
         endif()
     endif()
 
