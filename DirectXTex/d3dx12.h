@@ -12,6 +12,13 @@
 
 #if defined( __cplusplus )
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wfloat-equal"
+#pragma clang diagnostic ignored "-Wunknown-warning-option"
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#endif
+
 struct CD3DX12_DEFAULT {};
 extern const DECLSPEC_SELECTANY CD3DX12_DEFAULT D3D12_DEFAULT;
 
@@ -6456,6 +6463,10 @@ inline HRESULT CD3DX12FeatureSupport::QueryProtectedResourceSessionTypes(UINT No
 #undef D3DX12_COM_PTR
 #undef D3DX12_COM_PTR_GET
 #undef D3DX12_COM_PTR_ADDRESSOF
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #endif // defined( __cplusplus )
 
