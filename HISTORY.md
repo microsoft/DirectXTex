@@ -6,6 +6,11 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### April 28, 2023
+* Updated D3DX12 internal copy with latest changes from DirectX-Headers GitHub
+* CMake project updates and fixes for clang/LLVM v16 warnings
+* texassemble/texconv/texdiag: Windows on ARM64 version
+
 ### March 30, 2023
 * Fix for `SRGB_IN` / `SRGB_OUT` flag handling for GPU BC7 compressor
 * Fix to clamp negative values when encoding with the GPU BC6H compressor
