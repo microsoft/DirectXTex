@@ -109,12 +109,25 @@
       "cacheVariables": {
         "BUILD_XBOX_EXTS_XBOXONE": true
       },
+      "environment": {
+        "XboxOneXDKLatest": ""
+      },
       "hidden": true
     },
     {
       "name": "GDKXS",
       "cacheVariables": {
         "BUILD_XBOX_EXTS_SCARLETT": true
+      },
+      "hidden": true
+    },
+    {
+      "name": "XDK",
+      "cacheVariables": {
+        "BUILD_XBOX_EXTS_XBOXONE": true
+      },
+      "environment": {
+        "GameDKLatest": ""
       },
       "hidden": true
     },
@@ -139,6 +152,14 @@
       "name": "XboxOne",
       "cacheVariables": {
         "XBOX_CONSOLE_TARGET": "xboxone",
+        "BUILD_TESTING": false
+      },
+      "hidden": true
+    },
+    {
+      "name": "Durango",
+      "cacheVariables": {
+        "XBOX_CONSOLE_TARGET": "durango",
         "BUILD_TESTING": false
       },
       "hidden": true
@@ -210,6 +231,9 @@
     { "name": "x64-Debug-XboxOne"    , "description": "MSVC for x64 (Debug) for Xbox One", "inherits": [ "base", "x64", "Debug", "MSVC", "XboxOne" ] },
     { "name": "x64-Release-XboxOne"  , "description": "MSVC for x64 (Release) for Xbox One", "inherits": [ "base", "x64", "Release", "MSVC", "XboxOne" ] },
 
+    { "name": "x64-Debug-Durango"    , "description": "MSVC for x64 (Debug) for legacy Xbox One XDK", "inherits": [ "base", "x64", "Debug", "MSVC", "Durango" ] },
+    { "name": "x64-Release-Durango"  , "description": "MSVC for x64 (Release) for legacy Xbox One XDK", "inherits": [ "base", "x64", "Release", "MSVC", "Durango" ] },
+
     { "name": "x64-Debug-VCPKG"    , "description": "MSVC for x64 (Debug) using VCPKG", "inherits": [ "base", "x64", "Debug", "MSVC", "VCPKG" ] },
     { "name": "x64-Release-VCPKG"  , "description": "MSVC for x64 (Release) using VCPKG", "inherits": [ "base", "x64", "Release", "MSVC", "VCPKG" ] },
     { "name": "x86-Debug-VCPKG"    , "description": "MSVC for x86 (Debug) using VCPKG", "inherits": [ "base", "x86", "Debug", "MSVC", "VCPKG" ] },
@@ -243,6 +267,8 @@
     { "name": "x64-Release-GDKX"   , "description": "MSVC for x64 (Release) Xbox One Extensions", "inherits": [ "base", "x64", "Release", "GDKX", "MSVC" ] },
     { "name": "x64-Debug-GDKX-S"   , "description": "MSVC for x64 (Debug) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Debug", "GDKXS", "MSVC" ] },
     { "name": "x64-Release-GDKX-S" , "description": "MSVC for x64 (Release) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Release", "GDKXS", "MSVC" ] },
+    { "name": "x64-Debug-XDK"      , "description": "MSVC for x64 (Debug) Xbox One Extensions (legacy)", "inherits": [ "base", "x64", "Debug", "XDK", "MSVC" ] },
+    { "name": "x64-Release-XDK"    , "description": "MSVC for x64 (Release) Xbox One Extensions (legacy)", "inherits": [ "base", "x64", "Release", "XDK", "MSVC" ] },
 
     { "name": "x64-Debug-GDKX-Clang"     , "description": "MSVC for x64 (Debug) Xbox One Extensions", "inherits": [ "base", "x64", "Debug", "GDKX", "Clang" ] },
     { "name": "x64-Release-GDKX-Clang"   , "description": "MSVC for x64 (Release) Xbox One Extensions", "inherits": [ "base", "x64", "Release", "GDKX", "Clang" ] },
