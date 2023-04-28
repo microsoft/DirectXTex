@@ -126,3 +126,5 @@ This project may contain trademarks or logos for projects, products, or services
 The DirectXTex library is the work of Chuck Walbourn, with contributions from Matt Lee, Xin Huang, Craig Peeper, and the numerous other Microsoft engineers who developed the D3DX utility library over the years.
 
 Thanks to Paul Penson for his help with the implementation of ``MemoryStreamOnBlob``.
+
+Thanks to Andrew Farrier and Scott Matloff for their on-going help with code reviews.
