@@ -187,6 +187,8 @@ using WICPixelFormatGUID = GUID;
 
 #define XBOX_DXGI_FORMAT_R4G4_UNORM DXGI_FORMAT(190)
 
+#define WIN11_DXGI_FORMAT_A4B4G4R4_UNORM DXGI_FORMAT(191)
+
 #if defined(__MINGW32__) && !defined(E_BOUNDS)
 #define E_BOUNDS static_cast<HRESULT>(0x8000000BL)
 #endif

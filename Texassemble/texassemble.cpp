@@ -265,6 +265,9 @@ namespace
         // No support for legacy paletted video formats (AI44, IA44, P8, A8P8)
         DEFFMT(B4G4R4A4_UNORM),
 
+        // D3D11on12 format
+        { L"A4B4G4R4_UNORM", DXGI_FORMAT(191) },
+
         { nullptr, DXGI_FORMAT_UNKNOWN }
     };
 
