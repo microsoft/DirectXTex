@@ -456,6 +456,30 @@ bool DirectX::IsDepthStencil(DXGI_FORMAT fmt) noexcept
 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
+bool DirectX::IsBGR(DXGI_FORMAT fmt) noexcept
+{
+    switch (static_cast<int>(fmt))
+    {
+    case DXGI_FORMAT_B5G6R5_UNORM:
+    case DXGI_FORMAT_B5G5R5A1_UNORM:
+    case DXGI_FORMAT_B8G8R8A8_UNORM:
+    case DXGI_FORMAT_B8G8R8X8_UNORM:
+    case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8X8_TYPELESS:
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+    case DXGI_FORMAT_B4G4R4A4_UNORM:
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
+        return true;
+
+    default:
+        return false;
+    }
+}
+
+
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
 bool DirectX::IsTypeless(DXGI_FORMAT fmt, bool partialTypeless) noexcept
 {
     switch (static_cast<int>(fmt))
@@ -551,6 +575,7 @@ bool DirectX::HasAlpha(DXGI_FORMAT fmt) noexcept
     case XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT:
     case XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT:
     case XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM:
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
         return true;
 
     default:
@@ -667,6 +692,7 @@ size_t DirectX::BitsPerPixel(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_B4G4R4A4_UNORM:
     case WIN10_DXGI_FORMAT_P208:
     case WIN10_DXGI_FORMAT_V208:
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
         return 16;
 
     case DXGI_FORMAT_NV12:
@@ -867,6 +893,7 @@ size_t DirectX::BitsPerColor(DXGI_FORMAT fmt) noexcept
 
     case DXGI_FORMAT_B4G4R4A4_UNORM:
     case XBOX_DXGI_FORMAT_R4G4_UNORM:
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
         return 4;
 
     case DXGI_FORMAT_R1_UNORM:

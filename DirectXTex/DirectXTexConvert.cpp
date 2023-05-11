@@ -378,14 +378,24 @@ void DirectX::Internal::CopyScanline(
 
             //-----------------------------------------------------------------------------
         case DXGI_FORMAT_B5G5R5A1_UNORM:
+        case DXGI_FORMAT_B4G4R4A4_UNORM:
+        case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
             if (inSize >= 2 && outSize >= 2)
             {
+                uint16_t alpha;
+                if (format == DXGI_FORMAT_B4G4R4A4_UNORM)
+                    alpha = 0xF000;
+                else if (format == WIN11_DXGI_FORMAT_A4B4G4R4_UNORM)
+                    alpha = 0x000F;
+                else
+                    alpha = 0x8000;
+
                 if (pDestination == pSource)
                 {
                     auto dPtr = static_cast<uint16_t*>(pDestination);
                     for (size_t count = 0; count < (outSize - 1); count += 2)
                     {
-                        *(dPtr++) |= 0x8000;
+                        *(dPtr++) |= alpha;
                     }
                 }
                 else
@@ -395,7 +405,7 @@ void DirectX::Internal::CopyScanline(
                     const size_t size = std::min<size_t>(outSize, inSize);
                     for (size_t count = 0; count < (size - 1); count += 2)
                     {
-                        *(dPtr++) = uint16_t(*(sPtr++) | 0x8000);
+                        *(dPtr++) = uint16_t(*(sPtr++) | alpha);
                     }
                 }
             }
@@ -404,31 +414,6 @@ void DirectX::Internal::CopyScanline(
             //-----------------------------------------------------------------------------
         case DXGI_FORMAT_A8_UNORM:
             memset(pDestination, 0xff, outSize);
-            return;
-
-            //-----------------------------------------------------------------------------
-        case DXGI_FORMAT_B4G4R4A4_UNORM:
-            if (inSize >= 2 && outSize >= 2)
-            {
-                if (pDestination == pSource)
-                {
-                    auto dPtr = static_cast<uint16_t*>(pDestination);
-                    for (size_t count = 0; count < (outSize - 1); count += 2)
-                    {
-                        *(dPtr++) |= 0xF000;
-                    }
-                }
-                else
-                {
-                    const uint16_t * __restrict sPtr = static_cast<const uint16_t*>(pSource);
-                    uint16_t * __restrict dPtr = static_cast<uint16_t*>(pDestination);
-                    const size_t size = std::min<size_t>(outSize, inSize);
-                    for (size_t count = 0; count < (size - 1); count += 2)
-                    {
-                        *(dPtr++) = uint16_t(*(sPtr++) | 0xF000);
-                    }
-                }
-            }
             return;
         }
     }
@@ -631,7 +616,7 @@ bool DirectX::Internal::ExpandScanline(
     assert(IsValid(outFormat) && !IsPlanar(outFormat) && !IsPalettized(outFormat));
     assert(IsValid(inFormat) && !IsPlanar(inFormat) && !IsPalettized(inFormat));
 
-    switch (inFormat)
+    switch (static_cast<int>(inFormat))
     {
     case DXGI_FORMAT_B5G6R5_UNORM:
         if (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM)
@@ -700,6 +685,31 @@ bool DirectX::Internal::ExpandScanline(
                 uint32_t t2 = uint32_t(((t & 0x00f0) << 8) | ((t & 0x00f0) << 4));
                 uint32_t t3 = uint32_t(((t & 0x000f) << 20) | ((t & 0x000f) << 16));
                 uint32_t ta = (tflags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t(((t & 0xf000) << 16) | ((t & 0xf000) << 12));
+
+                *(dPtr++) = t1 | t2 | t3 | ta;
+            }
+            return true;
+        }
+        return false;
+
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
+        if (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM)
+            return false;
+
+        // DXGI_FORMAT_A4B4G4R4_UNORM -> DXGI_FORMAT_R8G8B8A8_UNORM
+        if (inSize >= 2 && outSize >= 4)
+        {
+            const uint16_t * __restrict sPtr = static_cast<const uint16_t*>(pSource);
+            uint32_t * __restrict dPtr = static_cast<uint32_t*>(pDestination);
+
+            for (size_t ocount = 0, icount = 0; ((icount < (inSize - 1)) && (ocount < (outSize - 3))); icount += 2, ocount += 4)
+            {
+                const uint16_t t = *(sPtr++);
+
+                uint32_t t1 = uint32_t(((t & 0xf000) >> 8) | ((t & 0xf000) >> 12));
+                uint32_t t2 = uint32_t((t & 0x0f00) | ((t & 0x0f00) << 4));
+                uint32_t t3 = uint32_t(((t & 0x00f0) << 16) | ((t & 0x00f0) << 12));
+                uint32_t ta = (tflags & TEXP_SCANLINE_SETALPHA) ? 0xff000000 : uint32_t(((t & 0x000f) << 28) | ((t & 0x000f) << 24));
 
                 *(dPtr++) = t1 | t2 | t3 | ta;
             }
@@ -1501,6 +1511,22 @@ _Use_decl_annotations_ bool DirectX::Internal::LoadScanline(
                 v = XMVectorMultiply(v, s_Scale);
                 if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSwizzle<2, 1, 0, 3>(v);
+            }
+            return true;
+        }
+        return false;
+
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
+        if (size >= sizeof(XMUNIBBLE4))
+        {
+            static const XMVECTORF32 s_Scale = { { { 1.f / 15.f, 1.f / 15.f, 1.f / 15.f, 1.f / 15.f } } };
+            const XMUNIBBLE4 * __restrict sPtr = static_cast<const XMUNIBBLE4*>(pSource);
+            for (size_t icount = 0; icount < (size - sizeof(XMUNIBBLE4) + 1); icount += sizeof(XMUNIBBLE4))
+            {
+                XMVECTOR v = XMLoadUNibble4(sPtr++);
+                v = XMVectorMultiply(v, s_Scale);
+                if (dPtr >= ePtr) break;
+                *(dPtr++) = XMVectorSwizzle<3, 2, 1, 0>(v);
             }
             return true;
         }
@@ -2382,6 +2408,26 @@ bool DirectX::Internal::StoreScanline(
         }
         return false;
 
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
+        if (size >= sizeof(XMUNIBBLE4))
+        {
+            static const XMVECTORF32 s_Scale = { { { 15.f, 15.f, 15.f, 15.f } } };
+            XMUNIBBLE4 * __restrict dPtr = static_cast<XMUNIBBLE4*>(pDestination);
+            for (size_t icount = 0; icount < (size - sizeof(XMUNIBBLE4) + 1); icount += sizeof(XMUNIBBLE4))
+            {
+                if (sPtr >= ePtr) break;
+                XMVECTOR v = XMVectorSwizzle<3, 2, 1, 0>(*sPtr++);
+#if defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__
+                v = XMVectorMultiplyAdd(v, s_Scale, g_XMOneHalf);
+#else
+                v = XMVectorMultiply(v, s_Scale);
+#endif
+                XMStoreUNibble4(dPtr++, v);
+            }
+            return true;
+        }
+        return false;
+
     case XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT:
         // Xbox One specific 7e3 format with alpha
         if (size >= sizeof(XMUDECN4))
@@ -2760,7 +2806,7 @@ bool DirectX::Internal::StoreScanlineLinear(
 
     assert((reinterpret_cast<uintptr_t>(pSource) & 0xF) == 0);
 
-    switch (format)
+    switch (static_cast<int>(format))
     {
     case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
     case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
@@ -2791,6 +2837,7 @@ bool DirectX::Internal::StoreScanlineLinear(
     case DXGI_FORMAT_B8G8R8A8_UNORM:
     case DXGI_FORMAT_B8G8R8X8_UNORM:
     case DXGI_FORMAT_B4G4R4A4_UNORM:
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
         break;
 
     default:
@@ -2831,7 +2878,7 @@ bool DirectX::Internal::LoadScanlineLinear(
     DXGI_FORMAT format,
     TEX_FILTER_FLAGS flags) noexcept
 {
-    switch (format)
+    switch (static_cast<int>(format))
     {
     case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
     case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
@@ -2862,6 +2909,7 @@ bool DirectX::Internal::LoadScanlineLinear(
     case DXGI_FORMAT_B8G8R8A8_UNORM:
     case DXGI_FORMAT_B8G8R8X8_UNORM:
     case DXGI_FORMAT_B4G4R4A4_UNORM:
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
         break;
 
     default:
@@ -2987,6 +3035,7 @@ namespace
         { XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT,  10, CONVF_FLOAT | CONVF_POS_ONLY | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM,10, CONVF_SNORM | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
         { XBOX_DXGI_FORMAT_R4G4_UNORM,               4, CONVF_UNORM | CONVF_R | CONVF_G },
+        { WIN11_DXGI_FORMAT_A4B4G4R4_UNORM,          4, CONVF_UNORM | CONVF_BGR | CONVF_R | CONVF_G | CONVF_B | CONVF_A },
     };
 
 #pragma prefast( suppress : 25004, "Signature must match bsearch" );
@@ -4327,6 +4376,56 @@ bool DirectX::Internal::StoreScanlineDither(
 
     case DXGI_FORMAT_B4G4R4A4_UNORM:
         STORE_SCANLINE(XMUNIBBLE4, g_Scale4pc, true, true, uint8_t, 0xF, y, true)
+
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
+        if (size >= sizeof(XMUNIBBLE4))
+        {
+            XMUNIBBLE4 * __restrict dest = static_cast<XMUNIBBLE4*>(pDestination);
+            for (size_t i = 0; i < count; ++i)
+            {
+                auto index = static_cast<ptrdiff_t>((y & 1) ? (count - i - 1) : i);
+                ptrdiff_t delta = (y & 1) ? -2 : 0;
+
+                XMVECTOR v = XMVectorSaturate(sPtr[index]);
+                v = XMVectorSwizzle<3, 2, 1, 0>(v);
+                v = XMVectorAdd(v, vError);
+                v = XMVectorMultiply(v, g_Scale4pc);
+
+                XMVECTOR target;
+                if (pDiffusionErrors)
+                {
+                    target = XMVectorRound(v);
+                    vError = XMVectorSubtract(v, target);
+                    vError = XMVectorDivide(vError, g_Scale4pc);
+
+                    // Distribute error to next scanline and next pixel
+                    pDiffusionErrors[index - delta] = XMVectorMultiplyAdd(g_ErrorWeight3, vError, pDiffusionErrors[index - delta]);
+                    pDiffusionErrors[index + 1] = XMVectorMultiplyAdd(g_ErrorWeight5, vError, pDiffusionErrors[index + 1]);
+                    pDiffusionErrors[index + 2 + delta] = XMVectorMultiplyAdd(g_ErrorWeight1, vError, pDiffusionErrors[index + 2 + delta]);
+                    vError = XMVectorMultiply(vError, g_ErrorWeight7);
+                }
+                else
+                {
+                    // Applied ordered dither
+                    target = XMVectorAdd(v, ordered[index & 3]);
+                    target = XMVectorRound(target);
+                }
+
+                target = XMVectorClamp(target, g_XMZero, g_Scale4pc);
+
+                XMFLOAT4A tmp;
+                XMStoreFloat4A(&tmp, target);
+
+                auto dPtr = &dest[index];
+                if (dPtr >= ePtr) break;
+                dPtr->x = uint8_t(static_cast<uint8_t>(tmp.x) & 0xF);
+                dPtr->y = uint8_t(static_cast<uint8_t>(tmp.y) & 0xF);
+                dPtr->z = uint8_t(static_cast<uint8_t>(tmp.z) & 0xF);
+                dPtr->w = uint8_t(static_cast<uint8_t>(tmp.w) & 0xF);
+            }
+            return true;
+        }
+        return false;
 
     case XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM:
         STORE_SCANLINE(XMXDECN4, g_Scale9pc, false, true, uint16_t, 0x3FF, y, false)
