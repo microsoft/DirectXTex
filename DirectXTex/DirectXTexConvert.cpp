@@ -3280,8 +3280,8 @@ void DirectX::Internal::ConvertScanline(
             {
                 // !CONVF_DEPTH -> CONVF_DEPTH
 
-                // RGB -> Depth (red channel)
-                switch (flags & (TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE))
+                // RGB -> Depth (red channel or other specified channel)
+                switch (flags & (TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE | TEX_FILTER_RGB_COPY_ALPHA))
                 {
                 case TEX_FILTER_RGB_COPY_GREEN:
                     {
@@ -3302,6 +3302,18 @@ void DirectX::Internal::ConvertScanline(
                         {
                             const XMVECTOR v = *ptr;
                             const XMVECTOR v1 = XMVectorSplatZ(v);
+                            *ptr++ = XMVectorSelect(v, v1, g_XMSelect1000);
+                        }
+                    }
+                    break;
+
+                case TEX_FILTER_RGB_COPY_ALPHA:
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for (size_t i = 0; i < count; ++i)
+                        {
+                            const XMVECTOR v = *ptr;
+                            const XMVECTOR v1 = XMVectorSplatW(v);
                             *ptr++ = XMVectorSelect(v, v1, g_XMSelect1000);
                         }
                     }
@@ -3574,6 +3586,7 @@ void DirectX::Internal::ConvertScanline(
         if (((out->flags & CONVF_RGBA_MASK) == CONVF_A) && !(in->flags & CONVF_A))
         {
             // !CONVF_A -> A format
+            // We ignore TEX_FILTER_RGB_COPY_ALPHA since there's no input alpha channel.
             switch (flags & (TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE))
             {
             case TEX_FILTER_RGB_COPY_GREEN:
@@ -3669,8 +3682,8 @@ void DirectX::Internal::ConvertScanline(
         {
             if ((out->flags & CONVF_RGB_MASK) == CONVF_R)
             {
-                // RGB format -> R format
-                switch (flags & (TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE))
+                // RGB(A) format -> R format
+                switch (flags & (TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE | TEX_FILTER_RGB_COPY_ALPHA))
                 {
                 case TEX_FILTER_RGB_COPY_GREEN:
                     {
@@ -3691,6 +3704,18 @@ void DirectX::Internal::ConvertScanline(
                         {
                             const XMVECTOR v = *ptr;
                             const XMVECTOR v1 = XMVectorSplatZ(v);
+                            *ptr++ = XMVectorSelect(v, v1, g_XMSelect1110);
+                        }
+                    }
+                    break;
+
+                case TEX_FILTER_RGB_COPY_ALPHA:
+                    {
+                        XMVECTOR* ptr = pBuffer;
+                        for (size_t i = 0; i < count; ++i)
+                        {
+                            const XMVECTOR v = *ptr;
+                            const XMVECTOR v1 = XMVectorSplatW(v);
                             *ptr++ = XMVectorSelect(v, v1, g_XMSelect1110);
                         }
                     }
@@ -3724,37 +3749,83 @@ void DirectX::Internal::ConvertScanline(
             }
             else if ((out->flags & CONVF_RGB_MASK) == (CONVF_R | CONVF_G))
             {
-                // RGB format -> RG format
-                switch (static_cast<int>(flags & (TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE)))
+                if ((flags & TEX_FILTER_RGB_COPY_ALPHA) && (in->flags & CONVF_A))
                 {
-                case (static_cast<int>(TEX_FILTER_RGB_COPY_RED) | static_cast<int>(TEX_FILTER_RGB_COPY_BLUE)):
+                    // RGBA -> RG format
+                    switch (static_cast<int>(flags & (TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE | TEX_FILTER_RGB_COPY_ALPHA)))
                     {
-                        XMVECTOR* ptr = pBuffer;
-                        for (size_t i = 0; i < count; ++i)
+                    case (static_cast<int>(TEX_FILTER_RGB_COPY_RED) | static_cast<int>(TEX_FILTER_RGB_COPY_ALPHA)):
+                    default:
                         {
-                            const XMVECTOR v = *ptr;
-                            const XMVECTOR v1 = XMVectorSwizzle<0, 2, 0, 2>(v);
-                            *ptr++ = XMVectorSelect(v, v1, g_XMSelect1100);
+                            XMVECTOR* ptr = pBuffer;
+                            for (size_t i = 0; i < count; ++i)
+                            {
+                                const XMVECTOR v = *ptr;
+                                const XMVECTOR v1 = XMVectorSwizzle<0, 3, 0, 3>(v);
+                                *ptr++ = XMVectorSelect(v, v1, g_XMSelect1100);
+                            }
                         }
-                    }
-                    break;
+                        break;
 
-                case (static_cast<int>(TEX_FILTER_RGB_COPY_GREEN) | static_cast<int>(TEX_FILTER_RGB_COPY_BLUE)):
+                    case (static_cast<int>(TEX_FILTER_RGB_COPY_GREEN) | static_cast<int>(TEX_FILTER_RGB_COPY_ALPHA)):
+                        {
+                            XMVECTOR* ptr = pBuffer;
+                            for (size_t i = 0; i < count; ++i)
+                            {
+                                const XMVECTOR v = *ptr;
+                                const XMVECTOR v1 = XMVectorSwizzle<1, 3, 1, 3>(v);
+                                *ptr++ = XMVectorSelect(v, v1, g_XMSelect1100);
+                            }
+                        }
+                        break;
+
+                    case (static_cast<int>(TEX_FILTER_RGB_COPY_BLUE) | static_cast<int>(TEX_FILTER_RGB_COPY_ALPHA)):
+                        {
+                            XMVECTOR* ptr = pBuffer;
+                            for (size_t i = 0; i < count; ++i)
+                            {
+                                const XMVECTOR v = *ptr;
+                                const XMVECTOR v1 = XMVectorSwizzle<2, 3, 2, 3>(v);
+                                *ptr++ = XMVectorSelect(v, v1, g_XMSelect1100);
+                            }
+                        }
+                        break;
+                    }
+                }
+                else
+                {
+                    // RGB format -> RG format
+                    switch (static_cast<int>(flags & (TEX_FILTER_RGB_COPY_RED | TEX_FILTER_RGB_COPY_GREEN | TEX_FILTER_RGB_COPY_BLUE)))
                     {
-                        XMVECTOR* ptr = pBuffer;
-                        for (size_t i = 0; i < count; ++i)
+                    case (static_cast<int>(TEX_FILTER_RGB_COPY_RED) | static_cast<int>(TEX_FILTER_RGB_COPY_BLUE)):
                         {
-                            const XMVECTOR v = *ptr;
-                            const XMVECTOR v1 = XMVectorSwizzle<1, 2, 3, 0>(v);
-                            *ptr++ = XMVectorSelect(v, v1, g_XMSelect1100);
+                            XMVECTOR* ptr = pBuffer;
+                            for (size_t i = 0; i < count; ++i)
+                            {
+                                const XMVECTOR v = *ptr;
+                                const XMVECTOR v1 = XMVectorSwizzle<0, 2, 0, 2>(v);
+                                *ptr++ = XMVectorSelect(v, v1, g_XMSelect1100);
+                            }
                         }
-                    }
-                    break;
+                        break;
 
-                case (static_cast<int>(TEX_FILTER_RGB_COPY_RED) | static_cast<int>(TEX_FILTER_RGB_COPY_GREEN)):
-                default:
-                    // Leave data unchanged and the store will handle this...
-                    break;
+                    case (static_cast<int>(TEX_FILTER_RGB_COPY_GREEN) | static_cast<int>(TEX_FILTER_RGB_COPY_BLUE)):
+                        {
+                            XMVECTOR* ptr = pBuffer;
+                            for (size_t i = 0; i < count; ++i)
+                            {
+                                const XMVECTOR v = *ptr;
+                                const XMVECTOR v1 = XMVectorSwizzle<1, 2, 3, 0>(v);
+                                *ptr++ = XMVectorSelect(v, v1, g_XMSelect1100);
+                            }
+                        }
+                        break;
+
+                    case (static_cast<int>(TEX_FILTER_RGB_COPY_RED) | static_cast<int>(TEX_FILTER_RGB_COPY_GREEN)):
+                    default:
+                        // Leave data unchanged and the store will handle this...
+                        break;
+                    }
                 }
             }
         }
