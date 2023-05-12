@@ -572,11 +572,15 @@ namespace DirectX
         TEX_FILTER_FLOAT_X2BIAS = 0x200,
         // Enable *2 - 1 conversion cases for unorm<->float and positive-only float formats
 
+        TEX_FILTER_FLOAT16_SATURATE_TO_INF = 0x400,
+        TEX_FILTER_FLOAT16_KEEP_NANS = 0x800,
+        // Float to half16 conversion options
+
         TEX_FILTER_RGB_COPY_RED = 0x1000,
         TEX_FILTER_RGB_COPY_GREEN = 0x2000,
         TEX_FILTER_RGB_COPY_BLUE = 0x4000,
         // When converting RGB to R, defaults to using grayscale. These flags indicate copying a specific channel instead
-        // When converting RGB to RG, defaults to copying RED | GREEN. These flags control which channels are selected instead.
+        // When converting RGB to RG, defaults to copying RED | GREEN. These flags control which channels are selected instead
 
         TEX_FILTER_DITHER = 0x10000,
         // Use ordered 4x4 dithering for any required conversions
