@@ -1440,6 +1440,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     }
     else
     {
+        size_t conversionIndex = 0;
         for (auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv)
         {
             wchar_t ext[_MAX_EXT] = {};
@@ -1821,7 +1822,20 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 height = info.height;
             }
-            if ((info.width != width || info.height != height) && dwCommand != CMD_FROM_MIPS)
+            size_t targetWidth = width;
+            size_t targetHeight = height;
+            if (dwCommand == CMD_FROM_MIPS)
+            {
+                size_t mipdiv = 1;
+                for (size_t i = 0; i < conversionIndex; ++i)
+                {
+                    mipdiv = mipdiv + mipdiv;
+                }
+
+                targetWidth /= mipdiv;
+                targetHeight /= mipdiv;
+            }
+            if (info.width != targetWidth || info.height != targetHeight)
             {
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                 if (!timage)
@@ -1830,7 +1844,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                hr = Resize(image->GetImages(), image->GetImageCount(), image->GetMetadata(), width, height, dwFilter | dwFilterOpts, *timage.get());
+                hr = Resize(image->GetImages(), image->GetImageCount(), image->GetMetadata(), targetWidth, targetHeight, dwFilter | dwFilterOpts, *timage.get());
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [resize] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -1839,7 +1853,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 auto& tinfo = timage->GetMetadata();
 
-                assert(tinfo.width == width && tinfo.height == height && tinfo.mipLevels == 1);
+                assert(tinfo.width == targetWidth && tinfo.height == targetHeight && tinfo.mipLevels == 1);
                 info.width = tinfo.width;
                 info.height = tinfo.height;
                 info.mipLevels = 1;
@@ -1972,6 +1986,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             images += info.arraySize;
             loadedImages.emplace_back(std::move(image));
+            ++conversionIndex;
         }
     }
 
