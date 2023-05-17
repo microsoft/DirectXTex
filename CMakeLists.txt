@@ -380,6 +380,13 @@ if(MSVC)
       endforeach()
     endif()
 
+    if((MSVC_VERSION GREATER_EQUAL 1924)
+       AND ((NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang")) OR (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)))
+      foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+        target_compile_options(${t} PRIVATE /ZH:SHA_256)
+      endforeach()
+    endif()
+
     if((MSVC_VERSION GREATER_EQUAL 1928)
        AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
        AND NOT ENABLE_OPENEXR_SUPPORT
@@ -443,12 +450,6 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
       foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
         target_compile_options(${t} PRIVATE /Gy /Gw)
       endforeach()
-    endif()
-
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.24)
-        foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-          target_compile_options(${t} PRIVATE /ZH:SHA_256)
-        endforeach()
     endif()
 
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.26)
