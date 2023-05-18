@@ -218,6 +218,9 @@ const SValue g_pFormats[] =
     DEFFMT(Y216),
     DEFFMT(B4G4R4A4_UNORM),
 
+    // D3D11on12 format
+    { L"A4B4G4R4_UNORM", DXGI_FORMAT(191) },
+
     { nullptr, DXGI_FORMAT_UNKNOWN }
 };
 
@@ -748,6 +751,14 @@ namespace
 
             if (errorText)
                 LocalFree(errorText);
+
+            for(wchar_t* ptr = desc; *ptr != 0; ++ptr)
+            {
+                if (*ptr == L'\r' || *ptr == L'\n')
+                {
+                    *ptr = L' ';
+                }
+            }
         }
 
         return desc;
