@@ -30,23 +30,24 @@ namespace
     enum CONVERSION_FLAGS : uint32_t
     {
         CONV_FLAGS_NONE = 0x0,
-        CONV_FLAGS_EXPAND = 0x1,      // Conversion requires expanded pixel size
-        CONV_FLAGS_NOALPHA = 0x2,      // Conversion requires setting alpha to known value
-        CONV_FLAGS_SWIZZLE = 0x4,      // BGR/RGB order swizzling required
-        CONV_FLAGS_PAL8 = 0x8,      // Has an 8-bit palette
-        CONV_FLAGS_888 = 0x10,     // Source is an 8:8:8 (24bpp) format
-        CONV_FLAGS_565 = 0x20,     // Source is a 5:6:5 (16bpp) format
-        CONV_FLAGS_5551 = 0x40,     // Source is a 5:5:5:1 (16bpp) format
-        CONV_FLAGS_4444 = 0x80,     // Source is a 4:4:4:4 (16bpp) format
-        CONV_FLAGS_44 = 0x100,    // Source is a 4:4 (8bpp) format
-        CONV_FLAGS_332 = 0x200,    // Source is a 3:3:2 (8bpp) format
-        CONV_FLAGS_8332 = 0x400,    // Source is a 8:3:3:2 (16bpp) format
-        CONV_FLAGS_A8P8 = 0x800,    // Has an 8-bit palette with an alpha channel
-        CONV_FLAGS_DX10 = 0x10000,  // Has the 'DX10' extension header
-        CONV_FLAGS_PMALPHA = 0x20000,  // Contains premultiplied alpha data
-        CONV_FLAGS_L8 = 0x40000,  // Source is a 8 luminance format
-        CONV_FLAGS_L16 = 0x80000,  // Source is a 16 luminance format
-        CONV_FLAGS_A8L8 = 0x100000, // Source is a 8:8 luminance format
+        CONV_FLAGS_EXPAND = 0x1,        // Conversion requires expanded pixel size
+        CONV_FLAGS_NOALPHA = 0x2,       // Conversion requires setting alpha to known value
+        CONV_FLAGS_SWIZZLE = 0x4,       // BGR/RGB order swizzling required
+        CONV_FLAGS_PAL8 = 0x8,          // Has an 8-bit palette
+        CONV_FLAGS_888 = 0x10,          // Source is an 8:8:8 (24bpp) format
+        CONV_FLAGS_565 = 0x20,          // Source is a 5:6:5 (16bpp) format
+        CONV_FLAGS_5551 = 0x40,         // Source is a 5:5:5:1 (16bpp) format
+        CONV_FLAGS_4444 = 0x80,         // Source is a 4:4:4:4 (16bpp) format
+        CONV_FLAGS_44 = 0x100,          // Source is a 4:4 (8bpp) format
+        CONV_FLAGS_332 = 0x200,         // Source is a 3:3:2 (8bpp) format
+        CONV_FLAGS_8332 = 0x400,        // Source is a 8:3:3:2 (16bpp) format
+        CONV_FLAGS_A8P8 = 0x800,        // Has an 8-bit palette with an alpha channel
+        CONF_FLAGS_11ON12 = 0x1000,     // D3D11on12 format
+        CONV_FLAGS_DX10 = 0x10000,      // Has the 'DX10' extension header
+        CONV_FLAGS_PMALPHA = 0x20000,   // Contains premultiplied alpha data
+        CONV_FLAGS_L8 = 0x40000,        // Source is a 8 luminance format
+        CONV_FLAGS_L16 = 0x80000,       // Source is a 16 luminance format
+        CONV_FLAGS_A8L8 = 0x100000,     // Source is a 8:8 luminance format
     };
 
     struct LegacyDDS
@@ -507,13 +508,20 @@ namespace
         // Special flag for handling 16bpp formats
         if (flags & DDS_FLAGS_NO_16BPP)
         {
-            switch (metadata.format)
+            switch (static_cast<int>(metadata.format))
             {
             case DXGI_FORMAT_B5G6R5_UNORM:
             case DXGI_FORMAT_B5G5R5A1_UNORM:
             case DXGI_FORMAT_B4G4R4A4_UNORM:
+            case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
                 if (metadata.format == DXGI_FORMAT_B5G6R5_UNORM)
+                {
                     convFlags |= CONV_FLAGS_NOALPHA;
+                }
+                if (metadata.format == WIN11_DXGI_FORMAT_A4B4G4R4_UNORM)
+                {
+                    convFlags |= CONV_FLAGS_4444 | CONF_FLAGS_11ON12;
+                }
                 metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
                 convFlags |= CONV_FLAGS_EXPAND;
                 break;
@@ -1368,7 +1376,15 @@ namespace
                             {
                                 if (convFlags & CONV_FLAGS_EXPAND)
                                 {
-                                    if (convFlags & (CONV_FLAGS_565 | CONV_FLAGS_5551 | CONV_FLAGS_4444))
+                                    if (convFlags & CONV_FLAGS_4444)
+                                    {
+                                        if (!ExpandScanline(pDest, dpitch, DXGI_FORMAT_R8G8B8A8_UNORM,
+                                            pSrc, spitch,
+                                            (convFlags & CONF_FLAGS_11ON12) ? WIN11_DXGI_FORMAT_A4B4G4R4_UNORM : DXGI_FORMAT_B4G4R4A4_UNORM,
+                                            tflags))
+                                            return E_FAIL;
+                                    }
+                                    else if (convFlags & (CONV_FLAGS_565 | CONV_FLAGS_5551))
                                     {
                                         if (!ExpandScanline(pDest, dpitch, DXGI_FORMAT_R8G8B8A8_UNORM,
                                             pSrc, spitch,
@@ -1461,7 +1477,15 @@ namespace
                             {
                                 if (convFlags & CONV_FLAGS_EXPAND)
                                 {
-                                    if (convFlags & (CONV_FLAGS_565 | CONV_FLAGS_5551 | CONV_FLAGS_4444))
+                                    if (convFlags & CONV_FLAGS_4444)
+                                    {
+                                        if (!ExpandScanline(pDest, dpitch, DXGI_FORMAT_R8G8B8A8_UNORM,
+                                            pSrc, spitch,
+                                            (convFlags & CONF_FLAGS_11ON12) ? WIN11_DXGI_FORMAT_A4B4G4R4_UNORM : DXGI_FORMAT_B4G4R4A4_UNORM,
+                                            tflags))
+                                            return E_FAIL;
+                                    }
+                                    else if (convFlags & (CONV_FLAGS_565 | CONV_FLAGS_5551))
                                     {
                                         if (!ExpandScanline(pDest, dpitch, DXGI_FORMAT_R8G8B8A8_UNORM,
                                             pSrc, spitch,
