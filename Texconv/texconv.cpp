@@ -97,6 +97,7 @@ namespace
         OPT_USE_DX10,
         OPT_USE_DX9,
         OPT_TGA20,
+        OPT_TGAZEROALPHA,
         OPT_WIC_QUALITY,
         OPT_WIC_LOSSLESS,
         OPT_WIC_MULTIFRAME,
@@ -186,6 +187,7 @@ namespace
         { L"dx10",          OPT_USE_DX10 },
         { L"dx9",           OPT_USE_DX9 },
         { L"tga20",         OPT_TGA20 },
+        { L"tgazeroalpha",  OPT_TGAZEROALPHA },
         { L"wicq",          OPT_WIC_QUALITY },
         { L"wiclossless",   OPT_WIC_LOSSLESS },
         { L"wicmulti",      OPT_WIC_MULTIFRAME },
@@ -950,6 +952,9 @@ namespace
             L"                       (DDS output only)\n"
             L"   -dx10               Force use of 'DX10' extended header\n"
             L"   -dx9                Force use of legacy DX9 header\n"
+            L"\n"
+            L"                       (TGA input only)\n"
+            L"   -tgazeroalpha       Allow all zero alpha channel files to be loaded 'as is'\n"
             L"\n"
             L"                       (TGA output only)\n"
             L"   -tga20              Write file including TGA 2.0 extension area\n"
@@ -2132,6 +2137,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         else if (_wcsicmp(ext, L".tga") == 0)
         {
             TGA_FLAGS tgaFlags = (IsBGR(format)) ? TGA_FLAGS_BGR : TGA_FLAGS_NONE;
+            if (dwOptions & (uint64_t(1) << OPT_TGAZEROALPHA))
+            {
+                tgaFlags |= TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA;
+            }
 
             hr = LoadFromTGAFile(pConv->szSrc, tgaFlags, &info, *image);
             if (FAILED(hr))
