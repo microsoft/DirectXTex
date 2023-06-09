@@ -147,6 +147,11 @@ namespace
         ROTATE_P3D65_TO_709,
     };
 
+    enum
+    {
+        FORMAT_DXT5_NM = 1,
+    };
+
     static_assert(OPT_MAX <= 64, "dwOptions is a unsigned int bitfield");
 
     struct SConversion
@@ -336,6 +341,14 @@ namespace
         { L"BPTC_FLOAT", DXGI_FORMAT_BC6H_UF16 },
 
         { nullptr, DXGI_FORMAT_UNKNOWN }
+    };
+
+    const SValue<uint32_t> g_pSpecialFormats[] =
+    {
+        { L"BC3n", FORMAT_DXT5_NM },
+        { L"DXT5nm", FORMAT_DXT5_NM },
+
+        { nullptr, 0 }
     };
 
     const SValue<uint32_t> g_pReadOnlyFormats[] =
@@ -996,6 +1009,8 @@ namespace
         PrintList(13, g_pFormats);
         wprintf(L"      ");
         PrintList(13, g_pFormatAliases);
+        wprintf(L"      ");
+        PrintList(13, g_pSpecialFormats);
 
         wprintf(L"\n   <filter>: ");
         PrintList(13, g_pFilters);
@@ -1427,6 +1442,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float paperWhiteNits = 200.f;
     float preserveAlphaCoverageRef = 0.0f;
     bool keepRecursiveDirs = false;
+    bool dxt5nm = false;
     uint32_t swizzleElements[4] = { 0, 1, 2, 3 };
     uint32_t zeroElements[4] = {};
     uint32_t oneElements[4] = {};
@@ -1580,10 +1596,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     format = static_cast<DXGI_FORMAT>(LookupByName(pValue, g_pFormatAliases));
                     if (!format)
                     {
-                        wprintf(L"Invalid value specified with -f (%ls)\n", pValue);
-                        wprintf(L"\n");
-                        PrintUsage();
-                        return 1;
+                        switch (LookupByName(pValue, g_pSpecialFormats))
+                        {
+                        case FORMAT_DXT5_NM:
+                            format = DXGI_FORMAT_BC3_UNORM;
+                            dxt5nm = true;
+                            break;
+
+                        default:
+                            wprintf(L"Invalid value specified with -f (%ls)\n", pValue);
+                            wprintf(L"\n");
+                            PrintUsage();
+                            return 1;
+                        }
                     }
                 }
                 break;
@@ -3453,6 +3478,51 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Compress ----------------------------------------------------------------
+        if (dxt5nm)
+        {
+            // Prepare for DXT5nm
+            assert(tformat == DXGI_FORMAT_BC3_UNORM);
+
+            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+            if (!timage)
+            {
+                wprintf(L"\nERROR: Memory allocation failed\n");
+                return 1;
+            }
+
+            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                [=](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+                {
+                    UNREFERENCED_PARAMETER(y);
+
+                    for (size_t j = 0; j < w; ++j)
+                    {
+                        outPixels[j] = XMVectorPermute<4, 1, 5, 0>(inPixels[j], g_XMIdentityR0);
+                    }
+                }, *timage);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED [DXT5nm] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                return 1;
+            }
+
+        #ifndef NDEBUG
+            auto& tinfo = timage->GetMetadata();
+        #endif
+
+            assert(info.width == tinfo.width);
+            assert(info.height == tinfo.height);
+            assert(info.depth == tinfo.depth);
+            assert(info.arraySize == tinfo.arraySize);
+            assert(info.mipLevels == tinfo.mipLevels);
+            assert(info.miscFlags == tinfo.miscFlags);
+            assert(info.format == tinfo.format);
+            assert(info.dimension == tinfo.dimension);
+
+            image.swap(timage);
+            cimage.reset();
+        }
+
         if (IsCompressed(tformat) && (FileType == CODEC_DDS))
         {
             if (cimage && (cimage->GetMetadata().format == tformat))
@@ -3577,7 +3647,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         if (HasAlpha(info.format)
             && info.format != DXGI_FORMAT_A8_UNORM)
         {
-            if (image->IsAlphaAllOpaque())
+            if (dxt5nm)
+            {
+                info.SetAlphaMode(TEX_ALPHA_MODE_CUSTOM);
+            }
+            else if (image->IsAlphaAllOpaque())
             {
                 info.SetAlphaMode(TEX_ALPHA_MODE_OPAQUE);
             }
