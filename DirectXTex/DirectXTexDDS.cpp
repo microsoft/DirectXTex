@@ -57,8 +57,6 @@ namespace
         DDS_PIXELFORMAT ddpf;
     };
 
-    const DDS_PIXELFORMAT DDSPF_DXT5_RXGB = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R', 'X', 'G', 'B'), 0, 0, 0, 0, 0 };
-
     const LegacyDDS g_LegacyDDSMap[] =
     {
         { DXGI_FORMAT_BC1_UNORM,          CONV_FLAGS_NONE,        DDSPF_DXT1 }, // D3DFMT_DXT1
@@ -78,7 +76,7 @@ namespace
         { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('x', 'G', 'x', 'R'), 0, 0, 0, 0, 0 } },
         { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('G', 'X', 'R', 'B'), 0, 0, 0, 0, 0 } },
         { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('G', 'R', 'X', 'B'), 0, 0, 0, 0, 0 } },
-        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        DDSPF_DXT5_RXGB },
+        { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R', 'X', 'G', 'B'), 0, 0, 0, 0, 0 } },
         { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,        { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B', 'R', 'G', 'X'), 0, 0, 0, 0, 0 } },
 
         { DXGI_FORMAT_BC4_UNORM,          CONV_FLAGS_NONE,        DDSPF_BC4_UNORM },
@@ -642,6 +640,14 @@ HRESULT DirectX::EncodeDDSHeader(
         case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy(&ddpf, &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.2
         case DXGI_FORMAT_YUY2:                  memcpy(&ddpf, &DDSPF_YUY2, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.2
 
+        case DXGI_FORMAT_BC3_UNORM:
+            memcpy(&ddpf, metadata.IsPMAlpha() ? (&DDSPF_DXT4) : (&DDSPF_DXT5), sizeof(DDS_PIXELFORMAT));
+            if (flags & DDS_FLAGS_FORCE_DXT5_RXGB)
+            {
+                ddpf.fourCC = MAKEFOURCC('R', 'X', 'G', 'B');
+            }
+            break;
+
         // Legacy D3DX formats using D3DFMT enum value as FourCC
         case DXGI_FORMAT_R32G32B32A32_FLOAT:
             ddpf.size = sizeof(DDS_PIXELFORMAT); ddpf.flags = DDS_FOURCC; ddpf.fourCC = 116;  // D3DFMT_A32B32G32R32F
@@ -666,21 +672,6 @@ HRESULT DirectX::EncodeDDSHeader(
             break;
         case DXGI_FORMAT_R16_FLOAT:
             ddpf.size = sizeof(DDS_PIXELFORMAT); ddpf.flags = DDS_FOURCC; ddpf.fourCC = 111;  // D3DFMT_R16F
-            break;
-
-        case DXGI_FORMAT_BC3_UNORM:
-            if (flags & DDS_FLAGS_FORCE_DXT5_RXGB)
-            {
-                memcpy(&ddpf, &DDSPF_DXT5_RXGB, sizeof(DDS_PIXELFORMAT)); break;
-            }
-            else if (metadata.IsPMAlpha())
-            {
-                memcpy(&ddpf, &DDSPF_DXT4, sizeof(DDS_PIXELFORMAT)); break;
-            }
-            else
-            {
-                memcpy(&ddpf, &DDSPF_DXT5, sizeof(DDS_PIXELFORMAT)); break;
-            }
             break;
 
         // DX9 legacy pixel formats
