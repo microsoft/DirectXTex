@@ -150,6 +150,7 @@ namespace
     enum
     {
         FORMAT_DXT5_NM = 1,
+        FORMAT_DXT5_RXGB,
     };
 
     static_assert(OPT_MAX <= 64, "dwOptions is a unsigned int bitfield");
@@ -347,6 +348,7 @@ namespace
     {
         { L"BC3n", FORMAT_DXT5_NM },
         { L"DXT5nm", FORMAT_DXT5_NM },
+        { L"RXGB", FORMAT_DXT5_RXGB },
 
         { nullptr, 0 }
     };
@@ -1443,6 +1445,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float preserveAlphaCoverageRef = 0.0f;
     bool keepRecursiveDirs = false;
     bool dxt5nm = false;
+    bool dxt5rxgb = false;
     uint32_t swizzleElements[4] = { 0, 1, 2, 3 };
     uint32_t zeroElements[4] = {};
     uint32_t oneElements[4] = {};
@@ -1601,6 +1604,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         case FORMAT_DXT5_NM:
                             format = DXGI_FORMAT_BC3_UNORM;
                             dxt5nm = true;
+                            break;
+
+                        case FORMAT_DXT5_RXGB:
+                            format = DXGI_FORMAT_BC3_UNORM;
+                            dxt5rxgb = true;
                             break;
 
                         default:
@@ -3478,81 +3486,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Compress ----------------------------------------------------------------
-        if (dxt5nm)
+        if (FileType == CODEC_DDS)
         {
-            // Prepare for DXT5nm
-            assert(tformat == DXGI_FORMAT_BC3_UNORM);
-
-            std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
-            if (!timage)
+            if (dxt5nm || dxt5rxgb)
             {
-                wprintf(L"\nERROR: Memory allocation failed\n");
-                return 1;
-            }
-
-            hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
-                [=](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
-                {
-                    UNREFERENCED_PARAMETER(y);
-
-                    for (size_t j = 0; j < w; ++j)
-                    {
-                        outPixels[j] = XMVectorPermute<4, 1, 5, 0>(inPixels[j], g_XMIdentityR0);
-                    }
-                }, *timage);
-            if (FAILED(hr))
-            {
-                wprintf(L" FAILED [DXT5nm] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-                return 1;
-            }
-
-        #ifndef NDEBUG
-            auto& tinfo = timage->GetMetadata();
-        #endif
-
-            assert(info.width == tinfo.width);
-            assert(info.height == tinfo.height);
-            assert(info.depth == tinfo.depth);
-            assert(info.arraySize == tinfo.arraySize);
-            assert(info.mipLevels == tinfo.mipLevels);
-            assert(info.miscFlags == tinfo.miscFlags);
-            assert(info.format == tinfo.format);
-            assert(info.dimension == tinfo.dimension);
-
-            image.swap(timage);
-            cimage.reset();
-        }
-
-        if (IsCompressed(tformat) && (FileType == CODEC_DDS))
-        {
-            if (cimage && (cimage->GetMetadata().format == tformat))
-            {
-                // We never changed the image and it was already compressed in our desired format, use original data
-                image.reset(cimage.release());
-
-                auto& tinfo = image->GetMetadata();
-
-                if ((tinfo.width % 4) != 0 || (tinfo.height % 4) != 0)
-                {
-                    non4bc = true;
-                }
-
-                info.format = tinfo.format;
-                assert(info.width == tinfo.width);
-                assert(info.height == tinfo.height);
-                assert(info.depth == tinfo.depth);
-                assert(info.arraySize == tinfo.arraySize);
-                assert(info.mipLevels == tinfo.mipLevels);
-                assert(info.miscFlags == tinfo.miscFlags);
-                assert(info.dimension == tinfo.dimension);
-            }
-            else
-            {
-                cimage.reset();
-
-                auto img = image->GetImage(0, 0, 0);
-                assert(img);
-                const size_t nimg = image->GetImageCount();
+                // Prepare for DXT5nm/RXGB
+                assert(tformat == DXGI_FORMAT_BC3_UNORM);
 
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                 if (!timage)
@@ -3561,93 +3500,184 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                bool bc6hbc7 = false;
-                switch (tformat)
+                if (dxt5nm)
                 {
-                case DXGI_FORMAT_BC6H_TYPELESS:
-                case DXGI_FORMAT_BC6H_UF16:
-                case DXGI_FORMAT_BC6H_SF16:
-                case DXGI_FORMAT_BC7_TYPELESS:
-                case DXGI_FORMAT_BC7_UNORM:
-                case DXGI_FORMAT_BC7_UNORM_SRGB:
-                    bc6hbc7 = true;
-
-                    {
-                        static bool s_tryonce = false;
-
-                        if (!s_tryonce)
+                    hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                        [=](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
                         {
-                            s_tryonce = true;
+                            UNREFERENCED_PARAMETER(y);
 
-                            if (!(dwOptions & (uint64_t(1) << OPT_NOGPU)))
+                            for (size_t j = 0; j < w; ++j)
                             {
-                                if (!CreateDevice(adapter, pDevice.GetAddressOf()))
-                                    wprintf(L"\nWARNING: DirectCompute is not available, using BC6H / BC7 CPU codec\n");
+                                outPixels[j] = XMVectorPermute<4, 1, 5, 0>(inPixels[j], g_XMIdentityR0);
                             }
-                            else
-                            {
-                                wprintf(L"\nWARNING: using BC6H / BC7 CPU codec\n");
-                            }
-                        }
+                        }, *timage);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED [DXT5nm] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                        return 1;
                     }
-                    break;
-
-                default:
-                    break;
-                }
-
-                TEX_COMPRESS_FLAGS cflags = dwCompress;
-            #ifdef _OPENMP
-                if (!(dwOptions & (uint64_t(1) << OPT_FORCE_SINGLEPROC)))
-                {
-                    cflags |= TEX_COMPRESS_PARALLEL;
-                }
-            #endif
-
-                if ((img->width % 4) != 0 || (img->height % 4) != 0)
-                {
-                    non4bc = true;
-                }
-
-                if (bc6hbc7 && pDevice)
-                {
-                    hr = Compress(pDevice.Get(), img, nimg, info, tformat, dwCompress | dwSRGB, alphaWeight, *timage);
                 }
                 else
                 {
-                    hr = Compress(img, nimg, info, tformat, cflags | dwSRGB, alphaThreshold, *timage);
-                }
-                if (FAILED(hr))
-                {
-                    wprintf(L" FAILED [compress] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-                    retVal = 1;
-                    continue;
+                    hr = TransformImage(image->GetImages(), image->GetImageCount(), image->GetMetadata(),
+                        [=](XMVECTOR* outPixels, const XMVECTOR* inPixels, size_t w, size_t y)
+                        {
+                            UNREFERENCED_PARAMETER(y);
+
+                            for (size_t j = 0; j < w; ++j)
+                            {
+                                outPixels[j] = XMVectorSwizzle<3, 1, 2, 0>(inPixels[j]);
+                            }
+                        }, *timage);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED [DXT5 RXGB] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                        return 1;
+                    }
                 }
 
+            #ifndef NDEBUG
                 auto& tinfo = timage->GetMetadata();
+            #endif
 
-                info.format = tinfo.format;
                 assert(info.width == tinfo.width);
                 assert(info.height == tinfo.height);
                 assert(info.depth == tinfo.depth);
                 assert(info.arraySize == tinfo.arraySize);
                 assert(info.mipLevels == tinfo.mipLevels);
                 assert(info.miscFlags == tinfo.miscFlags);
+                assert(info.format == tinfo.format);
                 assert(info.dimension == tinfo.dimension);
 
                 image.swap(timage);
+                cimage.reset();
+            }
+
+            if (IsCompressed(tformat))
+            {
+                if (cimage && (cimage->GetMetadata().format == tformat))
+                {
+                    // We never changed the image and it was already compressed in our desired format, use original data
+                    image.reset(cimage.release());
+
+                    auto& tinfo = image->GetMetadata();
+
+                    if ((tinfo.width % 4) != 0 || (tinfo.height % 4) != 0)
+                    {
+                        non4bc = true;
+                    }
+
+                    info.format = tinfo.format;
+                    assert(info.width == tinfo.width);
+                    assert(info.height == tinfo.height);
+                    assert(info.depth == tinfo.depth);
+                    assert(info.arraySize == tinfo.arraySize);
+                    assert(info.mipLevels == tinfo.mipLevels);
+                    assert(info.miscFlags == tinfo.miscFlags);
+                    assert(info.dimension == tinfo.dimension);
+                }
+                else
+                {
+                    cimage.reset();
+
+                    auto img = image->GetImage(0, 0, 0);
+                    assert(img);
+                    const size_t nimg = image->GetImageCount();
+
+                    std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
+                    if (!timage)
+                    {
+                        wprintf(L"\nERROR: Memory allocation failed\n");
+                        return 1;
+                    }
+
+                    bool bc6hbc7 = false;
+                    switch (tformat)
+                    {
+                    case DXGI_FORMAT_BC6H_TYPELESS:
+                    case DXGI_FORMAT_BC6H_UF16:
+                    case DXGI_FORMAT_BC6H_SF16:
+                    case DXGI_FORMAT_BC7_TYPELESS:
+                    case DXGI_FORMAT_BC7_UNORM:
+                    case DXGI_FORMAT_BC7_UNORM_SRGB:
+                        bc6hbc7 = true;
+
+                        {
+                            static bool s_tryonce = false;
+
+                            if (!s_tryonce)
+                            {
+                                s_tryonce = true;
+
+                                if (!(dwOptions & (uint64_t(1) << OPT_NOGPU)))
+                                {
+                                    if (!CreateDevice(adapter, pDevice.GetAddressOf()))
+                                        wprintf(L"\nWARNING: DirectCompute is not available, using BC6H / BC7 CPU codec\n");
+                                }
+                                else
+                                {
+                                    wprintf(L"\nWARNING: using BC6H / BC7 CPU codec\n");
+                                }
+                            }
+                        }
+                        break;
+
+                    default:
+                        break;
+                    }
+
+                    TEX_COMPRESS_FLAGS cflags = dwCompress;
+                #ifdef _OPENMP
+                    if (!(dwOptions & (uint64_t(1) << OPT_FORCE_SINGLEPROC)))
+                    {
+                        cflags |= TEX_COMPRESS_PARALLEL;
+                    }
+                #endif
+
+                    if ((img->width % 4) != 0 || (img->height % 4) != 0)
+                    {
+                        non4bc = true;
+                    }
+
+                    if (bc6hbc7 && pDevice)
+                    {
+                        hr = Compress(pDevice.Get(), img, nimg, info, tformat, dwCompress | dwSRGB, alphaWeight, *timage);
+                    }
+                    else
+                    {
+                        hr = Compress(img, nimg, info, tformat, cflags | dwSRGB, alphaThreshold, *timage);
+                    }
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED [compress] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                        retVal = 1;
+                        continue;
+                    }
+
+                    auto& tinfo = timage->GetMetadata();
+
+                    info.format = tinfo.format;
+                    assert(info.width == tinfo.width);
+                    assert(info.height == tinfo.height);
+                    assert(info.depth == tinfo.depth);
+                    assert(info.arraySize == tinfo.arraySize);
+                    assert(info.mipLevels == tinfo.mipLevels);
+                    assert(info.miscFlags == tinfo.miscFlags);
+                    assert(info.dimension == tinfo.dimension);
+
+                    image.swap(timage);
+                }
             }
         }
-        else
-        {
-            cimage.reset();
-        }
+
+        cimage.reset();
 
         // --- Set alpha mode ----------------------------------------------------------
         if (HasAlpha(info.format)
             && info.format != DXGI_FORMAT_A8_UNORM)
         {
-            if (dxt5nm)
+            if (dxt5nm || dxt5rxgb)
             {
                 info.SetAlphaMode(TEX_ALPHA_MODE_CUSTOM);
             }
@@ -3766,6 +3796,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }
                     else if (dwOptions & (uint64_t(1) << OPT_USE_DX9))
                     {
+                        if (dxt5rxgb)
+                        {
+                            ddsFlags |= DDS_FLAGS_FORCE_DXT5_RXGB;
+                        }
+
                         ddsFlags |= DDS_FLAGS_FORCE_DX9_LEGACY;
                     }
 
