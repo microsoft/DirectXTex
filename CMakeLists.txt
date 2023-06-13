@@ -285,6 +285,7 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   add_executable(texassemble
     Texassemble/texassemble.cpp
     Texassemble/texassemble.rc
+    Texassemble/settings.manifest
     Texassemble/AnimatedGif.cpp)
   target_link_libraries(texassemble ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texassemble REGULAR_EXPRESSION Texassemble/*.*)
@@ -292,6 +293,7 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   add_executable(texconv
     Texconv/texconv.cpp
     Texconv/texconv.rc
+    Texconv/settings.manifest
     Texconv/ExtendedBMP.cpp
     Texconv/PortablePixMap.cpp)
   target_link_libraries(texconv ${PROJECT_NAME} ole32.lib shell32.lib version.lib)
@@ -299,7 +301,8 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
 
   add_executable(texdiag
     Texdiag/texdiag.cpp
-    Texdiag/texdiag.rc)
+    Texdiag/texdiag.rc
+    Texdiag/settings.manifest)
   target_link_libraries(texdiag ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
 
