@@ -620,7 +620,7 @@ namespace
                             ? (std::wstring(folder) + std::wstring(findData.cFileName) + std::filesystem::path::preferred_separator)
                             : (std::wstring(findData.cFileName) + std::filesystem::path::preferred_separator);
 
-                        auto subdir = path.parent_path().append(findData.cFileName);
+                        auto subdir = path.parent_path().append(findData.cFileName).append(path.filename().c_str());
 
                         SearchForFiles(subdir, files, recursive, subfolder.c_str());
                     }
@@ -636,7 +636,7 @@ namespace
     {
         std::list<SConversion> flist;
         std::set<std::wstring> excludes;
-        wchar_t fname[1024] = {};
+        wchar_t fname[32768] = {};
         for (;;)
         {
             inFile >> fname;
@@ -2092,9 +2092,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         std::filesystem::path curpath(pConv->szSrc.c_str());
-        auto ext = curpath.extension().c_str();
+        auto const ext = curpath.extension();
 
-        if (_wcsicmp(ext, L".dds") == 0 || _wcsicmp(ext, L".ddx") == 0)
+        if (_wcsicmp(ext.c_str(), L".dds") == 0 || _wcsicmp(ext.c_str(), L".ddx") == 0)
         {
             DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES;
             if (dwOptions & (uint64_t(1) << OPT_DDS_DWORD_ALIGN))
@@ -2133,7 +2133,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 image->OverrideFormat(info.format);
             }
         }
-        else if (_wcsicmp(ext, L".bmp") == 0)
+        else if (_wcsicmp(ext.c_str(), L".bmp") == 0)
         {
             hr = LoadFromBMPEx(curpath.c_str(), WIC_FLAGS_NONE | dwFilter, &info, *image);
             if (FAILED(hr))
@@ -2143,7 +2143,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 continue;
             }
         }
-        else if (_wcsicmp(ext, L".tga") == 0)
+        else if (_wcsicmp(ext.c_str(), L".tga") == 0)
         {
             TGA_FLAGS tgaFlags = (IsBGR(format)) ? TGA_FLAGS_BGR : TGA_FLAGS_NONE;
             if (dwOptions & (uint64_t(1) << OPT_TGAZEROALPHA))
@@ -2159,7 +2159,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 continue;
             }
         }
-        else if (_wcsicmp(ext, L".hdr") == 0)
+        else if (_wcsicmp(ext.c_str(), L".hdr") == 0)
         {
             hr = LoadFromHDRFile(curpath.c_str(), &info, *image);
             if (FAILED(hr))
@@ -2169,7 +2169,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 continue;
             }
         }
-        else if (_wcsicmp(ext, L".ppm") == 0)
+        else if (_wcsicmp(ext.c_str(), L".ppm") == 0)
         {
             hr = LoadFromPortablePixMap(curpath.c_str(), &info, *image);
             if (FAILED(hr))
@@ -2179,7 +2179,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 continue;
             }
         }
-        else if (_wcsicmp(ext, L".pfm") == 0)
+        else if (_wcsicmp(ext.c_str(), L".pfm") == 0)
         {
             hr = LoadFromPortablePixMapHDR(curpath.c_str(), &info, *image);
             if (FAILED(hr))
@@ -2190,7 +2190,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
         }
     #ifdef USE_OPENEXR
-        else if (_wcsicmp(ext, L".exr") == 0)
+        else if (_wcsicmp(ext.c_str(), L".exr") == 0)
         {
             hr = LoadFromEXRFile(curpath.c_str(), &info, *image);
             if (FAILED(hr))
@@ -2222,11 +2222,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 retVal = 1;
                 if (hr == static_cast<HRESULT>(0xc00d5212) /* MF_E_TOPO_CODEC_NOT_FOUND */)
                 {
-                    if (_wcsicmp(ext, L".heic") == 0 || _wcsicmp(ext, L".heif") == 0)
+                    if (_wcsicmp(ext.c_str(), L".heic") == 0 || _wcsicmp(ext.c_str(), L".heif") == 0)
                     {
                         wprintf(L"INFO: This format requires installing the HEIF Image Extensions - https://aka.ms/heif\n");
                     }
-                    else if (_wcsicmp(ext, L".webp") == 0)
+                    else if (_wcsicmp(ext.c_str(), L".webp") == 0)
                     {
                         wprintf(L"INFO: This format requires installing the WEBP Image Extensions - https://www.microsoft.com/p/webp-image-extensions/9pg2dk419drg\n");
                     }
