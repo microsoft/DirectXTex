@@ -636,28 +636,29 @@ namespace
     {
         std::list<SConversion> flist;
         std::set<std::wstring> excludes;
-        wchar_t fname[32768] = {};
+
+        auto fname = std::make_unique<wchar_t[]>(32768);
         for (;;)
         {
-            inFile >> fname;
+            inFile >> fname.get();
             if (!inFile)
                 break;
 
-            if (*fname == L'#')
+            if (fname[0] == L'#')
             {
                 // Comment
             }
-            else if (*fname == L'-')
+            else if (fname[0] == L'-')
             {
                 if (flist.empty())
                 {
-                    wprintf(L"WARNING: Ignoring the line '%ls' in -flist\n", fname);
+                    wprintf(L"WARNING: Ignoring the line '%ls' in -flist\n", fname.get());
                 }
                 else
                 {
-                    std::filesystem::path path(fname + 1);
+                    std::filesystem::path path(fname.get() + 1);
                     auto& npath = path.make_preferred();
-                    if (wcspbrk(fname, L"?*") != nullptr)
+                    if (wcspbrk(fname.get(), L"?*") != nullptr)
                     {
                         std::list<SConversion> removeFiles;
                         SearchForFiles(npath, removeFiles, false, nullptr);
@@ -677,15 +678,15 @@ namespace
                     }
                 }
             }
-            else if (wcspbrk(fname, L"?*") != nullptr)
+            else if (wcspbrk(fname.get(), L"?*") != nullptr)
             {
-                std::filesystem::path path(fname);
+                std::filesystem::path path(fname.get());
                 SearchForFiles(path.make_preferred(), flist, false, nullptr);
             }
             else
             {
                 SConversion conv = {};
-                std::filesystem::path path(fname);
+                std::filesystem::path path(fname.get());
                 conv.szSrc = path.make_preferred().native();
                 flist.push_back(conv);
             }
