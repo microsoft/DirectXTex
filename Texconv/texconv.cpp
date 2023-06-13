@@ -2092,7 +2092,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             return 1;
         }
 
-        std::filesystem::path curpath(pConv->szSrc.c_str());
+        std::filesystem::path curpath(pConv->szSrc);
         auto const ext = curpath.extension();
 
         if (_wcsicmp(ext.c_str(), L".dds") == 0 || _wcsicmp(ext.c_str(), L".ddx") == 0)

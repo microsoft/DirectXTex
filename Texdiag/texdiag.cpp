@@ -3522,7 +3522,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             const size_t count = conversion.size();
             std::filesystem::path path(pArg);
-            SearchForFiles(path.make_preferred().c_str(), conversion, (dwOptions & (1 << OPT_RECURSIVE)) != 0);
+            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (1 << OPT_RECURSIVE)) != 0);
             if (conversion.size() <= count)
             {
                 wprintf(L"No matching files found for %ls\n", pArg);
@@ -3602,7 +3602,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 if (outputFile.empty())
                 {
-                    std::filesystem::path curpath(pImage1->szSrc.c_str());
+                    std::filesystem::path curpath(pImage1->szSrc);
                     auto const ext = curpath.extension();
 
                     if (_wcsicmp(ext.c_str(), L".bmp") == 0)
@@ -3810,7 +3810,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     default:
         for (auto pConv = conversion.cbegin(); pConv != conversion.cend(); ++pConv)
         {
-            std::filesystem::path curpath(pConv->szSrc.c_str());
+            std::filesystem::path curpath(pConv->szSrc);
 
             // Load source image
             if (pConv != conversion.begin())
