@@ -1409,7 +1409,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
         if (outputFile.empty())
         {
-            outputFile = curpath.stem().append(L".dds").native();
+            outputFile = curpath.stem().concat(L".dds").native();
         }
 
         hr = LoadAnimatedGif(curpath.c_str(), loadedImages, (dwOptions & (1 << OPT_GIF_BGCOLOR)) != 0);
@@ -1440,7 +1440,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 case CMD_H_STRIP:
                 case CMD_V_STRIP:
                 case CMD_ARRAY_STRIP:
-                    outputFile = curpath.stem().append(L".bmp").native();
+                    outputFile = curpath.stem().concat(L".bmp").native();
                     break;
 
                 default:
@@ -1450,7 +1450,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         return 1;
                     }
 
-                    outputFile = curpath.stem().append(L".dds").native();
+                    outputFile = curpath.stem().concat(L".dds").native();
                     break;
                 }
             }
