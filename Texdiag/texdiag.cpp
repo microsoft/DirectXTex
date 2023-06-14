@@ -100,7 +100,7 @@ static_assert(OPT_MAX <= 32, "dwOptions is a unsigned int bitfield");
 
 struct SConversion
 {
-    wchar_t szSrc[MAX_PATH];
+    std::wstring szSrc;
 };
 
 struct SValue
@@ -422,11 +422,11 @@ namespace
         return L"";
     }
 
-    void SearchForFiles(const wchar_t* path, std::list<SConversion>& files, bool recursive)
+    void SearchForFiles(const std::filesystem::path& path, std::list<SConversion>& files, bool recursive)
     {
         // Process files
         WIN32_FIND_DATAW findData = {};
-        ScopedFindHandle hFile(safe_handle(FindFirstFileExW(path,
+        ScopedFindHandle hFile(safe_handle(FindFirstFileExW(path.c_str(),
             FindExInfoBasic, &findData,
             FindExSearchNameMatch, nullptr,
             FIND_FIRST_EX_LARGE_FETCH)));
@@ -436,12 +436,8 @@ namespace
             {
                 if (!(findData.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_DIRECTORY)))
                 {
-                    wchar_t drive[_MAX_DRIVE] = {};
-                    wchar_t dir[_MAX_DIR] = {};
-                    _wsplitpath_s(path, drive, _MAX_DRIVE, dir, _MAX_DIR, nullptr, 0, nullptr, 0);
-
                     SConversion conv = {};
-                    _wmakepath_s(conv.szSrc, drive, dir, findData.cFileName, nullptr);
+                    conv.szSrc = path.parent_path().append(findData.cFileName).native();
                     files.push_back(conv);
                 }
 
@@ -453,15 +449,9 @@ namespace
         // Process directories
         if (recursive)
         {
-            wchar_t searchDir[MAX_PATH] = {};
-            {
-                wchar_t drive[_MAX_DRIVE] = {};
-                wchar_t dir[_MAX_DIR] = {};
-                _wsplitpath_s(path, drive, _MAX_DRIVE, dir, _MAX_DIR, nullptr, 0, nullptr, 0);
-                _wmakepath_s(searchDir, drive, dir, L"*", nullptr);
-            }
+            auto searchDir = path.parent_path().append(L"*");
 
-            hFile.reset(safe_handle(FindFirstFileExW(searchDir,
+            hFile.reset(safe_handle(FindFirstFileExW(searchDir.c_str(),
                 FindExInfoBasic, &findData,
                 FindExSearchLimitToDirectories, nullptr,
                 FIND_FIRST_EX_LARGE_FETCH)));
@@ -474,17 +464,7 @@ namespace
                 {
                     if (findData.cFileName[0] != L'.')
                     {
-                        wchar_t subdir[MAX_PATH] = {};
-
-                        {
-                            wchar_t drive[_MAX_DRIVE] = {};
-                            wchar_t dir[_MAX_DIR] = {};
-                            wchar_t fname[_MAX_FNAME] = {};
-                            wchar_t ext[_MAX_FNAME] = {};
-                            _wsplitpath_s(path, drive, dir, fname, ext);
-                            wcscat_s(dir, findData.cFileName);
-                            _wmakepath_s(subdir, drive, dir, fname, ext);
-                        }
+                        auto subdir = path.parent_path().append(findData.cFileName).append(path.filename().c_str());
 
                         SearchForFiles(subdir, files, recursive);
                     }
@@ -500,36 +480,38 @@ namespace
     {
         std::list<SConversion> flist;
         std::set<std::wstring> excludes;
-        wchar_t fname[1024] = {};
+
+        auto fname = std::make_unique<wchar_t[]>(32768);
         for (;;)
         {
-            inFile >> fname;
+            inFile >> fname.get();
             if (!inFile)
                 break;
 
-            if (*fname == L'#')
+            if (fname[0] == L'#')
             {
                 // Comment
             }
-            else if (*fname == L'-')
+            else if (fname[0] == L'-')
             {
                 if (flist.empty())
                 {
-                    wprintf(L"WARNING: Ignoring the line '%ls' in -flist\n", fname);
+                    wprintf(L"WARNING: Ignoring the line '%ls' in -flist\n", fname.get());
                 }
                 else
                 {
-                    std::filesystem::path path(fname + 1);
+                    std::filesystem::path path(fname.get() + 1);
                     auto& npath = path.make_preferred();
-                    if (wcspbrk(fname, L"?*") != nullptr)
+                    if (wcspbrk(fname.get(), L"?*") != nullptr)
                     {
                         std::list<SConversion> removeFiles;
-                        SearchForFiles(npath.c_str(), removeFiles, false);
+                        SearchForFiles(npath, removeFiles, false);
 
                         for (auto& it : removeFiles)
                         {
-                            _wcslwr_s(it.szSrc);
-                            excludes.insert(it.szSrc);
+                            std::wstring name = it.szSrc;
+                            std::transform(name.begin(), name.end(), name.begin(), towlower);
+                            excludes.insert(name);
                         }
                     }
                     else
@@ -540,16 +522,16 @@ namespace
                     }
                 }
             }
-            else if (wcspbrk(fname, L"?*") != nullptr)
+            else if (wcspbrk(fname.get(), L"?*") != nullptr)
             {
-                std::filesystem::path path(fname);
-                SearchForFiles(path.make_preferred().c_str(), flist, false);
+                std::filesystem::path path(fname.get());
+                SearchForFiles(path.make_preferred(), flist, false);
             }
             else
             {
                 SConversion conv = {};
-                std::filesystem::path path(fname);
-                wcscpy_s(conv.szSrc, path.make_preferred().c_str());
+                std::filesystem::path path(fname.get());
+                conv.szSrc = path.make_preferred().native();
                 flist.push_back(conv);
             }
 
@@ -632,7 +614,7 @@ namespace
         wchar_t version[32] = {};
 
         wchar_t appName[_MAX_PATH] = {};
-        if (GetModuleFileNameW(nullptr, appName, static_cast<DWORD>(std::size(appName))))
+        if (GetModuleFileNameW(nullptr, appName, _MAX_PATH))
         {
             const DWORD size = GetFileVersionInfoSizeW(appName, nullptr);
             if (size > 0)
@@ -751,6 +733,14 @@ namespace
 
             if (errorText)
                 LocalFree(errorText);
+
+            for(wchar_t* ptr = desc; *ptr != 0; ++ptr)
+            {
+                if (*ptr == L'\r' || *ptr == L'\n')
+                {
+                    *ptr = L' ';
+                }
+            }
         }
 
         return desc;
@@ -770,10 +760,10 @@ namespace
         if (!image)
             return E_OUTOFMEMORY;
 
-        wchar_t ext[_MAX_EXT] = {};
-        _wsplitpath_s(fileName, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
+        std::filesystem::path fname(fileName);
+        auto const ext = fname.extension();
 
-        if (_wcsicmp(ext, L".dds") == 0)
+        if (_wcsicmp(ext.c_str(), L".dds") == 0)
         {
             DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES;
             if (dwOptions & (1 << OPT_DDS_DWORD_ALIGN))
@@ -806,16 +796,16 @@ namespace
 
             return S_OK;
         }
-        else if (_wcsicmp(ext, L".tga") == 0)
+        else if (_wcsicmp(ext.c_str(), L".tga") == 0)
         {
             return LoadFromTGAFile(fileName, TGA_FLAGS_NONE, &info, *image);
         }
-        else if (_wcsicmp(ext, L".hdr") == 0)
+        else if (_wcsicmp(ext.c_str(), L".hdr") == 0)
         {
             return LoadFromHDRFile(fileName, &info, *image);
         }
     #ifdef USE_OPENEXR
-        else if (_wcsicmp(ext, L".exr") == 0)
+        else if (_wcsicmp(ext.c_str(), L".exr") == 0)
         {
             return LoadFromEXRFile(fileName, &info, *image);
         }
@@ -833,11 +823,11 @@ namespace
             HRESULT hr = LoadFromWICFile(fileName, dwFilter | WIC_FLAGS_ALL_FRAMES, &info, *image);
             if (hr == static_cast<HRESULT>(0xc00d5212) /* MF_E_TOPO_CODEC_NOT_FOUND */)
             {
-                if (_wcsicmp(ext, L".heic") == 0 || _wcsicmp(ext, L".heif") == 0)
+                if (_wcsicmp(ext.c_str(), L".heic") == 0 || _wcsicmp(ext.c_str(), L".heif") == 0)
                 {
                     wprintf(L"\nINFO: This format requires installing the HEIF Image Extensions - https://aka.ms/heif\n");
                 }
-                else if (_wcsicmp(ext, L".webp") == 0)
+                else if (_wcsicmp(ext.c_str(), L".webp") == 0)
                 {
                     wprintf(L"\nINFO: This format requires installing the WEBP Image Extensions - https://www.microsoft.com/p/webp-image-extensions/9pg2dk419drg\n");
                 }
@@ -3263,7 +3253,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     float threshold = 0.25f;
     DXGI_FORMAT diffFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
     uint32_t fileType = WIC_CODEC_BMP;
-    wchar_t szOutputFile[MAX_PATH] = {};
+    std::wstring outputFile;
 
     // Set locale for output since GetErrorDesc can get localized strings.
     std::locale::global(std::locale(""));
@@ -3436,12 +3426,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 else
                 {
                     std::filesystem::path path(pValue);
-                    wcscpy_s(szOutputFile, path.make_preferred().c_str());
+                    outputFile = path.make_preferred().native();
 
-                    wchar_t ext[_MAX_EXT] = {};
-                    _wsplitpath_s(szOutputFile, nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
-
-                    fileType = LookupByName(ext, g_pExtFileTypes);
+                    fileType = LookupByName(path.extension().c_str(), g_pExtFileTypes);
                 }
                 break;
 
@@ -3535,7 +3522,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             const size_t count = conversion.size();
             std::filesystem::path path(pArg);
-            SearchForFiles(path.make_preferred().c_str(), conversion, (dwOptions & (1 << OPT_RECURSIVE)) != 0);
+            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (1 << OPT_RECURSIVE)) != 0);
             if (conversion.size() <= count)
             {
                 wprintf(L"No matching files found for %ls\n", pArg);
@@ -3546,7 +3533,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             SConversion conv = {};
             std::filesystem::path path(pArg);
-            wcscpy_s(conv.szSrc, path.make_preferred().c_str());
+            conv.szSrc = path.make_preferred().native();
             conversion.push_back(conv);
         }
     }
@@ -3574,12 +3561,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             auto pImage1 = conversion.cbegin();
 
-            wprintf(L"1: %ls", pImage1->szSrc);
+            wprintf(L"1: %ls", pImage1->szSrc.c_str());
             fflush(stdout);
 
             TexMetadata info1;
             std::unique_ptr<ScratchImage> image1;
-            hr = LoadImage(pImage1->szSrc, dwOptions, dwFilter, info1, image1);
+            hr = LoadImage(pImage1->szSrc.c_str(), dwOptions, dwFilter, info1, image1);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -3589,12 +3576,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             auto pImage2 = conversion.cbegin();
             std::advance(pImage2, 1);
 
-            wprintf(L"\n2: %ls", pImage2->szSrc);
+            wprintf(L"\n2: %ls", pImage2->szSrc.c_str());
             fflush(stdout);
 
             TexMetadata info2;
             std::unique_ptr<ScratchImage> image2;
-            hr = LoadImage(pImage2->szSrc, dwOptions, dwFilter, info2, image2);
+            hr = LoadImage(pImage2->szSrc.c_str(), dwOptions, dwFilter, info2, image2);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -3613,18 +3600,18 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             if (dwCommand == CMD_DIFF)
             {
-                if (!*szOutputFile)
+                if (outputFile.empty())
                 {
-                    wchar_t ext[_MAX_EXT] = {};
-                    wchar_t fname[_MAX_FNAME] = {};
-                    _wsplitpath_s(pImage1->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, ext, _MAX_EXT);
-                    if (_wcsicmp(ext, L".bmp") == 0)
+                    std::filesystem::path curpath(pImage1->szSrc);
+                    auto const ext = curpath.extension();
+
+                    if (_wcsicmp(ext.c_str(), L".bmp") == 0)
                     {
                         wprintf(L"ERROR: Need to specify output file via -o\n");
                         return 1;
                     }
 
-                    _wmakepath_s(szOutputFile, nullptr, nullptr, fname, L".bmp");
+                    outputFile = curpath.stem().concat(L".bmp").native();
                 }
 
                 if (image1->GetImageCount() > 1 || image2->GetImageCount() > 1)
@@ -3640,26 +3627,26 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 if (dwOptions & (1 << OPT_TOLOWER))
                 {
-                    std::ignore = _wcslwr_s(szOutputFile);
+                    std::transform(outputFile.begin(), outputFile.end(), outputFile.begin(), towlower);
                 }
 
                 if (~dwOptions & (1 << OPT_OVERWRITE))
                 {
-                    if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+                    if (GetFileAttributesW(outputFile.c_str()) != INVALID_FILE_ATTRIBUTES)
                     {
                         wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
                         return 1;
                     }
                 }
 
-                hr = SaveImage(diffImage.GetImage(0, 0, 0), szOutputFile, fileType);
+                hr = SaveImage(diffImage.GetImage(0, 0, 0), outputFile.c_str(), fileType);
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
 
-                wprintf(L"Difference %ls\n", szOutputFile);
+                wprintf(L"Difference %ls\n", outputFile.c_str());
             }
             else if ((info1.depth == 1
                 && info1.arraySize == 1
@@ -3823,16 +3810,18 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     default:
         for (auto pConv = conversion.cbegin(); pConv != conversion.cend(); ++pConv)
         {
+            std::filesystem::path curpath(pConv->szSrc);
+
             // Load source image
             if (pConv != conversion.begin())
                 wprintf(L"\n");
 
-            wprintf(L"%ls", pConv->szSrc);
+            wprintf(L"%ls", curpath.c_str());
             fflush(stdout);
 
             TexMetadata info;
             std::unique_ptr<ScratchImage> image;
-            hr = LoadImage(pConv->szSrc, dwOptions, dwFilter, info, image);
+            hr = LoadImage(curpath.c_str(), dwOptions, dwFilter, info, image);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -3910,11 +3899,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                wchar_t ext[_MAX_EXT] = {};
-                wchar_t fname[_MAX_FNAME] = {};
-                _wsplitpath_s(pConv->szSrc, nullptr, 0, nullptr, 0, fname, _MAX_FNAME, nullptr, 0);
-
-                wcscpy_s(ext, LookupByValue(fileType, g_pDumpFileTypes));
+                auto const ext = LookupByValue(fileType, g_pDumpFileTypes);
 
                 if (info.depth > 1)
                 {
@@ -3934,19 +3919,20 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                             }
                             else
                             {
-                                wchar_t subFname[_MAX_FNAME] = {};
+                                wchar_t subFname[_MAX_PATH] = {};
                                 if (info.mipLevels > 1)
                                 {
-                                    swprintf_s(subFname, L"%ls_slice%03zu_mip%03zu", fname, slice, mip);
+                                    swprintf_s(subFname, L"%ls_slice%03zu_mip%03zu", curpath.stem().c_str(), slice, mip);
                                 }
                                 else
                                 {
-                                    swprintf_s(subFname, L"%ls_slice%03zu", fname, slice);
+                                    swprintf_s(subFname, L"%ls_slice%03zu", curpath.stem().c_str(), slice);
                                 }
 
-                                _wmakepath_s(szOutputFile, nullptr, nullptr, subFname, ext);
+                                outputFile.assign(subFname);
+                                outputFile.append(ext);
 
-                                hr = SaveImage(img, szOutputFile, fileType);
+                                hr = SaveImage(img, outputFile.c_str(), fileType);
                                 if (FAILED(hr))
                                 {
                                     wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -3977,19 +3963,20 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                             }
                             else
                             {
-                                wchar_t subFname[_MAX_FNAME];
+                                wchar_t subFname[_MAX_PATH] = {};
                                 if (info.mipLevels > 1)
                                 {
-                                    swprintf_s(subFname, L"%ls_item%03zu_mip%03zu", fname, item, mip);
+                                    swprintf_s(subFname, L"%ls_item%03zu_mip%03zu", curpath.stem().c_str(), item, mip);
                                 }
                                 else
                                 {
-                                    swprintf_s(subFname, L"%ls_item%03zu", fname, item);
+                                    swprintf_s(subFname, L"%ls_item%03zu", curpath.stem().c_str(), item);
                                 }
 
-                                _wmakepath_s(szOutputFile, nullptr, nullptr, subFname, ext);
+                                outputFile.assign(subFname);
+                                outputFile.append(ext);
 
-                                hr = SaveImage(img, szOutputFile, fileType);
+                                hr = SaveImage(img, outputFile.c_str(), fileType);
                                 if (FAILED(hr))
                                 {
                                     wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));

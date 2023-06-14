@@ -6,6 +6,14 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### June 13, 2023
+* Added ``TEX_FILTER_RGB_COPY_ALPHA`` flag and support for ``DXGI_FORMAT_A4B4G4R4_UNORM``
+* DDS loader now supports 'swizzled' DXT5 variant FourCCs
+* CMake project updates
+* texconv: Added ``-f BC3n``,  ``-f DXT5nm``, and ``-f RXBG`` support; ``.ddx`` file extension; and ``-tgazeroalpha`` switch
+* texassemble/texconv/texdiag: Fix minor display issue with error messages
+* texassemble/texconv/texdiag: Supports Long Paths on Windows 10, Version 1607 or later
+
 ### April 28, 2023
 * Updated D3DX12 internal copy with latest changes from DirectX-Headers GitHub
 * CMake project updates and fixes for clang/LLVM v16 warnings

@@ -3,7 +3,7 @@
 
 cmake_minimum_required (VERSION 3.20)
 
-set(DIRECTXTEX_VERSION 1.9.8)
+set(DIRECTXTEX_VERSION 1.9.9)
 
 if(DEFINED XBOX_CONSOLE_TARGET)
   set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
@@ -285,6 +285,7 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   add_executable(texassemble
     Texassemble/texassemble.cpp
     Texassemble/texassemble.rc
+    Texassemble/settings.manifest
     Texassemble/AnimatedGif.cpp)
   target_link_libraries(texassemble ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texassemble REGULAR_EXPRESSION Texassemble/*.*)
@@ -292,6 +293,7 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   add_executable(texconv
     Texconv/texconv.cpp
     Texconv/texconv.rc
+    Texconv/settings.manifest
     Texconv/ExtendedBMP.cpp
     Texconv/PortablePixMap.cpp)
   target_link_libraries(texconv ${PROJECT_NAME} ole32.lib shell32.lib version.lib)
@@ -299,7 +301,8 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
 
   add_executable(texdiag
     Texdiag/texdiag.cpp
-    Texdiag/texdiag.rc)
+    Texdiag/texdiag.rc
+    Texdiag/settings.manifest)
   target_link_libraries(texdiag ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
 
@@ -380,6 +383,13 @@ if(MSVC)
       endforeach()
     endif()
 
+    if((MSVC_VERSION GREATER_EQUAL 1924)
+       AND ((NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang")) OR (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)))
+      foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+        target_compile_options(${t} PRIVATE /ZH:SHA_256)
+      endforeach()
+    endif()
+
     if((MSVC_VERSION GREATER_EQUAL 1928)
        AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
        AND NOT ENABLE_OPENEXR_SUPPORT
@@ -445,12 +455,6 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
       endforeach()
     endif()
 
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.24)
-        foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-          target_compile_options(${t} PRIVATE /ZH:SHA_256)
-        endforeach()
-    endif()
-
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.26)
         foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
           target_compile_options(${t} PRIVATE /Zc:preprocessor /wd5105)
@@ -471,7 +475,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.35)
         foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-          target_compile_options(${t} PRIVATE /Zc:templateScope /Zc:checkGwOdr)
+          target_compile_options(${t} PRIVATE /Zc:checkGwOdr $<$<VERSION_GREATER_EQUAL:${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION},10.0.22000>:/Zc:templateScope>)
         endforeach()
     endif()
 
