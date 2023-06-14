@@ -216,11 +216,16 @@ HRESULT DirectX::GetMetadataFromEXRFile(const wchar_t* szFile, TexMetadata& meta
         return E_INVALIDARG;
 
 #ifdef _WIN32
-    char fileName[MAX_PATH] = {};
-    const int result = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, fileName, MAX_PATH, nullptr, nullptr);
-    if (result <= 0)
+    std::string fileName;
+    const int nameLength = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, nullptr, 0, nullptr, nullptr);
+    if (nameLength > 0)
     {
-        *fileName = 0;
+        fileName.resize(nameLength);
+        const int result = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, fileName.data(), nameLength, nullptr, nullptr);
+        if (result <= 0)
+        {
+            fileName.clear();
+        }
     }
 
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
@@ -241,7 +246,7 @@ HRESULT DirectX::GetMetadataFromEXRFile(const wchar_t* szFile, TexMetadata& meta
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    InputStream stream(hFile.get(), fileName);
+    InputStream stream(hFile.get(), fileName.c_str());
 #else
     std::wstring wFileName(szFile);
     std::string fileName(wFileName.cbegin(), wFileName.cend());
@@ -318,11 +323,16 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
     }
 
 #ifdef _WIN32
-    char fileName[MAX_PATH] = {};
-    const int result = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, fileName, MAX_PATH, nullptr, nullptr);
-    if (result <= 0)
+    std::string fileName;
+    const int nameLength = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, nullptr, 0, nullptr, nullptr);
+    if (nameLength > 0)
     {
-        *fileName = 0;
+        fileName.resize(nameLength);
+        const int result = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, fileName.data(), nameLength, nullptr, nullptr);
+        if (result <= 0)
+        {
+            fileName.clear();
+        }
     }
 
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
@@ -343,7 +353,7 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    InputStream stream(hFile.get(), fileName);
+    InputStream stream(hFile.get(), fileName.c_str());
 #else
     std::wstring wFileName(szFile);
     std::string fileName(wFileName.cbegin(), wFileName.cend());
@@ -450,12 +460,18 @@ HRESULT DirectX::SaveToEXRFile(const Image& image, const wchar_t* szFile)
     }
 
 #ifdef _WIN32
-    char fileName[MAX_PATH] = {};
-    const int result = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, fileName, MAX_PATH, nullptr, nullptr);
-    if (result <= 0)
+    std::string fileName;
+    const int nameLength = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, nullptr, 0, nullptr, nullptr);
+    if (nameLength > 0)
     {
-        *fileName = 0;
+        fileName.resize(nameLength);
+        const int result = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, fileName.data(), nameLength, nullptr, nullptr);
+        if (result <= 0)
+        {
+            fileName.clear();
+        }
     }
+
     // Create file and write header
 #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
     ScopedHandle hFile(safe_handle(CreateFile2(
@@ -477,7 +493,7 @@ HRESULT DirectX::SaveToEXRFile(const Image& image, const wchar_t* szFile)
 
     auto_delete_file delonfail(hFile.get());
 
-    OutputStream stream(hFile.get(), fileName);
+    OutputStream stream(hFile.get(), fileName.c_str());
 #else
     std::wstring wFileName(szFile);
     std::string fileName(wFileName.cbegin(), wFileName.cend());
