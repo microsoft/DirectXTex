@@ -1834,6 +1834,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 targetWidth /= mipdiv;
                 targetHeight /= mipdiv;
+                if (targetWidth == 0 || targetHeight == 0)
+                {
+                    wprintf(L"\nERROR: Too many input mips provided. For the dimensions of the first mip provided, only %u input mips can be used.\n", conversionIndex);
+                    return 1;
+                }
             }
             if (info.width != targetWidth || info.height != targetHeight)
             {
