@@ -761,7 +761,7 @@ struct CD3DX12_HEAP_PROPERTIES : public D3D12_HEAP_PROPERTIES
     bool IsCPUAccessible() const noexcept
     {
         return Type == D3D12_HEAP_TYPE_UPLOAD || Type == D3D12_HEAP_TYPE_READBACK
-#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 609)
+#if 0
             || Type == D3D12_HEAP_TYPE_GPU_UPLOAD
 #endif
             || (Type == D3D12_HEAP_TYPE_CUSTOM &&
