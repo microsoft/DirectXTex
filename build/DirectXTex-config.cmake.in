@@ -14,8 +14,11 @@ if(ENABLE_OPENEXR_SUPPORT)
 endif()
 
 if(MINGW OR (NOT WIN32))
-    find_dependency(directx-headers CONFIG)
-    find_dependency(directxmath CONFIG)
+    find_dependency(directx-headers)
+    find_dependency(directxmath)
+else()
+    find_package(directx-headers CONFIG QUIET)
+    find_package(directxmath CONFIG QUIET)
 endif()
 
 check_required_components("@PROJECT_NAME@")
