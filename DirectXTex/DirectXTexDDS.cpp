@@ -191,74 +191,92 @@ namespace
 
         constexpr size_t MAP_SIZE = sizeof(g_LegacyDDSMap) / sizeof(LegacyDDS);
         size_t index = 0;
-        for (index = 0; index < MAP_SIZE; ++index)
+        // Unreal Tournament 2004 DDS files use a incorrectly populated DDS_PIXELFORMAT
+        // structure that has all fields except the dwFourCC field set to zero.
+        if (ddpf.size == 0 && ddpf.flags == 0 && ddpf.fourCC != 0)
         {
-            const LegacyDDS* entry = &g_LegacyDDSMap[index];
+            for (index = 0; index < MAP_SIZE; ++index)
+            {
+                const LegacyDDS* entry = &g_LegacyDDSMap[index];
 
-            if ((ddpfFlags & DDS_FOURCC) && (entry->ddpf.flags & DDS_FOURCC))
-            {
-                // In case of FourCC codes, ignore any other bits in ddpf.flags
-                if (ddpf.fourCC == entry->ddpf.fourCC)
-                    break;
+                if (entry->ddpf.flags & DDS_FOURCC)
+                {
+                    if (ddpf.fourCC == entry->ddpf.fourCC)
+                        break;
+                }
             }
-            else if (ddpfFlags == entry->ddpf.flags)
+        }
+        else
+        {
+            for (index = 0; index < MAP_SIZE; ++index)
             {
-                if (entry->ddpf.flags & DDS_PAL8)
+                const LegacyDDS* entry = &g_LegacyDDSMap[index];
+
+                if ((ddpfFlags & DDS_FOURCC) && (entry->ddpf.flags & DDS_FOURCC))
                 {
-                    if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount)
+                    // In case of FourCC codes, ignore any other bits in ddpf.flags
+                    if (ddpf.fourCC == entry->ddpf.fourCC)
                         break;
                 }
-                else if (entry->ddpf.flags & DDS_ALPHA)
+                else if (ddpfFlags == entry->ddpf.flags)
                 {
-                    if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
-                        && ddpf.ABitMask == entry->ddpf.ABitMask)
-                        break;
-                }
-                else if (entry->ddpf.flags & DDS_LUMINANCE)
-                {
-                    if (entry->ddpf.flags & DDS_ALPHAPIXELS)
+                    if (entry->ddpf.flags & DDS_PAL8)
                     {
-                        // LUMINANCEA
+                        if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount)
+                            break;
+                    }
+                    else if (entry->ddpf.flags & DDS_ALPHA)
+                    {
                         if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
-                            && ddpf.RBitMask == entry->ddpf.RBitMask
                             && ddpf.ABitMask == entry->ddpf.ABitMask)
                             break;
                     }
-                    else
+                    else if (entry->ddpf.flags & DDS_LUMINANCE)
                     {
-                        // LUMINANCE
-                        if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
-                            && ddpf.RBitMask == entry->ddpf.RBitMask)
-                            break;
+                        if (entry->ddpf.flags & DDS_ALPHAPIXELS)
+                        {
+                            // LUMINANCEA
+                            if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
+                                && ddpf.RBitMask == entry->ddpf.RBitMask
+                                && ddpf.ABitMask == entry->ddpf.ABitMask)
+                                break;
+                        }
+                        else
+                        {
+                            // LUMINANCE
+                            if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
+                                && ddpf.RBitMask == entry->ddpf.RBitMask)
+                                break;
+                        }
                     }
-                }
-                else if (entry->ddpf.flags & DDS_BUMPDUDV)
-                {
-                    if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
-                        && ddpf.RBitMask == entry->ddpf.RBitMask
-                        && ddpf.GBitMask == entry->ddpf.GBitMask
-                        && ddpf.BBitMask == entry->ddpf.BBitMask
-                        && ddpf.ABitMask == entry->ddpf.ABitMask)
-                        break;
-                }
-                else if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount)
-                {
-                    if (entry->ddpf.flags & DDS_ALPHAPIXELS)
+                    else if (entry->ddpf.flags & DDS_BUMPDUDV)
                     {
-                        // RGBA
-                        if (ddpf.RBitMask == entry->ddpf.RBitMask
+                        if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
+                            && ddpf.RBitMask == entry->ddpf.RBitMask
                             && ddpf.GBitMask == entry->ddpf.GBitMask
                             && ddpf.BBitMask == entry->ddpf.BBitMask
                             && ddpf.ABitMask == entry->ddpf.ABitMask)
                             break;
                     }
-                    else
+                    else if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount)
                     {
-                        // RGB
-                        if (ddpf.RBitMask == entry->ddpf.RBitMask
-                            && ddpf.GBitMask == entry->ddpf.GBitMask
-                            && ddpf.BBitMask == entry->ddpf.BBitMask)
-                            break;
+                        if (entry->ddpf.flags & DDS_ALPHAPIXELS)
+                        {
+                            // RGBA
+                            if (ddpf.RBitMask == entry->ddpf.RBitMask
+                                && ddpf.GBitMask == entry->ddpf.GBitMask
+                                && ddpf.BBitMask == entry->ddpf.BBitMask
+                                && ddpf.ABitMask == entry->ddpf.ABitMask)
+                                break;
+                        }
+                        else
+                        {
+                            // RGB
+                            if (ddpf.RBitMask == entry->ddpf.RBitMask
+                                && ddpf.GBitMask == entry->ddpf.GBitMask
+                                && ddpf.BBitMask == entry->ddpf.BBitMask)
+                                break;
+                        }
                     }
                 }
             }
@@ -289,6 +307,28 @@ namespace
         return format;
     }
 
+    // Unreal Tournament 2004 DDS files use a incorrectly populated DDS_PIXELFORMAT
+    // structure that has all fields except the dwFourCC field set to zero.
+    bool IsUT2004PixelFormat(const DDS_PIXELFORMAT& ddpf)
+    {
+        if (ddpf.size == 0 && ddpf.flags == 0 && ddpf.fourCC != 0)
+        {
+            constexpr size_t MAP_SIZE = sizeof(g_LegacyDDSMap) / sizeof(LegacyDDS);
+
+            for (size_t index = 0; index < MAP_SIZE; ++index)
+            {
+                const LegacyDDS* entry = &g_LegacyDDSMap[index];
+
+                if (entry->ddpf.flags & DDS_FOURCC)
+                {
+                    if (ddpf.fourCC == entry->ddpf.fourCC)
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
 
     //-------------------------------------------------------------------------------------
     // Decodes DDS header including optional DX10 extended header
@@ -321,7 +361,7 @@ namespace
 
         // Verify header to validate DDS file
         if (pHeader->size != sizeof(DDS_HEADER)
-            || pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
+            || pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT) && !IsUT2004PixelFormat(pHeader->ddspf))
         {
             return E_FAIL;
         }
