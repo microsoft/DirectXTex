@@ -191,10 +191,9 @@ namespace
 
         constexpr size_t MAP_SIZE = sizeof(g_LegacyDDSMap) / sizeof(LegacyDDS);
         size_t index = 0;
-        // Unreal Tournament 2004 DDS files use a incorrectly populated DDS_PIXELFORMAT
-        // structure that has all fields except the dwFourCC field set to zero.
         if (ddpf.size == 0 && ddpf.flags == 0 && ddpf.fourCC != 0)
         {
+            // Handle some DDS files where the DDPF_PIXELFORMAT is mostly zero
             for (index = 0; index < MAP_SIZE; ++index)
             {
                 const LegacyDDS* entry = &g_LegacyDDSMap[index];
@@ -307,29 +306,6 @@ namespace
         return format;
     }
 
-    // Unreal Tournament 2004 DDS files use a incorrectly populated DDS_PIXELFORMAT
-    // structure that has all fields except the dwFourCC field set to zero.
-    bool IsUT2004PixelFormat(const DDS_PIXELFORMAT& ddpf)
-    {
-        if (ddpf.size == 0 && ddpf.flags == 0 && ddpf.fourCC != 0)
-        {
-            constexpr size_t MAP_SIZE = sizeof(g_LegacyDDSMap) / sizeof(LegacyDDS);
-
-            for (size_t index = 0; index < MAP_SIZE; ++index)
-            {
-                const LegacyDDS* entry = &g_LegacyDDSMap[index];
-
-                if (entry->ddpf.flags & DDS_FOURCC)
-                {
-                    if (ddpf.fourCC == entry->ddpf.fourCC)
-                        return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
     //-------------------------------------------------------------------------------------
     // Decodes DDS header including optional DX10 extended header
     //-------------------------------------------------------------------------------------
@@ -360,8 +336,12 @@ namespace
         auto pHeader = reinterpret_cast<const DDS_HEADER*>(static_cast<const uint8_t*>(pSource) + sizeof(uint32_t));
 
         // Verify header to validate DDS file
-        if (pHeader->size != sizeof(DDS_HEADER)
-            || pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT) && !IsUT2004PixelFormat(pHeader->ddspf))
+        if (pHeader->size != sizeof(DDS_HEADER))
+        {
+            return E_FAIL;
+        }
+
+        if (pHeader->ddspf.size != 0 && pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
         {
             return E_FAIL;
         }
