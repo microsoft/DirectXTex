@@ -147,8 +147,7 @@ namespace
         _In_ GPUCompressBC* gpubc,
         const Image& srcImage,
         const Image& destImage,
-        TEX_COMPRESS_FLAGS compress,
-        ProgressProc progressProc)
+        TEX_COMPRESS_FLAGS compress)
     {
         if (!gpubc)
             return E_POINTER;
@@ -165,7 +164,7 @@ namespace
         if (sformat == tformat)
         {
             // Input is already in our required source format
-            return gpubc->Compress(srcImage, destImage, progressProc);
+            return gpubc->Compress(srcImage, destImage);
         }
         else
         {
@@ -200,7 +199,7 @@ namespace
             if (!img)
                 return E_POINTER;
 
-            return gpubc->Compress(*img, destImage, progressProc);
+            return gpubc->Compress(*img, destImage);
         }
     }
 };
@@ -280,11 +279,33 @@ HRESULT DirectX::CompressEx(
         return E_POINTER;
     }
 
-    hr = GPUCompress(gpubc.get(), srcImage, *img, compress, progressProc);
-    if (FAILED(hr))
-        image.Release();
+    if (progressProc)
+    {
+        if (!progressProc(0, 100))
+        {
+            image.Release();
+            return HRESULT_E_CANCELLED;
+        }
+    }
 
-    return hr;
+    hr = GPUCompress(gpubc.get(), srcImage, *img, compress);
+
+    if (FAILED(hr))
+    {
+        image.Release();
+        return hr;
+    }
+
+    if (progressProc)
+    {
+        if (!progressProc(100, 100))
+        {
+            image.Release();
+            return HRESULT_E_CANCELLED;
+        }
+    }
+
+    return S_OK;
 }
 
 _Use_decl_annotations_
@@ -310,19 +331,6 @@ HRESULT DirectX::CompressEx(
         return HRESULT_E_NOT_SUPPORTED;
 
     cImages.Release();
-
-    if (progressProc
-        && nimages == 1
-        && !metadata.IsVolumemap()
-        && metadata.mipLevels == 1
-        && metadata.arraySize == 1)
-    {
-        // If progress reporting is requested when compressing a single 1D or 2D image, call
-        // the CompressEx overload that takes a single image.
-        // This provides a better user experience as progress will be reported as the image
-        // is being processed, instead of after processing has been completed.
-        return CompressEx(pDevice, srcImages[0], format, compress, alphaWeight, cImages, progressProc);
-    }
 
     // Setup GPU compressor
     std::unique_ptr<GPUCompressBC> gpubc(new (std::nothrow) GPUCompressBC);
@@ -400,7 +408,7 @@ HRESULT DirectX::CompressEx(
                         return E_FAIL;
                     }
 
-                    hr = GPUCompress(gpubc.get(), src, dest[index], compress, nullptr);
+                    hr = GPUCompress(gpubc.get(), src, dest[index], compress);
                     if (FAILED(hr))
                     {
                         cImages.Release();
@@ -461,7 +469,7 @@ HRESULT DirectX::CompressEx(
                         return E_FAIL;
                     }
 
-                    hr = GPUCompress(gpubc.get(), src, dest[index], compress, nullptr);
+                    hr = GPUCompress(gpubc.get(), src, dest[index], compress);
                     if (FAILED(hr))
                     {
                         cImages.Release();
