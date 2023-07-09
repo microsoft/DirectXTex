@@ -4799,7 +4799,7 @@ namespace
         _In_ const Image& destImage,
         _In_ float threshold,
         size_t z,
-        ProgressProc progressProc) noexcept
+        const std::function<bool __cdecl(size_t, size_t)>& statusCallback) noexcept
     {
         assert(srcImage.width == destImage.width);
         assert(srcImage.height == destImage.height);
@@ -4823,9 +4823,9 @@ namespace
 
             for (size_t h = 0; h < srcImage.height; ++h)
             {
-                if (progressProc)
+                if (statusCallback)
                 {
-                    if (!progressProc(h, srcImage.height))
+                    if (!statusCallback(h, srcImage.height))
                     {
                        return E_ABORT;
                     }
@@ -4854,9 +4854,9 @@ namespace
                 // Ordered dithering
                 for (size_t h = 0; h < srcImage.height; ++h)
                 {
-                    if (progressProc)
+                    if (statusCallback)
                     {
-                        if (!progressProc(h, srcImage.height))
+                        if (!statusCallback(h, srcImage.height))
                         {
                             return E_ABORT;
                         }
@@ -4879,9 +4879,9 @@ namespace
                 // No dithering
                 for (size_t h = 0; h < srcImage.height; ++h)
                 {
-                    if (progressProc)
+                    if (statusCallback)
                     {
-                        if (!progressProc(h, srcImage.height))
+                        if (!statusCallback(h, srcImage.height))
                         {
                             return E_ABORT;
                         }
@@ -5097,7 +5097,7 @@ HRESULT DirectX::ConvertEx(
     TEX_FILTER_FLAGS filter,
     float threshold,
     ScratchImage& image,
-    ProgressProc progressProc) noexcept
+    std::function<bool __cdecl(size_t, size_t)> statusCallback) noexcept
 {
     if ((srcImage.format == format) || !IsValid(format))
         return E_INVALIDARG;
@@ -5125,9 +5125,9 @@ HRESULT DirectX::ConvertEx(
         return E_POINTER;
     }
 
-    if (progressProc)
+    if (statusCallback)
     {
-        if (!progressProc(0, rimage->height))
+        if (!statusCallback(0, rimage->height))
         {
             image.Release();
             return E_ABORT;
@@ -5141,7 +5141,7 @@ HRESULT DirectX::ConvertEx(
     }
     else
     {
-        hr = ConvertCustom(srcImage, filter, *rimage, threshold, 0, progressProc);
+        hr = ConvertCustom(srcImage, filter, *rimage, threshold, 0, statusCallback);
     }
 
     if (FAILED(hr))
@@ -5150,9 +5150,9 @@ HRESULT DirectX::ConvertEx(
         return hr;
     }
 
-    if (progressProc)
+    if (statusCallback)
     {
-        if (!progressProc(rimage->height, rimage->height))
+        if (!statusCallback(rimage->height, rimage->height))
         {
             image.Release();
             return E_ABORT;
@@ -5188,7 +5188,7 @@ HRESULT DirectX::ConvertEx(
     TEX_FILTER_FLAGS filter,
     float threshold,
     ScratchImage& result,
-    ProgressProc progressProc) noexcept
+    std::function<bool __cdecl(size_t, size_t)> statusCallback) noexcept
 {
     if (!srcImages || !nimages || (metadata.format == format) || !IsValid(format))
         return E_INVALIDARG;
@@ -5202,7 +5202,7 @@ HRESULT DirectX::ConvertEx(
     if ((metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX))
         return E_INVALIDARG;
 
-    if (progressProc
+    if (statusCallback
         && nimages == 1
         && !metadata.IsVolumemap()
         && metadata.mipLevels == 1
@@ -5212,7 +5212,7 @@ HRESULT DirectX::ConvertEx(
         // the ConvertEx overload that takes a single image.
         // This provides a better user experience as progress will be reported as the image
         // is being processed, instead of after processing has been completed.
-        return ConvertEx(srcImages[0], format, filter, threshold, result, progressProc);
+        return ConvertEx(srcImages[0], format, filter, threshold, result, statusCallback);
     }
 
     TexMetadata mdata2 = metadata;
@@ -5234,9 +5234,9 @@ HRESULT DirectX::ConvertEx(
         return E_POINTER;
     }
 
-    if (progressProc)
+    if (statusCallback)
     {
-        if (!progressProc(0, nimages))
+        if (!statusCallback(0, nimages))
         {
             result.Release();
             return E_ABORT;
@@ -5289,9 +5289,9 @@ HRESULT DirectX::ConvertEx(
                 return hr;
             }
 
-            if (progressProc)
+            if (statusCallback)
             {
-                if (!progressProc(index, nimages))
+                if (!statusCallback(index, nimages))
                 {
                     result.Release();
                     return E_ABORT;
@@ -5342,7 +5342,7 @@ HRESULT DirectX::ConvertEx(
                     }
                     else
                     {
-                        hr = ConvertCustom(src, filter, dst, threshold, slice, progressProc);
+                        hr = ConvertCustom(src, filter, dst, threshold, slice, nullptr);
                     }
 
                     if (FAILED(hr))
@@ -5351,9 +5351,9 @@ HRESULT DirectX::ConvertEx(
                         return hr;
                     }
 
-                    if (progressProc)
+                    if (statusCallback)
                     {
-                        if (!progressProc(index, nimages))
+                        if (!statusCallback(index, nimages))
                         {
                             result.Release();
                             return E_ABORT;
@@ -5372,9 +5372,9 @@ HRESULT DirectX::ConvertEx(
         return E_FAIL;
     }
 
-    if (progressProc)
+    if (statusCallback)
     {
-        if (!progressProc(nimages, nimages))
+        if (!statusCallback(nimages, nimages))
         {
             result.Release();
             return E_ABORT;

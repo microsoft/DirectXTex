@@ -234,7 +234,7 @@ HRESULT DirectX::Compress(
     float alphaWeight,
     ScratchImage& cImages) noexcept
 {
-    return CompressEx(pDevice, srcImages, nimages, metadata, format, compress, alphaWeight, cImages, nullptr);
+    return CompressEx(pDevice, srcImages, nimages, metadata, format, compress, alphaWeight, cImages);
 }
 
 _Use_decl_annotations_
@@ -245,7 +245,7 @@ HRESULT DirectX::CompressEx(
     TEX_COMPRESS_FLAGS compress,
     float alphaWeight,
     ScratchImage& image,
-    ProgressProc progressProc) noexcept
+    std::function<bool __cdecl(size_t, size_t)> statusCallback) noexcept
 {
     if (!pDevice || IsCompressed(srcImage.format) || !IsCompressed(format))
         return E_INVALIDARG;
@@ -279,9 +279,9 @@ HRESULT DirectX::CompressEx(
         return E_POINTER;
     }
 
-    if (progressProc)
+    if (statusCallback)
     {
-        if (!progressProc(0, 100))
+        if (!statusCallback(0, 100))
         {
             image.Release();
             return E_ABORT;
@@ -296,9 +296,9 @@ HRESULT DirectX::CompressEx(
         return hr;
     }
 
-    if (progressProc)
+    if (statusCallback)
     {
-        if (!progressProc(100, 100))
+        if (!statusCallback(100, 100))
         {
             image.Release();
             return E_ABORT;
@@ -318,7 +318,7 @@ HRESULT DirectX::CompressEx(
     TEX_COMPRESS_FLAGS compress,
     float alphaWeight,
     ScratchImage& cImages,
-    ProgressProc progressProc) noexcept
+    std::function<bool __cdecl(size_t, size_t)> statusCallback) noexcept
 {
     if (!pDevice || !srcImages || !nimages)
         return E_INVALIDARG;
@@ -361,9 +361,9 @@ HRESULT DirectX::CompressEx(
         return E_POINTER;
     }
 
-    if (progressProc)
+    if (statusCallback)
     {
-        if (!progressProc(0, nimages))
+        if (!statusCallback(0, nimages))
         {
             cImages.Release();
             return E_ABORT;
@@ -415,9 +415,9 @@ HRESULT DirectX::CompressEx(
                         return hr;
                     }
 
-                    if (progressProc)
+                    if (statusCallback)
                     {
-                        if (!progressProc(progress++, nimages))
+                        if (!statusCallback(progress++, nimages))
                         {
                             cImages.Release();
                             return E_ABORT;
@@ -476,9 +476,9 @@ HRESULT DirectX::CompressEx(
                         return hr;
                     }
 
-                    if (progressProc)
+                    if (statusCallback)
                     {
-                        if (!progressProc(progress++, nimages))
+                        if (!statusCallback(progress++, nimages))
                         {
                             cImages.Release();
                             return E_ABORT;
@@ -502,9 +502,9 @@ HRESULT DirectX::CompressEx(
         return HRESULT_E_NOT_SUPPORTED;
     }
 
-    if (progressProc)
+    if (statusCallback)
     {
-        if (!progressProc(nimages, nimages))
+        if (!statusCallback(nimages, nimages))
         {
             cImages.Release();
             return E_ABORT;

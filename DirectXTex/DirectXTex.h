@@ -613,10 +613,6 @@ namespace DirectX
     constexpr unsigned long TEX_FILTER_MODE_MASK = 0xF00000;
     constexpr unsigned long TEX_FILTER_SRGB_MASK = 0xF000000;
 
-    // For reporting the image compression/conversion progress
-    // Return true to continue processing the image(s), or false to cancel
-    typedef bool(__cdecl *ProgressProc)(_In_ size_t done, _In_ size_t total);
-
     HRESULT __cdecl Resize(
         _In_ const Image& srcImage, _In_ size_t width, _In_ size_t height,
         _In_ TEX_FILTER_FLAGS filter,
@@ -639,10 +635,11 @@ namespace DirectX
 
     HRESULT __cdecl ConvertEx(
         _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold,
-        _Out_ ScratchImage& image, _In_opt_ ProgressProc progressProc) noexcept;
+        _Out_ ScratchImage& image, _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr) noexcept;
     HRESULT __cdecl ConvertEx(
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold, _Out_ ScratchImage& result, _In_opt_ ProgressProc progressProc) noexcept;
+        _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold, _Out_ ScratchImage& result,
+        _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr) noexcept;
         // Convert the image to a new format
 
     HRESULT __cdecl ConvertToSinglePlane(_In_ const Image& srcImage, _Out_ ScratchImage& image) noexcept;
@@ -739,10 +736,11 @@ namespace DirectX
 
     HRESULT __cdecl CompressEx(
         _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold,
-        _Out_ ScratchImage& cImage, _In_opt_ ProgressProc progressProc) noexcept;
+        _Out_ ScratchImage& cImage, _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr) noexcept;
     HRESULT __cdecl CompressEx(
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold, _Out_ ScratchImage& cImages, _In_opt_ ProgressProc progressProc) noexcept;
+        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold, _Out_ ScratchImage& cImages,
+        _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr) noexcept;
 
 #if defined(__d3d11_h__) || defined(__d3d11_x_h__)
     HRESULT __cdecl Compress(
@@ -755,10 +753,11 @@ namespace DirectX
 
     HRESULT __cdecl CompressEx(
         _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress,
-        _In_ float alphaWeight, _Out_ ScratchImage& image, _In_opt_ ProgressProc progressProc) noexcept;
+        _In_ float alphaWeight, _Out_ ScratchImage& image, _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr) noexcept;
     HRESULT __cdecl CompressEx(
         _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages, _In_opt_ ProgressProc progressProc) noexcept;
+        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages,
+        _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr) noexcept;
 #endif
 
     HRESULT __cdecl Decompress(_In_ const Image& cImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image) noexcept;
