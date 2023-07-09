@@ -613,6 +613,10 @@ namespace DirectX
     constexpr unsigned long TEX_FILTER_MODE_MASK = 0xF00000;
     constexpr unsigned long TEX_FILTER_SRGB_MASK = 0xF000000;
 
+    // For reporting the image compression/conversion progress
+    // Return true to continue processing the image(s), or false to cancel
+    typedef bool(__cdecl *ProgressProc)(_In_ size_t done, _In_ size_t total);
+
     HRESULT __cdecl Resize(
         _In_ const Image& srcImage, _In_ size_t width, _In_ size_t height,
         _In_ TEX_FILTER_FLAGS filter,
@@ -632,6 +636,13 @@ namespace DirectX
     HRESULT __cdecl Convert(
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
         _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold, _Out_ ScratchImage& result) noexcept;
+
+    HRESULT __cdecl ConvertEx(
+        _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold,
+        _Out_ ScratchImage& image, _In_opt_ ProgressProc progressProc) noexcept;
+    HRESULT __cdecl ConvertEx(
+        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+        _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold, _Out_ ScratchImage& result, _In_opt_ ProgressProc progressProc) noexcept;
         // Convert the image to a new format
 
     HRESULT __cdecl ConvertToSinglePlane(_In_ const Image& srcImage, _Out_ ScratchImage& image) noexcept;
@@ -726,6 +737,13 @@ namespace DirectX
         _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold, _Out_ ScratchImage& cImages) noexcept;
         // Note that threshold is only used by BC1. TEX_THRESHOLD_DEFAULT is a typical value to use
 
+    HRESULT __cdecl CompressEx(
+        _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold,
+        _Out_ ScratchImage& cImage, _In_opt_ ProgressProc progressProc) noexcept;
+    HRESULT __cdecl CompressEx(
+        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold, _Out_ ScratchImage& cImages, _In_opt_ ProgressProc progressProc) noexcept;
+
 #if defined(__d3d11_h__) || defined(__d3d11_x_h__)
     HRESULT __cdecl Compress(
         _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress,
@@ -734,6 +752,13 @@ namespace DirectX
         _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
         _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages) noexcept;
         // DirectCompute-based compression (alphaWeight is only used by BC7. 1.0 is the typical value to use)
+
+    HRESULT __cdecl CompressEx(
+        _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress,
+        _In_ float alphaWeight, _Out_ ScratchImage& image, _In_opt_ ProgressProc progressProc) noexcept;
+    HRESULT __cdecl CompressEx(
+        _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages, _In_opt_ ProgressProc progressProc) noexcept;
 #endif
 
     HRESULT __cdecl Decompress(_In_ const Image& cImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image) noexcept;

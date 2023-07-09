@@ -147,7 +147,8 @@ namespace
         _In_ GPUCompressBC* gpubc,
         const Image& srcImage,
         const Image& destImage,
-        TEX_COMPRESS_FLAGS compress)
+        TEX_COMPRESS_FLAGS compress,
+        ProgressProc progressProc)
     {
         if (!gpubc)
             return E_POINTER;
@@ -164,7 +165,7 @@ namespace
         if (sformat == tformat)
         {
             // Input is already in our required source format
-            return gpubc->Compress(srcImage, destImage);
+            return gpubc->Compress(srcImage, destImage, progressProc);
         }
         else
         {
@@ -199,7 +200,7 @@ namespace
             if (!img)
                 return E_POINTER;
 
-            return gpubc->Compress(*img, destImage);
+            return gpubc->Compress(*img, destImage, progressProc);
         }
     }
 };
@@ -219,6 +220,33 @@ HRESULT DirectX::Compress(
     TEX_COMPRESS_FLAGS compress,
     float alphaWeight,
     ScratchImage& image) noexcept
+{
+    return CompressEx(pDevice, srcImage, format, compress, alphaWeight, image, nullptr);
+}
+
+_Use_decl_annotations_
+HRESULT DirectX::Compress(
+    ID3D11Device* pDevice,
+    const Image* srcImages,
+    size_t nimages,
+    const TexMetadata& metadata,
+    DXGI_FORMAT format,
+    TEX_COMPRESS_FLAGS compress,
+    float alphaWeight,
+    ScratchImage& cImages) noexcept
+{
+    return CompressEx(pDevice, srcImages, nimages, metadata, format, compress, alphaWeight, cImages, nullptr);
+}
+
+_Use_decl_annotations_
+HRESULT DirectX::CompressEx(
+    ID3D11Device* pDevice,
+    const Image& srcImage,
+    DXGI_FORMAT format,
+    TEX_COMPRESS_FLAGS compress,
+    float alphaWeight,
+    ScratchImage& image,
+    ProgressProc progressProc) noexcept
 {
     if (!pDevice || IsCompressed(srcImage.format) || !IsCompressed(format))
         return E_INVALIDARG;
@@ -252,7 +280,7 @@ HRESULT DirectX::Compress(
         return E_POINTER;
     }
 
-    hr = GPUCompress(gpubc.get(), srcImage, *img, compress);
+    hr = GPUCompress(gpubc.get(), srcImage, *img, compress, progressProc);
     if (FAILED(hr))
         image.Release();
 
@@ -260,7 +288,7 @@ HRESULT DirectX::Compress(
 }
 
 _Use_decl_annotations_
-HRESULT DirectX::Compress(
+HRESULT DirectX::CompressEx(
     ID3D11Device* pDevice,
     const Image* srcImages,
     size_t nimages,
@@ -268,7 +296,8 @@ HRESULT DirectX::Compress(
     DXGI_FORMAT format,
     TEX_COMPRESS_FLAGS compress,
     float alphaWeight,
-    ScratchImage& cImages) noexcept
+    ScratchImage& cImages,
+    ProgressProc progressProc) noexcept
 {
     if (!pDevice || !srcImages || !nimages)
         return E_INVALIDARG;
@@ -281,6 +310,19 @@ HRESULT DirectX::Compress(
         return HRESULT_E_NOT_SUPPORTED;
 
     cImages.Release();
+
+    if (progressProc
+        && nimages == 1
+        && !metadata.IsVolumemap()
+        && metadata.mipLevels == 1
+        && metadata.arraySize == 1)
+    {
+        // If progress reporting is requested when compressing a single 1D or 2D image, call
+        // the CompressEx overload that takes a single image.
+        // This provides a better user experience as progress will be reported as the image
+        // is being processed, instead of after processing has been completed.
+        return CompressEx(pDevice, srcImages[0], format, compress, alphaWeight, cImages, progressProc);
+    }
 
     // Setup GPU compressor
     std::unique_ptr<GPUCompressBC> gpubc(new (std::nothrow) GPUCompressBC);
@@ -311,6 +353,15 @@ HRESULT DirectX::Compress(
         return E_POINTER;
     }
 
+    if (progressProc)
+    {
+        if (!progressProc(0, nimages))
+        {
+            cImages.Release();
+            return HRESULT_E_CANCELLED;
+        }
+    }
+
     // Process images (ordered by size)
     switch (metadata.dimension)
     {
@@ -319,6 +370,7 @@ HRESULT DirectX::Compress(
         {
             size_t w = metadata.width;
             size_t h = metadata.height;
+            size_t progress = 0;
 
             for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
@@ -348,11 +400,20 @@ HRESULT DirectX::Compress(
                         return E_FAIL;
                     }
 
-                    hr = GPUCompress(gpubc.get(), src, dest[index], compress);
+                    hr = GPUCompress(gpubc.get(), src, dest[index], compress, nullptr);
                     if (FAILED(hr))
                     {
                         cImages.Release();
                         return hr;
+                    }
+
+                    if (progressProc)
+                    {
+                        if (!progressProc(progress++, nimages))
+                        {
+                            cImages.Release();
+                            return HRESULT_E_CANCELLED;
+                        }
                     }
                 }
 
@@ -370,6 +431,7 @@ HRESULT DirectX::Compress(
             size_t w = metadata.width;
             size_t h = metadata.height;
             size_t d = metadata.depth;
+            size_t progress = 0;
 
             for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
@@ -399,11 +461,20 @@ HRESULT DirectX::Compress(
                         return E_FAIL;
                     }
 
-                    hr = GPUCompress(gpubc.get(), src, dest[index], compress);
+                    hr = GPUCompress(gpubc.get(), src, dest[index], compress, nullptr);
                     if (FAILED(hr))
                     {
                         cImages.Release();
                         return hr;
+                    }
+
+                    if (progressProc)
+                    {
+                        if (!progressProc(progress++, nimages))
+                        {
+                            cImages.Release();
+                            return HRESULT_E_CANCELLED;
+                        }
                     }
                 }
 
@@ -421,6 +492,15 @@ HRESULT DirectX::Compress(
 
     default:
         return HRESULT_E_NOT_SUPPORTED;
+    }
+
+    if (progressProc)
+    {
+        if (!progressProc(nimages, nimages))
+        {
+            cImages.Release();
+            return HRESULT_E_CANCELLED;
+        }
     }
 
     return S_OK;
