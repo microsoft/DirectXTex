@@ -4827,7 +4827,7 @@ namespace
                 {
                     if (!progressProc(h, srcImage.height))
                     {
-                       return HRESULT_E_CANCELLED;
+                       return E_ABORT;
                     }
                 }
 
@@ -4858,7 +4858,7 @@ namespace
                     {
                         if (!progressProc(h, srcImage.height))
                         {
-                            return HRESULT_E_CANCELLED;
+                            return E_ABORT;
                         }
                     }
 
@@ -4883,7 +4883,7 @@ namespace
                     {
                         if (!progressProc(h, srcImage.height))
                         {
-                            return HRESULT_E_CANCELLED;
+                            return E_ABORT;
                         }
                     }
 
@@ -5130,7 +5130,7 @@ HRESULT DirectX::ConvertEx(
         if (!progressProc(0, rimage->height))
         {
             image.Release();
-            return HRESULT_E_CANCELLED;
+            return E_ABORT;
         }
     }
 
@@ -5155,7 +5155,7 @@ HRESULT DirectX::ConvertEx(
         if (!progressProc(rimage->height, rimage->height))
         {
             image.Release();
-            return HRESULT_E_CANCELLED;
+            return E_ABORT;
         }
     }
 
@@ -5239,7 +5239,7 @@ HRESULT DirectX::ConvertEx(
         if (!progressProc(0, nimages))
         {
             result.Release();
-            return HRESULT_E_CANCELLED;
+            return E_ABORT;
         }
     }
 
@@ -5294,7 +5294,7 @@ HRESULT DirectX::ConvertEx(
                 if (!progressProc(index, nimages))
                 {
                     result.Release();
-                    return HRESULT_E_CANCELLED;
+                    return E_ABORT;
                 }
             }
         }
@@ -5356,7 +5356,7 @@ HRESULT DirectX::ConvertEx(
                         if (!progressProc(index, nimages))
                         {
                             result.Release();
-                            return HRESULT_E_CANCELLED;
+                            return E_ABORT;
                         }
                     }
                 }
@@ -5377,7 +5377,7 @@ HRESULT DirectX::ConvertEx(
         if (!progressProc(nimages, nimages))
         {
             result.Release();
-            return HRESULT_E_CANCELLED;
+            return E_ABORT;
         }
     }
 

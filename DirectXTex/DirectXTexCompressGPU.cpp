@@ -284,7 +284,7 @@ HRESULT DirectX::CompressEx(
         if (!progressProc(0, 100))
         {
             image.Release();
-            return HRESULT_E_CANCELLED;
+            return E_ABORT;
         }
     }
 
@@ -301,7 +301,7 @@ HRESULT DirectX::CompressEx(
         if (!progressProc(100, 100))
         {
             image.Release();
-            return HRESULT_E_CANCELLED;
+            return E_ABORT;
         }
     }
 
@@ -366,7 +366,7 @@ HRESULT DirectX::CompressEx(
         if (!progressProc(0, nimages))
         {
             cImages.Release();
-            return HRESULT_E_CANCELLED;
+            return E_ABORT;
         }
     }
 
@@ -420,7 +420,7 @@ HRESULT DirectX::CompressEx(
                         if (!progressProc(progress++, nimages))
                         {
                             cImages.Release();
-                            return HRESULT_E_CANCELLED;
+                            return E_ABORT;
                         }
                     }
                 }
@@ -481,7 +481,7 @@ HRESULT DirectX::CompressEx(
                         if (!progressProc(progress++, nimages))
                         {
                             cImages.Release();
-                            return HRESULT_E_CANCELLED;
+                            return E_ABORT;
                         }
                     }
                 }
@@ -507,7 +507,7 @@ HRESULT DirectX::CompressEx(
         if (!progressProc(nimages, nimages))
         {
             cImages.Release();
-            return HRESULT_E_CANCELLED;
+            return E_ABORT;
         }
     }
 
