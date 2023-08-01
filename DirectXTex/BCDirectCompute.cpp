@@ -380,7 +380,6 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
         || srcImage.height != destImage.height
         || srcImage.width != m_width
         || srcImage.height != m_height
-        || srcImage.format != m_srcformat
         || destImage.format != m_bcformat)
     {
         return E_UNEXPECTED;
