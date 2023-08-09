@@ -330,7 +330,7 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
     Texassemble/texassemble.rc
     Texassemble/settings.manifest
     Texassemble/AnimatedGif.cpp)
-  target_link_libraries(texassemble ${PROJECT_NAME} ole32.lib version.lib)
+  target_link_libraries(texassemble PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texassemble REGULAR_EXPRESSION Texassemble/*.*)
 
   add_executable(texconv
@@ -339,24 +339,24 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
     Texconv/settings.manifest
     Texconv/ExtendedBMP.cpp
     Texconv/PortablePixMap.cpp)
-  target_link_libraries(texconv ${PROJECT_NAME} ole32.lib shell32.lib version.lib)
+  target_link_libraries(texconv PRIVATE ${PROJECT_NAME} ole32.lib shell32.lib version.lib)
   source_group(texconv REGULAR_EXPRESSION Texconv/*.*)
 
   add_executable(texdiag
     Texdiag/texdiag.cpp
     Texdiag/texdiag.rc
     Texdiag/settings.manifest)
-  target_link_libraries(texdiag ${PROJECT_NAME} ole32.lib version.lib)
+  target_link_libraries(texdiag PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
 
   if(BC_USE_OPENMP)
-    target_link_libraries(texconv OpenMP::OpenMP_CXX)
+    target_link_libraries(texconv PRIVATE OpenMP::OpenMP_CXX)
   endif()
 
   if(ENABLE_OPENEXR_SUPPORT)
     foreach(t IN LISTS TOOL_EXES)
       target_include_directories(${t} PRIVATE Auxiliary)
-      target_link_libraries(${t} ${OPENEXR_ILMIMF_LIBRARY})
+      target_link_libraries(${t} PRIVATE ${OPENEXR_ILMIMF_LIBRARY})
       target_compile_options(${t} PRIVATE -DUSE_OPENEXR)
     endforeach()
   endif()
@@ -380,7 +380,7 @@ if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32)
     DDSView/ddsview.cpp
     DDSView/ddsview.rc
     ${COMPILED_DDSVIEW_SHADERS}/ddsview_ps1D.inc)
-  target_link_libraries(ddsview ${PROJECT_NAME} d3d11.lib ole32.lib)
+  target_link_libraries(ddsview PRIVATE ${PROJECT_NAME} d3d11.lib ole32.lib)
   source_group(ddsview REGULAR_EXPRESSION DDSView/*.*)
 
   target_include_directories(ddsview PRIVATE ${COMPILED_DDSVIEW_SHADERS})
@@ -399,7 +399,7 @@ endif()
 
 if(directxmath_FOUND)
   foreach(t IN LISTS TOOL_EXES)
-    target_link_libraries(${t} Microsoft::DirectXMath)
+    target_link_libraries(${t} PRIVATE Microsoft::DirectXMath)
   endforeach()
 endif()
 

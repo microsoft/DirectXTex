@@ -187,6 +187,20 @@ namespace DirectX
             // Helper for dimension
     };
 
+    struct DDSMetaData
+    {
+        uint32_t    size;           // DDPIXELFORMAT.dwSize
+        uint32_t    flags;          // DDPIXELFORMAT.dwFlags
+        uint32_t    fourCC;         // DDPIXELFORMAT.dwFourCC
+        uint32_t    RGBBitCount;    // DDPIXELFORMAT.dwRGBBitCount/dwYUVBitCount/dwAlphaBitDepth/dwLuminanceBitCount/dwBumpBitCount
+        uint32_t    RBitMask;       // DDPIXELFORMAT.dwRBitMask/dwYBitMask/dwLuminanceBitMask/dwBumpDuBitMask
+        uint32_t    GBitMask;       // DDPIXELFORMAT.dwGBitMask/dwUBitMask/dwBumpDvBitMask
+        uint32_t    BBitMask;       // DDPIXELFORMAT.dwBBitMask/dwVBitMask/dwBumpLuminanceBitMask
+        uint32_t    ABitMask;       // DDPIXELFORMAT.dwRGBAlphaBitMask/dwYUVAlphaBitMask/dwLuminanceAlphaBitMask
+
+        bool __cdecl IsDX10() const noexcept { return (fourCC == 0x30315844); }
+    };
+
     enum DDS_FLAGS : unsigned long
     {
         DDS_FLAGS_NONE = 0x0,
@@ -303,6 +317,17 @@ namespace DirectX
         _In_z_ const wchar_t* szFile,
         _In_ DDS_FLAGS flags,
         _Out_ TexMetadata& metadata) noexcept;
+
+    HRESULT __cdecl GetMetadataFromDDSMemoryEx(
+        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_ DDS_FLAGS flags,
+        _Out_ TexMetadata& metadata,
+        _Out_opt_ DDSMetaData* ddPixelFormat) noexcept;
+    HRESULT __cdecl GetMetadataFromDDSFileEx(
+        _In_z_ const wchar_t* szFile,
+        _In_ DDS_FLAGS flags,
+        _Out_ TexMetadata& metadata,
+        _Out_opt_ DDSMetaData* ddPixelFormat) noexcept;
 
     HRESULT __cdecl GetMetadataFromHDRMemory(
         _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
@@ -447,6 +472,19 @@ namespace DirectX
         _In_z_ const wchar_t* szFile,
         _In_ DDS_FLAGS flags,
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
+
+    HRESULT __cdecl LoadFromDDSMemoryEx(
+        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_ DDS_FLAGS flags,
+        _Out_opt_ TexMetadata* metadata,
+        _Out_opt_ DDSMetaData* ddPixelFormat,
+        _Out_ ScratchImage& image) noexcept;
+    HRESULT __cdecl LoadFromDDSFileEx(
+        _In_z_ const wchar_t* szFile,
+        _In_ DDS_FLAGS flags,
+        _Out_opt_ TexMetadata* metadata,
+        _Out_opt_ DDSMetaData* ddPixelFormat,
+        _Out_ ScratchImage& image) noexcept;
 
     HRESULT __cdecl SaveToDDSMemory(
         _In_ const Image& image,
