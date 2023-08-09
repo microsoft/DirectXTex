@@ -245,7 +245,7 @@ HRESULT DirectX::CompressEx(
     TEX_COMPRESS_FLAGS compress,
     float alphaWeight,
     ScratchImage& image,
-    std::function<bool __cdecl(size_t, size_t)> statusCallback) noexcept
+    std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
     if (!pDevice || IsCompressed(srcImage.format) || !IsCompressed(format))
         return E_INVALIDARG;
@@ -318,7 +318,7 @@ HRESULT DirectX::CompressEx(
     TEX_COMPRESS_FLAGS compress,
     float alphaWeight,
     ScratchImage& cImages,
-    std::function<bool __cdecl(size_t, size_t)> statusCallback) noexcept
+    std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
     if (!pDevice || !srcImages || !nimages)
         return E_INVALIDARG;
