@@ -726,6 +726,13 @@ namespace DirectX
         // Compress is free to use multithreading to improve performance (by default it does not use multithreading)
     };
 
+    struct CompressOptions
+    {
+        TEX_COMPRESS_FLAGS flags;
+        float              threshold;
+        float              alphaWeight;
+    };
+
     HRESULT __cdecl Compress(
         _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold,
         _Out_ ScratchImage& cImage) noexcept;
@@ -735,11 +742,11 @@ namespace DirectX
         // Note that threshold is only used by BC1. TEX_THRESHOLD_DEFAULT is a typical value to use
 
     HRESULT __cdecl CompressEx(
-        _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold,
+        _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ const CompressOptions& options,
         _Out_ ScratchImage& cImage, _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
     HRESULT __cdecl CompressEx(
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold, _Out_ ScratchImage& cImages,
+        _In_ DXGI_FORMAT format, _In_ const CompressOptions& options, _Out_ ScratchImage& cImages,
         _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
 
 #if defined(__d3d11_h__) || defined(__d3d11_x_h__)
@@ -752,11 +759,11 @@ namespace DirectX
         // DirectCompute-based compression (alphaWeight is only used by BC7. 1.0 is the typical value to use)
 
     HRESULT __cdecl CompressEx(
-        _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress,
-        _In_ float alphaWeight, _Out_ ScratchImage& image, _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
+        _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ const CompressOptions& options,
+        _Out_ ScratchImage& image, _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
     HRESULT __cdecl CompressEx(
         _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages,
+        _In_ DXGI_FORMAT format, _In_ const CompressOptions& options, _Out_ ScratchImage& cImages,
         _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
 #endif
 

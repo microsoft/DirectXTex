@@ -636,7 +636,11 @@ HRESULT DirectX::Compress(
     float threshold,
     ScratchImage& image) noexcept
 {
-    return CompressEx(srcImage, format, compress, threshold, image, nullptr);
+    CompressOptions options = {};
+    options.flags = compress;
+    options.threshold = threshold;
+
+    return CompressEx(srcImage, format, options, image, nullptr);
 }
 
 _Use_decl_annotations_
@@ -649,15 +653,18 @@ HRESULT DirectX::Compress(
     float threshold,
     ScratchImage& cImages) noexcept
 {
-    return CompressEx(srcImages, nimages, metadata, format, compress, threshold, cImages, nullptr);
+    CompressOptions options = {};
+    options.flags = compress;
+    options.threshold = threshold;
+
+    return CompressEx(srcImages, nimages, metadata, format, options, cImages, nullptr);
 }
 
 _Use_decl_annotations_
 HRESULT DirectX::CompressEx(
     const Image& srcImage,
     DXGI_FORMAT format,
-    TEX_COMPRESS_FLAGS compress,
-    float threshold,
+    const CompressOptions& options,
     ScratchImage& image,
     std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
@@ -690,17 +697,17 @@ HRESULT DirectX::CompressEx(
     }
 
     // Compress single image
-    if (compress & TEX_COMPRESS_PARALLEL)
+    if (options.flags & TEX_COMPRESS_PARALLEL)
     {
     #ifndef _OPENMP
         hr = E_NOTIMPL;
     #else
-        hr = CompressBC_Parallel(srcImage, *img, GetBCFlags(compress), GetSRGBFlags(compress), threshold, statusCallback);
+        hr = CompressBC_Parallel(srcImage, *img, GetBCFlags(options.flags), GetSRGBFlags(options.flags), options.threshold, statusCallback);
     #endif // _OPENMP
     }
     else
     {
-        hr = CompressBC(srcImage, *img, GetBCFlags(compress), GetSRGBFlags(compress), threshold, statusCallback);
+        hr = CompressBC(srcImage, *img, GetBCFlags(options.flags), GetSRGBFlags(options.flags), options.threshold, statusCallback);
     }
 
     if (FAILED(hr))
@@ -727,8 +734,7 @@ HRESULT DirectX::CompressEx(
     size_t nimages,
     const TexMetadata& metadata,
     DXGI_FORMAT format,
-    TEX_COMPRESS_FLAGS compress,
-    float threshold,
+    const CompressOptions& options,
     ScratchImage& cImages,
     std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
@@ -754,7 +760,7 @@ HRESULT DirectX::CompressEx(
         // the CompressEx overload that takes a single image.
         // This provides a better user experience as progress will be reported as the image
         // is being processed, instead of after processing has been completed.
-        return CompressEx(srcImages[0], format, compress, threshold, cImages, statusCallback);
+        return CompressEx(srcImages[0], format, options, cImages, statusCallback);
     }
 
     TexMetadata mdata2 = metadata;
@@ -797,17 +803,17 @@ HRESULT DirectX::CompressEx(
             return E_FAIL;
         }
 
-        if (compress & TEX_COMPRESS_PARALLEL)
+        if (options.flags & TEX_COMPRESS_PARALLEL)
         {
         #ifndef _OPENMP
             hr = E_NOTIMPL;
         #else
-            hr = CompressBC_Parallel(src, dest[index], GetBCFlags(compress), GetSRGBFlags(compress), threshold, nullptr);
+            hr = CompressBC_Parallel(src, dest[index], GetBCFlags(options.flags), GetSRGBFlags(options.flags), options.threshold, nullptr);
         #endif // _OPENMP
         }
         else
         {
-            hr = CompressBC(src, dest[index], GetBCFlags(compress), GetSRGBFlags(compress), threshold, nullptr);
+            hr = CompressBC(src, dest[index], GetBCFlags(options.flags), GetSRGBFlags(options.flags), options.threshold, nullptr);
         }
 
         if (FAILED(hr))

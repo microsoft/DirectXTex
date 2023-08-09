@@ -220,7 +220,11 @@ HRESULT DirectX::Compress(
     float alphaWeight,
     ScratchImage& image) noexcept
 {
-    return CompressEx(pDevice, srcImage, format, compress, alphaWeight, image, nullptr);
+    CompressOptions options = {};
+    options.flags = compress;
+    options.alphaWeight = alphaWeight;
+
+    return CompressEx(pDevice, srcImage, format, options, image, nullptr);
 }
 
 _Use_decl_annotations_
@@ -234,7 +238,11 @@ HRESULT DirectX::Compress(
     float alphaWeight,
     ScratchImage& cImages) noexcept
 {
-    return CompressEx(pDevice, srcImages, nimages, metadata, format, compress, alphaWeight, cImages);
+    CompressOptions options = {};
+    options.flags = compress;
+    options.alphaWeight = alphaWeight;
+
+    return CompressEx(pDevice, srcImages, nimages, metadata, format, options, cImages);
 }
 
 _Use_decl_annotations_
@@ -242,8 +250,7 @@ HRESULT DirectX::CompressEx(
     ID3D11Device* pDevice,
     const Image& srcImage,
     DXGI_FORMAT format,
-    TEX_COMPRESS_FLAGS compress,
-    float alphaWeight,
+    const CompressOptions& options,
     ScratchImage& image,
     std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
@@ -263,7 +270,7 @@ HRESULT DirectX::CompressEx(
     if (FAILED(hr))
         return hr;
 
-    hr = gpubc->Prepare(srcImage.width, srcImage.height, compress, format, alphaWeight);
+    hr = gpubc->Prepare(srcImage.width, srcImage.height, options.flags, format, options.alphaWeight);
     if (FAILED(hr))
         return hr;
 
@@ -288,7 +295,7 @@ HRESULT DirectX::CompressEx(
         }
     }
 
-    hr = GPUCompress(gpubc.get(), srcImage, *img, compress);
+    hr = GPUCompress(gpubc.get(), srcImage, *img, options.flags);
 
     if (FAILED(hr))
     {
@@ -315,8 +322,7 @@ HRESULT DirectX::CompressEx(
     size_t nimages,
     const TexMetadata& metadata,
     DXGI_FORMAT format,
-    TEX_COMPRESS_FLAGS compress,
-    float alphaWeight,
+    const CompressOptions& options,
     ScratchImage& cImages,
     std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
@@ -382,7 +388,7 @@ HRESULT DirectX::CompressEx(
 
             for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
-                hr = gpubc->Prepare(w, h, compress, format, alphaWeight);
+                hr = gpubc->Prepare(w, h, options.flags, format, options.alphaWeight);
                 if (FAILED(hr))
                 {
                     cImages.Release();
@@ -408,7 +414,7 @@ HRESULT DirectX::CompressEx(
                         return E_FAIL;
                     }
 
-                    hr = GPUCompress(gpubc.get(), src, dest[index], compress);
+                    hr = GPUCompress(gpubc.get(), src, dest[index], options.flags);
                     if (FAILED(hr))
                     {
                         cImages.Release();
@@ -443,7 +449,7 @@ HRESULT DirectX::CompressEx(
 
             for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
-                hr = gpubc->Prepare(w, h, compress, format, alphaWeight);
+                hr = gpubc->Prepare(w, h, options.flags, format, options.alphaWeight);
                 if (FAILED(hr))
                 {
                     cImages.Release();
@@ -469,7 +475,7 @@ HRESULT DirectX::CompressEx(
                         return E_FAIL;
                     }
 
-                    hr = GPUCompress(gpubc.get(), src, dest[index], compress);
+                    hr = GPUCompress(gpubc.get(), src, dest[index], options.flags);
                     if (FAILED(hr))
                     {
                         cImages.Release();
