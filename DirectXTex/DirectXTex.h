@@ -635,11 +635,11 @@ namespace DirectX
 
     HRESULT __cdecl ConvertEx(
         _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold,
-        _Out_ ScratchImage& image, _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr) noexcept;
+        _Out_ ScratchImage& image, _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
     HRESULT __cdecl ConvertEx(
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
         _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold, _Out_ ScratchImage& result,
-        _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr) noexcept;
+        _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
         // Convert the image to a new format
 
     HRESULT __cdecl ConvertToSinglePlane(_In_ const Image& srcImage, _Out_ ScratchImage& image) noexcept;

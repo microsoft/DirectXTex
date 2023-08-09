@@ -5097,7 +5097,7 @@ HRESULT DirectX::ConvertEx(
     TEX_FILTER_FLAGS filter,
     float threshold,
     ScratchImage& image,
-    std::function<bool __cdecl(size_t, size_t)> statusCallback) noexcept
+    std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
     if ((srcImage.format == format) || !IsValid(format))
         return E_INVALIDARG;
@@ -5188,7 +5188,7 @@ HRESULT DirectX::ConvertEx(
     TEX_FILTER_FLAGS filter,
     float threshold,
     ScratchImage& result,
-    std::function<bool __cdecl(size_t, size_t)> statusCallback) noexcept
+    std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
     if (!srcImages || !nimages || (metadata.format == format) || !IsValid(format))
         return E_INVALIDARG;
