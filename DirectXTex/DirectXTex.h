@@ -613,6 +613,12 @@ namespace DirectX
     constexpr unsigned long TEX_FILTER_MODE_MASK = 0xF00000;
     constexpr unsigned long TEX_FILTER_SRGB_MASK = 0xF000000;
 
+    struct ConvertOptions
+    {
+        TEX_FILTER_FLAGS flags;
+        float threshold;
+    };
+
     HRESULT __cdecl Resize(
         _In_ const Image& srcImage, _In_ size_t width, _In_ size_t height,
         _In_ TEX_FILTER_FLAGS filter,
@@ -634,11 +640,11 @@ namespace DirectX
         _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold, _Out_ ScratchImage& result) noexcept;
 
     HRESULT __cdecl ConvertEx(
-        _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold,
+        _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ const ConvertOptions& options,
         _Out_ ScratchImage& image, _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
     HRESULT __cdecl ConvertEx(
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold, _Out_ ScratchImage& result,
+        _In_ DXGI_FORMAT format, _In_ const ConvertOptions& options, _Out_ ScratchImage& result,
         _In_opt_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
         // Convert the image to a new format
 

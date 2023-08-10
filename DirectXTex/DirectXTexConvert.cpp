@@ -5087,15 +5087,18 @@ HRESULT DirectX::Convert(
     float threshold,
     ScratchImage& image) noexcept
 {
-    return ConvertEx(srcImage, format, filter, threshold, image, nullptr);
+    ConvertOptions options = {};
+    options.flags = filter;
+    options.threshold = threshold;
+
+    return ConvertEx(srcImage, format, options, image, nullptr);
 }
 
 _Use_decl_annotations_
 HRESULT DirectX::ConvertEx(
     const Image& srcImage,
     DXGI_FORMAT format,
-    TEX_FILTER_FLAGS filter,
-    float threshold,
+    const ConvertOptions& options,
     ScratchImage& image,
     std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
@@ -5135,13 +5138,13 @@ HRESULT DirectX::ConvertEx(
     }
 
     WICPixelFormatGUID pfGUID, targetGUID;
-    if (UseWICConversion(filter, srcImage.format, format, pfGUID, targetGUID))
+    if (UseWICConversion(options.flags, srcImage.format, format, pfGUID, targetGUID))
     {
-        hr = ConvertUsingWIC(srcImage, pfGUID, targetGUID, filter, threshold, *rimage);
+        hr = ConvertUsingWIC(srcImage, pfGUID, targetGUID, options.flags, options.threshold, *rimage);
     }
     else
     {
-        hr = ConvertCustom(srcImage, filter, *rimage, threshold, 0, statusCallback);
+        hr = ConvertCustom(srcImage, options.flags, *rimage, options.threshold, 0, statusCallback);
     }
 
     if (FAILED(hr))
@@ -5176,7 +5179,11 @@ HRESULT DirectX::Convert(
     float threshold,
     ScratchImage& result) noexcept
 {
-    return ConvertEx(srcImages, nimages, metadata, format, filter, threshold, result, nullptr);
+    ConvertOptions options = {};
+    options.flags = filter;
+    options.threshold = threshold;
+
+    return ConvertEx(srcImages, nimages, metadata, format, options, result, nullptr);
 }
 
 _Use_decl_annotations_
@@ -5185,8 +5192,7 @@ HRESULT DirectX::ConvertEx(
     size_t nimages,
     const TexMetadata& metadata,
     DXGI_FORMAT format,
-    TEX_FILTER_FLAGS filter,
-    float threshold,
+    const ConvertOptions& options,
     ScratchImage& result,
     std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
@@ -5212,7 +5218,7 @@ HRESULT DirectX::ConvertEx(
         // the ConvertEx overload that takes a single image.
         // This provides a better user experience as progress will be reported as the image
         // is being processed, instead of after processing has been completed.
-        return ConvertEx(srcImages[0], format, filter, threshold, result, statusCallback);
+        return ConvertEx(srcImages[0], format, options, result, statusCallback);
     }
 
     TexMetadata mdata2 = metadata;
@@ -5244,7 +5250,7 @@ HRESULT DirectX::ConvertEx(
     }
 
     WICPixelFormatGUID pfGUID, targetGUID;
-    const bool usewic = !metadata.IsPMAlpha() && UseWICConversion(filter, metadata.format, format, pfGUID, targetGUID);
+    const bool usewic = !metadata.IsPMAlpha() && UseWICConversion(options.flags, metadata.format, format, pfGUID, targetGUID);
 
     switch (metadata.dimension)
     {
@@ -5276,11 +5282,11 @@ HRESULT DirectX::ConvertEx(
 
             if (usewic)
             {
-                hr = ConvertUsingWIC(src, pfGUID, targetGUID, filter, threshold, dst);
+                hr = ConvertUsingWIC(src, pfGUID, targetGUID, options.flags, options.threshold, dst);
             }
             else
             {
-                hr = ConvertCustom(src, filter, dst, threshold, 0, nullptr);
+                hr = ConvertCustom(src, options.flags, dst, options.threshold, 0, nullptr);
             }
 
             if (FAILED(hr))
@@ -5338,11 +5344,11 @@ HRESULT DirectX::ConvertEx(
 
                     if (usewic)
                     {
-                        hr = ConvertUsingWIC(src, pfGUID, targetGUID, filter, threshold, dst);
+                        hr = ConvertUsingWIC(src, pfGUID, targetGUID, options.flags, options.threshold, dst);
                     }
                     else
                     {
-                        hr = ConvertCustom(src, filter, dst, threshold, slice, nullptr);
+                        hr = ConvertCustom(src, options.flags, dst, options.threshold, slice, nullptr);
                     }
 
                     if (FAILED(hr))
