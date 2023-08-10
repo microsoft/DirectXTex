@@ -615,7 +615,7 @@ namespace DirectX
 
     struct ConvertOptions
     {
-        TEX_FILTER_FLAGS flags;
+        TEX_FILTER_FLAGS filter;
         float threshold;
     };
 

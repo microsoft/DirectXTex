@@ -5088,7 +5088,7 @@ HRESULT DirectX::Convert(
     ScratchImage& image) noexcept
 {
     ConvertOptions options = {};
-    options.flags = filter;
+    options.filter = filter;
     options.threshold = threshold;
 
     return ConvertEx(srcImage, format, options, image, nullptr);
@@ -5138,13 +5138,13 @@ HRESULT DirectX::ConvertEx(
     }
 
     WICPixelFormatGUID pfGUID, targetGUID;
-    if (UseWICConversion(options.flags, srcImage.format, format, pfGUID, targetGUID))
+    if (UseWICConversion(options.filter, srcImage.format, format, pfGUID, targetGUID))
     {
-        hr = ConvertUsingWIC(srcImage, pfGUID, targetGUID, options.flags, options.threshold, *rimage);
+        hr = ConvertUsingWIC(srcImage, pfGUID, targetGUID, options.filter, options.threshold, *rimage);
     }
     else
     {
-        hr = ConvertCustom(srcImage, options.flags, *rimage, options.threshold, 0, statusCallback);
+        hr = ConvertCustom(srcImage, options.filter, *rimage, options.threshold, 0, statusCallback);
     }
 
     if (FAILED(hr))
@@ -5180,7 +5180,7 @@ HRESULT DirectX::Convert(
     ScratchImage& result) noexcept
 {
     ConvertOptions options = {};
-    options.flags = filter;
+    options.filter = filter;
     options.threshold = threshold;
 
     return ConvertEx(srcImages, nimages, metadata, format, options, result, nullptr);
@@ -5250,7 +5250,7 @@ HRESULT DirectX::ConvertEx(
     }
 
     WICPixelFormatGUID pfGUID, targetGUID;
-    const bool usewic = !metadata.IsPMAlpha() && UseWICConversion(options.flags, metadata.format, format, pfGUID, targetGUID);
+    const bool usewic = !metadata.IsPMAlpha() && UseWICConversion(options.filter, metadata.format, format, pfGUID, targetGUID);
 
     switch (metadata.dimension)
     {
@@ -5282,11 +5282,11 @@ HRESULT DirectX::ConvertEx(
 
             if (usewic)
             {
-                hr = ConvertUsingWIC(src, pfGUID, targetGUID, options.flags, options.threshold, dst);
+                hr = ConvertUsingWIC(src, pfGUID, targetGUID, options.filter, options.threshold, dst);
             }
             else
             {
-                hr = ConvertCustom(src, options.flags, dst, options.threshold, 0, nullptr);
+                hr = ConvertCustom(src, options.filter, dst, options.threshold, 0, nullptr);
             }
 
             if (FAILED(hr))
@@ -5344,11 +5344,11 @@ HRESULT DirectX::ConvertEx(
 
                     if (usewic)
                     {
-                        hr = ConvertUsingWIC(src, pfGUID, targetGUID, options.flags, options.threshold, dst);
+                        hr = ConvertUsingWIC(src, pfGUID, targetGUID, options.filter, options.threshold, dst);
                     }
                     else
                     {
-                        hr = ConvertCustom(src, options.flags, dst, options.threshold, slice, nullptr);
+                        hr = ConvertCustom(src, options.filter, dst, options.threshold, slice, nullptr);
                     }
 
                     if (FAILED(hr))
