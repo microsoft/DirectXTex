@@ -616,7 +616,7 @@ namespace DirectX
     struct ConvertOptions
     {
         TEX_FILTER_FLAGS filter;
-        float threshold;
+        float            threshold;
     };
 
     HRESULT __cdecl Resize(
