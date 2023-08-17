@@ -613,12 +613,6 @@ namespace DirectX
     constexpr unsigned long TEX_FILTER_MODE_MASK = 0xF00000;
     constexpr unsigned long TEX_FILTER_SRGB_MASK = 0xF000000;
 
-    struct ConvertOptions
-    {
-        TEX_FILTER_FLAGS filter;
-        float            threshold;
-    };
-
     HRESULT __cdecl Resize(
         _In_ const Image& srcImage, _In_ size_t width, _In_ size_t height,
         _In_ TEX_FILTER_FLAGS filter,
@@ -631,6 +625,12 @@ namespace DirectX
 
     constexpr float TEX_THRESHOLD_DEFAULT = 0.5f;
         // Default value for alpha threshold used when converting to 1-bit alpha
+
+    struct ConvertOptions
+    {
+        TEX_FILTER_FLAGS filter;
+        float            threshold;
+    };
 
     HRESULT __cdecl Convert(
         _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold,
