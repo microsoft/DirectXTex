@@ -732,6 +732,9 @@ namespace DirectX
         // Compress is free to use multithreading to improve performance (by default it does not use multithreading)
     };
 
+    constexpr float TEX_ALPHA_WEIGHT_DEFAULT = 1.0f;
+        // Default value for alpha weight used for GPU BC7 compression
+
     struct CompressOptions
     {
         TEX_COMPRESS_FLAGS flags;
