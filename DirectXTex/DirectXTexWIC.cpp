@@ -525,7 +525,7 @@ namespace
         _In_ IWICBitmapFrameDecode *frame,
         _Out_ TexMetadata& metadata,
         _Out_opt_ WICPixelFormatGUID* pConvert,
-        _In_opt_ std::function<void(IWICMetadataQueryReader*)> getMQR)
+        _In_ std::function<void(IWICMetadataQueryReader*)> getMQR)
     {
         if (!decoder || !frame)
             return E_POINTER;
@@ -1079,7 +1079,7 @@ namespace
         _In_ REFGUID containerFormat,
         _Inout_ IStream* stream,
         _In_opt_ const GUID* targetFormat,
-        _In_opt_ std::function<void(IPropertyBag2*)> setCustomProps)
+        _In_ std::function<void(IPropertyBag2*)> setCustomProps)
     {
         if (!stream)
             return E_INVALIDARG;
@@ -1144,7 +1144,7 @@ namespace
         _In_ REFGUID containerFormat,
         _Inout_ IStream* stream,
         _In_opt_ const GUID* targetFormat,
-        _In_opt_ std::function<void(IPropertyBag2*)> setCustomProps)
+        _In_ std::function<void(IPropertyBag2*)> setCustomProps)
     {
         if (!stream || nimages < 2)
             return E_INVALIDARG;
@@ -1630,7 +1630,7 @@ namespace DirectX
         _In_z_ const __wchar_t* szFile,
         _In_ WIC_FLAGS flags,
         _Out_ TexMetadata& metadata,
-        _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR)
+        _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR)
     {
         return GetMetadataFromWICFile(reinterpret_cast<const unsigned short*>(szFile), flags, metadata, getMQR);
     }
@@ -1640,7 +1640,7 @@ namespace DirectX
         _In_ WIC_FLAGS flags,
         _Out_opt_ TexMetadata* metadata,
         _Out_ ScratchImage& image,
-        _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR)
+        _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR)
     {
         return LoadFromWICFile(reinterpret_cast<const unsigned short*>(szFile), flags, metadata, image, getMQR);
     }
@@ -1651,7 +1651,7 @@ namespace DirectX
         _In_ REFGUID guidContainerFormat,
         _In_z_ const __wchar_t* szFile,
         _In_opt_ const GUID* targetFormat,
-        _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps)
+        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps)
     {
         return SaveToWICFile(image, flags, guidContainerFormat, reinterpret_cast<const unsigned short*>(szFile), targetFormat, setCustomProps);
     }
@@ -1663,7 +1663,7 @@ namespace DirectX
         _In_ REFGUID guidContainerFormat,
         _In_z_ const __wchar_t* szFile,
         _In_opt_ const GUID* targetFormat,
-        _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps)
+        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps)
     {
         return SaveToWICFile(images, nimages, flags, guidContainerFormat, reinterpret_cast<const unsigned short*>(szFile), targetFormat, setCustomProps);
     }
