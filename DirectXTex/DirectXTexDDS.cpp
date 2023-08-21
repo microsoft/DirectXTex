@@ -2574,3 +2574,68 @@ HRESULT DirectX::SaveToDDSFile(
 
     return S_OK;
 }
+
+
+//--------------------------------------------------------------------------------------
+// Adapters for /Zc:wchar_t- clients
+
+#if defined(_MSC_VER) && !defined(_NATIVE_WCHAR_T_DEFINED)
+
+namespace DirectX
+{
+    HRESULT __cdecl GetMetadataFromDDSFile(
+        _In_z_ const __wchar_t* szFile,
+        _In_ DDS_FLAGS flags,
+        _Out_ TexMetadata& metadata) noexcept
+    {
+        return GetMetadataFromDDSFile(reinterpret_cast<const unsigned short*>(szFile), flags, metadata);
+    }
+
+    HRESULT __cdecl GetMetadataFromDDSFileEx(
+        _In_z_ const __wchar_t* szFile,
+        _In_ DDS_FLAGS flags,
+        _Out_ TexMetadata& metadata,
+        _Out_opt_ DDSMetaData* ddPixelFormat) noexcept
+    {
+        return GetMetadataFromDDSFileEx(reinterpret_cast<const unsigned short*>(szFile), flags, metadata, ddPixelFormat);
+    }
+
+    HRESULT __cdecl LoadFromDDSFile(
+        _In_z_ const __wchar_t* szFile,
+        _In_ DDS_FLAGS flags,
+        _Out_opt_ TexMetadata* metadata,
+        _Out_ ScratchImage& image) noexcept
+    {
+        return LoadFromDDSFile(reinterpret_cast<const unsigned short*>(szFile), flags, metadata, image);
+    }
+
+    HRESULT __cdecl LoadFromDDSFileEx(
+        _In_z_ const __wchar_t* szFile,
+        _In_ DDS_FLAGS flags,
+        _Out_opt_ TexMetadata* metadata,
+        _Out_opt_ DDSMetaData* ddPixelFormat,
+        _Out_ ScratchImage& image) noexcept
+    {
+        return LoadFromDDSFileEx(reinterpret_cast<const unsigned short*>(szFile), flags, metadata, ddPixelFormat, image);
+    }
+
+    HRESULT __cdecl SaveToDDSFile(
+        _In_ const Image& image,
+        _In_ DDS_FLAGS flags,
+        _In_z_ const __wchar_t* szFile) noexcept
+    {
+        return SaveToDDSFile(image, flags, reinterpret_cast<const unsigned short*>(szFile));
+    }
+
+    HRESULT __cdecl SaveToDDSFile(
+        _In_reads_(nimages) const Image* images,
+        _In_ size_t nimages,
+        _In_ const TexMetadata& metadata,
+        _In_ DDS_FLAGS flags,
+        _In_z_ const __wchar_t* szFile) noexcept
+    {
+        return SaveToDDSFile(images, nimages, metadata, flags, reinterpret_cast<const unsigned short*>(szFile));
+    }
+}
+
+#endif // !_NATIVE_WCHAR_T_DEFINED

@@ -350,13 +350,13 @@ namespace DirectX
         _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
         _In_ WIC_FLAGS flags,
         _Out_ TexMetadata& metadata,
-        _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
+        _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 
     HRESULT __cdecl GetMetadataFromWICFile(
         _In_z_ const wchar_t* szFile,
         _In_ WIC_FLAGS flags,
         _Out_ TexMetadata& metadata,
-        _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
+        _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 #endif
 
     // Compatability helpers
@@ -534,31 +534,31 @@ namespace DirectX
         _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
         _In_ WIC_FLAGS flags,
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
-        _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
+        _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
     HRESULT __cdecl LoadFromWICFile(
         _In_z_ const wchar_t* szFile, _In_ WIC_FLAGS flags,
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
-        _In_opt_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
+        _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 
     HRESULT __cdecl SaveToWICMemory(
         _In_ const Image& image, _In_ WIC_FLAGS flags, _In_ REFGUID guidContainerFormat,
         _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr,
-        _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
+        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
     HRESULT __cdecl SaveToWICMemory(
         _In_count_(nimages) const Image* images, _In_ size_t nimages,
         _In_ WIC_FLAGS flags, _In_ REFGUID guidContainerFormat,
         _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr,
-        _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
+        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
 
     HRESULT __cdecl SaveToWICFile(
         _In_ const Image& image, _In_ WIC_FLAGS flags, _In_ REFGUID guidContainerFormat,
         _In_z_ const wchar_t* szFile, _In_opt_ const GUID* targetFormat = nullptr,
-        _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
+        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
     HRESULT __cdecl SaveToWICFile(
         _In_count_(nimages) const Image* images, _In_ size_t nimages,
         _In_ WIC_FLAGS flags, _In_ REFGUID guidContainerFormat,
         _In_z_ const wchar_t* szFile, _In_opt_ const GUID* targetFormat = nullptr,
-        _In_opt_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
+        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
 #endif // WIN32
 
     // Compatability helpers
@@ -664,12 +664,27 @@ namespace DirectX
     constexpr float TEX_THRESHOLD_DEFAULT = 0.5f;
         // Default value for alpha threshold used when converting to 1-bit alpha
 
+    struct ConvertOptions
+    {
+        TEX_FILTER_FLAGS filter;
+        float            threshold;
+    };
+
     HRESULT __cdecl Convert(
         _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold,
         _Out_ ScratchImage& image) noexcept;
     HRESULT __cdecl Convert(
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
         _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold, _Out_ ScratchImage& result) noexcept;
+
+    HRESULT __cdecl ConvertEx(
+        _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ const ConvertOptions& options,
+        _Out_ ScratchImage& image,
+        _In_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
+    HRESULT __cdecl ConvertEx(
+        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+        _In_ DXGI_FORMAT format, _In_ const ConvertOptions& options, _Out_ ScratchImage& result,
+        _In_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
         // Convert the image to a new format
 
     HRESULT __cdecl ConvertToSinglePlane(_In_ const Image& srcImage, _Out_ ScratchImage& image) noexcept;
@@ -756,6 +771,16 @@ namespace DirectX
         // Compress is free to use multithreading to improve performance (by default it does not use multithreading)
     };
 
+    constexpr float TEX_ALPHA_WEIGHT_DEFAULT = 1.0f;
+        // Default value for alpha weight used for GPU BC7 compression
+
+    struct CompressOptions
+    {
+        TEX_COMPRESS_FLAGS flags;
+        float              threshold;
+        float              alphaWeight;
+    };
+
     HRESULT __cdecl Compress(
         _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold,
         _Out_ ScratchImage& cImage) noexcept;
@@ -763,6 +788,15 @@ namespace DirectX
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
         _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold, _Out_ ScratchImage& cImages) noexcept;
         // Note that threshold is only used by BC1. TEX_THRESHOLD_DEFAULT is a typical value to use
+
+    HRESULT __cdecl CompressEx(
+        _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ const CompressOptions& options,
+        _Out_ ScratchImage& cImage,
+        _In_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
+    HRESULT __cdecl CompressEx(
+        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+        _In_ DXGI_FORMAT format, _In_ const CompressOptions& options, _Out_ ScratchImage& cImages,
+        _In_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
 
 #if defined(__d3d11_h__) || defined(__d3d11_x_h__)
     HRESULT __cdecl Compress(
@@ -772,6 +806,15 @@ namespace DirectX
         _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
         _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages) noexcept;
         // DirectCompute-based compression (alphaWeight is only used by BC7. 1.0 is the typical value to use)
+
+    HRESULT __cdecl CompressEx(
+        _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ const CompressOptions& options,
+        _Out_ ScratchImage& image,
+        _In_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
+    HRESULT __cdecl CompressEx(
+        _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+        _In_ DXGI_FORMAT format, _In_ const CompressOptions& options, _Out_ ScratchImage& cImages,
+        _In_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
 #endif
 
     HRESULT __cdecl Decompress(_In_ const Image& cImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image) noexcept;
