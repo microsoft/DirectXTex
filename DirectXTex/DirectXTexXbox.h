@@ -90,12 +90,31 @@ namespace Xbox
     HRESULT GetMetadataFromDDSFile(
         _In_z_ const wchar_t* szFile, _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox);
 
+    HRESULT GetMetadataFromDDSMemoryEx(
+        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox,
+        _Out_opt_ DirectX::DDSMetaData* ddPixelFormat);
+    HRESULT GetMetadataFromDDSFileEx(
+        _In_z_ const wchar_t* szFile, _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox,
+        _Out_opt_ DirectX::DDSMetaData* ddPixelFormat);
+
     HRESULT LoadFromDDSMemory(
         _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
         _Out_opt_ DirectX::TexMetadata* metadata, _Out_ XboxImage& image);
     HRESULT LoadFromDDSFile(
         _In_z_ const wchar_t* szFile,
         _Out_opt_ DirectX::TexMetadata* metadata, _Out_ XboxImage& image);
+
+    HRESULT LoadFromDDSMemoryEx(
+        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _Out_opt_ DirectX::TexMetadata* metadata,
+        _Out_opt_ DirectX::DDSMetaData* ddPixelFormat,
+        _Out_ XboxImage& image);
+    HRESULT LoadFromDDSFileEx(
+        _In_z_ const wchar_t* szFile,
+        _Out_opt_ DirectX::TexMetadata* metadata,
+        _Out_opt_ DirectX::DDSMetaData* ddPixelFormat,
+        _Out_ XboxImage& image);
 
     HRESULT SaveToDDSMemory(_In_ const XboxImage& xbox, _Out_ DirectX::Blob& blob);
     HRESULT SaveToDDSFile(_In_ const XboxImage& xbox, _In_z_ const wchar_t* szFile);

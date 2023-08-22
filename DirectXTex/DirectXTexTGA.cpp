@@ -2522,3 +2522,39 @@ HRESULT DirectX::SaveToTGAFile(
 
     return S_OK;
 }
+
+
+//--------------------------------------------------------------------------------------
+// Adapters for /Zc:wchar_t- clients
+
+#if defined(_MSC_VER) && !defined(_NATIVE_WCHAR_T_DEFINED)
+
+namespace DirectX
+{
+    HRESULT __cdecl GetMetadataFromTGAFile(
+        _In_z_ const __wchar_t* szFile,
+        _In_ TGA_FLAGS flags,
+        _Out_ TexMetadata& metadata) noexcept
+    {
+        return GetMetadataFromTGAFile(reinterpret_cast<const unsigned short*>(szFile), flags, metadata);
+    }
+
+    HRESULT __cdecl LoadFromTGAFile(
+        _In_z_ const __wchar_t* szFile,
+        _In_ TGA_FLAGS flags,
+        _Out_opt_ TexMetadata* metadata,
+        _Out_ ScratchImage& image) noexcept
+    {
+        return LoadFromTGAFile(reinterpret_cast<const unsigned short*>(szFile), flags, metadata, image);
+    }
+
+    HRESULT __cdecl SaveToTGAFile(_In_ const Image& image,
+        _In_ TGA_FLAGS flags,
+        _In_z_ const __wchar_t* szFile,
+        _In_opt_ const TexMetadata* metadata) noexcept
+    {
+        return SaveToTGAFile(image, flags, reinterpret_cast<const unsigned short*>(szFile), metadata);
+    }
+}
+
+#endif // !_NATIVE_WCHAR_T_DEFINED

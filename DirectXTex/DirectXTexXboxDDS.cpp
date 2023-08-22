@@ -58,6 +58,7 @@ namespace
         _In_reads_bytes_(size) const void* pSource,
         size_t size,
         DirectX::TexMetadata& metadata,
+        _Out_opt_ DDSMetaData* ddPixelFormat,
         _Out_opt_ XboxTileMode* tmode,
         _Out_opt_ uint32_t* dataSize,
         _Out_opt_ uint32_t* baseAlignment)
@@ -66,13 +67,24 @@ namespace
             return E_INVALIDARG;
 
         if (tmode)
+        {
             *tmode = c_XboxTileModeInvalid;
+        }
         if (dataSize)
+        {
             *dataSize = 0;
+        }
         if (baseAlignment)
+        {
             *baseAlignment = 0;
+        }
 
-        memset(&metadata, 0, sizeof(TexMetadata));
+        metadata = {};
+
+        if (ddPixelFormat)
+        {
+            *ddPixelFormat = {};
+        }
 
         if (size < (sizeof(DDS_HEADER) + sizeof(uint32_t)))
         {
@@ -228,6 +240,19 @@ namespace
 
         if (dataSize)
             *dataSize = xboxext->dataSize;
+
+        // Handle DDS-specific metadata
+        if (ddPixelFormat)
+        {
+            ddPixelFormat->size = pHeader->ddspf.size;
+            ddPixelFormat->flags = pHeader->ddspf.flags;
+            ddPixelFormat->fourCC = pHeader->ddspf.fourCC;
+            ddPixelFormat->RGBBitCount = pHeader->ddspf.RGBBitCount;
+            ddPixelFormat->RBitMask = pHeader->ddspf.RBitMask;
+            ddPixelFormat->GBitMask = pHeader->ddspf.GBitMask;
+            ddPixelFormat->BBitMask = pHeader->ddspf.BBitMask;
+            ddPixelFormat->ABitMask = pHeader->ddspf.ABitMask;
+        }
 
         return S_OK;
     }
@@ -402,16 +427,27 @@ HRESULT Xbox::GetMetadataFromDDSMemory(
     TexMetadata& metadata,
     bool& isXbox)
 {
+    return Xbox::GetMetadataFromDDSMemoryEx(pSource, size, metadata, isXbox, nullptr);
+}
+
+_Use_decl_annotations_
+HRESULT Xbox::GetMetadataFromDDSMemoryEx(
+    const void* pSource,
+    size_t size,
+    TexMetadata& metadata,
+    bool& isXbox,
+    DDSMetaData* ddPixelFormat)
+{
     if (!pSource || !size)
         return E_INVALIDARG;
 
     isXbox = false;
 
-    HRESULT hr = DecodeDDSHeader(pSource, size, metadata, nullptr, nullptr, nullptr);
+    HRESULT hr = DecodeDDSHeader(pSource, size, metadata, ddPixelFormat, nullptr, nullptr, nullptr);
 
     if (hr == S_FALSE)
     {
-        hr = DirectX::GetMetadataFromDDSMemory(pSource, size, DirectX::DDS_FLAGS_NONE, metadata);
+        hr = DirectX::GetMetadataFromDDSMemoryEx(pSource, size, DirectX::DDS_FLAGS_NONE, metadata, ddPixelFormat);
     }
     else if (SUCCEEDED(hr))
     {
@@ -426,6 +462,16 @@ HRESULT Xbox::GetMetadataFromDDSFile(
     const wchar_t* szFile,
     TexMetadata& metadata,
     bool& isXbox)
+{
+    return Xbox::GetMetadataFromDDSFileEx(szFile, metadata, isXbox, nullptr);
+}
+
+_Use_decl_annotations_
+HRESULT Xbox::GetMetadataFromDDSFileEx(
+    const wchar_t* szFile,
+    TexMetadata& metadata,
+    bool& isXbox,
+    DDSMetaData* ddPixelFormat)
 {
     if (!szFile)
         return E_INVALIDARG;
@@ -471,11 +517,11 @@ HRESULT Xbox::GetMetadataFromDDSFile(
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    HRESULT hr = DecodeDDSHeader(header, bytesRead, metadata, nullptr, nullptr, nullptr);
+    HRESULT hr = DecodeDDSHeader(header, bytesRead, metadata, ddPixelFormat, nullptr, nullptr, nullptr);
 
     if (hr == S_FALSE)
     {
-        hr = DirectX::GetMetadataFromDDSMemory(header, bytesRead, DirectX::DDS_FLAGS_NONE, metadata);
+        hr = DirectX::GetMetadataFromDDSMemoryEx(header, bytesRead, DirectX::DDS_FLAGS_NONE, metadata, ddPixelFormat);
     }
     else if (SUCCEEDED(hr))
     {
@@ -496,6 +542,17 @@ HRESULT Xbox::LoadFromDDSMemory(
     TexMetadata* metadata,
     XboxImage& xbox)
 {
+    return Xbox::LoadFromDDSMemoryEx(pSource, size, metadata, nullptr, xbox);
+}
+
+_Use_decl_annotations_
+HRESULT Xbox::LoadFromDDSMemoryEx(
+    const void* pSource,
+    size_t size,
+    TexMetadata* metadata,
+    DDSMetaData* ddPixelFormat,
+    XboxImage& xbox)
+{
     if (!pSource || !size)
         return E_INVALIDARG;
 
@@ -505,7 +562,7 @@ HRESULT Xbox::LoadFromDDSMemory(
     uint32_t dataSize;
     uint32_t baseAlignment;
     XboxTileMode tmode;
-    HRESULT hr = DecodeDDSHeader(pSource, size, mdata, &tmode, &dataSize, &baseAlignment);
+    HRESULT hr = DecodeDDSHeader(pSource, size, mdata, ddPixelFormat, &tmode, &dataSize, &baseAlignment);
     if (hr == S_FALSE)
     {
         // It's a DDS, but not an XBOX variant
@@ -558,6 +615,16 @@ HRESULT Xbox::LoadFromDDSFile(
     TexMetadata* metadata,
     XboxImage& xbox)
 {
+    return Xbox::LoadFromDDSFileEx(szFile, metadata, nullptr, xbox);
+}
+
+_Use_decl_annotations_
+HRESULT Xbox::LoadFromDDSFileEx(
+    const wchar_t* szFile,
+    TexMetadata* metadata,
+    DDSMetaData* ddPixelFormat,
+    XboxImage& xbox)
+{
     if (!szFile)
         return E_INVALIDARG;
 
@@ -607,7 +674,7 @@ HRESULT Xbox::LoadFromDDSFile(
     XboxTileMode tmode;
     uint32_t dataSize;
     uint32_t baseAlignment;
-    HRESULT hr = DecodeDDSHeader(header, bytesRead, mdata, &tmode, &dataSize, &baseAlignment);
+    HRESULT hr = DecodeDDSHeader(header, bytesRead, mdata, ddPixelFormat, &tmode, &dataSize, &baseAlignment);
     if (hr == S_FALSE)
     {
         // It's a DDS, but not an XBOX variant
@@ -750,3 +817,53 @@ HRESULT Xbox::SaveToDDSFile(const XboxImage& xbox, const wchar_t* szFile)
 
     return S_OK;
 }
+
+
+//--------------------------------------------------------------------------------------
+// Adapters for /Zc:wchar_t- clients
+
+#if defined(_MSC_VER) && !defined(_NATIVE_WCHAR_T_DEFINED)
+
+namespace Xbox
+{
+    HRESULT __cdecl GetMetadataFromDDSFile(
+        _In_z_ const __wchar_t* szFile,
+        _Out_ DirectX::TexMetadata& metadata,
+        _Out_ bool& isXbox)
+    {
+        return GetMetadataFromDDSFile(reinterpret_cast<const unsigned short*>(szFile), metadata, isXbox);
+    }
+
+    HRESULT __cdecl GetMetadataFromDDSFileEx(
+        _In_z_ const __wchar_t* szFile,
+        _Out_ DirectX::TexMetadata& metadata,
+        _Out_ bool& isXbox,
+        _Out_opt_ DirectX::DDSMetaData* ddPixelFormat)
+    {
+        return GetMetadataFromDDSFileEx(reinterpret_cast<const unsigned short*>(szFile), metadata, isXbox, ddPixelFormat);
+    }
+
+    HRESULT __cdecl LoadFromDDSFile(
+        _In_z_ const __wchar_t* szFile,
+        _Out_opt_ DirectX::TexMetadata* metadata,
+        _Out_ XboxImage& image)
+    {
+        return LoadFromDDSFile(reinterpret_cast<const unsigned short*>(szFile), metadata, image);
+    }
+
+    HRESULT __cdecl LoadFromDDSFileEx(
+        _In_z_ const __wchar_t* szFile,
+        _Out_opt_ DirectX::TexMetadata* metadata,
+        _Out_opt_ DirectX::DDSMetaData* ddPixelFormat,
+        _Out_ XboxImage& image)
+    {
+        return LoadFromDDSFileEx(reinterpret_cast<const unsigned short*>(szFile), metadata, ddPixelFormat, image);
+    }
+
+    HRESULT __cdecl SaveToDDSFile(_In_ const XboxImage& xbox, _In_z_ const __wchar_t* szFile)
+    {
+        return SaveToDDSFile(xbox, reinterpret_cast<const unsigned short*>(szFile));
+    }
+}
+
+#endif // !_NATIVE_WCHAR_T_DEFINED

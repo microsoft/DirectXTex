@@ -1298,3 +1298,36 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
 
     return S_OK;
 }
+
+
+//--------------------------------------------------------------------------------------
+// Adapters for /Zc:wchar_t- clients
+
+#if defined(_MSC_VER) && !defined(_NATIVE_WCHAR_T_DEFINED)
+
+namespace DirectX
+{
+    HRESULT __cdecl GetMetadataFromHDRFile(
+        _In_z_ const __wchar_t* szFile,
+        _Out_ TexMetadata& metadata) noexcept
+    {
+        return GetMetadataFromHDRFile(reinterpret_cast<const unsigned short*>(szFile), metadata);
+    }
+
+    HRESULT __cdecl LoadFromHDRFile(
+        _In_z_ const __wchar_t* szFile,
+        _Out_opt_ TexMetadata* metadata,
+        _Out_ ScratchImage& image) noexcept
+    {
+        return LoadFromHDRFile(reinterpret_cast<const unsigned short*>(szFile), metadata, image);
+    }
+
+    HRESULT __cdecl SaveToHDRFile(
+        _In_ const Image& image,
+        _In_z_ const __wchar_t* szFile) noexcept
+    {
+        return SaveToHDRFile(image, reinterpret_cast<const unsigned short*>(szFile));
+    }
+}
+
+#endif // !_NATIVE_WCHAR_T_DEFINED
