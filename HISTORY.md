@@ -6,6 +6,15 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### September 1, 2023
+* ``CompressEx`` and ``ConvertEx`` functions added with status callback and options structs
+* Added optional ``DDSMetaData`` return for Ex versions of DDS loader functions
+* Added ``TEX_ALPHA_WEIGHT_DEFAULT`` constant (set to 1.0)
+* DDS reader updated to support variant used by *Unreal Tournament 2004*
+* Fixed overvalidation bug with BC7 GPU compressor with SRGB formats
+* Retired ARM (32-bit) support for the UWP platform
+* CMake project updates
+
 ### June 13, 2023
 * Added ``TEX_FILTER_RGB_COPY_ALPHA`` flag and support for ``DXGI_FORMAT_A4B4G4R4_UNORM``
 * DDS loader now supports 'swizzled' DXT5 variant FourCCs
