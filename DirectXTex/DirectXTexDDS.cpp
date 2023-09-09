@@ -363,6 +363,7 @@ namespace
         {
             if (pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
             {
+                // We do not accept legacy DX9 'known variants' for modern "DX10" extension header files.
                 return E_FAIL;
             }
 
