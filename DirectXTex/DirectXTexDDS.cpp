@@ -352,12 +352,12 @@ namespace
                 && pHeader->ddspf.size != 24 /* Known variant */
                 && pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
             {
-                return E_FAIL;
+                return HRESULT_E_NOT_SUPPORTED;
             }
         }
         else if (pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
         {
-            return E_FAIL;
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         metadata.mipLevels = pHeader->mipMapCount;
