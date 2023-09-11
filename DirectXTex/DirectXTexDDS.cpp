@@ -346,7 +346,9 @@ namespace
             return E_FAIL;
         }
 
-        if (pHeader->ddspf.size != 0 && pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
+        if (pHeader->ddspf.size != 0 /* Known variant */
+            && pHeader->ddspf.size != 24 /* Known variant */
+            && pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
         {
             return E_FAIL;
         }
@@ -359,6 +361,12 @@ namespace
         if ((pHeader->ddspf.flags & DDS_FOURCC)
             && (MAKEFOURCC('D', 'X', '1', '0') == pHeader->ddspf.fourCC))
         {
+            if (pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
+            {
+                // We do not accept legacy DX9 'known variants' for modern "DX10" extension header files.
+                return E_FAIL;
+            }
+
             // Buffer must be big enough for both headers and magic value
             if (size < (sizeof(DDS_HEADER) + sizeof(uint32_t) + sizeof(DDS_HEADER_DXT10)))
             {
