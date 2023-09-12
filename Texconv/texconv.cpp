@@ -94,6 +94,7 @@ namespace
         OPT_VFLIP,
         OPT_DDS_DWORD_ALIGN,
         OPT_DDS_BAD_DXTN_TAILS,
+        OPT_DDS_PERMISSIVE,
         OPT_USE_DX10,
         OPT_USE_DX9,
         OPT_TGA20,
@@ -190,6 +191,7 @@ namespace
         { L"vflip",         OPT_VFLIP },
         { L"dword",         OPT_DDS_DWORD_ALIGN },
         { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
+        { L"permissive",    OPT_DDS_PERMISSIVE },
         { L"dx10",          OPT_USE_DX10 },
         { L"dx9",           OPT_USE_DX9 },
         { L"tga20",         OPT_TGA20 },
@@ -2104,6 +2106,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 ddsFlags |= DDS_FLAGS_EXPAND_LUMINANCE;
             if (dwOptions & (uint64_t(1) << OPT_DDS_BAD_DXTN_TAILS))
                 ddsFlags |= DDS_FLAGS_BAD_DXTN_TAILS;
+            if (dwOptions & (uint64_t(1) << OPT_DDS_PERMISSIVE))
+                ddsFlags |= DDS_FLAGS_PERMISSIVE;
 
             hr = LoadFromDDSFile(curpath.c_str(), ddsFlags, &info, *image);
             if (FAILED(hr))

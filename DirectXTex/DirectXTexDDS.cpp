@@ -346,11 +346,18 @@ namespace
             return E_FAIL;
         }
 
-        if (pHeader->ddspf.size != 0 /* Known variant */
-            && pHeader->ddspf.size != 24 /* Known variant */
-            && pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
+        if (flags & DDS_FLAGS_PERMISSIVE)
         {
-            return E_FAIL;
+            if (pHeader->ddspf.size != 0 /* Known variant */
+                && pHeader->ddspf.size != 24 /* Known variant */
+                && pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
+            {
+                return HRESULT_E_NOT_SUPPORTED;
+            }
+        }
+        else if (pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
+        {
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         metadata.mipLevels = pHeader->mipMapCount;
@@ -460,6 +467,14 @@ namespace
                 metadata.height = pHeader->height;
                 metadata.depth = pHeader->depth;
                 metadata.dimension = TEX_DIMENSION_TEXTURE3D;
+
+                if (flags & DDS_FLAGS_PERMISSIVE)
+                {
+                    // Allow cases where mipCount was computed incorrectly
+                    size_t maxMips = 0;
+                    std::ignore = Internal::CalculateMipLevels3D(metadata.width, metadata.height, metadata.depth, maxMips);
+                    metadata.mipLevels = std::min(metadata.mipLevels, maxMips);
+                }
             }
             else
             {
@@ -479,6 +494,14 @@ namespace
                 metadata.dimension = TEX_DIMENSION_TEXTURE2D;
 
                 // Note there's no way for a legacy Direct3D 9 DDS to express a '1D' texture
+
+                if (flags & DDS_FLAGS_PERMISSIVE)
+                {
+                    // Allow cases where mipCount was computed incorrectly
+                    size_t maxMips = 0;
+                    std::ignore = Internal::CalculateMipLevels(metadata.width, metadata.height, maxMips);
+                    metadata.mipLevels = std::min(metadata.mipLevels, maxMips);
+                }
             }
 
             metadata.format = GetDXGIFormat(*pHeader, pHeader->ddspf, flags, convFlags);
