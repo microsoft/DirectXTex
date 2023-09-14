@@ -9,6 +9,8 @@ if(DEFINED XBOX_CONSOLE_TARGET)
   set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 endif()
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 project (DirectXTex
   VERSION ${DIRECTXTEX_VERSION}
   DESCRIPTION "DirectX Texture Library"
@@ -18,6 +20,9 @@ project (DirectXTex
 option(BUILD_TOOLS "Build tex command-line tools" ON)
 
 option(BUILD_SAMPLE "Build DDSView sample" ON)
+
+# Shared libs option
+option(BUILD_SHARED_LIBS "Build DirectXTex as shared lib" OFF)
 
 # Includes the functions for Direct3D 11 resources and DirectCompute compression
 option(BUILD_DX11 "Build with DirectX11 Runtime support" ON)
@@ -159,7 +164,12 @@ if(BUILD_DX11 AND WIN32)
     endif()
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
+set(LIB_TYPE STATIC)
+if(${BUILD_SHARED_LIBS})
+  set(LIB_TYPE SHARED)
+endif()
+
+add_library(${PROJECT_NAME} ${LIB_TYPE} ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
 
 if(BUILD_DX11 AND WIN32)
    target_include_directories(${PROJECT_NAME} PRIVATE ${COMPILED_SHADERS})
