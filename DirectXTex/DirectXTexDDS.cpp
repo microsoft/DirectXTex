@@ -341,9 +341,17 @@ namespace
         auto pHeader = reinterpret_cast<const DDS_HEADER*>(static_cast<const uint8_t*>(pSource) + sizeof(uint32_t));
 
         // Verify header to validate DDS file
-        if (pHeader->size != sizeof(DDS_HEADER))
+        if (flags & DDS_FLAGS_PERMISSIVE)
         {
-            return E_FAIL;
+            if (pHeader->size != 24 /* Known variant */
+                && pHeader->size != sizeof(DDS_HEADER))
+            {
+                return HRESULT_E_NOT_SUPPORTED;
+            }
+        }
+        else if (pHeader->size != sizeof(DDS_HEADER))
+        {
+            return HRESULT_E_NOT_SUPPORTED;
         }
 
         if (flags & DDS_FLAGS_PERMISSIVE)
@@ -368,7 +376,8 @@ namespace
         if ((pHeader->ddspf.flags & DDS_FOURCC)
             && (MAKEFOURCC('D', 'X', '1', '0') == pHeader->ddspf.fourCC))
         {
-            if (pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
+            if (pHeader->size != sizeof(DDS_HEADER)
+                || pHeader->ddspf.size != sizeof(DDS_PIXELFORMAT))
             {
                 // We do not accept legacy DX9 'known variants' for modern "DX10" extension header files.
                 return E_FAIL;
