@@ -946,6 +946,7 @@ namespace
             L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n"
             L"   -dword              Use DWORD instead of BYTE alignment\n"
             L"   -badtails           Fix for older DXTn with bad mipchain tails\n"
+            L"   -permissive         Allow some DX9 variants with unusual header values\n"
             L"   -fixbc4x4           Fix for odd-sized BC files that Direct3D can't load\n"
             L"   -xlum               expand legacy L8, L16, and A8P8 formats\n"
             L"\n"
