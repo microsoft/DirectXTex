@@ -6,6 +6,14 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### October 28, 2023
+* New ``DDS_PERMISSIVE_FLAG`` to allow reading of various DDS DX9 file variants
+  * *breaking change* required to accept reading *Unreal Tournament 2004* DDS files
+  * Allows cases where DDS_HEADER size is incorrectly set to 24
+  * Allows cases where DDPIXELFORMAT size is incorrectly set to 24
+  * Allows cases where DDS_HEADER.MipMapCount is set to the wrong value
+* texassemble/texconv/texdiag: -flist option updated to support filenames with spaces
+
 ### September 1, 2023
 * ``CompressEx`` and ``ConvertEx`` functions added with status callback and options structs
 * Added optional ``DDSMetaData`` return for Ex versions of DDS loader functions
