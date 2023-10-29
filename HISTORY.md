@@ -13,6 +13,7 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
   * Allows cases where DDPIXELFORMAT size is incorrectly set to 24
   * Allows cases where DDS_HEADER.MipMapCount is set to the wrong value
 * texassemble/texconv/texdiag: -flist option updated to support filenames with spaces
+* texconv: -permissive switch added to opt-in use of new flag when reading DDS files
 
 ### September 1, 2023
 * ``CompressEx`` and ``ConvertEx`` functions added with status callback and options structs
