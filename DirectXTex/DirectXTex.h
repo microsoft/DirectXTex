@@ -47,7 +47,7 @@ struct IWICImagingFactory;
 struct IWICMetadataQueryReader;
 #endif
 
-#define DIRECTX_TEX_VERSION 200
+#define DIRECTX_TEX_VERSION 201
 
 
 namespace DirectX
@@ -225,6 +225,9 @@ namespace DirectX
 
         DDS_FLAGS_BAD_DXTN_TAILS = 0x40,
         // Some older DXTn DDS files incorrectly handle mipchain tails for blocks smaller than 4x4
+
+        DDS_FLAGS_PERMISSIVE = 0x80,
+        // Allow some file variants due to common bugs in the header written by various leagcy DDS writers
 
         DDS_FLAGS_FORCE_DX10_EXT = 0x10000,
         // Always use the 'DX10' header extension for DDS writer (i.e. don't try to write DX9 compatible DDS files)

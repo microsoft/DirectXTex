@@ -94,6 +94,7 @@ namespace
         OPT_VFLIP,
         OPT_DDS_DWORD_ALIGN,
         OPT_DDS_BAD_DXTN_TAILS,
+        OPT_DDS_PERMISSIVE,
         OPT_USE_DX10,
         OPT_USE_DX9,
         OPT_TGA20,
@@ -190,6 +191,7 @@ namespace
         { L"vflip",         OPT_VFLIP },
         { L"dword",         OPT_DDS_DWORD_ALIGN },
         { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
+        { L"permissive",    OPT_DDS_PERMISSIVE },
         { L"dx10",          OPT_USE_DX10 },
         { L"dx9",           OPT_USE_DX9 },
         { L"tga20",         OPT_TGA20 },
@@ -637,10 +639,10 @@ namespace
         std::list<SConversion> flist;
         std::set<std::wstring> excludes;
 
-        auto fname = std::make_unique<wchar_t[]>(32768);
         for (;;)
         {
-            inFile >> fname.get();
+            std::wstring fname;
+            std::getline(inFile, fname);
             if (!inFile)
                 break;
 
@@ -652,13 +654,13 @@ namespace
             {
                 if (flist.empty())
                 {
-                    wprintf(L"WARNING: Ignoring the line '%ls' in -flist\n", fname.get());
+                    wprintf(L"WARNING: Ignoring the line '%ls' in -flist\n", fname.c_str());
                 }
                 else
                 {
-                    std::filesystem::path path(fname.get() + 1);
+                    std::filesystem::path path(fname.c_str() + 1);
                     auto& npath = path.make_preferred();
-                    if (wcspbrk(fname.get(), L"?*") != nullptr)
+                    if (wcspbrk(fname.c_str(), L"?*") != nullptr)
                     {
                         std::list<SConversion> removeFiles;
                         SearchForFiles(npath, removeFiles, false, nullptr);
@@ -678,20 +680,18 @@ namespace
                     }
                 }
             }
-            else if (wcspbrk(fname.get(), L"?*") != nullptr)
+            else if (wcspbrk(fname.c_str(), L"?*") != nullptr)
             {
-                std::filesystem::path path(fname.get());
+                std::filesystem::path path(fname.c_str());
                 SearchForFiles(path.make_preferred(), flist, false, nullptr);
             }
             else
             {
                 SConversion conv = {};
-                std::filesystem::path path(fname.get());
+                std::filesystem::path path(fname.c_str());
                 conv.szSrc = path.make_preferred().native();
                 flist.push_back(conv);
             }
-
-            inFile.ignore(1000, '\n');
         }
 
         inFile.close();
@@ -946,6 +946,7 @@ namespace
             L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n"
             L"   -dword              Use DWORD instead of BYTE alignment\n"
             L"   -badtails           Fix for older DXTn with bad mipchain tails\n"
+            L"   -permissive         Allow some DX9 variants with unusual header values\n"
             L"   -fixbc4x4           Fix for odd-sized BC files that Direct3D can't load\n"
             L"   -xlum               expand legacy L8, L16, and A8P8 formats\n"
             L"\n"
@@ -2104,6 +2105,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 ddsFlags |= DDS_FLAGS_EXPAND_LUMINANCE;
             if (dwOptions & (uint64_t(1) << OPT_DDS_BAD_DXTN_TAILS))
                 ddsFlags |= DDS_FLAGS_BAD_DXTN_TAILS;
+            if (dwOptions & (uint64_t(1) << OPT_DDS_PERMISSIVE))
+                ddsFlags |= DDS_FLAGS_PERMISSIVE;
 
             hr = LoadFromDDSFile(curpath.c_str(), ddsFlags, &info, *image);
             if (FAILED(hr))

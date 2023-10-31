@@ -3,9 +3,9 @@
 
 cmake_minimum_required (VERSION 3.20)
 
-set(DIRECTXTEX_VERSION 2.0.0)
+set(DIRECTXTEX_VERSION 2.0.1)
 
-if(DEFINED XBOX_CONSOLE_TARGET)
+if(WINDOWS_STORE OR (DEFINED XBOX_CONSOLE_TARGET))
   set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 endif()
 
@@ -482,6 +482,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             list(APPEND WarningsLib "-Wno-reserved-identifier")
         endif()
     endif()
+
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)
+        list(APPEND WarningsLib "-Wno-unsafe-buffer-usage")
+    endif()
+    target_compile_options(${PROJECT_NAME} PRIVATE ${WarningsLib})
 
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)
         list(APPEND WarningsLib "-Wno-unsafe-buffer-usage")
