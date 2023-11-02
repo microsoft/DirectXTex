@@ -1,0 +1,99 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+#
+# http://go.microsoft.com/fwlink/?LinkId=248926
+
+# Builds the library using CMake and submit for fuzzing
+
+schedules:
+- cron: "0 5 * * *"
+  displayName: 'Submit for File Fuzzing'
+  branches:
+    include:
+    - main
+
+trigger: none
+pr: none
+
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: refs/heads/main
+
+name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
+
+variables:
+  VS_GENERATOR: 'Visual Studio 17 2022'
+  WIN11_SDK: '10.0.22000.0'
+  ONEFUZZ_PAT: $(OneFuzzPAT)
+
+pool:
+  vmImage: windows-2022
+
+jobs:
+- job: CMAKE_BUILD
+  displayName: CMake using VS Generator
+  steps:
+  - checkout: self
+    clean: true
+    fetchTags: false
+  - task: UniversalPackages@0
+    displayName: 'Download Current OneFuzz CLI'
+    inputs:
+      command: download
+      vstsFeed: 'onefuzz/onefuzz-cli'
+      vstsFeedPackage: 'onefuzz-cli'
+      vstsPackageVersion: '*'
+      downloadDirectory: '$(System.DefaultWorkingDirectory)'    
+  - task: CMake@1
+    displayName: 'CMake (MSVC): Config with ASan'
+    inputs:
+      cwd: '$(Build.SourcesDirectory)'
+      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out -DCMAKE_SYSTEM_VERSION=$(WIN11_SDK) -DBUILD_TOOLS=OFF -DBUILD_SAMPLE=OFF -DBUILD_FUZZING=ON -DBUILD_TESTING=ON'
+  - task: CMake@1
+    displayName: 'CMake (MSVC): Build with ASan'
+    inputs:
+      cwd: '$(Build.SourcesDirectory)'
+      cmakeArgs: --build out -v --config RelWithDebInfo
+  - task: CopyFiles@2
+    displayName: Copy fuzzer
+    inputs:
+      Contents: |
+        out\bin\CMake\RelWithDebInfo\fuzzloaders.exe
+      TargetFolder: .drop
+      OverWrite: true
+      flattenFolders: true
+  - task: CopyFiles@2
+    displayName: Copy symbols
+    inputs:
+      Contents: |
+        out\bin\CMake\RelWithDebInfo\fuzzloaders.pdb
+      TargetFolder: .drop\symbol
+      OverWrite: true
+      flattenFolders: true
+  - task: PowerShell@2
+    displayName: Download seed files
+    inputs:
+      targetType: inline
+      script: |
+        $seedfiles = "AlphaEdge.dds",
+            "cubea8r8g8b8.dds",
+            "default_texture_nm.dds",
+            "dx5_logo.dds",
+            "hdrtest.dds",
+            "normalmap.dds"
+
+        New-Item -ItemType Directory -Force -Path .drop\seeds\
+
+        foreach($filename in $seedfiles)
+        {
+            Write-Host "Fetching: $filename"
+            $url = "https://raw.githubusercontent.com/walbourn/directxtexmedia/main/" + $filename
+            $target = [System.IO.Path]::Combine(".drop\seeds\", $filename)
+            Invoke-WebRequest $url -o $target
+        }
+  - task: onefuzz-task@0
+    env:
+      onefuzzDropDirectory: .drop
+      onefuzzDropPAT: $(ONEFUZZ_PAT)
