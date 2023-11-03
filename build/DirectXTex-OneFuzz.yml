@@ -38,14 +38,6 @@ jobs:
   - checkout: self
     clean: true
     fetchTags: false
-  - task: UniversalPackages@0
-    displayName: 'Download Current OneFuzz CLI'
-    inputs:
-      command: download
-      vstsFeed: 'onefuzz/onefuzz-cli'
-      vstsFeedPackage: 'onefuzz-cli'
-      vstsPackageVersion: '*'
-      downloadDirectory: '$(System.DefaultWorkingDirectory)'    
   - task: CMake@1
     displayName: 'CMake (MSVC): Config with ASan'
     inputs:
@@ -93,6 +85,14 @@ jobs:
             $target = [System.IO.Path]::Combine(".drop\seeds\", $filename)
             Invoke-WebRequest $url -o $target
         }
+
+  - task: PowerShell@2
+    displayName: List drop files
+    inputs:
+      targetType: inline
+      script: |
+        Get-ChildItem ".drop" -Recurse | select FullName
+
   - task: onefuzz-task@0
     env:
       onefuzzDropDirectory: .drop
