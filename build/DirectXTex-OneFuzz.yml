@@ -49,8 +49,9 @@ jobs:
       RemoveDotFiles: true
   - task: CmdLine@2
     displayName: Fetch Tests
+    # TODO: Temporarily use of fuzzing branch for validation
     inputs:
-      script: git clone --quiet https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
+      script: git clone -b fuzzing --quiet https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
       workingDirectory: $(Build.SourcesDirectory)
       failOnStderr: true
   - task: CMake@1
@@ -107,6 +108,16 @@ jobs:
       targetType: inline
       script: |
         Get-ChildItem ".drop" -Recurse | select FullName
+
+
+  - task: AzureCLI@2
+    displayName: 'fetch oip'
+    inputs:
+      azureSubscription: 'onebranch-pipelines-spgo-azureprofiler'
+      scriptType: ps
+      scriptLocation: inlineScript
+      inlineScript: |
+        az artifacts universal download --organization "https://fuzzfest.visualstudio.com/" --project "5eaacf23-2084-4d62-8fbe-7d37326a8b74" --scope project --feed "OneFuzz-Ingestion-Preparation" --name "onefuzz-ingestion-prep.zip" --version "*" --path .
 
   - task: onefuzz-task@0
     env:
