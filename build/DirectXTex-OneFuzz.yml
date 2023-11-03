@@ -34,8 +34,8 @@ pool:
   vmImage: windows-2022
 
 jobs:
-- job: CMAKE_BUILD
-  displayName: CMake using VS Generator
+- job: FUZZ_BUILD
+  displayName: 'Build for file fuzzing'
   steps:
   - checkout: self
     clean: true
@@ -117,7 +117,11 @@ jobs:
         Get-ChildItem ".drop" -Recurse | select FullName
 
   - task: onefuzz-task@0
+    displayName: 'Submit to OneFuzz'
+    inputs:
+      onefuzzOSes: 'Windows'
     env:
       onefuzzDropDirectory: .drop
       onefuzzDropPAT: $(ONEFUZZ_PAT)
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
   
