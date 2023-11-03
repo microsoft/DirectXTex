@@ -16,13 +16,10 @@
         }
       ],
       "JobDependencies": [
-        "onefuzz-sample-fuzzer.exe",
-        "onefuzz-sample-fuzzer.pdb",
-        "onefuzz-libs*.dll",
-        "..\\vc\\ASANSdk\\bin\\amd64\\clang_rt.asan_dynamic-x86_64.dll",
-        "..\\vc\\ASANSdk\\bin\\amd64\\msdia140.dll",
-        "..\\libs\\**\\mylib*.dll",
-        "setup.ps1"
+        "fuzzloaders.exe",
+        "fuzzloaders.pdb",
+        "clang_rt.asan_dynamic-x86_64.dll",
+        "msdia140.dll",
       ],
       "AdoTemplate": {
         "Org": "microsoft",
