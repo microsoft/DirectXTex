@@ -113,7 +113,7 @@ jobs:
   - task: AzureCLI@2
     displayName: 'fetch oip'
     inputs:
-      azureSubscription: 'onebranch-pipelines-spgo-azureprofiler'
+      azureSubscription: 'onefuzz-azure-connection'
       scriptType: ps
       scriptLocation: inlineScript
       inlineScript: |
