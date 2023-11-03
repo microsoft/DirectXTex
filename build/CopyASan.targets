@@ -4,6 +4,7 @@
   <PropertyGroup>
     <TargetFolder Condition="'$(TargetFolder)'==''">.drop</TargetFolder>
 
+    <VSInstallDir>$(VsInstallRoot)\</VSInstallDir>
     <VCInstallDir>$(VSInstallDir)VC\</VCInstallDir>
     <VCToolsVersionProps>$(VCInstallDir)Auxiliary\Build\Microsoft.VCToolsVersion.default.props</VCToolsVersionProps>
   </PropertyGroup>
