@@ -19,7 +19,7 @@
         "fuzzloaders.exe",
         "fuzzloaders.pdb",
         "clang_rt.asan_dynamic-x86_64.dll",
-        "msdia140.dll",
+        "msdia140.dll"
       ],
       "AdoTemplate": {
         "Org": "microsoft",

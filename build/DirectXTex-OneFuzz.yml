@@ -78,7 +78,7 @@ jobs:
     inputs:
       Contents: |
         out\bin\CMake\RelWithDebInfo\fuzzloaders.pdb
-      TargetFolder: .drop\symbol
+      TargetFolder: .drop\symbols
       OverWrite: true
       flattenFolders: true
   - task: PowerShell@2
@@ -107,6 +107,7 @@ jobs:
     displayName: 'Copy ASan binaries'
     inputs:
       solution: build/CopyASAN.targets
+      msbuildArgs: /p:TargetFolder=$(Build.SourcesDirectory)\.drop
       msbuildVersion: 17.0
       msbuildArchitecture: x64
   - task: PowerShell@2
