@@ -108,14 +108,6 @@ jobs:
       script: |
         Get-ChildItem ".drop" -Recurse | select FullName
 
-  - task: AzureCLI@2
-    displayName: 'fetch oip'
-    inputs:
-      azureSubscription: 'OneFuzz Azure Connection'
-      scriptType: ps
-      scriptLocation: inlineScript
-      inlineScript: |
-        az artifacts universal download --organization "https://fuzzfest.visualstudio.com/" --project "5eaacf23-2084-4d62-8fbe-7d37326a8b74" --scope project --feed "OneFuzz-Ingestion-Preparation" --name "onefuzz-ingestion-prep.zip" --version "*" --path .
   - task: onefuzz-task@0
     env:
       onefuzzDropDirectory: .drop
