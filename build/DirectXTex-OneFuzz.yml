@@ -104,7 +104,9 @@ jobs:
             "UTC24.TGA",
             "UTC32.TGA",
             "UBW8.TGA",
-            "ucm8.tga";
+            "ucm8.tga",
+            "testimg.ppm",
+            "grad4d.pfm";
 
         New-Item -ItemType Directory -Force -Path .drop\seeds\
 
