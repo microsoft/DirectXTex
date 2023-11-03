@@ -68,6 +68,7 @@ jobs:
     displayName: Copy fuzzer
     inputs:
       Contents: |
+        build\OneFuzzConfig.json
         out\bin\CMake\RelWithDebInfo\fuzzloaders.exe
       TargetFolder: .drop
       OverWrite: true
@@ -102,6 +103,12 @@ jobs:
             Invoke-WebRequest $url -o $target
         }
 
+  - task: MSBuild@1
+    displayName: 'Copy ASan binaries'
+    inputs:
+      solution: build/CopyASAN.targets
+      msbuildVersion: 17.0
+      msbuildArchitecture: x64
   - task: PowerShell@2
     displayName: List drop files
     inputs:
@@ -109,17 +116,8 @@ jobs:
       script: |
         Get-ChildItem ".drop" -Recurse | select FullName
 
-
-  - task: AzureCLI@2
-    displayName: 'fetch oip'
-    inputs:
-      azureSubscription: 'onefuzz-azure-connection'
-      scriptType: ps
-      scriptLocation: inlineScript
-      inlineScript: |
-        az artifacts universal download --organization "https://fuzzfest.visualstudio.com/" --project "5eaacf23-2084-4d62-8fbe-7d37326a8b74" --scope project --feed "OneFuzz-Ingestion-Preparation" --name "onefuzz-ingestion-prep.zip" --version "*" --path .
-
   - task: onefuzz-task@0
     env:
       onefuzzDropDirectory: .drop
       onefuzzDropPAT: $(ONEFUZZ_PAT)
+  
