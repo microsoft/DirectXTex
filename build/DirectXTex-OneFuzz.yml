@@ -49,9 +49,8 @@ jobs:
       RemoveDotFiles: true
   - task: CmdLine@2
     displayName: Fetch Tests
-    # TODO: Temporarily use of fuzzing branch for validation
     inputs:
-      script: git clone -b fuzzing --quiet https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
+      script: git clone --quiet https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
       workingDirectory: $(Build.SourcesDirectory)
       failOnStderr: true
   - task: CMake@1
@@ -91,7 +90,20 @@ jobs:
             "default_texture_nm.dds",
             "dx5_logo.dds",
             "hdrtest.dds",
-            "normalmap.dds"
+            "normalmap.dds",
+            "grad4d.hdr",
+            "grad4dunc.hdr",
+            "BigTree.hdr",
+            "CBW8.TGA",
+            "ccm8.tga",
+            "CTC16.TGA",
+            "CTC24.TGA",
+            "CTC32.TGA",
+            "UTC16.TGA",
+            "UTC24.TGA",
+            "UTC32.TGA",
+            "UBW8.TGA",
+            "ucm8.tga";
 
         New-Item -ItemType Directory -Force -Path .drop\seeds\
 
@@ -107,7 +119,7 @@ jobs:
     displayName: 'Copy ASan binaries'
     inputs:
       solution: build/CopyASAN.targets
-      msbuildArgs: /p:TargetFolder=$(Build.SourcesDirectory)\.drop
+      msbuildArguments: /p:TargetFolder=$(Build.SourcesDirectory)\.drop
       msbuildVersion: 17.0
       msbuildArchitecture: x64
   - task: PowerShell@2
