@@ -65,6 +65,12 @@
 // See <https://github.com/Microsoft/DirectXTex/wiki/Adding-OpenEXR> for details
 #include "DirectXTexEXR.h"
 #endif
+#ifdef USE_LIBJPEG
+#include "DirectXTexJPEG.h"
+#endif
+#ifdef USE_LIBPNG
+#include "DirectXTexPNG.h"
+#endif
 
 using namespace DirectX;
 
@@ -348,13 +354,28 @@ const SValue g_pFilters[] =
 #ifdef USE_OPENEXR
 #define CODEC_EXR 0xFFFF0006
 #endif
+#ifdef USE_LIBJPEG
+#define CODEC_JPEG 0xFFFF0007
+#endif
+#ifdef USE_LIBPNG
+#define CODEC_PNG 0xFFFF0008
+#endif
 
 const SValue g_pDumpFileTypes[] =
 {
     { L"bmp",   WIC_CODEC_BMP  },
+#ifdef USE_LIBJPEG
+    { L"jpg",   CODEC_JPEG },
+    { L"jpeg",  CODEC_JPEG },
+#else
     { L"jpg",   WIC_CODEC_JPEG },
     { L"jpeg",  WIC_CODEC_JPEG },
+#endif
+#ifdef USE_LIBPNG
+    { L"png",   CODEC_PNG  },
+#else
     { L"png",   WIC_CODEC_PNG  },
+#endif
     { L"tga",   CODEC_TGA      },
     { L"hdr",   CODEC_HDR      },
     { L"tif",   WIC_CODEC_TIFF },
@@ -369,9 +390,18 @@ const SValue g_pDumpFileTypes[] =
 const SValue g_pExtFileTypes[] =
 {
     { L".bmp",  WIC_CODEC_BMP },
+#ifdef USE_LIBJPEG
+    { L".jpg",  CODEC_JPEG },
+    { L".jpeg", CODEC_JPEG },
+#else
     { L".jpg",  WIC_CODEC_JPEG },
     { L".jpeg", WIC_CODEC_JPEG },
+#endif
+#ifdef USE_LIBPNG
+    { L".png",  CODEC_PNG },
+#else
     { L".png",  WIC_CODEC_PNG },
+#endif
     { L".dds",  CODEC_DDS },
     { L".tga",  CODEC_TGA },
     { L".hdr",  CODEC_HDR },
@@ -814,6 +844,18 @@ namespace
             return LoadFromEXRFile(fileName, &info, *image);
         }
     #endif
+    #ifdef USE_LIBJPEG
+        else if (_wcsicmp(ext.c_str(), L".jpg") == 0)
+        {
+            return LoadFromJPEGFile(fileName, &info, *image);
+        }
+    #endif
+    #ifdef USE_LIBPNG
+        else if (_wcsicmp(ext.c_str(), L".png") == 0)
+        {
+            return LoadFromPNGFile(fileName, &info, *image);
+        }
+    #endif
         else
         {
             // WIC shares the same filter values for mode and dither
@@ -857,7 +899,14 @@ namespace
         case CODEC_EXR:
             return SaveToEXRFile(*image, fileName);
         #endif
-
+        #ifdef USE_LIBJPEG
+        case CODEC_JPEG:
+            return SaveToJPEGFile(*image, fileName);
+        #endif
+        #ifdef USE_LIBPNG
+        case CODEC_PNG:
+            return SaveToPNGFile(*image, fileName);
+        #endif
         default:
             return SaveToWICFile(*image, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(codec)), fileName);
         }
