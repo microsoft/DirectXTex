@@ -273,7 +273,7 @@ namespace DirectX
             return E_INVALIDARG;
         try
         {
-            auto fout = Create(file);
+            auto fout = CreateFILE(file);
             PNGCompress encoder{};
             encoder.UseOutput(fout.get());
             return encoder.WriteImage(image);
