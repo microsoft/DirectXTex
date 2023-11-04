@@ -6,7 +6,7 @@
 # Builds the library using CMake and submit for file fuzzing
 
 schedules:
-- cron: "0 0 * * *"
+- cron: "0 12 * * 0"
   displayName: 'Submit for File Fuzzing'
   branches:
     include:
