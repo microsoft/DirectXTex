@@ -48,6 +48,12 @@ option(BUILD_FUZZING "Build for fuzz testing" OFF)
 # Includes the functions for loading/saving OpenEXR files at runtime
 option(ENABLE_OPENEXR_SUPPORT "Build with OpenEXR support" OFF)
 
+# See https://www.ijg.org/
+option(ENABLE_LIBJPEG_SUPPORT "Build with libjpeg support" OFF)
+
+# See http://www.libpng.org/pub/png/libpng.html
+option(ENABLE_LIBPNG_SUPPORT "Build with libpng support" OFF)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -181,6 +187,20 @@ if(ENABLE_OPENEXR_SUPPORT)
    list(APPEND LIBRARY_SOURCES Auxiliary/DirectXTexEXR.cpp)
 endif()
 
+if(ENABLE_LIBJPEG_SUPPORT)
+    list(APPEND LIBRARY_HEADERS Auxiliary/DirectXTexJPEG.h)
+    list(APPEND LIBRARY_SOURCES
+      Auxiliary/DirectXTexJPEG.cpp
+      Auxiliary/DirectXTexHelper.cpp)
+endif()
+
+if(ENABLE_LIBPNG_SUPPORT)
+    list(APPEND LIBRARY_HEADERS Auxiliary/DirectXTexPNG.h)
+    list(APPEND LIBRARY_SOURCES
+      Auxiliary/DirectXTexPNG.cpp
+      Auxiliary/DirectXTexHelper.cpp)
+endif()
+
 if(BUILD_DX11 AND WIN32)
     if(NOT COMPILED_SHADERS)
         if(USE_PREBUILT_SHADERS)
@@ -253,6 +273,17 @@ elseif(BUILD_XBOX_EXTS_XBOXONE AND WIN32)
     else()
         message(FATAL_ERROR "Building Xbox extensions requires GameDKLatest or XboxOneXDKLatest")
     endif()
+endif()
+
+if(ENABLE_LIBJPEG_SUPPORT)
+  find_package(JPEG REQUIRED)
+  target_link_libraries(${PROJECT_NAME} PUBLIC JPEG::JPEG)
+endif()
+
+if(ENABLE_LIBPNG_SUPPORT)
+  find_package(ZLIB REQUIRED)
+  find_package(PNG REQUIRED)
+  target_link_libraries(${PROJECT_NAME} PUBLIC ZLIB::ZLIB PNG::PNG)
 endif()
 
 if(NOT MINGW)
