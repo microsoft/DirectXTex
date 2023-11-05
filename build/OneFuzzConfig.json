@@ -11,8 +11,8 @@
       "RebootAfterSetup": false,
       "OneFuzzJobs": [
         {
-          "ProjectName": "DirectXTex",
-          "TargetName": "fuzzloader"
+          "ProjectName": "Direct3D",
+          "TargetName": "DirectXTex"
         }
       ],
       "JobDependencies": [
