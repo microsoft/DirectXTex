@@ -194,8 +194,11 @@ HRESULT __cdecl LoadFromPortablePixMap(
             if (*pData != '\n')
                 return E_FAIL;
 
-            pData++;
-            ppmSize--;
+            if (ppmSize > 1)
+            {
+                pData++;
+                ppmSize--;
+            }
 
             while (ppmSize > 0 && (pixels < pixelEnd))
             {
@@ -205,6 +208,10 @@ HRESULT __cdecl LoadFromPortablePixMap(
                     | 0xff000000;
 
                 pData += 3;
+                if (ppmSize < 3)
+                {
+                    return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+                }
                 ppmSize -= 3;
             }
 
@@ -353,6 +360,11 @@ HRESULT __cdecl SaveToPortablePixMap(
         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
+    if ((image.width > INT32_MAX) || (image.height > INT32_MAX))
+    {
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+    }
+
     char header[256] = {};
     const int len = sprintf_s(header, "P6\n%zu %zu\n255\n", image.width, image.height);
     if (len == -1)
@@ -468,6 +480,10 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
             break;
 
         pData += len + 1;
+        if (pfmSize < (len + 1))
+        {
+            return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+        }
         pfmSize -= len + 1;
         if (!pfmSize)
             return E_FAIL;
@@ -487,6 +503,10 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
     }
 
     pData += len + 1;
+    if (pfmSize < (len + 1))
+    {
+        return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+    }
     pfmSize -= len + 1;
     if (!pfmSize)
         return E_FAIL;
@@ -503,6 +523,10 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
             break;
 
         pData += len + 1;
+        if (pfmSize < (len + 1))
+        {
+            return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+        }
         pfmSize -= len + 1;
         if (!pfmSize)
             return E_FAIL;
@@ -517,6 +541,10 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
     const bool bigendian = (aspectRatio >= 0);
 
     pData += len + 1;
+    if (pfmSize < (len + 1))
+    {
+        return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+    }
     pfmSize -= len + 1;
     if (!pfmSize)
         return E_FAIL;
@@ -648,6 +676,11 @@ HRESULT __cdecl SaveToPortablePixMapHDR(
         break;
 
     default:
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+    }
+
+    if ((image.width > INT32_MAX) || (image.height > INT32_MAX))
+    {
         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
