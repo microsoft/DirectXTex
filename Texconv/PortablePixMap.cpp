@@ -254,13 +254,23 @@ HRESULT __cdecl LoadFromPortablePixMap(
                 if (u == 0)
                     return E_FAIL;
 
+                if (u > INT32_MAX)
+                {
+                    return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+                }
+
                 width = u;
                 break;
 
             case PPM_HEIGHT:
                 {
-                    if (u == 0)
+                    if (u == 0 || width == 0)
                         return E_FAIL;
+
+                    if (u > INT32_MAX)
+                    {
+                        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+                    }
 
                     if (metadata)
                     {
@@ -470,6 +480,11 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
     size_t width = 0, height = 0;
     if (sscanf_s(dataStr, "%zu %zu%s", &width, &height, junkStr, 256) != 2)
         return E_FAIL;
+
+    if ((width > INT32_MAX) || (height > UINT32_MAX))
+    {
+        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+    }
 
     pData += len + 1;
     pfmSize -= len + 1;
