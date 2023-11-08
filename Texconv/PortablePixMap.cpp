@@ -202,16 +202,17 @@ HRESULT __cdecl LoadFromPortablePixMap(
 
             while (ppmSize > 0 && (pixels < pixelEnd))
             {
+                if (ppmSize < 3)
+                {
+                    return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+                }
+
                 *pixels++ = (255 * pData[0] / max)
                     | ((255 * pData[1] / max) << 8)
                     | ((255 * pData[2] / max) << 16)
                     | 0xff000000;
 
                 pData += 3;
-                if (ppmSize < 3)
-                {
-                    return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
-                }
                 ppmSize -= 3;
             }
 
