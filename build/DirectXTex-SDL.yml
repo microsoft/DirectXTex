@@ -27,7 +27,7 @@ variables:
   VS_GENERATOR: 'Visual Studio 17 2022'
 
 pool:
-  vmImage: windows-latest
+  vmImage: windows-2022
 
 jobs:
 - job: SDL_BUILD
@@ -55,9 +55,9 @@ jobs:
     displayName: 'CMake (MSVC): Config x64'
     inputs:
       cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out -DBUILD_TESTING=OFF'
+      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out -DENABLE_SPECTRE_MITIGATION=ON'
   - task: Semmle@1
-    displayName: 'Semmle C++'
+    displayName: 'Run CodeQL (Semmle) (C++)'
     env:
       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
     inputs:
@@ -97,7 +97,5 @@ jobs:
       GdnBreakAllTools: true
       GdnBreakPolicy: 'Microsoft'
       GdnBreakPolicyMinSev: 'Error'
-  - task: securedevelopmentteam.vss-secure-development-tools.build-task-publishsecurityanalysislogs.PublishSecurityAnalysisLogs@2
-    displayName: 'Publish Security Analysis Logs'
   - task: ComponentGovernanceComponentDetection@0
     displayName: Component Detection
