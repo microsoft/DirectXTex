@@ -34,6 +34,7 @@ Profile
 Release
 x64
 /Tests
+/Testing
 /wiki
 /out
 /CMakeUserPresets.json
