@@ -31,7 +31,7 @@ pool:
 
 jobs:
 - job: SDL_BUILD
-  displayName: Build using required SDL tools
+  displayName: 'Build using required SDL tools'
   steps:
   - checkout: self
     clean: true
