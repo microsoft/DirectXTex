@@ -338,7 +338,7 @@ bool DirectX::IsSupportedTexture(
     const size_t iWidth = metadata.width;
     const size_t iHeight = metadata.height;
 
-    switch (fmt)
+    switch (static_cast<int>(fmt))
     {
     case DXGI_FORMAT_NV12:
     case DXGI_FORMAT_P010:
