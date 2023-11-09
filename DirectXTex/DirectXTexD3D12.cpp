@@ -812,7 +812,7 @@ HRESULT DirectX::CaptureTexture(
         return E_FAIL;
     }
 
-    BYTE* pData;
+    BYTE* pData = nullptr;
     hr = pStaging->Map(0, nullptr, reinterpret_cast<void**>(&pData));
     if (FAILED(hr))
     {
