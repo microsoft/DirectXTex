@@ -12,7 +12,10 @@
       "OneFuzzJobs": [
         {
           "ProjectName": "Direct3D",
-          "TargetName": "DirectXTex"
+          "TargetName": "DirectXTex",
+          "TargetOptions": [
+             "-rss_limit_mb=4096"
+          ]
         }
       ],
       "JobDependencies": [

@@ -264,7 +264,7 @@ HRESULT __cdecl LoadFromPortablePixMap(
 
                 if (u > INT32_MAX)
                 {
-                    return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+                    return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
                 }
 
                 width = u;
@@ -277,7 +277,13 @@ HRESULT __cdecl LoadFromPortablePixMap(
 
                     if (u > INT32_MAX)
                     {
-                        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+                        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                    }
+
+                    uint64_t sizeBytes = uint64_t(width) * uint64_t(u);
+                    if (sizeBytes > UINT32_MAX)
+                    {
+                        HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
                     }
 
                     if (metadata)
@@ -473,7 +479,7 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
     size_t len = 0;
     while (pfmSize > 0)
     {
-        len = FindEOL(pData, 256);
+        len = FindEOL(pData, std::min<size_t>(256, pfmSize));
         if (!len)
             return E_FAIL;
 
@@ -498,9 +504,15 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
     if (sscanf_s(dataStr, "%zu %zu%s", &width, &height, junkStr, 256) != 2)
         return E_FAIL;
 
-    if ((width > INT32_MAX) || (height > UINT32_MAX))
+    if ((width > INT32_MAX) || (height > INT32_MAX))
     {
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+    }
+
+    uint64_t sizeBytes = uint64_t(width) * uint64_t(height);
+    if (sizeBytes > UINT32_MAX)
+    {
+        HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
     }
 
     pData += len + 1;
@@ -516,7 +528,7 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
     len = 0;
     while (pfmSize > 0)
     {
-        len = FindEOL(pData, 256);
+        len = FindEOL(pData, std::min<size_t>(256, pfmSize));
         if (!len)
             return E_FAIL;
 
@@ -550,8 +562,8 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
     if (!pfmSize)
         return E_FAIL;
 
-    const size_t scanline = width * (half16 ? sizeof(uint16_t) : sizeof(float)) * (monochrome ? 1 : 3);
-    if (pfmSize < scanline * height)
+    const uint64_t scanline = uint64_t(width) * (half16 ? sizeof(uint16_t) : sizeof(float)) * (monochrome ? 1 : 3);
+    if (uint64_t(pfmSize) < (scanline * uint64_t(height)))
         return HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
 
     if (metadata)
@@ -569,7 +581,6 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
         return hr;
 
     auto img = image.GetImage(0, 0, 0);
-
 
     if (half16)
     {
