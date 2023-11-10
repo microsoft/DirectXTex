@@ -264,7 +264,7 @@ HRESULT __cdecl LoadFromPortablePixMap(
 
                 if (u > INT32_MAX)
                 {
-                    return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+                    return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
                 }
 
                 width = u;
@@ -277,7 +277,13 @@ HRESULT __cdecl LoadFromPortablePixMap(
 
                     if (u > INT32_MAX)
                     {
-                        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+                        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                    }
+
+                    uint64_t sizeBytes = uint64_t(width) * uint64_t(u);
+                    if (sizeBytes > UINT32_MAX)
+                    {
+                        HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
                     }
 
                     if (metadata)
@@ -500,7 +506,13 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
 
     if ((width > INT32_MAX) || (height > INT32_MAX))
     {
-        return HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE);
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+    }
+
+    uint64_t sizeBytes = uint64_t(width) * uint64_t(height);
+    if (sizeBytes > UINT32_MAX)
+    {
+        HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
     }
 
     pData += len + 1;
