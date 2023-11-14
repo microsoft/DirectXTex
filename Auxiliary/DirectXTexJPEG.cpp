@@ -41,7 +41,7 @@ namespace DirectX
         jpeg_decompress_struct dec;
 
     public:
-        JPEGDecompress() :err{}, dec{}
+        JPEGDecompress() : err{}, dec{}
         {
             jpeg_std_error(&err);
             err.error_exit = &OnJPEGError;
@@ -58,7 +58,27 @@ namespace DirectX
             jpeg_stdio_src(&dec, fin);
         }
 
-        /// @todo More correct DXGI_FORMAT mapping
+        static DXGI_FORMAT TranslateColor(J_COLOR_SPACE colorspace) noexcept
+        {
+            switch (colorspace)
+            {
+            case JCS_GRAYSCALE: // 1 component
+                return DXGI_FORMAT_R8_UNORM;
+            case JCS_RGB: // 3 component, Standard RGB
+                return DXGI_FORMAT_R8G8B8A8_UNORM;
+            #if defined(LIBJPEG_TURBO_VERSION)
+            case JCS_EXT_RGBX: // 4 component
+            case JCS_EXT_RGBA:
+                return DXGI_FORMAT_R8G8B8A8_UNORM;
+            case JCS_RGB565:
+                return DXGI_FORMAT_B5G6R5_UNORM;
+            #endif
+            case JCS_YCbCr: // 3 component, YCbCr
+            default:
+                return DXGI_FORMAT_UNKNOWN;
+            }
+        }
+
         void GetMetadata(TexMetadata& metadata) noexcept(false)
         {
             metadata.width = dec.image_width;
@@ -67,16 +87,11 @@ namespace DirectX
             metadata.arraySize = 1;
             metadata.mipLevels = 1;
             metadata.dimension = TEX_DIMENSION_TEXTURE2D;
-            switch (dec.out_color_space)
-            {
-            case JCS_BG_RGB:
-            case JCS_RGB:
-                // maybe DXGI_FORMAT_R8G8B8A8_UNORM_SRGB?
-                metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
-                return;
-            default:
+            metadata.miscFlags2 |= TEX_ALPHA_MODE_OPAQUE;
+
+            metadata.format = TranslateColor(dec.out_color_space);
+            if (metadata.format == DXGI_FORMAT_UNKNOWN)
                 throw std::runtime_error{ "unexpected out_color_space in jpeg_decompress_struct" };
-            }
         }
 
         HRESULT GetHeader(TexMetadata& metadata) noexcept(false)
@@ -95,6 +110,23 @@ namespace DirectX
             return S_OK;
         }
 
+    #if !defined(LIBJPEG_TURBO_VERSION)
+        // shift pixels with padding in reverse order (to make it work in-memory)
+        void ShiftPixels(ScratchImage& image) noexcept
+        {
+            size_t num_pixels = dec.output_width * dec.output_height;
+            uint8_t* dst = image.GetPixels();
+            const uint8_t* src = dst;
+            for (size_t i = num_pixels - 1; i > 0; i -= 1)
+            {
+                dst[4*i + 0] = src[3*i + 0];
+                dst[4*i + 1] = src[3*i + 1];
+                dst[4*i + 2] = src[3*i + 2];
+                dst[4*i + 3] = 0;
+            }
+        }
+    #endif
+
         HRESULT GetImage(TexMetadata& metadata, ScratchImage& image) noexcept(false)
         {
             metadata = {};
@@ -109,11 +141,15 @@ namespace DirectX
                 break;
             }
             GetMetadata(metadata);
+            if (auto hr = image.Initialize2D(metadata.format, metadata.width, metadata.height, metadata.arraySize, metadata.mipLevels); FAILED(hr))
+                return hr;
+
+        #if defined(LIBJPEG_TURBO_VERSION)
+            dec.out_color_space = JCS_EXT_RGBX;
+        #endif
             if (jpeg_start_decompress(&dec) == false)
                 return E_FAIL;
 
-            if (auto hr = image.Initialize2D(metadata.format, metadata.width, metadata.height, metadata.arraySize, metadata.mipLevels); FAILED(hr))
-                return hr;
             uint8_t* dest = image.GetPixels();
             const size_t stride = dec.output_width * dec.output_components;
             std::vector<JSAMPROW> rows(dec.output_height);
@@ -128,6 +164,11 @@ namespace DirectX
             }
             if (jpeg_finish_decompress(&dec) == false)
                 return E_FAIL;
+
+        #if !defined(LIBJPEG_TURBO_VERSION)
+            // if NOT TurboJPEG, we need to make 3 component images to 4 component image
+            ShiftPixels(image);
+        #endif
             return S_OK;
         }
 
@@ -144,7 +185,7 @@ namespace DirectX
         jpeg_compress_struct enc{};
 
     public:
-        JPEGCompress() :err{}, enc{}
+        JPEGCompress() : err{}, enc{}
         {
             jpeg_std_error(&err);
             err.error_exit = &OnJPEGError;
@@ -170,14 +211,21 @@ namespace DirectX
                 enc.input_components = 1;
                 enc.in_color_space = JCS_GRAYSCALE;
                 break;
+            #if defined(LIBJPEG_TURBO_VERSION)
+            case DXGI_FORMAT_R8G8B8A8_UNORM:
+                enc.input_components = 4;
+                enc.in_color_space = JCS_EXT_RGBA;
+                break;
+            case DXGI_FORMAT_B8G8R8A8_UNORM:
+                enc.input_components = 4;
+                enc.in_color_space = JCS_EXT_BGRA;
+                break;
+            #else
             case DXGI_FORMAT_R8G8B8A8_UNORM:
                 enc.input_components = 3;
                 enc.in_color_space = JCS_RGB;
-                break;
-            case DXGI_FORMAT_YUY2:
-            case DXGI_FORMAT_AYUV:
-                enc.in_color_space = JCS_YCbCr;
-                [[fallthrough]];
+            #endif
+
             default:
                 return E_INVALIDARG;
             }
