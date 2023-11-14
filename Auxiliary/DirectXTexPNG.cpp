@@ -76,8 +76,11 @@ namespace DirectX
         void Update() noexcept(false)
         {
             png_read_info(st, info);
-            if (png_get_color_type(st, info) == PNG_COLOR_TYPE_RGB)
-                png_set_add_alpha(st, 0, PNG_FILLER_AFTER);
+            // make 4 component
+            // using `png_set_add_alpha` here may confuse `TEX_ALPHA_MODE_OPAQUE` estimation
+            if (png_get_channels(st, info) == 3)
+                png_set_filler(st, 0, PNG_FILLER_AFTER);
+            // prefer DXGI_FORMAT_R8G8B8A8_UNORM. strip in decode
             if (png_get_bit_depth(st, info) > 8)
                 png_set_strip_16(st);
             png_read_update_info(st, info);
@@ -90,7 +93,14 @@ namespace DirectX
             metadata.height = png_get_image_height(st, info);
             metadata.arraySize = 1;
             metadata.mipLevels = 1;
+            metadata.depth = 1;
             metadata.dimension = TEX_DIMENSION_TEXTURE2D;
+
+            png_byte color = png_get_color_type(st, info);
+            bool have_alpha = (color & PNG_COLOR_MASK_ALPHA);
+            if (have_alpha == false)
+                metadata.miscFlags2 |= TEX_ALPHA_MODE_OPAQUE;
+
             auto c = png_get_channels(st, info);
             auto d = png_get_bit_depth(st, info);
             switch (c)
@@ -99,13 +109,15 @@ namespace DirectX
                 metadata.format = DXGI_FORMAT_R8_UNORM;
                 break;
             case 4:
-                metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                if (d == 16)
+                    metadata.format = DXGI_FORMAT_R16G16B16A16_UNORM;
+                else
+                    metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
                 break;
             case 3:
             default:
-                throw std::runtime_error{ "png_get_channels" };
+                throw std::runtime_error{ "png_get_channels returned unexpected value" };
             }
-            metadata.depth = d / 8; // expect 1
         }
 
         /// @todo More correct DXGI_FORMAT mapping
@@ -168,7 +180,7 @@ namespace DirectX
 
         HRESULT WriteImage(const Image& image) noexcept(false)
         {
-            int color_type = PNG_COLOR_TYPE_RGBA;
+            int color_type = PNG_COLOR_TYPE_RGB;
             bool using_bgr = false;
             int channel = 4;
             int bit_depth = 8;
@@ -182,8 +194,7 @@ namespace DirectX
                 using_bgr = true;
                 [[fallthrough]];
             case DXGI_FORMAT_R8G8B8A8_UNORM:
-                channel = 4;
-                bit_depth = 8;
+                color_type = PNG_COLOR_TYPE_RGBA;
                 break;
             default:
                 return E_INVALIDARG;
