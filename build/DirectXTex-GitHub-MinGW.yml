@@ -63,7 +63,7 @@ jobs:
     # We can use the preinstalled vcpkg instead of the latest when MS Hosted updates their vcpkg to the newer DirectX-Headers
     displayName: Fetch VCPKG
     inputs:
-      script: git clone --quiet https://%GITHUB_PAT%@github.com/microsoft/vcpkg.git
+      script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/microsoft/vcpkg.git
       workingDirectory: $(Build.SourcesDirectory)
   - task: CmdLine@2
     displayName: VCPKG Bootstrap
@@ -154,12 +154,12 @@ jobs:
   - task: CmdLine@2
     displayName: Fetch VCPKG
     inputs:
-      script: git clone --quiet https://%GITHUB_PAT%@github.com/microsoft/vcpkg.git
+      script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/microsoft/vcpkg.git
       workingDirectory: $(Build.SourcesDirectory)
   - task: CmdLine@2
     displayName: Fetch Tests
     inputs:
-      script: git clone --quiet https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
+      script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
   - task: CmdLine@2
     displayName: VCPKG Bootstrap
     inputs:

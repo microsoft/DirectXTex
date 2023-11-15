@@ -48,7 +48,7 @@ jobs:
   - task: CmdLine@2
     displayName: Fetch Tests
     inputs:
-      script: git clone --quiet https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
+      script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
       workingDirectory: $(Build.SourcesDirectory)
       failOnStderr: true
   - task: VSBuild@1
@@ -159,7 +159,7 @@ jobs:
   - task: CmdLine@2
     displayName: Fetch Tests
     inputs:
-      script: git clone --quiet https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
+      script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
       workingDirectory: $(Build.SourcesDirectory)
       failOnStderr: true
   - task: ChocolateyCommand@0
@@ -194,6 +194,9 @@ jobs:
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out/build/x64-Debug -v
+  - task: DeleteFiles@1
+    inputs:
+      Contents: 'out'
   - task: CMake@1
     displayName: CMake (MSVC; x64-Release) Config
     inputs:
@@ -204,6 +207,9 @@ jobs:
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out/build/x64-Release -v
+  - task: DeleteFiles@1
+    inputs:
+      Contents: 'out'
   - task: CMake@1
     displayName: CMake (clang/LLVM; x64-Debug) Config
     inputs:
@@ -214,6 +220,9 @@ jobs:
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out/build/x64-Debug-Clang -v
+  - task: DeleteFiles@1
+    inputs:
+      Contents: 'out'
   - task: CMake@1
     displayName: CMake (clang/LLVM; x64-Release) Config
     inputs:
@@ -224,6 +233,9 @@ jobs:
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out/build/x64-Release-Clang -v
+  - task: DeleteFiles@1
+    inputs:
+      Contents: 'out'
   - task: CmdLine@2
     displayName: Set LIB for ARM64
     inputs:
@@ -245,6 +257,9 @@ jobs:
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out/build/arm64-Debug-Clang -v
+  - task: DeleteFiles@1
+    inputs:
+      Contents: 'out'
   - task: CMake@1
     displayName: CMake (clang/LLVM; arm64-Release) Config
     inputs:
