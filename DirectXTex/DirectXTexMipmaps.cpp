@@ -71,12 +71,15 @@ namespace
         _In_ IWICBitmap* src,
         _In_ TEX_FILTER_FLAGS filter,
         _In_ const WICPixelFormatGUID& desiredPixelFormat,
-        _Deref_out_ IWICBitmap** dest) noexcept
+        _COM_Outptr_ IWICBitmap** dest) noexcept
     {
-        if (!pWIC || !src || !dest)
+        if (!dest)
             return E_POINTER;
 
         *dest = nullptr;
+
+        if (!pWIC || !src)
+            return E_POINTER;
 
         WICPixelFormatGUID actualPixelFormat;
         HRESULT hr = src->GetPixelFormat(&actualPixelFormat);
