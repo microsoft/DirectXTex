@@ -28,6 +28,10 @@ option(BUILD_DX12 "Build with DirectX12 Runtime support" ON)
 # Enable the use of OpenMP for software BC6H/BC7 compression
 option(BC_USE_OPENMP "Build with OpenMP support" ON)
 
+# Builds Xbox extensions for Host PC
+option(BUILD_XBOX_EXTS_XBOXONE "Build Xbox library extensions for Xbox One" OFF)
+option(BUILD_XBOX_EXTS_SCARLETT "Build Xbox library extensions for Xbox Series X|S" OFF)
+
 # https://devblogs.microsoft.com/cppblog/spectre-mitigations-in-msvc/
 option(ENABLE_SPECTRE_MITIGATION "Build using /Qspectre for MSVC" OFF)
 
@@ -109,6 +113,24 @@ if(WIN32)
        DirectXTex/DirectXTexWIC.cpp)
 endif()
 
+if((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
+    if(DEFINED ENV{GameDKLatest})
+        cmake_path(SET GameDK_DIR "$ENV{GameDKLatest}")
+    endif()
+    if(DEFINED ENV{XboxOneXDKLatest})
+        cmake_path(SET XboxOneXDK_DIR "$ENV{XboxOneXDKLatest}")
+    endif()
+
+    set(LIBRARY_HEADERS
+        Auxiliary/DirectXTexXbox.h)
+
+   set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
+       Auxiliary/DirectXTexXboxDDS.cpp
+       Auxiliary/DirectXTexXboxDetile.cpp
+       Auxiliary/DirectXTexXboxImage.cpp
+       Auxiliary/DirectXTexXboxTile.cpp)
+endif()
+
 set(SHADER_SOURCES
     DirectXTex/Shaders/BC6HEncode.hlsl
     DirectXTex/Shaders/BC7Encode.hlsl)
@@ -187,6 +209,27 @@ endif()
 if(ENABLE_OPENEXR_SUPPORT)
   find_package(OpenEXR REQUIRED)
   target_link_libraries(${PROJECT_NAME} PUBLIC OpenEXR::OpenEXR)
+endif()
+
+if(BUILD_XBOX_EXTS_SCARLETT AND WIN32)
+    if (EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
+        message(STATUS "Building Xbox extensions for Xbox Series X|S")
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _USE_GXDK _USE_SCARLETT)
+        target_include_directories(${PROJECT_NAME} PRIVATE ${GameDK_DIR}/GXDK/toolKit/include ${GameDK_DIR}/GXDK/toolKit/include/Scarlett)
+    else()
+        message(FATAL_ERROR "Building Xbox extensions requires GameDKLatest")
+    endif()
+elseif(BUILD_XBOX_EXTS_XBOXONE AND WIN32)
+    if (EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
+        message(STATUS "Building Xbox extensions for XboxOne using the Microsoft GDK")
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _USE_GXDK)
+        target_include_directories(${PROJECT_NAME} PRIVATE ${GameDK_DIR}/GXDK/toolKit/include ${GameDK_DIR}/GXDK/toolKit/include/XboxOne)
+    elseif (EXISTS "${XboxOneXDK_DIR}/PC/include/xdk.h")
+        message(STATUS "Building Xbox extensions for XboxOne using the Xbox One XDK")
+        target_include_directories(${PROJECT_NAME} PRIVATE ${XboxOneXDK_DIR}/PC/include)
+    else()
+        message(FATAL_ERROR "Building Xbox extensions requires GameDKLatest or XboxOneXDKLatest")
+    endif()
 endif()
 
 if(NOT MINGW)
@@ -434,6 +477,19 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(WarningsLib -Wall -Wpedantic -Wextra)
+
+    if((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
+        list(APPEND WarningsLib "-Wno-microsoft-enum-value" "-Wno-non-virtual-dtor" "-Wno-ignored-pragmas" "-Wno-deprecated-dynamic-exception-spec")
+        if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13.0)
+            list(APPEND WarningsLib "-Wno-reserved-identifier")
+        endif()
+    endif()
+
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)
+        list(APPEND WarningsLib "-Wno-unsafe-buffer-usage")
+    endif()
+    target_compile_options(${PROJECT_NAME} PRIVATE ${WarningsLib})
+
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)
         list(APPEND WarningsLib "-Wno-unsafe-buffer-usage")
     endif()
@@ -470,6 +526,9 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
           target_compile_options(${t} PRIVATE /Zc:preprocessor /wd5105)
         endforeach()
+        if(BUILD_XBOX_EXTS_XBOXONE)
+            target_compile_options(${PROJECT_NAME} PRIVATE /wd5104 /wd5204)
+        endif()
     endif()
 
     if((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.27) AND (NOT (${DIRECTX_ARCH} MATCHES "^arm")))
