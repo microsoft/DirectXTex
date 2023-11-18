@@ -212,8 +212,6 @@
   <ItemGroup>
     <ClInclude Include="..\Auxiliary\DirectXTexXbox.h" />
     <CLInclude Include="BC.h" />
-    <ClCompile Include="..\Auxiliary\DirectXTexXboxD3D11X.cpp" />
-    <ClCompile Include="..\Auxiliary\DirectXTexXboxD3D12X.cpp" />
     <ClCompile Include="..\Auxiliary\DirectXTexXboxDDS.cpp" />
     <ClCompile Include="..\Auxiliary\DirectXTexXboxDetile.cpp" />
     <ClCompile Include="..\Auxiliary\DirectXTexXboxImage.cpp" />
@@ -228,11 +226,6 @@
     <CLInclude Include="scoped.h" />
     <CLInclude Include="DirectXTex.h" />
     <CLInclude Include="DirectXTexP.h" />
-    <ClInclude Include="DirectXTexXbox.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Gaming.Desktop.x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|Gaming.Desktop.x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <CLInclude Include="DirectXTex.inl" />
     <ClCompile Include="BCDirectCompute.cpp" />
     <ClCompile Include="DirectXTexCompress.cpp" />

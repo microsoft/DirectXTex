@@ -212,8 +212,6 @@
   <ItemGroup>
     <ClInclude Include="..\Auxiliary\DirectXTexXbox.h" />
     <CLInclude Include="BC.h" />
-    <ClCompile Include="..\Auxiliary\DirectXTexXboxD3D11X.cpp" />
-    <ClCompile Include="..\Auxiliary\DirectXTexXboxD3D12X.cpp" />
     <ClCompile Include="..\Auxiliary\DirectXTexXboxDDS.cpp" />
     <ClCompile Include="..\Auxiliary\DirectXTexXboxDetile.cpp" />
     <ClCompile Include="..\Auxiliary\DirectXTexXboxImage.cpp" />

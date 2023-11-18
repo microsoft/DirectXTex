@@ -108,12 +108,30 @@ set(LIBRARY_SOURCES
     DirectXTex/DirectXTexUtil.cpp)
 
 if(WIN32)
-   set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
+   list(APPEND LIBRARY_SOURCES
        DirectXTex/DirectXTexFlipRotate.cpp
        DirectXTex/DirectXTexWIC.cpp)
 endif()
 
-if((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
+if(DEFINED XBOX_CONSOLE_TARGET)
+
+    list(APPEND LIBRARY_HEADERS Auxiliary/DirectXTexXbox.h)
+
+    list(APPEND LIBRARY_SOURCES
+       Auxiliary/DirectXTexXboxDDS.cpp
+       Auxiliary/DirectXTexXboxDetile.cpp
+       Auxiliary/DirectXTexXboxImage.cpp
+       Auxiliary/DirectXTexXboxTile.cpp)
+
+    if((XBOX_CONSOLE_TARGET STREQUAL "durango") AND BUILD_DX11)
+       list(APPEND LIBRARY_SOURCES Auxiliary/DirectXTexXboxD3D11X.cpp)
+    endif()
+
+    if(BUILD_DX12)
+       list(APPEND LIBRARY_SOURCES Auxiliary/DirectXTexXboxD3D12X.cpp)
+    endif()
+
+elseif((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
     if(DEFINED ENV{GameDKLatest})
         cmake_path(SET GameDK_DIR "$ENV{GameDKLatest}")
     endif()
@@ -121,10 +139,9 @@ if((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
         cmake_path(SET XboxOneXDK_DIR "$ENV{XboxOneXDKLatest}")
     endif()
 
-    set(LIBRARY_HEADERS
-        Auxiliary/DirectXTexXbox.h)
+    list(APPEND LIBRARY_HEADERS Auxiliary/DirectXTexXbox.h)
 
-   set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
+    list(APPEND LIBRARY_SOURCES
        Auxiliary/DirectXTexXboxDDS.cpp
        Auxiliary/DirectXTexXboxDetile.cpp
        Auxiliary/DirectXTexXboxImage.cpp
@@ -136,7 +153,7 @@ set(SHADER_SOURCES
     DirectXTex/Shaders/BC7Encode.hlsl)
 
 if(BUILD_DX11 AND WIN32)
-   set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
+   list(APPEND LIBRARY_SOURCES
        DirectXTex/BCDirectCompute.h
        DirectXTex/BCDirectCompute.cpp
        DirectXTex/DirectXTexCompressGPU.cpp
@@ -144,17 +161,16 @@ if(BUILD_DX11 AND WIN32)
 endif()
 
 if(BUILD_DX12)
-   set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
-       DirectXTex/d3dx12.h
-       DirectXTex/DirectXTexD3D12.cpp)
+   list(APPEND LIBRARY_SOURCES DirectXTex/DirectXTexD3D12.cpp)
+
+   if(NOT (DEFINED XBOX_CONSOLE_TARGET))
+       list(APPEND LIBRARY_SOURCES DirectXTex/d3dx12.h)
+   endif()
 endif()
 
 if(ENABLE_OPENEXR_SUPPORT)
-   set(LIBRARY_HEADERS ${LIBRARY_HEADERS}
-       Auxiliary/DirectXTexEXR.h)
-
-   set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
-       Auxiliary/DirectXTexEXR.cpp)
+   list(APPEND LIBRARY_HEADERS Auxiliary/DirectXTexEXR.h)
+   list(APPEND LIBRARY_SOURCES Auxiliary/DirectXTexEXR.cpp)
 endif()
 
 if(BUILD_DX11 AND WIN32)
@@ -168,8 +184,7 @@ if(BUILD_DX11 AND WIN32)
         file(TO_CMAKE_PATH ${COMPILED_SHADERS} COMPILED_SHADERS)
     endif()
 
-    set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
-        ${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc)
+    list(APPEND LIBRARY_SOURCES ${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc)
 
     if(NOT USE_PREBUILT_SHADERS)
         add_custom_command(

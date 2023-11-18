@@ -101,12 +101,6 @@
     <ClCompile Include="DirectXTexHDR.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Auxiliary\DirectXTexXboxD3D11X.cpp">
-      <Filter>Auxiliary</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Auxiliary\DirectXTexXboxD3D12X.cpp">
-      <Filter>Auxiliary</Filter>
-    </ClCompile>
     <ClCompile Include="..\Auxiliary\DirectXTexXboxDDS.cpp">
       <Filter>Auxiliary</Filter>
     </ClCompile>
