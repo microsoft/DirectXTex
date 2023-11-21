@@ -59,6 +59,9 @@ namespace DirectX
                 png_destroy_read_struct(&st, nullptr, nullptr);
                 throw std::runtime_error{ "png_create_info_struct" };
             }
+        #if defined(PNG_USER_MEM_SUPPORTED)
+            // `png_set_mem_fn` can be used to customize memory allocation
+        #endif
         }
 
         ~PNGDecompress() noexcept
@@ -76,14 +79,54 @@ namespace DirectX
         void Update() noexcept(false)
         {
             png_read_info(st, info);
+            // color handling
+            png_byte color_type = png_get_color_type(st, info);
+            if (color_type == PNG_COLOR_TYPE_GRAY)
+            {
+                if (png_get_bit_depth(st, info) < 8)
+                    png_set_expand_gray_1_2_4_to_8(st);
+            }
+            else if (color_type == PNG_COLOR_TYPE_PALETTE)
+            {
+                // request RGB color
+                png_set_palette_to_rgb(st);
+                if (png_get_valid(st, info, PNG_INFO_tRNS))
+                    png_set_tRNS_to_alpha(st);
+            }
+            // Here we don't know if the pixel data is in BGR/RGB order
+            // png_set_bgr(st);
+            png_set_alpha_mode(st, PNG_ALPHA_STANDARD, PNG_DEFAULT_sRGB);
             // make 4 component
             // using `png_set_add_alpha` here may confuse `TEX_ALPHA_MODE_OPAQUE` estimation
             if (png_get_channels(st, info) == 3)
                 png_set_filler(st, 0, PNG_FILLER_AFTER);
             // prefer DXGI_FORMAT_R8G8B8A8_UNORM. strip in decode
-            if (png_get_bit_depth(st, info) > 8)
-                png_set_strip_16(st);
+            //if (png_get_bit_depth(st, info) > 8)
+            //    png_set_strip_16(st);
             png_read_update_info(st, info);
+        }
+
+        /// @note must call `Update` before this
+        /// @todo Proper detection of DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB
+        DXGI_FORMAT GuessFormat() const noexcept(false)
+        {
+            // 1 or 4. 1 is for gray
+            auto c = png_get_channels(st, info);
+            if (c == 1)
+                return DXGI_FORMAT_R8_UNORM;
+
+            // 8 or 16. expanded if 1, 2, 4
+            auto d = png_get_bit_depth(st, info);
+            if (d == 16)
+                return DXGI_FORMAT_R16G16B16A16_UNORM;
+            if (d != 8)
+                throw std::runtime_error{ "unexpected info from libpng" };
+
+            int intent = 0;
+            if (png_get_sRGB(st, info, &intent) == PNG_INFO_sRGB)
+                return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+
+            return DXGI_FORMAT_R8G8B8A8_UNORM;
         }
 
         /// @todo More correct DXGI_FORMAT mapping
@@ -95,29 +138,11 @@ namespace DirectX
             metadata.mipLevels = 1;
             metadata.depth = 1;
             metadata.dimension = TEX_DIMENSION_TEXTURE2D;
-
-            png_byte color = png_get_color_type(st, info);
-            bool have_alpha = (color & PNG_COLOR_MASK_ALPHA);
+            metadata.format = GuessFormat();
+            png_byte color_type = png_get_color_type(st, info);
+            bool have_alpha = (color_type & PNG_COLOR_MASK_ALPHA);
             if (have_alpha == false)
                 metadata.miscFlags2 |= TEX_ALPHA_MODE_OPAQUE;
-
-            auto c = png_get_channels(st, info);
-            auto d = png_get_bit_depth(st, info);
-            switch (c)
-            {
-            case 1:
-                metadata.format = DXGI_FORMAT_R8_UNORM;
-                break;
-            case 4:
-                if (d == 16)
-                    metadata.format = DXGI_FORMAT_R16G16B16A16_UNORM;
-                else
-                    metadata.format = DXGI_FORMAT_R8G8B8A8_UNORM;
-                break;
-            case 3:
-            default:
-                throw std::runtime_error{ "png_get_channels returned unexpected value" };
-            }
         }
 
         /// @todo More correct DXGI_FORMAT mapping
