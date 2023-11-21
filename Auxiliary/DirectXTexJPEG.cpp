@@ -30,6 +30,8 @@ namespace DirectX
     void OnJPEGError(j_common_ptr ptr)
     {
         char msg[JMSG_LENGTH_MAX]{};
+        // "0x89 0x50": PNG
+        // "0x52 0x49": WEBP
         (*ptr->err->format_message)(ptr, msg);
         jpeg_destroy(ptr);
         throw std::runtime_error{ msg };
