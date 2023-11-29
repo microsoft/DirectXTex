@@ -1,0 +1,134 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+#
+# http://go.microsoft.com/fwlink/?LinkId=248926
+
+# Builds the library with Xbox extensions using CMake.
+
+schedules:
+- cron: "0 4 * * *"
+  displayName: 'Nightly build'
+  branches:
+    include:
+    - main
+
+trigger: none
+pr: none
+
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: refs/heads/main
+
+name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
+
+variables:
+  VS_GENERATOR: 'Visual Studio 17 2022'
+  WIN10_SDK: '10.0.19041.0'
+  EXTRACTED_FOLDER: $(ExtractedFolder)
+  GDK_EDITION: $(GDKEditionNumber)
+  URL_FEED: $(ADOFeedURL)
+  GameDKLatest: '$(ExtractedFolder)\GDK\Microsoft.gdk.xbox.$(GDKEditionNumber)\native\$(GDKEditionNumber)\'
+
+pool:
+  vmImage: windows-2022
+
+jobs:
+- job: CMAKE_BUILD
+  displayName: CMake using VS Generator
+  steps:
+  - checkout: self
+    clean: true
+    fetchTags: false
+  - task: NuGetToolInstaller@1
+    displayName: 'Use NuGet'
+    inputs:
+      versionSpec: '6.5.x'
+  - task: NuGetCommand@2
+    # We have to use a nuget.config to provide the feed for the 'nuget install' option.
+    displayName: 'NuGet set package source to ADO feed'
+    inputs:
+      command: custom
+      arguments: sources add -Name xboxgdk-DirectXTex -Source $(URL_FEED) -ConfigFile $(Build.SourcesDirectory)\NuGet.config
+  - task: PowerShell@2
+    displayName: 'Set nuget.config to single source'
+    inputs:
+      targetType: inline
+      script: |
+        $file = '.\NuGet.Config'
+        $doc = [xml](Get-Content $file)
+        $newelement = $doc.CreateElement("clear")
+        $clearadd = $doc.configuration.packageSources.PrependChild($newelement)
+        $doc.OuterXml | Set-Content $file
+
+  - task: NuGetCommand@2
+    displayName: NuGet install PGDK
+    inputs:
+      command: custom
+      arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)\GDK
+  - task: NuGetCommand@2
+    displayName: NuGet install GDKX
+    inputs:
+      command: custom
+      arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)\GDK
+  - task: CMake@1
+    displayName: 'CMake (MSVC): Config x64 (Xbox Series X|S)'
+    inputs:
+      cwd: ''
+      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK) -DBUILD_XBOX_EXTS_SCARLETT=ON -DBUILD_SAMPLE=OFF'
+  - task: CMake@1
+    displayName: 'CMake (MSVC): Build x64 Debug (Xbox Series X|S)'
+    inputs:
+      cwd: ''
+      cmakeArgs: --build out -v --config Debug
+  - task: CMake@1
+    displayName: 'CMake (MSVC): Build x64 Release (Xbox Series X|S)'
+    inputs:
+      cwd: ''
+      cmakeArgs: --build out -v --config RelWithDebInfo
+  - task: CMake@1
+    displayName: 'CMake (ClangCl): Config x64 (Xbox Series X|S)'
+    inputs:
+      cwd: ''
+      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -T clangcl -B out2 -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK) -DBUILD_XBOX_EXTS_SCARLETT=ON -DBUILD_SAMPLE=OFF'
+  - task: CMake@1
+    displayName: 'CMake (ClangCl): Build x64 Debug (Xbox Series X|S)'
+    inputs:
+      cwd: ''
+      cmakeArgs: --build out2 -v --config Debug
+  - task: CMake@1
+    displayName: 'CMake (ClangCl): Build x64 Release (Xbox Series X|S)'
+    inputs:
+      cwd: ''
+      cmakeArgs: --build out2 -v --config RelWithDebInfo
+  - task: CMake@1
+    displayName: 'CMake (MSVC): Config x64 (Xbox One)'
+    inputs:
+      cwd: ''
+      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out3 -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK) -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF'
+  - task: CMake@1
+    displayName: 'CMake (MSVC): Build x64 Debug (Xbox One)'
+    inputs:
+      cwd: ''
+      cmakeArgs: --build out3 -v --config Debug
+  - task: CMake@1
+    displayName: 'CMake (MSVC): Build x64 Release (Xbox One)'
+    inputs:
+      cwd: ''
+      cmakeArgs: --build out3 -v --config RelWithDebInfo
+  - task: CMake@1
+    displayName: 'CMake (ClangCl): Config x64 (Xbox One)'
+    inputs:
+      cwd: ''
+      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -T clangcl -B out4 -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK) -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF'
+  - task: CMake@1
+    displayName: 'CMake (ClangCl): Build x64 Debug (Xbox One)'
+    inputs:
+      cwd: ''
+      cmakeArgs: --build out4 -v --config Debug
+  - task: CMake@1
+    displayName: 'CMake (ClangCl): Build x64 Release (Xbox One)'
+    inputs:
+      cwd: ''
+      cmakeArgs: --build out4 -v --config RelWithDebInfo

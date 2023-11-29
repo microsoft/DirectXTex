@@ -12,6 +12,9 @@
     <Filter Include="Source Files\Shaders">
       <UniqueIdentifier>{c60baf7a-25a9-4215-842d-8d49d65d538e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Auxiliary">
+      <UniqueIdentifier>{34568028-594c-4052-9a41-0973bbe526e1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirectXTex.h">
@@ -34,6 +37,9 @@
     </ClInclude>
     <ClInclude Include="d3dx12.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Auxiliary\DirectXTexXbox.h">
+      <Filter>Auxiliary</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -105,6 +111,21 @@
     </ClCompile>
     <ClCompile Include="DirectXTexD3D12.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Auxiliary\DirectXTexXboxTile.cpp">
+      <Filter>Auxiliary</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Auxiliary\DirectXTexXboxD3D12X.cpp">
+      <Filter>Auxiliary</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Auxiliary\DirectXTexXboxDDS.cpp">
+      <Filter>Auxiliary</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Auxiliary\DirectXTexXboxDetile.cpp">
+      <Filter>Auxiliary</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Auxiliary\DirectXTexXboxImage.cpp">
+      <Filter>Auxiliary</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
