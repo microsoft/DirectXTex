@@ -15,10 +15,20 @@
 
 #include "DirectXTex.h"
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnonportable-system-include-path"
+#pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
+
 #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
 #include <xg_xs.h>
 #else
 #include <xg.h>
+#endif
+
+#ifdef __clang__
+#pragma clang diagnostic pop
 #endif
 
 #ifdef _GAMING_XBOX_SCARLETT
