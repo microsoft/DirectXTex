@@ -14,7 +14,7 @@
           "ProjectName": "Direct3D",
           "TargetName": "DirectXTex",
           "TargetOptions": [
-             "-rss_limit_mb=4096"
+             " -rss_limit_mb=4096"
           ]
         }
       ],
