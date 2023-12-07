@@ -14,7 +14,7 @@
           "ProjectName": "Direct3D",
           "TargetName": "DirectXTex",
           "TargetOptions": [
-             "-rss_limit_mb=4096"
+             " -rss_limit_mb=4096"
           ]
         }
       ],
@@ -22,7 +22,8 @@
         "fuzzloaders.exe",
         "fuzzloaders.pdb",
         "clang_rt.asan_dynamic-x86_64.dll",
-        "msdia140.dll"
+        "msdia140.dll",
+        "setup.ps1"
       ],
       "AdoTemplate": {
         "Org": "microsoft",

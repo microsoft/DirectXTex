@@ -118,6 +118,13 @@ jobs:
             Invoke-WebRequest $url -o $target
         }
 
+  - task: PowerShell@2
+    displayName: Copy OneFuzz setup script
+    inputs:
+      targetType: 'inline'
+      script: |
+        Copy-Item -Path .\build\onefuzz-setup.ps1 -Destination .drop/setup.ps1
+
   - task: MSBuild@1
     displayName: 'Copy ASan binaries'
     inputs:
@@ -141,4 +148,3 @@ jobs:
       onefuzzDropPAT: $(ONEFUZZ_PAT)
       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
       onefuzzBugFilingPAT: $(BUGFILING_PAT)
-  
