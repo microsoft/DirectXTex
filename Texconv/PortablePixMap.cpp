@@ -280,7 +280,7 @@ HRESULT __cdecl LoadFromPortablePixMap(
                         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
                     }
 
-                    uint64_t sizeBytes = uint64_t(width) * uint64_t(u);
+                    uint64_t sizeBytes = uint64_t(width) * uint64_t(u) * 4;
                     if (sizeBytes > UINT32_MAX)
                     {
                         HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);
@@ -460,12 +460,13 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
     bool monochrome = false;
     bool half16 = false;
+    unsigned int bpp = 0;
     switch (pfmData[1])
     {
-    case 'f': format = DXGI_FORMAT_R32_FLOAT; monochrome = true; break;
-    case 'F': format = DXGI_FORMAT_R32G32B32A32_FLOAT; break;
-    case 'h': format = DXGI_FORMAT_R16_FLOAT; monochrome = true; half16 = true; break;
-    case 'H': format = DXGI_FORMAT_R16G16B16A16_FLOAT; half16 = true; break;
+    case 'f': format = DXGI_FORMAT_R32_FLOAT; monochrome = true; bpp = 4u; break;
+    case 'F': format = DXGI_FORMAT_R32G32B32A32_FLOAT; bpp = 16u; break;
+    case 'h': format = DXGI_FORMAT_R16_FLOAT; monochrome = true; half16 = true; bpp = 2u; break;
+    case 'H': format = DXGI_FORMAT_R16G16B16A16_FLOAT; half16 = true; bpp = 8u; break;
     default:
         return E_FAIL;
     }
@@ -509,7 +510,7 @@ HRESULT __cdecl LoadFromPortablePixMapHDR(
         return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
     }
 
-    uint64_t sizeBytes = uint64_t(width) * uint64_t(height);
+    uint64_t sizeBytes = uint64_t(width) * uint64_t(height) * bpp;
     if (sizeBytes > UINT32_MAX)
     {
         HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW);

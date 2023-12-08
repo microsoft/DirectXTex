@@ -18,7 +18,7 @@ function Execute-Setup {
     # $AsanOptions = 'windows_hook_rtl_allocators=true:allocator_may_return_null=1'
     # $AsanOptions = 'allocator_may_return_null=1'
 
-    $AsanOptions = 'windows_hook_rtl_allocators=true:allocator_may_return_null=1'
+    $AsanOptions = 'allocator_may_return_null=1'
 
     # Use the 'machine' scope to make this permanent because the machine will reboot  
     [Environment]::SetEnvironmentVariable('ASAN_OPTIONS', $AsanOptions, 'Machine')
