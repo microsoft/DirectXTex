@@ -247,6 +247,11 @@ namespace
             return E_FAIL;
         }
 
+        if (height > UINT16_MAX)
+        {
+            return HRESULT_E_NOT_SUPPORTED;
+        }
+
         const char* ptr = orientation + 2;
         while (*ptr != 0 && *ptr != '-' && *ptr != '+')
             ++ptr;
@@ -279,12 +284,23 @@ namespace
             return E_FAIL;
         }
 
+        if (width > UINT16_MAX)
+        {
+            return HRESULT_E_NOT_SUPPORTED;
+        }
+
         info += len + 1;
         size -= len + 1;
 
         if (!width || !height)
         {
             return HRESULT_E_INVALID_DATA;
+        }
+
+        uint64_t sizeBytes = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
+        if (sizeBytes > UINT32_MAX)
+        {
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
         }
 
         if (size == 0)
