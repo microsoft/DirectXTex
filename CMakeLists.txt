@@ -340,6 +340,20 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME})
 
+# Create pkg-config file
+# For the VC++ Package Manager tool, this requires that you add "vcpkg_fixup_pkgconfig()" to your portfile.cmake file.
+include(build/JoinPaths.cmake)
+# from: https://github.com/jtojnar/cmake-snips#concatenating-paths-when-building-pkg-config-files
+join_paths(DIRECTXTEX_INCLUDEDIR_FOR_PKG_CONFIG "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
+join_paths(DIRECTXTEX_LIBDIR_FOR_PKG_CONFIG "\${prefix}"     "${CMAKE_INSTALL_LIBDIR}")
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/build/DirectXTex.pc.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/DirectXTex.pc" @ONLY)
+
+# Install the pkg-config file
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DirectXTex.pc"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
 #--- Command-line tools
 if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   set(TOOL_EXES texassemble texconv texdiag)
