@@ -341,7 +341,6 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME})
 
 # Create pkg-config file
-# For the VC++ Package Manager tool, this requires that you add "vcpkg_fixup_pkgconfig()" to your portfile.cmake file.
 include(build/JoinPaths.cmake)
 # from: https://github.com/jtojnar/cmake-snips#concatenating-paths-when-building-pkg-config-files
 join_paths(DIRECTXTEX_INCLUDEDIR_FOR_PKG_CONFIG "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
