@@ -348,15 +348,18 @@ join_paths(DIRECTXTEX_LIBDIR_FOR_PKG_CONFIG "\${prefix}"     "${CMAKE_INSTALL_LI
 
 set(DIRECTXTEX_DEP_L "")
 if(ENABLE_OPENEXR_SUPPORT)
-list(APPEND DIRECTXTEX_DEP_L "OpenEXR")
-list(APPEND DIRECTXTEX_DEP_L "zlib")
+  list(APPEND DIRECTXTEX_DEP_L "OpenEXR")
+  list(APPEND DIRECTXTEX_DEP_L "zlib")
 endif()
 if(directxmath_FOUND)
-list(APPEND DIRECTXTEX_DEP_L "DirectX-Headers")
+  list(APPEND DIRECTXTEX_DEP_L "DirectXMath")
+endif()
+if(directx-headers_FOUND)
+  list(APPEND DIRECTXTEX_DEP_L "DirectX-Headers")
 endif()
 list(LENGTH DIRECTXTEX_DEP_L DEP_L)
 if(DEP_L)
-STRING(REPLACE ";" ", " DIRECTXTEX_DEP " ${DIRECTXTEX_DEP_L}")
+  STRING(REPLACE ";" ", " DIRECTXTEX_DEP " ${DIRECTXTEX_DEP_L}")
 endif()
 
 configure_file(
