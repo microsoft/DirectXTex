@@ -345,6 +345,19 @@ include(build/JoinPaths.cmake)
 # from: https://github.com/jtojnar/cmake-snips#concatenating-paths-when-building-pkg-config-files
 join_paths(DIRECTXTEX_INCLUDEDIR_FOR_PKG_CONFIG "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
 join_paths(DIRECTXTEX_LIBDIR_FOR_PKG_CONFIG "\${prefix}"     "${CMAKE_INSTALL_LIBDIR}")
+
+if(ENABLE_OPENEXR_SUPPORT)
+list(APPEND DIRECTXTEX_DEP_L "OpenEXR")
+list(APPEND DIRECTXTEX_DEP_L "zlib")
+endif()
+if(directxmath_FOUND)
+list(APPEND DIRECTXTEX_DEP_L "DirectX-Headers")
+endif()
+list(LENGTH DIRECTXTEX_DEP_L DEP_L)
+if(DEP_L)
+STRING(REPLACE ";" ", " DIRECTXTEX_DEP " ${DIRECTXTEX_DEP_L}")
+endif()
+
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/build/DirectXTex.pc.in"
     "${CMAKE_CURRENT_BINARY_DIR}/DirectXTex.pc" @ONLY)
