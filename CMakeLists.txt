@@ -340,6 +340,36 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME})
 
+# Create pkg-config file
+include(build/JoinPaths.cmake)
+# from: https://github.com/jtojnar/cmake-snips#concatenating-paths-when-building-pkg-config-files
+join_paths(DIRECTXTEX_INCLUDEDIR_FOR_PKG_CONFIG "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
+join_paths(DIRECTXTEX_LIBDIR_FOR_PKG_CONFIG "\${prefix}"     "${CMAKE_INSTALL_LIBDIR}")
+
+set(DIRECTXTEX_DEP_L "")
+if(ENABLE_OPENEXR_SUPPORT)
+  list(APPEND DIRECTXTEX_DEP_L "OpenEXR")
+  list(APPEND DIRECTXTEX_DEP_L "zlib")
+endif()
+if(directxmath_FOUND)
+  list(APPEND DIRECTXTEX_DEP_L "DirectXMath")
+endif()
+if(directx-headers_FOUND)
+  list(APPEND DIRECTXTEX_DEP_L "DirectX-Headers")
+endif()
+list(LENGTH DIRECTXTEX_DEP_L DEP_L)
+if(DEP_L)
+  STRING(REPLACE ";" ", " DIRECTXTEX_DEP " ${DIRECTXTEX_DEP_L}")
+endif()
+
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/build/DirectXTex.pc.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/DirectXTex.pc" @ONLY)
+
+# Install the pkg-config file
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DirectXTex.pc"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
 #--- Command-line tools
 if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   set(TOOL_EXES texassemble texconv texdiag)
@@ -490,6 +520,12 @@ elseif(NOT (${DIRECTX_ARCH} MATCHES "^arm"))
     endforeach()
 endif()
 
+if(MINGW)
+    foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+      target_link_options(${t} PRIVATE -municode)
+    endforeach()
+endif()
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(WarningsLib -Wall -Wpedantic -Wextra)
 
@@ -514,10 +550,9 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     foreach(t IN LISTS TOOL_EXES)
       target_compile_options(${t} PRIVATE ${WarningsEXE})
     endforeach()
-elseif(MINGW)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
       target_compile_options(${t} PRIVATE -Wno-ignored-attributes)
-      target_link_options(${t} PRIVATE -municode)
     endforeach()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
