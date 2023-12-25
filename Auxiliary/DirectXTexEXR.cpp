@@ -22,7 +22,7 @@
 #include <tuple>
 
 //
-// Requires the OpenEXR library <http://www.openexr.com/> and ZLIB <http://www.zlib.net>
+// Requires the OpenEXR library <http://www.openexr.com/> and its dependencies.
 //
 
 #ifdef __clang__

@@ -349,7 +349,6 @@ join_paths(DIRECTXTEX_LIBDIR_FOR_PKG_CONFIG "\${prefix}"     "${CMAKE_INSTALL_LI
 set(DIRECTXTEX_DEP_L "")
 if(ENABLE_OPENEXR_SUPPORT)
   list(APPEND DIRECTXTEX_DEP_L "OpenEXR")
-  list(APPEND DIRECTXTEX_DEP_L "zlib")
 endif()
 if(directxmath_FOUND)
   list(APPEND DIRECTXTEX_DEP_L "DirectXMath")
