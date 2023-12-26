@@ -27,7 +27,7 @@ namespace DirectX
         throw std::runtime_error{ msg };
     }
 
-    [[noreturn]] void OnPNGWarning(png_structp, png_const_charp)
+    void OnPNGWarning(png_structp, png_const_charp)
     {
         // drain warning messages ...
     }
