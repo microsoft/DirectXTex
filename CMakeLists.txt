@@ -371,15 +371,8 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DirectXTex.pc"
 
 #--- Command-line tools
 set(TOOL_EXES "")
-if(BUILD_TOOLS AND WIN32)
-  add_executable(texdiag
-    Texdiag/texdiag.cpp
-    Texdiag/texdiag.rc
-    Texdiag/settings.manifest)
-  target_link_libraries(texdiag PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
-  source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
-  list(APPEND TOOL_EXES texdiag)
 
+if(BUILD_TOOLS AND WIN32)
   add_executable(texassemble
     Texassemble/texassemble.cpp
     Texassemble/texassemble.rc
@@ -404,7 +397,19 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   if(BC_USE_OPENMP)
     target_link_libraries(texconv PRIVATE OpenMP::OpenMP_CXX)
   endif()
+endif()
 
+if(BUILD_TOOLS AND WIN32)
+  add_executable(texdiag
+    Texdiag/texdiag.cpp
+    Texdiag/texdiag.rc
+    Texdiag/settings.manifest)
+  target_link_libraries(texdiag PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
+  source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
+  list(APPEND TOOL_EXES texdiag)
+endif()
+
+if(BUILD_TOOLS AND WIN32)
   if(ENABLE_OPENEXR_SUPPORT)
     foreach(t IN LISTS TOOL_EXES)
       target_include_directories(${t} PRIVATE Auxiliary)
