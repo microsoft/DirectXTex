@@ -370,8 +370,15 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DirectXTex.pc"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 #--- Command-line tools
-if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
-  set(TOOL_EXES texassemble texconv texdiag)
+set(TOOL_EXES "")
+if(BUILD_TOOLS AND WIN32)
+  add_executable(texdiag
+    Texdiag/texdiag.cpp
+    Texdiag/texdiag.rc
+    Texdiag/settings.manifest)
+  target_link_libraries(texdiag PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
+  source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
+  list(APPEND TOOL_EXES texdiag)
 
   add_executable(texassemble
     Texassemble/texassemble.cpp
@@ -380,7 +387,10 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
     Texassemble/AnimatedGif.cpp)
   target_link_libraries(texassemble PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texassemble REGULAR_EXPRESSION Texassemble/*.*)
+  list(APPEND TOOL_EXES texassemble)
+endif()
 
+if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   add_executable(texconv
     Texconv/texconv.cpp
     Texconv/texconv.rc
@@ -389,13 +399,7 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
     Texconv/PortablePixMap.cpp)
   target_link_libraries(texconv PRIVATE ${PROJECT_NAME} ole32.lib shell32.lib version.lib)
   source_group(texconv REGULAR_EXPRESSION Texconv/*.*)
-
-  add_executable(texdiag
-    Texdiag/texdiag.cpp
-    Texdiag/texdiag.rc
-    Texdiag/settings.manifest)
-  target_link_libraries(texdiag PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
-  source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
+  list(APPEND TOOL_EXES texconv)
 
   if(BC_USE_OPENMP)
     target_link_libraries(texconv PRIVATE OpenMP::OpenMP_CXX)
