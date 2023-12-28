@@ -11,23 +11,60 @@
 
 #include "DirectXTexJPEG.h"
 
-#include <cstdio>
-#include <filesystem>
-#include <memory>
 #if !defined(_BASETSD_H_)
 #define _BASETSD_H_
 #endif
+#include <cstdio>
+#include <filesystem>
 #include <jpeglib.h>
 #include <jerror.h>
+#include <memory>
 
 namespace DirectX
 {
     using std::filesystem::path;
+    using ScopedFILE = std::unique_ptr<FILE, int(*)(FILE*)>;
 
-    std::unique_ptr<FILE, int(*)(FILE*)> OpenFILE(const path& p) noexcept(false);
-    std::unique_ptr<FILE, int(*)(FILE*)> CreateFILE(const path& p) noexcept(false);
+    namespace
+    {
+    #if defined(_WIN32)
+        ScopedFILE OpenFILE(const path& p) noexcept(false)
+        {
+            const std::wstring fpath = p.generic_wstring();
+            FILE* fp = nullptr;
+            if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"rb"); ec)
+                throw std::system_error{ ec, std::system_category(), "_wfopen_s" };
+            return { fp, &fclose };
+        }
+        ScopedFILE CreateFILE(const path& p) noexcept(false)
+        {
+            const std::wstring fpath = p.generic_wstring();
+            FILE* fp = nullptr;
+            if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"w+b"); ec)
+                throw std::system_error{ ec, std::system_category(), "_wfopen_s" };
+            return { fp, &fclose };
+        }
+    #else
+        ScopedFILE OpenFILE(const path& p) noexcept(false)
+        {
+            const std::string fpath = p.generic_string();
+            FILE* fp = fopen(fpath.c_str(), "rb");
+            if (fp == nullptr)
+                throw std::system_error{ errno, std::system_category(), "fopen" };
+            return { fp, &fclose };
+        }
+        ScopedFILE CreateFILE(const path& p) noexcept(false)
+        {
+            const std::string fpath = p.generic_string();
+            FILE* fp = fopen(fpath.c_str(), "w+b");
+            if (fp == nullptr)
+                throw std::system_error{ errno, std::system_category(), "fopen" };
+            return { fp, &fclose };
+        }
+    #endif
+    }
 
-    void OnJPEGError(j_common_ptr ptr)
+    [[noreturn]] void OnJPEGError(j_common_ptr ptr)
     {
         char msg[JMSG_LENGTH_MAX]{};
         // "0x89 0x50": PNG

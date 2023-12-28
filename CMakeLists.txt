@@ -189,16 +189,12 @@ endif()
 
 if(ENABLE_LIBJPEG_SUPPORT)
     list(APPEND LIBRARY_HEADERS Auxiliary/DirectXTexJPEG.h)
-    list(APPEND LIBRARY_SOURCES
-      Auxiliary/DirectXTexJPEG.cpp
-      Auxiliary/DirectXTexHelper.cpp)
+    list(APPEND LIBRARY_SOURCES Auxiliary/DirectXTexJPEG.cpp)
 endif()
 
 if(ENABLE_LIBPNG_SUPPORT)
     list(APPEND LIBRARY_HEADERS Auxiliary/DirectXTexPNG.h)
-    list(APPEND LIBRARY_SOURCES
-      Auxiliary/DirectXTexPNG.cpp
-      Auxiliary/DirectXTexHelper.cpp)
+    list(APPEND LIBRARY_SOURCES Auxiliary/DirectXTexPNG.cpp)
 endif()
 
 if(BUILD_DX11 AND WIN32)
