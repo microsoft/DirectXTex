@@ -13,6 +13,16 @@ if(ENABLE_OPENEXR_SUPPORT)
     find_dependency(OpenEXR)
 endif()
 
+set(ENABLE_LIBJPEG_SUPPORT @ENABLE_LIBJPEG_SUPPORT@)
+if(ENABLE_LIBJPEG_SUPPORT)
+    find_dependency(JPEG)
+endif()
+
+set(ENABLE_LIBPNG_SUPPORT @ENABLE_LIBPNG_SUPPORT@)
+if(ENABLE_LIBPNG_SUPPORT)
+    find_dependency(PNG)
+endif()
+
 if(MINGW OR (NOT WIN32))
     find_dependency(directx-headers)
     find_dependency(directxmath)
