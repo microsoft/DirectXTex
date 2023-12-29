@@ -1658,7 +1658,7 @@ HRESULT DirectX::LoadFromTGAMemory(
         return hr;
 
     if (offset > size)
-        return E_FAIL;
+        return HRESULT_E_INVALID_DATA;
 
     size_t paletteOffset = 0;
     uint8_t palette[256 * 4] = {};
@@ -1831,6 +1831,9 @@ HRESULT DirectX::LoadFromTGAFile(
     HRESULT hr = DecodeTGAHeader(header, headerLen, flags, mdata, offset, &convFlags);
     if (FAILED(hr))
         return hr;
+
+    if (offset > len)
+        return HRESULT_E_INVALID_DATA;
 
     // Read the pixels
     auto const remaining = len - offset;
