@@ -339,6 +339,12 @@ namespace DirectX
         LDRColorA() = default;
         LDRColorA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a) noexcept : r(_r), g(_g), b(_b), a(_a) {}
 
+        LDRColorA(LDRColorA const&) = default;
+        LDRColorA& operator= (const LDRColorA&) = default;
+
+        LDRColorA(LDRColorA&&) = default;
+        LDRColorA& operator= (LDRColorA&&) = default;
+
         const uint8_t& operator [] (_In_range_(0, 3) size_t uElement) const noexcept
         {
             switch (uElement)
@@ -449,9 +455,14 @@ namespace
         int r, g, b;
         int pad;
 
-    public:
         INTColor() = default;
         INTColor(int nr, int ng, int nb) noexcept : r(nr), g(ng), b(nb), pad(0) {}
+
+        INTColor(INTColor const&) = default;
+        INTColor& operator= (const INTColor&) = default;
+
+        INTColor(INTColor&&) = default;
+        INTColor& operator= (INTColor&&) = default;
 
         INTColor& operator += (_In_ const INTColor& c) noexcept
         {

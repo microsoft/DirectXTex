@@ -17,6 +17,12 @@ namespace DirectX
     public:
         GPUCompressBC() noexcept;
 
+        GPUCompressBC(GPUCompressBC&&) = default;
+        GPUCompressBC& operator= (GPUCompressBC&&) = default;
+
+        GPUCompressBC(GPUCompressBC const&) = delete;
+        GPUCompressBC& operator= (GPUCompressBC const&) = delete;
+
         HRESULT Initialize(_In_ ID3D11Device* pDevice);
 
         HRESULT Prepare(size_t width, size_t height, uint32_t flags, DXGI_FORMAT format, float alphaWeight);
