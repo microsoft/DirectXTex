@@ -1011,12 +1011,16 @@ namespace DirectX
 #pragma clang diagnostic ignored "-Wswitch-enum"
 #endif
 
+#ifdef  _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4619 4616 4061)
+#endif
 
 #include "DirectXTex.inl"
 
+#ifdef  _MSC_VER
 #pragma warning(pop)
+#endif
 
 #ifdef __clang__
 #pragma clang diagnostic pop
