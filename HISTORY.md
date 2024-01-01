@@ -6,6 +6,13 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### December 31, 2023
+* TGA reader bug fix for offset boundary check
+* PPM/PFM reader bug fixes for bounds checking
+* Xbox-specific functionality added to Auxiliary folder
+* CMake project updates including pkg-config file generation
+* Code review
+
 ### October 28, 2023
 * New ``DDS_PERMISSIVE_FLAG`` to allow reading of various DDS DX9 file variants
   * *breaking change* required to accept reading *Unreal Tournament 2004* DDS files
