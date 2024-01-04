@@ -152,6 +152,10 @@
 
 #define _XM_NO_XMVECTOR_OVERLOADS_
 
+#ifdef _WIN32
+#include <intrin.h>
+#endif
+
 #include <DirectXPackedVector.h>
 
 #if (DIRECTX_MATH_VERSION < 315)
