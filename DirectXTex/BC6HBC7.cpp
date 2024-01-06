@@ -2692,7 +2692,14 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
 
         for (i = 0; i < uNumEndPts; i++)
         {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
             c[i] = Unquantize(c[i], RGBAPrecWithP);
+#ifdef __GNUC_
+#pragma GCC diagnostic pop
+#endif
         }
 
         uint8_t w1[NUM_PIXELS_PER_BLOCK], w2[NUM_PIXELS_PER_BLOCK];
@@ -3410,8 +3417,15 @@ float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation,
 
     for (size_t p = 0; p <= uPartitions; p++)
     {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
         aOrgEndPts[p].A = Quantize(aEndPts[p].A, ms_aInfo[pEP->uMode].RGBAPrecWithP);
         aOrgEndPts[p].B = Quantize(aEndPts[p].B, ms_aInfo[pEP->uMode].RGBAPrecWithP);
+#ifdef __GNUC_
+#pragma GCC diagnostic pop
+#endif
     }
 
     LDREndPntPair newEndPts1[BC7_MAX_REGIONS];
