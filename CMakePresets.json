@@ -173,6 +173,14 @@
       "hidden": true
     },
     {
+      "name": "PNG_JPEG",
+      "cacheVariables": {
+        "ENABLE_LIBJPEG_SUPPORT": true,
+        "ENABLE_LIBPNG_SUPPORT": true
+      },
+      "hidden": true
+    },
+    {
       "name": "MinGW32",
       "hidden": true,
       "environment": {
@@ -240,6 +248,9 @@
 
     { "name": "x64-Debug-EXR"      , "description": "MSVC for x64 (Debug) using VCPKG/OpenEXR", "inherits": [ "base", "x64", "Debug", "MSVC", "VCPKG", "EXR" ] },
     { "name": "x64-Release-EXR"    , "description": "MSVC for x64 (Release) using VCPKG/OpenEXR", "inherits": [ "base", "x64", "Release", "MSVC", "VCPKG", "EXR" ] },
+
+    { "name": "x64-Debug-PNG-JPEG"  , "description": "MSVC for x64 (Debug) using VCPKG/PNG/JPEG", "inherits": [ "base", "x64", "Debug", "MSVC", "VCPKG", "PNG_JPEG" ] },
+    { "name": "x64-Release-PNG-JPEG", "description": "MSVC for x64 (Release) using VCPKG/PNG/JPEG", "inherits": [ "base", "x64", "Release", "MSVC", "VCPKG", "PNG_JPEG" ] },
 
     { "name": "x64-Debug-Clang"    , "description": "Clang/LLVM for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "Clang" ] },
     { "name": "x64-Release-Clang"  , "description": "Clang/LLVM for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "Clang" ] },
