@@ -455,6 +455,9 @@ HRESULT ScratchImage::Initialize3D(DXGI_FORMAT fmt, size_t width, size_t height,
     if (!IsValid(fmt) || !width || !height || !depth)
         return E_INVALIDARG;
 
+    if (depth > INT16_MAX)
+        return E_INVALIDARG;
+
     if (IsPalettized(fmt))
         return HRESULT_E_NOT_SUPPORTED;
 
@@ -641,6 +644,9 @@ _Use_decl_annotations_
 HRESULT ScratchImage::Initialize3DFromImages(const Image* images, size_t depth, CP_FLAGS flags) noexcept
 {
     if (!images || !depth)
+        return E_INVALIDARG;
+
+    if (depth > INT16_MAX)
         return E_INVALIDARG;
 
     const DXGI_FORMAT format = images[0].format;
