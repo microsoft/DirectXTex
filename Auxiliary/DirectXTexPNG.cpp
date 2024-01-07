@@ -281,7 +281,7 @@ namespace
             if (using_bgr)
                 png_set_bgr(st);
 
-            const size_t stride = channel * image.width;
+            const size_t stride = static_cast<size_t>(channel) * image.width;
             std::vector<png_bytep> rows(image.height);
             for (size_t i = 0u; i< image.height; ++i)
                 rows[i] = image.pixels + stride * i;

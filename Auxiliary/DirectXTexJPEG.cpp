@@ -197,7 +197,7 @@ namespace
                 return E_FAIL;
 
             uint8_t* dest = image.GetPixels();
-            const size_t stride = dec.output_width * dec.output_components;
+            const size_t stride = dec.output_width * static_cast<size_t>(dec.output_components);
             std::vector<JSAMPROW> rows(dec.output_height);
             for (size_t i = 0u; i < dec.output_height; ++i)
                 rows[i] = dest + (stride * i);
@@ -281,7 +281,7 @@ namespace
             jpeg_set_quality(&enc, 100, true);
             // we will write a row each time ...
             jpeg_start_compress(&enc, true);
-            const size_t stride = enc.image_width * enc.input_components;
+            const size_t stride = enc.image_width * static_cast<size_t>(enc.input_components);
             while (enc.next_scanline < enc.image_height)
             {
                 JSAMPROW rows[1]{ image.pixels + stride * enc.next_scanline };
