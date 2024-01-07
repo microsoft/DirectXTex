@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: DirectXTexXbox.h
 //
-// DirectXTex Auxillary functions for Xbox texture processing
+// DirectXTex Auxilary functions for Xbox texture processing
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.

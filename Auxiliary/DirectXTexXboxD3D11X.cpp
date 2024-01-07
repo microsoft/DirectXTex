@@ -1,7 +1,7 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexD3D11X.cpp
 //  
-// DirectXTex Auxillary functions for creating resouces from XboxImage containers
+// DirectXTex Auxilary functions for creating resouces from XboxImage containers
 // via the CreatePlacement APIs
 //
 // Copyright (c) Microsoft Corporation.
