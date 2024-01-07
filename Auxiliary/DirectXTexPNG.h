@@ -1,7 +1,11 @@
 //--------------------------------------------------------------------------------------
 // File: DirectXTexPNG.h
 //
-// DirectXTex Auxillary functions for using the PNG(http://www.libpng.org/pub/png/libpng.html) library
+// DirectXTex Auxilary functions for using the PNG(http://www.libpng.org/pub/png/libpng.html) library
+//
+// For the Windows platform, the strong recommendation is to make use of the WIC
+// functions rather than using the open source library. This module exists to support
+// Windows Subsystem on Linux.
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.

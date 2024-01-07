@@ -1,68 +1,75 @@
 //--------------------------------------------------------------------------------------
 // File: DirectXTexJPEG.cpp
 //
-// DirectXTex Auxillary functions for using the JPEG(https://www.ijg.org) library
+// DirectXTex Auxilary functions for using the JPEG(https://www.ijg.org) library
+//
+// For the Windows platform, the strong recommendation is to make use of the WIC
+// functions rather than using the open source library. This module exists to support
+// Windows Subsystem on Linux.
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //--------------------------------------------------------------------------------------
 
 #include "DirectXTexP.h"
-
 #include "DirectXTexJPEG.h"
 
-#if !defined(_BASETSD_H_)
+#if __cplusplus < 201703L
+#error Requires C++17 (and /Zc:__cplusplus with MSVC)
+#endif
+
+#ifndef _BASETSD_H_
 #define _BASETSD_H_
 #endif
+
 #include <cstdio>
 #include <filesystem>
+
 #include <jpeglib.h>
 #include <jerror.h>
-#include <memory>
 
-namespace DirectX
+
+using namespace DirectX;
+using std::filesystem::path;
+using ScopedFILE = std::unique_ptr<FILE, int(*)(FILE*)>;
+
+namespace
 {
-    using std::filesystem::path;
-    using ScopedFILE = std::unique_ptr<FILE, int(*)(FILE*)>;
-
-    namespace
+#ifdef _WIN32
+    ScopedFILE OpenFILE(const path& p) noexcept(false)
     {
-    #if defined(_WIN32)
-        ScopedFILE OpenFILE(const path& p) noexcept(false)
-        {
-            const std::wstring fpath = p.generic_wstring();
-            FILE* fp = nullptr;
-            if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"rb"); ec)
-                throw std::system_error{ ec, std::system_category(), "_wfopen_s" };
-            return { fp, &fclose };
-        }
-        ScopedFILE CreateFILE(const path& p) noexcept(false)
-        {
-            const std::wstring fpath = p.generic_wstring();
-            FILE* fp = nullptr;
-            if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"w+b"); ec)
-                throw std::system_error{ ec, std::system_category(), "_wfopen_s" };
-            return { fp, &fclose };
-        }
-    #else
-        ScopedFILE OpenFILE(const path& p) noexcept(false)
-        {
-            const std::string fpath = p.generic_string();
-            FILE* fp = fopen(fpath.c_str(), "rb");
-            if (fp == nullptr)
-                throw std::system_error{ errno, std::system_category(), "fopen" };
-            return { fp, &fclose };
-        }
-        ScopedFILE CreateFILE(const path& p) noexcept(false)
-        {
-            const std::string fpath = p.generic_string();
-            FILE* fp = fopen(fpath.c_str(), "w+b");
-            if (fp == nullptr)
-                throw std::system_error{ errno, std::system_category(), "fopen" };
-            return { fp, &fclose };
-        }
-    #endif
+        const std::wstring fpath = p.generic_wstring();
+        FILE* fp = nullptr;
+        if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"rb"); ec)
+            throw std::system_error{ ec, std::system_category(), "_wfopen_s" };
+        return { fp, &fclose };
     }
+    ScopedFILE CreateFILE(const path& p) noexcept(false)
+    {
+        const std::wstring fpath = p.generic_wstring();
+        FILE* fp = nullptr;
+        if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"w+b"); ec)
+            throw std::system_error{ ec, std::system_category(), "_wfopen_s" };
+        return { fp, &fclose };
+    }
+#else
+    ScopedFILE OpenFILE(const path& p) noexcept(false)
+    {
+        const std::string fpath = p.generic_string();
+        FILE* fp = fopen(fpath.c_str(), "rb");
+        if (!fp)
+            throw std::system_error{ errno, std::system_category(), "fopen" };
+        return { fp, &fclose };
+    }
+    ScopedFILE CreateFILE(const path& p) noexcept(false)
+    {
+        const std::string fpath = p.generic_string();
+        FILE* fp = fopen(fpath.c_str(), "w+b");
+        if (!fp)
+            throw std::system_error{ errno, std::system_category(), "fopen" };
+        return { fp, &fclose };
+    }
+#endif
 
     [[noreturn]] void OnJPEGError(j_common_ptr ptr)
     {
@@ -105,7 +112,7 @@ namespace DirectX
                 return DXGI_FORMAT_R8_UNORM;
             case JCS_RGB: // 3 component, Standard RGB
                 return DXGI_FORMAT_R8G8B8A8_UNORM;
-            #if defined(LIBJPEG_TURBO_VERSION)
+            #ifdef LIBJPEG_TURBO_VERSION
             case JCS_EXT_RGBX: // 4 component
             case JCS_EXT_RGBA:
                 return DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -183,7 +190,7 @@ namespace DirectX
             if (auto hr = image.Initialize2D(metadata.format, metadata.width, metadata.height, metadata.arraySize, metadata.mipLevels); FAILED(hr))
                 return hr;
 
-        #if defined(LIBJPEG_TURBO_VERSION)
+        #ifdef LIBJPEG_TURBO_VERSION
             dec.out_color_space = JCS_EXT_RGBX;
         #endif
             if (jpeg_start_decompress(&dec) == false)
@@ -250,7 +257,7 @@ namespace DirectX
                 enc.input_components = 1;
                 enc.in_color_space = JCS_GRAYSCALE;
                 break;
-            #if defined(LIBJPEG_TURBO_VERSION)
+            #ifdef LIBJPEG_TURBO_VERSION
             case DXGI_FORMAT_R8G8B8A8_UNORM:
                 enc.input_components = 4;
                 enc.in_color_space = JCS_EXT_RGBA;
@@ -284,76 +291,84 @@ namespace DirectX
             return S_OK;
         }
     };
+}
 
-    HRESULT __cdecl GetMetadataFromJPEGFile(
-        _In_z_ const wchar_t* file,
-        _Out_ TexMetadata& metadata)
+_Use_decl_annotations_
+HRESULT DirectX::GetMetadataFromJPEGFile(
+    const wchar_t* file,
+    TexMetadata& metadata)
+{
+    if (!file)
+        return E_INVALIDARG;
+
+    try
     {
-        if (file == nullptr)
-            return E_INVALIDARG;
-        try
-        {
-            auto fin = OpenFILE(file);
-            JPEGDecompress decoder{};
-            decoder.UseInput(fin.get());
-            return decoder.GetHeader(metadata);
-        }
-        catch (const std::system_error& ec)
-        {
-            return ec.code().value();
-        }
-        catch (const std::exception&)
-        {
-            return E_FAIL;
-        }
+        auto fin = OpenFILE(file);
+        JPEGDecompress decoder{};
+        decoder.UseInput(fin.get());
+        return decoder.GetHeader(metadata);
     }
-
-    HRESULT __cdecl LoadFromJPEGFile(
-        _In_z_ const wchar_t* file,
-        _Out_opt_ TexMetadata* metadata,
-        _Out_ ScratchImage&image)
+    catch (const std::system_error& ec)
     {
-        if (file == nullptr)
-            return E_INVALIDARG;
-        image.Release();
-
-        try
-        {
-            auto fin = OpenFILE(file);
-            JPEGDecompress decoder{};
-            decoder.UseInput(fin.get());
-            if (metadata == nullptr)
-                return decoder.GetImage(image);
-            return decoder.GetImage(*metadata, image);
-        }
-        catch (const std::system_error& ec)
-        {
-            return ec.code().value();
-        }
-        catch (const std::exception&)
-        {
-            return E_FAIL;
-        }
+        return ec.code().value();
     }
-
-    HRESULT __cdecl SaveToJPEGFile(_In_ const Image& image, _In_z_ const wchar_t* file)
+    catch (const std::exception&)
     {
-        if (file == nullptr)
-            return E_INVALIDARG;
-        try
-        {
-            auto fout = CreateFILE(file);
-            JPEGCompress encoder{};
-            encoder.UseOutput(fout.get());
-            return encoder.WriteImage(image);
-        }
-        catch (const std::system_error& ec)
-        {
-            return ec.code().value();
-        }
-        catch (const std::exception&)
-        {
-            return E_FAIL;
-        }
+        return E_FAIL;
+    }
+}
+
+_Use_decl_annotations_
+HRESULT DirectX::LoadFromJPEGFile(
+    const wchar_t* file,
+    TexMetadata* metadata,
+    ScratchImage&image)
+{
+    if (!file)
+        return E_INVALIDARG;
+
+    image.Release();
+
+    try
+    {
+        auto fin = OpenFILE(file);
+        JPEGDecompress decoder{};
+        decoder.UseInput(fin.get());
+        if (!metadata)
+            return decoder.GetImage(image);
+        return decoder.GetImage(*metadata, image);
+    }
+    catch (const std::system_error& ec)
+    {
+        return ec.code().value();
+    }
+    catch (const std::exception&)
+    {
+        return E_FAIL;
+    }
+}
+
+_Use_decl_annotations_
+HRESULT DirectX::SaveToJPEGFile(
+    const Image& image,
+    const wchar_t* file)
+{
+    if (!file)
+        return E_INVALIDARG;
+
+    try
+    {
+        auto fout = CreateFILE(file);
+        JPEGCompress encoder{};
+        encoder.UseOutput(fout.get());
+        return encoder.WriteImage(image);
+    }
+    catch (const std::system_error& ec)
+    {
+        return ec.code().value();
+    }
+    catch (const std::exception&)
+    {
+        return E_FAIL;
     }
 }

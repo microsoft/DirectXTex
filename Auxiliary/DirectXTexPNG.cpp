@@ -1,63 +1,70 @@
 //--------------------------------------------------------------------------------------
 // File: DirectXTexPNG.cpp
 //
-// DirectXTex Auxillary functions for using the PNG(http://www.libpng.org/pub/png/libpng.html) library
+// DirectXTex Auxilary functions for using the PNG(http://www.libpng.org/pub/png/libpng.html) library
+//
+// For the Windows platform, the strong recommendation is to make use of the WIC
+// functions rather than using the open source library. This module exists to support
+// Windows Subsystem on Linux.
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //--------------------------------------------------------------------------------------
 
 #include "DirectXTexP.h"
-
 #include "DirectXTexPNG.h"
+
+#if __cplusplus < 201703L
+#error Requires C++17 (and /Zc:__cplusplus with MSVC)
+#endif
 
 #include <cstdio>
 #include <filesystem>
+
 #include <png.h>
 
-namespace DirectX
-{
-    using std::filesystem::path;
-    using ScopedFILE = std::unique_ptr<FILE, int(*)(FILE*)>;
 
-    namespace
+using namespace DirectX;
+using std::filesystem::path;
+using ScopedFILE = std::unique_ptr<FILE, int(*)(FILE*)>;
+
+namespace
+{
+#ifdef _WIN32
+    ScopedFILE OpenFILE(const path& p) noexcept(false)
     {
-    #if defined(_WIN32)
-        ScopedFILE OpenFILE(const path& p) noexcept(false)
-        {
-            const std::wstring fpath = p.generic_wstring();
-            FILE* fp = nullptr;
-            if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"rb"); ec)
-                throw std::system_error{ ec, std::system_category(), "_wfopen_s" };
-            return { fp, &fclose };
-        }
-        ScopedFILE CreateFILE(const path& p) noexcept(false)
-        {
-            const std::wstring fpath = p.generic_wstring();
-            FILE* fp = nullptr;
-            if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"w+b"); ec)
-                throw std::system_error{ ec, std::system_category(), "_wfopen_s" };
-            return { fp, &fclose };
-        }
-    #else
-        ScopedFILE OpenFILE(const path& p) noexcept(false)
-        {
-            const std::string fpath = p.generic_string();
-            FILE* fp = fopen(fpath.c_str(), "rb");
-            if (fp == nullptr)
-                throw std::system_error{ errno, std::system_category(), "fopen" };
-            return { fp, &fclose };
-        }
-        ScopedFILE CreateFILE(const path& p) noexcept(false)
-        {
-            const std::string fpath = p.generic_string();
-            FILE* fp = fopen(fpath.c_str(), "w+b");
-            if (fp == nullptr)
-                throw std::system_error{ errno, std::system_category(), "fopen" };
-            return { fp, &fclose };
-        }
-    #endif
+        const std::wstring fpath = p.generic_wstring();
+        FILE* fp = nullptr;
+        if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"rb"); ec)
+            throw std::system_error{ ec, std::system_category(), "_wfopen_s" };
+        return { fp, &fclose };
     }
+    ScopedFILE CreateFILE(const path& p) noexcept(false)
+    {
+        const std::wstring fpath = p.generic_wstring();
+        FILE* fp = nullptr;
+        if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"w+b"); ec)
+            throw std::system_error{ ec, std::system_category(), "_wfopen_s" };
+        return { fp, &fclose };
+    }
+#else
+    ScopedFILE OpenFILE(const path& p) noexcept(false)
+    {
+        const std::string fpath = p.generic_string();
+        FILE* fp = fopen(fpath.c_str(), "rb");
+        if (!fp)
+            throw std::system_error{ errno, std::system_category(), "fopen" };
+        return { fp, &fclose };
+    }
+    ScopedFILE CreateFILE(const path& p) noexcept(false)
+    {
+        const std::string fpath = p.generic_string();
+        FILE* fp = fopen(fpath.c_str(), "w+b");
+        if (!fp)
+            throw std::system_error{ errno, std::system_category(), "fopen" };
+        return { fp, &fclose };
+    }
+#endif
 
     [[noreturn]] void OnPNGError(png_structp, png_const_charp msg)
     {
@@ -88,15 +95,15 @@ namespace DirectX
         PNGDecompress() noexcept(false) : st{ nullptr }, info{ nullptr }
         {
             st = png_create_read_struct(PNG_LIBPNG_VER_STRING, this, &OnPNGError, &OnPNGWarning);
-            if (st == nullptr)
+            if (!st)
                 throw std::runtime_error{ "png_create_read_struct" };
             info = png_create_info_struct(st);
-            if (info == nullptr)
+            if (!info)
             {
                 png_destroy_read_struct(&st, nullptr, nullptr);
                 throw std::runtime_error{ "png_create_info_struct" };
             }
-        #if defined(PNG_USER_MEM_SUPPORTED)
+        #ifdef PNG_USER_MEM_SUPPORTED
             // `png_set_mem_fn` can be used to customize memory allocation
         #endif
         }
@@ -219,10 +226,10 @@ namespace DirectX
         PNGCompress() noexcept(false) : st{ nullptr }, info{ nullptr }
         {
             st = png_create_write_struct(PNG_LIBPNG_VER_STRING, this, &OnPNGError, &OnPNGWarning);
-            if (st == nullptr)
+            if (!st)
                 throw std::runtime_error{ "png_create_write_struct" };
             info = png_create_info_struct(st);
-            if (info == nullptr)
+            if (!info)
             {
                 png_destroy_write_struct(&st, nullptr);
                 throw std::runtime_error{ "png_create_info_struct" };
@@ -285,79 +292,87 @@ namespace DirectX
             return S_OK;
         }
     };
+}
 
-    HRESULT __cdecl GetMetadataFromPNGFile(
-        _In_z_ const wchar_t* file,
-        _Out_ TexMetadata& metadata)
+_Use_decl_annotations_
+HRESULT DirectX::GetMetadataFromPNGFile(
+    const wchar_t* file,
+    TexMetadata& metadata)
+{
+    if (!file)
+        return E_INVALIDARG;
+
+    try
     {
-        if (file == nullptr)
-            return E_INVALIDARG;
-        try
-        {
-            auto fin = OpenFILE(file);
-            PNGDecompress decoder{};
-            decoder.UseInput(fin.get());
-            decoder.Update();
-            decoder.GetHeader(metadata);
-            return S_OK;
-        }
-        catch (const std::system_error& ec)
-        {
-            return ec.code().value();
-        }
-        catch (const std::exception&)
-        {
-            return E_FAIL;
-        }
+        auto fin = OpenFILE(file);
+        PNGDecompress decoder{};
+        decoder.UseInput(fin.get());
+        decoder.Update();
+        decoder.GetHeader(metadata);
+        return S_OK;
     }
-
-    HRESULT __cdecl LoadFromPNGFile(
-        _In_z_ const wchar_t* file,
-        _Out_opt_ TexMetadata* metadata,
-        _Out_ ScratchImage& image)
+    catch (const std::system_error& ec)
     {
-        if (file == nullptr)
-            return E_INVALIDARG;
-        image.Release();
-
-        try
-        {
-            auto fin = OpenFILE(file);
-            PNGDecompress decoder{};
-            decoder.UseInput(fin.get());
-            decoder.Update();
-            if (metadata == nullptr)
-                return decoder.GetImage(image);
-            return decoder.GetImage(*metadata, image);
-        }
-        catch (const std::system_error& ec)
-        {
-            return ec.code().value();
-        }
-        catch (const std::exception&)
-        {
-            return E_FAIL;
-        }
+        return ec.code().value();
     }
-
-    HRESULT __cdecl SaveToPNGFile(_In_ const Image& image, _In_z_ const wchar_t* file)
+    catch (const std::exception&)
     {
-        if (file == nullptr)
-            return E_INVALIDARG;
-        try
-        {
-            auto fout = CreateFILE(file);
-            PNGCompress encoder{};
-            encoder.UseOutput(fout.get());
-            return encoder.WriteImage(image);
-        }
-        catch (const std::system_error& ec)
-        {
-            return ec.code().value();
-        }
-        catch (const std::exception&)
-        {
-            return E_FAIL;
-        }
+        return E_FAIL;
+    }
+}
+
+_Use_decl_annotations_
+HRESULT DirectX::LoadFromPNGFile(
+    const wchar_t* file,
+    TexMetadata* metadata,
+    ScratchImage& image)
+{
+    if (!file)
+        return E_INVALIDARG;
+
+    image.Release();
+
+    try
+    {
+        auto fin = OpenFILE(file);
+        PNGDecompress decoder{};
+        decoder.UseInput(fin.get());
+        decoder.Update();
+        if (metadata == nullptr)
+            return decoder.GetImage(image);
+        return decoder.GetImage(*metadata, image);
+    }
+    catch (const std::system_error& ec)
+    {
+        return ec.code().value();
+    }
+    catch (const std::exception&)
+    {
+        return E_FAIL;
+    }
+}
+
+_Use_decl_annotations_
+HRESULT DirectX::SaveToPNGFile(
+    const Image& image,
+    const wchar_t* file)
+{
+    if (!file)
+        return E_INVALIDARG;
+
+    try
+    {
+        auto fout = CreateFILE(file);
+        PNGCompress encoder{};
+        encoder.UseOutput(fout.get());
+        return encoder.WriteImage(image);
+    }
+    catch (const std::system_error& ec)
+    {
+        return ec.code().value();
+    }
+    catch (const std::exception&)
+    {
+        return E_FAIL;
     }
 }

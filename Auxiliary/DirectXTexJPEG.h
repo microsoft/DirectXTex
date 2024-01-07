@@ -1,7 +1,11 @@
 //--------------------------------------------------------------------------------------
 // File: DirectXTexJPEG.h
 //
-// DirectXTex Auxillary functions for using the JPEG(https://www.ijg.org) library
+// DirectXTex Auxilary functions for using the JPEG(https://www.ijg.org) library
+//
+// For the Windows platform, the strong recommendation is to make use of the WIC
+// functions rather than using the open source library. This module exists to support
+// Windows Subsystem on Linux.
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
