@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: DirectXTexXboxTile.cpp
 //
-// DirectXTex Auxillary functions for converting from linear to Xbox tiling
+// DirectXTex Auxilary functions for converting from linear to Xbox tiling
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.

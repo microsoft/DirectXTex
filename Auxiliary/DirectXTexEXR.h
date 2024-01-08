@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: DirectXTexEXR.h
 //
-// DirectXTex Auxillary functions for using the OpenEXR library
+// DirectXTex Auxilary functions for using the OpenEXR library
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
