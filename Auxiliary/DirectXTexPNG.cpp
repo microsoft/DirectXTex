@@ -19,7 +19,11 @@
 #endif
 
 #include <cstdio>
+#include <exception>
 #include <filesystem>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #include <png.h>
 
@@ -311,6 +315,10 @@ HRESULT DirectX::GetMetadataFromPNGFile(
         decoder.GetHeader(metadata);
         return S_OK;
     }
+    catch (const std::bad_alloc&)
+    {
+        return E_OUTOFMEMORY;
+    }
     catch (const std::system_error& ec)
     {
         return ec.code().value();
@@ -342,12 +350,19 @@ HRESULT DirectX::LoadFromPNGFile(
             return decoder.GetImage(image);
         return decoder.GetImage(*metadata, image);
     }
+    catch (const std::bad_alloc&)
+    {
+        image.Release();
+        return E_OUTOFMEMORY;
+    }
     catch (const std::system_error& ec)
     {
+        image.Release();
         return ec.code().value();
     }
     catch (const std::exception&)
     {
+        image.Release();
         return E_FAIL;
     }
 }
@@ -366,6 +381,10 @@ HRESULT DirectX::SaveToPNGFile(
         PNGCompress encoder{};
         encoder.UseOutput(fout.get());
         return encoder.WriteImage(image);
+    }
+    catch (const std::bad_alloc&)
+    {
+        return E_OUTOFMEMORY;
     }
     catch (const std::system_error& ec)
     {

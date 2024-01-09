@@ -23,7 +23,11 @@
 #endif
 
 #include <cstdio>
+#include <exception>
 #include <filesystem>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #include <jpeglib.h>
 #include <jerror.h>
@@ -308,6 +312,10 @@ HRESULT DirectX::GetMetadataFromJPEGFile(
         decoder.UseInput(fin.get());
         return decoder.GetHeader(metadata);
     }
+    catch (const std::bad_alloc&)
+    {
+        return E_OUTOFMEMORY;
+    }
     catch (const std::system_error& ec)
     {
         return ec.code().value();
@@ -338,12 +346,19 @@ HRESULT DirectX::LoadFromJPEGFile(
             return decoder.GetImage(image);
         return decoder.GetImage(*metadata, image);
     }
+    catch (const std::bad_alloc&)
+    {
+        image.Release();
+        return E_OUTOFMEMORY;
+    }
     catch (const std::system_error& ec)
     {
+        image.Release();
         return ec.code().value();
     }
     catch (const std::exception&)
     {
+        image.Release();
         return E_FAIL;
     }
 }
@@ -362,6 +377,10 @@ HRESULT DirectX::SaveToJPEGFile(
         JPEGCompress encoder{};
         encoder.UseOutput(fout.get());
         return encoder.WriteImage(image);
+    }
+    catch (const std::bad_alloc&)
+    {
+        return E_OUTOFMEMORY;
     }
     catch (const std::system_error& ec)
     {
