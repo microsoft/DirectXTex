@@ -23,10 +23,12 @@
 #endif
 
 #include <cstdio>
+#include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <vector>
 
 #include <jpeglib.h>
@@ -45,7 +47,7 @@ namespace
         const std::wstring fpath = p.generic_wstring();
         FILE* fp = nullptr;
         if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"rb"); ec)
-            throw std::system_error{ ec, std::system_category(), "_wfopen_s" };
+            throw std::system_error{ static_cast<int>(_doserrno), std::system_category(), "_wfopen_s" };
         return { fp, &fclose };
     }
     ScopedFILE CreateFILE(const path& p) noexcept(false)
@@ -53,7 +55,7 @@ namespace
         const std::wstring fpath = p.generic_wstring();
         FILE* fp = nullptr;
         if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"w+b"); ec)
-            throw std::system_error{ ec, std::system_category(), "_wfopen_s" };
+            throw std::system_error{ static_cast<int>(_doserrno), std::system_category(), "_wfopen_s" };
         return { fp, &fclose };
     }
 #else
@@ -318,7 +320,11 @@ HRESULT DirectX::GetMetadataFromJPEGFile(
     }
     catch (const std::system_error& ec)
     {
-        return ec.code().value();
+#ifdef _WIN32
+        return HRESULT_FROM_WIN32(ec.code().value());
+#else
+        return (ec.code().value() == 2/*ENOENT*/) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
+#endif
     }
     catch (const std::exception&)
     {
@@ -354,7 +360,11 @@ HRESULT DirectX::LoadFromJPEGFile(
     catch (const std::system_error& ec)
     {
         image.Release();
-        return ec.code().value();
+#ifdef _WIN32
+        return HRESULT_FROM_WIN32(ec.code().value());
+#else
+        return (ec.code().value() == 2/*ENOENT*/) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
+#endif
     }
     catch (const std::exception&)
     {
@@ -384,7 +394,11 @@ HRESULT DirectX::SaveToJPEGFile(
     }
     catch (const std::system_error& ec)
     {
-        return ec.code().value();
+#ifdef _WIN32
+        return HRESULT_FROM_WIN32(ec.code().value());
+#else
+        return (ec.code().value() == 2/*ENOENT*/) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
+#endif
     }
     catch (const std::exception&)
     {
