@@ -197,7 +197,10 @@ namespace
                 return hr;
 
         #ifdef LIBJPEG_TURBO_VERSION
-            dec.out_color_space = JCS_EXT_RGBX;
+            // grayscale is the only color space which uses 1 component
+            if (dec.out_color_space != JCS_GRAYSCALE)
+                // if there is no proper conversion to 4 component, E_FAIL...
+                dec.out_color_space = JCS_EXT_RGBX;
         #endif
             if (jpeg_start_decompress(&dec) == false)
                 return E_FAIL;
@@ -219,7 +222,8 @@ namespace
 
         #if !defined(LIBJPEG_TURBO_VERSION)
             // if NOT TurboJPEG, we need to make 3 component images to 4 component image
-            ShiftPixels(image);
+            if (dec.out_color_space != JCS_GRAYSCALE)
+                ShiftPixels(image);
         #endif
             return S_OK;
         }
