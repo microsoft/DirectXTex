@@ -118,6 +118,8 @@ namespace
                 return DXGI_FORMAT_R8_UNORM;
             case JCS_RGB: // 3 component, Standard RGB
                 return DXGI_FORMAT_R8G8B8A8_UNORM;
+            case JCS_CMYK: // 4 component. WIC retuns this for CMYK
+                return DXGI_FORMAT_R8G8B8A8_UNORM;
             #ifdef LIBJPEG_TURBO_VERSION
             case JCS_EXT_RGBX: // 4 component
             case JCS_EXT_RGBA:
