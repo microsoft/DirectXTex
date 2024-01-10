@@ -77,10 +77,9 @@ namespace
         throw std::runtime_error{ msg };
     }
 
-    void OnPNGWarning(png_structp, png_const_charp msg)
+    void OnPNGWarning(png_structp, png_const_charp)
     {
         // drain warning messages ...
-        std::fprintf(stderr, "%s", msg);
     }
 
     /// @note If the PNG contains some extra chunks like EXIF, this will be used
