@@ -77,9 +77,10 @@ namespace
         throw std::runtime_error{ msg };
     }
 
-    void OnPNGWarning(png_structp, png_const_charp)
+    void OnPNGWarning(png_structp, png_const_charp msg)
     {
         // drain warning messages ...
+        std::fprintf(stderr, "%s", msg);
     }
 
     /// @note If the PNG contains some extra chunks like EXIF, this will be used
@@ -109,9 +110,6 @@ namespace
                 png_destroy_read_struct(&st, nullptr, nullptr);
                 throw std::runtime_error{ "png_create_info_struct" };
             }
-        #ifdef PNG_USER_MEM_SUPPORTED
-            // `png_set_mem_fn` can be used to customize memory allocation
-        #endif
         }
 
         ~PNGDecompress() noexcept
@@ -133,6 +131,7 @@ namespace
             png_byte color_type = png_get_color_type(st, info);
             if (color_type == PNG_COLOR_TYPE_GRAY)
             {
+                // bit_depth will be 8 or 16
                 if (png_get_bit_depth(st, info) < 8)
                     png_set_expand_gray_1_2_4_to_8(st);
             }
@@ -163,7 +162,12 @@ namespace
             // 1 or 4. 1 is for gray
             auto c = png_get_channels(st, info);
             if (c == 1)
+            {
+                if (png_get_bit_depth(st, info) == 16)
+                    return DXGI_FORMAT_R16_UNORM;
+                // with `png_set_expand_gray_1_2_4_to_8`, libpng will change to R8_UNORM
                 return DXGI_FORMAT_R8_UNORM;
+            }
 
             // 8 or 16. expanded if 1, 2, 4
             auto d = png_get_bit_depth(st, info);
