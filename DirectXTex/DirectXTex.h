@@ -115,6 +115,9 @@ namespace DirectX
 
         CP_FLAGS_8BPP = 0x40000,
         // Override with a legacy 8 bits-per-pixel format size
+
+        CP_FLAGS_LIMIT_4GB = 0x10000000,
+        // Don't allow pixel allocations in excess of 4GB (always true for 32-bit)
     };
 
     HRESULT __cdecl ComputePitch(
