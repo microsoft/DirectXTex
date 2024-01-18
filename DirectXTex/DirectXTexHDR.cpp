@@ -715,7 +715,7 @@ HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata
     if (remaining == 0)
         return E_FAIL;
 
-    hr = image.Initialize2D(mdata.format, mdata.width, mdata.height, 1, 1);
+    hr = image.Initialize2D(mdata.format, mdata.width, mdata.height, 1, 1, CP_FLAGS_LIMIT_4GB);
     if (FAILED(hr))
         return hr;
 

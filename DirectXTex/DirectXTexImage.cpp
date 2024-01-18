@@ -123,6 +123,12 @@ HRESULT DirectX::Internal::DetermineImageArray(
     }
 #else
     static_assert(sizeof(size_t) == 8, "Not a 64-bit platform!");
+
+    if ((cpFlags & CP_FLAGS_LIMIT_4GB) && (totalPixelSize > UINT32_MAX))
+    {
+        nImages = pixelSize = 0;
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
+    }
 #endif
 
     nImages = nimages;
