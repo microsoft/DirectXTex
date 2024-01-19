@@ -58,13 +58,12 @@
 
 #include <DirectXPackedVector.h>
 
-//Uncomment to add support for OpenEXR (.exr)
-//#define USE_OPENEXR
-
 #ifdef USE_OPENEXR
 // See <https://github.com/Microsoft/DirectXTex/wiki/Adding-OpenEXR> for details
 #include "DirectXTexEXR.h"
 #endif
+
+// See <https://github.com/Microsoft/DirectXTex/wiki/Using-JPEG-PNG-OSS> for details
 #ifdef USE_LIBJPEG
 #include "DirectXTexJPEG.h"
 #endif
@@ -365,14 +364,14 @@ const SValue g_pDumpFileTypes[] =
 {
     { L"bmp",   WIC_CODEC_BMP  },
 #ifdef USE_LIBJPEG
-    { L"jpg",   CODEC_JPEG },
-    { L"jpeg",  CODEC_JPEG },
+    { L"jpg",   CODEC_JPEG     },
+    { L"jpeg",  CODEC_JPEG     },
 #else
     { L"jpg",   WIC_CODEC_JPEG },
     { L"jpeg",  WIC_CODEC_JPEG },
 #endif
 #ifdef USE_LIBPNG
-    { L"png",   CODEC_PNG  },
+    { L"png",   CODEC_PNG      },
 #else
     { L"png",   WIC_CODEC_PNG  },
 #endif
@@ -389,31 +388,31 @@ const SValue g_pDumpFileTypes[] =
 
 const SValue g_pExtFileTypes[] =
 {
-    { L".bmp",  WIC_CODEC_BMP },
+    { L".bmp",  WIC_CODEC_BMP  },
 #ifdef USE_LIBJPEG
-    { L".jpg",  CODEC_JPEG },
-    { L".jpeg", CODEC_JPEG },
+    { L".jpg",  CODEC_JPEG     },
+    { L".jpeg", CODEC_JPEG     },
 #else
     { L".jpg",  WIC_CODEC_JPEG },
     { L".jpeg", WIC_CODEC_JPEG },
 #endif
 #ifdef USE_LIBPNG
-    { L".png",  CODEC_PNG },
+    { L".png",  CODEC_PNG      },
 #else
-    { L".png",  WIC_CODEC_PNG },
+    { L".png",  WIC_CODEC_PNG  },
 #endif
-    { L".dds",  CODEC_DDS },
-    { L".tga",  CODEC_TGA },
-    { L".hdr",  CODEC_HDR },
+    { L".dds",  CODEC_DDS      },
+    { L".tga",  CODEC_TGA      },
+    { L".hdr",  CODEC_HDR      },
     { L".tif",  WIC_CODEC_TIFF },
     { L".tiff", WIC_CODEC_TIFF },
-    { L".wdp",  WIC_CODEC_WMP },
-    { L".hdp",  WIC_CODEC_WMP },
-    { L".jxr",  WIC_CODEC_WMP },
+    { L".wdp",  WIC_CODEC_WMP  },
+    { L".hdp",  WIC_CODEC_WMP  },
+    { L".jxr",  WIC_CODEC_WMP  },
 #ifdef USE_OPENEXR
-    { L"exr",   CODEC_EXR },
+    { L"exr",   CODEC_EXR      },
 #endif
-    { nullptr,  CODEC_DDS }
+    { nullptr,  CODEC_DDS      }
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -845,7 +844,7 @@ namespace
         }
     #endif
     #ifdef USE_LIBJPEG
-        else if (_wcsicmp(ext.c_str(), L".jpg") == 0)
+        else if (_wcsicmp(ext.c_str(), L".jpg") == 0 || _wcsicmp(ext.c_str(), L".jpeg") == 0)
         {
             return LoadFromJPEGFile(fileName, &info, *image);
         }
@@ -895,18 +894,18 @@ namespace
         case CODEC_HDR:
             return SaveToHDRFile(*image, fileName);
 
-        #ifdef USE_OPENEXR
+    #ifdef USE_OPENEXR
         case CODEC_EXR:
             return SaveToEXRFile(*image, fileName);
-        #endif
-        #ifdef USE_LIBJPEG
+    #endif
+    #ifdef USE_LIBJPEG
         case CODEC_JPEG:
             return SaveToJPEGFile(*image, fileName);
-        #endif
-        #ifdef USE_LIBPNG
+    #endif
+    #ifdef USE_LIBPNG
         case CODEC_PNG:
             return SaveToPNGFile(*image, fileName);
-        #endif
+    #endif
         default:
             return SaveToWICFile(*image, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(codec)), fileName);
         }
