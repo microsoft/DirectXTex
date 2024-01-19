@@ -327,7 +327,7 @@ HRESULT DirectX::GetMetadataFromJPEGFile(
     catch (const std::system_error& ec)
     {
 #ifdef _WIN32
-        return HRESULT_FROM_WIN32(ec.code().value());
+        return HRESULT_FROM_WIN32(static_cast<unsigned long>(ec.code().value()));
 #else
         return (ec.code().value() == ENOENT) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
 #endif
@@ -367,7 +367,7 @@ HRESULT DirectX::LoadFromJPEGFile(
     {
         image.Release();
 #ifdef _WIN32
-        return HRESULT_FROM_WIN32(ec.code().value());
+        return HRESULT_FROM_WIN32(static_cast<unsigned long>(ec.code().value()));
 #else
         return (ec.code().value() == ENOENT) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
 #endif
@@ -401,7 +401,7 @@ HRESULT DirectX::SaveToJPEGFile(
     catch (const std::system_error& ec)
     {
 #ifdef _WIN32
-        return HRESULT_FROM_WIN32(ec.code().value());
+        return HRESULT_FROM_WIN32(static_cast<unsigned long>(ec.code().value()));
 #else
         return (ec.code().value() == ENOENT) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
 #endif
