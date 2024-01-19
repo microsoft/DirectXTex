@@ -62,12 +62,17 @@
 
 #include "DirectXTex.h"
 
-//Uncomment to add support for OpenEXR (.exr)
-//#define USE_OPENEXR
-
 #ifdef USE_OPENEXR
 // See <https://github.com/Microsoft/DirectXTex/wiki/Adding-OpenEXR> for details
 #include "DirectXTexEXR.h"
+#endif
+
+// See <https://github.com/Microsoft/DirectXTex/wiki/Using-JPEG-PNG-OSS> for details
+#ifdef USE_LIBJPEG
+#include "DirectXTexJPEG.h"
+#endif
+#ifdef USE_LIBPNG
+#include "DirectXTexPNG.h"
 #endif
 
 using namespace DirectX;
@@ -319,25 +324,40 @@ namespace
 #ifdef USE_OPENEXR
 #define CODEC_EXR 0xFFFF0006
 #endif
+#ifdef USE_LIBJPEG
+#define CODEC_JPEG 0xFFFF0007
+#endif
+#ifdef USE_LIBPNG
+#define CODEC_PNG 0xFFFF0008
+#endif
 
     const SValue g_pExtFileTypes[] =
     {
-        { L".BMP",  WIC_CODEC_BMP },
+        { L".BMP",  WIC_CODEC_BMP  },
+    #ifdef USE_LIBJPEG
+        { L".JPG",  CODEC_JPEG     },
+        { L".JPEG", CODEC_JPEG     },
+    #else
         { L".JPG",  WIC_CODEC_JPEG },
         { L".JPEG", WIC_CODEC_JPEG },
-        { L".PNG",  WIC_CODEC_PNG },
-        { L".DDS",  CODEC_DDS },
-        { L".TGA",  CODEC_TGA },
-        { L".HDR",  CODEC_HDR },
+    #endif
+    #ifdef USE_LIBPNG
+        { L".PNG",  CODEC_PNG      },
+    #else
+        { L".PNG",  WIC_CODEC_PNG  },
+    #endif
+        { L".DDS",  CODEC_DDS      },
+        { L".TGA",  CODEC_TGA      },
+        { L".HDR",  CODEC_HDR      },
         { L".TIF",  WIC_CODEC_TIFF },
         { L".TIFF", WIC_CODEC_TIFF },
-        { L".WDP",  WIC_CODEC_WMP },
-        { L".HDP",  WIC_CODEC_WMP },
-        { L".JXR",  WIC_CODEC_WMP },
-        #ifdef USE_OPENEXR
-        { L"EXR",   CODEC_EXR },
-        #endif
-        { nullptr,  CODEC_DDS }
+        { L".WDP",  WIC_CODEC_WMP  },
+        { L".HDP",  WIC_CODEC_WMP  },
+        { L".JXR",  WIC_CODEC_WMP  },
+    #ifdef USE_OPENEXR
+        { L".EXR",  CODEC_EXR      },
+    #endif
+        { nullptr,  CODEC_DDS      }
     };
 
     const SValue g_pFeatureLevels[] =   // valid feature levels for -fl for maximimum size
@@ -833,10 +853,18 @@ namespace
         case CODEC_HDR:
             return SaveToHDRFile(img, szOutputFile);
 
-        #ifdef USE_OPENEXR
+    #ifdef USE_OPENEXR
         case CODEC_EXR:
             return SaveToEXRFile(img, szOutputFile);
-        #endif
+    #endif
+    #ifdef USE_LIBJPEG
+        case CODEC_JPEG:
+            return SaveToJPEGFile(img, szOutputFile);
+    #endif
+    #ifdef USE_LIBPNG
+        case CODEC_PNG:
+            return SaveToPNGFile(img, szOutputFile);
+    #endif
 
         default:
             {
@@ -1590,6 +1618,29 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }
                 }
             #endif
+            #ifdef USE_LIBJPEG
+                else if (_wcsicmp(ext.c_str(), L".jpg") == 0 || _wcsicmp(ext.c_str(), L".jpeg") == 0)
+                {
+                    hr = LoadFromJPEGFile(curpath.c_str(), &info, *image);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                        return 1;
+                    }
+                }
+            #endif
+            #ifdef USE_LIBPNG
+                else if (_wcsicmp(ext.c_str(), L".png") == 0)
+                {
+                    hr = LoadFromPNGFile(curpath.c_str(), &info, *image);
+                    if (FAILED(hr))
+                    {
+                        wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                        return 1;
+                    }
+                }
+            #endif
+
                 else
                 {
                     // WIC shares the same filter values for mode and dither

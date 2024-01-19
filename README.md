@@ -128,3 +128,5 @@ The DirectXTex library is the work of Chuck Walbourn, with contributions from Ma
 Thanks to Paul Penson for his help with the implementation of ``MemoryStreamOnBlob``.
 
 Thanks to Andrew Farrier and Scott Matloff for their on-going help with code reviews.
+
+Thanks to Park DongHa for their contribution of the JPEG/PNG auxiliary functions.

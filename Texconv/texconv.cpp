@@ -64,12 +64,17 @@
 
 #include "DirectXPackedVector.h"
 
-//Uncomment to add support for OpenEXR (.exr)
-//#define USE_OPENEXR
-
 #ifdef USE_OPENEXR
 // See <https://github.com/Microsoft/DirectXTex/wiki/Adding-OpenEXR> for details
 #include "DirectXTexEXR.h"
+#endif
+
+// See <https://github.com/Microsoft/DirectXTex/wiki/Using-JPEG-PNG-OSS> for details
+#ifdef USE_LIBJPEG
+#include "DirectXTexJPEG.h"
+#endif
+#ifdef USE_LIBPNG
+#include "DirectXTexPNG.h"
 #endif
 
 using namespace DirectX;
@@ -457,13 +462,28 @@ namespace
 #ifdef USE_OPENEXR
 #define CODEC_EXR 0xFFFF0008
 #endif
+#ifdef USE_LIBJPEG
+#define CODEC_JPEG 0xFFFF0009
+#endif
+#ifdef USE_LIBPNG
+#define CODEC_PNG 0xFFFF000A
+#endif
 
     const SValue<uint32_t> g_pSaveFileTypes[] =   // valid formats to write to
     {
         { L"bmp",   WIC_CODEC_BMP  },
+#ifdef USE_LIBJPEG
+        { L"jpg",   CODEC_JPEG     },
+        { L"jpeg",  CODEC_JPEG     },
+#else
         { L"jpg",   WIC_CODEC_JPEG },
         { L"jpeg",  WIC_CODEC_JPEG },
+#endif
+#ifdef USE_LIBPNG
+        { L"png",   CODEC_PNG      },
+#else
         { L"png",   WIC_CODEC_PNG  },
+#endif
         { L"dds",   CODEC_DDS      },
         { L"ddx",   CODEC_DDS      },
         { L"tga",   CODEC_TGA      },
@@ -2213,6 +2233,30 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
         }
     #endif
+    #ifdef USE_LIBJPEG
+        else if (_wcsicmp(ext.c_str(), L".jpg") == 0 || _wcsicmp(ext.c_str(), L".jpeg") == 0)
+        {
+            hr = LoadFromJPEGFile(curpath.c_str(), &info, *image);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
+                continue;
+            }
+        }
+    #endif
+    #ifdef USE_LIBPNG
+        else if (_wcsicmp(ext.c_str(), L".png") == 0)
+        {
+            hr = LoadFromPNGFile(curpath.c_str(), &info, *image);
+            if (FAILED(hr))
+            {
+                wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                retVal = 1;
+                continue;
+            }
+        }
+    #endif
         else
         {
             // WIC shares the same filter values for mode and dither
@@ -3801,6 +3845,16 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             #ifdef USE_OPENEXR
             case CODEC_EXR:
                 hr = SaveToEXRFile(img[0], destName.c_str());
+                break;
+            #endif
+            #ifdef USE_LIBJPEG
+            case CODEC_JPEG:
+                hr = SaveToJPEGFile(img[0], destName.c_str());
+                break;
+            #endif
+            #ifdef USE_LIBPNG
+            case CODEC_PNG:
+                hr = SaveToPNGFile(img[0], destName.c_str());
                 break;
             #endif
 

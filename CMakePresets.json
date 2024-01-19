@@ -173,7 +173,7 @@
       "hidden": true
     },
     {
-      "name": "PNG_JPEG",
+      "name": "JPEG_PNG",
       "cacheVariables": {
         "ENABLE_LIBJPEG_SUPPORT": true,
         "ENABLE_LIBPNG_SUPPORT": true
@@ -249,8 +249,8 @@
     { "name": "x64-Debug-EXR"      , "description": "MSVC for x64 (Debug) using VCPKG/OpenEXR", "inherits": [ "base", "x64", "Debug", "MSVC", "VCPKG", "EXR" ] },
     { "name": "x64-Release-EXR"    , "description": "MSVC for x64 (Release) using VCPKG/OpenEXR", "inherits": [ "base", "x64", "Release", "MSVC", "VCPKG", "EXR" ] },
 
-    { "name": "x64-Debug-PNG-JPEG"  , "description": "MSVC for x64 (Debug) using VCPKG/PNG/JPEG", "inherits": [ "base", "x64", "Debug", "MSVC", "VCPKG", "PNG_JPEG" ] },
-    { "name": "x64-Release-PNG-JPEG", "description": "MSVC for x64 (Release) using VCPKG/PNG/JPEG", "inherits": [ "base", "x64", "Release", "MSVC", "VCPKG", "PNG_JPEG" ] },
+    { "name": "x64-Debug-JPEG-PNG"  , "description": "MSVC for x64 (Debug) using VCPKG/PNG/JPEG", "inherits": [ "base", "x64", "Debug", "MSVC", "VCPKG", "JPEG_PNG" ] },
+    { "name": "x64-Release-JPEG-PNG", "description": "MSVC for x64 (Release) using VCPKG/PNG/JPEG", "inherits": [ "base", "x64", "Release", "MSVC", "VCPKG", "JPEG_PNG" ] },
 
     { "name": "x64-Debug-Clang"    , "description": "Clang/LLVM for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "Clang" ] },
     { "name": "x64-Release-Clang"  , "description": "Clang/LLVM for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "Clang" ] },
@@ -271,8 +271,8 @@
     { "name": "x86-Debug-Win7-Clang"  , "description": "Clang/LLVM for x86 (Debug) for Windows 7", "inherits": [ "base", "x86", "Debug", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
     { "name": "x86-Release-Win7-Clang", "description": "Clang/LLVM for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
 
-    { "name": "x64-Debug-Clang-PNG-JPEG"   , "description": "Clang/LLVM for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "Clang", "VCPKG", "PNG_JPEG" ] },
-    { "name": "x64-Release-Clang-PNG-JPEG" , "description": "Clang/LLVM for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "Clang", "VCPKG", "PNG_JPEG" ] },
+    { "name": "x64-Debug-Clang-JPEG-PNG"   , "description": "Clang/LLVM for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "Clang", "VCPKG", "JPEG_PNG" ] },
+    { "name": "x64-Release-Clang-JPEG-PNG" , "description": "Clang/LLVM for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "Clang", "VCPKG", "JPEG_PNG" ] },
 
     { "name": "x64-Debug-GDKX"     , "description": "MSVC for x64 (Debug) Xbox One Extensions", "inherits": [ "base", "x64", "Debug", "GDKX", "MSVC" ] },
     { "name": "x64-Release-GDKX"   , "description": "MSVC for x64 (Release) Xbox One Extensions", "inherits": [ "base", "x64", "Release", "GDKX", "MSVC" ] },
@@ -291,15 +291,15 @@
     { "name": "x86-Debug-MinGW"  , "description": "MinG-W32 (Debug)", "inherits": [ "base", "x86", "Debug", "GNUC", "VCPKG", "MinGW32" ] },
     { "name": "x86-Release-MinGW", "description": "MinG-W32 (Release)", "inherits": [ "base", "x86", "Release", "GNUC", "VCPKG", "MinGW32" ] },
 
-    { "name": "x64-Debug-MinGW-PNG-JPEG"  , "description": "MinG-W64 (Debug)", "inherits": [ "base", "x64", "Debug", "GNUC", "VCPKG", "MinGW64", "PNG_JPEG" ] },
-    { "name": "x64-Release-MinGW-PNG-JPEG", "description": "MinG-W64 (Release)", "inherits": [ "base", "x64", "Release", "GNUC", "VCPKG", "MinGW64", "PNG_JPEG" ] },
-    { "name": "x86-Debug-MinGW-PNG-JPEG"  , "description": "MinG-W32 (Debug)", "inherits": [ "base", "x86", "Debug", "GNUC", "VCPKG", "MinGW32", "PNG_JPEG" ] },
-    { "name": "x86-Release-MinGW-PNG-JPEG", "description": "MinG-W32 (Release)", "inherits": [ "base", "x86", "Release", "GNUC", "VCPKG", "MinGW32", "PNG_JPEG" ] },
+    { "name": "x64-Debug-MinGW-JPEG-PNG"  , "description": "MinG-W64 (Debug)", "inherits": [ "base", "x64", "Debug", "GNUC", "VCPKG", "MinGW64", "JPEG_PNG" ] },
+    { "name": "x64-Release-MinGW-JPEG-PNG", "description": "MinG-W64 (Release)", "inherits": [ "base", "x64", "Release", "GNUC", "VCPKG", "MinGW64", "JPEG_PNG" ] },
+    { "name": "x86-Debug-MinGW-JPEG-PNG"  , "description": "MinG-W32 (Debug)", "inherits": [ "base", "x86", "Debug", "GNUC", "VCPKG", "MinGW32", "JPEG_PNG" ] },
+    { "name": "x86-Release-MinGW-JPEG-PNG", "description": "MinG-W32 (Release)", "inherits": [ "base", "x86", "Release", "GNUC", "VCPKG", "MinGW32", "JPEG_PNG" ] },
 
-    { "name": "x64-Debug-Linux",     "description": "WSL Linux x64 (Debug)", "inherits": [ "base", "x64", "Debug", "VCPKG", "PNG_JPEG" ] },
-    { "name": "x64-Release-Linux",   "description": "WSL Linux x64 (Release)", "inherits": [ "base", "x64", "Release", "VCPKG", "PNG_JPEG" ] },
-    { "name": "arm64-Debug-Linux",   "description": "WSL Linux ARM64 (Debug)", "inherits": [ "base", "ARM64", "Debug", "VCPKG", "PNG_JPEG" ] },
-    { "name": "arm64-Release-Linux", "description": "WSL Linux ARM64 (Release)", "inherits": [ "base", "ARM64", "Release", "VCPKG", "PNG_JPEG" ] },
+    { "name": "x64-Debug-Linux",     "description": "WSL Linux x64 (Debug)", "inherits": [ "base", "x64", "Debug", "VCPKG", "JPEG_PNG" ] },
+    { "name": "x64-Release-Linux",   "description": "WSL Linux x64 (Release)", "inherits": [ "base", "x64", "Release", "VCPKG", "JPEG_PNG" ] },
+    { "name": "arm64-Debug-Linux",   "description": "WSL Linux ARM64 (Debug)", "inherits": [ "base", "ARM64", "Debug", "VCPKG", "JPEG_PNG" ] },
+    { "name": "arm64-Release-Linux", "description": "WSL Linux ARM64 (Release)", "inherits": [ "base", "ARM64", "Release", "VCPKG", "JPEG_PNG" ] },
 
     { "name": "x64-Fuzzing"      , "description": "MSVC for x64 (Release) with ASan", "inherits": [ "base", "x64", "Release", "MSVC", "Fuzzing" ] }
   ],
