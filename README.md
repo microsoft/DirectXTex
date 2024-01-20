@@ -20,12 +20,11 @@ These components are designed to work without requiring any content from the leg
 
   + This contains the DirectXTex library. This includes a full-featured DDS reader and writer including legacy format conversions, a TGA reader and writer, a HDR reader and writer, a WIC-based bitmap reader and writer (BMP, JPEG, PNG, TIFF, and HD Photo), and various texture processing functions. This is intended primarily for tool usage.
 
-> The majority of the header files here are intended for internal implementation
-    of the library only (``BC.h``, ``BCDirectCompute.h``, ``DDS.h``, ``DirectXTexP.h``, etc.). Only ``DirectXTex.h`` and ``DirectXTex.inl`` are meant as the 'public' header for the library.
+> The majority of the header files here are intended for internal implementation of the library only (``BC.h``, ``BCDirectCompute.h``, ``DDS.h``, ``DirectXTexP.h``, etc.). Only ``DirectXTex.h`` and ``DirectXTex.inl`` are meant as the 'public' header for the library.
 
 * ``Auxiliary\``
 
-  + Contains optional source files for the DirectXTex library, such as adapter loading functions using the OpenEXR library.
+  + Contains optional source files for the DirectXTex library, such as adapter loading functions using the OpenEXR library, Xbox texture tiling extensions, etc.
 
 * ``Texconv\``
 
@@ -87,13 +86,7 @@ For the latest version of DirectXTex, bug reports, etc. please visit the project
 
   * In cases where some of the flags overlap, you can use the ``|`` to combine the relevant types: ``TEX_FILTER_FLAGS`` filter modes combine with ``WIC_FLAGS``, ``TEX_FILTER_FLAGS`` sRGB flags combine with ``TEX_PMALPHA_FLAGS`` or ``TEX_COMPRESS_FLAGS``. No other bitwise operators are defined. For example, ```WIC_FLAGS wicFlags = WIC_FLAGS_NONE | TEX_FILTER_CUBIC;```
 
-* Due to the underlying Windows BMP WIC codec, alpha channels are not supported for 16bpp or 32bpp BMP pixel format files. The Windows 8.x and Windows 10 version of the Windows BMP WIC codec does support 32bpp pixel formats with alpha when using the ``BITMAPV5HEADER`` file header. Note the updated WIC is available on Windows 7 SP1 with [KB 2670838](https://walbourn.github.io/directx-11-1-and-windows-7-update/) installed.
-
-* While DXGI 1.0 and DXGI 1.1 include 5:6:5 (``DXGI_FORMAT_B5G6R5_UNORM``) and 5:5:5:1 (``DXGI_FORMAT_B5G5R5A1_UNORM``) pixel format enumerations, the DirectX 10.x and 11.0 Runtimes do not support these formats for use with Direct3D. The DirectX 11.1 runtime, DXGI 1.2, and the WDDM 1.2 driver model fully support 16bpp formats (5:6:5, 5:5:5:1, and 4:4:4:4).
-
 * WICTextureLoader cannot load ``.TGA`` or ``.HDR`` files unless the system has a 3rd party WIC codec installed. You must use the DirectXTex library for TGA/HDR file format support without relying on an add-on WIC codec.
-
-* Loading of 96bpp floating-point TIFF files results in a corrupted image prior to Windows 8. This fix is available on Windows 7 SP1 with KB 2670838 installed.
 
 * The UWP projects and the Win10 classic desktop project include configurations for the ARM64 platform. Building these requires installing the ARM64 toolset.
 

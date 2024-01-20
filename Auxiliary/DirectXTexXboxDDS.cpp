@@ -12,7 +12,7 @@
 
 #include "DDS.h"
 
-#if defined(_GAMING_XBOX) || defined(_USE_GXDK)
+#if defined(_GAMING_XBOX) || defined(USE_XBOX_EXTS)
 #include "gxdk.h"
 #else
 #include "xdk.h"
