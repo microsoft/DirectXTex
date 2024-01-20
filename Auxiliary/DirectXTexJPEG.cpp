@@ -195,6 +195,14 @@ namespace
                 break;
             }
             GetMetadata(metadata);
+            // if the JPEG library doesn't have color space conversion, it should be ERROR_NOT_SUPPORTED
+            if (dec.jpeg_color_space == JCS_YCCK)
+            {
+                // CMYK is the known case
+                if (dec.out_color_space == JCS_CMYK)
+                    return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            }
+
             if (auto hr = image.Initialize2D(metadata.format, metadata.width, metadata.height, metadata.arraySize, metadata.mipLevels); FAILED(hr))
                 return hr;
 
