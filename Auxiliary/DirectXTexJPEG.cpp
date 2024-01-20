@@ -200,7 +200,7 @@ namespace
             {
                 // CMYK is the known case
                 if (dec.out_color_space == JCS_CMYK)
-                    return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                    return HRESULT_E_NOT_SUPPORTED;
             }
 
             if (auto hr = image.Initialize2D(metadata.format, metadata.width, metadata.height, metadata.arraySize, metadata.mipLevels); FAILED(hr))
