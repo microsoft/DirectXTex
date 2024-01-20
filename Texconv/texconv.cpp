@@ -80,7 +80,11 @@
 // See <https://github.com/microsoft/DirectXTex/wiki/DirectXTexXbox> for details
 #include "DirectXTexXbox.h"
 
+#ifdef _USE_GXDK
 #include <gxdk.h>
+#else
+#include <xdk.h>
+#endif
 #endif
 
 using namespace DirectX;

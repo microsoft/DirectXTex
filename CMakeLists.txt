@@ -266,7 +266,7 @@ if(BUILD_XBOX_EXTS_SCARLETT AND WIN32)
             IMPORTED_IMPLIB "${GameDK_DIR}/GXDK/toolKit/lib/amd64/Scarlett/xg_xs.lib"
             MAP_IMPORTED_CONFIG_MINSIZEREL ""
             MAP_IMPORTED_CONFIG_RELWITHDEBINFO ""
-            INTERFACE_COMPILE_DEFINITIONS "_USE_SCARLETT"
+            INTERFACE_COMPILE_DEFINITIONS "_USE_GXDK;_USE_SCARLETT"
             INTERFACE_INCLUDE_DIRECTORIES "${GameDK_DIR}/GXDK/toolKit/include;${GameDK_DIR}/GXDK/toolKit/include/Scarlett")
 
         target_compile_definitions(${PROJECT_NAME} PRIVATE USE_XBOX_EXTS)
@@ -284,6 +284,7 @@ elseif(BUILD_XBOX_EXTS_XBOXONE AND WIN32)
             IMPORTED_IMPLIB "${GameDK_DIR}/GXDK/toolKit/lib/amd64/XboxOne/xg.lib"
             MAP_IMPORTED_CONFIG_MINSIZEREL ""
             MAP_IMPORTED_CONFIG_RELWITHDEBINFO ""
+            INTERFACE_COMPILE_DEFINITIONS "_USE_GXDK"
             INTERFACE_INCLUDE_DIRECTORIES "${GameDK_DIR}/GXDK/toolKit/include;${GameDK_DIR}/GXDK/toolKit/include/XboxOne")
 
         target_compile_definitions(${PROJECT_NAME} PRIVATE USE_XBOX_EXTS)
