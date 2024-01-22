@@ -259,19 +259,50 @@ endif()
 if(BUILD_XBOX_EXTS_SCARLETT AND WIN32)
     if (EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
         message(STATUS "Building Xbox extensions for Xbox Series X|S")
-        target_compile_definitions(${PROJECT_NAME} PRIVATE _USE_GXDK _USE_SCARLETT)
-        target_include_directories(${PROJECT_NAME} PRIVATE ${GameDK_DIR}/GXDK/toolKit/include ${GameDK_DIR}/GXDK/toolKit/include/Scarlett)
+
+        add_library(Xbox::GDKX SHARED IMPORTED)
+        set_target_properties(Xbox::GDKX PROPERTIES
+            IMPORTED_LOCATION "${GameDK_DIR}/GXDK/bin/Scarlett/xg_xs.dll"
+            IMPORTED_IMPLIB "${GameDK_DIR}/GXDK/toolKit/lib/amd64/Scarlett/xg_xs.lib"
+            MAP_IMPORTED_CONFIG_MINSIZEREL ""
+            MAP_IMPORTED_CONFIG_RELWITHDEBINFO ""
+            INTERFACE_COMPILE_DEFINITIONS "_USE_GXDK;_USE_SCARLETT"
+            INTERFACE_INCLUDE_DIRECTORIES "${GameDK_DIR}/GXDK/toolKit/include;${GameDK_DIR}/GXDK/toolKit/include/Scarlett")
+
+        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_XBOX_EXTS)
+        target_link_libraries(${PROJECT_NAME} PUBLIC Xbox::GDKX)
     else()
         message(FATAL_ERROR "Building Xbox extensions requires GameDKLatest")
     endif()
 elseif(BUILD_XBOX_EXTS_XBOXONE AND WIN32)
     if (EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
         message(STATUS "Building Xbox extensions for XboxOne using the Microsoft GDK")
-        target_compile_definitions(${PROJECT_NAME} PRIVATE _USE_GXDK)
-        target_include_directories(${PROJECT_NAME} PRIVATE ${GameDK_DIR}/GXDK/toolKit/include ${GameDK_DIR}/GXDK/toolKit/include/XboxOne)
+
+        add_library(Xbox::GDKX SHARED IMPORTED)
+        set_target_properties(Xbox::GDKX PROPERTIES
+            IMPORTED_LOCATION "${GameDK_DIR}/GXDK/bin/XboxOne/xg.dll"
+            IMPORTED_IMPLIB "${GameDK_DIR}/GXDK/toolKit/lib/amd64/XboxOne/xg.lib"
+            MAP_IMPORTED_CONFIG_MINSIZEREL ""
+            MAP_IMPORTED_CONFIG_RELWITHDEBINFO ""
+            INTERFACE_COMPILE_DEFINITIONS "_USE_GXDK"
+            INTERFACE_INCLUDE_DIRECTORIES "${GameDK_DIR}/GXDK/toolKit/include;${GameDK_DIR}/GXDK/toolKit/include/XboxOne")
+
+        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_XBOX_EXTS)
+        target_link_libraries(${PROJECT_NAME} PUBLIC Xbox::GDKX)
+
     elseif (EXISTS "${XboxOneXDK_DIR}/PC/include/xdk.h")
         message(STATUS "Building Xbox extensions for XboxOne using the Xbox One XDK")
-        target_include_directories(${PROJECT_NAME} PRIVATE ${XboxOneXDK_DIR}/PC/include)
+
+        add_library(Xbox::XDK SHARED IMPORTED)
+        set_target_properties(Xbox::XDK PROPERTIES
+            IMPORTED_LOCATION "${XboxOneXDK_DIR}/bin/xg.dll"
+            IMPORTED_IMPLIB "${XboxOneXDK_DIR}/PC/lib/amd64/xg.lib"
+            MAP_IMPORTED_CONFIG_MINSIZEREL ""
+            MAP_IMPORTED_CONFIG_RELWITHDEBINFO ""
+            INTERFACE_INCLUDE_DIRECTORIES "${XboxOneXDK_DIR}/PC/include")
+
+        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_XBOX_EXTS)
+        target_link_libraries(${PROJECT_NAME} PUBLIC Xbox::XDK)
     else()
         message(FATAL_ERROR "Building Xbox extensions requires GameDKLatest or XboxOneXDKLatest")
     endif()
@@ -477,6 +508,19 @@ if(BUILD_TOOLS AND WIN32)
       target_link_libraries(${t} PRIVATE PNG::PNG)
       target_compile_definitions(${t} PRIVATE USE_LIBPNG)
     endforeach()
+  endif()
+  if(BUILD_XBOX_EXTS_SCARLETT OR BUILD_XBOX_EXTS_XBOXONE)
+    target_include_directories(texconv PRIVATE Auxiliary)
+    target_compile_definitions(texconv PRIVATE USE_XBOX_EXTS)
+    target_link_libraries(texconv PUBLIC $<TARGET_NAME_IF_EXISTS:Xbox::GDKX> $<TARGET_NAME_IF_EXISTS:Xbox::XDK>)
+
+    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.21")
+      add_custom_command(TARGET texconv POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy
+          $<TARGET_RUNTIME_DLLS:texconv> $<TARGET_FILE_DIR:texconv>
+          COMMAND_EXPAND_LISTS
+          )
+    endif()
   endif()
 endif()
 
