@@ -20,7 +20,7 @@ option(BUILD_TOOLS "Build tex command-line tools" ON)
 option(BUILD_SAMPLE "Build DDSView sample" ON)
 
 # Includes the functions for Direct3D 11 resources and DirectCompute compression
-option(BUILD_DX11 "Build with DirectX11 Runtime support" ON)
+option(BUILD_DX11 "Build with DirectX11 Runtime support (requires fxc.exe)" ON)
 
 # Includes the functions for creating Direct3D 12 resources at runtime
 option(BUILD_DX12 "Build with DirectX12 Runtime support" ON)
