@@ -88,7 +88,7 @@ if(WINDOWS_STORE OR (DEFINED XBOX_CONSOLE_TARGET))
    set(BUILD_SAMPLE OFF)
 endif()
 
-if(DEFINED XBOX_CONSOLE_TARGET)
+if((DEFINED XBOX_CONSOLE_TARGET) AND (NOT (XBOX_CONSOLE_TARGET STREQUAL "durango")))
   set(BUILD_DX11 OFF)
 endif()
 
@@ -648,12 +648,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             list(APPEND WarningsLib "-Wno-reserved-identifier")
         endif()
     endif()
-
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)
-        list(APPEND WarningsLib "-Wno-unsafe-buffer-usage")
-    endif()
-    target_compile_options(${PROJECT_NAME} PRIVATE ${WarningsLib})
-
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)
         list(APPEND WarningsLib "-Wno-unsafe-buffer-usage")
     endif()
