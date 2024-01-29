@@ -471,10 +471,6 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   target_link_libraries(texconv PRIVATE ${PROJECT_NAME} ole32.lib shell32.lib version.lib)
   source_group(texconv REGULAR_EXPRESSION Texconv/*.*)
   list(APPEND TOOL_EXES texconv)
-
-  if(BC_USE_OPENMP)
-    target_link_libraries(texconv PRIVATE OpenMP::OpenMP_CXX)
-  endif()
 endif()
 
 if(BUILD_TOOLS AND WIN32)
@@ -712,12 +708,11 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         endif()
     endif()
 
-    if(BC_USE_OPENMP)
-        # OpenMP in MSVC is not compatible with /permissive unless you disable two-phase lookup
-        target_compile_options(${PROJECT_NAME} PRIVATE /Zc:twoPhase-)
-        if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
-          target_compile_options(texconv PRIVATE /Zc:twoPhase-)
-        endif()
+    if(OpenMP_CXX_FOUND)
+        # OpenMP in MSVC is not compatible with /permissive- unless you disable two-phase lookup
+        foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+          target_compile_options(${t} PRIVATE /Zc:twoPhase-)
+        endforeach()
     endif()
 
     set(WarningsEXE "/wd4061" "/wd4062" "/wd4365" "/wd4514" "/wd4625" "/wd4626" "/wd4627" "/wd4668" "/wd4710" "/wd4711" "/wd4751" "/wd4820" "/wd5026" "/wd5027" "/wd5039" "/wd5045" "/wd5219")
