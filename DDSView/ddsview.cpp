@@ -25,7 +25,9 @@
 
 #include <DirectXMath.h>
 
+#ifdef _MSC_VER
 #pragma warning(disable : 4619 4616 26812)
+#endif
 
 #include "DirectXTex.h"
 
@@ -103,7 +105,9 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void Render();
 
 //--------------------------------------------------------------------------------------
+#ifdef _MSC_VER
 #pragma warning( suppress : 6262 )
+#endif
 int WINAPI wWinMain(
     _In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE /*hPrevInstance*/,
@@ -519,12 +523,12 @@ HRESULT InitDevice(const TexMetadata& mdata)
     case TEX_DIMENSION_TEXTURE1D:
         if (mdata.arraySize > 1)
         {
-            pshader = g_PS_1DArray;
+            pshader = (BYTE*) g_PS_1DArray;
             pshader_size = sizeof(g_PS_1DArray);
         }
         else
         {
-            pshader = g_PS_1D;
+            pshader = (BYTE*) g_PS_1D;
             pshader_size = sizeof(g_PS_1D);
         }
         is1D = true;
@@ -533,24 +537,24 @@ HRESULT InitDevice(const TexMetadata& mdata)
     case TEX_DIMENSION_TEXTURE2D:
         if (mdata.miscFlags & TEX_MISC_TEXTURECUBE)
         {
-            pshader = g_PS_Cube;
+            pshader = (BYTE*) g_PS_Cube;
             pshader_size = sizeof(g_PS_Cube);
             isCubeMap = true;
         }
         else if (mdata.arraySize > 1)
         {
-            pshader = g_PS_2DArray;
+            pshader = (BYTE*) g_PS_2DArray;
             pshader_size = sizeof(g_PS_2DArray);
         }
         else
         {
-            pshader = g_PS_2D;
+            pshader = (BYTE*) g_PS_2D;
             pshader_size = sizeof(g_PS_2D);
         }
         break;
 
     case TEX_DIMENSION_TEXTURE3D:
-        pshader = g_PS_3D;
+        pshader = (BYTE*) g_PS_3D;
         pshader_size = sizeof(g_PS_3D);
         break;
 
