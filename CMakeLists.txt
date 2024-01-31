@@ -206,29 +206,29 @@ endif()
 macro(call_mingw_fxc work_dir input_filename output_filename entry_point var_name semantic _targetname)
     add_custom_command(
         COMMAND ${CMAKE_COMMAND} -DWORK_DIR=${work_dir} 
-		    -DINPUT_FILENAME=${input_filename}  -DOUTPUT_FILENAME=${output_filename}
-		    -DENTRY_POINT=${entry_point} -DVAR_NAME=${var_name} -DSEMANTIC=${semantic}
-			-P ${PROJECT_SOURCE_DIR}/build/mingw-compile-fxc-for-inc.cmake
-		COMMENT "Generating HLSL shader..."
-		DEPENDS ${work_dir}/${input_filename}
-		OUTPUT ${_targetname})
+            -DINPUT_FILENAME=${input_filename}  -DOUTPUT_FILENAME=${output_filename}
+            -DENTRY_POINT=${entry_point} -DVAR_NAME=${var_name} -DSEMANTIC=${semantic}
+            -P ${PROJECT_SOURCE_DIR}/build/mingw-compile-fxc-for-inc.cmake
+        COMMENT "Generating HLSL shader..."
+        DEPENDS ${work_dir}/${input_filename}
+        OUTPUT ${_targetname})
 endmacro()
 
 macro(call_mingw_fxc_src work_dir input_filename output_filename entry_point var_name semantic)
    set(_fname ${COMPILED_SHADERS}/${output_filename}_${entry_point}.inc)
    call_mingw_fxc("${work_dir}" "${input_filename}"
       "${output_filename}" "${entry_point}"
-	  "${var_name}" "${semantic}" "${_fname}")
+      "${var_name}" "${semantic}" "${_fname}")
    list(APPEND LIBRARY_SOURCES "${_fname}")     
 endmacro()
 
 macro(call_mingw_fxc_dx11 work_dir input_filename entry_point )
      call_mingw_fxc_src("${work_dir}" "${input_filename}.hlsl" 
-	    "${input_filename}_${entry_point}" "${entry_point}" 
-		"${input_filename}_${entry_point}" "cs_5_0")
+        "${input_filename}_${entry_point}" "${entry_point}" 
+        "${input_filename}_${entry_point}" "cs_5_0")
 	 call_mingw_fxc_src("${work_dir}" "${input_filename}.hlsl" 
-	    "${input_filename}_${entry_point}_cs40" 
-	    "${entry_point}" "${input_filename}_${entry_point}" "cs_4_0")
+        "${input_filename}_${entry_point}_cs40" 
+        "${entry_point}" "${input_filename}_${entry_point}" "cs_4_0")
 endmacro()
 
 if(BUILD_DX11 AND WIN32)
@@ -586,7 +586,7 @@ endmacro()
       if(USE_PREBUILT_SHADERS)
           message(FATAL_ERROR "ERROR: Using prebuilt shaders requires the COMPILED_DDSVIEW_SHADERS variable is set")
       endif()
-      set(COMPILED_DDSVIEW_SHADERS ${CMAKE_CURRENT_BINARY_DIR}/Shadersd/Compiled)
+      set(COMPILED_DDSVIEW_SHADERS ${CMAKE_CURRENT_BINARY_DIR}/Shaders/Compiled)
       file(MAKE_DIRECTORY ${COMPILED_DDSVIEW_SHADERS})
   else()
       file(TO_CMAKE_PATH ${COMPILED_DDSVIEW_SHADERS} COMPILED_DDSVIEW_SHADERS)
