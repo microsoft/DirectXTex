@@ -88,7 +88,7 @@ if(WINDOWS_STORE OR (DEFINED XBOX_CONSOLE_TARGET))
    set(BUILD_SAMPLE OFF)
 endif()
 
-if((DEFINED XBOX_CONSOLE_TARGET) AND (NOT (XBOX_CONSOLE_TARGET STREQUAL "durango")))
+if(DEFINED XBOX_CONSOLE_TARGET)
   set(BUILD_DX11 OFF)
 endif()
 
@@ -203,29 +203,31 @@ if(ENABLE_LIBPNG_SUPPORT)
     list(APPEND LIBRARY_SOURCES Auxiliary/DirectXTexPNG.cpp)
 endif()
 
-macro(call_mingw_fxc work_dir input_filename output_filename entry_point var_name semantic)
-	execute_process(
-        COMMAND fxc -E ${entry_point} -T ${semantic} -Vn${var_name} -Fh${output_filename}.inc ${input_filename}
-        WORKING_DIRECTORY "${work_dir}"
-		OUTPUT_VARIABLE _stdout
-		RESULT_VARIABLE _res)
-	if(NOT(${_res} EQUAL 0))
-        message(FATAL_ERROR ${_stdout})
-	endif()
-	#fpr some reason, the -Vn parameter did not work.
-	file(READ ${work_dir}/${output_filename}.inc BUFFER)
-	string(REPLACE "${entry_point}" "${var_name}" BUFFER "${BUFFER}")
-	string(REPLACE "\}" "\}\;" BUFFER "${BUFFER}")
-	file(WRITE ${work_dir}/${output_filename}.inc ${BUFFER})	
+macro(call_mingw_fxc work_dir input_filename output_filename entry_point var_name semantic _targetname)
+    add_custom_command(
+        COMMAND ${CMAKE_COMMAND} -DWORK_DIR=${work_dir} 
+		    -DINPUT_FILENAME=${input_filename}  -DOUTPUT_FILENAME=${output_filename}
+		    -DENTRY_POINT=${entry_point} -DVAR_NAME=${var_name} -DSEMANTIC=${semantic}
+			-P ${PROJECT_SOURCE_DIR}/build/mingw-compile-fxc-for-inc.cmake
+		DEPENDS ${work_dir}/${input_filename}
+		OUTPUT ${_targetname})
 endmacro()
 
-macro(call_mingw_fxc_fx work_dir input_filename output_filename entry_point var_name semantic)
-	call_mingw_fxc("${work_dir}" "${input_filename}.fx" "${output_filename}" "${entry_point}" "${var_name}" "${semantic}")
+macro(call_mingw_fxc_src work_dir input_filename output_filename entry_point var_name semantic)
+   set(_fname ${COMPILED_SHADERS}/${output_filename}_${entry_point}.inc)
+   call_mingw_fxc("${work_dir}" "${input_filename}"
+      "${output_filename}" "${entry_point}"
+	  "${var_name}" "${semantic}" "${_fname}")
+   list(APPEND LIBRARY_SOURCES "${_fname}")     
 endmacro()
 
 macro(call_mingw_fxc_dx11 work_dir input_filename entry_point )
-     call_mingw_fxc("${work_dir}" "${input_filename}.hlsl" "${input_filename}_${entry_point}" "${entry_point}" "${input_filename}_${entry_point}" "cs_5_0")
-	 call_mingw_fxc("${work_dir}" "${input_filename}.hlsl" "${input_filename}_${entry_point}_cs40" "${entry_point}" "${input_filename}_${entry_point}" "cs_4_0")
+     call_mingw_fxc_src("${work_dir}" "${input_filename}.hlsl" 
+	    "${input_filename}_${entry_point}" "${entry_point}" 
+		"${input_filename}_${entry_point}" "cs_5_0")
+	 call_mingw_fxc_src("${work_dir}" "${input_filename}.hlsl" 
+	    "${input_filename}_${entry_point}_cs40" 
+	    "${entry_point}" "${input_filename}_${entry_point}" "cs_4_0")
 endmacro()
 
 if(BUILD_DX11 AND WIN32)
@@ -241,7 +243,6 @@ if(BUILD_DX11 AND WIN32)
 
     if(NOT USE_PREBUILT_SHADERS)
 	    if(MINGW)
-		    message(STATUS "Generating HLSL shaders...")
 		    file(COPY ${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/BC7Encode.hlsl DESTINATION ${COMPILED_SHADERS})
 			file(COPY ${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/BC6HEncode.hlsl DESTINATION ${COMPILED_SHADERS})
 		
@@ -253,7 +254,6 @@ if(BUILD_DX11 AND WIN32)
 			call_mingw_fxc_dx11(${COMPILED_SHADERS} BC6HEncode TryModeG10CS)
 			call_mingw_fxc_dx11(${COMPILED_SHADERS} BC6HEncode TryModeLE10CS)
 			call_mingw_fxc_dx11(${COMPILED_SHADERS} BC6HEncode EncodeBlockCS)
-			list(APPEND LIBRARY_SOURCES ${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc)
 		else()
          	list(APPEND LIBRARY_SOURCES ${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc)
 		
@@ -512,6 +512,10 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   target_link_libraries(texconv PRIVATE ${PROJECT_NAME} ole32.lib shell32.lib version.lib)
   source_group(texconv REGULAR_EXPRESSION Texconv/*.*)
   list(APPEND TOOL_EXES texconv)
+
+  if(BC_USE_OPENMP)
+    target_link_libraries(texconv PRIVATE OpenMP::OpenMP_CXX)
+  endif()
 endif()
 
 if(BUILD_TOOLS AND WIN32)
@@ -562,6 +566,12 @@ if(BUILD_TOOLS AND WIN32)
 endif()
 
 #--- DDSView sample
+macro(call_mingw_fxc_fx work_dir input_filename output_filename entry_point var_name semantic)
+   call_mingw_fxc("${work_dir}" "${input_filename}.fx"
+      "${output_filename}" "${entry_point}"
+	  "${var_name}" "${semantic}" "${work_dir}/${output_filename}.inc")
+endmacro()
+
 if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32)
   list(APPEND TOOL_EXES ddsview)
 
@@ -587,12 +597,11 @@ if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32)
   if(NOT USE_PREBUILT_SHADERS)
     if(MINGW)
         file(COPY ${PROJECT_SOURCE_DIR}/DDSView/ddsview.fx DESTINATION ${COMPILED_DDSVIEW_SHADERS})		
-        message(STATUS "Generating HLSL shaders for DDSView...")
 		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_vs VS g_VS vs_4_1)
 		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps1D PS_1D g_PS_1D ps_4_1)
 		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps1Darray PS_1DArray g_PS_1DArray ps_4_1)
 		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps2D PS_2D g_PS_2D ps_4_1)
-		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps2Darray PS_2DArray g_PS_2DArray ps_4_1)
+		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps2Darray PS_2DArray g_PS_2DArray ps_4_1)#		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps3D PS_3D g_PS_3D ps_4_1)
 		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps3D PS_3D g_PS_3D ps_4_1)
 		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_psCube PS_Cube g_PS_Cube ps_4_1)
 	else()
@@ -697,6 +706,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             list(APPEND WarningsLib "-Wno-reserved-identifier")
         endif()
     endif()
+
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)
+        list(APPEND WarningsLib "-Wno-unsafe-buffer-usage")
+    endif()
+    target_compile_options(${PROJECT_NAME} PRIVATE ${WarningsLib})
+
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)
         list(APPEND WarningsLib "-Wno-unsafe-buffer-usage")
     endif()
@@ -751,21 +766,16 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.35)
         foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-          target_compile_options(${t} PRIVATE /Zc:checkGwOdr)
+          target_compile_options(${t} PRIVATE /Zc:checkGwOdr $<$<VERSION_GREATER_EQUAL:${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION},10.0.22000>:/Zc:templateScope>)
         endforeach()
-
-        if(NOT (DEFINED XBOX_CONSOLE_TARGET))
-          foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-            target_compile_options(${t} PRIVATE $<$<VERSION_GREATER_EQUAL:${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION},10.0.22000>:/Zc:templateScope>)
-          endforeach()
-        endif()
     endif()
 
-    if(OpenMP_CXX_FOUND)
-        # OpenMP in MSVC is not compatible with /permissive- unless you disable two-phase lookup
-        foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-          target_compile_options(${t} PRIVATE /Zc:twoPhase-)
-        endforeach()
+    if(BC_USE_OPENMP)
+        # OpenMP in MSVC is not compatible with /permissive unless you disable two-phase lookup
+        target_compile_options(${PROJECT_NAME} PRIVATE /Zc:twoPhase-)
+        if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
+          target_compile_options(texconv PRIVATE /Zc:twoPhase-)
+        endif()
     endif()
 
     set(WarningsEXE "/wd4061" "/wd4062" "/wd4365" "/wd4514" "/wd4625" "/wd4626" "/wd4627" "/wd4668" "/wd4710" "/wd4711" "/wd4751" "/wd4820" "/wd5026" "/wd5027" "/wd5039" "/wd5045" "/wd5219")
@@ -815,18 +825,19 @@ endif()
 
 if(BUILD_TOOLS AND (NOT VCPKG_TOOLCHAIN))
     foreach(t IN LISTS TOOL_EXES)
-      install(TARGETS ${t} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+      install(TARGETS ${t}
+         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
     endforeach()
 endif()
 
 #--- Test suite
-if(WIN32 AND (NOT WINDOWS_STORE) AND (NOT (DEFINED XBOX_CONSOLE_TARGET)))
-    include(CTest)
-    if(BUILD_TESTING AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/Tests/CMakeLists.txt"))
-        enable_testing()
-        add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Tests)
-    elseif(BUILD_FUZZING AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/Tests/fuzzloaders/CMakeLists.txt"))
-        message(STATUS "Building for fuzzing")
-        add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Tests/fuzzloaders)
-  endif()
+include(CTest)
+if(BUILD_TESTING AND WIN32 AND (NOT WINDOWS_STORE) AND (NOT (DEFINED XBOX_CONSOLE_TARGET))
+   AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/Tests/CMakeLists.txt"))
+  enable_testing()
+  add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Tests)
+elseif(BUILD_FUZZING AND WIN32 AND (NOT WINDOWS_STORE) AND (NOT (DEFINED XBOX_CONSOLE_TARGET))
+   AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/Tests/fuzzloaders/CMakeLists.txt"))
+  message(STATUS "Building for fuzzing")
+  add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Tests/fuzzloaders)
 endif()
