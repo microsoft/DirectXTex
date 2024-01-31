@@ -566,33 +566,30 @@ if(BUILD_TOOLS AND WIN32)
 endif()
 
 #--- DDSView sample
-macro(call_mingw_fxc_fx work_dir input_filename output_filename entry_point var_name semantic)
-   call_mingw_fxc("${work_dir}" "${input_filename}.fx"
-      "${output_filename}" "${entry_point}"
-	  "${var_name}" "${semantic}" "${work_dir}/${output_filename}.inc")
-endmacro()
 
 if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32)
   list(APPEND TOOL_EXES ddsview)
-
+  Set(DDS_SRC_L
+    DDSView/ddsview.cpp
+    DDSView/ddsview.rc)
+  
+macro(call_mingw_fxc_fx work_dir input_filename output_filename entry_point var_name semantic)
+  set(_fname ${work_dir}/${output_filename})
+  call_mingw_fxc("${work_dir}" "${input_filename}.fx"
+      "${output_filename}" "${entry_point}"
+	  "${var_name}" "${semantic}" "${_fname}")
+  list(APPEND DDS_SRC_L "${_fname}")
+endmacro()
+  
   if(NOT COMPILED_DDSVIEW_SHADERS)
       if(USE_PREBUILT_SHADERS)
           message(FATAL_ERROR "ERROR: Using prebuilt shaders requires the COMPILED_DDSVIEW_SHADERS variable is set")
       endif()
-      set(COMPILED_DDSVIEW_SHADERS ${CMAKE_CURRENT_BINARY_DIR}/Shaders/Compiled)
+      set(COMPILED_DDSVIEW_SHADERS ${CMAKE_CURRENT_BINARY_DIR}/Shadersd/Compiled)
       file(MAKE_DIRECTORY ${COMPILED_DDSVIEW_SHADERS})
   else()
       file(TO_CMAKE_PATH ${COMPILED_DDSVIEW_SHADERS} COMPILED_DDSVIEW_SHADERS)
   endif()
-
-  add_executable(ddsview WIN32
-    DDSView/ddsview.cpp
-    DDSView/ddsview.rc
-    ${COMPILED_DDSVIEW_SHADERS}/ddsview_ps1D.inc)
-  target_link_libraries(ddsview PRIVATE ${PROJECT_NAME} d3d11.lib ole32.lib)
-  source_group(ddsview REGULAR_EXPRESSION DDSView/*.*)
-
-  target_include_directories(ddsview PRIVATE ${COMPILED_DDSVIEW_SHADERS})
 
   if(NOT USE_PREBUILT_SHADERS)
     if(MINGW)
@@ -613,8 +610,14 @@ if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32)
             COMMAND COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_DDSVIEW_SHADERS}" hlsl.cmd > "${COMPILED_DDSVIEW_SHADERS}/hlsl.log"
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DDSView"
             USES_TERMINAL)
-	endif()
+		list(APPEND ${COMPILED_DDSVIEW_SHADERS}/ddsview_ps1D.inc)
+	endif()	
   endif()
+  add_executable(ddsview WIN32 ${DDS_SRC_L})
+  target_link_libraries(ddsview PRIVATE ${PROJECT_NAME} d3d11.lib ole32.lib)
+  source_group(ddsview REGULAR_EXPRESSION DDSView/*.*)
+
+  target_include_directories(ddsview PRIVATE ${COMPILED_DDSVIEW_SHADERS})  
 endif()
 
 if(directxmath_FOUND)
