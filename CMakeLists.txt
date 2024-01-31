@@ -209,6 +209,7 @@ macro(call_mingw_fxc work_dir input_filename output_filename entry_point var_nam
 		    -DINPUT_FILENAME=${input_filename}  -DOUTPUT_FILENAME=${output_filename}
 		    -DENTRY_POINT=${entry_point} -DVAR_NAME=${var_name} -DSEMANTIC=${semantic}
 			-P ${PROJECT_SOURCE_DIR}/build/mingw-compile-fxc-for-inc.cmake
+		COMMENT "Generating HLSL shader..."
 		DEPENDS ${work_dir}/${input_filename}
 		OUTPUT ${_targetname})
 endmacro()
