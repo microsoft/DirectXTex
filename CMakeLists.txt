@@ -203,30 +203,30 @@ if(ENABLE_LIBPNG_SUPPORT)
     list(APPEND LIBRARY_SOURCES Auxiliary/DirectXTexPNG.cpp)
 endif()
 
-macro(call_mingw_fxc work_dir input_filename output_filename entry_point var_name semantic _targetname)
+macro(call_fxc work_dir input_filename output_filename entry_point var_name semantic _targetname)
     add_custom_command(
         COMMAND ${CMAKE_COMMAND} -DWORK_DIR=${work_dir} 
             -DINPUT_FILENAME=${input_filename}  -DOUTPUT_FILENAME=${output_filename}
             -DENTRY_POINT=${entry_point} -DVAR_NAME=${var_name} -DSEMANTIC=${semantic}
-            -P ${PROJECT_SOURCE_DIR}/build/mingw-compile-fxc-for-inc.cmake
-        COMMENT "Generating HLSL shader..."
+            -P ${PROJECT_SOURCE_DIR}/build/hlsl_compile.cmake
+        COMMENT "Generating HLSL shader ${output_filename}..."
         DEPENDS ${work_dir}/${input_filename}
         OUTPUT ${_targetname})
 endmacro()
 
-macro(call_mingw_fxc_src work_dir input_filename output_filename entry_point var_name semantic)
+macro(call_fxc_lib_source work_dir input_filename output_filename entry_point var_name semantic)
    set(_fname ${COMPILED_SHADERS}/${output_filename}_${entry_point}.inc)
-   call_mingw_fxc("${work_dir}" "${input_filename}"
+   call_fxc("${work_dir}" "${input_filename}"
       "${output_filename}" "${entry_point}"
       "${var_name}" "${semantic}" "${_fname}")
    list(APPEND LIBRARY_SOURCES "${_fname}")     
 endmacro()
 
-macro(call_mingw_fxc_dx11 work_dir input_filename entry_point )
-     call_mingw_fxc_src("${work_dir}" "${input_filename}.hlsl" 
+macro(call_fxc_both_cs5_cs4 work_dir input_filename entry_point )
+     call_fxc_lib_source("${work_dir}" "${input_filename}.hlsl" 
         "${input_filename}_${entry_point}" "${entry_point}" 
         "${input_filename}_${entry_point}" "cs_5_0")
-	 call_mingw_fxc_src("${work_dir}" "${input_filename}.hlsl" 
+	 call_fxc_lib_source("${work_dir}" "${input_filename}.hlsl" 
         "${input_filename}_${entry_point}_cs40" 
         "${entry_point}" "${input_filename}_${entry_point}" "cs_4_0")
 endmacro()
@@ -243,30 +243,17 @@ if(BUILD_DX11 AND WIN32)
     endif()
 
     if(NOT USE_PREBUILT_SHADERS)
-	    if(MINGW)
-		    file(COPY ${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/BC7Encode.hlsl DESTINATION ${COMPILED_SHADERS})
-			file(COPY ${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/BC6HEncode.hlsl DESTINATION ${COMPILED_SHADERS})
-		
-		    call_mingw_fxc_dx11(${COMPILED_SHADERS} BC7Encode TryMode456CS)	
-			call_mingw_fxc_dx11(${COMPILED_SHADERS} BC7Encode TryMode137CS)
-			call_mingw_fxc_dx11(${COMPILED_SHADERS} BC7Encode TryMode02CS)
-			call_mingw_fxc_dx11(${COMPILED_SHADERS} BC7Encode EncodeBlockCS)
-			
-			call_mingw_fxc_dx11(${COMPILED_SHADERS} BC6HEncode TryModeG10CS)
-			call_mingw_fxc_dx11(${COMPILED_SHADERS} BC6HEncode TryModeLE10CS)
-			call_mingw_fxc_dx11(${COMPILED_SHADERS} BC6HEncode EncodeBlockCS)
-		else()
-         	list(APPEND LIBRARY_SOURCES ${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc)
-		
-            add_custom_command(
-              OUTPUT "${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc"
-              MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
-              DEPENDS ${SHADER_SOURCES}
-              COMMENT "Generating HLSL shaders..."
-              COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_SHADERS}" CompileShaders.cmd > "${COMPILED_SHADERS}/compileshaders.log"
-              WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
-              USES_TERMINAL)
-		endif()
+        file(COPY ${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/BC7Encode.hlsl DESTINATION ${COMPILED_SHADERS})
+        file(COPY ${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/BC6HEncode.hlsl DESTINATION ${COMPILED_SHADERS})
+
+        call_fxc_both_cs5_cs4(${COMPILED_SHADERS} BC7Encode TryMode456CS)	
+        call_fxc_both_cs5_cs4(${COMPILED_SHADERS} BC7Encode TryMode137CS)
+        call_fxc_both_cs5_cs4(${COMPILED_SHADERS} BC7Encode TryMode02CS)
+        call_fxc_both_cs5_cs4(${COMPILED_SHADERS} BC7Encode EncodeBlockCS)
+	
+        call_fxc_both_cs5_cs4(${COMPILED_SHADERS} BC6HEncode TryModeG10CS)
+        call_fxc_both_cs5_cs4(${COMPILED_SHADERS} BC6HEncode TryModeLE10CS)
+        call_fxc_both_cs5_cs4(${COMPILED_SHADERS} BC6HEncode EncodeBlockCS)
     endif()
 endif()
 
@@ -574,9 +561,9 @@ if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32)
     DDSView/ddsview.cpp
     DDSView/ddsview.rc)
   
-macro(call_mingw_fxc_fx work_dir input_filename output_filename entry_point var_name semantic)
+macro(call_fxc_fx work_dir input_filename output_filename entry_point var_name semantic)
   set(_fname ${work_dir}/${output_filename})
-  call_mingw_fxc("${work_dir}" "${input_filename}.fx"
+  call_fxc("${work_dir}" "${input_filename}.fx"
       "${output_filename}" "${entry_point}"
 	  "${var_name}" "${semantic}" "${_fname}")
   list(APPEND DDS_SRC_L "${_fname}")
@@ -593,26 +580,14 @@ endmacro()
   endif()
 
   if(NOT USE_PREBUILT_SHADERS)
-    if(MINGW)
-        file(COPY ${PROJECT_SOURCE_DIR}/DDSView/ddsview.fx DESTINATION ${COMPILED_DDSVIEW_SHADERS})		
-		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_vs VS g_VS vs_4_1)
-		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps1D PS_1D g_PS_1D ps_4_1)
-		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps1Darray PS_1DArray g_PS_1DArray ps_4_1)
-		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps2D PS_2D g_PS_2D ps_4_1)
-		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps2Darray PS_2DArray g_PS_2DArray ps_4_1)#		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps3D PS_3D g_PS_3D ps_4_1)
-		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps3D PS_3D g_PS_3D ps_4_1)
-		call_mingw_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_psCube PS_Cube g_PS_Cube ps_4_1)
-	else()
-        add_custom_command(
-            OUTPUT "${COMPILED_DDSVIEW_SHADERS}/ddsview_ps1D.inc"
-            MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DDSView/hlsl.cmd"
-            DEPENDS "${PROJECT_SOURCE_DIR}/DDSView/ddsview.fx"
-            COMMENT "Generating HLSL shaders for DDSView..."
-            COMMAND COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_DDSVIEW_SHADERS}" hlsl.cmd > "${COMPILED_DDSVIEW_SHADERS}/hlsl.log"
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DDSView"
-            USES_TERMINAL)
-		list(APPEND ${COMPILED_DDSVIEW_SHADERS}/ddsview_ps1D.inc)
-	endif()	
+    file(COPY ${PROJECT_SOURCE_DIR}/DDSView/ddsview.fx DESTINATION ${COMPILED_DDSVIEW_SHADERS})		
+    call_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_vs VS g_VS vs_4_1)
+    call_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps1D PS_1D g_PS_1D ps_4_1)
+    call_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps1Darray PS_1DArray g_PS_1DArray ps_4_1)
+    call_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps2D PS_2D g_PS_2D ps_4_1)
+    call_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps2Darray PS_2DArray g_PS_2DArray ps_4_1)#		call_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps3D PS_3D g_PS_3D ps_4_1)
+    call_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_ps3D PS_3D g_PS_3D ps_4_1)
+    call_fxc_fx(${COMPILED_DDSVIEW_SHADERS} ddsview ddsview_psCube PS_Cube g_PS_Cube ps_4_1)
   endif()
   add_executable(ddsview WIN32 ${DDS_SRC_L})
   target_link_libraries(ddsview PRIVATE ${PROJECT_NAME} d3d11.lib ole32.lib)
