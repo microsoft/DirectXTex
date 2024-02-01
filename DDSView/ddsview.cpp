@@ -523,12 +523,12 @@ HRESULT InitDevice(const TexMetadata& mdata)
     case TEX_DIMENSION_TEXTURE1D:
         if (mdata.arraySize > 1)
         {
-            pshader = (BYTE*) g_PS_1DArray;
+            pshader = reinterpret_cast<const BYTE*>(g_PS_1DArray);
             pshader_size = sizeof(g_PS_1DArray);
         }
         else
         {
-            pshader = (BYTE*) g_PS_1D;
+            pshader = reinterpret_cast<const BYTE*>(g_PS_1D);
             pshader_size = sizeof(g_PS_1D);
         }
         is1D = true;
@@ -537,24 +537,24 @@ HRESULT InitDevice(const TexMetadata& mdata)
     case TEX_DIMENSION_TEXTURE2D:
         if (mdata.miscFlags & TEX_MISC_TEXTURECUBE)
         {
-            pshader = (BYTE*) g_PS_Cube;
+            pshader = reinterpret_cast<const BYTE*>(g_PS_Cube);
             pshader_size = sizeof(g_PS_Cube);
             isCubeMap = true;
         }
         else if (mdata.arraySize > 1)
         {
-            pshader = (BYTE*) g_PS_2DArray;
+            pshader = reinterpret_cast<const BYTE*>(g_PS_2DArray);
             pshader_size = sizeof(g_PS_2DArray);
         }
         else
         {
-            pshader = (BYTE*) g_PS_2D;
+            pshader = reinterpret_cast<const BYTE*>(g_PS_2D);
             pshader_size = sizeof(g_PS_2D);
         }
         break;
 
     case TEX_DIMENSION_TEXTURE3D:
-        pshader = (BYTE*) g_PS_3D;
+        pshader = reinterpret_cast<const BYTE*>(g_PS_3D);
         pshader_size = sizeof(g_PS_3D);
         break;
 
