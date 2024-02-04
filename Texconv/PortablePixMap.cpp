@@ -343,6 +343,9 @@ HRESULT __cdecl LoadFromPortablePixMap(
 
                 mode = PPM_DATA_R - 1;
                 break;
+
+            default:
+                break;
             }
 
             mode++;
