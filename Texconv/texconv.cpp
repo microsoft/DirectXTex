@@ -2113,7 +2113,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         wprintf(L"\n   <mode>: ");
                         PrintList(14, s_pXGModes);
                         return 1;
-                    };
+                    }
 
                     XGSetHardwareVersion(static_cast<XG_HARDWARE_VERSION>(mode));
                     break;
