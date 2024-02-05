@@ -1344,6 +1344,7 @@ namespace
 
         switch (metadata.GetAlphaMode())
         {
+        default:
         case TEX_ALPHA_MODE_UNKNOWN:
             ext->bAttributesType = HasAlpha(metadata.format) ? TGA_ATTRIBUTE_UNDEFINED : TGA_ATTRIBUTE_NONE;
             break;
@@ -1399,6 +1400,7 @@ namespace
             case TGA_ATTRIBUTE_UNDEFINED: return TEX_ALPHA_MODE_CUSTOM;
             case TGA_ATTRIBUTE_ALPHA: return TEX_ALPHA_MODE_STRAIGHT;
             case TGA_ATTRIBUTE_PREMULTIPLIED: return TEX_ALPHA_MODE_PREMULTIPLIED;
+            default: return TEX_ALPHA_MODE_UNKNOWN;
             }
         }
 

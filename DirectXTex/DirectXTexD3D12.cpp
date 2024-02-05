@@ -88,6 +88,9 @@ namespace
                 res.SlicePitch = res.RowPitch * static_cast<PT>(height);
             }
             break;
+
+        default:
+            break;
         }
     }
 

@@ -653,6 +653,9 @@ HRESULT DirectX::CreateTextureEx(
             hr = pDevice->CreateTexture3D(&desc, initData.get(), reinterpret_cast<ID3D11Texture3D**>(ppResource));
         }
         break;
+
+    default:
+        return HRESULT_E_NOT_SUPPORTED;
     }
 
     return hr;
