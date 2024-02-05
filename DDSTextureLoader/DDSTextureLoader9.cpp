@@ -620,6 +620,9 @@ namespace
 
                 // Paletted texture formats are typically not supported on modern video cards aka D3DFMT_P8, D3DFMT_A8P8
                 break;
+
+            default:
+                return D3DFMT_UNKNOWN;
             }
         }
         else if (ddpf.flags & DDS_LUMINANCE)
@@ -651,6 +654,9 @@ namespace
                     return D3DFMT_A8L8; // Some DDS writers assume the bitcount should be 8 instead of 16
                 }
                 break;
+
+            default:
+                return D3DFMT_UNKNOWN;
             }
         }
         else if (ddpf.flags & DDS_ALPHA)
@@ -685,6 +691,9 @@ namespace
                     return D3DFMT_V8U8;
                 }
                 break;
+
+            default:
+                return D3DFMT_UNKNOWN;
             }
         }
         else if (ddpf.flags & DDS_BUMPLUMINANCE)
@@ -704,6 +713,9 @@ namespace
                     return D3DFMT_L6V5U5;
                 }
                 break;
+
+            default:
+                return D3DFMT_UNKNOWN;
             }
         }
         else if (ddpf.flags & DDS_FOURCC)
@@ -760,6 +772,9 @@ namespace
             case D3DFMT_A32B32G32R32F:
             case D3DFMT_CxV8U8:
                 return static_cast<D3DFORMAT>(ddpf.fourCC);
+
+            default:
+                return D3DFMT_UNKNOWN;
             }
         }
 

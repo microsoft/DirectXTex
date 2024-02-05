@@ -415,6 +415,9 @@ void DirectX::Internal::CopyScanline(
         case DXGI_FORMAT_A8_UNORM:
             memset(pDestination, 0xff, outSize);
             return;
+
+        default:
+            break;
         }
     }
 
@@ -585,6 +588,9 @@ void DirectX::Internal::SwizzleScanline(
                 return;
             }
         }
+        break;
+
+    default:
         break;
     }
 

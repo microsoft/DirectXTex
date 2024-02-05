@@ -1800,6 +1800,7 @@ void D3DX_BC6H::Decode(bool bSigned, HDRColorA* pOut) const noexcept
         case 0x17:  warnstr = "BC6H: Reserved mode 10111 encountered during decoding\n"; break;
         case 0x1B:  warnstr = "BC6H: Reserved mode 11011 encountered during decoding\n"; break;
         case 0x1F:  warnstr = "BC6H: Reserved mode 11111 encountered during decoding\n"; break;
+        default: break;
         }
         OutputDebugStringA(warnstr);
     #endif
@@ -2762,6 +2763,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
             case 1: std::swap(outPixel.r, outPixel.a); break;
             case 2: std::swap(outPixel.g, outPixel.a); break;
             case 3: std::swap(outPixel.b, outPixel.a); break;
+            default: break;
             }
 
             pOut[i] = HDRColorA(outPixel);
@@ -2837,6 +2839,7 @@ void D3DX_BC7::Encode(uint32_t flags, const HDRColorA* const pIn) noexcept
             case 1: for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) std::swap(EP.aLDRPixels[i].r, EP.aLDRPixels[i].a); break;
             case 2: for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) std::swap(EP.aLDRPixels[i].g, EP.aLDRPixels[i].a); break;
             case 3: for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) std::swap(EP.aLDRPixels[i].b, EP.aLDRPixels[i].a); break;
+            default: break;
             }
 
             for (size_t im = 0; im < uNumIdxMode && fMSEBest > 0; ++im)
@@ -2877,6 +2880,7 @@ void D3DX_BC7::Encode(uint32_t flags, const HDRColorA* const pIn) noexcept
             case 1: for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) std::swap(EP.aLDRPixels[i].r, EP.aLDRPixels[i].a); break;
             case 2: for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) std::swap(EP.aLDRPixels[i].g, EP.aLDRPixels[i].a); break;
             case 3: for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++) std::swap(EP.aLDRPixels[i].b, EP.aLDRPixels[i].a); break;
+            default: break;
             }
         }
     }
