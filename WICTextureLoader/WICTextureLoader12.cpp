@@ -75,6 +75,10 @@ namespace
     {
         const GUID&         wic;
         DXGI_FORMAT         format;
+
+        constexpr WICTranslate(const GUID& wg, DXGI_FORMAT fmt) noexcept :
+            wic(wg),
+            format(fmt) {}
     };
 
     constexpr WICTranslate g_WICFormats[] =
@@ -111,6 +115,10 @@ namespace
     {
         const GUID& source;
         const GUID& target;
+
+        constexpr WICConvert(const GUID& src, const GUID& tgt ) noexcept :
+            source(src),
+            target(tgt) {}
     };
 
     constexpr WICConvert g_WICConvert[] =
