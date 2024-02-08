@@ -732,8 +732,8 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     endforeach()
 
     if(BUILD_FUZZING
-        AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.32)
-        AND (NOT WINDOWS_STORE))
+       AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.32)
+       AND (NOT WINDOWS_STORE))
           foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
             target_compile_options(${t} PRIVATE /fsanitize=address /fsanitize-coverage=inline-8bit-counters /fsanitize-coverage=edge /fsanitize-coverage=trace-cmp /fsanitize-coverage=trace-div)
             target_link_libraries(${t} PRIVATE sancov.lib)
