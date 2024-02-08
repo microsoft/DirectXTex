@@ -257,7 +257,7 @@ if(ENABLE_OPENEXR_SUPPORT)
 endif()
 
 if(BUILD_XBOX_EXTS_SCARLETT AND WIN32)
-    if (EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
+    if(EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
         message(STATUS "Building Xbox extensions for Xbox Series X|S")
 
         add_library(Xbox::GDKX SHARED IMPORTED)
@@ -275,7 +275,7 @@ if(BUILD_XBOX_EXTS_SCARLETT AND WIN32)
         message(FATAL_ERROR "Building Xbox extensions requires GameDKLatest")
     endif()
 elseif(BUILD_XBOX_EXTS_XBOXONE AND WIN32)
-    if (EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
+    if(EXISTS "${GameDK_DIR}/GXDK/toolKit/include/gxdk.h")
         message(STATUS "Building Xbox extensions for XboxOne using the Microsoft GDK")
 
         add_library(Xbox::GDKX SHARED IMPORTED)
@@ -290,7 +290,7 @@ elseif(BUILD_XBOX_EXTS_XBOXONE AND WIN32)
         target_compile_definitions(${PROJECT_NAME} PRIVATE USE_XBOX_EXTS)
         target_link_libraries(${PROJECT_NAME} PUBLIC Xbox::GDKX)
 
-    elseif (EXISTS "${XboxOneXDK_DIR}/PC/include/xdk.h")
+    elseif(EXISTS "${XboxOneXDK_DIR}/PC/include/xdk.h")
         message(STATUS "Building Xbox extensions for XboxOne using the Xbox One XDK")
 
         add_library(Xbox::XDK SHARED IMPORTED)
@@ -510,7 +510,7 @@ if(BUILD_TOOLS AND WIN32)
     target_compile_definitions(texconv PRIVATE USE_XBOX_EXTS)
     target_link_libraries(texconv PUBLIC $<TARGET_NAME_IF_EXISTS:Xbox::GDKX> $<TARGET_NAME_IF_EXISTS:Xbox::XDK>)
 
-    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.21")
+    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.21")
       add_custom_command(TARGET texconv POST_BUILD
           COMMAND ${CMAKE_COMMAND} -E copy
           $<TARGET_RUNTIME_DLLS:texconv> $<TARGET_FILE_DIR:texconv>
@@ -731,7 +731,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
       target_compile_options(${t} PRIVATE ${WarningsEXE})
     endforeach()
 
-    if (BUILD_FUZZING
+    if(BUILD_FUZZING
         AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.32)
         AND (NOT WINDOWS_STORE))
           foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
@@ -742,7 +742,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 
 if(WIN32)
-    if (XBOX_CONSOLE_TARGET STREQUAL "durango")
+    if(XBOX_CONSOLE_TARGET STREQUAL "durango")
         set(WINVER 0x0602)
     elseif(BUILD_DX12 OR (${DIRECTX_ARCH} MATCHES "^arm64"))
         message(STATUS "Building with DirectX 12 Runtime support")
