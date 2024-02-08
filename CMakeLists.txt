@@ -717,10 +717,10 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     endif()
 
     if(OpenMP_CXX_FOUND)
-        # OpenMP in MSVC is not compatible with /permissive- unless you disable two-phase lookup
-        foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-          target_compile_options(${t} PRIVATE /Zc:twoPhase-)
-        endforeach()
+      # OpenMP in MSVC is not compatible with /permissive- unless you disable two-phase lookup
+      foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+        target_compile_options(${t} PRIVATE /Zc:twoPhase-)
+      endforeach()
     endif()
 
     set(WarningsEXE "/wd4061" "/wd4062" "/wd4365" "/wd4514" "/wd4625" "/wd4626" "/wd4627" "/wd4668" "/wd4710" "/wd4711" "/wd4751" "/wd4820" "/wd5026" "/wd5027" "/wd5039" "/wd5045" "/wd5219")
@@ -783,5 +783,5 @@ if(WIN32 AND (NOT WINDOWS_STORE) AND (NOT (DEFINED XBOX_CONSOLE_TARGET)))
     elseif(BUILD_FUZZING AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/Tests/fuzzloaders/CMakeLists.txt"))
         message(STATUS "Building for fuzzing")
         add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/Tests/fuzzloaders)
-  endif()
+    endif()
 endif()
