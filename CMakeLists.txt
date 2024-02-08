@@ -456,6 +456,7 @@ if(BUILD_TOOLS AND WIN32)
     Texassemble/texassemble.rc
     Texassemble/settings.manifest
     Texassemble/AnimatedGif.cpp)
+  target_compile_features(texassemble PRIVATE cxx_std_17)
   target_link_libraries(texassemble PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texassemble REGULAR_EXPRESSION Texassemble/*.*)
   list(APPEND TOOL_EXES texassemble)
@@ -468,6 +469,7 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
     Texconv/settings.manifest
     Texconv/ExtendedBMP.cpp
     Texconv/PortablePixMap.cpp)
+  target_compile_features(texconv PRIVATE cxx_std_17)
   target_link_libraries(texconv PRIVATE ${PROJECT_NAME} ole32.lib shell32.lib version.lib)
   source_group(texconv REGULAR_EXPRESSION Texconv/*.*)
   list(APPEND TOOL_EXES texconv)
@@ -478,6 +480,7 @@ if(BUILD_TOOLS AND WIN32)
     Texdiag/texdiag.cpp
     Texdiag/texdiag.rc
     Texdiag/settings.manifest)
+  target_compile_features(texdiag PRIVATE cxx_std_17)
   target_link_libraries(texdiag PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
   list(APPEND TOOL_EXES texdiag)
@@ -649,6 +652,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
       target_compile_options(${t} PRIVATE /Zc:__cplusplus /Zc:inline /fp:fast /Qdiag-disable:161)
     endforeach()
+    set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 14)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
       target_compile_options(${t} PRIVATE /sdl /permissive- /JMC- /Zc:__cplusplus /Zc:inline /fp:fast)
