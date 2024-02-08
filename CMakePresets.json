@@ -323,8 +323,8 @@
     { "name": "arm64-Debug-Linux",   "description": "WSL Linux ARM64 (Debug)", "inherits": [ "base", "ARM64", "Debug", "VCPKG", "JPEG_PNG" ] },
     { "name": "arm64-Release-Linux", "description": "WSL Linux ARM64 (Release)", "inherits": [ "base", "ARM64", "Release", "VCPKG", "JPEG_PNG" ] },
 
-    { "name": "x64-Debug-ICC"     , "description": "Intel Classic Compiler (Debug) - SSE/SSE2", "inherits": [ "base", "x64", "Debug", "Intel" ] },
-    { "name": "x64-Release-ICC"   , "description": "Intel Classic Compiler (Release) - SSE/SSE2", "inherits": [ "base", "x64", "Release", "Intel" ] },
+    { "name": "x64-Debug-ICC"     , "description": "Intel Classic Compiler (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "Intel" ] },
+    { "name": "x64-Release-ICC"   , "description": "Intel Classic Compiler (Release) with DX12", "inherits": [ "base", "x64", "Release", "Intel" ] },
 
     { "name": "x64-Debug-ICX"    , "description": "Intel oneAPI Compiler (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "IntelLLVM" ] },
     { "name": "x64-Release-ICX"  , "description": "Intel oneAPI Compiler (Release) with DX12", "inherits": [ "base", "x64", "Release", "IntelLLVM" ] },
