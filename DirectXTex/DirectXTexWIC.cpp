@@ -25,6 +25,11 @@ namespace
         const GUID&     source;
         const GUID&     target;
         TEX_ALPHA_MODE  alphaMode;
+
+        constexpr WICConvert(const GUID& src, const GUID& tgt, TEX_ALPHA_MODE mode) noexcept :
+            source(src),
+            target(tgt),
+            alphaMode(mode) {}
     };
 
     constexpr WICConvert g_WICConvert[] =

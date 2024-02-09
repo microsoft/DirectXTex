@@ -203,6 +203,29 @@
       }
     },
     {
+      "name": "Intel",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "icl.exe",
+        "BUILD_TOOLS": false
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      }
+    },
+    {
+      "name": "IntelLLVM",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "icx.exe"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      }
+    },
+    {
       "name": "Fuzzing",
       "cacheVariables": {
         "BUILD_FUZZING": true,
@@ -301,6 +324,12 @@
     { "name": "arm64-Debug-Linux",   "description": "WSL Linux ARM64 (Debug)", "inherits": [ "base", "ARM64", "Debug", "VCPKG", "JPEG_PNG" ] },
     { "name": "arm64-Release-Linux", "description": "WSL Linux ARM64 (Release)", "inherits": [ "base", "ARM64", "Release", "VCPKG", "JPEG_PNG" ] },
 
+    { "name": "x64-Debug-ICC"     , "description": "Intel Classic Compiler (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "Intel" ] },
+    { "name": "x64-Release-ICC"   , "description": "Intel Classic Compiler (Release) with DX12", "inherits": [ "base", "x64", "Release", "Intel" ] },
+
+    { "name": "x64-Debug-ICX"    , "description": "Intel oneAPI Compiler (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "IntelLLVM" ] },
+    { "name": "x64-Release-ICX"  , "description": "Intel oneAPI Compiler (Release) with DX12", "inherits": [ "base", "x64", "Release", "IntelLLVM" ] },
+
     { "name": "x64-Fuzzing"      , "description": "MSVC for x64 (Release) with ASan", "inherits": [ "base", "x64", "Release", "MSVC", "Fuzzing" ] }
   ],
   "testPresets": [
@@ -321,6 +350,12 @@
     { "name": "x64-Debug-MinGW"    , "configurePreset": "x64-Debug-MinGW" },
     { "name": "x64-Release-MinGW"  , "configurePreset": "x64-Release-MinGW" },
     { "name": "x86-Debug-MinGW"    , "configurePreset": "x86-Debug-MinGW" },
-    { "name": "x86-Release-MinGW"  , "configurePreset": "x86-Release-MinGW" }
+    { "name": "x86-Release-MinGW"  , "configurePreset": "x86-Release-MinGW" },
+
+    { "name": "x64-Debug-ICC"    , "configurePreset": "x64-Debug-ICC" },
+    { "name": "x64-Release-ICC"  , "configurePreset": "x64-Release-ICC"},
+
+    { "name": "x64-Debug-ICX"    , "configurePreset": "x64-Debug-ICX" },
+    { "name": "x64-Release-ICX"  , "configurePreset": "x64-Release-ICX"}
   ]
 }

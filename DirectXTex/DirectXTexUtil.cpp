@@ -41,6 +41,11 @@ namespace
         const GUID& wic;
         DXGI_FORMAT format;
         bool        srgb;
+
+        constexpr WICTranslate(const GUID& wg, DXGI_FORMAT fmt, bool isrgb) noexcept :
+            wic(wg),
+            format(fmt),
+            srgb(isrgb) {}
     };
 
     constexpr WICTranslate g_WICFormats[] =
