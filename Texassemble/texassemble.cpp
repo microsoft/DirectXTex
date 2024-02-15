@@ -101,6 +101,7 @@ namespace
         CMD_CUBE_FROM_HT,
         CMD_CUBE_FROM_HS,
         CMD_CUBE_FROM_VS,
+        CMD_FROM_MIPS,
         CMD_MAX
     };
 
@@ -171,6 +172,7 @@ namespace
         { L"cube-from-ht",      CMD_CUBE_FROM_HT },
         { L"cube-from-hs",      CMD_CUBE_FROM_HS },
         { L"cube-from-vs",      CMD_CUBE_FROM_VS },
+        { L"from-mips",         CMD_FROM_MIPS },
         { nullptr,          0 }
     };
 
@@ -1088,6 +1090,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_CUBE_FROM_HT:
     case CMD_CUBE_FROM_HS:
     case CMD_CUBE_FROM_VS:
+    case CMD_FROM_MIPS:
         break;
 
     default:
@@ -1254,6 +1257,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     case CMD_V_STRIP:
                     case CMD_MERGE:
                     case CMD_ARRAY_STRIP:
+                    case CMD_FROM_MIPS:
                         break;
 
                     default:
@@ -1453,6 +1457,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     }
     else
     {
+        size_t conversionIndex = 0;
         for (auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv)
         {
             std::filesystem::path curpath(pConv->szSrc);
@@ -1856,7 +1861,25 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 height = info.height;
             }
-            if (info.width != width || info.height != height)
+            size_t targetWidth = width;
+            size_t targetHeight = height;
+            if (dwCommand == CMD_FROM_MIPS)
+            {
+                size_t mipdiv = 1;
+                for (size_t i = 0; i < conversionIndex; ++i)
+                {
+                    mipdiv = mipdiv + mipdiv;
+                }
+
+                targetWidth /= mipdiv;
+                targetHeight /= mipdiv;
+                if (targetWidth == 0 || targetHeight == 0)
+                {
+                    wprintf(L"\nERROR: Too many input mips provided. For the dimensions of the first mip provided, only %u input mips can be used.\n", conversionIndex);
+                    return 1;
+                }
+            }
+            if (info.width != targetWidth || info.height != targetHeight)
             {
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                 if (!timage)
@@ -1865,7 +1888,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                hr = Resize(image->GetImages(), image->GetImageCount(), image->GetMetadata(), width, height, dwFilter | dwFilterOpts, *timage.get());
+                hr = Resize(image->GetImages(), image->GetImageCount(), image->GetMetadata(), targetWidth, targetHeight, dwFilter | dwFilterOpts, *timage.get());
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [resize] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -1874,7 +1897,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 auto& tinfo = timage->GetMetadata();
 
-                assert(tinfo.width == width && tinfo.height == height && tinfo.mipLevels == 1);
+                assert(tinfo.width == targetWidth && tinfo.height == targetHeight && tinfo.mipLevels == 1);
                 info.width = tinfo.width;
                 info.height = tinfo.height;
                 info.mipLevels = 1;
@@ -2007,6 +2030,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             images += info.arraySize;
             loadedImages.emplace_back(std::move(image));
+            ++conversionIndex;
         }
     }
 
@@ -2581,6 +2605,65 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = SaveToDDSFile(result.GetImages(), result.GetImageCount(), result.GetMetadata(),
                 (dwOptions & (1 << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
                 outputFile.c_str());
+            if (FAILED(hr))
+            {
+                wprintf(L"\nFAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                return 1;
+            }
+            break;
+        }
+    case CMD_FROM_MIPS:
+        {
+            auto src = loadedImages.cbegin();
+            auto img = (*src)->GetImage(0, 0, 0);
+            ScratchImage result;
+            hr = result.Initialize2D(format, width, height, 1, images);
+            if (FAILED(hr))
+            {
+                wprintf(L"FAILED setting up result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                return 1;
+            }
+            size_t mipdiv = 1;
+            size_t index = 0;
+            for (auto it = src; it != loadedImages.cend(); ++it)
+            {
+                auto dest = result.GetImage(index, 0, 0);
+                const ScratchImage* simage = it->get();
+                assert(simage != nullptr);
+                const Image* img = simage->GetImage(0, 0, 0);
+                assert(img != nullptr);
+                hr = CopyRectangle(*img, Rect(0, 0, width / mipdiv, height / mipdiv), *dest, dwFilter | dwFilterOpts, 0, 0);
+                if (FAILED(hr))
+                {
+                    wprintf(L"FAILED building result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                    return 1;
+                }
+                index++;
+                mipdiv *= 2;
+            }
+            // Write texture2D
+            wprintf(L"\nWriting %ls ", szOutputFile);
+            PrintInfo(result.GetMetadata());
+            wprintf(L"\n");
+            fflush(stdout);
+
+            if (dwOptions & (1 << OPT_TOLOWER))
+            {
+                std::ignore = _wcslwr_s(szOutputFile);
+            }
+
+            if (~dwOptions & (1 << OPT_OVERWRITE))
+            {
+                if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+                {
+                    wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
+                    return 1;
+                }
+            }
+
+            hr = SaveToDDSFile(result.GetImages(), result.GetImageCount(), result.GetMetadata(),
+                (dwOptions & (1 << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
+                szOutputFile);
             if (FAILED(hr))
             {
                 wprintf(L"\nFAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
