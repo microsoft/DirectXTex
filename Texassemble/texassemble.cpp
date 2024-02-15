@@ -1875,7 +1875,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 targetHeight /= mipdiv;
                 if (targetWidth == 0 || targetHeight == 0)
                 {
-                    wprintf(L"\nERROR: Too many input mips provided. For the dimensions of the first mip provided, only %u input mips can be used.\n", conversionIndex);
+                    wprintf(L"\nERROR: Too many input mips provided. For the dimensions of the first mip provided, only %zu input mips can be used.\n", conversionIndex);
                     return 1;
                 }
             }
@@ -2615,7 +2615,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_FROM_MIPS:
         {
             auto src = loadedImages.cbegin();
-            auto img = (*src)->GetImage(0, 0, 0);
             ScratchImage result;
             hr = result.Initialize2D(format, width, height, 1, images);
             if (FAILED(hr))
@@ -2642,19 +2641,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 mipdiv *= 2;
             }
             // Write texture2D
-            wprintf(L"\nWriting %ls ", szOutputFile);
+            wprintf(L"\nWriting %ls ", outputFile.c_str());
             PrintInfo(result.GetMetadata());
             wprintf(L"\n");
             fflush(stdout);
 
             if (dwOptions & (1 << OPT_TOLOWER))
             {
-                std::ignore = _wcslwr_s(szOutputFile);
+                std::transform(outputFile.begin(), outputFile.end(), outputFile.begin(), towlower);
             }
 
             if (~dwOptions & (1 << OPT_OVERWRITE))
             {
-                if (GetFileAttributesW(szOutputFile) != INVALID_FILE_ATTRIBUTES)
+                if (GetFileAttributesW(outputFile.c_str()) != INVALID_FILE_ATTRIBUTES)
                 {
                     wprintf(L"\nERROR: Output file already exists, use -y to overwrite\n");
                     return 1;
@@ -2663,7 +2662,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             hr = SaveToDDSFile(result.GetImages(), result.GetImageCount(), result.GetMetadata(),
                 (dwOptions & (1 << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
-                szOutputFile);
+                outputFile.c_str());
             if (FAILED(hr))
             {
                 wprintf(L"\nFAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
