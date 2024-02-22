@@ -95,9 +95,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
     if((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.26)
        AND (NOT (XBOX_CONSOLE_TARGET STREQUAL "durango")))
-        foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-          target_compile_options(${t} PRIVATE /Zc:preprocessor /wd5104 /wd5105)
-        endforeach()
+        list(APPEND COMPILER_SWITCHES /Zc:preprocessor /wd5104 /wd5105)
     endif()
 
     if((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.27) AND (NOT (${DIRECTX_ARCH} MATCHES "^arm")))
@@ -110,10 +108,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
     if((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.31)
        AND (XBOX_CONSOLE_TARGET STREQUAL "durango"))
-
-        foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
-        target_compile_options(${t} PRIVATE /Zc:static_assert-)
-      endforeach()
+        list(APPEND COMPILER_SWITCHES /Zc:static_assert-)
     endif()
 
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.35)
