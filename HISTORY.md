@@ -6,6 +6,15 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### February 21, 2024
+* TGA reader now limited to 4 GB for maximum image size for security hardening
+* Project updates for improved logging of shader compilation errors and GDK validation
+* CMake project updates and refactor
+* Minor code review for Clang, MinGW, and Intel compilers
+* Auxiliary updated with LIBJPEG and LIBPNG implementations for use on WSL which lacks WIC
+* texassemble: new ``from-mips`` command
+* texconv: Updated to support Xbox extension functionality
+
 ### December 31, 2023
 * TGA reader bug fix for offset boundary check
 * PPM/PFM reader bug fixes for bounds checking
@@ -19,8 +28,8 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
   * Allows cases where DDS_HEADER size is incorrectly set to 24
   * Allows cases where DDPIXELFORMAT size is incorrectly set to 24
   * Allows cases where DDS_HEADER.MipMapCount is set to the wrong value
-* texassemble/texconv/texdiag: -flist option updated to support filenames with spaces
-* texconv: -permissive switch added to opt-in use of new flag when reading DDS files
+* texassemble/texconv/texdiag: ``-flist`` option updated to support filenames with spaces
+* texconv: ``-permissive`` switch added to opt-in use of new flag when reading DDS files
 
 ### September 1, 2023
 * ``CompressEx`` and ``ConvertEx`` functions added with status callback and options structs
