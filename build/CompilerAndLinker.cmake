@@ -66,6 +66,10 @@ elseif(NOT (${DIRECTX_ARCH} MATCHES "^arm"))
         set(ARCH_SSE2 $<$<NOT:$<CXX_COMPILER_ID:MSVC,Intel>>:-msse2>)
     endif()
 
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        list(APPEND ARCH_SSE2 -mfpmath=sse)
+    endif()
+
     list(APPEND COMPILER_SWITCHES ${ARCH_SSE2})
 endif()
 
@@ -117,6 +121,12 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
       if(NOT (DEFINED XBOX_CONSOLE_TARGET))
         list(APPEND COMPILER_SWITCHES $<$<VERSION_GREATER_EQUAL:${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION},10.0.22000>:/Zc:templateScope>)
       endif()
+    endif()
+
+    if((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.37)
+       AND (NOT (${DIRECTX_ARCH} MATCHES "^arm"))
+       AND ((${DIRECTX_ARCH} MATCHES "x64") OR (CMAKE_SIZEOF_VOID_P EQUAL 8)))
+      list(APPEND COMPILER_SWITCHES /jumptablerdata)
     endif()
 endif()
 
