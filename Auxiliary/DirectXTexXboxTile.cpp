@@ -76,126 +76,6 @@ namespace
     }
 
     //----------------------------------------------------------------------------------
-    inline HRESULT TileByElement2D(
-        _In_reads_(nimages) const Image* const * images,
-        size_t nimages,
-        uint32_t level,
-        _In_ XGTextureAddressComputer* computer,
-        const XG_RESOURCE_LAYOUT& layout,
-        const XboxImage& xbox,
-        size_t bpp,
-        size_t w,
-        size_t h,
-        bool packed)
-    {
-        uint8_t* dptr = xbox.GetPointer();
-        const uint8_t* endPtr = dptr + layout.SizeBytes;
-
-        for (uint32_t item = 0; item < nimages; ++item)
-        {
-            const Image* img = images[item];
-
-            if (!img || !img->pixels)
-                return E_POINTER;
-
-            assert(img->width == images[0]->width);
-            assert(img->height == images[0]->height);
-            assert(img->rowPitch == images[0]->rowPitch);
-            assert(img->format == images[0]->format);
-
-            const uint8_t* sptr = img->pixels;
-            for (uint32_t y = 0; y < h; ++y)
-            {
-                const uint8_t* tptr = sptr;
-
-                for (size_t x = 0; x < w; ++x)
-                {
-                #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-                    UINT64 element = (packed) ? (x >> 1) : x;
-                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, element, y, item, 0, nullptr);
-                #else
-                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, item, 0);
-                #endif
-                    if (offset == size_t(-1))
-                        return E_FAIL;
-
-                    uint8_t* dest = dptr + offset;
-
-                    if ((dest + bpp) > endPtr)
-                        return E_FAIL;
-
-                    memcpy(dest, tptr, bpp);
-                    tptr += bpp;
-
-                    if (packed)
-                        ++x;
-                }
-
-                sptr += img->rowPitch;
-            }
-        }
-
-        return S_OK;
-    }
-
-    //----------------------------------------------------------------------------------
-    inline HRESULT TileByElement3D(
-        const Image& image,
-        uint32_t level,
-        uint32_t slices,
-        _In_ XGTextureAddressComputer* computer,
-        const XG_RESOURCE_LAYOUT& layout,
-        const XboxImage& xbox,
-        size_t bpp,
-        size_t w,
-        size_t h,
-        bool packed)
-    {
-        uint8_t* dptr = xbox.GetPointer();
-        const uint8_t* endPtr = dptr + layout.SizeBytes;
-
-        const uint8_t* sptr = image.pixels;
-        for (uint32_t z = 0; z < slices; ++z)
-        {
-            const uint8_t* rptr = sptr;
-
-            for (uint32_t y = 0; y < h; ++y)
-            {
-                const uint8_t* tptr = rptr;
-
-                for (size_t x = 0; x < w; ++x)
-                {
-                #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-                    UINT64 element = (packed) ? (x >> 1) : x;
-                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, element, y, z, 0, nullptr);
-                #else
-                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, z, 0);
-                #endif
-                    if (offset == size_t(-1))
-                        return E_FAIL;
-
-                    uint8_t* dest = dptr + offset;
-
-                    if ((dest + bpp) > endPtr)
-                        return E_FAIL;
-
-                    memcpy(dest, tptr, bpp);
-                    tptr += bpp;
-
-                    if (packed)
-                        ++x;
-                }
-
-                rptr += image.rowPitch;
-            }
-
-            sptr += image.slicePitch;
-        }
-
-        return S_OK;
-    }
-
-    //----------------------------------------------------------------------------------
 #ifdef VERBOSE
     void DebugPrintDesc(const XG_TEXTURE1D_DESC& desc)
     {
@@ -414,126 +294,32 @@ namespace
 
         assert(layout.Planes == 1);
 
-        const DXGI_FORMAT format = images[0]->format;
+        uint8_t* baseAddr = xbox.GetPointer();
+        const auto& metadata = xbox.GetMetadata();
 
-        assert(format == xbox.GetMetadata().format);
-
-        bool byelement = IsTypeless(format);
-    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-        if (nimages > 1)
-            byelement = true;
-    #endif
-
-        if (IsCompressed(format))
+        for (uint32_t item = 0; item < nimages; ++item)
         {
-            //--- BC formats use per-block copy -------------------------------------------
-            const size_t nbw = std::max<size_t>(1, (images[0]->width + 3) / 4);
-            const size_t nbh = std::max<size_t>(1, (images[0]->height + 3) / 4);
+            const Image* img = images[item];
 
-            const size_t bpb = (format == DXGI_FORMAT_BC1_TYPELESS
-                || format == DXGI_FORMAT_BC1_UNORM
-                || format == DXGI_FORMAT_BC1_UNORM_SRGB
-                || format == DXGI_FORMAT_BC4_TYPELESS
-                || format == DXGI_FORMAT_BC4_UNORM
-                || format == DXGI_FORMAT_BC4_SNORM) ? 8 : 16;
+            if (!img || !img->pixels)
+                return E_POINTER;
 
-            assert(nbw == layout.Plane[0].MipLayout[level].WidthElements);
-            assert(nbh == layout.Plane[0].MipLayout[level].HeightElements);
-            assert(bpb == layout.Plane[0].BytesPerElement);
+            assert(img->width == images[0]->width);
+            assert(img->height == images[0]->height);
+            assert(img->rowPitch == images[0]->rowPitch);
+            assert(img->format == images[0]->format);
 
-            return TileByElement2D(images, nimages, level, computer, layout, xbox, bpb, nbw, nbh, false);
-        }
-        else if (IsPacked(format))
-        {
-            const size_t bpp = (BitsPerPixel(format) + 7) / 8;
-
-            // XG (XboxOne) incorrectly returns 2 instead of 4 here for layout.Plane[0].BytesPerElement
-
-            const size_t w = images[0]->width;
-            const size_t h = images[0]->height;
-            assert(((w + 1) / 2) == layout.Plane[0].MipLayout[level].WidthElements);
-            assert(h == layout.Plane[0].MipLayout[level].HeightElements);
-
-            return TileByElement2D(images, nimages, level, computer, layout, xbox, bpp, w, h, true);
-        }
-        else if (byelement)
-        {
-            //--- Typeless is done with per-element copy ----------------------------------
-            const size_t bpp = (BitsPerPixel(format) + 7) / 8;
-            assert(bpp == layout.Plane[0].BytesPerElement);
-
-            const size_t w = images[0]->width;
-            const size_t h = images[0]->height;
-
-            assert(w == layout.Plane[0].MipLayout[level].WidthElements);
-            assert(h == layout.Plane[0].MipLayout[level].HeightElements);
-
-            return TileByElement2D(images, nimages, level, computer, layout, xbox, bpp, w, h, false);
-        }
-        else
-        {
-            //--- Standard format handling ------------------------------------------------
-            auto& mip = layout.Plane[0].MipLayout[level];
-
-            const UINT32 tiledPixels = mip.PaddedWidthElements * mip.PaddedHeightElements * mip.PaddedDepthOrArraySize;
-
-            auto scanline = make_AlignedArrayXMVECTOR(images[0]->width + tiledPixels);
-
-            XMVECTOR* row = scanline.get();
-            XMVECTOR* tiled = row + images[0]->width;
-
-        #ifdef _DEBUG
-            memset(row, 0xCD, sizeof(XMVECTOR) * images[0]->width);
-        #endif
-
-            memset(tiled, 0, sizeof(XMVECTOR) * tiledPixels);
-
-            // Perform tiling
-            for (uint32_t item = 0; item < nimages; ++item)
+            HRESULT hr = computer->CopyIntoSubresource(
+                baseAddr,
+                0u,
+                metadata.CalculateSubresource(level, item),
+                img->pixels,
+                static_cast<UINT32>(img->rowPitch),
+                0u);
+            if (FAILED(hr))
             {
-                const Image* img = images[item];
-
-                if (!img || !img->pixels)
-                    return E_POINTER;
-
-                assert(img->width == images[0]->width);
-                assert(img->height == images[0]->height);
-                assert(img->rowPitch == images[0]->rowPitch);
-                assert(img->format == images[0]->format);
-
-                auto sptr = reinterpret_cast<const uint8_t * __restrict>(img->pixels);
-                for (uint32_t y = 0; y < img->height; ++y)
-                {
-                    if (!LoadScanline(row, img->width, sptr, img->rowPitch, img->format))
-                        return E_FAIL;
-
-                    sptr += img->rowPitch;
-
-                    for (size_t x = 0; x < img->width; ++x)
-                    {
-                    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-                        size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, item, 0, nullptr);
-                    #else
-                        size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, item, 0);
-                    #endif
-                        if (offset == size_t(-1))
-                            return E_FAIL;
-
-                        assert(offset >= mip.OffsetBytes);
-                        assert(offset < mip.OffsetBytes + mip.SizeBytes);
-
-                        offset = (offset - mip.OffsetBytes) / layout.Plane[0].BytesPerElement;
-                        assert(offset < tiledPixels);
-
-                        tiled[offset] = row[x];
-                    }
-                }
+                return hr;
             }
-
-            // Store tiled texture
-            assert(mip.OffsetBytes + mip.SizeBytes <= layout.SizeBytes);
-            if (!StoreScanline(xbox.GetPointer() + mip.OffsetBytes, mip.SizeBytes, xbox.GetMetadata().format, tiled, tiledPixels))
-                return E_FAIL;
         }
 
         return S_OK;
@@ -546,7 +332,6 @@ namespace
     HRESULT Tile3D(
         const Image& image,
         uint32_t level,
-        uint32_t slices,
         _In_ XGTextureAddressComputer* computer,
         const XG_RESOURCE_LAYOUT& layout,
         const XboxImage& xbox)
@@ -554,141 +339,18 @@ namespace
         if (!image.pixels || !computer || !xbox.GetPointer())
             return E_POINTER;
 
-        assert(slices > 0);
-
         assert(layout.Planes == 1);
 
-        assert(image.format == xbox.GetMetadata().format);
+        uint8_t* baseAddr = xbox.GetPointer();
+        const auto& metadata = xbox.GetMetadata();
 
-    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-        const bool byelement = true;
-    #else
-        const bool byelement = IsTypeless(image.format);
-    #endif
-
-        if (IsCompressed(image.format))
-        {
-            //--- BC formats use per-block copy -------------------------------------------
-            const size_t nbw = std::max<size_t>(1, (image.width + 3) / 4);
-            const size_t nbh = std::max<size_t>(1, (image.height + 3) / 4);
-
-            const size_t bpb = (image.format == DXGI_FORMAT_BC1_TYPELESS
-                || image.format == DXGI_FORMAT_BC1_UNORM
-                || image.format == DXGI_FORMAT_BC1_UNORM_SRGB
-                || image.format == DXGI_FORMAT_BC4_TYPELESS
-                || image.format == DXGI_FORMAT_BC4_UNORM
-                || image.format == DXGI_FORMAT_BC4_SNORM) ? 8 : 16;
-
-            assert(nbw == layout.Plane[0].MipLayout[level].WidthElements);
-            assert(nbh == layout.Plane[0].MipLayout[level].HeightElements);
-            assert(bpb == layout.Plane[0].BytesPerElement);
-
-            return TileByElement3D(image, level, slices, computer, layout, xbox, bpb, nbw, nbh, false);
-        }
-        else if (IsPacked(image.format))
-        {
-            const size_t bpp = (BitsPerPixel(image.format) + 7) / 8;
-
-            // XG (XboxOne) incorrectly returns 2 instead of 4 here for layout.Plane[0].BytesPerElement
-
-            assert(((image.width + 1) / 2) == layout.Plane[0].MipLayout[level].WidthElements);
-            assert(image.height == layout.Plane[0].MipLayout[level].HeightElements);
-
-            return TileByElement3D(image, level, slices, computer, layout, xbox, bpp, image.width, image.height, true);
-        }
-        else if (byelement)
-        {
-            //--- Typeless is done with per-element copy ----------------------------------
-            const size_t bpp = (BitsPerPixel(image.format) + 7) / 8;
-            assert(bpp == layout.Plane[0].BytesPerElement);
-
-            assert(image.width == layout.Plane[0].MipLayout[level].WidthElements);
-            assert(image.height == layout.Plane[0].MipLayout[level].HeightElements);
-
-            return TileByElement3D(image, level, slices, computer, layout, xbox, bpp, image.width, image.height, false);
-        }
-        else
-        {
-            //--- Standard format handling ------------------------------------------------
-            auto& mip = layout.Plane[0].MipLayout[level];
-
-            const UINT32 tiledPixels = mip.PaddedWidthElements * mip.PaddedHeightElements * mip.PaddedDepthOrArraySize;
-            assert(tiledPixels >= (image.width * image.height * slices));
-
-            auto scanline = make_AlignedArrayXMVECTOR(image.width + tiledPixels);
-
-            XMVECTOR* row = scanline.get();
-            XMVECTOR* tiled = row + image.width;
-
-        #ifdef _DEBUG
-            memset(row, 0xCD, sizeof(XMVECTOR) * image.width);
-        #endif
-
-            memset(tiled, 0, sizeof(XMVECTOR) * tiledPixels);
-
-            // Perform tiling
-            const uint8_t* sptr = reinterpret_cast<const uint8_t*>(image.pixels);
-            for (uint32_t z = 0; z < slices; ++z)
-            {
-                const uint8_t* rptr = sptr;
-
-                for (uint32_t y = 0; y < image.height; ++y)
-                {
-                    if (!LoadScanline(row, image.width, rptr, image.rowPitch, image.format))
-                        return E_FAIL;
-
-                    rptr += image.rowPitch;
-
-                    for (size_t x = 0; x < image.width; ++x)
-                    {
-                    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-                        size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, z, 0, nullptr);
-                    #else
-                        size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, y, z, 0);
-                    #endif
-                        if (offset == size_t(-1))
-                            return E_FAIL;
-
-                        assert(offset >= mip.OffsetBytes);
-                        assert(offset < mip.OffsetBytes + mip.SizeBytes);
-
-                        offset = (offset - mip.OffsetBytes) / layout.Plane[0].BytesPerElement;
-                        assert(offset < tiledPixels);
-
-                        tiled[offset] = row[x];
-                    }
-                }
-
-                sptr += image.slicePitch;
-            }
-
-            // Store tiled texture
-            uint8_t* dptr = xbox.GetPointer() + mip.OffsetBytes;
-            const uint8_t* endPtr = dptr + mip.SizeBytes;
-            const XMVECTOR* tptr = tiled;
-            for (uint32_t z = 0; z < mip.PaddedDepthOrArraySize; ++z)
-            {
-                uint8_t* rptr = dptr;
-                const XMVECTOR* uptr = tptr;
-
-                for (uint32_t y = 0; y < mip.PaddedHeightElements; ++y)
-                {
-                    if ((rptr + mip.PitchBytes) > endPtr)
-                        return E_FAIL;
-
-                    if (!StoreScanline(rptr, mip.PitchBytes, xbox.GetMetadata().format, uptr, mip.PitchPixels))
-                        return E_FAIL;
-
-                    rptr += mip.PitchBytes;
-                    uptr += mip.PaddedWidthElements;
-                }
-
-                dptr += mip.Slice2DSizeBytes;
-                tptr += size_t(mip.PaddedHeightElements) * size_t(mip.PaddedWidthElements);
-            }
-        }
-
-        return S_OK;
+        return computer->CopyIntoSubresource(
+            baseAddr,
+            0u,
+            metadata.CalculateSubresource(level, 0),
+            image.pixels,
+            static_cast<UINT32>(image.rowPitch),
+            static_cast<UINT32>(image.slicePitch));
     }
 }
 
@@ -1055,7 +717,7 @@ HRESULT Xbox::Tile(
                 }
 
                 // Relies on the fact that slices are contiguous
-                hr = Tile3D(srcImages[index], level, d, computer.Get(), layout, xbox);
+                hr = Tile3D(srcImages[index], level, computer.Get(), layout, xbox);
                 if (FAILED(hr))
                 {
                     xbox.Release();
