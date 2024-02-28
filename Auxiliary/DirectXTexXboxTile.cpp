@@ -283,7 +283,6 @@ namespace
         size_t nimages,
         uint32_t level,
         _In_ XGTextureAddressComputer* computer,
-        const XG_RESOURCE_LAYOUT& layout,
         const XboxImage& xbox)
     {
         if (!nimages)
@@ -291,8 +290,6 @@ namespace
 
         if (!images || !images[0] || !computer || !xbox.GetPointer())
             return E_POINTER;
-
-        assert(layout.Planes == 1);
 
         uint8_t* baseAddr = xbox.GetPointer();
         const auto& metadata = xbox.GetMetadata();
@@ -333,13 +330,10 @@ namespace
         const Image& image,
         uint32_t level,
         _In_ XGTextureAddressComputer* computer,
-        const XG_RESOURCE_LAYOUT& layout,
         const XboxImage& xbox)
     {
         if (!image.pixels || !computer || !xbox.GetPointer())
             return E_POINTER;
-
-        assert(layout.Planes == 1);
 
         uint8_t* baseAddr = xbox.GetPointer();
         const auto& metadata = xbox.GetMetadata();
@@ -428,7 +422,7 @@ HRESULT Xbox::Tile(
         return hr;
 
     const Image* images = &srcImage;
-    hr = Tile2D(&images, 1, 0, computer.Get(), layout, xbox);
+    hr = Tile2D(&images, 1, 0, computer.Get(), xbox);
     if (FAILED(hr))
     {
         xbox.Release();
@@ -641,7 +635,7 @@ HRESULT Xbox::Tile(
                         images.push_back(&srcImages[index]);
                     }
 
-                    hr = Tile2D(&images[0], images.size(), level, computer.Get(), layout, xbox);
+                    hr = Tile2D(&images[0], images.size(), level, computer.Get(), xbox);
                 }
                 else
                 {
@@ -653,7 +647,7 @@ HRESULT Xbox::Tile(
                     }
 
                     const Image* images = &srcImages[index];
-                    hr = Tile2D(&images, 1, level, computer.Get(), layout, xbox);
+                    hr = Tile2D(&images, 1, level, computer.Get(), xbox);
                 }
 
                 if (FAILED(hr))
@@ -717,7 +711,7 @@ HRESULT Xbox::Tile(
                 }
 
                 // Relies on the fact that slices are contiguous
-                hr = Tile3D(srcImages[index], level, computer.Get(), layout, xbox);
+                hr = Tile3D(srcImages[index], level, computer.Get(), xbox);
                 if (FAILED(hr))
                 {
                     xbox.Release();

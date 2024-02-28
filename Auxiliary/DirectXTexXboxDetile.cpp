@@ -196,7 +196,6 @@ namespace
         const XboxImage& xbox,
         uint32_t level,
         _In_ XGTextureAddressComputer* computer,
-        const XG_RESOURCE_LAYOUT& layout,
         _In_reads_(nimages) const Image** result,
         size_t nimages)
     {
@@ -207,8 +206,6 @@ namespace
             return E_POINTER;
 
         assert(xbox.GetMetadata().format == result[0]->format);
-
-        assert(layout.Planes == 1);
 
         uint8_t* baseAddr = xbox.GetPointer();
         const auto& metadata = xbox.GetMetadata();
@@ -251,15 +248,12 @@ namespace
         const XboxImage& xbox,
         uint32_t level,
         _In_ XGTextureAddressComputer* computer,
-        const XG_RESOURCE_LAYOUT& layout,
         const Image& result)
     {
         if (!computer || !xbox.GetPointer() || !result.pixels)
             return E_POINTER;
 
         assert(xbox.GetMetadata().format == result.format);
-
-        assert(layout.Planes == 1);
 
         uint8_t* baseAddr = xbox.GetPointer();
         const auto& metadata = xbox.GetMetadata();
@@ -451,7 +445,7 @@ HRESULT Xbox::Detile(
                         images.push_back(img);
                     }
 
-                    hr = Detile2D(xbox, level, computer.Get(), layout, &images[0], images.size());
+                    hr = Detile2D(xbox, level, computer.Get(), &images[0], images.size());
                 }
                 else
                 {
@@ -462,7 +456,7 @@ HRESULT Xbox::Detile(
                         return E_FAIL;
                     }
 
-                    hr = Detile2D(xbox, level, computer.Get(), layout, &img, 1);
+                    hr = Detile2D(xbox, level, computer.Get(), &img, 1);
                 }
 
                 if (FAILED(hr))
@@ -522,7 +516,7 @@ HRESULT Xbox::Detile(
                 }
 
                 // Relies on the fact that slices are contiguous
-                hr = Detile3D(xbox, level, computer.Get(), layout, image.GetImages()[index]);
+                hr = Detile3D(xbox, level, computer.Get(), image.GetImages()[index]);
                 if (FAILED(hr))
                 {
                     image.Release();
