@@ -1492,7 +1492,6 @@ DXGI_FORMAT DirectX::MakeTypelessFLOAT(DXGI_FORMAT fmt) noexcept
 // TexMetadata
 //=====================================================================================
 
-_Use_decl_annotations_
 size_t TexMetadata::ComputeIndex(size_t mip, size_t item, size_t slice) const noexcept
 {
     if (mip >= mipLevels)
@@ -1539,6 +1538,72 @@ size_t TexMetadata::ComputeIndex(size_t mip, size_t item, size_t slice) const no
     default:
         return size_t(-1);
     }
+}
+
+// Equivalent to D3D11CacluateSubresource
+uint32_t TexMetadata::CalculateSubresource(size_t mip, size_t item) const noexcept
+{
+    uint32_t result = uint32_t(-1);
+
+    if (mip < mipLevels)
+    {
+        switch (dimension)
+        {
+        case TEX_DIMENSION_TEXTURE1D:
+        case TEX_DIMENSION_TEXTURE2D:
+            if (item < arraySize)
+            {
+                return static_cast<uint32_t>(mip + item*mipLevels);
+            }
+            break;
+
+        case TEX_DIMENSION_TEXTURE3D:
+            // No support for arrays of volumes
+            if (item == 0)
+            {
+                result = static_cast<uint32_t>(mip);
+            }
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    return result;
+}
+
+// Equivalent to D3D12CacluateSubresource
+uint32_t TexMetadata::CalculateSubresource(size_t mip, size_t item, size_t plane) const noexcept
+{
+    uint32_t result = uint32_t(-1);
+
+    if (mip < mipLevels)
+    {
+        switch (dimension)
+        {
+        case TEX_DIMENSION_TEXTURE1D:
+        case TEX_DIMENSION_TEXTURE2D:
+            if (item < arraySize)
+            {
+                return static_cast<uint32_t>(mip + item*mipLevels + plane*mipLevels*arraySize);
+            }
+            break;
+
+        case TEX_DIMENSION_TEXTURE3D:
+            // No support for arrays of volumes
+            if (item == 0)
+            {
+                result = static_cast<uint32_t>(mip + plane*mipLevels);
+            }
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    return result;
 }
 
 
