@@ -1540,7 +1540,7 @@ size_t TexMetadata::ComputeIndex(size_t mip, size_t item, size_t slice) const no
     }
 }
 
-// Equivalent to D3D11CacluateSubresource
+// Equivalent to D3D11CacluateSubresource: MipSlice + ArraySlice * MipLevels
 uint32_t TexMetadata::CalculateSubresource(size_t mip, size_t item) const noexcept
 {
     uint32_t result = uint32_t(-1);
@@ -1573,7 +1573,7 @@ uint32_t TexMetadata::CalculateSubresource(size_t mip, size_t item) const noexce
     return result;
 }
 
-// Equivalent to D3D12CacluateSubresource
+// Equivalent to D3D12CacluateSubresource: MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize
 uint32_t TexMetadata::CalculateSubresource(size_t mip, size_t item, size_t plane) const noexcept
 {
     uint32_t result = uint32_t(-1);
