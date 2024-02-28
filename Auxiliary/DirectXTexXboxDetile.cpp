@@ -207,8 +207,6 @@ namespace
 
         assert(xbox.GetMetadata().format == result[0]->format);
 
-        assert(layout.Planes == 1);
-
         uint8_t* baseAddr = xbox.GetPointer();
         const auto& metadata = xbox.GetMetadata();
 
@@ -256,8 +254,6 @@ namespace
             return E_POINTER;
 
         assert(xbox.GetMetadata().format == result.format);
-
-        assert(layout.Planes == 1);
 
         uint8_t* baseAddr = xbox.GetPointer();
         const auto& metadata = xbox.GetMetadata();

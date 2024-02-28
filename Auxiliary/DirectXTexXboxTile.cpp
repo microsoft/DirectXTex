@@ -291,8 +291,6 @@ namespace
         if (!images || !images[0] || !computer || !xbox.GetPointer())
             return E_POINTER;
 
-        assert(layout.Planes == 1);
-
         uint8_t* baseAddr = xbox.GetPointer();
         const auto& metadata = xbox.GetMetadata();
 
@@ -336,8 +334,6 @@ namespace
     {
         if (!image.pixels || !computer || !xbox.GetPointer())
             return E_POINTER;
-
-        assert(layout.Planes == 1);
 
         uint8_t* baseAddr = xbox.GetPointer();
         const auto& metadata = xbox.GetMetadata();
