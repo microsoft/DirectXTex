@@ -6,6 +6,9 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### March 6, 2024
+* Xbox Auxiliary tiling/detiling code optimization
+
 ### February 21, 2024
 * TGA reader now limited to 4 GB for maximum image size for security hardening
 * Project updates for improved logging of shader compilation errors and GDK validation
