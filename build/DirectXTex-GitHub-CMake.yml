@@ -267,7 +267,7 @@ jobs:
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out2 -v --config Debug
-   - task: CMake@1
+  - task: CMake@1
     displayName: 'CMake (MSVC): Config x64 w/ libjpeg'
     inputs:
       cwd: '$(Build.SourcesDirectory)'
@@ -277,7 +277,8 @@ jobs:
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out3 -v --config Debug
-     displayName: 'CMake (MSVC): Config x64 w/ libpng'
+  - task: CMake@1
+    displayName: 'CMake (MSVC): Config x64 w/ libpng'
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out4 -DENABLE_LIBPNG_SUPPORT=ON -DBUILD_TESTING=OFF -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)'
