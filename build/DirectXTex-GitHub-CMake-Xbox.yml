@@ -17,15 +17,28 @@ trigger:
     include:
     - main
   paths:
-    include:
-    - CMakeLists.txt
+    exclude:
+    - '*.md'
+    - LICENSE
+    - '.nuget/*'
+    - build/*.json
+    - build/*.props
+    - build/*.ps1
+    - build/*.targets
+
 pr:
   branches:
     include:
     - main
   paths:
-    include:
-    - CMakeLists.txt
+    exclude:
+    - '*.md'
+    - LICENSE
+    - '.nuget/*'
+    - build/*.json
+    - build/*.props
+    - build/*.ps1
+    - build/*.targets
   drafts: false
 
 resources:

@@ -20,20 +20,29 @@ trigger:
     - main
   paths:
     exclude:
-    - README.md
-    - HISTORY.md
-    - SECURITY.md
+    - '*.md'
     - LICENSE
+    - CMake*
+    - '.nuget/*'
+    - build/*.cmake
+    - build/*.in
+    - build/*.json
+    - build/*.ps1
+
 pr:
   branches:
     include:
     - main
   paths:
     exclude:
-    - README.md
-    - HISTORY.md
-    - SECURITY.md
+    - '*.md'
     - LICENSE
+    - CMake*
+    - '.nuget/*'
+    - build/*.cmake
+    - build/*.in
+    - build/*.json
+    - build/*.ps1
   drafts: false
 
 resources:
