@@ -156,7 +156,7 @@ jobs:
     displayName: VCPKG Bootstrap
     inputs:
       targetType: filePath
-      filePath: ./bootstrap-vcpkg.sh
+      filePath: $(Build.SourcesDirectory)/vcpkg/bootstrap-vcpkg.sh
       workingDirectory: $(Build.SourcesDirectory)/vcpkg
   - task: CmdLine@2
     displayName: VCPKG install headers
