@@ -159,15 +159,18 @@ jobs:
       filePath: $(Build.SourcesDirectory)/vcpkg/bootstrap-vcpkg.sh
       workingDirectory: $(Build.SourcesDirectory)/vcpkg
   - task: CmdLine@2
-    displayName: VCPKG install headers
+    displayName: GCC and CMake version
     inputs:
       script: |
-        ./vcpkg install directxmath
-        ./vcpkg install directx-headers
-        ./vcpkg install openexr
-        ./vcpkg install libpng
-        ./vcpkg install libjpeg-turbo
+        g++ --version
+        cmake --version
 
+  - task: Bash@3
+    displayName: VCPKG install headers
+    inputs:
+      targetType: filePath
+      filePath: $(Build.SourcesDirectory)/vcpkg/vcpkg
+      arguments: install directxmath directx-headers openexr libpng zlib libjpeg-turbo
       workingDirectory: $(Build.SourcesDirectory)/vcpkg
   - task: CMake@1
     displayName: CMake DirectXTex (Config) dbg
