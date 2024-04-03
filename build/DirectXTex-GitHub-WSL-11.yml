@@ -139,12 +139,10 @@ jobs:
         g++ --version
         cmake --version
 
-  - task: Bash@3
+  - task: CmdLine@2
     displayName: VCPKG install headers
     inputs:
-      targetType: filePath
-      filePath: $(Build.SourcesDirectory)/vcpkg/vcpkg
-      arguments: install directxmath directx-headers openexr libpng zlib libjpeg-turbo
+      script: $(Build.SourcesDirectory)/vcpkg/vcpkg install directxmath directx-headers openexr libpng zlib libjpeg-turbo
       workingDirectory: $(Build.SourcesDirectory)/vcpkg
   - task: CMake@1
     displayName: CMake DirectXTex (Config) dbg
