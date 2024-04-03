@@ -29,7 +29,6 @@ pool:
 variables:
   VCPKG_CMAKE_DIR: '$(VCPKG_ROOT)/scripts/buildsystems/vcpkg.cmake'
   GITHUB_PAT: $(GITHUBPUBLICTOKEN)
-  DEST_DIR: $(DESTDIR)
 
 jobs:
 - job: BUILD_WSL
@@ -40,6 +39,10 @@ jobs:
   - checkout: self
     clean: true
     fetchTags: false
+  - task: CmdLine@2
+    displayName: Fetch directx-headers
+    inputs:
+      script: export DESTDIR=$(Agent.BuildDirectory)/install/
   - task: CmdLine@2
     displayName: Fetch directx-headers
     inputs:
@@ -84,8 +87,8 @@ jobs:
       targetType: inline
       script: |
         $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri https://raw.githubusercontent.com/dotnet/corert/master/src/Native/inc/unix/sal.h -OutFile $(DEST_DIR)usr/local/include/sal.h
-        $fileHash = Get-FileHash -Algorithm SHA512 $(DEST_DIR)usr/local/include/sal.h | ForEach { $_.Hash} | Out-String
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/dotnet/corert/master/src/Native/inc/unix/sal.h -OutFile $(DESTDIR)usr/local/include/sal.h
+        $fileHash = Get-FileHash -Algorithm SHA512 $(DESTDIR)usr/local/include/sal.h | ForEach { $_.Hash} | Out-String
         $filehash = $fileHash.Trim()
         Write-Host "##[debug]SHA512: " $filehash
         if ($fileHash -ne "1643571673195d9eb892d2f2ac76eac7113ef7aa0ca116d79f3e4d3dc9df8a31600a9668b7e7678dfbe5a76906f9e0734ef8d6db0903ccc68fc742dd8238d8b0") {
@@ -96,7 +99,7 @@ jobs:
     displayName: CMake DirectXTex (Config) dbg
     inputs:
       cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: -B out -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=$(DEST_DIR)usr/local/share;$(DEST_DIR)usr/local/cmake
+      cmakeArgs: -B out -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=$(DESTDIR)usr/local/share;$(DESTDIR)usr/local/cmake
   - task: CMake@1
     displayName: CMake DirectXTex (Build) dbg
     inputs:
@@ -106,7 +109,7 @@ jobs:
     displayName: CMake DirectXTex (Config) rel
     inputs:
       cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: -B out2 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(DEST_DIR)usr/local/share;$(DEST_DIR)usr/local/cmake
+      cmakeArgs: -B out2 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(DESTDIR)usr/local/share;$(DESTDIR)usr/local/cmake
   - task: CMake@1
     displayName: CMake DirectXTex (Build) rel
     inputs:
