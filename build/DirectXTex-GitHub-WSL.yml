@@ -168,7 +168,7 @@ jobs:
   - task: CmdLine@2
     displayName: VCPKG install headers
     inputs:
-      script: $(Build.SourcesDirectory)/vcpkg/vcpkg install directxmath directx-headers openexr libpng zlib libjpeg-turbo
+      script: $(Build.SourcesDirectory)/vcpkg/vcpkg install directxmath directx-headers openexr libpng zlib libjpeg-turbo --debug
       workingDirectory: $(Build.SourcesDirectory)/vcpkg
   - task: CMake@1
     displayName: CMake DirectXTex (Config) dbg
