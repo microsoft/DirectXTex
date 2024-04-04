@@ -564,7 +564,8 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     if((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.37)
        AND (NOT (${DIRECTX_ARCH} MATCHES "^arm"))
        AND ((${DIRECTX_ARCH} MATCHES "x64") OR (CMAKE_SIZEOF_VOID_P EQUAL 8)))
-      list(APPEND COMPILER_SWITCHES /jumptablerdata)
+       # Enable since DirectXTex library has a lot of large switch statements
+      target_compile_options(${PROJECT_NAME} /jumptablerdata)
     endif()
 
     if(ENABLE_CODE_ANALYSIS)
