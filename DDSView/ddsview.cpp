@@ -25,7 +25,9 @@
 
 #include <DirectXMath.h>
 
+#ifdef _MSC_VER
 #pragma warning(disable : 4619 4616 26812)
+#endif
 
 #include "DirectXTex.h"
 
@@ -103,7 +105,9 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void Render();
 
 //--------------------------------------------------------------------------------------
+#ifdef _MSC_VER
 #pragma warning( suppress : 6262 )
+#endif
 int WINAPI wWinMain(
     _In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE /*hPrevInstance*/,
