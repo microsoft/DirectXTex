@@ -128,18 +128,6 @@ namespace
         auto xboxext = reinterpret_cast<const DDS_HEADER_XBOX*>(
             reinterpret_cast<const uint8_t*>(pSource) + sizeof(uint32_t) + sizeof(DDS_HEADER));
 
-    #ifdef _GXDK_VER
-        if (xboxext->xdkVer < _GXDK_VER)
-        {
-            OutputDebugStringA("WARNING: DDS XBOX file may be outdated and need regeneration\n");
-        }
-    #elif defined(_XDK_VER)
-        if (xboxext->xdkVer < _XDK_VER)
-        {
-            OutputDebugStringA("WARNING: DDS XBOX file may be outdated and need regeneration\n");
-        }
-    #endif
-
         metadata.arraySize = xboxext->arraySize;
         if (metadata.arraySize == 0)
         {
