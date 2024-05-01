@@ -163,7 +163,8 @@ namespace
                 formatFound = true;
 
                 const size_t len = FindEOL(info, size);
-                if (len == size_t(-1))
+                if (len == size_t(-1)
+                    || len < 1)
                 {
                     return E_FAIL;
                 }
@@ -207,7 +208,8 @@ namespace
             else
             {
                 const size_t len = FindEOL(info, size);
-                if (len == size_t(-1))
+                if (len == size_t(-1)
+                    || len < 1)
                 {
                     return E_FAIL;
                 }
