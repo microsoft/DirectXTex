@@ -134,24 +134,21 @@
     {
       "name": "Scarlett",
       "cacheVariables": {
-        "XBOX_CONSOLE_TARGET": "scarlett",
-        "BUILD_TESTING": false
+        "XBOX_CONSOLE_TARGET": "scarlett"
       },
       "hidden": true
     },
     {
       "name": "XboxOne",
       "cacheVariables": {
-        "XBOX_CONSOLE_TARGET": "xboxone",
-        "BUILD_TESTING": false
+        "XBOX_CONSOLE_TARGET": "xboxone"
       },
       "hidden": true
     },
     {
       "name": "Durango",
       "cacheVariables": {
-        "XBOX_CONSOLE_TARGET": "durango",
-        "BUILD_TESTING": false
+        "XBOX_CONSOLE_TARGET": "durango"
       },
       "hidden": true
     },
@@ -308,6 +305,12 @@
     { "name": "x64-Release-GDKX-Clang"   , "description": "MSVC for x64 (Release) Xbox One Extensions", "inherits": [ "base", "x64", "Release", "GDKX", "Clang" ] },
     { "name": "x64-Debug-GDKX-S-Clang"   , "description": "MSVC for x64 (Debug) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Debug", "GDKXS", "Clang" ] },
     { "name": "x64-Release-GDKX-S-Clang" , "description": "MSVC for x64 (Release) Xbox Series X|S Extensions", "inherits": [ "base", "x64", "Release", "GDKXS", "Clang" ] },
+
+    { "name": "x64-Debug-Scarlett-Clang"  , "description": "Clang/LLVM for x64 (Debug) for Xbox Series X|S", "inherits": [ "base", "x64", "Debug", "Clang", "Scarlett" ] },
+    { "name": "x64-Release-Scarlett-Clang", "description": "Clang/LLVM for x64 (Release) for Xbox Series X|S", "inherits": [ "base", "x64", "Release", "Clang", "Scarlett" ] },
+
+    { "name": "x64-Debug-XboxOne-Clang"   , "description": "Clang/LLVM for x64 (Debug) for Xbox One", "inherits": [ "base", "x64", "Debug", "Clang", "XboxOne" ] },
+    { "name": "x64-Release-XboxOne-Clang" , "description": "Clang/LLVM for x64 (Release) for Xbox One", "inherits": [ "base", "x64", "Release", "Clang", "XboxOne" ] },
 
     { "name": "x64-Debug-MinGW"  , "description": "MinG-W64 (Debug)", "inherits": [ "base", "x64", "Debug", "GNUC", "VCPKG", "MinGW64" ] },
     { "name": "x64-Release-MinGW", "description": "MinG-W64 (Release)", "inherits": [ "base", "x64", "Release", "GNUC", "VCPKG", "MinGW64" ] },

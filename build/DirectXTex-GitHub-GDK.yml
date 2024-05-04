@@ -3,7 +3,7 @@
 #
 # http://go.microsoft.com/fwlink/?LinkId=248926
 
-# Builds the library with Xbox extensions using the Microsoft GDK.
+# Builds the library using the Microsoft GDK.
 
 # NOTE: We use x64 MSBuild for the GDK as the NuGets don't include 32-bit support to avoid cross-arch dependencies.
 
@@ -25,6 +25,7 @@ trigger:
     - CMake*
     - '.nuget/*'
     - build/*.cmake
+    - build/*.cmd
     - build/*.in
     - build/*.json
     - build/*.ps1
@@ -40,6 +41,7 @@ pr:
     - CMake*
     - '.nuget/*'
     - build/*.cmake
+    - build/*.cmd
     - build/*.in
     - build/*.json
     - build/*.ps1
@@ -60,7 +62,6 @@ variables:
   EXTRACTED_FOLDER: $(ExtractedFolder)
   GDK_EDITION: $(GDKEditionNumber)
   GDKEnableBWOI: true
-  GITHUB_PAT: $(GITHUBPUBLICTOKEN)
   URL_FEED: $(ADOFeedURL)
   skipNugetSecurityAnalysis: true # We explicitly call this task so we don't need it to be auto-injected
 
