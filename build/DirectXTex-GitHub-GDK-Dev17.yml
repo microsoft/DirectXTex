@@ -43,8 +43,8 @@ variables:
   GDK_EDITION: $(GDKEditionNumber)
   GDKEnableBWOI: true
   URL_FEED: $(ADOFeedURL)
-  skipNugetSecurityAnalysis: true # We explicitly call this task so we don't need it to be auto-injected
   VC_PATH: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC'
+  skipNugetSecurityAnalysis: true # We explicitly call this task so we don't need it to be auto-injected
 
 jobs:
 - job: BUILD_GDK
@@ -234,12 +234,6 @@ jobs:
       arguments: sources add -Name xboxgdk -Source $(URL_FEED) -ConfigFile $(Build.SourcesDirectory)\NuGet.config
   - task: nuget-security-analysis@0
     displayName: 'Secure Supply Chain Analysis'
-  - task: PowerShell@2
-    displayName: Install Ninja
-    inputs:
-      targetType: inline
-      script: choco install ninja
-      failOnStderr: true
   - task: NuGetCommand@2
     displayName: NuGet install PGDK
     inputs:
@@ -256,6 +250,7 @@ jobs:
       script: |
         call "$(VC_PATH)\Auxiliary\Build\vcvars64.bat"
         echo ##vso[task.setvariable variable=WindowsSdkVerBinPath;]%WindowsSdkVerBinPath%
+        echo ##vso[task.prependpath]%VSINSTALLDIR%Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja
         echo ##vso[task.prependpath]%VCINSTALLDIR%Tools\Llvm\x64\bin
         echo ##vso[task.prependpath]%WindowsSdkBinPath%x64
         echo ##vso[task.prependpath]%WindowsSdkVerBinPath%x64
@@ -345,12 +340,6 @@ jobs:
       arguments: sources add -Name xboxgdk -Source $(URL_FEED) -ConfigFile $(Build.SourcesDirectory)\NuGet.config
   - task: nuget-security-analysis@0
     displayName: 'Secure Supply Chain Analysis'
-  - task: PowerShell@2
-    displayName: Install Ninja
-    inputs:
-      targetType: inline
-      script: choco install ninja
-      failOnStderr: true
   - task: NuGetCommand@2
     displayName: NuGet install PGDK
     inputs:
@@ -367,6 +356,7 @@ jobs:
       script: |
         call "$(VC_PATH)\Auxiliary\Build\vcvars64.bat"
         echo ##vso[task.setvariable variable=WindowsSdkVerBinPath;]%WindowsSdkVerBinPath%
+        echo ##vso[task.prependpath]%VSINSTALLDIR%Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja
         echo ##vso[task.prependpath]%VCINSTALLDIR%Tools\Llvm\x64\bin
         echo ##vso[task.prependpath]%WindowsSdkBinPath%x64
         echo ##vso[task.prependpath]%WindowsSdkVerBinPath%x64
