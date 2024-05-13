@@ -52,6 +52,7 @@ resources:
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
 variables:
+  Codeql.Enabled: false
   VCPKG_CMAKE_DIR: '$(VCPKG_ROOT)/scripts/buildsystems/vcpkg.cmake'
   GITHUB_PAT: $(GITHUBPUBLICTOKEN)
   VS_GENERATOR: 'Visual Studio 17 2022'

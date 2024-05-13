@@ -62,6 +62,7 @@ pool:
   vmImage: windows-2019
 
 variables:
+  Codeql.Enabled: false
   GITHUB_PAT: $(GITHUBPUBLICTOKEN)
 
 jobs:
