@@ -60,7 +60,7 @@ resources:
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
 variables:
-  Codeql.Enabled: true
+  Codeql.Enabled: false
 
 pool:
   vmImage: windows-2022

@@ -24,6 +24,8 @@ resources:
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
 variables:
+  Codeql.Enabled: true
+  Codeql.Language: cpp
   VS_GENERATOR: 'Visual Studio 17 2022'
 
 pool:
