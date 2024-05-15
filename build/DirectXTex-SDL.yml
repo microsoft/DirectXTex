@@ -13,7 +13,14 @@ schedules:
     - main
 
 trigger: none
-pr: none
+
+pr:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - build/DirectXTex-SDL.yml
 
 resources:
   repositories:
