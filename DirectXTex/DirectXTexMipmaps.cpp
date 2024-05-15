@@ -71,7 +71,7 @@ namespace
         _In_ IWICBitmap* src,
         _In_ TEX_FILTER_FLAGS filter,
         _In_ const WICPixelFormatGUID& desiredPixelFormat,
-        _COM_Outptr_ IWICBitmap** dest) noexcept
+        __RPC__deref_out_opt /* needed to match WIC annotation */ IWICBitmap** dest) noexcept
     {
         if (!dest)
             return E_POINTER;
