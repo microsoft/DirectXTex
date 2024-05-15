@@ -33,6 +33,7 @@ name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 variables:
   Codeql.Enabled: true
   Codeql.Language: cpp
+  VC_PATH: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC'
   VS_GENERATOR: 'Visual Studio 17 2022'
 
 pool:
