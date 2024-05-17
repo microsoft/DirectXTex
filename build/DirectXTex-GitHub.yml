@@ -63,7 +63,7 @@ variables:
   Codeql.Enabled: false
 
 pool:
-  vmImage: windows-2022
+  vmImage: windows-2019
 
 jobs:
 - job: DESKTOP_BUILD
@@ -221,56 +221,5 @@ jobs:
     inputs:
       solution: DirectXTex_Desktop_2019_Win10.sln
       msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=Spectre
-      platform: ARM64
-      configuration: Release
-
-- job: UWP_BUILD
-  displayName: 'Universal Windows Platform (UWP)'
-  timeoutInMinutes: 120
-  cancelTimeoutInMinutes: 1
-  steps:
-  - checkout: self
-    clean: true
-    fetchTags: false
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_Windows10_2022.sln 32dbg
-    inputs:
-      solution: DirectXTex_Windows10_2022.sln
-      msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: x86
-      configuration: Debug
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_Windows10_2022.sln 32rel
-    inputs:
-      solution: DirectXTex_Windows10_2022.sln
-      msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: x86
-      configuration: Release
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_Windows10_2022.sln 64dbg
-    inputs:
-      solution: DirectXTex_Windows10_2022.sln
-      msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: x64
-      configuration: Debug
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_Windows10_2022.sln 64rel
-    inputs:
-      solution: DirectXTex_Windows10_2022.sln
-      msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: x64
-      configuration: Release
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_Windows10_2022.sln arm64dbg
-    inputs:
-      solution: DirectXTex_Windows10_2022.sln
-      msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: ARM64
-      configuration: Debug
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_Windows10_2022.sln arm64rel
-    inputs:
-      solution: DirectXTex_Windows10_2022.sln
-      msbuildArgs: /p:PreferredToolArchitecture=x64
       platform: ARM64
       configuration: Release

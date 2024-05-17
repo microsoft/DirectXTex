@@ -12,22 +12,50 @@ schedules:
     include:
     - main
 
-trigger: none
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    exclude:
+    - '*.md'
+    - LICENSE
+    - CMake*
+    - '.nuget/*'
+    - build/*.cmake
+    - build/*.cmd
+    - build/*.in
+    - build/*.json
+    - build/*.props
+    - build/*.ps1
+    - build/*.targets
+    - Auxiliary/*
 
 pr:
   branches:
     include:
     - main
   paths:
-    include:
-    - build/DirectXTex-GitHub-Dev17.yml
+    exclude:
+    - '*.md'
+    - LICENSE
+    - CMake*
+    - '.nuget/*'
+    - build/*.cmake
+    - build/*.cmd
+    - build/*.in
+    - build/*.json
+    - build/*.props
+    - build/*.ps1
+    - build/*.targets
+    - Auxiliary/*
+  drafts: false
 
 resources:
   repositories:
   - repository: self
     type: git
     ref: refs/heads/main
-    trigger: none
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
