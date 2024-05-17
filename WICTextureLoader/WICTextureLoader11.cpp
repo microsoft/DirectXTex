@@ -802,29 +802,19 @@ namespace
             );
             if (result > 0)
             {
-                const char* pstrName = strrchr(strFileA, '\\');
-                if (!pstrName)
-                {
-                    pstrName = strFileA;
-                }
-                else
-                {
-                    pstrName++;
-                }
-
                 if (texture && *texture)
                 {
                     (*texture)->SetPrivateData(WKPDID_D3DDebugObjectName,
-                        static_cast<UINT>(strnlen_s(pstrName, MAX_PATH)),
-                        pstrName
+                        static_cast<UINT>(result),
+                        strFileA
                     );
                 }
 
                 if (textureView && *textureView)
                 {
                     (*textureView)->SetPrivateData(WKPDID_D3DDebugObjectName,
-                        static_cast<UINT>(strnlen_s(pstrName, MAX_PATH)),
-                        pstrName
+                        static_cast<UINT>(result),
+                        strFileA
                     );
                 }
             }
