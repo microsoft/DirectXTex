@@ -27,6 +27,10 @@ static_assert(WIN10_DXGI_FORMAT_V208 == DXGI_FORMAT_V208, "Windows SDK mismatch 
 static_assert(WIN10_DXGI_FORMAT_V408 == DXGI_FORMAT_V408, "Windows SDK mismatch detected");
 #endif
 
+#if defined(NTDDI_WIN11_GE)
+static_assert(WIN11_DXGI_FORMAT_A4B4G4R4_UNORM == DXGI_FORMAT_A4B4G4R4_UNORM, "Windows SDK mismatch detected");
+#endif
+
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
