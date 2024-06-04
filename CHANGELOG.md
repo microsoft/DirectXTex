@@ -6,6 +6,12 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### June 4, 2024
+* Fix for HDR codec to avoid buffer overread for some malformed files
+* Updated D3DX12 internal copy with latest changes from DirectX-Headers GitHub
+* CMake project updates
+* Retired VS 2019 projects for the UWP platform
+
 ### March 6, 2024
 * Xbox Auxiliary tiling/detiling code optimization
 
