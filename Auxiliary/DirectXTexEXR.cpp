@@ -371,11 +371,21 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
 
         auto const dw = file.dataWindow();
 
-        const int width = dw.max.x - dw.min.x + 1;
-        const int height = dw.max.y - dw.min.y + 1;
+        int width = dw.max.x - dw.min.x + 1;
+        int height = dw.max.y - dw.min.y + 1;
+        bool isEnvmap = false;
 
         if (width < 1 || height < 1)
             return E_FAIL;
+
+        if (file.header().find("envmap") != file.header().end())
+        {
+            if (width == height / 6)
+            {
+                height = width;
+            }
+            isEnvmap = true;
+        }
 
         if (metadata)
         {
@@ -386,8 +396,17 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
             metadata->dimension = TEX_DIMENSION_TEXTURE2D;
         }
 
-        hr = image.Initialize2D(DXGI_FORMAT_R16G16B16A16_FLOAT,
-            static_cast<size_t>(width), static_cast<size_t>(height), 1u, 1u);
+        if (!isEnvmap)
+        {
+            hr = image.Initialize2D(DXGI_FORMAT_R16G16B16A16_FLOAT,
+                static_cast<size_t>(width), static_cast<size_t>(height), 1u, 1u);
+        }
+        else
+        {
+            hr = image.InitializeCube(DXGI_FORMAT_R16G16B16A16_FLOAT,
+                static_cast<size_t>(width), static_cast<size_t>(height), 1u, 1u);
+        }
+        
         if (FAILED(hr))
             return hr;
 
