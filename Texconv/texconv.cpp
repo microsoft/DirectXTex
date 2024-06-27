@@ -110,6 +110,7 @@ namespace
         OPT_DDS_DWORD_ALIGN,
         OPT_DDS_BAD_DXTN_TAILS,
         OPT_DDS_PERMISSIVE,
+        OPT_DDS_IGNORE_MIPS,
         OPT_USE_DX10,
         OPT_USE_DX9,
         OPT_TGA20,
@@ -211,6 +212,7 @@ namespace
         { L"dword",         OPT_DDS_DWORD_ALIGN },
         { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
         { L"permissive",    OPT_DDS_PERMISSIVE },
+        { L"ignoremips",    OPT_DDS_IGNORE_MIPS },
         { L"dx10",          OPT_USE_DX10 },
         { L"dx9",           OPT_USE_DX9 },
         { L"tga20",         OPT_TGA20 },
@@ -1013,6 +1015,7 @@ namespace
             L"   -dword              Use DWORD instead of BYTE alignment\n"
             L"   -badtails           Fix for older DXTn with bad mipchain tails\n"
             L"   -permissive         Allow some DX9 variants with unusual header values\n"
+            L"   -ignoremips         Reads just the top-level mip which reads some invalid files\n"
             L"   -fixbc4x4           Fix for odd-sized BC files that Direct3D can't load\n"
             L"   -xlum               expand legacy L8, L16, and A8P8 formats\n"
             L"\n"
@@ -2240,6 +2243,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     ddsFlags |= DDS_FLAGS_BAD_DXTN_TAILS;
                 if (dwOptions & (uint64_t(1) << OPT_DDS_PERMISSIVE))
                     ddsFlags |= DDS_FLAGS_PERMISSIVE;
+                if (dwOptions & (uint64_t(1) << OPT_DDS_IGNORE_MIPS))
+                    ddsFlags |= DDS_FLAGS_IGNORE_MIPS;
 
                 hr = LoadFromDDSFile(curpath.c_str(), ddsFlags, &info, *image);
             }

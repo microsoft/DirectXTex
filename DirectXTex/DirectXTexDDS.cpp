@@ -369,8 +369,10 @@ namespace
         }
 
         metadata.mipLevels = pHeader->mipMapCount;
-        if (metadata.mipLevels == 0)
+        if ((metadata.mipLevels == 0) || (flags & DDS_FLAGS_IGNORE_MIPS))
+        {
             metadata.mipLevels = 1;
+        }
 
         // Check for DX10 extension
         if ((pHeader->ddspf.flags & DDS_FOURCC)
