@@ -236,6 +236,9 @@ namespace DirectX
         DDS_FLAGS_PERMISSIVE = 0x80,
         // Allow some file variants due to common bugs in the header written by various leagcy DDS writers
 
+        DDS_FLAGS_IGNORE_MIPS = 0x100,
+        // Allow some files to be read that have incorrect mipcount values in the header by only reading the top-level mip
+
         DDS_FLAGS_FORCE_DX10_EXT = 0x10000,
         // Always use the 'DX10' header extension for DDS writer (i.e. don't try to write DX9 compatible DDS files)
 

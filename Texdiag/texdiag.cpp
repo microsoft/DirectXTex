@@ -91,6 +91,8 @@ enum OPTIONS : uint32_t
     OPT_FILTER,
     OPT_DDS_DWORD_ALIGN,
     OPT_DDS_BAD_DXTN_TAILS,
+    OPT_DDS_PERMISSIVE,
+    OPT_DDS_IGNORE_MIPS,
     OPT_OUTPUTFILE,
     OPT_TOLOWER,
     OPT_OVERWRITE,
@@ -137,25 +139,27 @@ const SValue g_pCommands[] =
 
 const SValue g_pOptions[] =
 {
-    { L"r",         OPT_RECURSIVE },
-    { L"f",         OPT_FORMAT },
-    { L"if",        OPT_FILTER },
-    { L"dword",     OPT_DDS_DWORD_ALIGN },
-    { L"badtails",  OPT_DDS_BAD_DXTN_TAILS },
-    { L"nologo",    OPT_NOLOGO },
-    { L"o",         OPT_OUTPUTFILE },
-    { L"l",         OPT_TOLOWER },
-    { L"y",         OPT_OVERWRITE },
-    { L"ft",        OPT_FILETYPE },
-    { L"tu",        OPT_TYPELESS_UNORM },
-    { L"tf",        OPT_TYPELESS_FLOAT },
-    { L"xlum",      OPT_EXPAND_LUMINANCE },
-    { L"targetx",   OPT_TARGET_PIXELX },
-    { L"targety",   OPT_TARGET_PIXELY },
-    { L"c",         OPT_DIFF_COLOR },
-    { L"t",         OPT_THRESHOLD },
-    { L"flist",     OPT_FILELIST },
-    { nullptr,      0 }
+    { L"r",          OPT_RECURSIVE },
+    { L"f",          OPT_FORMAT },
+    { L"if",         OPT_FILTER },
+    { L"dword",      OPT_DDS_DWORD_ALIGN },
+    { L"badtails",   OPT_DDS_BAD_DXTN_TAILS },
+    { L"permissive", OPT_DDS_PERMISSIVE },
+    { L"ignoremips", OPT_DDS_IGNORE_MIPS },
+    { L"nologo",     OPT_NOLOGO },
+    { L"o",          OPT_OUTPUTFILE },
+    { L"l",          OPT_TOLOWER },
+    { L"y",          OPT_OVERWRITE },
+    { L"ft",         OPT_FILETYPE },
+    { L"tu",         OPT_TYPELESS_UNORM },
+    { L"tf",         OPT_TYPELESS_FLOAT },
+    { L"xlum",       OPT_EXPAND_LUMINANCE },
+    { L"targetx",    OPT_TARGET_PIXELX },
+    { L"targety",    OPT_TARGET_PIXELY },
+    { L"c",          OPT_DIFF_COLOR },
+    { L"t",          OPT_THRESHOLD },
+    { L"flist",      OPT_FILELIST },
+    { nullptr,       0 }
 };
 
 #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
@@ -706,6 +710,8 @@ namespace
             L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n"
             L"   -dword              Use DWORD instead of BYTE alignment\n"
             L"   -badtails           Fix for older DXTn with bad mipchain tails\n"
+            L"   -permissive         Allow some DX9 variants with unusual header values\n"
+            L"   -ignoremips         Reads just the top-level mip which reads some invalid files\n"
             L"   -xlum               expand legacy L8, L16, and A8P8 formats\n"
             L"\n"
             L"                       (diff only)\n"
@@ -805,6 +811,10 @@ namespace
                 ddsFlags |= DDS_FLAGS_EXPAND_LUMINANCE;
             if (dwOptions & (1 << OPT_DDS_BAD_DXTN_TAILS))
                 ddsFlags |= DDS_FLAGS_BAD_DXTN_TAILS;
+            if (dwOptions & (1 << OPT_DDS_PERMISSIVE))
+                ddsFlags |= DDS_FLAGS_PERMISSIVE;
+            if (dwOptions & (1 << OPT_DDS_IGNORE_MIPS))
+                ddsFlags |= DDS_FLAGS_IGNORE_MIPS;
 
             HRESULT hr = LoadFromDDSFile(fileName, ddsFlags, &info, *image);
             if (FAILED(hr))
