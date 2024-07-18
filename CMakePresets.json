@@ -38,6 +38,15 @@
       "cacheVariables": { "DIRECTX_ARCH": "arm64" },
       "hidden": true
     },
+    {
+      "name": "ARM64EC",
+      "architecture": {
+        "value": "arm64ec",
+        "strategy": "external"
+      },
+      "cacheVariables": { "DIRECTX_ARCH": "arm64ec" },
+      "hidden": true
+    },
 
     {
       "name": "Debug",
@@ -237,6 +246,8 @@
     { "name": "x86-Release"  , "description": "MSVC for x86 (Release) with DX12", "inherits": [ "base", "x86", "Release", "MSVC" ] },
     { "name": "arm64-Debug"  , "description": "MSVC for ARM64 (Debug) with DX12", "inherits": [ "base", "ARM64", "Debug", "MSVC" ] },
     { "name": "arm64-Release", "description": "MSVC for ARM64 (Release) with DX12", "inherits": [ "base", "ARM64", "Release", "MSVC" ] },
+    { "name": "arm64ec-Debug"  , "description": "MSVC for ARM64EC (Debug) with DX12", "inherits": [ "base", "ARM64EC", "Debug", "MSVC" ], "environment": { "CXXFLAGS": "/arm64EC" } },
+    { "name": "arm64ec-Release", "description": "MSVC for ARM64EC (Release) with DX12", "inherits": [ "base", "ARM64EC", "Release", "MSVC" ], "environment": { "CXXFLAGS": "/arm64EC" } },
 
     { "name": "x64-Debug-UWP"    , "description": "MSVC for x64 (Debug) for UWP", "inherits": [ "base", "x64", "Debug", "MSVC", "UWP" ] },
     { "name": "x64-Release-UWP"  , "description": "MSVC for x64 (Release) for UWP", "inherits": [ "base", "x64", "Release", "MSVC", "UWP" ] },
