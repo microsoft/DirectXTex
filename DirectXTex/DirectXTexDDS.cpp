@@ -397,7 +397,7 @@ namespace
             metadata.arraySize = d3d10ext->arraySize;
             if (metadata.arraySize == 0)
             {
-                return HRESULT_E_INVALID_DATA;
+                metadata.arraySize = 1;
             }
 
             metadata.format = d3d10ext->dxgiFormat;
