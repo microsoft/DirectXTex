@@ -21,6 +21,7 @@ trigger:
     - '*.md'
     - LICENSE
     - CMake*
+    - '.github/*'
     - '.nuget/*'
     - build/*.cmake
     - build/*.cmd
@@ -30,6 +31,7 @@ trigger:
     - build/*.ps1
     - build/*.targets
     - Auxiliary/*
+
 pr:
   branches:
     include:
@@ -39,6 +41,7 @@ pr:
     - '*.md'
     - LICENSE
     - CMake*
+    - '.github/*'
     - '.nuget/*'
     - build/*.cmake
     - build/*.cmd

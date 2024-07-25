@@ -3,7 +3,7 @@
 #
 # http://go.microsoft.com/fwlink/?LinkId=248926
 
-name: 'CMake'
+name: 'CMake (Windows)'
 
 on:
   push:
@@ -69,12 +69,6 @@ jobs:
           - os: windows-2022
             build_type: arm64ec-Release
             arch: amd64_arm64
-          - os: ubuntu-latest
-            build_type: x64-Debug-Linux
-            arch: none
-          - os: ubuntu-latest
-            build_type: x64-Release-Linux
-            arch: none
 
     steps:
     - uses: actions/checkout@v4
@@ -82,8 +76,7 @@ jobs:
     - name: 'Install Ninja'
       run: choco install ninja
 
-    - if: matrix.arch != 'none'
-      uses: ilammy/msvc-dev-cmd@v1
+    - uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.arch }}
 
