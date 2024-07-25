@@ -10,6 +10,16 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - LICENSE
+      - '.nuget/*'
+      - build/*.cmd
+      - build/*.json
+      - build/*.props
+      - build/*.ps1
+      - build/*.targets
+      - build/*.yml
 
 jobs:
   build:
