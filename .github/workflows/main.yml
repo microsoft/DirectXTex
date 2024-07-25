@@ -3,7 +3,7 @@
 #
 # http://go.microsoft.com/fwlink/?LinkId=248926
 
-name: 'CMake (Windows)'
+name: 'CMake'
 
 on:
   push:
@@ -59,6 +59,12 @@ jobs:
           - os: windows-2022
             build_type: arm64ec-Release
             arch: amd64_arm64
+          - os: ubuntu-latest
+            build_type: x64-Debug-Linux
+            arch: none
+          - os: ubuntu-latest
+            build_type: x64-Release-Linux
+            arch: none
 
     steps:
     - uses: actions/checkout@v4
@@ -66,12 +72,13 @@ jobs:
     - name: 'Install Ninja'
       run: choco install ninja
 
-    - uses: ilammy/msvc-dev-cmd@v1
+    - if: matrix.arch != 'none'
+      uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.arch }}
 
     - name: 'Configure CMake'
-      working-directory: ${{env.GITHUB_WORKSPACE}}    
+      working-directory: ${{env.GITHUB_WORKSPACE}}
       run: cmake --preset=${{ matrix.build_type }}
 
     - name: 'Build'
