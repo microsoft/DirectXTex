@@ -39,9 +39,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
       - name: Configure CMake
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: cmake -B out -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
+
+      - name: Build Shaders
+        working-directory: ./DirectXTex/Shaders
+        run: CompileShaders.cmd
+        env:
+          CompileShadersOutput: ./out/Shaders/Compiled
 
       - name: Initialize MSVC Code Analysis
         uses: microsoft/msvc-code-analysis-action@v0.1.1
