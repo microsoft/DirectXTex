@@ -52,7 +52,7 @@ jobs:
         working-directory: ./DirectXTex/Shaders
         run: CompileShaders.cmd
         env:
-          CompileShadersOutput: '$GITHUB_WORKSPACE/out/Shaders/Compiled'
+          CompileShadersOutput: ${{ env.GITHUB_WORKSPACE }}/out/Shaders/Compiled
 
       - name: Initialize MSVC Code Analysis
         uses: microsoft/msvc-code-analysis-action@v0.1.1
