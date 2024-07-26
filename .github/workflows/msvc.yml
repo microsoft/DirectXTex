@@ -48,8 +48,9 @@ jobs:
         run: cmake -B out -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
 
       - name: Build Shaders
+        shell: pwsh
         working-directory: ./DirectXTex/Shaders
-        run: CompileShaders.cmd
+        run: ./CompileShaders.cmd
         env:
           CompileShadersOutput: ./out/Shaders/Compiled
 
