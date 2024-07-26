@@ -44,7 +44,7 @@ jobs:
           arch: amd64
 
       - name: Configure CMake
-        working-directory: ${{ env.GITHUB_WORKSPACE }}
+        working-directory: ${{ github.workspace }}
         run: cmake -B out -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
 
       - name: Build Shaders
@@ -52,7 +52,7 @@ jobs:
         working-directory: ./DirectXTex/Shaders
         run: CompileShaders.cmd
         env:
-          CompileShadersOutput: ${{ env.GITHUB_WORKSPACE }}/out/Shaders/Compiled
+          CompileShadersOutput: ${{ github.workspace }}/out/Shaders/Compiled
 
       - name: Initialize MSVC Code Analysis
         uses: microsoft/msvc-code-analysis-action@v0.1.1
