@@ -47,10 +47,17 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: cmake -B out -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
 
-      - name: Build Shaders
+      - name: 'Build Shaders (BC)'
         shell: cmd
         working-directory: ./DirectXTex/Shaders
         run: CompileShaders.cmd
+        env:
+          CompileShadersOutput: ${{ github.workspace }}/out/Shaders/Compiled
+
+      - name: 'Build Shaders (DDSVIEW)'
+        shell: cmd
+        working-directory: ./DDSView
+        run: hlsl.cmd
         env:
           CompileShadersOutput: ${{ github.workspace }}/out/Shaders/Compiled
 
