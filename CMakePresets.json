@@ -240,12 +240,12 @@
       "hidden": true
     },
 
-    { "name": "x64-Debug"    , "description": "MSVC for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "MSVC" ] },
-    { "name": "x64-Release"  , "description": "MSVC for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "MSVC" ] },
-    { "name": "x86-Debug"    , "description": "MSVC for x86 (Debug) with DX12", "inherits": [ "base", "x86", "Debug", "MSVC" ] },
-    { "name": "x86-Release"  , "description": "MSVC for x86 (Release) with DX12", "inherits": [ "base", "x86", "Release", "MSVC" ] },
-    { "name": "arm64-Debug"  , "description": "MSVC for ARM64 (Debug) with DX12", "inherits": [ "base", "ARM64", "Debug", "MSVC" ] },
-    { "name": "arm64-Release", "description": "MSVC for ARM64 (Release) with DX12", "inherits": [ "base", "ARM64", "Release", "MSVC" ] },
+    { "name": "x64-Debug"      , "description": "MSVC for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "MSVC" ] },
+    { "name": "x64-Release"    , "description": "MSVC for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "MSVC" ] },
+    { "name": "x86-Debug"      , "description": "MSVC for x86 (Debug) with DX12", "inherits": [ "base", "x86", "Debug", "MSVC" ] },
+    { "name": "x86-Release"    , "description": "MSVC for x86 (Release) with DX12", "inherits": [ "base", "x86", "Release", "MSVC" ] },
+    { "name": "arm64-Debug"    , "description": "MSVC for ARM64 (Debug) with DX12", "inherits": [ "base", "ARM64", "Debug", "MSVC" ] },
+    { "name": "arm64-Release"  , "description": "MSVC for ARM64 (Release) with DX12", "inherits": [ "base", "ARM64", "Release", "MSVC" ] },
     { "name": "arm64ec-Debug"  , "description": "MSVC for ARM64EC (Debug) with DX12", "inherits": [ "base", "ARM64EC", "Debug", "MSVC" ], "environment": { "CXXFLAGS": "/arm64EC" } },
     { "name": "arm64ec-Release", "description": "MSVC for ARM64EC (Release) with DX12", "inherits": [ "base", "ARM64EC", "Release", "MSVC" ], "environment": { "CXXFLAGS": "/arm64EC" } },
 
@@ -347,12 +347,12 @@
     { "name": "x64-Fuzzing"      , "description": "MSVC for x64 (Release) with ASan", "inherits": [ "base", "x64", "Release", "MSVC", "Fuzzing" ] }
   ],
   "testPresets": [
-    { "name": "x64-Debug"    , "configurePreset": "x64-Debug" },
-    { "name": "x64-Release"  , "configurePreset": "x64-Release" },
-    { "name": "x86-Debug"    , "configurePreset": "x86-Debug" },
-    { "name": "x86-Release"  , "configurePreset": "x86-Release" },
-    { "name": "arm64-Debug"  , "configurePreset": "arm64-Debug" },
-    { "name": "arm64-Release", "configurePreset": "arm64-Release" },
+    { "name": "x64-Debug"      , "configurePreset": "x64-Debug" },
+    { "name": "x64-Release"    , "configurePreset": "x64-Release" },
+    { "name": "x86-Debug"      , "configurePreset": "x86-Debug" },
+    { "name": "x86-Release"    , "configurePreset": "x86-Release" },
+    { "name": "arm64-Debug"    , "configurePreset": "arm64-Debug" },
+    { "name": "arm64-Release"  , "configurePreset": "arm64-Release" },
     { "name": "arm64ec-Debug"  , "configurePreset": "arm64ec-Debug" },
     { "name": "arm64ec-Release", "configurePreset": "arm64ec-Release" },
 
