@@ -84,7 +84,7 @@ jobs:
         path: Tests
         ref: main
 
-    - if: matrix.build_type == 'x64-Release'
+    - if: (matrix.build_type == 'x64-Release') || (matrix.build_type == 'x86-Release')
       name: Clone media repository
       uses: actions/checkout@v4
       with:
