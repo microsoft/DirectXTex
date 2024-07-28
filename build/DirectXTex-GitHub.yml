@@ -6,52 +6,21 @@
 # Builds the library for Windows Desktop and UWP.
 
 schedules:
-- cron: "0 3 * * *"
+- cron: "5 3 * * *"
   displayName: 'Nightly build'
   branches:
     include:
     - main
 
-trigger:
-  branches:
-    include:
-    - main
-  paths:
-    exclude:
-    - '*.md'
-    - LICENSE
-    - CMake*
-    - '.github/*'
-    - '.nuget/*'
-    - build/*.cmake
-    - build/*.cmd
-    - build/*.in
-    - build/*.json
-    - build/*.props
-    - build/*.ps1
-    - build/*.targets
-    - Auxiliary/*
-
+# GitHub Actions handles MSBuild for CI/PR
+trigger: none
 pr:
   branches:
     include:
     - main
   paths:
-    exclude:
-    - '*.md'
-    - LICENSE
-    - CMake*
-    - '.github/*'
-    - '.nuget/*'
-    - build/*.cmake
-    - build/*.cmd
-    - build/*.in
-    - build/*.json
-    - build/*.props
-    - build/*.ps1
-    - build/*.targets
-    - Auxiliary/*
-  drafts: false
+    include:
+    - build/DirectXTex-GitHub.yml
 
 resources:
   repositories:
