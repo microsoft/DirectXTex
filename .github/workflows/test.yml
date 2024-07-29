@@ -29,9 +29,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
 
-    env:
-      CTEST_EXTRA_OPTS: ${{ runner.debug == '1' && '--output-on-failure' || '--stop-on-failure' }}
-
     strategy:
       fail-fast: false
 
@@ -116,9 +113,13 @@ jobs:
       name: 'Test (CPU only)'
       working-directory: ${{ github.workspace }}
       run: ctest --preset=${{ matrix.build_type }} -L Library ${{ env.CTEST_EXTRA_OPTS }}
-
+      env:
+        CTEST_EXTRA_OPTS: ${{ runner.debug == '1' && '--output-on-failure' || '--stop-on-failure' }}
+  
     - if: (matrix.build_type == 'x64-Release') || (matrix.build_type == 'x86-Release')
       timeout-minutes: 30
       name: 'Test (ImageFormats)'
       working-directory: ${{ github.workspace }}
       run: ctest --preset=${{ matrix.build_type }} -L ImageFormats ${{ env.CTEST_EXTRA_OPTS }}
+      env:
+        CTEST_EXTRA_OPTS: ${{ runner.debug == '1' && '--output-on-failure' || '--stop-on-failure' }}
