@@ -112,10 +112,10 @@ jobs:
       timeout-minutes: 30
       name: 'Test (CPU only)'
       working-directory: ${{ github.workspace }}
-      run: ctest --preset=${{ matrix.build_type }} -L Library
+      run: ctest --preset=${{ matrix.build_type }} -L Library --output-on-failure
 
     - if: (matrix.build_type == 'x64-Release') || (matrix.build_type == 'x86-Release')
       timeout-minutes: 30
       name: 'Test (ImageFormats)'
       working-directory: ${{ github.workspace }}
-      run: ctest --preset=${{ matrix.build_type }} -L ImageFormats
+      run: ctest --preset=${{ matrix.build_type }} -L ImageFormats --output-on-failure
