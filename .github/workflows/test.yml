@@ -23,6 +23,7 @@ on:
 
 env:
   DIRECTXTEX_MEDIA_PATH: ${{ github.workspace }}/Media
+  CTEST_EXTRA_OPTS: ${{ runner.debug == '1' && '--output-on-failure' || '--stop-on-failure' }}
 
 jobs:
   build:
@@ -112,10 +113,10 @@ jobs:
       timeout-minutes: 30
       name: 'Test (CPU only)'
       working-directory: ${{ github.workspace }}
-      run: ctest --preset=${{ matrix.build_type }} -L Library --output-on-failure
+      run: ctest --preset=${{ matrix.build_type }} -L Library ${{ env.CTEST_EXTRA_OPTS }}
 
     - if: (matrix.build_type == 'x64-Release') || (matrix.build_type == 'x86-Release')
       timeout-minutes: 30
       name: 'Test (ImageFormats)'
       working-directory: ${{ github.workspace }}
-      run: ctest --preset=${{ matrix.build_type }} -L ImageFormats --output-on-failure
+      run: ctest --preset=${{ matrix.build_type }} -L ImageFormats ${{ env.CTEST_EXTRA_OPTS }}
