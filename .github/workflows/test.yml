@@ -111,15 +111,17 @@ jobs:
     - if: (matrix.build_type == 'x64-Release') || (matrix.build_type == 'x86-Release')
       timeout-minutes: 30
       name: 'Test (CPU only)'
+      shell: cmd
       working-directory: ${{ github.workspace }}
-      run: ctest --preset=${{ matrix.build_type }} -L Library $env:CTEST_DEBUG_OPTS
+      run: ctest --preset=${{ matrix.build_type }} -L Library %CTEST_DEBUG_OPTS%
       env:
         CTEST_DEBUG_OPTS: ${{ runner.debug == '1' && '--output-on-failure' || '' }}
 
     - if: (matrix.build_type == 'x64-Release') || (matrix.build_type == 'x86-Release')
       timeout-minutes: 30
       name: 'Test (ImageFormats)'
+      shell: cmd
       working-directory: ${{ github.workspace }}
-      run: ctest --preset=${{ matrix.build_type }} -L ImageFormats $env:CTEST_DEBUG_OPTS
+      run: ctest --preset=${{ matrix.build_type }} -L ImageFormats %CTEST_DEBUG_OPTS%
       env:
         CTEST_DEBUG_OPTS: ${{ runner.debug == '1' && '--output-on-failure' || '' }}
