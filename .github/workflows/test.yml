@@ -112,7 +112,7 @@ jobs:
       timeout-minutes: 30
       name: 'Test (CPU only)'
       working-directory: ${{ github.workspace }}
-      run: ctest --preset=${{ matrix.build_type }} -L Library $env:CTEST_DEBUG_OPTS
+      run: ctest --preset=${{ matrix.build_type }} -L Library ${env:CTEST_DEBUG_OPTS}
       env:
         CTEST_DEBUG_OPTS: ${{ runner.debug == '1' && '--output-on-failure' || '' }}
   
@@ -120,6 +120,6 @@ jobs:
       timeout-minutes: 30
       name: 'Test (ImageFormats)'
       working-directory: ${{ github.workspace }}
-      run: ctest --preset=${{ matrix.build_type }} -L ImageFormats $env:CTEST_DEBUG_OPTS
+      run: ctest --preset=${{ matrix.build_type }} -L ImageFormats ${env:CTEST_DEBUG_OPTS}
       env:
         CTEST_DEBUG_OPTS: ${{ runner.debug == '1' && '--output-on-failure' || '' }}
