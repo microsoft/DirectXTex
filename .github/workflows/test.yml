@@ -23,12 +23,14 @@ on:
 
 env:
   DIRECTXTEX_MEDIA_PATH: ${{ github.workspace }}/Media
-  CTEST_EXTRA_OPTS: ${{ runner.debug == '1' && '--output-on-failure' || '--stop-on-failure' }}
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+
+    env:
+      CTEST_EXTRA_OPTS: ${{ runner.debug == '1' && '--output-on-failure' || '--stop-on-failure' }}
 
     strategy:
       fail-fast: false
