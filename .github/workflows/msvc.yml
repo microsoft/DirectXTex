@@ -1,0 +1,76 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+#
+# http://go.microsoft.com/fwlink/?LinkId=248926
+
+name: Microsoft C++ Code Analysis
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - LICENSE
+      - '.nuget/*'
+      - build/*.cmd
+      - build/*.json
+      - build/*.props
+      - build/*.ps1
+      - build/*.targets
+      - build/*.yml
+  schedule:
+    - cron: '41 16 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    name: Analyze
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
+      - name: Configure CMake
+        working-directory: ${{ github.workspace }}
+        run: cmake -B out -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
+
+      - name: 'Build Shaders (BC)'
+        shell: cmd
+        working-directory: ./DirectXTex/Shaders
+        run: CompileShaders.cmd
+        env:
+          CompileShadersOutput: ${{ github.workspace }}/out/Shaders/Compiled
+
+      - name: 'Build Shaders (DDSVIEW)'
+        shell: cmd
+        working-directory: ./DDSView
+        run: hlsl.cmd
+        env:
+          CompileShadersOutput: ${{ github.workspace }}/out/Shaders/Compiled
+
+      - name: Initialize MSVC Code Analysis
+        uses: microsoft/msvc-code-analysis-action@v0.1.1
+        id: run-analysis
+        with:
+          cmakeBuildDirectory: ./out
+          buildConfiguration: Debug
+          ruleset: NativeRecommendedRules.ruleset
+
+      # Upload SARIF file to GitHub Code Scanning Alerts
+      - name: Upload SARIF to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.run-analysis.outputs.sarif }}
