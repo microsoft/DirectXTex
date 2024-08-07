@@ -46,6 +46,9 @@ namespace
         CONV_FLAGS_L8 = 0x40000,        // Source is a 8 luminance format
         CONV_FLAGS_L16 = 0x80000,       // Source is a 16 luminance format
         CONV_FLAGS_A8L8 = 0x100000,     // Source is a 8:8 luminance format
+        CONV_FLAGS_L6U5V5 = 0x200000,   // Source is a 6:5:5 bumpluminance format
+        CONV_FLAGS_L8U8V8 = 0x400000,   // Source is a X:8:8:8 bumpluminance format
+        CONV_FLAGS_WUV10 = 0x800000,    // Source is a 2:10:10:10 bump format
     };
 
     struct LegacyDDS
@@ -157,6 +160,11 @@ namespace
         { DXGI_FORMAT_R8G8_SNORM,         CONV_FLAGS_NONE,        DDSPF_V8U8 },     // D3DFMT_V8U8
         { DXGI_FORMAT_R8G8B8A8_SNORM,     CONV_FLAGS_NONE,        DDSPF_Q8W8V8U8 }, // D3DFMT_Q8W8V8U8
         { DXGI_FORMAT_R16G16_SNORM,       CONV_FLAGS_NONE,        DDSPF_V16U16 },   // D3DFMT_V16U16
+
+        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_L6U5V5
+                                          | CONV_FLAGS_EXPAND,    DDSPF_L6V5U5 },      // D3DFMT_L6V5U5
+        { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_L8U8V8,      DDSPF_X8L8V8U8 },    // D3DFMT_X8L8V8U8
+        { DXGI_FORMAT_R10G10B10A2_UNORM,  CONV_FLAGS_WUV10,       DDSPF_A2W10V10U10 }, // D3DFMT_A2W10V10U10
     };
 
     // Note that many common DDS reader/writers (including D3DX) swap the
@@ -248,12 +256,24 @@ namespace
                     }
                     else if (entry->ddpf.flags & DDS_BUMPDUDV)
                     {
-                        if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
-                            && ddpf.RBitMask == entry->ddpf.RBitMask
-                            && ddpf.GBitMask == entry->ddpf.GBitMask
-                            && ddpf.BBitMask == entry->ddpf.BBitMask
-                            && ddpf.ABitMask == entry->ddpf.ABitMask)
-                            break;
+                        if (entry->ddpf.flags & DDS_ALPHAPIXELS)
+                        {
+                            // BUMPDUDVA
+                            if (ddpf.RBitMask == entry->ddpf.RBitMask
+                                && ddpf.GBitMask == entry->ddpf.GBitMask
+                                && ddpf.BBitMask == entry->ddpf.BBitMask
+                                && ddpf.ABitMask == entry->ddpf.ABitMask)
+                                break;
+                        }
+                        else
+                        {
+                            // BUMPDUDV
+                            if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
+                                && ddpf.RBitMask == entry->ddpf.RBitMask
+                                && ddpf.GBitMask == entry->ddpf.GBitMask
+                                && ddpf.BBitMask == entry->ddpf.BBitMask)
+                                break;
+                        }
                     }
                     else if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount)
                     {
@@ -996,7 +1016,10 @@ namespace
         TEXP_LEGACY_B4G4R4A4,
         TEXP_LEGACY_L8,
         TEXP_LEGACY_L16,
-        TEXP_LEGACY_A8L8
+        TEXP_LEGACY_A8L8,
+        TEXP_LEGACY_L6U5V5,
+        TEXP_LEGACY_X8L8V8U8,
+        TEXP_LEGACY_A2W10V10U10
     };
 
     constexpr TEXP_LEGACY_FORMAT FindLegacyFormat(uint32_t flags) noexcept
@@ -1023,6 +1046,12 @@ namespace
             lformat = TEXP_LEGACY_L16;
         else if (flags & CONV_FLAGS_A8L8)
             lformat = TEXP_LEGACY_A8L8;
+        else if (flags & CONV_FLAGS_L6U5V5)
+            lformat = TEXP_LEGACY_L6U5V5;
+        else if (flags & CONV_FLAGS_L8U8V8)
+            lformat = TEXP_LEGACY_X8L8V8U8;
+        else if (flags & CONV_FLAGS_WUV10)
+            lformat = TEXP_LEGACY_A2W10V10U10;
 
         return lformat;
     }
@@ -1328,11 +1357,50 @@ namespace
             }
             return false;
 
+        case TEXP_LEGACY_L6U5V5:
+            if (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM)
+                return false;
+
+            // TODO - converts unsigned 6-bit/signed 5-bit/signed 5-bit bump luminance to 8:8:8:8 unsigned
+            return false;
+
         default:
             return false;
         }
     }
 
+    _Success_(return)
+        bool LegacyConvertScanline(
+            _Out_writes_bytes_(outSize) void* pDestination,
+            size_t outSize,
+            _In_ DXGI_FORMAT outFormat,
+            _In_reads_bytes_(inSize) const void* pSource,
+            size_t inSize,
+            _In_ TEXP_LEGACY_FORMAT inFormat) noexcept
+    {
+        assert(pDestination && outSize > 0);
+        assert(pSource && inSize > 0);
+
+        switch (inFormat)
+        {
+        case TEXP_LEGACY_X8L8V8U8:
+            if (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM)
+                return false;
+
+            // TODO - Converts 8-bit unsigned / 8-bit signed / 8-bit signed to 8:8:8:8 unsigned
+            return false;
+
+        case TEXP_LEGACY_A2W10V10U10:
+            if (outFormat != DXGI_FORMAT_R10G10B10A2_UNORM)
+                return false;
+
+            // TODO - Converts 2-bit unsigned / 10-bit signed / 10-bit signed / 10-bit signed to 2:10:10:10 unsigned
+            return false;
+
+        default:
+            return false;
+        }
+    }
 
     //-------------------------------------------------------------------------------------
     // Converts or copies image data from pPixels into scratch image data
@@ -1356,7 +1424,7 @@ namespace
         {
             if (convFlags & CONV_FLAGS_888)
                 cpFlags |= CP_FLAGS_24BPP;
-            else if (convFlags & (CONV_FLAGS_565 | CONV_FLAGS_5551 | CONV_FLAGS_4444 | CONV_FLAGS_8332 | CONV_FLAGS_A8P8 | CONV_FLAGS_L16 | CONV_FLAGS_A8L8))
+            else if (convFlags & (CONV_FLAGS_565 | CONV_FLAGS_5551 | CONV_FLAGS_4444 | CONV_FLAGS_8332 | CONV_FLAGS_A8P8 | CONV_FLAGS_L16 | CONV_FLAGS_A8L8 | CONV_FLAGS_L6U5V5))
                 cpFlags |= CP_FLAGS_16BPP;
             else if (convFlags & (CONV_FLAGS_44 | CONV_FLAGS_332 | CONV_FLAGS_PAL8 | CONV_FLAGS_L8))
                 cpFlags |= CP_FLAGS_8BPP;
@@ -1502,13 +1570,18 @@ namespace
                                 }
                                 else if (convFlags & CONV_FLAGS_SWIZZLE)
                                 {
-                                    SwizzleScanline(pDest, dpitch, pSrc, spitch,
-                                        metadata.format, tflags);
+                                    SwizzleScanline(pDest, dpitch, pSrc, spitch, metadata.format, tflags);
+                                }
+                                else if (convFlags & (CONV_FLAGS_L8U8V8 | CONV_FLAGS_WUV10))
+                                {
+                                    const TEXP_LEGACY_FORMAT lformat = FindLegacyFormat(convFlags);
+                                    if (!LegacyConvertScanline(pDest, dpitch, metadata.format,
+                                        pSrc, spitch, lformat))
+                                        return E_FAIL;
                                 }
                                 else
                                 {
-                                    CopyScanline(pDest, dpitch, pSrc, spitch,
-                                        metadata.format, tflags);
+                                    CopyScanline(pDest, dpitch, pSrc, spitch, metadata.format, tflags);
                                 }
 
                                 pSrc += spitch;
@@ -1605,6 +1678,13 @@ namespace
                                 {
                                     SwizzleScanline(pDest, dpitch, pSrc, spitch, metadata.format, tflags);
                                 }
+                                else if (convFlags & (CONV_FLAGS_L8U8V8 | CONV_FLAGS_WUV10))
+                                {
+                                    const TEXP_LEGACY_FORMAT lformat = FindLegacyFormat(convFlags);
+                                    if (!LegacyConvertScanline(pDest, dpitch, metadata.format,
+                                        pSrc, spitch, lformat))
+                                        return E_FAIL;
+                                }
                                 else
                                 {
                                     CopyScanline(pDest, dpitch, pSrc, spitch, metadata.format, tflags);
@@ -1661,6 +1741,14 @@ namespace
                 if (convFlags & CONV_FLAGS_SWIZZLE)
                 {
                     SwizzleScanline(pPixels, rowPitch, pPixels, rowPitch, metadata.format, tflags);
+                }
+                else if (convFlags & (CONV_FLAGS_L8U8V8 | CONV_FLAGS_WUV10))
+                {
+                    const TEXP_LEGACY_FORMAT lformat = FindLegacyFormat(convFlags);
+                    if (!LegacyConvertScanline(pPixels, rowPitch, metadata.format, pPixels, rowPitch, lformat))
+                    {
+                        return E_UNEXPECTED;
+                    }
                 }
                 else
                 {
@@ -2133,7 +2221,7 @@ HRESULT DirectX::LoadFromDDSFileEx(
         }
     #endif
 
-        if (convFlags & (CONV_FLAGS_SWIZZLE | CONV_FLAGS_NOALPHA))
+        if (convFlags & (CONV_FLAGS_SWIZZLE | CONV_FLAGS_NOALPHA | CONV_FLAGS_L8U8V8 | CONV_FLAGS_WUV10))
         {
             // Swizzle/copy image in place
             hr = CopyImageInPlace(convFlags, image);
