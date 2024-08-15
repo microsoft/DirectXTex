@@ -1381,6 +1381,12 @@ namespace
         assert(pDestination && outSize > 0);
         assert(pSource && inSize > 0);
 
+        // TODO - 
+        UNREFERENCED_PARAMETER(pDestination);
+        UNREFERENCED_PARAMETER(outSize);
+        UNREFERENCED_PARAMETER(pSource);
+        UNREFERENCED_PARAMETER(inSize);
+
         switch (inFormat)
         {
         case TEXP_LEGACY_X8L8V8U8:
