@@ -261,7 +261,7 @@ HRESULT Xbox::EncodeDDSHeader(
     size_t maxsize) noexcept
 {
     if (!pDestination)
-        return E_POINTER;
+        return E_INVALIDARG;
 
     if (maxsize < XBOX_HEADER_SIZE)
         return E_NOT_SUFFICIENT_BUFFER;
