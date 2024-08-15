@@ -244,165 +244,166 @@ namespace
 
         return S_OK;
     }
-
-
-    //-------------------------------------------------------------------------------------
-    // Encodes DDS file header (magic value, header, XBOX extended header)
-    //-------------------------------------------------------------------------------------
-    HRESULT EncodeDDSHeader(
-        const XboxImage& xbox,
-        _Out_writes_(maxsize) void* pDestination,
-        size_t maxsize)
-    {
-        if (!pDestination)
-            return E_POINTER;
-
-        if (maxsize < XBOX_HEADER_SIZE)
-            return E_NOT_SUFFICIENT_BUFFER;
-
-        *reinterpret_cast<uint32_t*>(pDestination) = DDS_MAGIC;
-
-        auto header = reinterpret_cast<DDS_HEADER*>(reinterpret_cast<uint8_t*>(pDestination) + sizeof(uint32_t));
-
-        memset(header, 0, sizeof(DDS_HEADER));
-        header->size = sizeof(DDS_HEADER);
-        header->flags = DDS_HEADER_FLAGS_TEXTURE;
-        header->caps = DDS_SURFACE_FLAGS_TEXTURE;
-
-        auto& metadata = xbox.GetMetadata();
-
-        if (metadata.mipLevels > 0)
-        {
-            header->flags |= DDS_HEADER_FLAGS_MIPMAP;
-
-            if (metadata.mipLevels > UINT32_MAX)
-                return E_INVALIDARG;
-
-            header->mipMapCount = static_cast<uint32_t>(metadata.mipLevels);
-
-            if (header->mipMapCount > 1)
-                header->caps |= DDS_SURFACE_FLAGS_MIPMAP;
-        }
-
-        switch (metadata.dimension)
-        {
-        case TEX_DIMENSION_TEXTURE1D:
-            if (metadata.width > UINT32_MAX)
-                return E_INVALIDARG;
-
-            header->width = static_cast<uint32_t>(metadata.width);
-            header->height = header->depth = 1;
-            break;
-
-        case TEX_DIMENSION_TEXTURE2D:
-            if (metadata.height > UINT32_MAX
-                || metadata.width > UINT32_MAX)
-                return E_INVALIDARG;
-
-            header->height = static_cast<uint32_t>(metadata.height);
-            header->width = static_cast<uint32_t>(metadata.width);
-            header->depth = 1;
-
-            if (metadata.IsCubemap())
-            {
-                header->caps |= DDS_SURFACE_FLAGS_CUBEMAP;
-                header->caps2 |= DDS_CUBEMAP_ALLFACES;
-            }
-            break;
-
-        case TEX_DIMENSION_TEXTURE3D:
-            if (metadata.height > UINT32_MAX
-                || metadata.width > UINT32_MAX
-                || metadata.depth > UINT32_MAX)
-                return E_INVALIDARG;
-
-            header->flags |= DDS_HEADER_FLAGS_VOLUME;
-            header->caps2 |= DDS_FLAGS_VOLUME;
-            header->height = static_cast<uint32_t>(metadata.height);
-            header->width = static_cast<uint32_t>(metadata.width);
-            header->depth = static_cast<uint32_t>(metadata.depth);
-            break;
-
-        default:
-            return E_FAIL;
-        }
-
-        size_t rowPitch, slicePitch;
-        ComputePitch(metadata.format, metadata.width, metadata.height, rowPitch, slicePitch, CP_FLAGS_NONE);
-
-        if (slicePitch > UINT32_MAX
-            || rowPitch > UINT32_MAX)
-            return E_FAIL;
-
-        if (IsCompressed(metadata.format))
-        {
-            header->flags |= DDS_HEADER_FLAGS_LINEARSIZE;
-            header->pitchOrLinearSize = static_cast<uint32_t>(slicePitch);
-        }
-        else
-        {
-            header->flags |= DDS_HEADER_FLAGS_PITCH;
-            header->pitchOrLinearSize = static_cast<uint32_t>(rowPitch);
-        }
-
-        memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_XBOX, sizeof(DDS_PIXELFORMAT));
-
-        // Setup XBOX extended header
-        auto xboxext = reinterpret_cast<DDS_HEADER_XBOX*>(reinterpret_cast<uint8_t*>(header) + sizeof(DDS_HEADER));
-
-        memset(xboxext, 0, sizeof(DDS_HEADER_XBOX));
-        xboxext->dxgiFormat = metadata.format;
-        xboxext->resourceDimension = metadata.dimension;
-
-        if (metadata.arraySize > UINT32_MAX)
-            return E_INVALIDARG;
-
-        static_assert(static_cast<int>(TEX_MISC_TEXTURECUBE) == static_cast<int>(DDS_RESOURCE_MISC_TEXTURECUBE), "DDS header mismatch");
-        xboxext->miscFlag = metadata.miscFlags & ~static_cast<uint32_t>(TEX_MISC_TEXTURECUBE);
-
-        if (metadata.miscFlags & TEX_MISC_TEXTURECUBE)
-        {
-            xboxext->miscFlag |= TEX_MISC_TEXTURECUBE;
-            assert((metadata.arraySize % 6) == 0);
-            xboxext->arraySize = static_cast<UINT>(metadata.arraySize / 6);
-        }
-        else
-        {
-            xboxext->arraySize = static_cast<UINT>(metadata.arraySize);
-        }
-
-        static_assert(static_cast<int>(TEX_MISC2_ALPHA_MODE_MASK) == static_cast<int>(DDS_MISC_FLAGS2_ALPHA_MODE_MASK), "DDS header mismatch");
-
-        static_assert(static_cast<int>(TEX_ALPHA_MODE_UNKNOWN) == static_cast<int>(DDS_ALPHA_MODE_UNKNOWN), "DDS header mismatch");
-        static_assert(static_cast<int>(TEX_ALPHA_MODE_STRAIGHT) == static_cast<int>(DDS_ALPHA_MODE_STRAIGHT), "DDS header mismatch");
-        static_assert(static_cast<int>(TEX_ALPHA_MODE_PREMULTIPLIED) == static_cast<int>(DDS_ALPHA_MODE_PREMULTIPLIED), "DDS header mismatch");
-        static_assert(static_cast<int>(TEX_ALPHA_MODE_OPAQUE) == static_cast<int>(DDS_ALPHA_MODE_OPAQUE), "DDS header mismatch");
-        static_assert(static_cast<int>(TEX_ALPHA_MODE_CUSTOM) == static_cast<int>(DDS_ALPHA_MODE_CUSTOM), "DDS header mismatch");
-
-        xboxext->miscFlags2 = metadata.miscFlags2;
-
-    #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-        xboxext->tileMode = static_cast<uint32_t>(xbox.GetTileMode()) | XBOX_TILEMODE_SCARLETT;
-    #else
-        xboxext->tileMode = static_cast<uint32_t>(xbox.GetTileMode());
-    #endif
-
-        xboxext->baseAlignment = xbox.GetAlignment();
-        xboxext->dataSize = xbox.GetSize();
-    #ifdef _GXDK_VER
-        xboxext->xdkVer = _GXDK_VER;
-    #elif defined(_XDK_VER)
-        xboxext->xdkVer = _XDK_VER;
-    #endif
-
-        return S_OK;
-    }
 }
 
 
 //=====================================================================================
 // Entry-points
 //=====================================================================================
+
+//-------------------------------------------------------------------------------------
+// Encodes DDS file header (magic value, header, XBOX extended header)
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
+HRESULT Xbox::EncodeDDSHeader(
+    const XboxImage& xbox,
+    void* pDestination,
+    size_t maxsize) noexcept
+{
+    if (!pDestination)
+        return E_POINTER;
+
+    if (maxsize < XBOX_HEADER_SIZE)
+        return E_NOT_SUFFICIENT_BUFFER;
+
+    *reinterpret_cast<uint32_t*>(pDestination) = DDS_MAGIC;
+
+    auto header = reinterpret_cast<DDS_HEADER*>(reinterpret_cast<uint8_t*>(pDestination) + sizeof(uint32_t));
+
+    memset(header, 0, sizeof(DDS_HEADER));
+    header->size = sizeof(DDS_HEADER);
+    header->flags = DDS_HEADER_FLAGS_TEXTURE;
+    header->caps = DDS_SURFACE_FLAGS_TEXTURE;
+
+    auto& metadata = xbox.GetMetadata();
+
+    if (metadata.mipLevels > 0)
+    {
+        header->flags |= DDS_HEADER_FLAGS_MIPMAP;
+
+        if (metadata.mipLevels > UINT32_MAX)
+            return E_INVALIDARG;
+
+        header->mipMapCount = static_cast<uint32_t>(metadata.mipLevels);
+
+        if (header->mipMapCount > 1)
+            header->caps |= DDS_SURFACE_FLAGS_MIPMAP;
+    }
+
+    switch (metadata.dimension)
+    {
+    case TEX_DIMENSION_TEXTURE1D:
+        if (metadata.width > UINT32_MAX)
+            return E_INVALIDARG;
+
+        header->width = static_cast<uint32_t>(metadata.width);
+        header->height = header->depth = 1;
+        break;
+
+    case TEX_DIMENSION_TEXTURE2D:
+        if (metadata.height > UINT32_MAX
+            || metadata.width > UINT32_MAX)
+            return E_INVALIDARG;
+
+        header->height = static_cast<uint32_t>(metadata.height);
+        header->width = static_cast<uint32_t>(metadata.width);
+        header->depth = 1;
+
+        if (metadata.IsCubemap())
+        {
+            header->caps |= DDS_SURFACE_FLAGS_CUBEMAP;
+            header->caps2 |= DDS_CUBEMAP_ALLFACES;
+        }
+        break;
+
+    case TEX_DIMENSION_TEXTURE3D:
+        if (metadata.height > UINT32_MAX
+            || metadata.width > UINT32_MAX
+            || metadata.depth > UINT32_MAX)
+            return E_INVALIDARG;
+
+        header->flags |= DDS_HEADER_FLAGS_VOLUME;
+        header->caps2 |= DDS_FLAGS_VOLUME;
+        header->height = static_cast<uint32_t>(metadata.height);
+        header->width = static_cast<uint32_t>(metadata.width);
+        header->depth = static_cast<uint32_t>(metadata.depth);
+        break;
+
+    default:
+        return E_FAIL;
+    }
+
+    size_t rowPitch, slicePitch;
+    ComputePitch(metadata.format, metadata.width, metadata.height, rowPitch, slicePitch, CP_FLAGS_NONE);
+
+    if (slicePitch > UINT32_MAX
+        || rowPitch > UINT32_MAX)
+        return E_FAIL;
+
+    if (IsCompressed(metadata.format))
+    {
+        header->flags |= DDS_HEADER_FLAGS_LINEARSIZE;
+        header->pitchOrLinearSize = static_cast<uint32_t>(slicePitch);
+    }
+    else
+    {
+        header->flags |= DDS_HEADER_FLAGS_PITCH;
+        header->pitchOrLinearSize = static_cast<uint32_t>(rowPitch);
+    }
+
+    memcpy_s(&header->ddspf, sizeof(header->ddspf), &DDSPF_XBOX, sizeof(DDS_PIXELFORMAT));
+
+    // Setup XBOX extended header
+    auto xboxext = reinterpret_cast<DDS_HEADER_XBOX*>(reinterpret_cast<uint8_t*>(header) + sizeof(DDS_HEADER));
+
+    memset(xboxext, 0, sizeof(DDS_HEADER_XBOX));
+    xboxext->dxgiFormat = metadata.format;
+    xboxext->resourceDimension = metadata.dimension;
+
+    if (metadata.arraySize > UINT32_MAX)
+        return E_INVALIDARG;
+
+    static_assert(static_cast<int>(TEX_MISC_TEXTURECUBE) == static_cast<int>(DDS_RESOURCE_MISC_TEXTURECUBE), "DDS header mismatch");
+    xboxext->miscFlag = metadata.miscFlags & ~static_cast<uint32_t>(TEX_MISC_TEXTURECUBE);
+
+    if (metadata.miscFlags & TEX_MISC_TEXTURECUBE)
+    {
+        xboxext->miscFlag |= TEX_MISC_TEXTURECUBE;
+        assert((metadata.arraySize % 6) == 0);
+        xboxext->arraySize = static_cast<UINT>(metadata.arraySize / 6);
+    }
+    else
+    {
+        xboxext->arraySize = static_cast<UINT>(metadata.arraySize);
+    }
+
+    static_assert(static_cast<int>(TEX_MISC2_ALPHA_MODE_MASK) == static_cast<int>(DDS_MISC_FLAGS2_ALPHA_MODE_MASK), "DDS header mismatch");
+
+    static_assert(static_cast<int>(TEX_ALPHA_MODE_UNKNOWN) == static_cast<int>(DDS_ALPHA_MODE_UNKNOWN), "DDS header mismatch");
+    static_assert(static_cast<int>(TEX_ALPHA_MODE_STRAIGHT) == static_cast<int>(DDS_ALPHA_MODE_STRAIGHT), "DDS header mismatch");
+    static_assert(static_cast<int>(TEX_ALPHA_MODE_PREMULTIPLIED) == static_cast<int>(DDS_ALPHA_MODE_PREMULTIPLIED), "DDS header mismatch");
+    static_assert(static_cast<int>(TEX_ALPHA_MODE_OPAQUE) == static_cast<int>(DDS_ALPHA_MODE_OPAQUE), "DDS header mismatch");
+    static_assert(static_cast<int>(TEX_ALPHA_MODE_CUSTOM) == static_cast<int>(DDS_ALPHA_MODE_CUSTOM), "DDS header mismatch");
+
+    xboxext->miscFlags2 = metadata.miscFlags2;
+
+#if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
+    xboxext->tileMode = static_cast<uint32_t>(xbox.GetTileMode()) | XBOX_TILEMODE_SCARLETT;
+#else
+    xboxext->tileMode = static_cast<uint32_t>(xbox.GetTileMode());
+#endif
+
+    xboxext->baseAlignment = xbox.GetAlignment();
+    xboxext->dataSize = xbox.GetSize();
+#ifdef _GXDK_VER
+    xboxext->xdkVer = _GXDK_VER;
+#elif defined(_XDK_VER)
+    xboxext->xdkVer = _XDK_VER;
+#endif
+
+    return S_OK;
+}
+
 
 //-------------------------------------------------------------------------------------
 // Obtain metadata from DDS file in memory/on disk
