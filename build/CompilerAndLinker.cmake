@@ -93,7 +93,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     endif()
 
     if(OpenMP_CXX_FOUND
-       or (XBOX_CONSOLE_TARGET STREQUAL "durango"))
+       OR (XBOX_CONSOLE_TARGET STREQUAL "durango"))
       # OpenMP in MSVC is not compatible with /permissive- unless you disable two-phase lookup
       list(APPEND COMPILER_SWITCHES /Zc:twoPhase-)
     endif()
