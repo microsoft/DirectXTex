@@ -288,4 +288,39 @@ namespace DirectX
     static_assert(sizeof(DDS_HEADER) == 124, "DDS Header size mismatch");
     static_assert(sizeof(DDS_HEADER_DXT10) == 20, "DDS DX10 Extended Header size mismatch");
 
+    constexpr size_t DDS_MIN_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER);
+    constexpr size_t DDS_DX10_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
+    static_assert(DDS_DX10_HEADER_SIZE > DDS_MIN_HEADER_SIZE, "DDS DX10 Header should be larger than standard header");
+
+} // namespace
+
+namespace Xbox
+{
+    DDSGLOBALCONST DirectX::DDS_PIXELFORMAT DDSPF_XBOX =
+    { sizeof(DirectX::DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('X','B','O','X'), 0, 0, 0, 0, 0 };
+
+#pragma pack(push,1)
+
+    struct DDS_HEADER_XBOX
+        // Must match structure in XboxDDSTextureLoader module
+    {
+        DXGI_FORMAT dxgiFormat;
+        uint32_t    resourceDimension;
+        uint32_t    miscFlag; // see DDS_RESOURCE_MISC_FLAG
+        uint32_t    arraySize;
+        uint32_t    miscFlags2; // see DDS_MISC_FLAGS2
+        uint32_t    tileMode; // see XG_TILE_MODE / XG_SWIZZLE_MODE
+        uint32_t    baseAlignment;
+        uint32_t    dataSize;
+        uint32_t    xdkVer; // matching _XDK_VER / _GXDK_VER
+    };
+
+#pragma pack(pop)
+
+    static_assert(sizeof(DDS_HEADER_XBOX) == 36, "DDS XBOX Header size mismatch");
+    static_assert(sizeof(DDS_HEADER_XBOX) > sizeof(DirectX::DDS_HEADER_DXT10), "DDS XBOX Header should be larger than DX10 header");
+
+    constexpr size_t DDS_XBOX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DirectX::DDS_HEADER) + sizeof(DDS_HEADER_XBOX);
+
+    constexpr uint32_t XBOX_TILEMODE_SCARLETT = 0x1000000;
 } // namespace

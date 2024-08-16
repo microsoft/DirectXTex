@@ -23,34 +23,6 @@ using namespace Xbox;
 
 namespace
 {
-    const DDS_PIXELFORMAT DDSPF_XBOX =
-    { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('X','B','O','X'), 0, 0, 0, 0, 0 };
-
-#pragma pack(push,1)
-
-    struct DDS_HEADER_XBOX
-        // Must match structure in XboxDDSTextureLoader module
-    {
-        DXGI_FORMAT dxgiFormat;
-        uint32_t    resourceDimension;
-        uint32_t    miscFlag; // see DDS_RESOURCE_MISC_FLAG
-        uint32_t    arraySize;
-        uint32_t    miscFlags2; // see DDS_MISC_FLAGS2
-        uint32_t    tileMode; // see XG_TILE_MODE / XG_SWIZZLE_MODE
-        uint32_t    baseAlignment;
-        uint32_t    dataSize;
-        uint32_t    xdkVer; // matching _XDK_VER / _GXDK_VER
-    };
-
-#pragma pack(pop)
-
-    constexpr uint32_t XBOX_TILEMODE_SCARLETT = 0x1000000;
-
-    static_assert(sizeof(DDS_HEADER_XBOX) == 36, "DDS XBOX Header size mismatch");
-    static_assert(sizeof(DDS_HEADER_XBOX) >= sizeof(DDS_HEADER_DXT10), "DDS XBOX Header should be larger than DX10 header");
-
-    constexpr size_t XBOX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_XBOX);
-
     //-------------------------------------------------------------------------------------
     // Decodes DDS header using XBOX extended header (variant of DX10 header)
     //-------------------------------------------------------------------------------------
@@ -86,7 +58,7 @@ namespace
             *ddPixelFormat = {};
         }
 
-        if (size < (sizeof(DDS_HEADER) + sizeof(uint32_t)))
+        if (size < DDS_MIN_HEADER_SIZE)
         {
             return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
         }
@@ -120,13 +92,13 @@ namespace
         }
 
         // Buffer must be big enough for both headers and magic value
-        if (size < XBOX_HEADER_SIZE)
+        if (size < DDS_XBOX_HEADER_SIZE)
         {
             return E_FAIL;
         }
 
         auto xboxext = reinterpret_cast<const DDS_HEADER_XBOX*>(
-            reinterpret_cast<const uint8_t*>(pSource) + sizeof(uint32_t) + sizeof(DDS_HEADER));
+            reinterpret_cast<const uint8_t*>(pSource) + DDS_MIN_HEADER_SIZE);
 
         metadata.arraySize = xboxext->arraySize;
         if (metadata.arraySize == 0)
@@ -263,7 +235,7 @@ HRESULT Xbox::EncodeDDSHeader(
     if (!pDestination)
         return E_INVALIDARG;
 
-    if (maxsize < XBOX_HEADER_SIZE)
+    if (maxsize < DDS_XBOX_HEADER_SIZE)
         return E_NOT_SUFFICIENT_BUFFER;
 
     *reinterpret_cast<uint32_t*>(pDestination) = DDS_MAGIC;
@@ -492,16 +464,16 @@ HRESULT Xbox::GetMetadataFromDDSFileEx(
     }
 
     // Need at least enough data to fill the standard header and magic number to be a valid DDS
-    if (fileInfo.EndOfFile.LowPart < (sizeof(DDS_HEADER) + sizeof(uint32_t)))
+    if (fileInfo.EndOfFile.LowPart < DDS_MIN_HEADER_SIZE)
     {
         return E_FAIL;
     }
 
     // Read the header in (including extended header if present)
-    uint8_t header[XBOX_HEADER_SIZE] = {};
+    uint8_t header[DDS_XBOX_HEADER_SIZE] = {};
 
     DWORD bytesRead = 0;
-    if (!ReadFile(hFile.get(), header, XBOX_HEADER_SIZE, &bytesRead, nullptr))
+    if (!ReadFile(hFile.get(), header, DDS_XBOX_HEADER_SIZE, &bytesRead, nullptr))
     {
         return HRESULT_FROM_WIN32(GetLastError());
     }
@@ -567,13 +539,13 @@ HRESULT Xbox::LoadFromDDSMemoryEx(
         return E_FAIL;
     }
 
-    if (size <= XBOX_HEADER_SIZE)
+    if (size <= DDS_XBOX_HEADER_SIZE)
     {
         return E_FAIL;
     }
 
     // Copy tiled data
-    const size_t remaining = size - XBOX_HEADER_SIZE;
+    const size_t remaining = size - DDS_XBOX_HEADER_SIZE;
 
     if (remaining < dataSize)
     {
@@ -586,7 +558,7 @@ HRESULT Xbox::LoadFromDDSMemoryEx(
 
     assert(xbox.GetPointer() != nullptr);
 
-    memcpy(xbox.GetPointer(), reinterpret_cast<const uint8_t*>(pSource) + XBOX_HEADER_SIZE, dataSize);
+    memcpy(xbox.GetPointer(), reinterpret_cast<const uint8_t*>(pSource) + DDS_XBOX_HEADER_SIZE, dataSize);
 
     if (metadata)
         memcpy(metadata, &mdata, sizeof(TexMetadata));
@@ -645,16 +617,16 @@ HRESULT Xbox::LoadFromDDSFileEx(
     }
 
     // Need at least enough data to fill the standard header and magic number to be a valid DDS
-    if (fileInfo.EndOfFile.LowPart < (sizeof(DDS_HEADER) + sizeof(uint32_t)))
+    if (fileInfo.EndOfFile.LowPart < DDS_MIN_HEADER_SIZE)
     {
         return E_FAIL;
     }
 
     // Read the header in (including extended header if present)
-    uint8_t header[XBOX_HEADER_SIZE] = {};
+    uint8_t header[DDS_XBOX_HEADER_SIZE] = {};
 
     DWORD bytesRead = 0;
-    if (!ReadFile(hFile.get(), header, XBOX_HEADER_SIZE, &bytesRead, nullptr))
+    if (!ReadFile(hFile.get(), header, DDS_XBOX_HEADER_SIZE, &bytesRead, nullptr))
     {
         return HRESULT_FROM_WIN32(GetLastError());
     }
@@ -678,7 +650,7 @@ HRESULT Xbox::LoadFromDDSFileEx(
     }
 
     // Read tiled data
-    const DWORD remaining = fileInfo.EndOfFile.LowPart - XBOX_HEADER_SIZE;
+    const DWORD remaining = fileInfo.EndOfFile.LowPart - DDS_XBOX_HEADER_SIZE;
     if (remaining == 0)
         return E_FAIL;
 
@@ -717,7 +689,7 @@ HRESULT Xbox::SaveToDDSMemory(const XboxImage& xbox, Blob& blob)
 
     blob.Release();
 
-    HRESULT hr = blob.Initialize(XBOX_HEADER_SIZE + xbox.GetSize());
+    HRESULT hr = blob.Initialize(DDS_XBOX_HEADER_SIZE + xbox.GetSize());
     if (FAILED(hr))
         return hr;
 
@@ -725,7 +697,7 @@ HRESULT Xbox::SaveToDDSMemory(const XboxImage& xbox, Blob& blob)
     auto pDestination = reinterpret_cast<uint8_t*>(blob.GetBufferPointer());
     assert(pDestination);
 
-    hr = EncodeDDSHeader(xbox, pDestination, XBOX_HEADER_SIZE);
+    hr = EncodeDDSHeader(xbox, pDestination, DDS_XBOX_HEADER_SIZE);
     if (FAILED(hr))
     {
         blob.Release();
@@ -733,8 +705,8 @@ HRESULT Xbox::SaveToDDSMemory(const XboxImage& xbox, Blob& blob)
     }
 
     // Copy tiled data
-    const size_t remaining = blob.GetBufferSize() - XBOX_HEADER_SIZE;
-    pDestination += XBOX_HEADER_SIZE;
+    const size_t remaining = blob.GetBufferSize() - DDS_XBOX_HEADER_SIZE;
+    pDestination += DDS_XBOX_HEADER_SIZE;
 
     if (!remaining)
     {
@@ -764,8 +736,8 @@ HRESULT Xbox::SaveToDDSFile(const XboxImage& xbox, const wchar_t* szFile)
         return E_INVALIDARG;
 
     // Create DDS Header
-    uint8_t header[XBOX_HEADER_SIZE] = {};
-    HRESULT hr = EncodeDDSHeader(xbox, header, XBOX_HEADER_SIZE);
+    uint8_t header[DDS_XBOX_HEADER_SIZE] = {};
+    HRESULT hr = EncodeDDSHeader(xbox, header, DDS_XBOX_HEADER_SIZE);
     if (FAILED(hr))
         return hr;
 
@@ -783,12 +755,12 @@ HRESULT Xbox::SaveToDDSFile(const XboxImage& xbox, const wchar_t* szFile)
     }
 
     DWORD bytesWritten;
-    if (!WriteFile(hFile.get(), header, static_cast<DWORD>(XBOX_HEADER_SIZE), &bytesWritten, nullptr))
+    if (!WriteFile(hFile.get(), header, static_cast<DWORD>(DDS_XBOX_HEADER_SIZE), &bytesWritten, nullptr))
     {
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    if (bytesWritten != XBOX_HEADER_SIZE)
+    if (bytesWritten != DDS_XBOX_HEADER_SIZE)
     {
         return E_FAIL;
     }
