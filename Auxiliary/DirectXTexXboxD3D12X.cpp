@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexD3D12X.cpp
-//  
+//
 // DirectXTex Auxilary functions for creating resouces from XboxImage containers
 // via the CreatePlacedResourceX API
 //

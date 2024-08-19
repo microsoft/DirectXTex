@@ -410,7 +410,7 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
 
         hr = image.Initialize2D(DXGI_FORMAT_R16G16B16A16_FLOAT,
                 static_cast<size_t>(width), static_cast<size_t>(height), arraySize, 1u);
-        
+
         if (FAILED(hr))
             return hr;
 
