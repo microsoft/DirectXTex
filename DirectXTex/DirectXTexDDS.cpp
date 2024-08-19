@@ -22,8 +22,6 @@ static_assert(static_cast<int>(TEX_DIMENSION_TEXTURE3D) == static_cast<int>(DDS_
 
 namespace
 {
-    constexpr size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
-
     //-------------------------------------------------------------------------------------
     // Legacy format mapping table (used for DDS files without 'DX10' extended header)
     //-------------------------------------------------------------------------------------
@@ -326,7 +324,7 @@ namespace
             *ddPixelFormat = {};
         }
 
-        if (size < (sizeof(DDS_HEADER) + sizeof(uint32_t)))
+        if (size < DDS_MIN_HEADER_SIZE)
         {
             return HRESULT_E_INVALID_DATA;
         }
@@ -386,12 +384,12 @@ namespace
             }
 
             // Buffer must be big enough for both headers and magic value
-            if (size < (sizeof(DDS_HEADER) + sizeof(uint32_t) + sizeof(DDS_HEADER_DXT10)))
+            if (size < DDS_DX10_HEADER_SIZE)
             {
                 return E_FAIL;
             }
 
-            auto d3d10ext = reinterpret_cast<const DDS_HEADER_DXT10*>(static_cast<const uint8_t*>(pSource) + sizeof(uint32_t) + sizeof(DDS_HEADER));
+            auto d3d10ext = reinterpret_cast<const DDS_HEADER_DXT10*>(static_cast<const uint8_t*>(pSource) + DDS_MIN_HEADER_SIZE);
             convFlags |= CONV_FLAGS_DX10;
 
             metadata.arraySize = d3d10ext->arraySize;
@@ -826,7 +824,7 @@ HRESULT DirectX::EncodeDDSHeader(
         }
     }
 
-    required = sizeof(uint32_t) + sizeof(DDS_HEADER);
+    required = DDS_MIN_HEADER_SIZE;
 
     if (ddpf.size == 0)
     {
@@ -1776,24 +1774,24 @@ HRESULT DirectX::GetMetadataFromDDSFileEx(
 #endif
 
     // Need at least enough data to fill the standard header and magic number to be a valid DDS
-    if (len < (sizeof(DDS_HEADER) + sizeof(uint32_t)))
+    if (len < DDS_MIN_HEADER_SIZE)
     {
         return E_FAIL;
     }
 
     // Read the header in (including extended header if present)
-    uint8_t header[MAX_HEADER_SIZE] = {};
+    uint8_t header[DDS_DX10_HEADER_SIZE] = {};
 
 #ifdef _WIN32
     DWORD bytesRead = 0;
-    if (!ReadFile(hFile.get(), header, MAX_HEADER_SIZE, &bytesRead, nullptr))
+    if (!ReadFile(hFile.get(), header, DDS_DX10_HEADER_SIZE, &bytesRead, nullptr))
     {
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
     auto const headerLen = static_cast<size_t>(bytesRead);
 #else
-    auto const headerLen = std::min<size_t>(len, MAX_HEADER_SIZE);
+    auto const headerLen = std::min<size_t>(len, DDS_DX10_HEADER_SIZE);
 
     inFile.read(reinterpret_cast<char*>(header), headerLen);
     if (!inFile)
@@ -1839,7 +1837,7 @@ HRESULT DirectX::LoadFromDDSMemoryEx(
     if (FAILED(hr))
         return hr;
 
-    size_t offset = sizeof(uint32_t) + sizeof(DDS_HEADER);
+    size_t offset = DDS_MIN_HEADER_SIZE;
     if (convFlags & CONV_FLAGS_DX10)
         offset += sizeof(DDS_HEADER_DXT10);
 
@@ -1960,24 +1958,24 @@ HRESULT DirectX::LoadFromDDSFileEx(
 #endif
 
     // Need at least enough data to fill the standard header and magic number to be a valid DDS
-    if (len < (sizeof(DDS_HEADER) + sizeof(uint32_t)))
+    if (len < DDS_MIN_HEADER_SIZE)
     {
         return E_FAIL;
     }
 
     // Read the header in (including extended header if present)
-    uint8_t header[MAX_HEADER_SIZE] = {};
+    uint8_t header[DDS_DX10_HEADER_SIZE] = {};
 
 #ifdef _WIN32
     DWORD bytesRead = 0;
-    if (!ReadFile(hFile.get(), header, MAX_HEADER_SIZE, &bytesRead, nullptr))
+    if (!ReadFile(hFile.get(), header, DDS_DX10_HEADER_SIZE, &bytesRead, nullptr))
     {
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
     auto const headerLen = static_cast<size_t>(bytesRead);
 #else
-    auto const headerLen = std::min<size_t>(len, MAX_HEADER_SIZE);
+    auto const headerLen = std::min<size_t>(len, DDS_DX10_HEADER_SIZE);
 
     inFile.read(reinterpret_cast<char*>(header), headerLen);
     if (!inFile)
@@ -1990,24 +1988,24 @@ HRESULT DirectX::LoadFromDDSFileEx(
     if (FAILED(hr))
         return hr;
 
-    size_t offset = MAX_HEADER_SIZE;
+    size_t offset = DDS_DX10_HEADER_SIZE;
 
     if (!(convFlags & CONV_FLAGS_DX10))
     {
     #ifdef _WIN32
             // Must reset file position since we read more than the standard header above
-        const LARGE_INTEGER filePos = { { sizeof(uint32_t) + sizeof(DDS_HEADER), 0 } };
+        const LARGE_INTEGER filePos = { { DDS_MIN_HEADER_SIZE, 0 } };
         if (!SetFilePointerEx(hFile.get(), filePos, nullptr, FILE_BEGIN))
         {
             return HRESULT_FROM_WIN32(GetLastError());
         }
     #else
-        inFile.seekg(sizeof(uint32_t) + sizeof(DDS_HEADER), std::ios::beg);
+        inFile.seekg(DDS_MIN_HEADER_SIZE, std::ios::beg);
         if (!inFile)
             return E_FAIL;
     #endif
 
-        offset = sizeof(uint32_t) + sizeof(DDS_HEADER);
+        offset = DDS_MIN_HEADER_SIZE;
     }
 
     std::unique_ptr<uint32_t[]> pal8;
@@ -2393,9 +2391,9 @@ HRESULT DirectX::SaveToDDSFile(
         return E_INVALIDARG;
 
     // Create DDS Header
-    uint8_t header[MAX_HEADER_SIZE];
+    uint8_t header[DDS_DX10_HEADER_SIZE];
     size_t required;
-    HRESULT hr = EncodeDDSHeader(metadata, flags, header, MAX_HEADER_SIZE, required);
+    HRESULT hr = EncodeDDSHeader(metadata, flags, header, DDS_DX10_HEADER_SIZE, required);
     if (FAILED(hr))
         return hr;
 
