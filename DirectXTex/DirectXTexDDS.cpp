@@ -144,7 +144,7 @@ namespace
 
         { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND
                                           | CONV_FLAGS_PAL8
-                                          | CONV_FLAGS_A8P8,      { sizeof(DDS_PIXELFORMAT), DDS_PAL8A,     0, 16, 0, 0, 0, 0 } }, // D3DFMT_A8P8
+                                          | CONV_FLAGS_A8P8,      { sizeof(DDS_PIXELFORMAT), DDS_PAL8A,     0, 16, 0, 0, 0, 0xff00 } }, // D3DFMT_A8P8
         { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_EXPAND
                                           | CONV_FLAGS_PAL8,      { sizeof(DDS_PIXELFORMAT), DDS_PAL8,      0,  8, 0, 0, 0, 0 } }, // D3DFMT_P8
 
@@ -174,8 +174,6 @@ namespace
     // header extension and specify the DXGI_FORMAT_R10G10B10A2_UNORM format directly
 
     // We do not support the following legacy Direct3D 9 formats:
-    //      BumpDuDv D3DFMT_A2W10V10U10
-    //      BumpLuminance D3DFMT_L6V5U5, D3DFMT_X8L8V8U8
     //      FourCC 117 D3DFMT_CxV8U8
     //      ZBuffer D3DFMT_D16_LOCKABLE
     //      FourCC 82 D3DFMT_D32F_LOCKABLE
@@ -223,17 +221,16 @@ namespace
                     if (ddpf.fourCC == entry->ddpf.fourCC)
                         break;
                 }
-                else if (ddpfFlags == entry->ddpf.flags)
+                else if ((ddpfFlags == entry->ddpf.flags) && (ddpf.RGBBitCount == entry->ddpf.RGBBitCount))
                 {
                     if (entry->ddpf.flags & DDS_PAL8)
                     {
-                        if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount)
-                            break;
+                        // PAL8 / PAL8A
+                        break;
                     }
                     else if (entry->ddpf.flags & DDS_ALPHA)
                     {
-                        if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
-                            && ddpf.ABitMask == entry->ddpf.ABitMask)
+                        if (ddpf.ABitMask == entry->ddpf.ABitMask)
                             break;
                     }
                     else if (entry->ddpf.flags & DDS_LUMINANCE)
@@ -241,59 +238,33 @@ namespace
                         if (entry->ddpf.flags & DDS_ALPHAPIXELS)
                         {
                             // LUMINANCEA
-                            if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
-                                && ddpf.RBitMask == entry->ddpf.RBitMask
+                            if (ddpf.RBitMask == entry->ddpf.RBitMask
                                 && ddpf.ABitMask == entry->ddpf.ABitMask)
                                 break;
                         }
                         else
                         {
                             // LUMINANCE
-                            if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
-                                && ddpf.RBitMask == entry->ddpf.RBitMask)
+                            if (ddpf.RBitMask == entry->ddpf.RBitMask)
                                 break;
                         }
                     }
-                    else if (entry->ddpf.flags & DDS_BUMPDUDV)
+                    else if (entry->ddpf.flags & DDS_ALPHAPIXELS)
                     {
-                        if (entry->ddpf.flags & DDS_ALPHAPIXELS)
-                        {
-                            // BUMPDUDVA
-                            if (ddpf.RBitMask == entry->ddpf.RBitMask
-                                && ddpf.GBitMask == entry->ddpf.GBitMask
-                                && ddpf.BBitMask == entry->ddpf.BBitMask
-                                && ddpf.ABitMask == entry->ddpf.ABitMask)
-                                break;
-                        }
-                        else
-                        {
-                            // BUMPDUDV
-                            if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount
-                                && ddpf.RBitMask == entry->ddpf.RBitMask
-                                && ddpf.GBitMask == entry->ddpf.GBitMask
-                                && ddpf.BBitMask == entry->ddpf.BBitMask)
-                                break;
-                        }
+                        // RGBA / BUMPDUDVA
+                        if (ddpf.RBitMask == entry->ddpf.RBitMask
+                            && ddpf.GBitMask == entry->ddpf.GBitMask
+                            && ddpf.BBitMask == entry->ddpf.BBitMask
+                            && ddpf.ABitMask == entry->ddpf.ABitMask)
+                            break;
                     }
-                    else if (ddpf.RGBBitCount == entry->ddpf.RGBBitCount)
+                    else
                     {
-                        if (entry->ddpf.flags & DDS_ALPHAPIXELS)
-                        {
-                            // RGBA
-                            if (ddpf.RBitMask == entry->ddpf.RBitMask
-                                && ddpf.GBitMask == entry->ddpf.GBitMask
-                                && ddpf.BBitMask == entry->ddpf.BBitMask
-                                && ddpf.ABitMask == entry->ddpf.ABitMask)
-                                break;
-                        }
-                        else
-                        {
-                            // RGB
-                            if (ddpf.RBitMask == entry->ddpf.RBitMask
-                                && ddpf.GBitMask == entry->ddpf.GBitMask
-                                && ddpf.BBitMask == entry->ddpf.BBitMask)
-                                break;
-                        }
+                        // RGB / BUMPDUDV
+                        if (ddpf.RBitMask == entry->ddpf.RBitMask
+                            && ddpf.GBitMask == entry->ddpf.GBitMask
+                            && ddpf.BBitMask == entry->ddpf.BBitMask)
+                            break;
                     }
                 }
             }
@@ -1361,6 +1332,7 @@ namespace
             if (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM)
                 return false;
 
+            // D3DFMT_L6U5V5 -> DXGI_FORMAT_R8G8B8A8_UNORM
             // TODO - converts unsigned 6-bit/signed 5-bit/signed 5-bit bump luminance to 8:8:8:8 unsigned
             return false;
 
@@ -1381,7 +1353,7 @@ namespace
         assert(pDestination && outSize > 0);
         assert(pSource && inSize > 0);
 
-        // TODO - 
+        // TODO -
         UNREFERENCED_PARAMETER(pDestination);
         UNREFERENCED_PARAMETER(outSize);
         UNREFERENCED_PARAMETER(pSource);
@@ -1393,6 +1365,7 @@ namespace
             if (outFormat != DXGI_FORMAT_R8G8B8A8_UNORM)
                 return false;
 
+            // D3DFMT_X8L8V8U8 -> DXGI_FORMAT_R8G8B8A8_UNORM
             // TODO - Converts 8-bit unsigned / 8-bit signed / 8-bit signed to 8:8:8:8 unsigned
             return false;
 
@@ -1400,6 +1373,7 @@ namespace
             if (outFormat != DXGI_FORMAT_R10G10B10A2_UNORM)
                 return false;
 
+            // D3DFMT_A2W10V10U10 -> DXGI_FORMAT_R10G10B10A2_UNORM
             // TODO - Converts 2-bit unsigned / 10-bit signed / 10-bit signed / 10-bit signed to 2:10:10:10 unsigned
             return false;
 
