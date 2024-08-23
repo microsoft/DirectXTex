@@ -38,3 +38,4 @@ x64
 /wiki
 /out
 /CMakeUserPresets.json
+/build/vcpkg_installed

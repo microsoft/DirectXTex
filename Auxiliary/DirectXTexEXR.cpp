@@ -544,7 +544,7 @@ HRESULT DirectX::SaveToEXRFile(const Image& image, const wchar_t* szFile)
         {
             const uint64_t bytes = image.width * image.height;
 
-            if (bytes > UINT32_MAX)
+            if (bytes > static_cast<uint64_t>(UINT32_MAX))
             {
                 return /* HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW) */ static_cast<HRESULT>(0x80070216L);
             }
