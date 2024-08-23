@@ -304,6 +304,13 @@
     { "name": "x86-Debug-Win7-Clang"  , "description": "Clang/LLVM for x86 (Debug) for Windows 7", "inherits": [ "base", "x86", "Debug", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
     { "name": "x86-Release-Win7-Clang", "description": "Clang/LLVM for x86 (Release) for Windows 7", "inherits": [ "base", "x86", "Release", "Clang", "Win7" ], "environment": { "CXXFLAGS": "-m32" } },
 
+    { "name": "x64-Debug-Clang-VCPKG"    , "description": "Clang/LLVM for x64 (Debug) using VCPKG/OpenEXR", "inherits": [ "base", "x64", "Debug", "Clang", "VCPKG" ] },
+    { "name": "x64-Release-Clang-VCPKG"  , "description": "Clang/LLVM for x64 (Release) using VCPKG/OpenEXR", "inherits": [ "base", "x64", "Release", "Clang", "VCPKG" ] },
+    { "name": "x86-Debug-Clang-VCPKG"    , "description": "Clang/LLVM for x86 (Debug) using VCPKG/OpenEXR", "inherits": [ "base", "x86", "Debug", "Clang", "VCPKG" ], "environment": { "CXXFLAGS": "-m32" } },
+    { "name": "x86-Release-Clang-VCPKG"  , "description": "Clang/LLVM for x86 (Release) using VCPKG/OpenEXR", "inherits": [ "base", "x86", "Release", "Clang", "VCPKG" ], "environment": { "CXXFLAGS": "-m32" } },
+    { "name": "arm64-Debug-Clang-VCPKG"  , "description": "Clang/LLVM for AArch64 (Debug) using VCPKG/OpenEXR", "inherits": [ "base", "ARM64", "Debug", "Clang", "VCPKG" ], "environment": { "CXXFLAGS": "--target=arm64-pc-windows-msvc" } },
+    { "name": "arm64-Release-Clang-VCPKG", "description": "Clang/LLVM for AArch64 (Release) using VCPKG/OpenEXR", "inherits": [ "base", "ARM64", "Release", "Clang", "VCPKG" ], "environment": { "CXXFLAGS": "--target=arm64-pc-windows-msvc" } },
+
     { "name": "x64-Debug-Clang-JPEG-PNG"   , "description": "Clang/LLVM for x64 (Debug) with DX12", "inherits": [ "base", "x64", "Debug", "Clang", "VCPKG", "JPEG_PNG" ] },
     { "name": "x64-Release-Clang-JPEG-PNG" , "description": "Clang/LLVM for x64 (Release) with DX12", "inherits": [ "base", "x64", "Release", "Clang", "VCPKG", "JPEG_PNG" ] },
 
