@@ -174,13 +174,14 @@ namespace
     // header extension and specify the DXGI_FORMAT_R10G10B10A2_UNORM format directly
 
     // We do not support the following legacy Direct3D 9 formats:
-    //      FourCC 117 D3DFMT_CxV8U8
-    //      ZBuffer D3DFMT_D16_LOCKABLE
+    //      D3DFMT_D16_LOCKABLE (DDPF_ZBUFFER: 0x00000400)
     //      FourCC 82 D3DFMT_D32F_LOCKABLE
+    //      FourCC 117 D3DFMT_CxV8U8
 
     // We do not support the following known FourCC codes:
     //      FourCC CTX1 (Xbox 360 only)
     //      FourCC EAR, EARG, ET2, ET2A (Ericsson Texture Compression)
+    //      FourCC MET1 (a.k.a. D3DFMT_MULTI2_ARGB8; rarely supported by any hardware)
 
     DXGI_FORMAT GetDXGIFormat(const DDS_HEADER& hdr, const DDS_PIXELFORMAT& ddpf,
         DDS_FLAGS flags,
