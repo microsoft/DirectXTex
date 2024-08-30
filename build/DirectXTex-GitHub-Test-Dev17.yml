@@ -21,7 +21,6 @@ pr:
   paths:
     include:
     - build/DirectXTex-GitHub-Test-Dev17.yml
-    - DirectXTex/Shaders/CompileShaders.cmd
 
 resources:
   repositories:
