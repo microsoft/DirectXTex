@@ -266,6 +266,7 @@ namespace
             {
             case DXGI_FORMAT_R8_UNORM:
                 color_type = PNG_COLOR_TYPE_GRAY;
+                channel = 1;
                 break;
             case DXGI_FORMAT_B8G8R8A8_UNORM:
             case DXGI_FORMAT_B8G8R8X8_UNORM:
