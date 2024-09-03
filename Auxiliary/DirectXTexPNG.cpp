@@ -126,6 +126,12 @@ namespace
         void Update() noexcept(false)
         {
             png_read_info(st, info);
+            // check for unsupported cases
+            png_byte interlacing = png_get_interlace_type(st, info);
+            if (interlacing != PNG_INTERLACE_NONE)
+            {
+                throw std::invalid_argument{ "interlacing not supported" };
+            }
             // color handling
             png_byte color_type = png_get_color_type(st, info);
             if (color_type == PNG_COLOR_TYPE_GRAY)
@@ -185,6 +191,7 @@ namespace
         /// @todo More correct DXGI_FORMAT mapping
         void GetHeader(TexMetadata& metadata) noexcept(false)
         {
+            metadata = {};
             metadata.width = png_get_image_width(st, info);
             metadata.height = png_get_image_height(st, info);
             metadata.arraySize = 1;
@@ -194,7 +201,7 @@ namespace
             metadata.format = GuessFormat();
             png_byte color_type = png_get_color_type(st, info);
             bool have_alpha = (color_type & PNG_COLOR_MASK_ALPHA);
-            if (have_alpha == false)
+            if (have_alpha == false && (metadata.format != DXGI_FORMAT_R8_UNORM))
                 metadata.miscFlags2 |= TEX_ALPHA_MODE_OPAQUE;
         }
 
@@ -266,6 +273,7 @@ namespace
             {
             case DXGI_FORMAT_R8_UNORM:
                 color_type = PNG_COLOR_TYPE_GRAY;
+                channel = 1;
                 break;
             case DXGI_FORMAT_B8G8R8A8_UNORM:
             case DXGI_FORMAT_B8G8R8X8_UNORM:
@@ -275,7 +283,7 @@ namespace
                 color_type = PNG_COLOR_TYPE_RGBA;
                 break;
             default:
-                return E_INVALIDARG;
+                return HRESULT_E_NOT_SUPPORTED;
             }
 
             png_set_IHDR(st, info,
@@ -332,6 +340,10 @@ HRESULT DirectX::GetMetadataFromPNGFile(
         return (ec.code().value() == ENOENT) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
 #endif
     }
+    catch (const std::invalid_argument&)
+    {
+        return HRESULT_E_NOT_SUPPORTED;
+    }
     catch (const std::exception&)
     {
         return E_FAIL;
@@ -372,6 +384,10 @@ HRESULT DirectX::LoadFromPNGFile(
 #else
         return (ec.code().value() == ENOENT) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
 #endif
+    }
+    catch (const std::invalid_argument&)
+    {
+        return HRESULT_E_NOT_SUPPORTED;
     }
     catch (const std::exception&)
     {
