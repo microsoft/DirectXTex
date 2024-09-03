@@ -297,7 +297,7 @@ namespace
             #endif
 
             default:
-                return E_INVALIDARG;
+                return HRESULT_E_NOT_SUPPORTED;
             }
             enc.image_width = static_cast<JDIMENSION>(image.width);
             enc.image_height = static_cast<JDIMENSION>(image.height);
