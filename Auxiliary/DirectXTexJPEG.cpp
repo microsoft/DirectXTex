@@ -141,11 +141,15 @@ namespace
             metadata.arraySize = 1;
             metadata.mipLevels = 1;
             metadata.dimension = TEX_DIMENSION_TEXTURE2D;
-            metadata.miscFlags2 |= TEX_ALPHA_MODE_OPAQUE;
-
             metadata.format = TranslateColor(dec.out_color_space);
             if (metadata.format == DXGI_FORMAT_UNKNOWN)
+            {
                 throw std::runtime_error{ "unexpected out_color_space in jpeg_decompress_struct" };
+            }
+            if (metadata.format == DXGI_FORMAT_R8G8B8A8_UNORM)
+            {
+                metadata.miscFlags2 |= TEX_ALPHA_MODE_OPAQUE;
+            }
         }
 
         HRESULT GetHeader(TexMetadata& metadata) noexcept(false)
@@ -293,7 +297,7 @@ namespace
             #endif
 
             default:
-                return E_INVALIDARG;
+                return HRESULT_E_NOT_SUPPORTED;
             }
             enc.image_width = static_cast<JDIMENSION>(image.width);
             enc.image_height = static_cast<JDIMENSION>(image.height);
