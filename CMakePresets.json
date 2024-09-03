@@ -381,6 +381,9 @@
     { "name": "x64-Release-ICC"  , "configurePreset": "x64-Release-ICC"},
 
     { "name": "x64-Debug-ICX"    , "configurePreset": "x64-Debug-ICX" },
-    { "name": "x64-Release-ICX"  , "configurePreset": "x64-Release-ICX"}
+    { "name": "x64-Release-ICX"  , "configurePreset": "x64-Release-ICX"},
+
+    { "name": "x64-Debug-JPEG-PNG"  , "configurePreset": "x64-Debug-JPEG-PNG" },
+    { "name": "x64-Release-JPEG-PNG", "configurePreset": "x64-Release-JPEG-PNG"}
   ]
 }
