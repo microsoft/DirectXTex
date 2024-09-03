@@ -60,7 +60,7 @@ jobs:
       script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
       workingDirectory: $(Build.SourcesDirectory)
       failOnStderr: true
-  - task: NuGetToolInstaller
+  - task: NuGetToolInstaller@1
     displayName: 'Use NuGet'
   - task: NuGetCommand@2
     displayName: NuGet restore tests
