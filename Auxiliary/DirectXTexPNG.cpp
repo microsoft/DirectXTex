@@ -195,7 +195,7 @@ namespace
             metadata.format = GuessFormat();
             png_byte color_type = png_get_color_type(st, info);
             bool have_alpha = (color_type & PNG_COLOR_MASK_ALPHA);
-            if (have_alpha == false)
+            if (have_alpha == false && (metadata.format != DXGI_FORMAT_R8_UNORM))
                 metadata.miscFlags2 |= TEX_ALPHA_MODE_OPAQUE;
         }
 
