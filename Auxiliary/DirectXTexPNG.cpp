@@ -131,7 +131,7 @@ namespace
             if (interlacing != PNG_INTERLACE_NONE)
             {
                 throw std::invalid_argument{ "interlacing not supported" };
-            }           
+            }
             // color handling
             png_byte color_type = png_get_color_type(st, info);
             if (color_type == PNG_COLOR_TYPE_GRAY)
@@ -191,7 +191,7 @@ namespace
         /// @todo More correct DXGI_FORMAT mapping
         void GetHeader(TexMetadata& metadata) noexcept(false)
         {
-            metadata = {};            
+            metadata = {};
             metadata.width = png_get_image_width(st, info);
             metadata.height = png_get_image_height(st, info);
             metadata.arraySize = 1;
