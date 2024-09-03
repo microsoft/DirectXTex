@@ -143,16 +143,17 @@ elseif((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
        Auxiliary/DirectXTexXboxTile.cpp)
 endif()
 
-set(SHADER_SOURCES
-    DirectXTex/Shaders/BC6HEncode.hlsl
-    DirectXTex/Shaders/BC7Encode.hlsl)
 
-if(BUILD_DX11 AND WIN32)
-   list(APPEND LIBRARY_SOURCES
-       DirectXTex/BCDirectCompute.h
-       DirectXTex/BCDirectCompute.cpp
-       DirectXTex/DirectXTexCompressGPU.cpp
-       DirectXTex/DirectXTexD3D11.cpp)
+if(BUILD_DX11 AND WIN32 AND (NOT (XBOX_CONSOLE_TARGET STREQUAL "durango")))
+    set(SHADER_SOURCES
+        DirectXTex/Shaders/BC6HEncode.hlsl
+        DirectXTex/Shaders/BC7Encode.hlsl)
+
+    list(APPEND LIBRARY_SOURCES
+        DirectXTex/BCDirectCompute.h
+        DirectXTex/BCDirectCompute.cpp
+        DirectXTex/DirectXTexCompressGPU.cpp
+        DirectXTex/DirectXTexD3D11.cpp)
 endif()
 
 if(BUILD_DX12)
@@ -184,7 +185,7 @@ if(ENABLE_LIBPNG_SUPPORT)
     list(APPEND LIBRARY_SOURCES Auxiliary/DirectXTexPNG.cpp)
 endif()
 
-if(BUILD_DX11 AND WIN32)
+if(BUILD_DX11 AND WIN32 AND (NOT (XBOX_CONSOLE_TARGET STREQUAL "durango")))
     if(NOT COMPILED_SHADERS)
         if(USE_PREBUILT_SHADERS)
             message(FATAL_ERROR "ERROR: Using prebuilt shaders requires the COMPILED_SHADERS variable is set")
