@@ -185,6 +185,7 @@ namespace
         /// @todo More correct DXGI_FORMAT mapping
         void GetHeader(TexMetadata& metadata) noexcept(false)
         {
+            metadata = {};            
             metadata.width = png_get_image_width(st, info);
             metadata.height = png_get_image_height(st, info);
             metadata.arraySize = 1;
