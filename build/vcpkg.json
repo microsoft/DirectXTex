@@ -3,9 +3,17 @@
     "dependencies": [
       "directxmath",
       "directx-headers",
-      "openexr",
-      "libpng",
-      "libjpeg-turbo"
+      {
+        "name": "openexr",
+        "platform": "linux | (windows & !arm64ec)"
+      },
+      {
+        "name": "libpng",
+        "platform": "linux | (windows & !arm64ec)"
+      },
+      {
+        "name": "libjpeg-turbo",
+        "platform": "linux | (windows & !arm64ec)"
+      }
     ]
-  }
-  
+}
