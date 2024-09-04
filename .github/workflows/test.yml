@@ -144,6 +144,7 @@ jobs:
         cmake --preset=${{ matrix.build_type }} -DBUILD_TESTING=ON -DBUILD_TOOLS=OFF -DBUILD_SAMPLE=OFF $BUILD_OPTION1 $BUILD_OPTION2
         -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/build"
         -DVCPKG_TARGET_TRIPLET="${env:VCPKG_DEFAULT_TRIPLET}"
+
       env:
         BUILD_OPTION1: ${{ matrix.build_opts == 'jpegpng' && '-DENABLE_LIBJPEG_SUPPORT=ON' || '' }}
         BUILD_OPTION2: ${{ matrix.build_opts == 'jpegpng' && '-DENABLE_LIBPNG_SUPPORT=ON' || '' }}
