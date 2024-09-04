@@ -45,7 +45,7 @@ jobs:
     - name: 'Configure CMake'
       working-directory: ${{ github.workspace }}
       run: >
-        cmake --preset=${{ matrix.build_type }} -DENABLE_LIBJPEG_SUPPORT=ON -DENABLE_LIBPNG_SUPPORT=ON
+        cmake --preset=${{ matrix.build_type }} -DENABLE_OPENEXR_SUPPORT=ON -DENABLE_LIBJPEG_SUPPORT=ON -DENABLE_LIBPNG_SUPPORT=ON
         -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/build"
         -DVCPKG_TARGET_TRIPLET="x64-linux"
 
