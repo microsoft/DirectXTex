@@ -141,7 +141,7 @@ jobs:
     - name: 'Configure CMake'
       working-directory: ${{ github.workspace }}
       run: >
-        cmake --preset=${{ matrix.build_type }} -DBUILD_TESTING=ON -DBUILD_TOOLS=OFF -DBUILD_SAMPLE=OFF $BUILD_OPTION1 $BUILD_OPTION2
+        cmake --preset=${{ matrix.build_type }} -DBUILD_TESTING=ON -DBUILD_TOOLS=OFF -DBUILD_SAMPLE=OFF ${env:BUILD_OPTION1} ${env:BUILD_OPTION2}
         -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/build"
         -DVCPKG_TARGET_TRIPLET="${env:VCPKG_DEFAULT_TRIPLET}"
 
