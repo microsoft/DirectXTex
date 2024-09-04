@@ -36,43 +36,56 @@ jobs:
         os: [windows-2019, windows-2022]
         build_type: [x64-Debug, x64-Release]
         arch: [amd64]
+        build_opts: [jpegpng]
         include:
           - os: windows-2019
             build_type: x86-Debug
             arch: amd64_x86
+            build_opts: jpegpng
           - os: windows-2019
             build_type: x86-Release
             arch: amd64_x86
+            build_opts: jpegpng
           - os: windows-2022
             build_type: x86-Debug
             arch: amd64_x86
+            build_opts: jpegpng
           - os: windows-2022
             build_type: x86-Release
             arch: amd64_x86
+            build_opts: jpegpng
           - os: windows-2022
             build_type: x64-Debug-Clang
             arch: amd64
+            build_opts: jpegpng
           - os: windows-2022
             build_type: x64-Release-Clang
             arch: amd64
+            build_opts: jpegpng
           - os: windows-2022
             build_type: x86-Debug-Clang
             arch: amd64_x86
+            build_opts: jpegpng
           - os: windows-2022
             build_type: x86-Release-Clang
             arch: amd64_x86
+            build_opts: jpegpng
           - os: windows-2022
             build_type: arm64-Debug
             arch: amd64_arm64
+            build_opts: jpegpng
           - os: windows-2022
             build_type: arm64-Release
             arch: amd64_arm64
+            build_opts: jpegpng
           - os: windows-2022
             build_type: arm64ec-Debug
             arch: amd64_arm64
+            build_opts: none
           - os: windows-2022
             build_type: arm64ec-Release
             arch: amd64_arm64
+            build_opts: none
 
     steps:
     - uses: actions/checkout@v4
@@ -127,9 +140,12 @@ jobs:
     - name: 'Configure CMake'
       working-directory: ${{ github.workspace }}
       run: >
-        cmake --preset=${{ matrix.build_type }} -DBUILD_TESTING=ON -DBUILD_TOOLS=OFF -DBUILD_SAMPLE=OFF -DENABLE_LIBJPEG_SUPPORT=ON -DENABLE_LIBPNG_SUPPORT=ON
+        cmake --preset=${{ matrix.build_type }} -DBUILD_TESTING=ON -DBUILD_TOOLS=OFF -DBUILD_SAMPLE=OFF $BUILD_OPTION1 $BUILD_OPTION2
         -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/build"
         -DVCPKG_TARGET_TRIPLET="${env:VCPKG_DEFAULT_TRIPLET}"
+      env:
+        BUILD_OPTION1: ${{ matrix.build_opts == 'jpegpng' && '-DENABLE_LIBJPEG_SUPPORT=ON' || '' }}
+        BUILD_OPTION2: ${{ matrix.build_opts == 'jpegpng' && '-DENABLE_LIBPNG_SUPPORT=ON' || '' }}
 
     - name: 'Build'
       working-directory: ${{ github.workspace }}
