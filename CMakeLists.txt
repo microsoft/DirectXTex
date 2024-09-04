@@ -73,6 +73,7 @@ if((DEFINED XBOX_CONSOLE_TARGET) AND (NOT (XBOX_CONSOLE_TARGET STREQUAL "durango
 endif()
 
 include(GNUInstallDirs)
+include(build/CompilerAndLinker.cmake)
 
 #--- Library
 set(LIBRARY_HEADERS
@@ -142,16 +143,17 @@ elseif((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
        Auxiliary/DirectXTexXboxTile.cpp)
 endif()
 
-set(SHADER_SOURCES
-    DirectXTex/Shaders/BC6HEncode.hlsl
-    DirectXTex/Shaders/BC7Encode.hlsl)
 
-if(BUILD_DX11 AND WIN32)
-   list(APPEND LIBRARY_SOURCES
-       DirectXTex/BCDirectCompute.h
-       DirectXTex/BCDirectCompute.cpp
-       DirectXTex/DirectXTexCompressGPU.cpp
-       DirectXTex/DirectXTexD3D11.cpp)
+if(BUILD_DX11 AND WIN32 AND (NOT (XBOX_CONSOLE_TARGET STREQUAL "durango")))
+    set(SHADER_SOURCES
+        DirectXTex/Shaders/BC6HEncode.hlsl
+        DirectXTex/Shaders/BC7Encode.hlsl)
+
+    list(APPEND LIBRARY_SOURCES
+        DirectXTex/BCDirectCompute.h
+        DirectXTex/BCDirectCompute.cpp
+        DirectXTex/DirectXTexCompressGPU.cpp
+        DirectXTex/DirectXTexD3D11.cpp)
 endif()
 
 if(BUILD_DX12)
@@ -183,7 +185,7 @@ if(ENABLE_LIBPNG_SUPPORT)
     list(APPEND LIBRARY_SOURCES Auxiliary/DirectXTexPNG.cpp)
 endif()
 
-if(BUILD_DX11 AND WIN32)
+if(BUILD_DX11 AND WIN32 AND (NOT (XBOX_CONSOLE_TARGET STREQUAL "durango")))
     if(NOT COMPILED_SHADERS)
         if(USE_PREBUILT_SHADERS)
             message(FATAL_ERROR "ERROR: Using prebuilt shaders requires the COMPILED_SHADERS variable is set")
@@ -197,12 +199,16 @@ if(BUILD_DX11 AND WIN32)
     list(APPEND LIBRARY_SOURCES ${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc)
 
     if(NOT USE_PREBUILT_SHADERS)
+        find_program(DIRECTX_FXC_TOOL FXC.EXE
+          HINTS "C:/Program Files (x86)/Windows Kits/10/bin/${CMAKE_SYSTEM_VERSION}/${DIRECTX_HOST_ARCH}"
+                "C:/Program Files (x86)/Windows Kits/10/bin/${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/${DIRECTX_HOST_ARCH}")
+        message(STATUS "Using LegacyShaderCompiler found in ${DIRECTX_FXC_TOOL}")
         add_custom_command(
             OUTPUT "${COMPILED_SHADERS}/BC6HEncode_EncodeBlockCS.inc"
             MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
             DEPENDS ${SHADER_SOURCES}
             COMMENT "Generating HLSL shaders..."
-            COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_SHADERS}" CompileShaders.cmd > "${COMPILED_SHADERS}/compileshaders.log"
+            COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_SHADERS}" $<$<BOOL:${DIRECTX_FXC_TOOL}>:LegacyShaderCompiler=${DIRECTX_FXC_TOOL}> CompileShaders.cmd > "${COMPILED_SHADERS}/compileshaders.log"
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
             USES_TERMINAL)
     endif()
@@ -319,6 +325,7 @@ if(directx-headers_FOUND)
     message(STATUS "Using DirectX-Headers package")
     target_link_libraries(${PROJECT_NAME} PUBLIC Microsoft::DirectX-Headers)
     target_compile_definitions(${PROJECT_NAME} PUBLIC USING_DIRECTX_HEADERS)
+    target_compile_options(${PROJECT_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC,Intel>:/wd4062> $<$<CXX_COMPILER_ID:Clang,IntelLLVM>:-Wno-switch-enum>)
 endif()
 
 #--- Package
@@ -519,8 +526,6 @@ if(MSVC)
       endforeach()
     endif()
 endif()
-
-include(build/CompilerAndLinker.cmake)
 
 foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
   target_compile_definitions(${t} PRIVATE ${COMPILER_DEFINES})

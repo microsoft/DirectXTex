@@ -24,6 +24,7 @@ pr:
     - build/*.cmake
     - build/*.in
     - build/DirectXTex-GitHub-CMake-Xbox-Dev17.yml
+    - DirectXTex/Shaders/CompileShaders.cmd
 
 resources:
   repositories:

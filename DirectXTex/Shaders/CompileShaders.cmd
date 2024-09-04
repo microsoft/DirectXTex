@@ -9,6 +9,7 @@ if %PROCESSOR_ARCHITECTURE%.==ARM64. (set FXCARCH=arm64) else (if %PROCESSOR_ARC
 
 set FXCOPTS=/nologo /WX /Ges /Zi /Zpc /Qstrip_reflect /Qstrip_debug
 
+if defined LegacyShaderCompiler goto fxcviaenv
 set PCFXC="%WindowsSdkVerBinPath%%FXCARCH%\fxc.exe"
 if exist %PCFXC% goto continue
 set PCFXC="%WindowsSdkBinPath%%WindowsSDKVersion%\%FXCARCH%\fxc.exe"
@@ -17,6 +18,12 @@ set PCFXC="%WindowsSdkDir%bin\%WindowsSDKVersion%\%FXCARCH%\fxc.exe"
 if exist %PCFXC% goto continue
 
 set PCFXC=fxc.exe
+goto continue
+
+:fxcviaenv
+set PCFXC="%LegacyShaderCompiler%"
+if not exist %PCFXC% goto needfxc
+goto continue
 
 :continue
 if not defined CompileShadersOutput set CompileShadersOutput=Compiled
@@ -54,3 +61,7 @@ echo %fxc%
 echo %fxc4%
 %fxc4% || set error=1
 exit /b
+
+:needfxc
+echo ERROR: CompileShaders requires FXC.EXE
+exit /b 1

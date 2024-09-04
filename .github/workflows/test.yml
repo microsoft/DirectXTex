@@ -91,9 +91,45 @@ jobs:
       with:
         arch: ${{ matrix.arch }}
 
+    - name: 'Set triplet'
+      shell: pwsh
+      run: |
+        if ("${{ matrix.arch }}" -eq "amd64")
+        {
+            echo "VCPKG_DEFAULT_TRIPLET=x64-windows" >> $env:GITHUB_ENV
+        }
+        elseif ("${{ matrix.arch }}" -eq "amd64_x86")
+        {
+            echo "VCPKG_DEFAULT_TRIPLET=x86-windows" >> $env:GITHUB_ENV
+        }
+        elseif ("${{ matrix.arch }}" -eq "amd64_arm64")
+        {
+            if ("${{ matrix.build_type }}" -match "^arm64ec")
+            {
+                echo "VCPKG_DEFAULT_TRIPLET=arm64ec-windows" >> $env:GITHUB_ENV
+            }
+            else
+            {
+                echo "VCPKG_DEFAULT_TRIPLET=arm64-windows" >> $env:GITHUB_ENV
+            }
+        }
+        else
+        {
+            echo "::error Unknown architecture/build-type triplet mapping"
+        }
+
+    - uses: lukka/run-vcpkg@v11
+      with:
+        runVcpkgInstall: true
+        vcpkgJsonGlob: '**/build/vcpkg.json'
+        vcpkgGitCommitId: '7516a02de04e8f8ff4e4beb8f5bac0565f9bf9da'
+
     - name: 'Configure CMake'
       working-directory: ${{ github.workspace }}
-      run: cmake --preset=${{ matrix.build_type }} -DBUILD_TESTING=ON -DBUILD_TOOLS=OFF -DBUILD_SAMPLE=OFF
+      run: >
+        cmake --preset=${{ matrix.build_type }} -DBUILD_TESTING=ON -DBUILD_TOOLS=OFF -DBUILD_SAMPLE=OFF -DENABLE_LIBJPEG_SUPPORT=ON -DENABLE_LIBPNG_SUPPORT=ON
+        -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/build"
+        -DVCPKG_TARGET_TRIPLET="${env:VCPKG_DEFAULT_TRIPLET}"
 
     - name: 'Build'
       working-directory: ${{ github.workspace }}

@@ -1369,8 +1369,8 @@ namespace
                     int8_t v = ((((t >> 5) & 0x1f) ^ m) - m) + 16;
                     int8_t u = (((t & 0x1f) ^ m) - m) + 16;
 
-                    uint32_t t2 = u << 3 | u >> 2;
-                    uint32_t t3 = v << 3 | v >> 2;
+                    auto t2 = static_cast<uint32_t>(u << 3 | u >> 2);
+                    auto t3 = static_cast<uint32_t>(v << 3 | v >> 2);
 
                     *(dPtr++) = t1 | (t2 << 8) | (t3 << 16) | 0xff000000;
                 }
