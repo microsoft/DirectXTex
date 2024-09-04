@@ -7,13 +7,7 @@
         "name": "openexr",
         "platform": "linux | (windows & !arm64ec)"
       },
-      {
-        "name": "libpng",
-        "platform": "linux | (windows & !arm64ec)"
-      },
-      {
-        "name": "libjpeg-turbo",
-        "platform": "linux | (windows & !arm64ec)"
-      }
+      "libpng",
+      "libjpeg-turbo"
     ]
 }
