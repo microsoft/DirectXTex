@@ -146,8 +146,8 @@ jobs:
         -DVCPKG_TARGET_TRIPLET="${env:VCPKG_DEFAULT_TRIPLET}"
 
       env:
-        BUILD_OPTION1: ${{ matrix.build_opts == 'jpegpng' && '-DENABLE_LIBJPEG_SUPPORT=ON' || '' }}
-        BUILD_OPTION2: ${{ matrix.build_opts == 'jpegpng' && '-DENABLE_LIBPNG_SUPPORT=ON' || '' }}
+        BUILD_OPTION1: ${{ matrix.build_opts == 'jpegpng' && '-DENABLE_LIBJPEG_SUPPORT=ON' || '-DENABLE_LIBJPEG_SUPPORT=OFF' }}
+        BUILD_OPTION2: ${{ matrix.build_opts == 'jpegpng' && '-DENABLE_LIBPNG_SUPPORT=ON' || '-DENABLE_LIBPNG_SUPPORT=OFF' }}
 
     - name: 'Build'
       working-directory: ${{ github.workspace }}
