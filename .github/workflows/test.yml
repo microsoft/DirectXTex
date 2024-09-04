@@ -131,7 +131,8 @@ jobs:
             echo "::error Unknown architecture/build-type triplet mapping"
         }
 
-    - uses: lukka/run-vcpkg@v11
+    - if: ${{ !contains(matrix.arch, 'arm64ec') }}
+      uses: lukka/run-vcpkg@v11
       with:
         runVcpkgInstall: true
         vcpkgJsonGlob: '**/build/vcpkg.json'
