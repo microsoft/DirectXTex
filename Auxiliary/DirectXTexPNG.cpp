@@ -86,7 +86,7 @@ namespace
     void OnPNGRead(png_structp st, png_bytep ptr, size_t len)
     {
         FILE* fin = reinterpret_cast<FILE*>(png_get_io_ptr(st));
-        fread(ptr, len, 1, fin);
+        std::ignore = fread(ptr, len, 1, fin);
     }
 
 
