@@ -6,6 +6,20 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### September 4, 2024
+* DDS reader now accepts a variant of the "DX10" extended header
+  * arraySize of 0 is treated as 1
+* DDS reader will now load legacy 'mixed' channel formats as UNORM
+  * Uses x2bias for the signed channels
+  * `DDSPF_L6V5U5`, `DDSPF_X8L8V8U8`, `DDSPF_A2W10V10U10`
+* texconv: Added `-ignoremips` option to handle some invalid/truncated DDS files
+* EXR auxiliary reader returns 6 images for files with 'envmap' metadata
+* PNG auxiliary reader/writer fixed for single channel images (`DXGI_FORMAT_R8_UNORM`)
+* Xbox auxiliary now has `EncodeDDSHeader` function
+* ScreenGrab9 minor DDS header fix when writing A2W10V10U10 legacy mixed formats
+* CMake project updates including support for ARM64EC
+* Added GitHub Actions YAML files
+
 ### June 4, 2024
 * Fix for HDR codec to avoid buffer overread for some malformed files
 * Updated D3DX12 internal copy with latest changes from DirectX-Headers GitHub
