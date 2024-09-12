@@ -50,7 +50,7 @@
   <Import Condition="'$(GDKEnableBWOI)' == 'true' and $(Platform.Contains('x64')) and Exists('$(ExtractedFolder)GDK\$(_PCNuGetPackage)\build\$(_PCNuGetPackage).props')"
           Project="$(ExtractedFolder)GDK\$(_PCNuGetPackage)\build\$(_PCNuGetPackage).props" />
 
-  <Import Condition="'$(GDKEnableBWOI)' == 'true ' and $(Platform.Contains('x64')) and Exists('$(ExtractedFolder)GDK\$(_XboxNuGetPackage)\build\$(_XboxNuGetPackage).props')"
+  <Import Condition="'$(GDKEnableBWOI)' == 'true' and $(Platform.Contains('x64')) and Exists('$(ExtractedFolder)GDK\$(_XboxNuGetPackage)\build\$(_XboxNuGetPackage).props')"
           Project="$(ExtractedFolder)GDK\$(_XboxNuGetPackage)\build\$(_XboxNuGetPackage).props" />
 
   <!-- Remove copy of real gameos.xvd since this is a build validation only pipeline -->
