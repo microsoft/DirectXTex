@@ -42,7 +42,7 @@ variables:
   EXTRACTED_FOLDER: $(ExtractedFolder)
   GDK_EDITION: $(GDKEditionNumber)
   URL_FEED: $(ADOFeedURL)
-  GameDKLatest: '$(ExtractedFolder)\GDK\Microsoft.gdk.xbox.$(GDKEditionNumber)\native\$(GDKEditionNumber)\'
+  GameDKLatest: '$(ExtractedFolder)\Microsoft.gdk.xbox.$(GDKEditionNumber)\native\$(GDKEditionNumber)\'
   skipNugetSecurityAnalysis: true # We explicitly call this task so we don't need it to be auto-injected
 
 pool:
