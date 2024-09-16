@@ -64,9 +64,6 @@
 
 #include "DirectXTex.h"
 
-//Uncomment to add support for OpenEXR (.exr)
-//#define USE_OPENEXR
-
 #ifdef USE_OPENEXR
 // See <https://github.com/Microsoft/DirectXTex/wiki/Adding-OpenEXR> for details
 #include "DirectXTexEXR.h"
@@ -242,7 +239,6 @@ namespace
 #ifdef USE_OPENEXR
 #define CODEC_EXR 0xFFFF0006
 #endif
-
 #ifdef USE_LIBJPEG
 #define CODEC_JPEG 0xFFFF0007
 #endif
@@ -537,7 +533,7 @@ namespace
     {
         while (pValue->name)
         {
-            size_t cchName = wcslen(pValue->name);
+            const size_t cchName = wcslen(pValue->name);
 
             if (cch + cchName + 2 >= 80)
             {
@@ -602,7 +598,7 @@ namespace
 
         LPWSTR errorText = nullptr;
 
-        DWORD result = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+        const DWORD result = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
             nullptr, static_cast<DWORD>(hr),
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&errorText), 0, nullptr);
 
@@ -613,14 +609,21 @@ namespace
             swprintf_s(desc, L": %ls", errorText);
 
             size_t len = wcslen(desc);
-            if (len >= 2)
+            if (len >= 1)
             {
-                desc[len - 2] = 0;
                 desc[len - 1] = 0;
             }
 
             if (errorText)
                 LocalFree(errorText);
+
+            for (wchar_t* ptr = desc; *ptr != 0; ++ptr)
+            {
+                if (*ptr == L'\r' || *ptr == L'\n')
+                {
+                    *ptr = L' ';
+                }
+            }
         }
 
         return desc;
@@ -1763,7 +1766,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
         }
     #endif
-        
+
         else
         {
             // WIC shares the same filter values for mode and dither
@@ -1961,7 +1964,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         if (info.width > maxWidth)
             maxWidth = info.width;
         if (info.height > maxHeight)
-            maxHeight = info.height;        
+            maxHeight = info.height;
     }
 
     if (images > 6)
@@ -2024,7 +2027,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         pContext->RSSetState(stateObjects.CullNone());
         auto linear = stateObjects.LinearClamp();
 
-        for (size_t face = 0; face < 6; ++face) 
+        for (size_t face = 0; face < 6; ++face)
         {
             ComPtr<ID3D11ShaderResourceView> srv;
             auto& input = loadedImages[face];
