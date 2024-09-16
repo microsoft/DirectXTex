@@ -404,8 +404,10 @@ if(BUILD_TOOLS AND WIN32)
   add_executable(texassemble
     Texassemble/texassemble.cpp
     Texassemble/texassemble.rc
-    Texassemble/settings.manifest
+    Common/CmdLineHelpers.h
+    Common/settings.manifest
     Texassemble/AnimatedGif.cpp)
+  target_include_directories(texassemble PRIVATE Common)
   target_compile_features(texassemble PRIVATE cxx_std_17)
   target_link_libraries(texassemble PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texassemble REGULAR_EXPRESSION Texassemble/*.*)
@@ -416,9 +418,11 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   add_executable(texconv
     Texconv/texconv.cpp
     Texconv/texconv.rc
-    Texconv/settings.manifest
+    Common/CmdLineHelpers.h
+    Common/settings.manifest
     Texconv/ExtendedBMP.cpp
     Texconv/PortablePixMap.cpp)
+  target_include_directories(texconv PRIVATE Common)
   target_compile_features(texconv PRIVATE cxx_std_17)
   target_link_libraries(texconv PRIVATE ${PROJECT_NAME} ole32.lib shell32.lib version.lib)
   source_group(texconv REGULAR_EXPRESSION Texconv/*.*)
@@ -429,7 +433,9 @@ if(BUILD_TOOLS AND WIN32)
   add_executable(texdiag
     Texdiag/texdiag.cpp
     Texdiag/texdiag.rc
-    Texdiag/settings.manifest)
+    Common/CmdLineHelpers.h
+    Common/settings.manifest)
+  target_include_directories(texdiag PRIVATE Common)
   target_compile_features(texdiag PRIVATE cxx_std_17)
   target_link_libraries(texdiag PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
@@ -497,6 +503,7 @@ if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32)
   target_include_directories(ddsview PRIVATE ${COMPILED_DDSVIEW_SHADERS})
 
   if(NOT USE_PREBUILT_SHADERS)
+      #TODO: DIRECTX_FXC_TOOL
       add_custom_command(
             OUTPUT "${COMPILED_DDSVIEW_SHADERS}/ddsview_ps1D.inc"
             MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DDSView/hlsl.cmd"
