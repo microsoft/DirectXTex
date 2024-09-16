@@ -483,33 +483,22 @@ endif()
 if(BUILD_SAMPLE AND BUILD_DX11 AND WIN32)
   list(APPEND TOOL_EXES ddsview)
 
-  if(NOT COMPILED_DDSVIEW_SHADERS)
-      if(USE_PREBUILT_SHADERS)
-          message(FATAL_ERROR "ERROR: Using prebuilt shaders requires the COMPILED_DDSVIEW_SHADERS variable is set")
-      endif()
-      set(COMPILED_DDSVIEW_SHADERS ${CMAKE_CURRENT_BINARY_DIR}/Shaders/Compiled)
-      file(MAKE_DIRECTORY ${COMPILED_DDSVIEW_SHADERS})
-  else()
-      file(TO_CMAKE_PATH ${COMPILED_DDSVIEW_SHADERS} COMPILED_DDSVIEW_SHADERS)
-  endif()
-
   add_executable(ddsview WIN32
     DDSView/ddsview.cpp
     DDSView/ddsview.rc
-    ${COMPILED_DDSVIEW_SHADERS}/ddsview_ps1D.inc)
+    ${COMPILED_SHADERS}/ddsview_ps1D.inc)
   target_link_libraries(ddsview PRIVATE ${PROJECT_NAME} d3d11.lib ole32.lib)
   source_group(ddsview REGULAR_EXPRESSION DDSView/*.*)
 
-  target_include_directories(ddsview PRIVATE ${COMPILED_DDSVIEW_SHADERS})
+  target_include_directories(ddsview PRIVATE ${COMPILED_SHADERS})
 
   if(NOT USE_PREBUILT_SHADERS)
-      #TODO: DIRECTX_FXC_TOOL
       add_custom_command(
-            OUTPUT "${COMPILED_DDSVIEW_SHADERS}/ddsview_ps1D.inc"
+            OUTPUT "${COMPILED_SHADERS}/ddsview_ps1D.inc"
             MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DDSView/hlsl.cmd"
-            DEPENDS "${PROJECT_SOURCE_DIR}/DDSView/ddsview.fx"
+            DEPENDS "DDSView/ddsview.hlsl"
             COMMENT "Generating HLSL shaders for DDSView..."
-            COMMAND COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_DDSVIEW_SHADERS}" hlsl.cmd > "${COMPILED_DDSVIEW_SHADERS}/hlsl.log"
+            COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_SHADERS}" $<$<BOOL:${DIRECTX_FXC_TOOL}>:LegacyShaderCompiler=${DIRECTX_FXC_TOOL}> hlsl.cmd > "${COMPILED_SHADERS}/hlsl_ddsview.log"
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DDSView"
             USES_TERMINAL)
   endif()

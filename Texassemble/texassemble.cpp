@@ -280,6 +280,8 @@ namespace
         { nullptr, DXGI_FORMAT_UNKNOWN }
     };
 
+    #undef DEFFMT
+
     const SValue<DXGI_FORMAT> g_pFormatAliases[] =
     {
         { L"RGBA", DXGI_FORMAT_R8G8B8A8_UNORM },

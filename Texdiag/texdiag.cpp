@@ -325,6 +325,8 @@ namespace
         { nullptr, DXGI_FORMAT_UNKNOWN }
     };
 
+    #undef DEFFMT
+
     const SValue<uint32_t> g_pFilters[] =
     {
         { L"POINT",                     TEX_FILTER_POINT },
