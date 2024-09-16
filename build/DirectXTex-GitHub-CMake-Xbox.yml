@@ -60,7 +60,7 @@ variables:
   EXTRACTED_FOLDER: $(ExtractedFolder)
   GDK_EDITION: $(GDKEditionNumber)
   URL_FEED: $(ADOFeedURL)
-  GameDKLatest: '$(ExtractedFolder)\GDK\Microsoft.gdk.xbox.$(GDKEditionNumber)\native\$(GDKEditionNumber)\'
+  GameDKLatest: '$(ExtractedFolder)\Microsoft.gdk.xbox.$(GDKEditionNumber)\native\$(GDKEditionNumber)\'
   skipNugetSecurityAnalysis: true # We explicitly call this task so we don't need it to be auto-injected
 
 pool:
@@ -104,12 +104,12 @@ jobs:
     displayName: NuGet install PGDK
     inputs:
       command: custom
-      arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)\GDK
+      arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
   - task: NuGetCommand@2
     displayName: NuGet install GDKX
     inputs:
       command: custom
-      arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)\GDK
+      arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
   - task: CMake@1
     displayName: 'CMake (MSVC): Config x64 (Xbox Series X|S)'
     inputs:
