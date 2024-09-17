@@ -510,6 +510,10 @@ if(directxmath_FOUND)
   endforeach()
 endif()
 
+if(TOOL_EXES)
+  message("INFO: Building tools: ${TOOL_EXES}")
+endif()
+
 if(MSVC)
     foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
       target_compile_options(${t} PRIVATE /Wall /GR-)
@@ -570,6 +574,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     endif()
 
     if(ENABLE_CODE_ANALYSIS)
+      message(STATUS "Building with Code Analysis (PREFIX)")
       foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
         target_compile_options(${t} PRIVATE /analyze /WX)
       endforeach()
