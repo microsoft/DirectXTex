@@ -15,11 +15,14 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="settings.manifest">
-      <Filter>Resource Files</Filter>
-    </Manifest>
+    <None Include="Shaders\Texenvmap.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\Texenvmap.hlsl" />
+    <ClInclude Include="..\Common\CmdLineHelpers.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="..\Common\settings.manifest">
+      <Filter>Resource Files</Filter>
+    </Manifest>
   </ItemGroup>
 </Project>
