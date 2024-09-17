@@ -115,7 +115,7 @@
     <ClInclude Include="scoped.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="d3dx12.h">
+    <ClInclude Include="..\Common\d3dx12.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

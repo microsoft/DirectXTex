@@ -143,7 +143,6 @@ elseif((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
        Auxiliary/DirectXTexXboxTile.cpp)
 endif()
 
-
 if(BUILD_DX11 AND WIN32 AND (NOT (XBOX_CONSOLE_TARGET STREQUAL "durango")))
     set(SHADER_SOURCES
         DirectXTex/Shaders/BC6HEncode.hlsl
@@ -160,7 +159,7 @@ if(BUILD_DX12)
    list(APPEND LIBRARY_SOURCES DirectXTex/DirectXTexD3D12.cpp)
 
    if(NOT (DEFINED XBOX_CONSOLE_TARGET))
-       list(APPEND LIBRARY_SOURCES DirectXTex/d3dx12.h)
+       list(APPEND LIBRARY_SOURCES Common/d3dx12.h)
    endif()
 endif()
 
@@ -407,7 +406,6 @@ if(BUILD_TOOLS AND WIN32)
     Common/CmdLineHelpers.h
     Common/settings.manifest
     Texassemble/AnimatedGif.cpp)
-  target_include_directories(texassemble PRIVATE Common)
   target_compile_features(texassemble PRIVATE cxx_std_17)
   target_link_libraries(texassemble PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texassemble REGULAR_EXPRESSION Texassemble/*.*)
@@ -422,7 +420,6 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
     Common/settings.manifest
     Texconv/ExtendedBMP.cpp
     Texconv/PortablePixMap.cpp)
-  target_include_directories(texconv PRIVATE Common)
   target_compile_features(texconv PRIVATE cxx_std_17)
   target_link_libraries(texconv PRIVATE ${PROJECT_NAME} ole32.lib shell32.lib version.lib)
   source_group(texconv REGULAR_EXPRESSION Texconv/*.*)
@@ -435,12 +432,15 @@ if(BUILD_TOOLS AND WIN32)
     Texdiag/texdiag.rc
     Common/CmdLineHelpers.h
     Common/settings.manifest)
-  target_include_directories(texdiag PRIVATE Common)
   target_compile_features(texdiag PRIVATE cxx_std_17)
   target_link_libraries(texdiag PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
   source_group(texdiag REGULAR_EXPRESSION Texdiag/*.*)
   list(APPEND TOOL_EXES texdiag)
 endif()
+
+foreach(t IN LISTS TOOL_EXES ITEMS ${PROJECT_NAME})
+  target_include_directories(${t} PRIVATE Common)
+endforeach()
 
 if(BUILD_TOOLS AND WIN32)
   if(ENABLE_OPENEXR_SUPPORT)

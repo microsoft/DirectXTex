@@ -35,11 +35,11 @@
     <ClInclude Include="scoped.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="d3dx12.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Auxiliary\DirectXTexXbox.h">
       <Filter>Auxiliary</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\d3dx12.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
