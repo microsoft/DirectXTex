@@ -81,6 +81,7 @@
 #include "DirectXTexXbox.h"
 #endif
 
+#define TOOL_VERSION DIRECTX_TEX_VERSION
 #include "CmdLineHelpers.h"
 
 using namespace Helpers;

@@ -23,6 +23,10 @@
 #include <set>
 #include <string>
 
+#ifndef TOOL_VERSION
+#error Define TOOL_VERSION before including this header
+#endif
+
 
 namespace Helpers
 {
@@ -164,7 +168,7 @@ namespace Helpers
 
         if (!*version || wcscmp(version, L"1.0.0.0") == 0)
         {
-            swprintf_s(version, L"%03d (library)", DIRECTX_TEX_VERSION);
+            swprintf_s(version, L"%03d (library)", TOOL_VERSION);
         }
 
         if (versionOnly)
