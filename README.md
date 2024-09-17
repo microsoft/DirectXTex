@@ -26,6 +26,10 @@ These components are designed to work without requiring any content from the leg
 
   + Contains optional source files for the DirectXTex library, such as adapter loading functions using the OpenEXR library, Xbox texture tiling extensions, etc.
 
+* ``Common\``
+
+  + Contains shared source headers used by the DirectXTex library and tools.
+
 * ``Texconv\``
 
   + This DirectXTex sample is an implementation of the [texconv](https://github.com/Microsoft/DirectXTex/wiki/Texconv) command-line texture utility from the DirectX SDK utilizing DirectXTex rather than D3DX.

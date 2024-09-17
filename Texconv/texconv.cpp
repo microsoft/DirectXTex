@@ -45,7 +45,6 @@
 #include <locale>
 #include <memory>
 #include <new>
-#include <set>
 #include <string>
 #include <tuple>
 
@@ -82,12 +81,25 @@
 #include "DirectXTexXbox.h"
 #endif
 
+#define TOOL_VERSION DIRECTX_TEX_VERSION
+#include "CmdLineHelpers.h"
+
+using namespace Helpers;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 using Microsoft::WRL::ComPtr;
 
 namespace
 {
+    const wchar_t* g_ToolName = L"texconv";
+#if defined(USE_XBOX_EXTS) && defined(_USE_SCARLETT)
+    const wchar_t* g_Description = L"Microsoft (R) DirectX Texture Converter for Microsoft GDKX for Xbox Series X|S";
+#elif defined(USE_XBOX_EXTS)
+    const wchar_t* g_Description = L"Microsoft (R) DirectX Texture Converter for Microsoft GDKX for Xbox One";
+#else
+    const wchar_t* g_Description = L"Microsoft (R) DirectX Texture Converter [DirectXTex]";
+#endif
+
     enum OPTIONS : uint64_t
     {
         OPT_RECURSIVE = 1,
@@ -177,19 +189,6 @@ namespace
 
     static_assert(OPT_MAX <= 64, "dwOptions is a unsigned int bitfield");
 
-    struct SConversion
-    {
-        std::wstring szSrc;
-        std::wstring szFolder;
-    };
-
-    template<typename T>
-    struct SValue
-    {
-        const wchar_t*  name;
-        T               value;
-    };
-
     const SValue<uint64_t> g_pOptions[] =
     {
         { L"r",             OPT_RECURSIVE },
@@ -259,9 +258,9 @@ namespace
         { nullptr,          0 }
     };
 
-#define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
+    #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
 
-    const SValue<uint32_t> g_pFormats[] =
+    const SValue<DXGI_FORMAT> g_pFormats[] =
     {
         // List does not include _TYPELESS or depth/stencil formats
         DEFFMT(R32G32B32A32_FLOAT),
@@ -389,7 +388,7 @@ namespace
         { nullptr, 0 }
     };
 
-    const SValue<uint32_t> g_pReadOnlyFormats[] =
+    const SValue<DXGI_FORMAT> g_pReadOnlyFormats[] =
     {
         DEFFMT(R32G32B32A32_TYPELESS),
         DEFFMT(R32G32B32_TYPELESS),
@@ -445,6 +444,8 @@ namespace
         { nullptr, DXGI_FORMAT_UNKNOWN }
     };
 
+    #undef DEFFMT
+
     const SValue<uint32_t> g_pFilters[] =
     {
         { L"POINT",                     TEX_FILTER_POINT },
@@ -481,39 +482,39 @@ namespace
         { nullptr, 0 },
     };
 
-#define CODEC_DDS 0xFFFF0001
-#define CODEC_TGA 0xFFFF0002
-#define CODEC_HDP 0xFFFF0003
-#define CODEC_JXR 0xFFFF0004
-#define CODEC_HDR 0xFFFF0005
-#define CODEC_PPM 0xFFFF0006
-#define CODEC_PFM 0xFFFF0007
+    #define CODEC_DDS 0xFFFF0001
+    #define CODEC_TGA 0xFFFF0002
+    #define CODEC_HDP 0xFFFF0003
+    #define CODEC_JXR 0xFFFF0004
+    #define CODEC_HDR 0xFFFF0005
+    #define CODEC_PPM 0xFFFF0006
+    #define CODEC_PFM 0xFFFF0007
 
-#ifdef USE_OPENEXR
-#define CODEC_EXR 0xFFFF0008
-#endif
-#ifdef USE_LIBJPEG
-#define CODEC_JPEG 0xFFFF0009
-#endif
-#ifdef USE_LIBPNG
-#define CODEC_PNG 0xFFFF000A
-#endif
+    #ifdef USE_OPENEXR
+    #define CODEC_EXR 0xFFFF0008
+    #endif
+    #ifdef USE_LIBJPEG
+    #define CODEC_JPEG 0xFFFF0009
+    #endif
+    #ifdef USE_LIBPNG
+    #define CODEC_PNG 0xFFFF000A
+    #endif
 
     const SValue<uint32_t> g_pSaveFileTypes[] =   // valid formats to write to
     {
         { L"bmp",   WIC_CODEC_BMP  },
-#ifdef USE_LIBJPEG
+    #ifdef USE_LIBJPEG
         { L"jpg",   CODEC_JPEG     },
         { L"jpeg",  CODEC_JPEG     },
-#else
+    #else
         { L"jpg",   WIC_CODEC_JPEG },
         { L"jpeg",  WIC_CODEC_JPEG },
-#endif
-#ifdef USE_LIBPNG
+    #endif
+    #ifdef USE_LIBPNG
         { L"png",   CODEC_PNG      },
-#else
+    #else
         { L"png",   WIC_CODEC_PNG  },
-#endif
+    #endif
         { L"dds",   CODEC_DDS      },
         { L"ddx",   CODEC_DDS      },
         { L"tga",   CODEC_TGA      },
@@ -587,220 +588,9 @@ HRESULT __cdecl SaveToPortablePixMapHDR(
 
 namespace
 {
-    inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
-
-    struct find_closer { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
-
-    using ScopedFindHandle = std::unique_ptr<void, find_closer>;
-
     constexpr static bool ispow2(size_t x)
     {
         return ((x != 0) && !(x & (x - 1)));
-    }
-
-#ifdef _PREFAST_
-#pragma prefast(disable : 26018, "Only used with static internal arrays")
-#endif
-
-    template<typename T>
-    T LookupByName(const wchar_t *pName, const SValue<T> *pArray)
-    {
-        while (pArray->name)
-        {
-            if (!_wcsicmp(pName, pArray->name))
-                return pArray->value;
-
-            pArray++;
-        }
-
-        return 0;
-    }
-
-    template<typename T>
-    const wchar_t* LookupByValue(T value, const SValue<T> *pArray)
-    {
-        while (pArray->name)
-        {
-            if (value == pArray->value)
-                return pArray->name;
-
-            pArray++;
-        }
-
-        return L"";
-    }
-
-    void SearchForFiles(const std::filesystem::path& path, std::list<SConversion>& files, bool recursive, const wchar_t* folder)
-    {
-        // Process files
-        WIN32_FIND_DATAW findData = {};
-        ScopedFindHandle hFile(safe_handle(FindFirstFileExW(path.c_str(),
-            FindExInfoBasic, &findData,
-            FindExSearchNameMatch, nullptr,
-            FIND_FIRST_EX_LARGE_FETCH)));
-        if (hFile)
-        {
-            for (;;)
-            {
-                if (!(findData.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_DIRECTORY)))
-                {
-                    SConversion conv = {};
-                    conv.szSrc = path.parent_path().append(findData.cFileName).native();
-                    if (folder)
-                    {
-                        conv.szFolder = folder;
-                    }
-                    files.push_back(conv);
-                }
-
-                if (!FindNextFileW(hFile.get(), &findData))
-                    break;
-            }
-        }
-
-        // Process directories
-        if (recursive)
-        {
-            auto searchDir = path.parent_path().append(L"*");
-
-            hFile.reset(safe_handle(FindFirstFileExW(searchDir.c_str(),
-                FindExInfoBasic, &findData,
-                FindExSearchLimitToDirectories, nullptr,
-                FIND_FIRST_EX_LARGE_FETCH)));
-            if (!hFile)
-                return;
-
-            for (;;)
-            {
-                if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                {
-                    if (findData.cFileName[0] != L'.')
-                    {
-                        auto subfolder = (folder)
-                            ? (std::wstring(folder) + std::wstring(findData.cFileName) + std::filesystem::path::preferred_separator)
-                            : (std::wstring(findData.cFileName) + std::filesystem::path::preferred_separator);
-
-                        auto subdir = path.parent_path().append(findData.cFileName).append(path.filename().c_str());
-
-                        SearchForFiles(subdir, files, recursive, subfolder.c_str());
-                    }
-                }
-
-                if (!FindNextFileW(hFile.get(), &findData))
-                    break;
-            }
-        }
-    }
-
-    void ProcessFileList(std::wifstream& inFile, std::list<SConversion>& files)
-    {
-        std::list<SConversion> flist;
-        std::set<std::wstring> excludes;
-
-        for (;;)
-        {
-            std::wstring fname;
-            std::getline(inFile, fname);
-            if (!inFile)
-                break;
-
-            if (fname[0] == L'#')
-            {
-                // Comment
-            }
-            else if (fname[0] == L'-')
-            {
-                if (flist.empty())
-                {
-                    wprintf(L"WARNING: Ignoring the line '%ls' in -flist\n", fname.c_str());
-                }
-                else
-                {
-                    std::filesystem::path path(fname.c_str() + 1);
-                    auto& npath = path.make_preferred();
-                    if (wcspbrk(fname.c_str(), L"?*") != nullptr)
-                    {
-                        std::list<SConversion> removeFiles;
-                        SearchForFiles(npath, removeFiles, false, nullptr);
-
-                        for (auto& it : removeFiles)
-                        {
-                            std::wstring name = it.szSrc;
-                            std::transform(name.begin(), name.end(), name.begin(), towlower);
-                            excludes.insert(name);
-                        }
-                    }
-                    else
-                    {
-                        std::wstring name = npath.c_str();
-                        std::transform(name.begin(), name.end(), name.begin(), towlower);
-                        excludes.insert(name);
-                    }
-                }
-            }
-            else if (wcspbrk(fname.c_str(), L"?*") != nullptr)
-            {
-                std::filesystem::path path(fname.c_str());
-                SearchForFiles(path.make_preferred(), flist, false, nullptr);
-            }
-            else
-            {
-                SConversion conv = {};
-                std::filesystem::path path(fname.c_str());
-                conv.szSrc = path.make_preferred().native();
-                flist.push_back(conv);
-            }
-        }
-
-        inFile.close();
-
-        if (!excludes.empty())
-        {
-            // Remove any excluded files
-            for (auto it = flist.begin(); it != flist.end();)
-            {
-                std::wstring name = it->szSrc;
-                std::transform(name.begin(), name.end(), name.begin(), towlower);
-                auto item = it;
-                ++it;
-                if (excludes.find(name) != excludes.end())
-                {
-                    flist.erase(item);
-                }
-            }
-        }
-
-        if (flist.empty())
-        {
-            wprintf(L"WARNING: No file names found in -flist\n");
-        }
-        else
-        {
-            files.splice(files.end(), flist);
-        }
-    }
-
-    void PrintFormat(DXGI_FORMAT Format)
-    {
-        for (auto pFormat = g_pFormats; pFormat->name; pFormat++)
-        {
-            if (static_cast<DXGI_FORMAT>(pFormat->value) == Format)
-            {
-                wprintf(L"%ls", pFormat->name);
-                return;
-            }
-        }
-
-        for (auto pFormat = g_pReadOnlyFormats; pFormat->name; pFormat++)
-        {
-            if (static_cast<DXGI_FORMAT>(pFormat->value) == Format)
-            {
-                wprintf(L"%ls", pFormat->name);
-                return;
-            }
-        }
-
-        wprintf(L"*UNKNOWN*");
     }
 
     void PrintInfo(const TexMetadata& info, bool isXbox)
@@ -817,7 +607,7 @@ namespace
             wprintf(L",%zu", info.arraySize);
 
         wprintf(L" ");
-        PrintFormat(info.format);
+        PrintFormat(info.format, g_pFormats, g_pReadOnlyFormats);
 
         switch (info.dimension)
         {
@@ -867,75 +657,6 @@ namespace
         wprintf(L")");
     }
 
-    void PrintList(size_t cch, const SValue<uint32_t> *pValue)
-    {
-        while (pValue->name)
-        {
-            const size_t cchName = wcslen(pValue->name);
-
-            if (cch + cchName + 2 >= 80)
-            {
-                wprintf(L"\n      ");
-                cch = 6;
-            }
-
-            wprintf(L"%ls ", pValue->name);
-            cch += cchName + 2;
-            pValue++;
-        }
-
-        wprintf(L"\n");
-    }
-
-    void PrintLogo(bool versionOnly)
-    {
-        wchar_t version[32] = {};
-
-        wchar_t appName[_MAX_PATH] = {};
-        if (GetModuleFileNameW(nullptr, appName, _MAX_PATH))
-        {
-            const DWORD size = GetFileVersionInfoSizeW(appName, nullptr);
-            if (size > 0)
-            {
-                auto verInfo = std::make_unique<uint8_t[]>(size);
-                if (GetFileVersionInfoW(appName, 0, size, verInfo.get()))
-                {
-                    LPVOID lpstr = nullptr;
-                    UINT strLen = 0;
-                    if (VerQueryValueW(verInfo.get(), L"\\StringFileInfo\\040904B0\\ProductVersion", &lpstr, &strLen))
-                    {
-                        wcsncpy_s(version, reinterpret_cast<const wchar_t*>(lpstr), strLen);
-                    }
-                }
-            }
-        }
-
-        if (!*version || wcscmp(version, L"1.0.0.0") == 0)
-        {
-            swprintf_s(version, L"%03d (library)", DIRECTX_TEX_VERSION);
-        }
-
-        if (versionOnly)
-        {
-            wprintf(L"texconv version %ls\n", version);
-        }
-        else
-        {
-        #if defined(USE_XBOX_EXTS) && defined(_USE_SCARLETT)
-            wprintf(L"Microsoft (R) DirectX Texture Converter for Microsoft GDKX for Xbox Series X|S [Version %ls]\n", version);
-        #elif defined(USE_XBOX_EXTS)
-            wprintf(L"Microsoft (R) DirectX Texture Converter for Microsoft GDKX for Xbox One [Version %ls]\n", version);
-        #else
-            wprintf(L"Microsoft (R) DirectX Texture Converter [DirectXTex] Version %ls\n", version);
-        #endif
-            wprintf(L"Copyright (C) Microsoft Corp.\n");
-        #ifdef _DEBUG
-            wprintf(L"*** Debug build ***\n");
-        #endif
-            wprintf(L"\n");
-        }
-    }
-
     _Success_(return)
         bool GetDXGIFactory(_Outptr_ IDXGIFactory1** pFactory)
     {
@@ -964,7 +685,7 @@ namespace
 
     void PrintUsage()
     {
-        PrintLogo(false);
+        PrintLogo(false, g_ToolName, g_Description);
 
         static const wchar_t* const s_usage =
             L"Usage: texconv <options> [--] <files>\n"
@@ -1103,43 +824,6 @@ namespace
                 }
             }
         }
-    }
-
-    const wchar_t* GetErrorDesc(HRESULT hr)
-    {
-        static wchar_t desc[1024] = {};
-
-        LPWSTR errorText = nullptr;
-
-        const DWORD result = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-            nullptr, static_cast<DWORD>(hr),
-            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&errorText), 0, nullptr);
-
-        *desc = 0;
-
-        if (result > 0 && errorText)
-        {
-            swprintf_s(desc, L": %ls", errorText);
-
-            size_t len = wcslen(desc);
-            if (len >= 1)
-            {
-                desc[len - 1] = 0;
-            }
-
-            if (errorText)
-                LocalFree(errorText);
-
-            for (wchar_t* ptr = desc; *ptr != 0; ++ptr)
-            {
-                if (*ptr == L'\r' || *ptr == L'\n')
-                {
-                    *ptr = L' ';
-                }
-            }
-        }
-
-        return desc;
     }
 
     _Success_(return)
@@ -1544,7 +1228,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             else if (!_wcsicmp(pArg,L"--version"))
             {
-                PrintLogo(true);
+                PrintLogo(true, g_ToolName, g_Description);
                 return 0;
             }
             else if (!_wcsicmp(pArg, L"--help"))
@@ -2152,7 +1836,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     }
 
     if (~dwOptions & (uint64_t(1) << OPT_NOLOGO))
-        PrintLogo(false);
+        PrintLogo(false, g_ToolName, g_Description);
 
     auto fileTypeName = LookupByValue(FileType, g_pSaveFileTypes);
 

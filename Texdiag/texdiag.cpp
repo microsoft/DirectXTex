@@ -44,7 +44,6 @@
 #include <locale>
 #include <memory>
 #include <new>
-#include <set>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -72,627 +71,357 @@
 #include "DirectXTexPNG.h"
 #endif
 
+#define TOOL_VERSION DIRECTX_TEX_VERSION
+#include "CmdLineHelpers.h"
+
+using namespace Helpers;
 using namespace DirectX;
-
-enum COMMANDS : uint32_t
-{
-    CMD_INFO = 1,
-    CMD_ANALYZE,
-    CMD_COMPARE,
-    CMD_DIFF,
-    CMD_DUMPBC,
-    CMD_DUMPDDS,
-    CMD_MAX
-};
-
-enum OPTIONS : uint32_t
-{
-    OPT_RECURSIVE = 1,
-    OPT_FORMAT,
-    OPT_FILTER,
-    OPT_DDS_DWORD_ALIGN,
-    OPT_DDS_BAD_DXTN_TAILS,
-    OPT_DDS_PERMISSIVE,
-    OPT_DDS_IGNORE_MIPS,
-    OPT_OUTPUTFILE,
-    OPT_TOLOWER,
-    OPT_OVERWRITE,
-    OPT_FILETYPE,
-    OPT_NOLOGO,
-    OPT_TYPELESS_UNORM,
-    OPT_TYPELESS_FLOAT,
-    OPT_EXPAND_LUMINANCE,
-    OPT_TARGET_PIXELX,
-    OPT_TARGET_PIXELY,
-    OPT_DIFF_COLOR,
-    OPT_THRESHOLD,
-    OPT_FILELIST,
-    OPT_MAX
-};
-
-static_assert(OPT_MAX <= 32, "dwOptions is a unsigned int bitfield");
-
-struct SConversion
-{
-    std::wstring szSrc;
-};
-
-struct SValue
-{
-    const wchar_t*  name;
-    uint32_t        value;
-};
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-const SValue g_pCommands[] =
-{
-    { L"info",      CMD_INFO },
-    { L"analyze",   CMD_ANALYZE },
-    { L"compare",   CMD_COMPARE },
-    { L"diff",      CMD_DIFF },
-    { L"dumpbc",    CMD_DUMPBC },
-    { L"dumpdds",   CMD_DUMPDDS },
-    { nullptr,      0 }
-};
-
-const SValue g_pOptions[] =
-{
-    { L"r",          OPT_RECURSIVE },
-    { L"f",          OPT_FORMAT },
-    { L"if",         OPT_FILTER },
-    { L"dword",      OPT_DDS_DWORD_ALIGN },
-    { L"badtails",   OPT_DDS_BAD_DXTN_TAILS },
-    { L"permissive", OPT_DDS_PERMISSIVE },
-    { L"ignoremips", OPT_DDS_IGNORE_MIPS },
-    { L"nologo",     OPT_NOLOGO },
-    { L"o",          OPT_OUTPUTFILE },
-    { L"l",          OPT_TOLOWER },
-    { L"y",          OPT_OVERWRITE },
-    { L"ft",         OPT_FILETYPE },
-    { L"tu",         OPT_TYPELESS_UNORM },
-    { L"tf",         OPT_TYPELESS_FLOAT },
-    { L"xlum",       OPT_EXPAND_LUMINANCE },
-    { L"targetx",    OPT_TARGET_PIXELX },
-    { L"targety",    OPT_TARGET_PIXELY },
-    { L"c",          OPT_DIFF_COLOR },
-    { L"t",          OPT_THRESHOLD },
-    { L"flist",      OPT_FILELIST },
-    { nullptr,       0 }
-};
-
-#define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
-
-const SValue g_pFormats[] =
-{
-    // List does not include _TYPELESS, depth/stencil, or BC formats
-    DEFFMT(R32G32B32A32_FLOAT),
-    DEFFMT(R32G32B32A32_UINT),
-    DEFFMT(R32G32B32A32_SINT),
-    DEFFMT(R32G32B32_FLOAT),
-    DEFFMT(R32G32B32_UINT),
-    DEFFMT(R32G32B32_SINT),
-    DEFFMT(R16G16B16A16_FLOAT),
-    DEFFMT(R16G16B16A16_UNORM),
-    DEFFMT(R16G16B16A16_UINT),
-    DEFFMT(R16G16B16A16_SNORM),
-    DEFFMT(R16G16B16A16_SINT),
-    DEFFMT(R32G32_FLOAT),
-    DEFFMT(R32G32_UINT),
-    DEFFMT(R32G32_SINT),
-    DEFFMT(R10G10B10A2_UNORM),
-    DEFFMT(R10G10B10A2_UINT),
-    DEFFMT(R11G11B10_FLOAT),
-    DEFFMT(R8G8B8A8_UNORM),
-    DEFFMT(R8G8B8A8_UNORM_SRGB),
-    DEFFMT(R8G8B8A8_UINT),
-    DEFFMT(R8G8B8A8_SNORM),
-    DEFFMT(R8G8B8A8_SINT),
-    DEFFMT(R16G16_FLOAT),
-    DEFFMT(R16G16_UNORM),
-    DEFFMT(R16G16_UINT),
-    DEFFMT(R16G16_SNORM),
-    DEFFMT(R16G16_SINT),
-    DEFFMT(R32_FLOAT),
-    DEFFMT(R32_UINT),
-    DEFFMT(R32_SINT),
-    DEFFMT(R8G8_UNORM),
-    DEFFMT(R8G8_UINT),
-    DEFFMT(R8G8_SNORM),
-    DEFFMT(R8G8_SINT),
-    DEFFMT(R16_FLOAT),
-    DEFFMT(R16_UNORM),
-    DEFFMT(R16_UINT),
-    DEFFMT(R16_SNORM),
-    DEFFMT(R16_SINT),
-    DEFFMT(R8_UNORM),
-    DEFFMT(R8_UINT),
-    DEFFMT(R8_SNORM),
-    DEFFMT(R8_SINT),
-    DEFFMT(A8_UNORM),
-    DEFFMT(R9G9B9E5_SHAREDEXP),
-    DEFFMT(R8G8_B8G8_UNORM),
-    DEFFMT(G8R8_G8B8_UNORM),
-    DEFFMT(B5G6R5_UNORM),
-    DEFFMT(B5G5R5A1_UNORM),
-
-    // DXGI 1.1 formats
-    DEFFMT(B8G8R8A8_UNORM),
-    DEFFMT(B8G8R8X8_UNORM),
-    DEFFMT(R10G10B10_XR_BIAS_A2_UNORM),
-    DEFFMT(B8G8R8A8_UNORM_SRGB),
-    DEFFMT(B8G8R8X8_UNORM_SRGB),
-
-    // DXGI 1.2 formats
-    DEFFMT(AYUV),
-    DEFFMT(Y410),
-    DEFFMT(Y416),
-    DEFFMT(YUY2),
-    DEFFMT(Y210),
-    DEFFMT(Y216),
-    DEFFMT(B4G4R4A4_UNORM),
-
-    // D3D11on12 format
-    { L"A4B4G4R4_UNORM", DXGI_FORMAT(191) },
-
-    { nullptr, DXGI_FORMAT_UNKNOWN }
-};
-
-const SValue g_pFormatAliases[] =
-{
-    { L"RGBA", DXGI_FORMAT_R8G8B8A8_UNORM },
-    { L"BGRA", DXGI_FORMAT_B8G8R8A8_UNORM },
-    { L"BGR",  DXGI_FORMAT_B8G8R8X8_UNORM },
-
-    { L"FP16", DXGI_FORMAT_R16G16B16A16_FLOAT },
-    { L"FP32", DXGI_FORMAT_R32G32B32A32_FLOAT },
-
-    { nullptr, DXGI_FORMAT_UNKNOWN }
-};
-
-const SValue g_pReadOnlyFormats[] =
-{
-    DEFFMT(R32G32B32A32_TYPELESS),
-    DEFFMT(R32G32B32_TYPELESS),
-    DEFFMT(R16G16B16A16_TYPELESS),
-    DEFFMT(R32G32_TYPELESS),
-    DEFFMT(R32G8X24_TYPELESS),
-    DEFFMT(D32_FLOAT_S8X24_UINT),
-    DEFFMT(R32_FLOAT_X8X24_TYPELESS),
-    DEFFMT(X32_TYPELESS_G8X24_UINT),
-    DEFFMT(R10G10B10A2_TYPELESS),
-    DEFFMT(R8G8B8A8_TYPELESS),
-    DEFFMT(R16G16_TYPELESS),
-    DEFFMT(R32_TYPELESS),
-    DEFFMT(D32_FLOAT),
-    DEFFMT(R24G8_TYPELESS),
-    DEFFMT(D24_UNORM_S8_UINT),
-    DEFFMT(R24_UNORM_X8_TYPELESS),
-    DEFFMT(X24_TYPELESS_G8_UINT),
-    DEFFMT(R8G8_TYPELESS),
-    DEFFMT(R16_TYPELESS),
-    DEFFMT(R8_TYPELESS),
-    DEFFMT(BC1_TYPELESS),
-    DEFFMT(BC1_UNORM),
-    DEFFMT(BC1_UNORM_SRGB),
-    DEFFMT(BC2_TYPELESS),
-    DEFFMT(BC2_UNORM),
-    DEFFMT(BC2_UNORM_SRGB),
-    DEFFMT(BC3_TYPELESS),
-    DEFFMT(BC3_UNORM),
-    DEFFMT(BC3_UNORM_SRGB),
-    DEFFMT(BC4_TYPELESS),
-    DEFFMT(BC4_UNORM),
-    DEFFMT(BC4_SNORM),
-    DEFFMT(BC5_TYPELESS),
-    DEFFMT(BC5_UNORM),
-    DEFFMT(BC5_SNORM),
-
-    // DXGI 1.1 formats
-    DEFFMT(B8G8R8A8_TYPELESS),
-    DEFFMT(B8G8R8X8_TYPELESS),
-    DEFFMT(BC6H_TYPELESS),
-    DEFFMT(BC6H_UF16),
-    DEFFMT(BC6H_SF16),
-    DEFFMT(BC7_TYPELESS),
-    DEFFMT(BC7_UNORM),
-    DEFFMT(BC7_UNORM_SRGB),
-
-    // DXGI 1.2 formats
-    DEFFMT(AI44),
-    DEFFMT(IA44),
-    DEFFMT(P8),
-    DEFFMT(A8P8),
-    DEFFMT(NV12),
-    DEFFMT(P010),
-    DEFFMT(P016),
-    DEFFMT(420_OPAQUE),
-    DEFFMT(NV11),
-
-    // DXGI 1.3 formats
-    { L"P208", DXGI_FORMAT(130) },
-    { L"V208", DXGI_FORMAT(131) },
-    { L"V408", DXGI_FORMAT(132) },
-
-    // Xbox-specific formats
-    { L"R10G10B10_7E3_A2_FLOAT (Xbox)", DXGI_FORMAT(116) },
-    { L"R10G10B10_6E4_A2_FLOAT (Xbox)", DXGI_FORMAT(117) },
-    { L"D16_UNORM_S8_UINT (Xbox)", DXGI_FORMAT(118) },
-    { L"R16_UNORM_X8_TYPELESS (Xbox)", DXGI_FORMAT(119) },
-    { L"X16_TYPELESS_G8_UINT (Xbox)", DXGI_FORMAT(120) },
-    { L"R10G10B10_SNORM_A2_UNORM (Xbox)", DXGI_FORMAT(189) },
-    { L"R4G4_UNORM (Xbox)", DXGI_FORMAT(190) },
-
-    { nullptr, DXGI_FORMAT_UNKNOWN }
-};
-
-const SValue g_pFilters[] =
-{
-    { L"POINT",                     TEX_FILTER_POINT },
-    { L"LINEAR",                    TEX_FILTER_LINEAR },
-    { L"CUBIC",                     TEX_FILTER_CUBIC },
-    { L"FANT",                      TEX_FILTER_FANT },
-    { L"BOX",                       TEX_FILTER_BOX },
-    { L"TRIANGLE",                  TEX_FILTER_TRIANGLE },
-    { L"POINT_DITHER",              TEX_FILTER_POINT | TEX_FILTER_DITHER },
-    { L"LINEAR_DITHER",             TEX_FILTER_LINEAR | TEX_FILTER_DITHER },
-    { L"CUBIC_DITHER",              TEX_FILTER_CUBIC | TEX_FILTER_DITHER },
-    { L"FANT_DITHER",               TEX_FILTER_FANT | TEX_FILTER_DITHER },
-    { L"BOX_DITHER",                TEX_FILTER_BOX | TEX_FILTER_DITHER },
-    { L"TRIANGLE_DITHER",           TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER },
-    { L"POINT_DITHER_DIFFUSION",    TEX_FILTER_POINT | TEX_FILTER_DITHER_DIFFUSION },
-    { L"LINEAR_DITHER_DIFFUSION",   TEX_FILTER_LINEAR | TEX_FILTER_DITHER_DIFFUSION },
-    { L"CUBIC_DITHER_DIFFUSION",    TEX_FILTER_CUBIC | TEX_FILTER_DITHER_DIFFUSION },
-    { L"FANT_DITHER_DIFFUSION",     TEX_FILTER_FANT | TEX_FILTER_DITHER_DIFFUSION },
-    { L"BOX_DITHER_DIFFUSION",      TEX_FILTER_BOX | TEX_FILTER_DITHER_DIFFUSION },
-    { L"TRIANGLE_DITHER_DIFFUSION", TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER_DIFFUSION },
-    { nullptr,                      TEX_FILTER_DEFAULT }
-};
-
-#define CODEC_DDS 0xFFFF0001
-#define CODEC_TGA 0xFFFF0002
-#define CODEC_HDR 0xFFFF0005
-
-#ifdef USE_OPENEXR
-#define CODEC_EXR 0xFFFF0006
-#endif
-#ifdef USE_LIBJPEG
-#define CODEC_JPEG 0xFFFF0007
-#endif
-#ifdef USE_LIBPNG
-#define CODEC_PNG 0xFFFF0008
-#endif
-
-const SValue g_pDumpFileTypes[] =
-{
-    { L"bmp",   WIC_CODEC_BMP  },
-#ifdef USE_LIBJPEG
-    { L"jpg",   CODEC_JPEG     },
-    { L"jpeg",  CODEC_JPEG     },
-#else
-    { L"jpg",   WIC_CODEC_JPEG },
-    { L"jpeg",  WIC_CODEC_JPEG },
-#endif
-#ifdef USE_LIBPNG
-    { L"png",   CODEC_PNG      },
-#else
-    { L"png",   WIC_CODEC_PNG  },
-#endif
-    { L"tga",   CODEC_TGA      },
-    { L"hdr",   CODEC_HDR      },
-    { L"tif",   WIC_CODEC_TIFF },
-    { L"tiff",  WIC_CODEC_TIFF },
-    { L"jxr",   WIC_CODEC_WMP  },
-#ifdef USE_OPENEXR
-    { L"exr",   CODEC_EXR      },
-#endif
-    { nullptr,  CODEC_DDS      }
-};
-
-const SValue g_pExtFileTypes[] =
-{
-    { L".bmp",  WIC_CODEC_BMP  },
-#ifdef USE_LIBJPEG
-    { L".jpg",  CODEC_JPEG     },
-    { L".jpeg", CODEC_JPEG     },
-#else
-    { L".jpg",  WIC_CODEC_JPEG },
-    { L".jpeg", WIC_CODEC_JPEG },
-#endif
-#ifdef USE_LIBPNG
-    { L".png",  CODEC_PNG      },
-#else
-    { L".png",  WIC_CODEC_PNG  },
-#endif
-    { L".dds",  CODEC_DDS      },
-    { L".tga",  CODEC_TGA      },
-    { L".hdr",  CODEC_HDR      },
-    { L".tif",  WIC_CODEC_TIFF },
-    { L".tiff", WIC_CODEC_TIFF },
-    { L".wdp",  WIC_CODEC_WMP  },
-    { L".hdp",  WIC_CODEC_WMP  },
-    { L".jxr",  WIC_CODEC_WMP  },
-#ifdef USE_OPENEXR
-    { L"exr",   CODEC_EXR      },
-#endif
-    { nullptr,  CODEC_DDS      }
-};
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
 
 namespace
 {
-    inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
+    const wchar_t* g_ToolName = L"texdiag";
+    const wchar_t* g_Description = L"Microsoft (R) DirectX Texture Diagnostic Tool [DirectXTex]";
 
-    struct find_closer { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
-
-    using ScopedFindHandle = std::unique_ptr<void, find_closer>;
-
-#ifdef _PREFAST_
-#pragma prefast(disable : 26018, "Only used with static internal arrays")
-#endif
-
-    uint32_t LookupByName(const wchar_t *pName, const SValue *pArray)
+    enum COMMANDS : uint32_t
     {
-        while (pArray->name)
-        {
-            if (!_wcsicmp(pName, pArray->name))
-                return pArray->value;
+        CMD_INFO = 1,
+        CMD_ANALYZE,
+        CMD_COMPARE,
+        CMD_DIFF,
+        CMD_DUMPBC,
+        CMD_DUMPDDS,
+        CMD_MAX
+    };
 
-            pArray++;
-        }
-
-        return 0;
-    }
-
-    const wchar_t* LookupByValue(uint32_t pValue, const SValue *pArray)
+    enum OPTIONS : uint32_t
     {
-        while (pArray->name)
-        {
-            if (pValue == pArray->value)
-                return pArray->name;
+        OPT_RECURSIVE = 1,
+        OPT_FORMAT,
+        OPT_FILTER,
+        OPT_DDS_DWORD_ALIGN,
+        OPT_DDS_BAD_DXTN_TAILS,
+        OPT_DDS_PERMISSIVE,
+        OPT_DDS_IGNORE_MIPS,
+        OPT_OUTPUTFILE,
+        OPT_TOLOWER,
+        OPT_OVERWRITE,
+        OPT_FILETYPE,
+        OPT_NOLOGO,
+        OPT_TYPELESS_UNORM,
+        OPT_TYPELESS_FLOAT,
+        OPT_EXPAND_LUMINANCE,
+        OPT_TARGET_PIXELX,
+        OPT_TARGET_PIXELY,
+        OPT_DIFF_COLOR,
+        OPT_THRESHOLD,
+        OPT_FILELIST,
+        OPT_MAX
+    };
 
-            pArray++;
-        }
+    static_assert(OPT_MAX <= 32, "dwOptions is a unsigned int bitfield");
 
-        return L"";
-    }
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
 
-    void SearchForFiles(const std::filesystem::path& path, std::list<SConversion>& files, bool recursive)
+    const SValue<uint32_t> g_pCommands[] =
     {
-        // Process files
-        WIN32_FIND_DATAW findData = {};
-        ScopedFindHandle hFile(safe_handle(FindFirstFileExW(path.c_str(),
-            FindExInfoBasic, &findData,
-            FindExSearchNameMatch, nullptr,
-            FIND_FIRST_EX_LARGE_FETCH)));
-        if (hFile)
-        {
-            for (;;)
-            {
-                if (!(findData.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_DIRECTORY)))
-                {
-                    SConversion conv = {};
-                    conv.szSrc = path.parent_path().append(findData.cFileName).native();
-                    files.push_back(conv);
-                }
+        { L"info",      CMD_INFO },
+        { L"analyze",   CMD_ANALYZE },
+        { L"compare",   CMD_COMPARE },
+        { L"diff",      CMD_DIFF },
+        { L"dumpbc",    CMD_DUMPBC },
+        { L"dumpdds",   CMD_DUMPDDS },
+        { nullptr,      0 }
+    };
 
-                if (!FindNextFileW(hFile.get(), &findData))
-                    break;
-            }
-        }
-
-        // Process directories
-        if (recursive)
-        {
-            auto searchDir = path.parent_path().append(L"*");
-
-            hFile.reset(safe_handle(FindFirstFileExW(searchDir.c_str(),
-                FindExInfoBasic, &findData,
-                FindExSearchLimitToDirectories, nullptr,
-                FIND_FIRST_EX_LARGE_FETCH)));
-            if (!hFile)
-                return;
-
-            for (;;)
-            {
-                if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                {
-                    if (findData.cFileName[0] != L'.')
-                    {
-                        auto subdir = path.parent_path().append(findData.cFileName).append(path.filename().c_str());
-
-                        SearchForFiles(subdir, files, recursive);
-                    }
-                }
-
-                if (!FindNextFileW(hFile.get(), &findData))
-                    break;
-            }
-        }
-    }
-
-    void ProcessFileList(std::wifstream& inFile, std::list<SConversion>& files)
+    const SValue<uint32_t> g_pOptions[] =
     {
-        std::list<SConversion> flist;
-        std::set<std::wstring> excludes;
+        { L"r",          OPT_RECURSIVE },
+        { L"f",          OPT_FORMAT },
+        { L"if",         OPT_FILTER },
+        { L"dword",      OPT_DDS_DWORD_ALIGN },
+        { L"badtails",   OPT_DDS_BAD_DXTN_TAILS },
+        { L"permissive", OPT_DDS_PERMISSIVE },
+        { L"ignoremips", OPT_DDS_IGNORE_MIPS },
+        { L"nologo",     OPT_NOLOGO },
+        { L"o",          OPT_OUTPUTFILE },
+        { L"l",          OPT_TOLOWER },
+        { L"y",          OPT_OVERWRITE },
+        { L"ft",         OPT_FILETYPE },
+        { L"tu",         OPT_TYPELESS_UNORM },
+        { L"tf",         OPT_TYPELESS_FLOAT },
+        { L"xlum",       OPT_EXPAND_LUMINANCE },
+        { L"targetx",    OPT_TARGET_PIXELX },
+        { L"targety",    OPT_TARGET_PIXELY },
+        { L"c",          OPT_DIFF_COLOR },
+        { L"t",          OPT_THRESHOLD },
+        { L"flist",      OPT_FILELIST },
+        { nullptr,       0 }
+    };
 
-        for (;;)
-        {
-            std::wstring fname;
-            std::getline(inFile, fname);
-            if (!inFile)
-                break;
+    #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
 
-            if (fname[0] == L'#')
-            {
-                // Comment
-            }
-            else if (fname[0] == L'-')
-            {
-                if (flist.empty())
-                {
-                    wprintf(L"WARNING: Ignoring the line '%ls' in -flist\n", fname.c_str());
-                }
-                else
-                {
-                    std::filesystem::path path(fname.c_str() + 1);
-                    auto& npath = path.make_preferred();
-                    if (wcspbrk(fname.c_str(), L"?*") != nullptr)
-                    {
-                        std::list<SConversion> removeFiles;
-                        SearchForFiles(npath, removeFiles, false);
-
-                        for (auto& it : removeFiles)
-                        {
-                            std::wstring name = it.szSrc;
-                            std::transform(name.begin(), name.end(), name.begin(), towlower);
-                            excludes.insert(name);
-                        }
-                    }
-                    else
-                    {
-                        std::wstring name = npath.c_str();
-                        std::transform(name.begin(), name.end(), name.begin(), towlower);
-                        excludes.insert(name);
-                    }
-                }
-            }
-            else if (wcspbrk(fname.c_str(), L"?*") != nullptr)
-            {
-                std::filesystem::path path(fname.c_str());
-                SearchForFiles(path.make_preferred(), flist, false);
-            }
-            else
-            {
-                SConversion conv = {};
-                std::filesystem::path path(fname.c_str());
-                conv.szSrc = path.make_preferred().native();
-                flist.push_back(conv);
-            }
-        }
-
-        inFile.close();
-
-        if (!excludes.empty())
-        {
-            // Remove any excluded files
-            for (auto it = flist.begin(); it != flist.end();)
-            {
-                std::wstring name = it->szSrc;
-                std::transform(name.begin(), name.end(), name.begin(), towlower);
-                auto item = it;
-                ++it;
-                if (excludes.find(name) != excludes.end())
-                {
-                    flist.erase(item);
-                }
-            }
-        }
-
-        if (flist.empty())
-        {
-            wprintf(L"WARNING: No file names found in -flist\n");
-        }
-        else
-        {
-            files.splice(files.end(), flist);
-        }
-    }
-
-    void PrintFormat(DXGI_FORMAT Format)
+    const SValue<DXGI_FORMAT> g_pFormats[] =
     {
-        for (auto pFormat = g_pFormats; pFormat->name; pFormat++)
-        {
-            if (static_cast<DXGI_FORMAT>(pFormat->value) == Format)
-            {
-                wprintf(L"%ls", pFormat->name);
-                return;
-            }
-        }
+        // List does not include _TYPELESS, depth/stencil, or BC formats
+        DEFFMT(R32G32B32A32_FLOAT),
+        DEFFMT(R32G32B32A32_UINT),
+        DEFFMT(R32G32B32A32_SINT),
+        DEFFMT(R32G32B32_FLOAT),
+        DEFFMT(R32G32B32_UINT),
+        DEFFMT(R32G32B32_SINT),
+        DEFFMT(R16G16B16A16_FLOAT),
+        DEFFMT(R16G16B16A16_UNORM),
+        DEFFMT(R16G16B16A16_UINT),
+        DEFFMT(R16G16B16A16_SNORM),
+        DEFFMT(R16G16B16A16_SINT),
+        DEFFMT(R32G32_FLOAT),
+        DEFFMT(R32G32_UINT),
+        DEFFMT(R32G32_SINT),
+        DEFFMT(R10G10B10A2_UNORM),
+        DEFFMT(R10G10B10A2_UINT),
+        DEFFMT(R11G11B10_FLOAT),
+        DEFFMT(R8G8B8A8_UNORM),
+        DEFFMT(R8G8B8A8_UNORM_SRGB),
+        DEFFMT(R8G8B8A8_UINT),
+        DEFFMT(R8G8B8A8_SNORM),
+        DEFFMT(R8G8B8A8_SINT),
+        DEFFMT(R16G16_FLOAT),
+        DEFFMT(R16G16_UNORM),
+        DEFFMT(R16G16_UINT),
+        DEFFMT(R16G16_SNORM),
+        DEFFMT(R16G16_SINT),
+        DEFFMT(R32_FLOAT),
+        DEFFMT(R32_UINT),
+        DEFFMT(R32_SINT),
+        DEFFMT(R8G8_UNORM),
+        DEFFMT(R8G8_UINT),
+        DEFFMT(R8G8_SNORM),
+        DEFFMT(R8G8_SINT),
+        DEFFMT(R16_FLOAT),
+        DEFFMT(R16_UNORM),
+        DEFFMT(R16_UINT),
+        DEFFMT(R16_SNORM),
+        DEFFMT(R16_SINT),
+        DEFFMT(R8_UNORM),
+        DEFFMT(R8_UINT),
+        DEFFMT(R8_SNORM),
+        DEFFMT(R8_SINT),
+        DEFFMT(A8_UNORM),
+        DEFFMT(R9G9B9E5_SHAREDEXP),
+        DEFFMT(R8G8_B8G8_UNORM),
+        DEFFMT(G8R8_G8B8_UNORM),
+        DEFFMT(B5G6R5_UNORM),
+        DEFFMT(B5G5R5A1_UNORM),
 
-        for (auto pFormat = g_pReadOnlyFormats; pFormat->name; pFormat++)
-        {
-            if (static_cast<DXGI_FORMAT>(pFormat->value) == Format)
-            {
-                wprintf(L"%ls", pFormat->name);
-                return;
-            }
-        }
+        // DXGI 1.1 formats
+        DEFFMT(B8G8R8A8_UNORM),
+        DEFFMT(B8G8R8X8_UNORM),
+        DEFFMT(R10G10B10_XR_BIAS_A2_UNORM),
+        DEFFMT(B8G8R8A8_UNORM_SRGB),
+        DEFFMT(B8G8R8X8_UNORM_SRGB),
 
-        wprintf(L"*UNKNOWN*");
-    }
+        // DXGI 1.2 formats
+        DEFFMT(AYUV),
+        DEFFMT(Y410),
+        DEFFMT(Y416),
+        DEFFMT(YUY2),
+        DEFFMT(Y210),
+        DEFFMT(Y216),
+        DEFFMT(B4G4R4A4_UNORM),
 
-    void PrintList(size_t cch, const SValue *pValue)
+        // D3D11on12 format
+        { L"A4B4G4R4_UNORM", DXGI_FORMAT(191) },
+
+        { nullptr, DXGI_FORMAT_UNKNOWN }
+    };
+
+    const SValue<DXGI_FORMAT> g_pFormatAliases[] =
     {
-        while (pValue->name)
-        {
-            const size_t cchName = wcslen(pValue->name);
+        { L"RGBA", DXGI_FORMAT_R8G8B8A8_UNORM },
+        { L"BGRA", DXGI_FORMAT_B8G8R8A8_UNORM },
+        { L"BGR",  DXGI_FORMAT_B8G8R8X8_UNORM },
 
-            if (cch + cchName + 2 >= 80)
-            {
-                wprintf(L"\n      ");
-                cch = 6;
-            }
+        { L"FP16", DXGI_FORMAT_R16G16B16A16_FLOAT },
+        { L"FP32", DXGI_FORMAT_R32G32B32A32_FLOAT },
 
-            wprintf(L"%ls ", pValue->name);
-            cch += cchName + 2;
-            pValue++;
-        }
+        { nullptr, DXGI_FORMAT_UNKNOWN }
+    };
 
-        wprintf(L"\n");
-    }
-
-    void PrintLogo(bool versionOnly)
+    const SValue<DXGI_FORMAT> g_pReadOnlyFormats[] =
     {
-        wchar_t version[32] = {};
+        DEFFMT(R32G32B32A32_TYPELESS),
+        DEFFMT(R32G32B32_TYPELESS),
+        DEFFMT(R16G16B16A16_TYPELESS),
+        DEFFMT(R32G32_TYPELESS),
+        DEFFMT(R32G8X24_TYPELESS),
+        DEFFMT(D32_FLOAT_S8X24_UINT),
+        DEFFMT(R32_FLOAT_X8X24_TYPELESS),
+        DEFFMT(X32_TYPELESS_G8X24_UINT),
+        DEFFMT(R10G10B10A2_TYPELESS),
+        DEFFMT(R8G8B8A8_TYPELESS),
+        DEFFMT(R16G16_TYPELESS),
+        DEFFMT(R32_TYPELESS),
+        DEFFMT(D32_FLOAT),
+        DEFFMT(R24G8_TYPELESS),
+        DEFFMT(D24_UNORM_S8_UINT),
+        DEFFMT(R24_UNORM_X8_TYPELESS),
+        DEFFMT(X24_TYPELESS_G8_UINT),
+        DEFFMT(R8G8_TYPELESS),
+        DEFFMT(R16_TYPELESS),
+        DEFFMT(R8_TYPELESS),
+        DEFFMT(BC1_TYPELESS),
+        DEFFMT(BC1_UNORM),
+        DEFFMT(BC1_UNORM_SRGB),
+        DEFFMT(BC2_TYPELESS),
+        DEFFMT(BC2_UNORM),
+        DEFFMT(BC2_UNORM_SRGB),
+        DEFFMT(BC3_TYPELESS),
+        DEFFMT(BC3_UNORM),
+        DEFFMT(BC3_UNORM_SRGB),
+        DEFFMT(BC4_TYPELESS),
+        DEFFMT(BC4_UNORM),
+        DEFFMT(BC4_SNORM),
+        DEFFMT(BC5_TYPELESS),
+        DEFFMT(BC5_UNORM),
+        DEFFMT(BC5_SNORM),
 
-        wchar_t appName[_MAX_PATH] = {};
-        if (GetModuleFileNameW(nullptr, appName, _MAX_PATH))
-        {
-            const DWORD size = GetFileVersionInfoSizeW(appName, nullptr);
-            if (size > 0)
-            {
-                auto verInfo = std::make_unique<uint8_t[]>(size);
-                if (GetFileVersionInfoW(appName, 0, size, verInfo.get()))
-                {
-                    LPVOID lpstr = nullptr;
-                    UINT strLen = 0;
-                    if (VerQueryValueW(verInfo.get(), L"\\StringFileInfo\\040904B0\\ProductVersion", &lpstr, &strLen))
-                    {
-                        wcsncpy_s(version, reinterpret_cast<const wchar_t*>(lpstr), strLen);
-                    }
-                }
-            }
-        }
+        // DXGI 1.1 formats
+        DEFFMT(B8G8R8A8_TYPELESS),
+        DEFFMT(B8G8R8X8_TYPELESS),
+        DEFFMT(BC6H_TYPELESS),
+        DEFFMT(BC6H_UF16),
+        DEFFMT(BC6H_SF16),
+        DEFFMT(BC7_TYPELESS),
+        DEFFMT(BC7_UNORM),
+        DEFFMT(BC7_UNORM_SRGB),
 
-        if (!*version || wcscmp(version, L"1.0.0.0") == 0)
-        {
-            swprintf_s(version, L"%03d (library)", DIRECTX_TEX_VERSION);
-        }
+        // DXGI 1.2 formats
+        DEFFMT(AI44),
+        DEFFMT(IA44),
+        DEFFMT(P8),
+        DEFFMT(A8P8),
+        DEFFMT(NV12),
+        DEFFMT(P010),
+        DEFFMT(P016),
+        DEFFMT(420_OPAQUE),
+        DEFFMT(NV11),
 
-        if (versionOnly)
-        {
-            wprintf(L"texdiag version %ls\n", version);
-        }
-        else
-        {
-            wprintf(L"Microsoft (R) DirectX Texture Diagnostic Tool [DirectXTex] Version %ls\n", version);
-            wprintf(L"Copyright (C) Microsoft Corp.\n");
-        #ifdef _DEBUG
-            wprintf(L"*** Debug build ***\n");
-        #endif
-            wprintf(L"\n");
-        }
-    }
+        // DXGI 1.3 formats
+        { L"P208", DXGI_FORMAT(130) },
+        { L"V208", DXGI_FORMAT(131) },
+        { L"V408", DXGI_FORMAT(132) },
+
+        // Xbox-specific formats
+        { L"R10G10B10_7E3_A2_FLOAT (Xbox)", DXGI_FORMAT(116) },
+        { L"R10G10B10_6E4_A2_FLOAT (Xbox)", DXGI_FORMAT(117) },
+        { L"D16_UNORM_S8_UINT (Xbox)", DXGI_FORMAT(118) },
+        { L"R16_UNORM_X8_TYPELESS (Xbox)", DXGI_FORMAT(119) },
+        { L"X16_TYPELESS_G8_UINT (Xbox)", DXGI_FORMAT(120) },
+        { L"R10G10B10_SNORM_A2_UNORM (Xbox)", DXGI_FORMAT(189) },
+        { L"R4G4_UNORM (Xbox)", DXGI_FORMAT(190) },
+
+        { nullptr, DXGI_FORMAT_UNKNOWN }
+    };
+
+    #undef DEFFMT
+
+    const SValue<uint32_t> g_pFilters[] =
+    {
+        { L"POINT",                     TEX_FILTER_POINT },
+        { L"LINEAR",                    TEX_FILTER_LINEAR },
+        { L"CUBIC",                     TEX_FILTER_CUBIC },
+        { L"FANT",                      TEX_FILTER_FANT },
+        { L"BOX",                       TEX_FILTER_BOX },
+        { L"TRIANGLE",                  TEX_FILTER_TRIANGLE },
+        { L"POINT_DITHER",              TEX_FILTER_POINT | TEX_FILTER_DITHER },
+        { L"LINEAR_DITHER",             TEX_FILTER_LINEAR | TEX_FILTER_DITHER },
+        { L"CUBIC_DITHER",              TEX_FILTER_CUBIC | TEX_FILTER_DITHER },
+        { L"FANT_DITHER",               TEX_FILTER_FANT | TEX_FILTER_DITHER },
+        { L"BOX_DITHER",                TEX_FILTER_BOX | TEX_FILTER_DITHER },
+        { L"TRIANGLE_DITHER",           TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER },
+        { L"POINT_DITHER_DIFFUSION",    TEX_FILTER_POINT | TEX_FILTER_DITHER_DIFFUSION },
+        { L"LINEAR_DITHER_DIFFUSION",   TEX_FILTER_LINEAR | TEX_FILTER_DITHER_DIFFUSION },
+        { L"CUBIC_DITHER_DIFFUSION",    TEX_FILTER_CUBIC | TEX_FILTER_DITHER_DIFFUSION },
+        { L"FANT_DITHER_DIFFUSION",     TEX_FILTER_FANT | TEX_FILTER_DITHER_DIFFUSION },
+        { L"BOX_DITHER_DIFFUSION",      TEX_FILTER_BOX | TEX_FILTER_DITHER_DIFFUSION },
+        { L"TRIANGLE_DITHER_DIFFUSION", TEX_FILTER_TRIANGLE | TEX_FILTER_DITHER_DIFFUSION },
+        { nullptr,                      TEX_FILTER_DEFAULT }
+    };
+
+    #define CODEC_DDS 0xFFFF0001
+    #define CODEC_TGA 0xFFFF0002
+    #define CODEC_HDR 0xFFFF0005
+
+    #ifdef USE_OPENEXR
+    #define CODEC_EXR 0xFFFF0006
+    #endif
+    #ifdef USE_LIBJPEG
+    #define CODEC_JPEG 0xFFFF0007
+    #endif
+    #ifdef USE_LIBPNG
+    #define CODEC_PNG 0xFFFF0008
+    #endif
+
+    const SValue<uint32_t> g_pDumpFileTypes[] =
+    {
+        { L"bmp",   WIC_CODEC_BMP  },
+    #ifdef USE_LIBJPEG
+        { L"jpg",   CODEC_JPEG     },
+        { L"jpeg",  CODEC_JPEG     },
+    #else
+        { L"jpg",   WIC_CODEC_JPEG },
+        { L"jpeg",  WIC_CODEC_JPEG },
+    #endif
+    #ifdef USE_LIBPNG
+        { L"png",   CODEC_PNG      },
+    #else
+        { L"png",   WIC_CODEC_PNG  },
+    #endif
+        { L"tga",   CODEC_TGA      },
+        { L"hdr",   CODEC_HDR      },
+        { L"tif",   WIC_CODEC_TIFF },
+        { L"tiff",  WIC_CODEC_TIFF },
+        { L"jxr",   WIC_CODEC_WMP  },
+    #ifdef USE_OPENEXR
+        { L"exr",   CODEC_EXR      },
+    #endif
+        { nullptr,  CODEC_DDS      }
+    };
+
+    const SValue<uint32_t> g_pExtFileTypes[] =
+    {
+        { L".bmp",  WIC_CODEC_BMP  },
+    #ifdef USE_LIBJPEG
+        { L".jpg",  CODEC_JPEG     },
+        { L".jpeg", CODEC_JPEG     },
+    #else
+        { L".jpg",  WIC_CODEC_JPEG },
+        { L".jpeg", WIC_CODEC_JPEG },
+    #endif
+    #ifdef USE_LIBPNG
+        { L".png",  CODEC_PNG      },
+    #else
+        { L".png",  WIC_CODEC_PNG  },
+    #endif
+        { L".dds",  CODEC_DDS      },
+        { L".tga",  CODEC_TGA      },
+        { L".hdr",  CODEC_HDR      },
+        { L".tif",  WIC_CODEC_TIFF },
+        { L".tiff", WIC_CODEC_TIFF },
+        { L".wdp",  WIC_CODEC_WMP  },
+        { L".hdp",  WIC_CODEC_WMP  },
+        { L".jxr",  WIC_CODEC_WMP  },
+    #ifdef USE_OPENEXR
+        { L"exr",   CODEC_EXR      },
+    #endif
+        { nullptr,  CODEC_DDS      }
+    };
 
     void PrintUsage()
     {
-        PrintLogo(false);
+        PrintLogo(false, g_ToolName, g_Description);
 
         static const wchar_t* const s_usage =
             L"Usage: texdiag <command> <options> [--] <files>\n"
@@ -747,43 +476,6 @@ namespace
 
         wprintf(L"\n   <filetype>: ");
         PrintList(15, g_pDumpFileTypes);
-    }
-
-    const wchar_t* GetErrorDesc(HRESULT hr)
-    {
-        static wchar_t desc[1024] = {};
-
-        LPWSTR errorText = nullptr;
-
-        const DWORD result = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-            nullptr, static_cast<DWORD>(hr),
-            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&errorText), 0, nullptr);
-
-        *desc = 0;
-
-        if (result > 0 && errorText)
-        {
-            swprintf_s(desc, L": %ls", errorText);
-
-            size_t len = wcslen(desc);
-            if (len >= 1)
-            {
-                desc[len - 1] = 0;
-            }
-
-            if (errorText)
-                LocalFree(errorText);
-
-            for(wchar_t* ptr = desc; *ptr != 0; ++ptr)
-            {
-                if (*ptr == L'\r' || *ptr == L'\n')
-                {
-                    *ptr = L' ';
-                }
-            }
-        }
-
-        return desc;
     }
 
     HRESULT LoadImage(
@@ -1053,7 +745,7 @@ namespace
         void Print(DXGI_FORMAT fmt)
         {
             wprintf(L"\t        Compression - ");
-            PrintFormat(fmt);
+            PrintFormat(fmt, g_pFormats, g_pReadOnlyFormats);
             wprintf(L"\n\t       Total blocks - %zu\n", blocks);
 
             switch (fmt)
@@ -3340,7 +3032,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     {
         if (!_wcsicmp(argv[1], L"--version"))
         {
-            PrintLogo(true);
+            PrintLogo(true, g_ToolName, g_Description);
             return 0;
         }
         else if (!_wcsicmp(argv[1], L"--help"))
@@ -3384,7 +3076,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             else if (!_wcsicmp(pArg, L"--version"))
             {
-                PrintLogo(true);
+                PrintLogo(true, g_ToolName, g_Description);
                 return 0;
             }
             else if (!_wcsicmp(pArg, L"--help"))
@@ -3585,7 +3277,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             const size_t count = conversion.size();
             std::filesystem::path path(pArg);
-            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (1 << OPT_RECURSIVE)) != 0);
+            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (1 << OPT_RECURSIVE)) != 0, nullptr);
             if (conversion.size() <= count)
             {
                 wprintf(L"No matching files found for %ls\n", pArg);
@@ -3608,7 +3300,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     }
 
     if (~dwOptions & (1 << OPT_NOLOGO))
-        PrintLogo(false);
+        PrintLogo(false, g_ToolName, g_Description);
 
     switch (dwCommand)
     {
@@ -3903,7 +3595,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 wprintf(L"    mipLevels = %zu\n", info.mipLevels);
                 wprintf(L"    arraySize = %zu\n", info.arraySize);
                 wprintf(L"       format = ");
-                PrintFormat(info.format);
+                PrintFormat(info.format, g_pFormats, g_pReadOnlyFormats);
                 wprintf(L"\n    dimension = ");
                 switch (info.dimension)
                 {
@@ -4069,7 +3761,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
 
                 wprintf(L"Compression: ");
-                PrintFormat(info.format);
+                PrintFormat(info.format, g_pFormats, g_pReadOnlyFormats);
                 wprintf(L"\n");
 
                 if (info.depth > 1)
