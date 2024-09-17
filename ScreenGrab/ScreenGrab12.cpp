@@ -811,6 +811,7 @@ namespace
         if (FAILED(hr))
             return hr;
 
+        _Analysis_assume_(*pStaging);
         assert(*pStaging);
 
         // Transition the resource if necessary
