@@ -13,6 +13,17 @@
 #error Requires C++17 (and /Zc:__cplusplus with MSVC)
 #endif
 
+#include <algorithm>
+#include <cstdio>
+#include <cwchar>
+#include <filesystem>
+#include <fstream>
+#include <list>
+#include <memory>
+#include <set>
+#include <string>
+
+
 namespace Helpers
 {
     inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
@@ -39,7 +50,7 @@ namespace Helpers
     };
 
     template<typename T>
-    T LookupByName(const wchar_t *pName, const SValue<T> *pArray)
+    T LookupByName(const wchar_t _In_z_ *pName, const SValue<T> *pArray)
     {
         while (pArray->name)
         {
@@ -167,7 +178,7 @@ namespace Helpers
         }
     }
 
-    void SearchForFiles(const std::filesystem::path& path, std::list<SConversion>& files, bool recursive, const wchar_t* folder)
+    void SearchForFiles(const std::filesystem::path& path, std::list<SConversion>& files, bool recursive, _In_opt_z_ const wchar_t* folder)
     {
         // Process files
         WIN32_FIND_DATAW findData = {};
@@ -342,7 +353,7 @@ namespace Helpers
             if (errorText)
                 LocalFree(errorText);
 
-            for (wchar_t* ptr = desc; *ptr != 0; ++ptr)
+            for(wchar_t* ptr = desc; *ptr != 0; ++ptr)
             {
                 if (*ptr == L'\r' || *ptr == L'\n')
                 {
