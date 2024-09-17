@@ -416,7 +416,11 @@ namespace DirectX
         HRESULT __cdecl InitializeCube(_In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t nCubes, _In_ size_t mipLevels, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
 
         HRESULT __cdecl InitializeFromImage(_In_ const Image& srcImage, _In_ bool allow1D = false, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
+        HRESULT __cdecl InitializeSwizzleFromImage(const Image& srcImage, CP_FLAGS flags) noexcept;
+        HRESULT __cdecl InitializeImageFromSwizzle(const Image& srcImage, CP_FLAGS flags) noexcept;
         HRESULT __cdecl InitializeArrayFromImages(_In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ bool allow1D = false, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
+        HRESULT __cdecl InitializeSwizzlesFromImages(const Image* srcImage, size_t nImages, CP_FLAGS flags) noexcept;
+        HRESULT __cdecl InitializeImagesFromSwizzles(const Image* srcImage, size_t nImages, CP_FLAGS flags) noexcept;
         HRESULT __cdecl InitializeCubeFromImages(_In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
         HRESULT __cdecl Initialize3DFromImages(_In_reads_(depth) const Image* images, _In_ size_t depth, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
 

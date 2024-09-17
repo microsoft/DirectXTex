@@ -568,6 +568,78 @@ HRESULT ScratchImage::InitializeFromImage(const Image& srcImage, bool allow1D, C
 }
 
 _Use_decl_annotations_
+HRESULT ScratchImage::InitializeSwizzleFromImage(const Image& srcImage, CP_FLAGS flags) noexcept
+{
+    HRESULT hr = Initialize2D(srcImage.format, srcImage.width, srcImage.height, 1, 1, flags);
+
+    if (FAILED(hr))
+        return hr;
+
+    uint8_t* sptr = srcImage.pixels;
+    if (!sptr)
+        return E_POINTER;
+
+    uint8_t* dptr = m_image[0].pixels;
+    if (!dptr)
+        return E_POINTER;
+
+    size_t bytesPerPixel = BitsPerPixel(srcImage.format) / 8;
+
+    uint32_t xBytesMask = 0b1010101010101010;
+    uint32_t yBytesMask = 0b0101010101010101;
+
+    for (size_t y = 0; y < srcImage.height; y++)
+    {
+        for (size_t x = 0; x < srcImage.width; x++)
+        {
+            uint32_t swizzleIndex = _pdep_u32(x, xBytesMask) + _pdep_u32(y, yBytesMask);
+
+            uint8_t* sourcePixelPointer = sptr + y * srcImage.rowPitch + x * bytesPerPixel;
+            uint8_t* destPixelPointer = dptr + swizzleIndex * bytesPerPixel;
+            memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixel);
+        }
+    }
+
+    return S_OK;
+}
+
+_Use_decl_annotations_
+HRESULT ScratchImage::InitializeImageFromSwizzle(const Image& srcImage, CP_FLAGS flags) noexcept
+{
+    HRESULT hr = Initialize2D(srcImage.format, srcImage.width, srcImage.height, 1, 1, flags);
+
+    if (FAILED(hr))
+        return hr;
+
+    uint8_t* sptr = srcImage.pixels;
+    if (!sptr)
+        return E_POINTER;
+
+    uint8_t* dptr = m_image[0].pixels;
+    if (!dptr)
+        return E_POINTER;
+
+    size_t bytesPerPixel = BitsPerPixel(srcImage.format) / 8;
+
+    uint32_t xBytesMask = 0b1010101010101010;
+    uint32_t yBytesMask = 0b0101010101010101;
+
+    for (size_t y = 0; y < srcImage.height; y++)
+    {
+        for (size_t x = 0; x < srcImage.width; x++)
+        {
+            uint32_t swizzleIndex = _pdep_u32(x, xBytesMask) + _pdep_u32(y, yBytesMask);
+
+            uint8_t* sourcePixelPointer = sptr + swizzleIndex * bytesPerPixel;
+            uint8_t* destPixelPointer = dptr + y * m_image[0].rowPitch + x * bytesPerPixel;
+            memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixel);
+        }
+    }
+
+    return S_OK;
+}
+
+_Use_decl_annotations_
 HRESULT ScratchImage::InitializeArrayFromImages(const Image* images, size_t nImages, bool allow1D, CP_FLAGS flags) noexcept
 {
     if (!images || !nImages)
@@ -621,6 +693,84 @@ HRESULT ScratchImage::InitializeArrayFromImages(const Image* images, size_t nIma
             memcpy(dptr, sptr, size);
             sptr += spitch;
             dptr += dpitch;
+        }
+    }
+
+    return S_OK;
+}
+
+_Use_decl_annotations_
+HRESULT ScratchImage::InitializeSwizzlesFromImages(const Image* srcImage, size_t nImages, CP_FLAGS flags) noexcept
+{
+    HRESULT hr = Initialize2D(srcImage[0].format, srcImage[0].width, srcImage[0].height, nImages, 1, flags);
+
+    if (FAILED(hr))
+        return hr;
+
+    for (size_t imageIndex = 0; imageIndex < nImages; imageIndex++)
+    {
+        uint8_t* sptr = srcImage[imageIndex].pixels;
+        if (!sptr)
+            return E_POINTER;
+
+        uint8_t* dptr = m_image[imageIndex].pixels;
+        if (!dptr)
+            return E_POINTER;
+
+        size_t bytesPerPixel = BitsPerPixel(srcImage[imageIndex].format) / 8;
+
+        uint32_t xBytesMask = 0b1010101010101010;
+        uint32_t yBytesMask = 0b0101010101010101;
+
+        for (size_t y = 0; y < srcImage[imageIndex].height; y++)
+        {
+            for (size_t x = 0; x < srcImage[imageIndex].width; x++)
+            {
+                uint32_t swizzleIndex = _pdep_u32(x, xBytesMask) + _pdep_u32(y, yBytesMask);
+
+                uint8_t* sourcePixelPointer = sptr + y * srcImage[imageIndex].rowPitch + x * bytesPerPixel;
+                uint8_t* destPixelPointer = dptr + swizzleIndex * bytesPerPixel;
+                memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixel);
+            }
+        }
+    }
+
+    return S_OK;
+}
+
+_Use_decl_annotations_
+HRESULT ScratchImage::InitializeImagesFromSwizzles(const Image* srcImage, size_t nImages, CP_FLAGS flags) noexcept
+{
+    HRESULT hr = Initialize2D(srcImage[0].format, srcImage[0].width, srcImage[0].height, nImages, 1, flags);
+
+    if (FAILED(hr))
+        return hr;
+
+    for (size_t imageIndex = 0; imageIndex < nImages; imageIndex++)
+    {
+        uint8_t* sptr = srcImage[imageIndex].pixels;
+        if (!sptr)
+            return E_POINTER;
+
+        uint8_t* dptr = m_image[imageIndex].pixels;
+        if (!dptr)
+            return E_POINTER;
+
+        size_t bytesPerPixel = BitsPerPixel(srcImage[imageIndex].format) / 8;
+
+        uint32_t xBytesMask = 0b1010101010101010;
+        uint32_t yBytesMask = 0b0101010101010101;
+
+        for (size_t y = 0; y < srcImage[imageIndex].height; y++)
+        {
+            for (size_t x = 0; x < srcImage[imageIndex].width; x++)
+            {
+                uint32_t swizzleIndex = _pdep_u32(x, xBytesMask) + _pdep_u32(y, yBytesMask);
+
+                uint8_t* sourcePixelPointer = sptr + swizzleIndex * bytesPerPixel;
+                uint8_t* destPixelPointer = dptr + y * m_image[imageIndex].rowPitch + x * bytesPerPixel;
+                memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixel);
+            }
         }
     }
 
