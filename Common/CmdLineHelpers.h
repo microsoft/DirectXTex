@@ -26,6 +26,10 @@
 
 namespace Helpers
 {
+    struct handle_closer { void operator()(HANDLE h) { if (h) CloseHandle(h); } };
+
+    using ScopedHandle = std::unique_ptr<void, handle_closer>;
+
     inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
 
     struct find_closer { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
