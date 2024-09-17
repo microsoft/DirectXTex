@@ -508,7 +508,8 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   add_executable(texenvmap
     Texenvmap/texenvmap.cpp
     Texenvmap/texenvmap.rc
-    Texenvmap/settings.manifest
+    Common/CmdLineHelpers.h
+    Common/settings.manifest
     ${COMPILED_SHADERS}/Texenvmap_VSBasic.inc)
   target_compile_features(texenvmap PRIVATE cxx_std_17)
   target_include_directories(texenvmap PRIVATE ${COMPILED_SHADERS})
