@@ -27,44 +27,6 @@ namespace
 }
 #endif
 
-namespace
-{
-#ifdef __AVX2__
-#define deposit_bits(v,m) _pdep_u32(v,m)
-#define extract_bits(v,m) _pext_u32(v,m)
-#else
-    // N3864 - A constexpr bitwise operations library for C++
-    // https://github.com/fmatthew5876/stdcxx-bitops
-    uint32_t deposit_bits(uint32_t val, uint32_t mask)
-    {
-        uint32_t res = 0;
-        for (uint32_t bb = 1; mask != 0; bb += bb)
-        {
-            if (val & bb)
-            {
-                res |= mask & (-mask);
-            }
-            mask &= (mask - 1);
-        }
-        return res;
-    }
-
-    uint32_t extract_bits(uint32_t val, uint32_t mask)
-    {
-        uint32_t res = 0;
-        for (uint32_t bb = 1; mask !=0; bb += bb)
-        {
-            if (val & mask & -mask)
-            {
-                res |= bb;
-            }
-            mask &= (mask - 1);
-        }
-        return res;
-    }
-#endif
-}
-
 //-------------------------------------------------------------------------------------
 // Determines number of image array entries and pixel size
 //-------------------------------------------------------------------------------------
