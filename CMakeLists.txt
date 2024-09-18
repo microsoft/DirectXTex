@@ -97,6 +97,7 @@ set(LIBRARY_SOURCES
     DirectXTex/DirectXTexMipmaps.cpp
     DirectXTex/DirectXTexMisc.cpp
     DirectXTex/DirectXTexNormalMaps.cpp
+    DirectXTex/DirectxTexSwizzle.cpp
     DirectXTex/DirectXTexPMAlpha.cpp
     DirectXTex/DirectXTexResize.cpp
     DirectXTex/DirectXTexTGA.cpp
