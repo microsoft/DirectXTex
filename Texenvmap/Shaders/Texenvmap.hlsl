@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------
-// File: Texenvmap.fx
+// File: Texenvmap.hlsl
 //
 // DirectX Texture environment map tool shaders
 //
