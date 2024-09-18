@@ -140,3 +140,59 @@ HRESULT DirectX::StandardSwizzle(const Image* srcImages, size_t nimages, const T
 
     return S_OK;
 }
+
+_Use_decl_annotations_
+HRESULT DirectX::StandardSwizzle3D(const Image* srcImages, size_t depth, const TexMetadata& metadata, bool toSwizzle, ScratchImage& result) noexcept
+{
+    HRESULT hr = result.Initialize3D(srcImages[0].format, srcImages[0].width, srcImages[0].height, depth, 1);
+
+    if (!srcImages || !depth || !IsValid(metadata.format) || depth > metadata.depth || !result.GetImages())
+        return E_INVALIDARG;
+
+    if (metadata.IsVolumemap()
+        || IsCompressed(metadata.format) || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
+        return HRESULT_E_NOT_SUPPORTED;
+
+    if (srcImages[0].format != metadata.format || srcImages[0].width != metadata.width || srcImages[0].height != metadata.height)
+    {
+        // Base image must be the same format, width, and height
+        return E_FAIL;
+    }
+
+    for (size_t slice = 0; slice < depth; slice++)
+    {
+        const uint8_t* sptr = srcImages[slice].pixels;
+        if (!sptr)
+            return E_POINTER;
+
+        uint8_t* dptr = result.GetImages()[slice].pixels;
+        if (!dptr)
+            return E_POINTER;
+
+        size_t bytesPerPixel = BitsPerPixel(srcImages[slice].format) / 8;
+
+        uint32_t xBytesMask = 0b1001001001001001;
+        uint32_t yBytesMask = 0b0100100100100100;
+        uint32_t zBytesMask = 0b0010010010010010;
+
+        for (size_t y = 0; y < srcImages[slice].height; y++)
+        {
+            for (size_t x = 0; x < srcImages[slice].width; x++)
+            {
+                uint32_t swizzleIndex = deposit_bits(x, xBytesMask) + deposit_bits(y, yBytesMask) + deposit_bits(slice, zBytesMask);
+                size_t swizzleOffset = swizzleIndex * bytesPerPixel;
+
+                size_t rowMajorOffset = y * srcImages[0].rowPitch + x * bytesPerPixel;
+
+                size_t sourceOffset = toSwizzle ? rowMajorOffset : swizzleOffset;
+                size_t destOffset = toSwizzle ? swizzleOffset : rowMajorOffset;
+
+                const uint8_t* sourcePixelPointer = sptr + sourceOffset;
+                uint8_t* destPixelPointer = dptr + destOffset;
+                memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixel);
+            }
+        }
+    }
+
+    return S_OK;
+}

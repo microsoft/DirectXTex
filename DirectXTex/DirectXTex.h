@@ -730,9 +730,9 @@ namespace DirectX
         _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ size_t item,
         _In_ float alphaReference, _Inout_ ScratchImage& mipChain) noexcept;
 
-    HRESULT __cdecl StandardSwizzle(_In_ const Image& srcImage, bool toSwizzle, _Out_ ScratchImage& image) noexcept;
-
-    HRESULT __cdecl StandardSwizzle(_In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata, bool toSwizzle, _Out_ ScratchImage& result) noexcept;
+    HRESULT __cdecl StandardSwizzle(_In_ const Image& srcImage, _In_ bool toSwizzle, _Out_ ScratchImage& image) noexcept;
+    HRESULT __cdecl StandardSwizzle(_In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ bool toSwizzle, _Out_ ScratchImage& result) noexcept;
+    HRESULT __cdecl StandardSwizzle3D(_In_reads_(depth) const Image* srcImages, _In_ size_t depth, _In_ const TexMetadata& metadata, _In_ bool toSwizzle, _Out_ ScratchImage& result) noexcept;
 
     enum TEX_PMALPHA_FLAGS : unsigned long
     {
