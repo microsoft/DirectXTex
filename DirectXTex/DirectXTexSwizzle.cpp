@@ -65,9 +65,12 @@ HRESULT DirectX::StandardSwizzle(const Image& srcImage, bool toSwizzle, ScratchI
     uint32_t xBytesMask = 0b1010101010101010;
     uint32_t yBytesMask = 0b0101010101010101;
 
-    for (size_t y = 0; y < srcImage.height; y++)
+    size_t height = IsCompressed(srcImage.format) ? (srcImage.height + 3) / 4 : srcImage.height;
+    size_t width  = IsCompressed(srcImage.format) ? (srcImage.width  + 3) / 4 : srcImage.width;
+
+    for (size_t y = 0; y < height; y++)
     {
-        for (size_t x = 0; x < srcImage.width; x++)
+        for (size_t x = 0; x < width; x++)
         {
             uint32_t swizzleIndex = deposit_bits(x, xBytesMask) + deposit_bits(y, yBytesMask);
             size_t swizzleOffset = swizzleIndex * bytesPerPixel;
@@ -94,8 +97,7 @@ HRESULT DirectX::StandardSwizzle(const Image* srcImages, size_t nimages, const T
     if (!srcImages || !nimages || !IsValid(metadata.format) || nimages > metadata.mipLevels || !result.GetImages())
         return E_INVALIDARG;
 
-    if (metadata.IsVolumemap()
-        || IsCompressed(metadata.format) || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
+    if (metadata.IsVolumemap() || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
         return HRESULT_E_NOT_SUPPORTED;
 
     if (srcImages[0].format != metadata.format || srcImages[0].width != metadata.width || srcImages[0].height != metadata.height)
@@ -103,6 +105,9 @@ HRESULT DirectX::StandardSwizzle(const Image* srcImages, size_t nimages, const T
         // Base image must be the same format, width, and height
         return E_FAIL;
     }
+
+    size_t height = IsCompressed(metadata.format) ? (metadata.height + 3) / 4 : metadata.height;
+    size_t width  = IsCompressed(metadata.format) ? (metadata.width  + 3) / 4 : metadata.width;
 
     for (size_t imageIndex = 0; imageIndex < nimages; imageIndex++)
     {
@@ -119,9 +124,9 @@ HRESULT DirectX::StandardSwizzle(const Image* srcImages, size_t nimages, const T
         uint32_t xBytesMask = 0b1010101010101010;
         uint32_t yBytesMask = 0b0101010101010101;
 
-        for (size_t y = 0; y < srcImages[imageIndex].height; y++)
+        for (size_t y = 0; y <height; y++)
         {
-            for (size_t x = 0; x < srcImages[imageIndex].width; x++)
+            for (size_t x = 0; x < width; x++)
             {
                 uint32_t swizzleIndex = deposit_bits(x, xBytesMask) + deposit_bits(y, yBytesMask);
                 size_t swizzleOffset = swizzleIndex * bytesPerPixel;
@@ -149,8 +154,7 @@ HRESULT DirectX::StandardSwizzle3D(const Image* srcImages, size_t depth, const T
     if (!srcImages || !depth || !IsValid(metadata.format) || depth > metadata.depth || !result.GetImages())
         return E_INVALIDARG;
 
-    if (metadata.IsVolumemap()
-        || IsCompressed(metadata.format) || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
+    if (metadata.IsVolumemap() || IsTypeless(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format))
         return HRESULT_E_NOT_SUPPORTED;
 
     if (srcImages[0].format != metadata.format || srcImages[0].width != metadata.width || srcImages[0].height != metadata.height)
@@ -159,6 +163,9 @@ HRESULT DirectX::StandardSwizzle3D(const Image* srcImages, size_t depth, const T
         return E_FAIL;
     }
 
+    size_t height = IsCompressed(metadata.format) ? (metadata.height + 3) / 4 : metadata.height;
+    size_t width  = IsCompressed(metadata.format) ? (metadata.width  + 3) / 4 : metadata.width;
+
     size_t bytesPerPixel = BitsPerPixel(srcImages[0].format) / 8;
     uint32_t xBytesMask = 0b1001001001001001;
     uint32_t yBytesMask = 0b0100100100100100;
@@ -166,9 +173,9 @@ HRESULT DirectX::StandardSwizzle3D(const Image* srcImages, size_t depth, const T
 
     for (size_t z = 0; z < depth; z++)
     {
-        for (size_t y = 0; y < metadata.height; y++)
+        for (size_t y = 0; y < height; y++)
         {
-            for (size_t x = 0; x < metadata.width; x++)
+            for (size_t x = 0; x < width; x++)
             {
                 uint32_t swizzle3Dindex = deposit_bits(x, xBytesMask) + deposit_bits(y, yBytesMask) + deposit_bits(z, zBytesMask);
                 uint32_t swizzle2Dindex = swizzle3Dindex % (metadata.width * metadata.height);
