@@ -251,33 +251,36 @@ HRESULT DirectX::StandardSwizzle3D(const Image* srcImages, size_t depth, const T
         uncompressedDestination = result.GetImages();
     }
 
-    for (size_t slice = 0; slice < depth; slice++)
+    size_t bytesPerPixel = BitsPerPixel(uncompressedSource[0].format) / 8;
+    uint32_t xBytesMask = 0b1001001001001001;
+    uint32_t yBytesMask = 0b0100100100100100;
+    uint32_t zBytesMask = 0b0010010010010010;
+
+    for (size_t z = 0; z < depth; z++)
     {
-        const uint8_t* sptr = uncompressedSource[slice].pixels;
-        if (!sptr)
-            return E_POINTER;
-
-        uint8_t* dptr = uncompressedDestination[slice].pixels;
-        if (!dptr)
-            return E_POINTER;
-
-        size_t bytesPerPixel = BitsPerPixel(uncompressedSource[slice].format) / 8;
-
-        uint32_t xBytesMask = 0b1001001001001001;
-        uint32_t yBytesMask = 0b0100100100100100;
-        uint32_t zBytesMask = 0b0010010010010010;
-
-        for (size_t y = 0; y < uncompressedSource[slice].height; y++)
+        for (size_t y = 0; y < metadata.height; y++)
         {
-            for (size_t x = 0; x < uncompressedSource[slice].width; x++)
+            for (size_t x = 0; x < metadata.width; x++)
             {
-                uint32_t swizzleIndex = deposit_bits(x, xBytesMask) + deposit_bits(y, yBytesMask) + deposit_bits(slice, zBytesMask);
-                size_t swizzleOffset = swizzleIndex * bytesPerPixel;
+                uint32_t swizzle3Dindex = deposit_bits(x, xBytesMask) + deposit_bits(y, yBytesMask) + deposit_bits(z, zBytesMask);
+                uint32_t swizzle2Dindex = swizzle3Dindex % (metadata.width * metadata.height);
+                uint32_t swizzleSlice   = swizzle3Dindex / (metadata.width * metadata.height);
+                size_t swizzleOffset = swizzle2Dindex * bytesPerPixel;
 
                 size_t rowMajorOffset = y * uncompressedSource[0].rowPitch + x * bytesPerPixel;
 
                 size_t sourceOffset = toSwizzle ? rowMajorOffset : swizzleOffset;
+                uint32_t sourceSlice = toSwizzle ? z : swizzleSlice;
+
                 size_t destOffset = toSwizzle ? swizzleOffset : rowMajorOffset;
+                uint32_t destSlice = toSwizzle ? swizzleSlice : z;
+
+                const uint8_t* sptr = uncompressedSource[sourceSlice].pixels;
+                if (!sptr)
+                    return E_POINTER;
+                uint8_t* dptr = uncompressedDestination[destSlice].pixels;
+                if (!dptr)
+                    return E_POINTER;
 
                 const uint8_t* sourcePixelPointer = sptr + sourceOffset;
                 uint8_t* destPixelPointer = dptr + destOffset;
