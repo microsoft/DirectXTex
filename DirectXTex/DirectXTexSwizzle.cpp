@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------
-// DirectXTexImage.cpp
+// DirectXTexSwizzle.cpp
 //
 // DirectX Texture Library - Image container
 //
