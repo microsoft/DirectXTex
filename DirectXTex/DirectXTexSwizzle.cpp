@@ -52,51 +52,27 @@ HRESULT DirectX::StandardSwizzle(const Image& srcImage, bool toSwizzle, ScratchI
     if (FAILED(hr))
         return hr;
 
-    Image uncompressedSource;
-    Image uncompressedDestination;
-    ScratchImage wide;
-    ScratchImage dest;
-    if (IsCompressed(srcImage.format))
-    {
-        wide = ScratchImage();
-        HRESULT de = Decompress(srcImage, srcImage.format, wide);
-        if (FAILED(de))
-            return de;
-        uncompressedSource = wide.GetImages()[0];
-
-        dest = ScratchImage();
-        HRESULT dcom = dest.Initialize2D(uncompressedSource.format, srcImage.width, srcImage.height, 1, 1);
-        if (FAILED(dcom))
-            return dcom;
-        uncompressedDestination = dest.GetImages()[0];
-    }
-    else
-    {
-        uncompressedSource = srcImage;
-        uncompressedDestination = result.GetImages()[0];
-    }
-
-    const uint8_t* sptr = uncompressedSource.pixels;
+    const uint8_t* sptr = srcImage.pixels;
     if (!sptr)
         return E_POINTER;
 
-    uint8_t* dptr = uncompressedDestination.pixels;
+    uint8_t* dptr = result.GetImages()[0].pixels;
     if (!dptr)
         return E_POINTER;
 
-    size_t bytesPerPixel = BitsPerPixel(uncompressedSource.format) / 8;
+    size_t bytesPerPixel = BitsPerPixel(srcImage.format) / 8;
 
     uint32_t xBytesMask = 0b1010101010101010;
     uint32_t yBytesMask = 0b0101010101010101;
 
-    for (size_t y = 0; y < uncompressedSource.height; y++)
+    for (size_t y = 0; y < srcImage.height; y++)
     {
-        for (size_t x = 0; x < uncompressedSource.width; x++)
+        for (size_t x = 0; x < srcImage.width; x++)
         {
             uint32_t swizzleIndex = deposit_bits(x, xBytesMask) + deposit_bits(y, yBytesMask);
             size_t swizzleOffset = swizzleIndex * bytesPerPixel;
 
-            size_t rowMajorOffset = y * uncompressedSource.rowPitch + x * bytesPerPixel;
+            size_t rowMajorOffset = y * srcImage.rowPitch + x * bytesPerPixel;
 
             size_t sourceOffset = toSwizzle ? rowMajorOffset : swizzleOffset;
             size_t destOffset   = toSwizzle ? swizzleOffset  : rowMajorOffset;
@@ -105,16 +81,6 @@ HRESULT DirectX::StandardSwizzle(const Image& srcImage, bool toSwizzle, ScratchI
             uint8_t* destPixelPointer = dptr + destOffset;
             memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixel);
         }
-    }
-
-    if (IsCompressed(srcImage.format))
-    {
-        TEX_COMPRESS_FLAGS flags = TEX_COMPRESS_DEFAULT; // !!TODO!! actual value
-        float threshold = -42; // !!TODO!! actual value
-
-        Compress(uncompressedDestination, srcImage.format, flags, threshold, result);
-        wide.Release();
-        dest.Release();
     }
 
     return S_OK;
@@ -138,53 +104,29 @@ HRESULT DirectX::StandardSwizzle(const Image* srcImages, size_t nimages, const T
         return E_FAIL;
     }
 
-    const Image* uncompressedSource;
-    const Image* uncompressedDestination;
-    ScratchImage wide;
-    ScratchImage dest;
-    if (IsCompressed(metadata.format))
-    {
-        wide = ScratchImage();
-        HRESULT de = Decompress(srcImages, nimages, metadata, metadata.format, wide);
-        if (FAILED(de))
-            return de;
-        uncompressedSource = wide.GetImages();
-
-        dest = ScratchImage();
-        HRESULT dcom = dest.Initialize2D(uncompressedSource[0].format, srcImages[0].width, srcImages[0].height, nimages, 1);
-        if (FAILED(dcom))
-            return dcom;
-        uncompressedDestination = dest.GetImages();
-    }
-    else
-    {
-        uncompressedSource = srcImages;
-        uncompressedDestination = result.GetImages();
-    }
-
     for (size_t imageIndex = 0; imageIndex < nimages; imageIndex++)
     {
-        const uint8_t* sptr = uncompressedSource[imageIndex].pixels;
+        const uint8_t* sptr = srcImages[imageIndex].pixels;
         if (!sptr)
             return E_POINTER;
 
-        uint8_t* dptr = uncompressedDestination[imageIndex].pixels;
+        uint8_t* dptr = result.GetImages()[imageIndex].pixels;
         if (!dptr)
             return E_POINTER;
 
-        size_t bytesPerPixel = BitsPerPixel(uncompressedSource[imageIndex].format) / 8;
+        size_t bytesPerPixel = BitsPerPixel(srcImages[imageIndex].format) / 8;
 
         uint32_t xBytesMask = 0b1010101010101010;
         uint32_t yBytesMask = 0b0101010101010101;
 
-        for (size_t y = 0; y < uncompressedSource[imageIndex].height; y++)
+        for (size_t y = 0; y < srcImages[imageIndex].height; y++)
         {
-            for (size_t x = 0; x < uncompressedSource[imageIndex].width; x++)
+            for (size_t x = 0; x < srcImages[imageIndex].width; x++)
             {
                 uint32_t swizzleIndex = deposit_bits(x, xBytesMask) + deposit_bits(y, yBytesMask);
                 size_t swizzleOffset = swizzleIndex * bytesPerPixel;
 
-                size_t rowMajorOffset = y * uncompressedSource[0].rowPitch + x * bytesPerPixel;
+                size_t rowMajorOffset = y * srcImages[0].rowPitch + x * bytesPerPixel;
 
                 size_t sourceOffset = toSwizzle ? rowMajorOffset : swizzleOffset;
                 size_t destOffset = toSwizzle ? swizzleOffset : rowMajorOffset;
@@ -194,16 +136,6 @@ HRESULT DirectX::StandardSwizzle(const Image* srcImages, size_t nimages, const T
                 memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixel);
             }
         }
-    }
-
-    if (IsCompressed(metadata.format))
-    {
-        TEX_COMPRESS_FLAGS flags = TEX_COMPRESS_DEFAULT; // !!TODO!! actual value
-        float threshold = -42; // !!TODO!! actual value
-
-        Compress(uncompressedDestination, nimages, metadata, metadata.format, flags, threshold, result);
-        wide.Release();
-        dest.Release();
     }
 
     return S_OK;
@@ -227,31 +159,7 @@ HRESULT DirectX::StandardSwizzle3D(const Image* srcImages, size_t depth, const T
         return E_FAIL;
     }
 
-    const Image* uncompressedSource;
-    const Image* uncompressedDestination;
-    ScratchImage wide;
-    ScratchImage dest;
-    if (IsCompressed(metadata.format))
-    {
-        wide = ScratchImage();
-        HRESULT de = Decompress(srcImages, depth, metadata, metadata.format, wide);
-        if (FAILED(de))
-            return de;
-        uncompressedSource = wide.GetImages();
-
-        dest = ScratchImage();
-        HRESULT dcom = dest.Initialize3D(uncompressedSource[0].format, srcImages[0].width, srcImages[0].height, depth, 1);
-        if (FAILED(dcom))
-            return dcom;
-        uncompressedDestination = dest.GetImages();
-    }
-    else
-    {
-        uncompressedSource = srcImages;
-        uncompressedDestination = result.GetImages();
-    }
-
-    size_t bytesPerPixel = BitsPerPixel(uncompressedSource[0].format) / 8;
+    size_t bytesPerPixel = BitsPerPixel(srcImages[0].format) / 8;
     uint32_t xBytesMask = 0b1001001001001001;
     uint32_t yBytesMask = 0b0100100100100100;
     uint32_t zBytesMask = 0b0010010010010010;
@@ -267,7 +175,7 @@ HRESULT DirectX::StandardSwizzle3D(const Image* srcImages, size_t depth, const T
                 uint32_t swizzleSlice   = swizzle3Dindex / (metadata.width * metadata.height);
                 size_t swizzleOffset = swizzle2Dindex * bytesPerPixel;
 
-                size_t rowMajorOffset = y * uncompressedSource[0].rowPitch + x * bytesPerPixel;
+                size_t rowMajorOffset = y * srcImages[0].rowPitch + x * bytesPerPixel;
 
                 size_t sourceOffset = toSwizzle ? rowMajorOffset : swizzleOffset;
                 uint32_t sourceSlice = toSwizzle ? z : swizzleSlice;
@@ -275,10 +183,10 @@ HRESULT DirectX::StandardSwizzle3D(const Image* srcImages, size_t depth, const T
                 size_t destOffset = toSwizzle ? swizzleOffset : rowMajorOffset;
                 uint32_t destSlice = toSwizzle ? swizzleSlice : z;
 
-                const uint8_t* sptr = uncompressedSource[sourceSlice].pixels;
+                const uint8_t* sptr = srcImages[sourceSlice].pixels;
                 if (!sptr)
                     return E_POINTER;
-                uint8_t* dptr = uncompressedDestination[destSlice].pixels;
+                uint8_t* dptr = result.GetImages()[destSlice].pixels;
                 if (!dptr)
                     return E_POINTER;
 
@@ -287,16 +195,6 @@ HRESULT DirectX::StandardSwizzle3D(const Image* srcImages, size_t depth, const T
                 memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixel);
             }
         }
-    }
-
-    if (IsCompressed(metadata.format))
-    {
-        TEX_COMPRESS_FLAGS flags = TEX_COMPRESS_DEFAULT; // !!TODO!! actual value
-        float threshold = -42; // !!TODO!! actual value
-
-        Compress(uncompressedDestination, depth, metadata, metadata.format, flags, threshold, result);
-        wide.Release();
-        dest.Release();
     }
 
     return S_OK;
