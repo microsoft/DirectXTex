@@ -921,6 +921,45 @@ size_t DirectX::BitsPerColor(DXGI_FORMAT fmt) noexcept
 
 
 //-------------------------------------------------------------------------------------
+// Returns bytes per block for a given DXGI BC format, or 0 on failure
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
+size_t DirectX::BytesPerBlock(DXGI_FORMAT fmt) noexcept
+{
+    switch (fmt)
+    {
+    case DXGI_FORMAT_BC1_TYPELESS:
+    case DXGI_FORMAT_BC1_UNORM:
+    case DXGI_FORMAT_BC1_UNORM_SRGB:
+    case DXGI_FORMAT_BC4_TYPELESS:
+    case DXGI_FORMAT_BC4_UNORM:
+    case DXGI_FORMAT_BC4_SNORM:
+        return 8;
+
+    case DXGI_FORMAT_BC2_TYPELESS:
+    case DXGI_FORMAT_BC2_UNORM:
+    case DXGI_FORMAT_BC2_UNORM_SRGB:
+    case DXGI_FORMAT_BC3_TYPELESS:
+    case DXGI_FORMAT_BC3_UNORM:
+    case DXGI_FORMAT_BC3_UNORM_SRGB:
+    case DXGI_FORMAT_BC5_TYPELESS:
+    case DXGI_FORMAT_BC5_UNORM:
+    case DXGI_FORMAT_BC5_SNORM:
+    case DXGI_FORMAT_BC6H_TYPELESS:
+    case DXGI_FORMAT_BC6H_UF16:
+    case DXGI_FORMAT_BC6H_SF16:
+    case DXGI_FORMAT_BC7_TYPELESS:
+    case DXGI_FORMAT_BC7_UNORM:
+    case DXGI_FORMAT_BC7_UNORM_SRGB:
+        return 16;
+
+    default:
+        return 0;
+    }
+}
+
+
+//-------------------------------------------------------------------------------------
 // Computes the image row pitch in bytes, and the slice ptich (size in bytes of the image)
 // based on DXGI format, width, and height
 //-------------------------------------------------------------------------------------
