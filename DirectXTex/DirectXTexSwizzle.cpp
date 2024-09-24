@@ -1,7 +1,7 @@
 //-------------------------------------------------------------------------------------
 // DirectXTexSwizzle.cpp
 //
-// DirectX Texture Library - Image container
+// DirectX Texture Library - Standard Swizzle (z-order curve)
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
