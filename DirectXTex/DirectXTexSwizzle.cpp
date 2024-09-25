@@ -229,24 +229,31 @@ HRESULT DirectX::StandardSwizzle(
         return E_FAIL;
     }
 
+    const auto dstImage = result.GetImage(0, 0, 0);
+    if (!dstImage)
+    {
+        result.Release();
+        return E_POINTER;
+    }
+
     if (toSwizzle)
     {
         switch(bytesPerPixel)
         {
         case 1:
-            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_8, 1>(srcImage, *result.GetImage(0, 0, 0), false);
+            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_8, 1>(srcImage, *dstImage, false);
             break;
         case 2:
-            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_16, 2>(srcImage, *result.GetImage(0, 0, 0), false);
+            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_16, 2>(srcImage, *dstImage, false);
             break;
         case 8:
-            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_64, 8>(srcImage, *result.GetImage(0, 0, 0), isCompressed);
+            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_64, 8>(srcImage, *dstImage, isCompressed);
             break;
         case 16:
-            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_128, 16>(srcImage, *result.GetImage(0, 0, 0), isCompressed);
+            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_128, 16>(srcImage, *dstImage, isCompressed);
             break;
         default:
-            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_32, 4>(srcImage, *result.GetImage(0, 0, 0), false);
+            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_32, 4>(srcImage, *dstImage, false);
             break;
         }
     }
@@ -255,19 +262,19 @@ HRESULT DirectX::StandardSwizzle(
         switch(bytesPerPixel)
         {
         case 1:
-            hr = StandardSwizzleToLinear2D<STANDARD_SWIZZLE_MASK_8, 1>(srcImage, *result.GetImage(0, 0, 0), false);
+            hr = StandardSwizzleToLinear2D<STANDARD_SWIZZLE_MASK_8, 1>(srcImage, *dstImage, false);
             break;
         case 2:
-            hr = StandardSwizzleToLinear2D<STANDARD_SWIZZLE_MASK_16, 2>(srcImage, *result.GetImage(0, 0, 0), false);
+            hr = StandardSwizzleToLinear2D<STANDARD_SWIZZLE_MASK_16, 2>(srcImage, *dstImage, false);
             break;
         case 8:
-            hr = StandardSwizzleToLinear2D<STANDARD_SWIZZLE_MASK_64, 8>(srcImage, *result.GetImage(0, 0, 0), isCompressed);
+            hr = StandardSwizzleToLinear2D<STANDARD_SWIZZLE_MASK_64, 8>(srcImage, *dstImage, isCompressed);
             break;
         case 16:
-            hr = StandardSwizzleToLinear2D<STANDARD_SWIZZLE_MASK_128, 16>(srcImage, *result.GetImage(0, 0, 0), isCompressed);
+            hr = StandardSwizzleToLinear2D<STANDARD_SWIZZLE_MASK_128, 16>(srcImage, *dstImage, isCompressed);
             break;
         default:
-            hr = StandardSwizzleToLinear2D<STANDARD_SWIZZLE_MASK_32, 4>(srcImage, *result.GetImage(0, 0, 0), false);
+            hr = StandardSwizzleToLinear2D<STANDARD_SWIZZLE_MASK_32, 4>(srcImage, *dstImage, false);
             break;
         }
     }
