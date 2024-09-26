@@ -13,7 +13,6 @@
 #include "DirectXTexP.h"
 
 using namespace DirectX;
-using namespace DirectX::Internal;
 
 
 namespace
@@ -55,10 +54,10 @@ namespace
 
     constexpr size_t MAX_TEXTURE_DIMENSION = 16384u;
 
-#if defined(_M_X64) || defined(_M_ARM64)
-    constexpr size_t MAX_TEXTURE_SIZE = 16384u * 16384u * 16u;
+#if defined(_M_X64) || defined(_M_ARM64) || __x86_64__ || __aarch64__
+    constexpr uint64_t MAX_TEXTURE_SIZE = 16384u * 16384u * 16u;
 #else
-    constexpr size_t MAX_TEXTURE_SIZE = UINT32_MAX;
+    constexpr uint64_t MAX_TEXTURE_SIZE = UINT32_MAX;
 #endif
 
     // Standard Swizzle is not defined for these formats.
@@ -147,7 +146,7 @@ namespace
         if (!dptr)
             return E_POINTER;
 
-        if ((srcImage.rowPitch > UINT32_MAX) || (destImage.rowPitch > UINT32_MAX))
+        if (srcImage.rowPitch > UINT32_MAX)
             return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         const size_t height = isCompressed ? (srcImage.height + 3) / 4 : srcImage.height;
@@ -216,7 +215,7 @@ namespace
         if (!dptr)
             return E_POINTER;
 
-        if ((srcImage.rowPitch > UINT32_MAX) || (destImage.rowPitch > UINT32_MAX))
+        if (srcImage.rowPitch > UINT32_MAX)
             return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         const size_t height = isCompressed ? (srcImage.height + 3) / 4 : srcImage.height;
@@ -296,9 +295,6 @@ namespace
         if (!dptr)
             return E_POINTER;
 
-        if (destImage.rowPitch > UINT32_MAX)
-            return HRESULT_E_ARITHMETIC_OVERFLOW;
-
         // TODO: linear to swizzle x,y,z
         return E_NOTIMPL;
     }
@@ -319,9 +315,6 @@ namespace
         uint8_t* dptr = destImage.pixels;
         if (!dptr)
             return E_POINTER;
-
-        if (destImage.rowPitch > UINT32_MAX)
-            return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         // TODO: swizzle x,y,z to linear
         return E_NOTIMPL;
