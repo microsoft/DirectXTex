@@ -24,7 +24,7 @@ namespace
 #else
     // N3864 - A constexpr bitwise operations library for C++
     // https://github.com/fmatthew5876/stdcxx-bitops
-    uint32_t deposit_bits(uint32_t val, int mask)
+    uint32_t deposit_bits(uint32_t val, int mask) noexcept
     {
         uint32_t res = 0;
         for (uint32_t bb = 1; mask != 0; bb += bb)
@@ -38,7 +38,7 @@ namespace
         return res;
     }
 
-    uint32_t extract_bits(uint32_t val, int mask)
+    uint32_t extract_bits(uint32_t val, int mask) noexcept
     {
         uint32_t res = 0;
         for (uint32_t bb = 1; mask !=0; bb += bb)
@@ -60,6 +60,64 @@ namespace
 #else
     constexpr size_t MAX_TEXTURE_SIZE = UINT32_MAX;
 #endif
+
+    // Standard Swizzle is not defined for these formats.
+    bool IsExcludedFormat(DXGI_FORMAT fmt) noexcept
+    {
+        switch(static_cast<int>(fmt))
+        {
+        // 96bpp
+        case DXGI_FORMAT_R32G32B32_TYPELESS:
+        case DXGI_FORMAT_R32G32B32_FLOAT:
+        case DXGI_FORMAT_R32G32B32_UINT:
+        case DXGI_FORMAT_R32G32B32_SINT:
+
+        // Depth/stencil
+        case DXGI_FORMAT_R32G8X24_TYPELESS:
+        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+        case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+        case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+        case DXGI_FORMAT_D32_FLOAT:
+        case DXGI_FORMAT_R24G8_TYPELESS:
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:
+        case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+        case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+        case DXGI_FORMAT_D16_UNORM:
+        case XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT:
+        case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
+        case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:
+
+        // Monochrome
+        case DXGI_FORMAT_R1_UNORM:
+
+        // Packed
+        case DXGI_FORMAT_R8G8_B8G8_UNORM:
+        case DXGI_FORMAT_G8R8_G8B8_UNORM:
+        case DXGI_FORMAT_YUY2:
+        case DXGI_FORMAT_Y210:
+        case DXGI_FORMAT_Y216:
+
+        // Planar
+        case DXGI_FORMAT_NV12:
+        case DXGI_FORMAT_P010:
+        case DXGI_FORMAT_P016:
+        case DXGI_FORMAT_420_OPAQUE:
+        case DXGI_FORMAT_NV11:
+        case WIN10_DXGI_FORMAT_P208:
+        case WIN10_DXGI_FORMAT_V208:
+        case WIN10_DXGI_FORMAT_V408:
+
+        // Palettized
+        case DXGI_FORMAT_AI44:
+        case DXGI_FORMAT_IA44:
+        case DXGI_FORMAT_P8:
+        case DXGI_FORMAT_A8P8:
+            return true;
+
+        default:
+            return false;
+        }
+    }
 
 //-------------------------------------------------------------------------------------
 // 2D z-order curve
@@ -218,40 +276,55 @@ namespace
     constexpr uint16_t VOLUME_STANDARD_SWIZZLE_Z_64  = 0b0010010011000111;
     constexpr uint16_t VOLUME_STANDARD_SWIZZLE_Z_128 = 0b0010010011001111;
 
-    inline int GetSwizzleMask3D_X(size_t bytesPerPixel) noexcept
+    // We rely on the fact that ScratchImage will put all slices in the same mip level
+    // in continous memory. We do not assume that is true of the source images.
+
+    //---------------------------------------------------------------------------------
+    // row-major to z-order curve
+    //---------------------------------------------------------------------------------
+    template<int xBytesMask, int yBytesMask, int zBytesMask, size_t bytesPerPixel>
+    HRESULT LinearToStandardSwizzle3D(
+        _In_reads_(depth) const Image* srcImages,
+        const Image& destImage,
+        size_t depth,
+        bool isCompressed) noexcept
     {
-        switch(bytesPerPixel)
-        {
-        case 1: return VOLUME_STANDARD_SWIZZLE_X_8;
-        case 2: return VOLUME_STANDARD_SWIZZLE_X_16;
-        case 8: return VOLUME_STANDARD_SWIZZLE_X_64;
-        case 16: return VOLUME_STANDARD_SWIZZLE_X_128;
-        default: return VOLUME_STANDARD_SWIZZLE_X_32;
-        }
+        if (!srcImages || !depth)
+            return E_INVALIDARG;
+
+        uint8_t* dptr = destImage.pixels;
+        if (!dptr)
+            return E_POINTER;
+
+        if (destImage.rowPitch > UINT32_MAX)
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+
+        // TODO: linear to swizzle x,y,z
+        return E_NOTIMPL;
     }
 
-    inline int GetSwizzleMask3D_Y(size_t bytesPerPixel) noexcept
+    //---------------------------------------------------------------------------------
+    // z-order curve to row-major
+    //---------------------------------------------------------------------------------
+    template<int xBytesMask, int yBytesMask, int zBytesMask, size_t bytesPerPixel>
+    HRESULT StandardSwizzleToLinear3D(
+        _In_reads_(depth) const Image* srcImages,
+        const Image& destImage,
+        size_t depth,
+        bool isCompressed) noexcept
     {
-        switch(bytesPerPixel)
-        {
-        case 1: return VOLUME_STANDARD_SWIZZLE_Y_8;
-        case 2: return VOLUME_STANDARD_SWIZZLE_Y_16;
-        case 8: return VOLUME_STANDARD_SWIZZLE_Y_64;
-        case 16: return VOLUME_STANDARD_SWIZZLE_Y_128;
-        default: return VOLUME_STANDARD_SWIZZLE_Y_32;
-        }
-    }
+        if (!srcImages || !depth)
+            return E_INVALIDARG;
 
-    inline int GetSwizzleMask3D_Z(size_t bytesPerPixel) noexcept
-    {
-        switch(bytesPerPixel)
-        {
-        case 1: return VOLUME_STANDARD_SWIZZLE_Z_8;
-        case 2: return VOLUME_STANDARD_SWIZZLE_Z_16;
-        case 8: return VOLUME_STANDARD_SWIZZLE_Z_64;
-        case 16: return VOLUME_STANDARD_SWIZZLE_Z_128;
-        default: return VOLUME_STANDARD_SWIZZLE_Z_32;
-        }
+        uint8_t* dptr = destImage.pixels;
+        if (!dptr)
+            return E_POINTER;
+
+        if (destImage.rowPitch > UINT32_MAX)
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+
+        // TODO: swizzle x,y,z to linear
+        return E_NOTIMPL;
     }
 }
 
@@ -273,7 +346,7 @@ HRESULT DirectX::StandardSwizzle(
         return HRESULT_E_NOT_SUPPORTED;
     }
 
-    if (IsPlanar(srcImage.format) || IsPalettized(srcImage.format) || (srcImage.format == DXGI_FORMAT_R1_UNORM))
+    if (IsExcludedFormat(srcImage.format))
         return HRESULT_E_NOT_SUPPORTED;
 
     if (!srcImage.pixels)
@@ -368,7 +441,7 @@ HRESULT DirectX::StandardSwizzle(
         return HRESULT_E_NOT_SUPPORTED;
     }
 
-    if (IsPlanar(metadata.format) || IsPalettized(metadata.format) || (metadata.format == DXGI_FORMAT_R1_UNORM))
+    if (IsExcludedFormat(metadata.format))
         return HRESULT_E_NOT_SUPPORTED;
 
     HRESULT hr = result.Initialize(metadata);
@@ -398,8 +471,104 @@ HRESULT DirectX::StandardSwizzle(
 
     if (metadata.dimension == TEX_DIMENSION_TEXTURE3D)
     {
-        // TODO -
-        return E_NOTIMPL;
+        size_t index = 0;
+        size_t depth = metadata.depth;
+        for (size_t level = 0; level < metadata.mipLevels; ++level)
+        {
+            const Image* srcBase = &srcImages[index];
+            const Image& destBase = dest[index];
+
+            for(size_t slice = 0; slice < depth; ++slice, ++index)
+            {
+                if (index >= nimages)
+                {
+                    result.Release();
+                    return E_UNEXPECTED;
+                }
+
+                const Image& src = srcImages[index];
+                if (!src.pixels)
+                {
+                    result.Release();
+                    return E_POINTER;
+                }
+
+                if (src.format != metadata.format)
+                {
+                    result.Release();
+                    return E_FAIL;
+                }
+
+                if ((src.width > MAX_TEXTURE_DIMENSION) || (src.height > MAX_TEXTURE_DIMENSION))
+                {
+                    result.Release();
+                    return E_FAIL;
+                }
+
+                const Image& dst = dest[index];
+                assert(dst.format == metadata.format);
+
+                if (src.width != dst.width || src.height != dst.height)
+                {
+                    result.Release();
+                    return E_FAIL;
+                }
+            }
+
+            if (toSwizzle)
+            {
+                switch(bytesPerPixel)
+                {
+                case 1:
+                    hr = LinearToStandardSwizzle3D<VOLUME_STANDARD_SWIZZLE_X_8, VOLUME_STANDARD_SWIZZLE_Y_8, VOLUME_STANDARD_SWIZZLE_Z_8, 1>(srcBase, destBase, depth, false);
+                    break;
+                case 2:
+                    hr = LinearToStandardSwizzle3D<VOLUME_STANDARD_SWIZZLE_X_16, VOLUME_STANDARD_SWIZZLE_Y_16, VOLUME_STANDARD_SWIZZLE_Z_16, 2>(srcBase, destBase, depth, false);
+                    break;
+                case 8:
+                    hr = LinearToStandardSwizzle3D<VOLUME_STANDARD_SWIZZLE_X_64, VOLUME_STANDARD_SWIZZLE_Y_64, VOLUME_STANDARD_SWIZZLE_Z_64, 8>(srcBase, destBase, depth, isCompressed);
+                    break;
+                case 16:
+                    hr = LinearToStandardSwizzle3D<VOLUME_STANDARD_SWIZZLE_X_128, VOLUME_STANDARD_SWIZZLE_Y_128, VOLUME_STANDARD_SWIZZLE_Z_128, 16>(srcBase, destBase, depth, isCompressed);
+                    break;
+                default:
+                    hr = LinearToStandardSwizzle3D<VOLUME_STANDARD_SWIZZLE_X_32, VOLUME_STANDARD_SWIZZLE_Y_32, VOLUME_STANDARD_SWIZZLE_Z_32, 4>(srcBase, destBase, depth, false);
+                    break;
+                }
+            }
+            else
+            {
+                switch(bytesPerPixel)
+                {
+                case 1:
+                    hr = StandardSwizzleToLinear3D<VOLUME_STANDARD_SWIZZLE_X_8, VOLUME_STANDARD_SWIZZLE_Y_8, VOLUME_STANDARD_SWIZZLE_Z_8, 1>(srcBase, destBase, depth, false);
+                    break;
+                case 2:
+                    hr = StandardSwizzleToLinear3D<VOLUME_STANDARD_SWIZZLE_X_16, VOLUME_STANDARD_SWIZZLE_Y_16, VOLUME_STANDARD_SWIZZLE_Z_16, 2>(srcBase, destBase, depth, false);
+                    break;
+                case 8:
+                    hr = StandardSwizzleToLinear3D<VOLUME_STANDARD_SWIZZLE_X_64, VOLUME_STANDARD_SWIZZLE_Y_64, VOLUME_STANDARD_SWIZZLE_Z_64, 8>(srcBase, destBase, depth, isCompressed);
+                    break;
+                case 16:
+                    hr = StandardSwizzleToLinear3D<VOLUME_STANDARD_SWIZZLE_X_128, VOLUME_STANDARD_SWIZZLE_Y_128, VOLUME_STANDARD_SWIZZLE_Z_128, 16>(srcBase, destBase, depth, isCompressed);
+                    break;
+                default:
+                    hr = StandardSwizzleToLinear3D<VOLUME_STANDARD_SWIZZLE_X_32, VOLUME_STANDARD_SWIZZLE_Y_32, VOLUME_STANDARD_SWIZZLE_Z_32, 4>(srcBase, destBase, depth, false);
+                    break;
+                }
+            }
+
+            if (FAILED(hr))
+            {
+                result.Release();
+                return hr;
+            }
+
+            if (depth > 1)
+                depth >>= 1;
+        }
+
+        return S_OK;
     }
     else
     {
@@ -484,43 +653,6 @@ HRESULT DirectX::StandardSwizzle(
 
 
 #if 0
-// TODO: merging into main based on metadata
-_Use_decl_annotations_
-HRESULT DirectX::StandardSwizzle3D(
-    const Image* srcImages,
-    size_t depth,
-    const TexMetadata& metadata,
-    bool toSwizzle,
-    ScratchImage& result) noexcept
-{
-    if (!srcImages || !depth || (metadata.dimension != TEX_DIMENSION_TEXTURE3D))
-        return E_INVALIDARG;
-
-    if (IsPlanar(metadata.format) || IsPalettized(metadata.format) || (metadata.format == DXGI_FORMAT_R1_UNORM))
-        return HRESULT_E_NOT_SUPPORTED;
-
-    HRESULT hr = result.Initialize(metadata);
-    if (FAILED(hr))
-        return hr;
-
-    if ((depth * metadata.mipLevels) != result.GetImageCount())
-    {
-        result.Release();
-        return E_FAIL;
-    }
-
-    const bool isCompressed = IsCompressed(metadata.format);
-    const size_t bytesPerPixel = isCompressed ? BytesPerBlock(metadata.format) : (BitsPerPixel(metadata.format) / 8);
-    if (!bytesPerPixel)
-    {
-        result.Release();
-        return E_FAIL;
-    }
-
-    const int xBytesMask = GetSwizzleMask3D_X(metadata.format);
-    const int yBytesMask = GetSwizzleMask3D_Y(metadata.format);
-    const int zBytesMask = GetSwizzleMask3D_Z(metadata.format);
-
     if (toSwizzle)
     {
         // row-major to z-order curve
@@ -584,7 +716,4 @@ HRESULT DirectX::StandardSwizzle3D(
             }
         }
     }
-
-    return S_OK;
-}
 #endif
