@@ -21,9 +21,6 @@ on:
       - build/*.targets
       - build/*.yml
 
-env:
-  DIRECTXTEX_MEDIA_PATH: ${{ github.workspace }}/Media
-
 permissions:
   contents: read
 
