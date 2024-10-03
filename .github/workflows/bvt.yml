@@ -1,0 +1,106 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+#
+# http://go.microsoft.com/fwlink/?LinkId=248926
+
+name: 'CTest (BVTs)'
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - LICENSE
+      - '.nuget/*'
+      - build/*.cmd
+      - build/*.json
+      - build/*.props
+      - build/*.ps1
+      - build/*.targets
+      - build/*.yml
+
+env:
+  DIRECTXTEX_MEDIA_PATH: ${{ github.workspace }}/Media
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        os: [windows-2019, windows-2022]
+        build_type: [x64-Debug, x64-Release]
+        arch: [amd64]
+
+    steps:
+    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+
+    - name: Clone test repository
+      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      with:
+        repository: walbourn/directxtextest
+        path: Tests
+        ref: main
+
+    - name: 'Install Ninja'
+      run: choco install ninja
+
+    - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+      with:
+        arch: ${{ matrix.arch }}
+
+    - name: 'Set triplet'
+      shell: pwsh
+      run: |
+        if ("${{ matrix.arch }}" -eq "amd64")
+        {
+            echo "VCPKG_DEFAULT_TRIPLET=x64-windows" >> $env:GITHUB_ENV
+        }
+        elseif ("${{ matrix.arch }}" -eq "amd64_x86")
+        {
+            echo "VCPKG_DEFAULT_TRIPLET=x86-windows" >> $env:GITHUB_ENV
+        }
+        elseif ("${{ matrix.arch }}" -eq "amd64_arm64")
+        {
+            if ("${{ matrix.build_type }}" -match "^arm64ec")
+            {
+                echo "VCPKG_DEFAULT_TRIPLET=arm64ec-windows" >> $env:GITHUB_ENV
+            }
+            else
+            {
+                echo "VCPKG_DEFAULT_TRIPLET=arm64-windows" >> $env:GITHUB_ENV
+            }
+        }
+        else
+        {
+            echo "::error Unknown architecture/build-type triplet mapping"
+        }
+
+    - uses: lukka/run-vcpkg@7d259227a1fb6471a0253dd5ab7419835228f7d7 # v11
+      with:
+        runVcpkgInstall: true
+        vcpkgJsonGlob: '**/build/vcpkg.json'
+        vcpkgGitCommitId: '7516a02de04e8f8ff4e4beb8f5bac0565f9bf9da'
+
+    - name: 'Configure CMake'
+      working-directory: ${{ github.workspace }}
+      run: >
+        cmake --preset=${{ matrix.build_type }} -DBUILD_TESTING=ON -DBUILD_TOOLS=OFF -DBUILD_SAMPLE=OFF -DBUILD_BVT=ON
+        -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/build"
+        -DVCPKG_TARGET_TRIPLET="${env:VCPKG_DEFAULT_TRIPLET}"
+
+    - name: 'Build'
+      working-directory: ${{ github.workspace }}
+      run: cmake --build out\build\${{ matrix.build_type }}
+
+    - name: 'Run BVTs'
+      working-directory: ${{ github.workspace }}
+      run: ctest --preset=${{ matrix.build_type }} --output-on-failure
