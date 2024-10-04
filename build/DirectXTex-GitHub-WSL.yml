@@ -155,7 +155,7 @@ jobs:
   - task: CmdLine@2
     displayName: Fetch VCPKG
     inputs:
-      script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/microsoft/vcpkg.git
+      script: git clone --quiet --no-tags --depth=1 --branch $(VCPKG_TAG) https://%GITHUB_PAT%@github.com/microsoft/vcpkg.git
       workingDirectory: $(Build.SourcesDirectory)
   - task: Bash@3
     displayName: VCPKG Bootstrap
