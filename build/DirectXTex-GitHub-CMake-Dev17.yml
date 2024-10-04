@@ -50,13 +50,17 @@ resources:
   - repository: self
     type: git
     ref: refs/heads/main
+  - repository: Microsoft/vcpkg
+    name: vcpkg
+    type: github
+    ref: refs/tags/$(VCPKG_TAG)
+    path: $(Build.SourcesDirectory)/vcpkg
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
 variables:
   Codeql.Enabled: false
   VCPKG_CMAKE_DIR: '$(VCPKG_ROOT)/scripts/buildsystems/vcpkg.cmake'
-  GITHUB_PAT: $(GITHUBPUBLICTOKEN)
   VS_GENERATOR: 'Visual Studio 17 2022'
   WIN10_SDK: '10.0.19041.0'
   WIN11_SDK: '10.0.22000.0'
@@ -218,16 +222,16 @@ jobs:
   - checkout: self
     clean: true
     fetchTags: false
-  - task: CmdLine@2
+  - checkout: vcpkg
     displayName: Fetch VCPKG
-    inputs:
-      script: git clone --quiet --no-tags --depth=1 --branch $(VCPKG_TAG) https://%GITHUB_PAT%@github.com/microsoft/vcpkg.git
-      workingDirectory: $(Build.SourcesDirectory)
+    clean: true
+    fetchTags: false
+    fetchDepth: 1
   - task: CmdLine@2
     displayName: VCPKG Bootstrap
     inputs:
       script: call bootstrap-vcpkg.bat
-      workingDirectory: $(Build.SourcesDirectory)\vcpkg
+      workingDirectory: $(Build.SourcesDirectory)/vcpkg
   - task: CmdLine@2
     displayName: VCPKG install headers
     inputs:
@@ -249,7 +253,7 @@ jobs:
         @echo --- ERROR: VCPKG FAILED ---
         exit /b 1
 
-      workingDirectory: $(Build.SourcesDirectory)\vcpkg
+      workingDirectory: $(Build.SourcesDirectory)/vcpkg
 
   - task: CMake@1
     displayName: 'CMake (MSVC): Config x64'
