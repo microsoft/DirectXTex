@@ -53,6 +53,7 @@ resources:
   - repository: Microsoft/vcpkg
     name: vcpkg
     type: github
+    endpoint: microsoft
     ref: refs/tags/$(VCPKG_TAG)
     path: $(Build.SourcesDirectory)/vcpkg
 
