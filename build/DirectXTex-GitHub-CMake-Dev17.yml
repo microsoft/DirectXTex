@@ -50,12 +50,11 @@ resources:
   - repository: self
     type: git
     ref: refs/heads/main
-  - repository: Microsoft/vcpkg
-    name: vcpkg
+  - repository: vcpkg
+    name: Microsoft/vcpkg
     type: github
     endpoint: microsoft
     ref: refs/tags/$(VCPKG_TAG)
-    path: $(Build.SourcesDirectory)/vcpkg
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
@@ -228,6 +227,7 @@ jobs:
     clean: true
     fetchTags: false
     fetchDepth: 1
+    path: $(Build.SourcesDirectory)/vcpkg
   - task: CmdLine@2
     displayName: VCPKG Bootstrap
     inputs:
