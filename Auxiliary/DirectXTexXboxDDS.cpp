@@ -229,7 +229,7 @@ namespace
 _Use_decl_annotations_
 HRESULT Xbox::EncodeDDSHeader(
     const XboxImage& xbox,
-    void* pDestination,
+    uint8_t* pDestination,
     size_t maxsize) noexcept
 {
     if (!pDestination)
