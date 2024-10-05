@@ -199,7 +199,7 @@ jobs:
   - task: CmdLine@2
     displayName: VCPKG install packages
     inputs:
-      script: vcpkg install --x-manifest-root=$(VCPKG_MANIFEST_DIR) --triplet=x64-windows
+      script: vcpkg install --x-manifest-root=$(VCPKG_MANIFEST_DIR) --triplet=x64-linux
       workingDirectory: $(VCPKG_ROOT)
   - task: CMake@1
     displayName: CMake DirectXTex (Config) dbg
