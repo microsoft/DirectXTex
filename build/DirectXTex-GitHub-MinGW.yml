@@ -121,9 +121,13 @@ jobs:
         Write-Host "Added to path: $env:BUILD_SOURCESDIRECTORY\gw32\mingw32\bin"
         Write-Host "##vso[task.prependpath]$env:BUILD_SOURCESDIRECTORY\gw32\mingw32\bin"
         $sdkroot = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows Kits\Installed Roots' | Select-Object -ExpandProperty KitsRoot10
-        $windows11sdk = "{0}bin\$(WIN11_SDK)\" -f $sdkroot
-        if (Test-Path "$windows11sdk") {
-            Write-Host "##vso[task.setvariable variable=WindowsSdkVerBinPath;]$windows11sdk"
+        $wsdkbin = "{0}bin\" -f $sdkroot
+        $wsdkverbin = "{0}bin\$(WIN11_SDK)\" -f $sdkroot
+        $wsdkarchbin = "{0}bin\$(WIN11_SDK)\x86" -f $sdkroot
+        if (Test-Path "$wsdkarchbin") {
+            Write-Host "##vso[task.setvariable variable=WindowsSdkBinPath;]$wsdkbin"
+            Write-Host "##vso[task.setvariable variable=WindowsSdkVerBinPath;]$wsdkverbin"
+            Write-Host "##vso[task.prependpath]$wsdkarchbin"
         }
         else {
             Write-Error -Message "##[error]Can't find Windows SDK ($(WIN11_SDK))" -ErrorAction Stop
@@ -242,11 +246,13 @@ jobs:
       script: |
         $ProgressPreference = 'SilentlyContinue'
         $sdkroot = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows Kits\Installed Roots' | Select-Object -ExpandProperty KitsRoot10
-        $windows11sdk = "{0}bin\$(WIN11_SDK)\" -f $sdkroot
-        $windows11x64sdk = "{0}bin\$(WIN11_SDK)\x64" -f $sdkroot
-        if (Test-Path "$windows11sdk") {
-            Write-Host "##vso[task.setvariable variable=WindowsSdkVerBinPath;]$windows11sdk"
-            Write-Host "##vso[task.prependpath]$windows11x64sdk"
+        $wsdkbin = "{0}bin\" -f $sdkroot
+        $wsdkverbin = "{0}bin\$(WIN11_SDK)\" -f $sdkroot
+        $wsdkarchbin = "{0}bin\$(WIN11_SDK)\x64" -f $sdkroot
+        if (Test-Path "$wsdkarchbin") {
+            Write-Host "##vso[task.setvariable variable=WindowsSdkBinPath;]$wsdkbin"
+            Write-Host "##vso[task.setvariable variable=WindowsSdkVerBinPath;]$wsdkverbin"
+            Write-Host "##vso[task.prependpath]$wsdkarchbin"
         }
         else {
             Write-Error -Message "##[error]Can't find Windows SDK ($(WIN11_SDK))" -ErrorAction Stop
