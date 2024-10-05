@@ -23,7 +23,7 @@ trigger:
     - '.github/*'
     - '.nuget/*'
     - build/*.cmd
-    - build/*.json
+    - build/OneFuzz*.json
     - build/*.props
     - build/*.ps1
     - build/*.targets
@@ -39,7 +39,7 @@ pr:
     - '.github/*'
     - '.nuget/*'
     - build/*.cmd
-    - build/*.json
+    - build/OneFuzz*.json
     - build/*.props
     - build/*.ps1
     - build/*.targets
