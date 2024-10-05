@@ -31,7 +31,7 @@ resources:
     name: walbourn/directxtextest
     type: github
     endpoint: microsoft
-    ref: refs/tags/main
+    ref: refs/heads/main
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
