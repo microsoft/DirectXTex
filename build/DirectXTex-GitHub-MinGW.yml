@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 #
-# http://go.microsoft.com/fwlink/?LinkId=248926
+# https://go.microsoft.com/fwlink/?LinkId=248926
 
 # Builds the library and test suite using the MinGW compiler.
 
@@ -155,7 +155,8 @@ jobs:
       cwd: $(Build.SourcesDirectory)
       cmakeArgs: >
         -B out -DCMAKE_BUILD_TYPE="Debug" -DDIRECTX_ARCH=x86
-        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles" -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
+        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles"
+        -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
         -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x86-mingw-static
   - task: CMake@1
     displayName: CMake (MinGW32) Build
@@ -168,7 +169,8 @@ jobs:
       cwd: $(Build.SourcesDirectory)
       cmakeArgs: >
         -B out2 -DCMAKE_BUILD_TYPE="Debug" -DENABLE_OPENEXR_SUPPORT=ON -DDIRECTX_ARCH=x86
-        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles" -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
+        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles"
+        -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
         -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x86-mingw-static
   - task: CMake@1
     displayName: CMake (MinGW32) Build  w/ OpenEXR
@@ -181,7 +183,8 @@ jobs:
       cwd: $(Build.SourcesDirectory)
       cmakeArgs: >
         -B out3 -DCMAKE_BUILD_TYPE="Debug" -DENABLE_LIBJPEG_SUPPORT=ON -DDIRECTX_ARCH=x86
-        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles" -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
+        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles"
+        -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
         -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x86-mingw-static
   - task: CMake@1
     displayName: CMake (MinGW32) Build w/ libjpeg
@@ -194,7 +197,8 @@ jobs:
       cwd: $(Build.SourcesDirectory)
       cmakeArgs: >
         -B out4 -DCMAKE_BUILD_TYPE="Debug" -DENABLE_LIBPNG_SUPPORT=ON -DDIRECTX_ARCH=x86
-        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles" -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
+        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles"
+        -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
         -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x86-mingw-static
   - task: CMake@1
     displayName: CMake (MinGW32) Build w/ libpng
@@ -203,7 +207,7 @@ jobs:
       cmakeArgs: --build out4
 
 - job: MINGW64_BUILD
-  displayName: 'Minimalist GNU for Windows (MinGW-W64)'
+  displayName: 'Minimalist GNU for Windows (MinGW-W64) BUILD_TESTING=ON'
   steps:
   - checkout: self
     clean: true
@@ -273,7 +277,8 @@ jobs:
       cwd: $(Build.SourcesDirectory)
       cmakeArgs: >
         -B out -DCMAKE_BUILD_TYPE="Debug" -DDIRECTX_ARCH=x64
-        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles" -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
+        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles"
+        -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
         -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-mingw-static
   - task: CMake@1
     displayName: CMake (MinGW-W64) Build
@@ -286,7 +291,8 @@ jobs:
       cwd: $(Build.SourcesDirectory)
       cmakeArgs: >
         -B out2 -DCMAKE_BUILD_TYPE="Debug" -DENABLE_OPENEXR_SUPPORT=ON -DDIRECTX_ARCH=x64 -DBUILD_TESTING=OFF
-        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles" -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
+        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles"
+        -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
         -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-mingw-static
   - task: CMake@1
     displayName: CMake (MinGW-W64) Build  w/ OpenEXR
@@ -299,7 +305,8 @@ jobs:
       cwd: $(Build.SourcesDirectory)
       cmakeArgs: >
         -B out3 -DCMAKE_BUILD_TYPE="Debug" -DENABLE_LIBJPEG_SUPPORT=ON -DDIRECTX_ARCH=x64 -DBUILD_TESTING=OFF
-        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles" -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
+        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles"
+        -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
         -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-mingw-static
   - task: CMake@1
     displayName: CMake (MinGW-W64) Build w/ libjpeg
@@ -312,7 +319,8 @@ jobs:
       cwd: $(Build.SourcesDirectory)
       cmakeArgs: >
         -B out4 -DCMAKE_BUILD_TYPE="Debug" -DENABLE_LIBPNG_SUPPORT=ON -DDIRECTX_ARCH=x64 -DBUILD_TESTING=OFF
-        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles" -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
+        -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles"
+        -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
         -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-mingw-static
   - task: CMake@1
     displayName: CMake (MinGW-W64) Build w/ libpng
