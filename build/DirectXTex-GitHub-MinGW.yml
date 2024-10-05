@@ -285,7 +285,7 @@ jobs:
     inputs:
       cwd: $(Build.SourcesDirectory)
       cmakeArgs: >
-        -B out2 -DCMAKE_BUILD_TYPE="Debug" -DENABLE_OPENEXR_SUPPORT=ON -DDIRECTX_ARCH=x64
+        -B out2 -DCMAKE_BUILD_TYPE="Debug" -DENABLE_OPENEXR_SUPPORT=ON -DDIRECTX_ARCH=x64 -DBUILD_TESTING=OFF
         -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles" -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
         -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-mingw-static
   - task: CMake@1
@@ -298,7 +298,7 @@ jobs:
     inputs:
       cwd: $(Build.SourcesDirectory)
       cmakeArgs: >
-        -B out3 -DCMAKE_BUILD_TYPE="Debug" -DENABLE_LIBJPEG_SUPPORT=ON -DDIRECTX_ARCH=x64
+        -B out3 -DCMAKE_BUILD_TYPE="Debug" -DENABLE_LIBJPEG_SUPPORT=ON -DDIRECTX_ARCH=x64 -DBUILD_TESTING=OFF
         -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles" -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
         -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-mingw-static
   - task: CMake@1
@@ -311,7 +311,7 @@ jobs:
     inputs:
       cwd: $(Build.SourcesDirectory)
       cmakeArgs: >
-        -B out4 -DCMAKE_BUILD_TYPE="Debug" -DENABLE_LIBPNG_SUPPORT=ON -DDIRECTX_ARCH=x64
+        -B out4 -DCMAKE_BUILD_TYPE="Debug" -DENABLE_LIBPNG_SUPPORT=ON -DDIRECTX_ARCH=x64 -DBUILD_TESTING=OFF
         -DCMAKE_CXX_COMPILER="g++.exe" -G "MinGW Makefiles" -DUSE_PREBUILT_SHADERS=ON -DCOMPILED_SHADERS=$(Build.BinariesDirectory)\Shaders
         -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-mingw-static
   - task: CMake@1
