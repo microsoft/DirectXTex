@@ -55,12 +55,12 @@ resources:
     name: Microsoft/DirectX-Headers
     type: github
     endpoint: microsoft
-    ref: refs/tags/main
+    ref: refs/heads/main
   - repository: dxMathRepo
     name: Microsoft/DirectXMath
     type: github
     endpoint: microsoft
-    ref: refs/tags/main
+    ref: refs/heads/main
   - repository: vcpkgRepo
     name: Microsoft/vcpkg
     type: github
