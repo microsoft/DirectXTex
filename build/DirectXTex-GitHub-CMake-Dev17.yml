@@ -50,7 +50,7 @@ resources:
   - repository: self
     type: git
     ref: refs/heads/main
-  - repository: vcpkg
+  - repository: vcpkgRepo
     name: Microsoft/vcpkg
     type: github
     endpoint: microsoft
@@ -60,7 +60,9 @@ name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
 variables:
   Codeql.Enabled: false
-  VCPKG_CMAKE_DIR: '$(VCPKG_ROOT)/scripts/buildsystems/vcpkg.cmake'
+  VCPKG_ROOT: $(Build.SourcesDirectory)/vcpkg
+  VCPKG_CMAKE_DIR: $(Build.SourcesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
+  VCPKG_MANIFEST_DIR: '$(Build.SourcesDirectory)/build
   VS_GENERATOR: 'Visual Studio 17 2022'
   WIN10_SDK: '10.0.19041.0'
   WIN11_SDK: '10.0.22000.0'
@@ -222,45 +224,31 @@ jobs:
   - checkout: self
     clean: true
     fetchTags: false
-  - checkout: vcpkg
+    fetchDepth: 1
+    path: 's'
+  - checkout: vcpkgRepo
     displayName: Fetch VCPKG
     clean: true
     fetchTags: false
     fetchDepth: 1
-    path: $(Build.SourcesDirectory)/vcpkg
+    path: 's/vcpkg'
   - task: CmdLine@2
     displayName: VCPKG Bootstrap
     inputs:
       script: call bootstrap-vcpkg.bat
-      workingDirectory: $(Build.SourcesDirectory)/vcpkg
+      workingDirectory: $(VCPKG_ROOT)
   - task: CmdLine@2
-    displayName: VCPKG install headers
+    displayName: VCPKG install packages
     inputs:
-      script: |
-        call vcpkg install directxmath
-        @if ERRORLEVEL 1 goto error
-        call vcpkg install directx-headers
-        @if ERRORLEVEL 1 goto error
-        call vcpkg install openexr
-        @if ERRORLEVEL 1 goto error
-        call vcpkg install libpng
-        @if ERRORLEVEL 1 goto error
-        call vcpkg install libjpeg-turbo
-        @if ERRORLEVEL 1 goto error
-        :finish
-        @echo --- VCPKG COMPLETE ---
-        exit /b 0
-        :error
-        @echo --- ERROR: VCPKG FAILED ---
-        exit /b 1
-
-      workingDirectory: $(Build.SourcesDirectory)/vcpkg
-
+      script: call vcpkg install --x-manifest-root=$(VCPKG_MANIFEST_DIR)
+      workingDirectory: $(VCPKG_ROOT)
   - task: CMake@1
     displayName: 'CMake (MSVC): Config x64'
     inputs:
       cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)'
+      cmakeArgs: >
+        '-G "$(VS_GENERATOR)" -A x64 -B out -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
+        -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-windows
   - task: CMake@1
     displayName: 'CMake (MSVC): Build x64 Debug'
     inputs:
@@ -270,7 +258,9 @@ jobs:
     displayName: 'CMake (MSVC): Config x64 w/ OpenEXR'
     inputs:
       cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out2 -DENABLE_OPENEXR_SUPPORT=ON -DBUILD_TESTING=OFF -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)'
+      cmakeArgs: >
+        '-G "$(VS_GENERATOR)" -A x64 -B out2 -DENABLE_OPENEXR_SUPPORT=ON -DBUILD_TESTING=OFF -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)'
+        -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)"
   - task: CMake@1
     displayName: 'CMake (MSVC): Build x64 Debug w/ OpenEXR'
     inputs:
@@ -280,7 +270,9 @@ jobs:
     displayName: 'CMake (MSVC): Config x64 w/ libjpeg'
     inputs:
       cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out3 -DENABLE_LIBJPEG_SUPPORT=ON -DBUILD_TESTING=OFF -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)'
+      cmakeArgs: >
+        '-G "$(VS_GENERATOR)" -A x64 -B out3 -DENABLE_LIBJPEG_SUPPORT=ON -DBUILD_TESTING=OFF -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)'
+        -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-windows
   - task: CMake@1
     displayName: 'CMake (MSVC): Build x64 Debug w/ libjpeg'
     inputs:
@@ -290,7 +282,9 @@ jobs:
     displayName: 'CMake (MSVC): Config x64 w/ libpng'
     inputs:
       cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: '-G "$(VS_GENERATOR)" -A x64 -B out4 -DENABLE_LIBPNG_SUPPORT=ON -DBUILD_TESTING=OFF -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)'
+      cmakeArgs: >
+        '-G "$(VS_GENERATOR)" -A x64 -B out4 -DENABLE_LIBPNG_SUPPORT=ON -DBUILD_TESTING=OFF -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)'
+        -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-windows
   - task: CMake@1
     displayName: 'CMake (MSVC): Build x64 Debug w/ libpng'
     inputs:
