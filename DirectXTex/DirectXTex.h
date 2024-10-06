@@ -325,7 +325,7 @@ namespace DirectX
     };
 
     HRESULT __cdecl GetMetadataFromDDSMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _In_ DDS_FLAGS flags,
         _Out_ TexMetadata& metadata) noexcept;
     HRESULT __cdecl GetMetadataFromDDSFile(
@@ -334,7 +334,7 @@ namespace DirectX
         _Out_ TexMetadata& metadata) noexcept;
 
     HRESULT __cdecl GetMetadataFromDDSMemoryEx(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _In_ DDS_FLAGS flags,
         _Out_ TexMetadata& metadata,
         _Out_opt_ DDSMetaData* ddPixelFormat) noexcept;
@@ -345,14 +345,14 @@ namespace DirectX
         _Out_opt_ DDSMetaData* ddPixelFormat) noexcept;
 
     HRESULT __cdecl GetMetadataFromHDRMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _Out_ TexMetadata& metadata) noexcept;
     HRESULT __cdecl GetMetadataFromHDRFile(
         _In_z_ const wchar_t* szFile,
         _Out_ TexMetadata& metadata) noexcept;
 
     HRESULT __cdecl GetMetadataFromTGAMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _In_ TGA_FLAGS flags,
         _Out_ TexMetadata& metadata) noexcept;
     HRESULT __cdecl GetMetadataFromTGAFile(
@@ -362,7 +362,7 @@ namespace DirectX
 
 #ifdef _WIN32
     HRESULT __cdecl GetMetadataFromWICMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _In_ WIC_FLAGS flags,
         _Out_ TexMetadata& metadata,
         _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
@@ -376,7 +376,7 @@ namespace DirectX
 
     // Compatability helpers
     HRESULT __cdecl GetMetadataFromTGAMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _Out_ TexMetadata& metadata) noexcept;
     HRESULT __cdecl GetMetadataFromTGAFile(
         _In_z_ const wchar_t* szFile,
@@ -461,7 +461,7 @@ namespace DirectX
 
         void __cdecl Release() noexcept;
 
-        void *__cdecl GetBufferPointer() const noexcept { return m_buffer; }
+        uint8_t*__cdecl GetBufferPointer() const noexcept { return m_buffer; }
         size_t __cdecl GetBufferSize() const noexcept { return m_size; }
 
         HRESULT __cdecl Resize(size_t size) noexcept;
@@ -471,7 +471,7 @@ namespace DirectX
             // Shorten size without reallocation
 
     private:
-        void*   m_buffer;
+        uint8_t*   m_buffer;
         size_t  m_size;
     };
 
@@ -480,7 +480,7 @@ namespace DirectX
 
     // DDS operations
     HRESULT __cdecl LoadFromDDSMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _In_ DDS_FLAGS flags,
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
     HRESULT __cdecl LoadFromDDSFile(
@@ -489,7 +489,7 @@ namespace DirectX
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
 
     HRESULT __cdecl LoadFromDDSMemoryEx(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _In_ DDS_FLAGS flags,
         _Out_opt_ TexMetadata* metadata,
         _Out_opt_ DDSMetaData* ddPixelFormat,
@@ -517,7 +517,7 @@ namespace DirectX
 
     // HDR operations
     HRESULT __cdecl LoadFromHDRMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
     HRESULT __cdecl LoadFromHDRFile(
         _In_z_ const wchar_t* szFile,
@@ -528,7 +528,7 @@ namespace DirectX
 
     // TGA operations
     HRESULT __cdecl LoadFromTGAMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _In_ TGA_FLAGS flags,
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
     HRESULT __cdecl LoadFromTGAFile(
@@ -546,7 +546,7 @@ namespace DirectX
     // WIC operations
 #ifdef _WIN32
     HRESULT __cdecl LoadFromWICMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _In_ WIC_FLAGS flags,
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
         _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
@@ -578,7 +578,7 @@ namespace DirectX
 
     // Compatability helpers
     HRESULT __cdecl LoadFromTGAMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
     HRESULT __cdecl LoadFromTGAFile(
         _In_z_ const wchar_t* szFile,
