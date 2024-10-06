@@ -95,13 +95,13 @@ namespace Xbox
     // Image I/O
 
     HRESULT __cdecl GetMetadataFromDDSMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox);
     HRESULT __cdecl GetMetadataFromDDSFile(
         _In_z_ const wchar_t* szFile, _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox);
 
     HRESULT __cdecl GetMetadataFromDDSMemoryEx(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox,
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat);
     HRESULT __cdecl GetMetadataFromDDSFileEx(
@@ -109,14 +109,14 @@ namespace Xbox
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat);
 
     HRESULT __cdecl LoadFromDDSMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _Out_opt_ DirectX::TexMetadata* metadata, _Out_ XboxImage& image);
     HRESULT __cdecl LoadFromDDSFile(
         _In_z_ const wchar_t* szFile,
         _Out_opt_ DirectX::TexMetadata* metadata, _Out_ XboxImage& image);
 
     HRESULT __cdecl LoadFromDDSMemoryEx(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _Out_opt_ DirectX::TexMetadata* metadata,
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat,
         _Out_ XboxImage& image);
@@ -146,13 +146,13 @@ namespace Xbox
 
     HRESULT __cdecl CreateTexture(
         _In_ ID3D11DeviceX* d3dDevice,
-        _In_ const XboxImage& xbox, _Outptr_opt_ ID3D11Resource** ppResource, _Outptr_ void** grfxMemory);
+        _In_ const XboxImage& xbox, _Outptr_opt_ ID3D11Resource** ppResource, _Outptr_ const uint8_t** grfxMemory);
 
     HRESULT __cdecl CreateShaderResourceView(
         _In_ ID3D11DeviceX* d3dDevice,
-        _In_ const XboxImage& xbox, _Outptr_opt_ ID3D11ShaderResourceView** ppSRV, _Outptr_ void** grfxMemory);
+        _In_ const XboxImage& xbox, _Outptr_opt_ ID3D11ShaderResourceView** ppSRV, _Outptr_ const uint8_t** grfxMemory);
 
-    void __cdecl FreeTextureMemory(_In_ ID3D11DeviceX* d3dDevice, _In_opt_ void* grfxMemory);
+    void __cdecl FreeTextureMemory(_In_ ID3D11DeviceX* d3dDevice, _In_opt_ const uint8_t* grfxMemory);
 
 #endif
 
@@ -163,9 +163,9 @@ namespace Xbox
 
     HRESULT __cdecl CreateTexture(
         _In_ ID3D12Device* d3dDevice,
-        _In_ const XboxImage& xbox, _Outptr_opt_ ID3D12Resource** ppResource, _Outptr_ void** grfxMemory);
+        _In_ const XboxImage& xbox, _Outptr_opt_ ID3D12Resource** ppResource, _Outptr_ const uint8_t** grfxMemory);
 
-    void __cdecl FreeTextureMemory(_In_ ID3D12Device* d3dDevice, _In_opt_ void* grfxMemory);
+    void __cdecl FreeTextureMemory(_In_ ID3D12Device* d3dDevice, _In_opt_ const uint8_t* grfxMemory);
 
 #endif
 
@@ -173,6 +173,6 @@ namespace Xbox
     // DDS helper functions
     HRESULT __cdecl EncodeDDSHeader(
         const XboxImage& xbox,
-        _Out_writes_bytes_(maxsize) void* pDestination, _In_ size_t maxsize) noexcept;
+        _Out_writes_bytes_(maxsize) const uint8_t* pDestination, _In_ size_t maxsize) noexcept;
 
 } // namespace
