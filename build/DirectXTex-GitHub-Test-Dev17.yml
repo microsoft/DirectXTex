@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 #
-# http://go.microsoft.com/fwlink/?LinkId=248926
+# https://go.microsoft.com/fwlink/?LinkId=248926
 
 # Builds the library and test suite.
 
@@ -28,6 +28,11 @@ resources:
     type: git
     ref: refs/heads/main
     trigger: none
+  - repository: testRepo
+    name: walbourn/directxtextest
+    type: github
+    endpoint: microsoft
+    ref: refs/heads/main
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
@@ -37,7 +42,6 @@ pool:
 variables:
   Codeql.Enabled: false
   VC_PATH: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC'
-  GITHUB_PAT: $(GITHUBPUBLICTOKEN)
   GUID_FEED: $(ADOFeedGUID)
 
 jobs:
@@ -49,19 +53,14 @@ jobs:
   - checkout: self
     clean: true
     fetchTags: false
-  - task: DeleteFiles@1
-    displayName: Delete files from Tests
-    inputs:
-      SourceFolder: Tests
-      Contents: '**'
-      RemoveSourceFolder: true
-      RemoveDotFiles: true
-  - task: CmdLine@2
+    fetchDepth: 1
+    path: 's'
+  - checkout: testRepo
     displayName: Fetch Tests
-    inputs:
-      script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
-      workingDirectory: $(Build.SourcesDirectory)
-      failOnStderr: true
+    clean: true
+    fetchTags: false
+    fetchDepth: 1
+    path: 's/Tests'
   - task: NuGetToolInstaller@1
     displayName: 'Use NuGet'
   - task: NuGetCommand@2
@@ -170,19 +169,14 @@ jobs:
   - checkout: self
     clean: true
     fetchTags: false
-  - task: DeleteFiles@1
-    displayName: Delete files from Tests
-    inputs:
-      SourceFolder: Tests
-      Contents: '**'
-      RemoveSourceFolder: true
-      RemoveDotFiles: true
-  - task: CmdLine@2
+    fetchDepth: 1
+    path: 's'
+  - checkout: testRepo
     displayName: Fetch Tests
-    inputs:
-      script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
-      workingDirectory: $(Build.SourcesDirectory)
-      failOnStderr: true
+    clean: true
+    fetchTags: false
+    fetchDepth: 1
+    path: 's/Tests'
   - task: CmdLine@2
     displayName: Setup environment for CMake to use VS
     inputs:
@@ -257,19 +251,14 @@ jobs:
   - checkout: self
     clean: true
     fetchTags: false
-  - task: DeleteFiles@1
-    displayName: Delete files from Tests
-    inputs:
-      SourceFolder: Tests
-      Contents: '**'
-      RemoveSourceFolder: true
-      RemoveDotFiles: true
-  - task: CmdLine@2
+    fetchDepth: 1
+    path: 's'
+  - checkout: testRepo
     displayName: Fetch Tests
-    inputs:
-      script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/walbourn/directxtextest.git Tests
-      workingDirectory: $(Build.SourcesDirectory)
-      failOnStderr: true
+    clean: true
+    fetchTags: false
+    fetchDepth: 1
+    path: 's/Tests'
   - task: CmdLine@2
     displayName: Setup environment for CMake to use VS
     inputs:

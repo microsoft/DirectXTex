@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 #
-# http://go.microsoft.com/fwlink/?LinkId=248926
+# https://go.microsoft.com/fwlink/?LinkId=248926
 
 # Builds the library for Windows Subsystem for Linux (WSL)
 
@@ -23,7 +23,7 @@ trigger:
     - '.github/*'
     - '.nuget/*'
     - build/*.cmd
-    - build/*.json
+    - build/OneFuzz*.json
     - build/*.props
     - build/*.ps1
     - build/*.targets
@@ -39,7 +39,7 @@ pr:
     - '.github/*'
     - '.nuget/*'
     - build/*.cmd
-    - build/*.json
+    - build/OneFuzz*.json
     - build/*.props
     - build/*.ps1
     - build/*.targets
@@ -50,6 +50,21 @@ resources:
   - repository: self
     type: git
     ref: refs/heads/main
+  - repository: dxHeadersRepo
+    name: Microsoft/DirectX-Headers
+    type: github
+    endpoint: microsoft
+    ref: refs/heads/main
+  - repository: dxMathRepo
+    name: Microsoft/DirectXMath
+    type: github
+    endpoint: microsoft
+    ref: refs/heads/main
+  - repository: vcpkgRepo
+    name: Microsoft/vcpkg
+    type: github
+    endpoint: microsoft
+    ref: refs/tags/$(VCPKG_TAG)
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
@@ -58,8 +73,9 @@ pool:
 
 variables:
   Codeql.Enabled: false
-  VCPKG_CMAKE_DIR: '$(VCPKG_ROOT)/scripts/buildsystems/vcpkg.cmake'
-  GITHUB_PAT: $(GITHUBPUBLICTOKEN)
+  VCPKG_ROOT: $(Build.SourcesDirectory)/vcpkg
+  VCPKG_CMAKE_DIR: $(Build.SourcesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
+  VCPKG_MANIFEST_DIR: $(Build.SourcesDirectory)/build
   LOCAL_PKG_DIR: '$(Agent.BuildDirectory)/install/'
 
 jobs:
@@ -71,10 +87,20 @@ jobs:
   - checkout: self
     clean: true
     fetchTags: false
-  - task: CmdLine@2
-    displayName: Fetch directx-headers
-    inputs:
-      script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/microsoft/DirectX-Headers.git directx-headers
+    fetchDepth: 1
+    path: 's'
+  - checkout: dxHeadersRepo
+    displayName: Fetch DirectX-Headers
+    clean: true
+    fetchTags: false
+    fetchDepth: 1
+    path: 's/directx-headers'
+  - checkout: dxMathRepo
+    displayName: Fetch DirectX-Math
+    clean: true
+    fetchTags: false
+    fetchDepth: 1
+    path: 's/directxmath'
   - task: CMake@1
     displayName: CMake DirectX-Headers
     inputs:
@@ -90,10 +116,6 @@ jobs:
     inputs:
       cwd: directx-headers
       cmakeArgs: --install .
-  - task: CmdLine@2
-    displayName: Fetch directxmath
-    inputs:
-      script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/microsoft/DirectXMath.git directxmath
   - task: CMake@1
     displayName: CMake DirectXMath
     inputs:
@@ -126,22 +148,22 @@ jobs:
   - task: CMake@1
     displayName: CMake DirectXTex (Config) dbg
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
+      cwd: $(Build.SourcesDirectory)
       cmakeArgs: -B out -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=$(LOCAL_PKG_DIR)/share;$(LOCAL_PKG_DIR)/cmake
   - task: CMake@1
     displayName: CMake DirectXTex (Build) dbg
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
+      cwd: $(Build.SourcesDirectory)
       cmakeArgs: --build out -v
   - task: CMake@1
     displayName: CMake DirectXTex (Config) rel
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
+      cwd: $(Build.SourcesDirectory)
       cmakeArgs: -B out2 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(LOCAL_PKG_DIR)/share;$(LOCAL_PKG_DIR)/cmake
   - task: CMake@1
     displayName: CMake DirectXTex (Build) rel
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
+      cwd: $(Build.SourcesDirectory)
       cmakeArgs: --build out2 -v
 
 - job: BUILD_WSL_VCPKG
@@ -152,11 +174,14 @@ jobs:
   - checkout: self
     clean: true
     fetchTags: false
-  - task: CmdLine@2
+    fetchDepth: 1
+    path: 's'
+  - checkout: vcpkgRepo
     displayName: Fetch VCPKG
-    inputs:
-      script: git clone --quiet --no-tags https://%GITHUB_PAT%@github.com/microsoft/vcpkg.git
-      workingDirectory: $(Build.SourcesDirectory)
+    clean: true
+    fetchTags: false
+    fetchDepth: 1
+    path: 's/vcpkg'
   - task: Bash@3
     displayName: VCPKG Bootstrap
     inputs:
@@ -171,57 +196,67 @@ jobs:
         cmake --version
 
   - task: CmdLine@2
-    displayName: VCPKG install headers
+    displayName: VCPKG install packages
     inputs:
-      script: $(Build.SourcesDirectory)/vcpkg/vcpkg install directxmath directx-headers openexr libpng zlib libjpeg-turbo
-      workingDirectory: $(Build.SourcesDirectory)/vcpkg
+      script: vcpkg install --x-manifest-root=$(VCPKG_MANIFEST_DIR) --triplet=x64-linux
+      workingDirectory: $(VCPKG_ROOT)
   - task: CMake@1
     displayName: CMake DirectXTex (Config) dbg
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: -B out -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)"
+      cwd: $(Build.SourcesDirectory)
+      cmakeArgs: >
+        -B out -DCMAKE_BUILD_TYPE=Debug -DDIRECTX_ARCH=x64
+        -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-linux
   - task: CMake@1
     displayName: CMake DirectXTex (Build) dbg
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
+      cwd: $(Build.SourcesDirectory)
       cmakeArgs: --build out -v
   - task: CMake@1
     displayName: CMake DirectXTex (Config) rel
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: -B out2 -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)"
+      cwd: $(Build.SourcesDirectory)
+      cmakeArgs: >
+        -B out2 -DCMAKE_BUILD_TYPE=Release -DDIRECTX_ARCH=x64
+        -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-linux
   - task: CMake@1
     displayName: CMake DirectXTex (Build) rel
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
+      cwd: $(Build.SourcesDirectory)
       cmakeArgs: --build out2 -v
   - task: CMake@1
     displayName: CMake DirectXTex (Config) w/ OpenEXR
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: -B out3 -DCMAKE_BUILD_TYPE=Debug -DENABLE_OPENEXR_SUPPORT=ON -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)"
+      cwd: $(Build.SourcesDirectory)
+      cmakeArgs: >
+        -B out3 -DCMAKE_BUILD_TYPE=Debug -DENABLE_OPENEXR_SUPPORT=ON -DDIRECTX_ARCH=x64
+        -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-linux
   - task: CMake@1
     displayName: CMake DirectXTex (Build) w/ OpenEXR
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
+      cwd: $(Build.SourcesDirectory)
       cmakeArgs: --build out3 -v
   - task: CMake@1
     displayName: CMake DirectXTex (Config) w/ libjpeg
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: -B out4 -DCMAKE_BUILD_TYPE=Debug -DENABLE_LIBJPEG_SUPPORT=ON -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)"
+      cwd: $(Build.SourcesDirectory)
+      cmakeArgs: >
+        -B out4 -DCMAKE_BUILD_TYPE=Debug -DENABLE_LIBJPEG_SUPPORT=ON -DDIRECTX_ARCH=x64
+        -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-linux
   - task: CMake@1
     displayName: CMake DirectXTex (Build) w/ libjpeg
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
+      cwd: $(Build.SourcesDirectory)
       cmakeArgs: --build out4 -v
   - task: CMake@1
     displayName: CMake DirectXTex (Config) w/ libpng
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: -B out5 -DCMAKE_BUILD_TYPE=Debug -DENABLE_LIBPNG_SUPPORT=ON -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)"
+      cwd: $(Build.SourcesDirectory)
+      cmakeArgs: >
+        -B out5 -DCMAKE_BUILD_TYPE=Debug -DENABLE_LIBPNG_SUPPORT=ON -DDIRECTX_ARCH=x64
+        -DCMAKE_TOOLCHAIN_FILE="$(VCPKG_CMAKE_DIR)" -DVCPKG_MANIFEST_DIR="$(VCPKG_MANIFEST_DIR)" -DVCPKG_TARGET_TRIPLET=x64-linux
   - task: CMake@1
     displayName: CMake DirectXTex (Build) w/ libpng
     inputs:
-      cwd: '$(Build.SourcesDirectory)'
+      cwd: $(Build.SourcesDirectory)
       cmakeArgs: --build out5 -v
