@@ -471,8 +471,8 @@ namespace DirectX
             // Shorten size without reallocation
 
     private:
-        uint8_t*   m_buffer;
-        size_t  m_size;
+        uint8_t* m_buffer;
+        size_t   m_size;
     };
 
     //---------------------------------------------------------------------------------
@@ -953,7 +953,7 @@ namespace DirectX
     // DDS helper functions
     HRESULT __cdecl EncodeDDSHeader(
         _In_ const TexMetadata& metadata, DDS_FLAGS flags,
-        _Out_writes_bytes_to_opt_(maxsize, required) void* pDestination, _In_ size_t maxsize,
+        _Out_writes_bytes_to_opt_(maxsize, required) uint8_t* pDestination, _In_ size_t maxsize,
         _Out_ size_t& required) noexcept;
 
     //---------------------------------------------------------------------------------
