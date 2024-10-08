@@ -39,6 +39,8 @@ option(DISABLE_MSVC_ITERATOR_DEBUGGING "Disable iterator debugging in Debug conf
 
 option(ENABLE_CODE_ANALYSIS "Use Static Code Analysis on build" OFF)
 
+option(ENABLE_CODE_COVERAGE "Build with code-coverage" OFF)
+
 option(USE_PREBUILT_SHADERS "Use externally built HLSL shaders" OFF)
 
 option(NO_WCHAR_T "Use legacy wide-character as unsigned short" OFF)
