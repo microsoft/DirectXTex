@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <new>
@@ -63,9 +64,9 @@ using Microsoft::WRL::ComPtr;
 //--------------------------------------------------------------------------------------
 namespace
 {
-#pragma pack(push,1)
+    #pragma pack(push,1)
 
-#define DDS_MAGIC 0x20534444 // "DDS "
+    constexpr uint32_t DDS_MAGIC = 0x20534444; // "DDS "
 
     struct DDS_PIXELFORMAT
     {
@@ -79,22 +80,22 @@ namespace
         uint32_t    ABitMask;
     };
 
-#define DDS_FOURCC        0x00000004  // DDPF_FOURCC
-#define DDS_RGB           0x00000040  // DDPF_RGB
-#define DDS_RGBA          0x00000041  // DDPF_RGB | DDPF_ALPHAPIXELS
-#define DDS_LUMINANCE     0x00020000  // DDPF_LUMINANCE
-#define DDS_LUMINANCEA    0x00020001  // DDPF_LUMINANCE | DDPF_ALPHAPIXELS
-#define DDS_ALPHA         0x00000002  // DDPF_ALPHA
-#define DDS_BUMPLUMINANCE 0x00040000  // DDPF_BUMPLUMINANCE
-#define DDS_BUMPDUDV      0x00080000  // DDPF_BUMPDUDV
-#define DDS_BUMPDUDVA     0x00080001  // DDPF_BUMPDUDV | DDPF_ALPHAPIXELS
+    #define DDS_FOURCC        0x00000004  // DDPF_FOURCC
+    #define DDS_RGB           0x00000040  // DDPF_RGB
+    #define DDS_RGBA          0x00000041  // DDPF_RGB | DDPF_ALPHAPIXELS
+    #define DDS_LUMINANCE     0x00020000  // DDPF_LUMINANCE
+    #define DDS_LUMINANCEA    0x00020001  // DDPF_LUMINANCE | DDPF_ALPHAPIXELS
+    #define DDS_ALPHA         0x00000002  // DDPF_ALPHA
+    #define DDS_BUMPLUMINANCE 0x00040000  // DDPF_BUMPLUMINANCE
+    #define DDS_BUMPDUDV      0x00080000  // DDPF_BUMPDUDV
+    #define DDS_BUMPDUDVA     0x00080001  // DDPF_BUMPDUDV | DDPF_ALPHAPIXELS
 
-#define DDS_HEADER_FLAGS_TEXTURE        0x00001007  // DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT
-#define DDS_HEADER_FLAGS_MIPMAP         0x00020000  // DDSD_MIPMAPCOUNT
-#define DDS_HEADER_FLAGS_PITCH          0x00000008  // DDSD_PITCH
-#define DDS_HEADER_FLAGS_LINEARSIZE     0x00080000  // DDSD_LINEARSIZE
+    #define DDS_HEADER_FLAGS_TEXTURE        0x00001007  // DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT
+    #define DDS_HEADER_FLAGS_MIPMAP         0x00020000  // DDSD_MIPMAPCOUNT
+    #define DDS_HEADER_FLAGS_PITCH          0x00000008  // DDSD_PITCH
+    #define DDS_HEADER_FLAGS_LINEARSIZE     0x00080000  // DDSD_LINEARSIZE
 
-#define DDS_SURFACE_FLAGS_TEXTURE 0x00001000 // DDSCAPS_TEXTURE
+    #define DDS_SURFACE_FLAGS_TEXTURE 0x00001000 // DDSCAPS_TEXTURE
 
     struct DDS_HEADER
     {
@@ -114,7 +115,12 @@ namespace
         uint32_t        reserved2;
     };
 
-#pragma pack(pop)
+    #pragma pack(pop)
+
+    static_assert(sizeof(DDS_PIXELFORMAT) == 32, "DDS pixel format size mismatch");
+    static_assert(sizeof(DDS_HEADER) == 124, "DDS Header size mismatch");
+
+    constexpr size_t DDS_MIN_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER);
 
     const DDS_PIXELFORMAT DDSPF_DXT1 =
     { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 };
