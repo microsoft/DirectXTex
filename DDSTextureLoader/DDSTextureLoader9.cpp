@@ -121,7 +121,7 @@ namespace
     static_assert(sizeof(DDS_PIXELFORMAT) == 32, "DDS pixel format size mismatch");
     static_assert(sizeof(DDS_HEADER) == 124, "DDS Header size mismatch");
 
-    constexpr size_t DDS_MIN_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER);
+    constexpr size_t DDS_DX9_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER);
 
     //--------------------------------------------------------------------------------------
     struct handle_closer { void operator()(HANDLE h) noexcept { if (h) CloseHandle(h); } };
@@ -150,7 +150,7 @@ namespace
             return E_FAIL;
         }
 
-        if (ddsDataSize < (sizeof(uint32_t) + sizeof(DDS_HEADER)))
+        if (ddsDataSize < DDS_DX9_HEADER_SIZE)
         {
             return E_FAIL;
         }
@@ -181,9 +181,8 @@ namespace
 
         // setup the pointers in the process request
         *header = hdr;
-        auto offset = sizeof(uint32_t) + sizeof(DDS_HEADER);
-        *bitData = ddsData + offset;
-        *bitSize = ddsDataSize - offset;
+        *bitData = ddsData + DDS_DX9_HEADER_SIZE;
+        *bitSize = ddsDataSize - DDS_DX9_HEADER_SIZE;
 
         return S_OK;
     }
@@ -240,7 +239,7 @@ namespace
         }
 
         // Need at least enough data to fill the header and magic number to be a valid DDS
-        if (fileInfo.EndOfFile.LowPart < (sizeof(uint32_t) + sizeof(DDS_HEADER)))
+        if (fileInfo.EndOfFile.LowPart < DDS_DX9_HEADER_SIZE)
         {
             return E_FAIL;
         }
@@ -300,9 +299,8 @@ namespace
 
         // setup the pointers in the process request
         *header = hdr;
-        auto offset = sizeof(uint32_t) + sizeof(DDS_HEADER);
-        *bitData = ddsData.get() + offset;
-        *bitSize = fileInfo.EndOfFile.LowPart - offset;
+        *bitData = ddsData.get() + DDS_DX9_HEADER_SIZE;
+        *bitSize = fileInfo.EndOfFile.LowPart - DDS_DX9_HEADER_SIZE;
 
         return S_OK;
     }

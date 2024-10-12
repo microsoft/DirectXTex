@@ -223,7 +223,7 @@ namespace
             return E_FAIL;
         }
 
-        if (ddsDataSize < (sizeof(uint32_t) + sizeof(DDS_HEADER)))
+        if (ddsDataSize < DDS_MIN_HEADER_SIZE)
         {
             return E_FAIL;
         }
@@ -250,7 +250,7 @@ namespace
             (MAKEFOURCC('D', 'X', '1', '0') == hdr->ddspf.fourCC))
         {
             // Must be long enough for both headers and magic value
-            if (ddsDataSize < (sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10)))
+            if (ddsDataSize < DDS_DX10_HEADER_SIZE)
             {
                 return E_FAIL;
             }
@@ -260,8 +260,7 @@ namespace
 
         // setup the pointers in the process request
         *header = hdr;
-        auto offset = sizeof(uint32_t)
-            + sizeof(DDS_HEADER)
+        auto offset = DDS_MIN_HEADER_SIZE
             + (bDXT10Header ? sizeof(DDS_HEADER_DXT10) : 0u);
         *bitData = ddsData + offset;
         *bitSize = ddsDataSize - offset;
@@ -311,7 +310,7 @@ namespace
         }
 
         // Need at least enough data to fill the header and magic number to be a valid DDS
-        if (fileInfo.EndOfFile.LowPart < (sizeof(uint32_t) + sizeof(DDS_HEADER)))
+        if (fileInfo.EndOfFile.LowPart < DDS_MIN_HEADER_SIZE)
         {
             return E_FAIL;
         }
@@ -354,7 +353,7 @@ namespace
             return E_FAIL;
 
         // Need at least enough data to fill the header and magic number to be a valid DDS
-        if (fileLen < (sizeof(uint32_t) + sizeof(DDS_HEADER)))
+        if (fileLen < DDS_MIN_HEADER_SIZE)
             return E_FAIL;
 
         ddsData.reset(new (std::nothrow) uint8_t[size_t(fileLen)]);
@@ -404,7 +403,7 @@ namespace
             (MAKEFOURCC('D', 'X', '1', '0') == hdr->ddspf.fourCC))
         {
             // Must be long enough for both headers and magic value
-            if (len < (sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10)))
+            if (len < DDS_DX10_HEADER_SIZE)
             {
                 ddsData.reset();
                 return E_FAIL;
@@ -415,7 +414,7 @@ namespace
 
         // setup the pointers in the process request
         *header = hdr;
-        auto offset = sizeof(uint32_t) + sizeof(DDS_HEADER)
+        auto offset = DDS_MIN_HEADER_SIZE
             + (bDXT10Header ? sizeof(DDS_HEADER_DXT10) : 0u);
         *bitData = ddsData.get() + offset;
         *bitSize = len - offset;

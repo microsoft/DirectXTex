@@ -120,7 +120,7 @@ namespace
     static_assert(sizeof(DDS_PIXELFORMAT) == 32, "DDS pixel format size mismatch");
     static_assert(sizeof(DDS_HEADER) == 124, "DDS Header size mismatch");
 
-    constexpr size_t DDS_MIN_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER);
+    constexpr size_t DDS_DX9_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER);
 
     const DDS_PIXELFORMAT DDSPF_DXT1 =
     { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 };
@@ -612,13 +612,11 @@ HRESULT DirectX::SaveDDSTextureToFile(
     auto_delete_file delonfail(hFile.get());
 
     // Setup header
-    constexpr size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER);
-    uint8_t fileHeader[MAX_HEADER_SIZE] = {};
+    uint8_t fileHeader[DDS_DX9_HEADER_SIZE] = {};
 
     *reinterpret_cast<uint32_t*>(&fileHeader[0]) = DDS_MAGIC;
 
     auto header = reinterpret_cast<DDS_HEADER*>(&fileHeader[0] + sizeof(uint32_t));
-    constexpr size_t headerSize = sizeof(uint32_t) + sizeof(DDS_HEADER);
     header->size = sizeof(DDS_HEADER);
     header->flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_MIPMAP;
     header->height = desc.Height;
@@ -732,10 +730,10 @@ HRESULT DirectX::SaveDDSTextureToFile(
 
     // Write header & pixels
     DWORD bytesWritten;
-    if (!WriteFile(hFile.get(), fileHeader, static_cast<DWORD>(headerSize), &bytesWritten, nullptr))
+    if (!WriteFile(hFile.get(), fileHeader, static_cast<DWORD>(DDS_DX9_HEADER_SIZE), &bytesWritten, nullptr))
         return HRESULT_FROM_WIN32(GetLastError());
 
-    if (bytesWritten != headerSize)
+    if (bytesWritten != DDS_DX9_HEADER_SIZE)
         return E_FAIL;
 
     if (!WriteFile(hFile.get(), pixels.get(), static_cast<DWORD>(slicePitch), &bytesWritten, nullptr))
