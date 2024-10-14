@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <new>
@@ -93,7 +94,7 @@ namespace
 {
 #pragma pack(push,1)
 
-#define DDS_MAGIC 0x20534444 // "DDS "
+    constexpr uint32_t DDS_MAGIC = 0x20534444; // "DDS "
 
     struct DDS_PIXELFORMAT
     {
@@ -107,20 +108,20 @@ namespace
         uint32_t    ABitMask;
     };
 
-#define DDS_FOURCC      0x00000004  // DDPF_FOURCC
-#define DDS_RGB         0x00000040  // DDPF_RGB
-#define DDS_RGBA        0x00000041  // DDPF_RGB | DDPF_ALPHAPIXELS
-#define DDS_LUMINANCE   0x00020000  // DDPF_LUMINANCE
-#define DDS_LUMINANCEA  0x00020001  // DDPF_LUMINANCE | DDPF_ALPHAPIXELS
-#define DDS_ALPHA       0x00000002  // DDPF_ALPHA
-#define DDS_BUMPDUDV    0x00080000  // DDPF_BUMPDUDV
+    #define DDS_FOURCC      0x00000004  // DDPF_FOURCC
+    #define DDS_RGB         0x00000040  // DDPF_RGB
+    #define DDS_RGBA        0x00000041  // DDPF_RGB | DDPF_ALPHAPIXELS
+    #define DDS_LUMINANCE   0x00020000  // DDPF_LUMINANCE
+    #define DDS_LUMINANCEA  0x00020001  // DDPF_LUMINANCE | DDPF_ALPHAPIXELS
+    #define DDS_ALPHA       0x00000002  // DDPF_ALPHA
+    #define DDS_BUMPDUDV    0x00080000  // DDPF_BUMPDUDV
 
-#define DDS_HEADER_FLAGS_TEXTURE        0x00001007  // DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT
-#define DDS_HEADER_FLAGS_MIPMAP         0x00020000  // DDSD_MIPMAPCOUNT
-#define DDS_HEADER_FLAGS_PITCH          0x00000008  // DDSD_PITCH
-#define DDS_HEADER_FLAGS_LINEARSIZE     0x00080000  // DDSD_LINEARSIZE
+    #define DDS_HEADER_FLAGS_TEXTURE        0x00001007  // DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT
+    #define DDS_HEADER_FLAGS_MIPMAP         0x00020000  // DDSD_MIPMAPCOUNT
+    #define DDS_HEADER_FLAGS_PITCH          0x00000008  // DDSD_PITCH
+    #define DDS_HEADER_FLAGS_LINEARSIZE     0x00080000  // DDSD_LINEARSIZE
 
-#define DDS_SURFACE_FLAGS_TEXTURE 0x00001000 // DDSCAPS_TEXTURE
+    #define DDS_SURFACE_FLAGS_TEXTURE 0x00001000 // DDSCAPS_TEXTURE
 
     struct DDS_HEADER
     {
@@ -149,7 +150,15 @@ namespace
         uint32_t        reserved;
     };
 
-#pragma pack(pop)
+    static_assert(sizeof(DDS_PIXELFORMAT) == 32, "DDS pixel format size mismatch");
+    static_assert(sizeof(DDS_HEADER) == 124, "DDS Header size mismatch");
+    static_assert(sizeof(DDS_HEADER_DXT10) == 20, "DDS DX10 Extended Header size mismatch");
+
+    #pragma pack(pop)
+
+    constexpr size_t DDS_MIN_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER);
+    constexpr size_t DDS_DX10_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
+    static_assert(DDS_DX10_HEADER_SIZE > DDS_MIN_HEADER_SIZE, "DDS DX10 Header should be larger than standard header");
 
     const DDS_PIXELFORMAT DDSPF_DXT1 =
     { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 };
@@ -755,8 +764,11 @@ namespace
         bufferDesc.SampleDesc.Count = 1;
 
         ComPtr<ID3D12Resource> copySource(pSource);
+        D3D12_RESOURCE_STATES beforeStateSource = beforeState;
         if (desc.SampleDesc.Count > 1)
         {
+            TransitionResource(commandList.Get(), pSource, beforeState, D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
+
             // MSAA content must be resolved before being copied to a staging texture
             auto descCopy = desc;
             descCopy.SampleDesc.Count = 1;
@@ -768,7 +780,7 @@ namespace
                 &defaultHeapProperties,
                 D3D12_HEAP_FLAG_NONE,
                 &descCopy,
-                D3D12_RESOURCE_STATE_COPY_DEST,
+                D3D12_RESOURCE_STATE_RESOLVE_DEST,
                 nullptr,
                 IID_ID3D12Resource,
                 reinterpret_cast<void**>(pTemp.GetAddressOf()));
@@ -797,6 +809,11 @@ namespace
             }
 
             copySource = pTemp;
+            beforeState = D3D12_RESOURCE_STATE_RESOLVE_DEST;
+        }
+        else
+        {
+            beforeStateSource = D3D12_RESOURCE_STATE_COPY_SOURCE;
         }
 
         // Create a staging texture
@@ -815,7 +832,7 @@ namespace
         assert(*pStaging);
 
         // Transition the resource if necessary
-        TransitionResource(commandList.Get(), pSource, beforeState, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        TransitionResource(commandList.Get(), copySource.Get(), beforeState, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
         // Get the copy target location
         D3D12_PLACED_SUBRESOURCE_FOOTPRINT bufferFootprint = {};
@@ -831,8 +848,8 @@ namespace
         // Copy the texture
         commandList->CopyTextureRegion(&copyDest, 0, 0, 0, &copySrc, nullptr);
 
-        // Transition the resource to the next state
-        TransitionResource(commandList.Get(), pSource, D3D12_RESOURCE_STATE_COPY_SOURCE, afterState);
+        // Transition the source resource to the next state
+        TransitionResource(commandList.Get(), pSource, beforeStateSource, afterState);
 
         hr = commandList->Close();
         if (FAILED(hr))
@@ -954,13 +971,12 @@ HRESULT DirectX::SaveDDSTextureToFile(
 #endif
 
     // Setup header
-    constexpr size_t MAX_HEADER_SIZE = sizeof(uint32_t) + sizeof(DDS_HEADER) + sizeof(DDS_HEADER_DXT10);
-    uint8_t fileHeader[MAX_HEADER_SIZE] = {};
+    uint8_t fileHeader[DDS_DX10_HEADER_SIZE] = {};
 
     *reinterpret_cast<uint32_t*>(&fileHeader[0]) = DDS_MAGIC;
 
     auto header = reinterpret_cast<DDS_HEADER*>(&fileHeader[0] + sizeof(uint32_t));
-    size_t headerSize = sizeof(uint32_t) + sizeof(DDS_HEADER);
+    size_t headerSize = DDS_MIN_HEADER_SIZE;
     header->size = sizeof(DDS_HEADER);
     header->flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_MIPMAP;
     header->height = desc.Height;
@@ -1017,7 +1033,7 @@ HRESULT DirectX::SaveDDSTextureToFile(
         memcpy(&header->ddspf, &DDSPF_DX10, sizeof(DDS_PIXELFORMAT));
 
         headerSize += sizeof(DDS_HEADER_DXT10);
-        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>(fileHeader + sizeof(uint32_t) + sizeof(DDS_HEADER));
+        extHeader = reinterpret_cast<DDS_HEADER_DXT10*>(fileHeader + DDS_MIN_HEADER_SIZE);
         extHeader->dxgiFormat = desc.Format;
         extHeader->resourceDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         extHeader->arraySize = 1;
@@ -1422,7 +1438,9 @@ HRESULT DirectX::SaveWICTextureToFile(
     else
     {
         // No conversion required
-        hr = frame->WritePixels(desc.Height, static_cast<UINT>(dstRowPitch), static_cast<UINT>(imageSize), static_cast<BYTE*>(pMappedMemory));
+        hr = frame->WritePixels(desc.Height,
+            static_cast<UINT>(dstRowPitch), static_cast<UINT>(imageSize),
+            static_cast<BYTE*>(pMappedMemory));
     }
 
     pStaging->Unmap(0, &writeRange);
