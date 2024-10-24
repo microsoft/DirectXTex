@@ -166,7 +166,9 @@ namespace
         OPT_USE_XBOX,
         OPT_XGMODE,
     #endif
-        OPT_MAX
+        OPT_FLAGS_MAX,
+        OPT_VERSION,
+        OPT_HELP,
     };
 
     enum
@@ -187,7 +189,7 @@ namespace
         FORMAT_DXT5_RXGB,
     };
 
-    static_assert(OPT_MAX <= 64, "dwOptions is a unsigned int bitfield");
+    static_assert(OPT_FLAGS_MAX <= 64, "dwOptions is a unsigned int bitfield");
 
     const SValue<uint64_t> g_pOptions[] =
     {
@@ -210,20 +212,11 @@ namespace
         { L"hflip",         OPT_HFLIP },
         { L"vflip",         OPT_VFLIP },
         { L"dword",         OPT_DDS_DWORD_ALIGN },
-        { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
-        { L"permissive",    OPT_DDS_PERMISSIVE },
-        { L"ignoremips",    OPT_DDS_IGNORE_MIPS },
         { L"dx10",          OPT_USE_DX10 },
         { L"dx9",           OPT_USE_DX9 },
-        { L"tga20",         OPT_TGA20 },
-        { L"tgazeroalpha",  OPT_TGAZEROALPHA },
         { L"wicq",          OPT_WIC_QUALITY },
-        { L"wiclossless",   OPT_WIC_LOSSLESS },
-        { L"wicmulti",      OPT_WIC_MULTIFRAME },
         { L"nologo",        OPT_NOLOGO },
-        { L"timing",        OPT_TIMING },
         { L"sepalpha",      OPT_SEPALPHA },
-        { L"keepcoverage",  OPT_PRESERVE_ALPHA_COVERAGE },
         { L"nowic",         OPT_NO_WIC },
         { L"tu",            OPT_TYPELESS_UNORM },
         { L"tf",            OPT_TYPELESS_FLOAT },
@@ -232,7 +225,6 @@ namespace
         { L"xlum",          OPT_EXPAND_LUMINANCE },
         { L"wrap",          OPT_TA_WRAP },
         { L"mirror",        OPT_TA_MIRROR },
-        { L"singleproc",    OPT_FORCE_SINGLEPROC },
         { L"gpu",           OPT_GPU },
         { L"nogpu",         OPT_NOGPU },
         { L"fl",            OPT_FEATURE_LEVEL },
@@ -243,19 +235,64 @@ namespace
         { L"nmapamp",       OPT_NORMAL_MAP_AMPLITUDE },
         { L"bc",            OPT_BC_COMPRESS },
         { L"c",             OPT_COLORKEY },
-        { L"tonemap",       OPT_TONEMAP },
         { L"x2bias",        OPT_X2_BIAS },
-        { L"inverty",       OPT_INVERT_Y },
-        { L"reconstructz",  OPT_RECONSTRUCT_Z },
-        { L"rotatecolor",   OPT_ROTATE_COLOR },
         { L"nits",          OPT_PAPER_WHITE_NITS },
-        { L"fixbc4x4",      OPT_BCNONMULT4FIX },
-        { L"swizzle",       OPT_SWIZZLE },
     #ifdef USE_XBOX_EXTS
         { L"xbox",          OPT_USE_XBOX },
         { L"xgmode",        OPT_XGMODE },
     #endif
         { nullptr,          0 }
+    };
+
+    const SValue<uint64_t> g_pOptionsLong[] =
+    {
+        { L"alpha-threshold",       OPT_ALPHA_THRESHOLD },
+        { L"alpha-weight",          OPT_ALPHA_WEIGHT },
+        { L"bad-tails",             OPT_DDS_BAD_DXTN_TAILS },
+        { L"block-compress",        OPT_BC_COMPRESS },
+        { L"color-key",             OPT_COLORKEY },
+        { L"expand-luminance",      OPT_EXPAND_LUMINANCE },
+        { L"feature-level",         OPT_FEATURE_LEVEL },
+        { L"file-list",             OPT_FILELIST },
+        { L"file-type",             OPT_FILETYPE },
+        { L"fit-power-of-2",        OPT_FIT_POWEROF2 },
+        { L"fix-bc-4x4",            OPT_BCNONMULT4FIX },
+        { L"format",                OPT_FORMAT },
+        { L"height",                OPT_HEIGHT },
+        { L"help",                  OPT_HELP },
+        { L"horizontal-flip",       OPT_HFLIP },
+        { L"ignore-mips",           OPT_DDS_IGNORE_MIPS },
+        { L"image-filter",          OPT_FILTER },
+        { L"invert-y",              OPT_INVERT_Y },
+        { L"keep-coverage",         OPT_PRESERVE_ALPHA_COVERAGE },
+        { L"mip-levels",            OPT_MIPLEVELS },
+        { L"normalmap-amplitude",   OPT_NORMAL_MAP_AMPLITUDE },
+        { L"normalmap",             OPT_NORMAL_MAP },
+        { L"overwrite",             OPT_OVERWRITE },
+        { L"paper-white-nits",      OPT_PAPER_WHITE_NITS },
+        { L"permissive",            OPT_DDS_PERMISSIVE },
+        { L"prefix",                OPT_PREFIX },
+        { L"premultiplied-alpha",   OPT_PREMUL_ALPHA },
+        { L"reconstruct-z",         OPT_RECONSTRUCT_Z },
+        { L"rotate-color",          OPT_ROTATE_COLOR },
+        { L"separate-alpha",        OPT_SEPALPHA },
+        { L"single-proc",           OPT_FORCE_SINGLEPROC },
+        { L"srgb-in",               OPT_SRGBI },
+        { L"srgb-out",              OPT_SRGBO },
+        { L"suffix",                OPT_SUFFIX },
+        { L"swizzle",               OPT_SWIZZLE },
+        { L"tga-zero-alpha",        OPT_TGAZEROALPHA },
+        { L"tga20",                 OPT_TGA20 },
+        { L"timing",                OPT_TIMING },
+        { L"to-lowercase",          OPT_TOLOWER },
+        { L"tonemap",               OPT_TONEMAP },
+        { L"version",               OPT_VERSION },
+        { L"vertical-flip",         OPT_VFLIP },
+        { L"wic-lossless",          OPT_WIC_LOSSLESS },
+        { L"wic-multiframe",        OPT_WIC_MULTIFRAME },
+        { L"wic-quality",           OPT_WIC_QUALITY },
+        { L"width",                 OPT_WIDTH },
+        { nullptr,                  0 }
     };
 
     #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
@@ -693,53 +730,58 @@ namespace
             L"   -r                  wildcard filename search is recursive\n"
             L"     -r:flatten        flatten the directory structure (default)\n"
             L"     -r:keep           keep the directory structure\n"
-            L"   -flist <filename>   use text file with a list of input files (one per line)\n"
+            L"   -flist <filename>, --file-list <filename>\n"
+            L"                       use text file with a list of input files (one per line)\n"
             L"\n"
-            L"   -w <n>              width\n"
-            L"   -h <n>              height\n"
-            L"   -m <n>              miplevels\n"
-            L"   -f <format>         format\n"
+            L"   -w <n>, --width <n>                     width for output\n"
+            L"   -h <n>, --height <n>                    height for output\n"
+            L"   -m <n>, --mip-levels <n>                miplevels for output\n"
+            L"   -f <format>, --format <format>          pixel format for output\n"
             L"\n"
-            L"   -if <filter>        image filtering\n"
-            L"   -srgb{i|o}          sRGB {input, output}\n"
+            L"   -if <filter>, --image-filter <filter>   image filtering\n"
+            L"   -srgb{i|o}, --srgb-in, --srgb-out       sRGB {input, output}\n"
             L"\n"
-            L"   -px <string>        name prefix\n"
-            L"   -sx <string>        name suffix\n"
-            L"   -o <directory>      output directory\n"
-            L"   -l                  force output filename to lower case\n"
-            L"   -y                  overwrite existing output file (if any)\n"
-            L"   -ft <filetype>      output file type\n"
+            L"   -px <string>, --prefix <string>         name prefix\n"
+            L"   -sx <string>, --suffix <string>         name suffix\n"
+            L"   -o <directory>                          output directory\n"
+            L"   -l, --to-lowercase                      force output filename to lower case\n"
+            L"   -y, --overwrite                         overwrite existing output file (if any)\n"
+            L"   -ft <filetype>, --file-type <filetype>  output file type\n"
             L"\n"
-            L"   -hflip              horizonal flip of source image\n"
-            L"   -vflip              vertical flip of source image\n"
+            L"   -hflip, --horizontal-flip               horizonal flip of source image\n"
+            L"   -vflip, --vertical-flip                 vertical flip of source image\n"
             L"\n"
-            L"   -sepalpha           resize/generate mips alpha channel separately\n"
-            L"                       from color channels\n"
-            L"   -keepcoverage <ref> Preserve alpha coverage in mips for alpha test ref\n"
+            L"   -sepalpha, --separate-alpha   resize/generate mips alpha channel separately from color channels\n"
+            L"   --keep-coverage <ref>         Preserve alpha coverage in mips for alpha test ref\n"
             L"\n"
-            L"   -nowic              Force non-WIC filtering\n"
-            L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n"
-            L"   -pmalpha            convert final texture to use premultiplied alpha\n"
-            L"   -alpha              convert premultiplied alpha to straight alpha\n"
-            L"   -at <threshold>     Alpha threshold used for BC1, RGBA5551, and WIC\n"
-            L"                       (defaults to 0.5)\n"
+            L"   -nowic                             Force non-WIC filtering\n"
+            L"   -wrap, -mirror                     texture addressing mode (wrap, mirror, or clamp)\n"
+            L"   -pmalpha, --premultiplied-alpha    convert final texture to use premultiplied alpha\n"
+            L"   -alpha                             convert premultiplied alpha to straight alpha\n"
+            L"   -at <threshold>, --alpha-threshold <threshold>\n"
+            L"                                      Alpha threshold used for BC1, RGBA5551, and WIC\n"
+            L"                                      (defaults to 0.5)\n"
             L"\n"
-            L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n"
-            L"   -pow2               resize to fit a power-of-2, respecting aspect ratio\n"
+            L"   -fl <feature-level>, --feature-level <feature-level>\n"
+            L"                       Set maximum feature level target (defaults to 11.0)\n"
+            L"   -pow2, --fit-power-of-2\n"
+            L"                       resize to fit a power-of-2, respecting aspect ratio\n"
             L"\n"
-            L"   -nmap <options>     converts height-map to normal-map\n"
+            L"   -nmap <options>, --normal-map <options>\n"
+            L"                       converts height-map to normal-map\n"
             L"                       options must be one or more of\n"
             L"                          r, g, b, a, l, m, u, v, i, o\n"
-            L"   -nmapamp <weight>   normal map amplitude (defaults to 1.0)\n"
+            L"   -nmapamp <weight>, --normalmap-amplitude <weight>\n"
+            L"                       normal map amplitude (defaults to 1.0)\n"
             L"\n"
-            L"                       (DDS input only)\n"
-            L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n"
-            L"   -dword              Use DWORD instead of BYTE alignment\n"
-            L"   -badtails           Fix for older DXTn with bad mipchain tails\n"
-            L"   -permissive         Allow some DX9 variants with unusual header values\n"
-            L"   -ignoremips         Reads just the top-level mip which reads some invalid files\n"
-            L"   -fixbc4x4           Fix for odd-sized BC files that Direct3D can't load\n"
-            L"   -xlum               expand legacy L8, L16, and A8P8 formats\n"
+            L"                                  (DDS input only)\n"
+            L"   -t{u|f}                        TYPELESS format is treated as UNORM or FLOAT\n"
+            L"   -dword                         Use DWORD instead of BYTE alignment\n"
+            L"   --bad-tails                    Fix for older DXTn with bad mipchain tails\n"
+            L"   --permissive                   Allow some DX9 variants with unusual header values\n"
+            L"   --ignore-mips                  Reads just the top-level mip which reads some invalid files\n"
+            L"   --fix-bc-4x4                   Fix for odd-sized BC files that Direct3D can't load\n"
+            L"   -xlum, --expand-luminance      Expand legacy L8, L16, and A8P8 formats\n"
             L"\n"
             L"                       (DDS output only)\n"
             L"   -dx10               Force use of 'DX10' extended header\n"
@@ -750,39 +792,44 @@ namespace
         #endif
             L"\n"
             L"                       (TGA input only)\n"
-            L"   -tgazeroalpha       Allow all zero alpha channel files to be loaded 'as is'\n"
+            L"   --tga-zero-alpha    Allow all zero alpha channel files to be loaded 'as is'\n"
             L"\n"
             L"                       (TGA output only)\n"
-            L"   -tga20              Write file including TGA 2.0 extension area\n"
+            L"   --tga20             Write file including TGA 2.0 extension area\n"
             L"\n"
             L"                       (BMP, PNG, JPG, TIF, WDP output only)\n"
-            L"   -wicq <quality>     When writing images with WIC use quality (0.0 to 1.0)\n"
-            L"   -wiclossless        When writing images with WIC use lossless mode\n"
-            L"   -wicmulti           When writing images with WIC encode multiframe images\n"
+            L"   -wicq <quality>, --wic-quality <quality>\n"
+            L"                       When writing images with WIC use quality (0.0 to 1.0)\n"
+            L"   --wic-lossless      When writing images with WIC use lossless mode\n"
+            L"   --wic-multiframe    When writing images with WIC encode multiframe images\n"
             L"\n"
             L"   -nologo             suppress copyright message\n"
-            L"   -timing             Display elapsed processing time\n"
+            L"   --timing            display elapsed processing time\n"
             L"\n"
         #ifdef _OPENMP
-            L"   -singleproc         Do not use multi-threaded compression\n"
+            L"   --single-proc       Do not use multi-threaded compression\n"
         #endif
             L"   -gpu <adapter>      Select GPU for DirectCompute-based codecs (0 is default)\n"
             L"   -nogpu              Do not use DirectCompute-based codecs\n"
             L"\n"
-            L"   -bc <options>       Sets options for BC compression\n"
+            L"   -bc <options>, --block-compress <options>\n"
+            L"                       Sets options for BC compression\n"
             L"                       options must be one or more of\n"
             L"                          d, u, q, x\n"
-            L"   -aw <weight>        BC7 GPU compressor weighting for alpha error metric\n"
+            L"   -aw <weight>, --alpha-weight <weight>\n"
+            L"                       BC7 GPU compressor weighting for alpha error metric\n"
             L"                       (defaults to 1.0)\n"
             L"\n"
-            L"   -c <hex-RGB>        colorkey (a.k.a. chromakey) transparency\n"
-            L"   -rotatecolor <rot>  rotates color primaries and/or applies a curve\n"
-            L"   -nits <value>       paper-white value in nits to use for HDR10 (def: 200.0)\n"
-            L"   -tonemap            Apply a tonemap operator based on maximum luminance\n"
+            L"   -c <hex-RGB>, --color-key <hex-RGB>    colorkey (a.k.a. chromakey) transparency\n"
+            L"   --rotate-color <rot>                   rotates color primaries and/or applies a curve\n"
+            L"\n"
+            L"   -nits <value>, --paper-white-nits <value>\n"
+            L"                       paper-white value in nits to use for HDR10 (def: 200.0)\n"
+            L"   --tonemap           Apply a tonemap operator based on maximum luminance\n"
             L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n"
-            L"   -inverty            Invert Y (i.e. green) channel values\n"
-            L"   -reconstructz       Rebuild Z (blue) channel assuming X/Y are normals\n"
-            L"   -swizzle <rgba>     Swizzle image channels using HLSL-style mask\n"
+            L"   --invert-y          Invert Y (i.e. green) channel values\n"
+            L"   --reconstruct-z     Rebuild Z (blue) channel assuming X/Y are normals\n"
+            L"   --swizzle <rgba>    Swizzle image channels using HLSL-style mask\n"
             L"\n"
             L"   '-- ' is needed if any input filepath starts with the '-' or '/' character\n";
 
@@ -1218,34 +1265,55 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     {
         PWSTR pArg = argv[iArg];
 
-        if (allowOpts
-            && ('-' == pArg[0]) && ('-' == pArg[1]))
+        if (allowOpts && (('-' == pArg[0]) || ('/' == pArg[0])))
         {
-            if (pArg[2] == 0)
+            uint64_t dwOption = 0;
+
+            if (('-' == pArg[0]) && ('-' == pArg[1]))
             {
-                // "-- " is the POSIX standard for "end of options" marking to escape the '-' and '/' characters at the start of filepaths.
-                allowOpts = false;
+                if (pArg[2] == 0)
+                {
+                    // "-- " is the POSIX standard for "end of options" marking to escape the '-' and '/' characters at the start of filepaths.
+                    allowOpts = false;
+                }
+                else
+                {
+                    pArg += 2;
+                    dwOption = LookupByName(pArg, g_pOptionsLong);
+
+                    if (dwOption == OPT_VERSION)
+                    {
+                        PrintLogo(true, g_ToolName, g_Description);
+                        return 0;
+                    }
+                    else if (dwOption == OPT_HELP)
+                    {
+                        PrintUsage();
+                        return 0;
+                    }
+                }
             }
-            else if (!_wcsicmp(pArg,L"--version"))
+            else if (('-' == pArg[0]) || ('/' == pArg[0]))
             {
-                PrintLogo(true, g_ToolName, g_Description);
-                return 0;
+                pArg++;
+                dwOption = LookupByName(pArg, g_pOptions);
+
+                if (!dwOption)
+                {
+                    if (LookupByName(pArg, g_pOptionsLong))
+                    {
+                        wprintf(L"ERROR: did you mean `--%ls` (with two dashes)?\n", pArg);
+                        return 1;
+                    }
+                }
             }
-            else if (!_wcsicmp(pArg, L"--help"))
+
+            if (!dwOption)
             {
-                PrintUsage();
-                return 0;
-            }
-            else
-            {
-                wprintf(L"Unknown option: %ls\n", pArg);
+                wprintf(L"ERROR: Unknown option: `%ls`\n\nUse %ls --help\n", pArg, g_ToolName);
                 return 1;
             }
-        }
-        else if (allowOpts
-            && (('-' == pArg[0]) || ('/' == pArg[0])))
-        {
-            pArg++;
+
             PWSTR pValue;
 
             for (pValue = pArg; *pValue && (':' != *pValue); pValue++);
@@ -1253,11 +1321,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (*pValue)
                 *pValue++ = 0;
 
-            const uint64_t dwOption = LookupByName(pArg, g_pOptions);
-
-            if (!dwOption || (dwOptions & (uint64_t(1) << dwOption)))
+            if (dwOptions & (uint64_t(1) << dwOption))
             {
-                PrintUsage();
+                wprintf(L"ERROR: Duplicate option: `%ls`\n\n", pArg);
                 return 1;
             }
 
