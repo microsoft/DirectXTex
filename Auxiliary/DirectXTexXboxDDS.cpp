@@ -27,7 +27,7 @@ namespace
     // Decodes DDS header using XBOX extended header (variant of DX10 header)
     //-------------------------------------------------------------------------------------
     HRESULT DecodeDDSHeader(
-        _In_reads_bytes_(size) const void* pSource,
+        _In_reads_bytes_(size) const uint8_t* pSource,
         size_t size,
         DirectX::TexMetadata& metadata,
         _Out_opt_ DDSMetaData* ddPixelFormat,
@@ -229,7 +229,7 @@ namespace
 _Use_decl_annotations_
 HRESULT Xbox::EncodeDDSHeader(
     const XboxImage& xbox,
-    void* pDestination,
+    uint8_t* pDestination,
     size_t maxsize) noexcept
 {
     if (!pDestination)
@@ -383,7 +383,7 @@ HRESULT Xbox::EncodeDDSHeader(
 
 _Use_decl_annotations_
 HRESULT Xbox::GetMetadataFromDDSMemory(
-    const void* pSource,
+    const uint8_t* pSource,
     size_t size,
     TexMetadata& metadata,
     bool& isXbox)
@@ -393,7 +393,7 @@ HRESULT Xbox::GetMetadataFromDDSMemory(
 
 _Use_decl_annotations_
 HRESULT Xbox::GetMetadataFromDDSMemoryEx(
-    const void* pSource,
+    const uint8_t* pSource,
     size_t size,
     TexMetadata& metadata,
     bool& isXbox,
@@ -498,7 +498,7 @@ HRESULT Xbox::GetMetadataFromDDSFileEx(
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT Xbox::LoadFromDDSMemory(
-    const void* pSource,
+    const uint8_t* pSource,
     size_t size,
     TexMetadata* metadata,
     XboxImage& xbox)
@@ -508,7 +508,7 @@ HRESULT Xbox::LoadFromDDSMemory(
 
 _Use_decl_annotations_
 HRESULT Xbox::LoadFromDDSMemoryEx(
-    const void* pSource,
+    const uint8_t* pSource,
     size_t size,
     TexMetadata* metadata,
     DDSMetaData* ddPixelFormat,
@@ -694,7 +694,7 @@ HRESULT Xbox::SaveToDDSMemory(const XboxImage& xbox, Blob& blob)
         return hr;
 
     // Copy header
-    auto pDestination = reinterpret_cast<uint8_t*>(blob.GetBufferPointer());
+    auto pDestination = blob.GetBufferPointer();
     assert(pDestination);
 
     hr = EncodeDDSHeader(xbox, pDestination, DDS_XBOX_HEADER_SIZE);

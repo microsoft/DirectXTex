@@ -94,7 +94,7 @@ namespace
     // Decodes HDR header
     //-------------------------------------------------------------------------------------
     HRESULT DecodeHDRHeader(
-        _In_reads_bytes_(size) const void* pSource,
+        _In_reads_bytes_(size) const uint8_t* pSource,
         size_t size,
         _Out_ TexMetadata& metadata,
         size_t& offset,
@@ -121,7 +121,7 @@ namespace
 
         // Process first part of header
         bool formatFound = false;
-        auto info = static_cast<const char*>(pSource);
+        auto info = reinterpret_cast<const char*>(pSource);
         while (size > 0)
         {
             if (*info == '\n')
@@ -310,7 +310,7 @@ namespace
             return E_FAIL;
         }
 
-        offset = size_t(info - static_cast<const char*>(pSource));
+        offset = size_t(info - reinterpret_cast<const char*>(pSource));
 
         metadata.width = width;
         metadata.height = height;
@@ -600,7 +600,7 @@ namespace
 // Obtain metadata from HDR file in memory/on disk
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::GetMetadataFromHDRMemory(const void* pSource, size_t size, TexMetadata& metadata) noexcept
+HRESULT DirectX::GetMetadataFromHDRMemory(const uint8_t* pSource, size_t size, TexMetadata& metadata) noexcept
 {
     if (!pSource || size == 0)
         return E_INVALIDARG;
@@ -696,7 +696,7 @@ HRESULT DirectX::GetMetadataFromHDRFile(const wchar_t* szFile, TexMetadata& meta
 // Load a HDR file in memory
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::LoadFromHDRMemory(const void* pSource, size_t size, TexMetadata* metadata, ScratchImage& image) noexcept
+HRESULT DirectX::LoadFromHDRMemory(const uint8_t* pSource, size_t size, TexMetadata* metadata, ScratchImage& image) noexcept
 {
     if (!pSource || size == 0)
         return E_INVALIDARG;
@@ -1045,7 +1045,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob) noexcept
         return hr;
 
     // Copy header
-    auto dPtr = static_cast<uint8_t*>(blob.GetBufferPointer());
+    auto dPtr = blob.GetBufferPointer();
     assert(dPtr != nullptr);
     memcpy(dPtr, header, headerLen);
     dPtr += headerLen;
@@ -1097,7 +1097,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob) noexcept
     }
 #endif
 
-    hr = blob.Trim(size_t(dPtr - static_cast<uint8_t*>(blob.GetBufferPointer())));
+    hr = blob.Trim(size_t(dPtr - blob.GetConstBufferPointer()));
     if (FAILED(hr))
     {
         blob.Release();
@@ -1184,7 +1184,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
     #ifdef _WIN32
         auto const bytesToWrite = static_cast<const DWORD>(blob.GetBufferSize());
         DWORD bytesWritten;
-        if (!WriteFile(hFile.get(), blob.GetBufferPointer(), bytesToWrite, &bytesWritten, nullptr))
+        if (!WriteFile(hFile.get(), blob.GetConstBufferPointer(), bytesToWrite, &bytesWritten, nullptr))
         {
             return HRESULT_FROM_WIN32(GetLastError());
         }
@@ -1194,7 +1194,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
             return E_FAIL;
         }
     #else
-        outFile.write(reinterpret_cast<char*>(blob.GetBufferPointer()),
+        outFile.write(reinterpret_cast<const char*>(blob.GetConstBufferPointer()),
             static_cast<std::streamsize>(blob.GetBufferSize()));
 
         if (!outFile)

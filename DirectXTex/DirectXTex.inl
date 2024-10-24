@@ -14,29 +14,29 @@
 //=====================================================================================
 // Bitmask flags enumerator operators
 //=====================================================================================
-DEFINE_ENUM_FLAG_OPERATORS(CP_FLAGS);
-DEFINE_ENUM_FLAG_OPERATORS(DDS_FLAGS);
-DEFINE_ENUM_FLAG_OPERATORS(TGA_FLAGS);
-DEFINE_ENUM_FLAG_OPERATORS(WIC_FLAGS);
-DEFINE_ENUM_FLAG_OPERATORS(TEX_FR_FLAGS);
-DEFINE_ENUM_FLAG_OPERATORS(TEX_FILTER_FLAGS);
-DEFINE_ENUM_FLAG_OPERATORS(TEX_PMALPHA_FLAGS);
-DEFINE_ENUM_FLAG_OPERATORS(TEX_COMPRESS_FLAGS);
-DEFINE_ENUM_FLAG_OPERATORS(CNMAP_FLAGS);
-DEFINE_ENUM_FLAG_OPERATORS(CMSE_FLAGS);
-DEFINE_ENUM_FLAG_OPERATORS(CREATETEX_FLAGS);
+DEFINE_ENUM_FLAG_OPERATORS(CP_FLAGS)
+DEFINE_ENUM_FLAG_OPERATORS(DDS_FLAGS)
+DEFINE_ENUM_FLAG_OPERATORS(TGA_FLAGS)
+DEFINE_ENUM_FLAG_OPERATORS(WIC_FLAGS)
+DEFINE_ENUM_FLAG_OPERATORS(TEX_FR_FLAGS)
+DEFINE_ENUM_FLAG_OPERATORS(TEX_FILTER_FLAGS)
+DEFINE_ENUM_FLAG_OPERATORS(TEX_PMALPHA_FLAGS)
+DEFINE_ENUM_FLAG_OPERATORS(TEX_COMPRESS_FLAGS)
+DEFINE_ENUM_FLAG_OPERATORS(CNMAP_FLAGS)
+DEFINE_ENUM_FLAG_OPERATORS(CMSE_FLAGS)
+DEFINE_ENUM_FLAG_OPERATORS(CREATETEX_FLAGS)
 
 // WIC_FILTER modes match TEX_FILTER modes
-constexpr WIC_FLAGS operator|(WIC_FLAGS a, TEX_FILTER_FLAGS b) { return static_cast<WIC_FLAGS>(static_cast<unsigned long>(a) | static_cast<unsigned long>(b & TEX_FILTER_MODE_MASK)); }
-constexpr WIC_FLAGS operator|(TEX_FILTER_FLAGS a, WIC_FLAGS b) { return static_cast<WIC_FLAGS>(static_cast<unsigned long>(a & TEX_FILTER_MODE_MASK) | static_cast<unsigned long>(b)); }
+constexpr WIC_FLAGS operator|(WIC_FLAGS a, TEX_FILTER_FLAGS b) { return static_cast<WIC_FLAGS>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b & TEX_FILTER_MODE_MASK)); }
+constexpr WIC_FLAGS operator|(TEX_FILTER_FLAGS a, WIC_FLAGS b) { return static_cast<WIC_FLAGS>(static_cast<uint32_t>(a & TEX_FILTER_MODE_MASK) | static_cast<uint32_t>(b)); }
 
 // TEX_PMALPHA_SRGB match TEX_FILTER_SRGB
-constexpr TEX_PMALPHA_FLAGS operator|(TEX_PMALPHA_FLAGS a, TEX_FILTER_FLAGS b) { return static_cast<TEX_PMALPHA_FLAGS>(static_cast<unsigned long>(a) | static_cast<unsigned long>(b & TEX_FILTER_SRGB_MASK)); }
-constexpr TEX_PMALPHA_FLAGS operator|(TEX_FILTER_FLAGS a, TEX_PMALPHA_FLAGS b) { return static_cast<TEX_PMALPHA_FLAGS>(static_cast<unsigned long>(a & TEX_FILTER_SRGB_MASK) | static_cast<unsigned long>(b)); }
+constexpr TEX_PMALPHA_FLAGS operator|(TEX_PMALPHA_FLAGS a, TEX_FILTER_FLAGS b) { return static_cast<TEX_PMALPHA_FLAGS>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b & TEX_FILTER_SRGB_MASK)); }
+constexpr TEX_PMALPHA_FLAGS operator|(TEX_FILTER_FLAGS a, TEX_PMALPHA_FLAGS b) { return static_cast<TEX_PMALPHA_FLAGS>(static_cast<uint32_t>(a & TEX_FILTER_SRGB_MASK) | static_cast<uint32_t>(b)); }
 
 // TEX_COMPRESS_SRGB match TEX_FILTER_SRGB
-constexpr TEX_COMPRESS_FLAGS operator|(TEX_COMPRESS_FLAGS a, TEX_FILTER_FLAGS b) { return static_cast<TEX_COMPRESS_FLAGS>(static_cast<unsigned long>(a) | static_cast<unsigned long>(b & TEX_FILTER_SRGB_MASK)); }
-constexpr TEX_COMPRESS_FLAGS operator|(TEX_FILTER_FLAGS a, TEX_COMPRESS_FLAGS b) { return static_cast<TEX_COMPRESS_FLAGS>(static_cast<unsigned long>(a & TEX_FILTER_SRGB_MASK) | static_cast<unsigned long>(b)); }
+constexpr TEX_COMPRESS_FLAGS operator|(TEX_COMPRESS_FLAGS a, TEX_FILTER_FLAGS b) { return static_cast<TEX_COMPRESS_FLAGS>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b & TEX_FILTER_SRGB_MASK)); }
+constexpr TEX_COMPRESS_FLAGS operator|(TEX_FILTER_FLAGS a, TEX_COMPRESS_FLAGS b) { return static_cast<TEX_COMPRESS_FLAGS>(static_cast<uint32_t>(a & TEX_FILTER_SRGB_MASK) | static_cast<uint32_t>(b)); }
 
 
 //=====================================================================================
@@ -156,7 +156,7 @@ inline HRESULT __cdecl SaveToDDSFile(const Image& image, DDS_FLAGS flags, const 
 // Compatability helpers
 //=====================================================================================
 _Use_decl_annotations_
-inline HRESULT __cdecl GetMetadataFromTGAMemory(const void* pSource, size_t size, TexMetadata& metadata) noexcept
+inline HRESULT __cdecl GetMetadataFromTGAMemory(const uint8_t* pSource, size_t size, TexMetadata& metadata) noexcept
 {
     return GetMetadataFromTGAMemory(pSource, size, TGA_FLAGS_NONE, metadata);
 }
@@ -168,7 +168,7 @@ inline HRESULT __cdecl GetMetadataFromTGAFile(const wchar_t* szFile, TexMetadata
 }
 
 _Use_decl_annotations_
-inline HRESULT __cdecl LoadFromTGAMemory(const void* pSource, size_t size, TexMetadata* metadata, ScratchImage& image) noexcept
+inline HRESULT __cdecl LoadFromTGAMemory(const uint8_t* pSource, size_t size, TexMetadata* metadata, ScratchImage& image) noexcept
 {
     return LoadFromTGAMemory(pSource, size, TGA_FLAGS_NONE, metadata, image);
 }

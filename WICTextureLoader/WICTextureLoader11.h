@@ -51,7 +51,7 @@ namespace DirectX
 #pragma clang diagnostic ignored "-Wdeprecated-dynamic-exception-spec"
 #endif
 
-    DEFINE_ENUM_FLAG_OPERATORS(WIC_LOADER_FLAGS);
+    DEFINE_ENUM_FLAG_OPERATORS(WIC_LOADER_FLAGS)
 
 #ifdef __clang__
 #pragma clang diagnostic pop

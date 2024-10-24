@@ -1688,7 +1688,7 @@ HRESULT Blob::Initialize(size_t size) noexcept
 
     Release();
 
-    m_buffer = _aligned_malloc(size, 16);
+    m_buffer = reinterpret_cast<uint8_t*>(_aligned_malloc(size, 16));
     if (!m_buffer)
     {
         Release();
@@ -1724,7 +1724,7 @@ HRESULT Blob::Resize(size_t size) noexcept
     if (!m_buffer || !m_size)
         return E_UNEXPECTED;
 
-    void *tbuffer = _aligned_malloc(size, 16);
+    auto tbuffer = reinterpret_cast<uint8_t*>(_aligned_malloc(size, 16));
     if (!tbuffer)
         return E_OUTOFMEMORY;
 

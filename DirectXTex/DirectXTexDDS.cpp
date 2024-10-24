@@ -675,7 +675,7 @@ _Use_decl_annotations_
 HRESULT DirectX::EncodeDDSHeader(
     const TexMetadata& metadata,
     DDS_FLAGS flags,
-    void* pDestination,
+    uint8_t* pDestination,
     size_t maxsize,
     size_t& required) noexcept
 {
@@ -851,7 +851,7 @@ HRESULT DirectX::EncodeDDSHeader(
     if (maxsize < required)
         return E_NOT_SUFFICIENT_BUFFER;
 
-    *static_cast<uint32_t*>(pDestination) = DDS_MAGIC;
+    *reinterpret_cast<uint32_t*>(pDestination) = DDS_MAGIC;
 
     auto header = reinterpret_cast<DDS_HEADER*>(static_cast<uint8_t*>(pDestination) + sizeof(uint32_t));
     assert(header);
@@ -1835,7 +1835,7 @@ namespace
 
 _Use_decl_annotations_
 HRESULT DirectX::GetMetadataFromDDSMemory(
-    const void* pSource,
+    const uint8_t* pSource,
     size_t size,
     DDS_FLAGS flags,
     TexMetadata& metadata) noexcept
@@ -1845,7 +1845,7 @@ HRESULT DirectX::GetMetadataFromDDSMemory(
 
 _Use_decl_annotations_
 HRESULT DirectX::GetMetadataFromDDSMemoryEx(
-    const void* pSource,
+    const uint8_t* pSource,
     size_t size,
     DDS_FLAGS flags,
     TexMetadata& metadata,
@@ -1957,7 +1957,7 @@ HRESULT DirectX::GetMetadataFromDDSFileEx(
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT DirectX::LoadFromDDSMemory(
-    const void* pSource,
+    const uint8_t* pSource,
     size_t size,
     DDS_FLAGS flags,
     TexMetadata* metadata,
@@ -1968,7 +1968,7 @@ HRESULT DirectX::LoadFromDDSMemory(
 
 _Use_decl_annotations_
 HRESULT DirectX::LoadFromDDSMemoryEx(
-    const void* pSource,
+    const uint8_t* pSource,
     size_t size,
     DDS_FLAGS flags,
     TexMetadata* metadata,
@@ -2355,7 +2355,7 @@ HRESULT DirectX::SaveToDDSMemory(
     if (FAILED(hr))
         return hr;
 
-    auto pDestination = static_cast<uint8_t*>(blob.GetBufferPointer());
+    auto pDestination = blob.GetBufferPointer();
     assert(pDestination);
 
     hr = EncodeDDSHeader(metadata, flags, pDestination, blob.GetBufferSize(), required);
