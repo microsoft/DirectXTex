@@ -301,6 +301,26 @@ namespace
         { nullptr,                  0 }
     };
 
+    const SValue<const wchar_t*> g_pOptionsOld[] =
+    {
+        { L"badtails", L"bad-tails" },
+        { L"fixbc4x4", L"fix-bc-4x4" },
+        { L"ignoremips", L"ignore-mips" },
+        { L"inverty", L"invert-y" },
+        { L"keepcoverage", L"keep-coverage" },
+        { L"permissive", L"permissive" },
+        { L"reconstructz", L"reconstruct-z" },
+        { L"rotatecolor", L"rotate-color" },
+        { L"singleproc", L"single-proc" },
+        { L"swizzle", L"swizzle" },
+        { L"tgazeroalpha", L"tga-zero-alpha" },
+        { L"timing", L"timing" },
+        { L"tonemap", L"tonemap" },
+        { L"wiclossless", L"wic-lossless" },
+        { L"wicmulti", L"wic-multiframe" },
+        { L"x2bias", L"x2-bias" },
+    };
+
     #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
 
     const SValue<DXGI_FORMAT> g_pFormats[] =
@@ -1313,6 +1333,15 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     {
                         wprintf(L"ERROR: did you mean `--%ls` (with two dashes)?\n", pArg);
                         return 1;
+                    }
+                    else
+                    {
+                        auto hint = LookupByName(pArg, g_pOptionsOld);
+                        if (hint)
+                        {
+                            wprintf(L"ERROR: use `--%ls` (with two dashes) instead\n", hint);
+                            return 1;
+                        }
                     }
                 }
             }
