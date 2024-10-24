@@ -462,6 +462,9 @@ namespace DirectX
         void __cdecl Release() noexcept;
 
         uint8_t* __cdecl GetBufferPointer() const noexcept { return m_buffer; }
+
+        const uint8_t* __cdecl GetConstBufferPointer() const noexcept { return m_buffer; }
+
         size_t __cdecl GetBufferSize() const noexcept { return m_size; }
 
         HRESULT __cdecl Resize(size_t size) noexcept;

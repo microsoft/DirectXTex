@@ -1045,7 +1045,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob) noexcept
         return hr;
 
     // Copy header
-    auto dPtr = static_cast<uint8_t*>(blob.GetBufferPointer());
+    auto dPtr = blob.GetBufferPointer();
     assert(dPtr != nullptr);
     memcpy(dPtr, header, headerLen);
     dPtr += headerLen;
@@ -1097,7 +1097,7 @@ HRESULT DirectX::SaveToHDRMemory(const Image& image, Blob& blob) noexcept
     }
 #endif
 
-    hr = blob.Trim(size_t(dPtr - static_cast<uint8_t*>(blob.GetBufferPointer())));
+    hr = blob.Trim(size_t(dPtr - blob.GetConstBufferPointer()));
     if (FAILED(hr))
     {
         blob.Release();
@@ -1184,7 +1184,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
     #ifdef _WIN32
         auto const bytesToWrite = static_cast<const DWORD>(blob.GetBufferSize());
         DWORD bytesWritten;
-        if (!WriteFile(hFile.get(), blob.GetBufferPointer(), bytesToWrite, &bytesWritten, nullptr))
+        if (!WriteFile(hFile.get(), blob.GetConstBufferPointer(), bytesToWrite, &bytesWritten, nullptr))
         {
             return HRESULT_FROM_WIN32(GetLastError());
         }
@@ -1194,7 +1194,7 @@ HRESULT DirectX::SaveToHDRFile(const Image& image, const wchar_t* szFile) noexce
             return E_FAIL;
         }
     #else
-        outFile.write(reinterpret_cast<char*>(blob.GetBufferPointer()),
+        outFile.write(reinterpret_cast<const char*>(blob.GetConstBufferPointer()),
             static_cast<std::streamsize>(blob.GetBufferSize()));
 
         if (!outFile)

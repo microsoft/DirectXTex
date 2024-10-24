@@ -208,7 +208,7 @@ namespace
             m_streamEOF(0),
             mRefCount(1)
         {
-            assert(mBlob.GetBufferPointer() && mBlob.GetBufferSize() > 0);
+            assert(mBlob.GetConstBufferPointer() && mBlob.GetBufferSize() > 0);
         }
 
     public:
@@ -254,7 +254,7 @@ namespace
         HRESULT STDMETHODCALLTYPE Read(void* pv, ULONG cb, ULONG* pcbRead) override
         {
             size_t maxRead = m_streamEOF - m_streamPosition;
-            auto ptr = static_cast<const uint8_t*>(mBlob.GetBufferPointer());
+            auto ptr = mBlob.GetBufferPointer();
             if (cb > maxRead)
             {
                 const uint64_t pos = uint64_t(m_streamPosition) + uint64_t(maxRead);
@@ -324,7 +324,7 @@ namespace
             if (pos > UINT32_MAX)
                 return HRESULT_E_ARITHMETIC_OVERFLOW;
 
-            auto ptr = static_cast<uint8_t*>(mBlob.GetBufferPointer());
+            auto ptr = mBlob.GetBufferPointer();
             memcpy(&ptr[m_streamPosition], pv, cb);
 
             m_streamPosition = static_cast<size_t>(pos);
@@ -347,7 +347,7 @@ namespace
 
             if (blobSize >= size.LowPart)
             {
-                auto ptr = static_cast<uint8_t*>(mBlob.GetBufferPointer());
+                auto ptr = mBlob.GetBufferPointer();
                 if (m_streamEOF < size.LowPart)
                 {
                     memset(&ptr[m_streamEOF], 0, size.LowPart - m_streamEOF);
@@ -367,7 +367,7 @@ namespace
                 if (FAILED(hr))
                     return hr;
 
-                auto ptr = static_cast<uint8_t*>(mBlob.GetBufferPointer());
+                auto ptr = mBlob.GetBufferPointer();
                 if (m_streamEOF < size.LowPart)
                 {
                     memset(&ptr[m_streamEOF], 0, size.LowPart - m_streamEOF);

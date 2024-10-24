@@ -694,7 +694,7 @@ HRESULT Xbox::SaveToDDSMemory(const XboxImage& xbox, Blob& blob)
         return hr;
 
     // Copy header
-    auto pDestination = reinterpret_cast<uint8_t*>(blob.GetBufferPointer());
+    auto pDestination = blob.GetBufferPointer();
     assert(pDestination);
 
     hr = EncodeDDSHeader(xbox, pDestination, DDS_XBOX_HEADER_SIZE);

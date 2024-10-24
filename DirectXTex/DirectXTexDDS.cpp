@@ -2355,7 +2355,7 @@ HRESULT DirectX::SaveToDDSMemory(
     if (FAILED(hr))
         return hr;
 
-    auto pDestination = static_cast<uint8_t*>(blob.GetBufferPointer());
+    auto pDestination = blob.GetBufferPointer();
     assert(pDestination);
 
     hr = EncodeDDSHeader(metadata, flags, pDestination, blob.GetBufferSize(), required);
