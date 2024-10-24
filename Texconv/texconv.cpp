@@ -315,6 +315,7 @@ namespace
         { L"wiclossless", L"wic-lossless" },
         { L"wicmulti", L"wic-multiframe" },
         { L"x2bias", L"x2-bias" },
+        { nullptr, nullptr }
     };
 
     #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
@@ -1292,6 +1293,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         if (allowOpts && (('-' == pArg[0]) || ('/' == pArg[0])))
         {
             uint64_t dwOption = 0;
+            PWSTR pValue = nullptr;
 
             if (('-' == pArg[0]) && ('-' == pArg[1]))
             {
@@ -1304,6 +1306,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 else
                 {
                     pArg += 2;
+
+                    for (pValue = pArg; *pValue && (':' != *pValue) && ('=' != *pValue); ++pValue);
+
+                    if (*pValue)
+                        *pValue++ = 0;
+
                     dwOption = LookupByName(pArg, g_pOptionsLong);
 
                     if (dwOption == OPT_VERSION)
@@ -1321,6 +1329,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             else
             {
                 pArg++;
+
+                for (pValue = pArg; *pValue && (':' != *pValue) && ('=' != *pValue); ++pValue);
+
+                if (*pValue)
+                    *pValue++ = 0;
+
                 dwOption = LookupByName(pArg, g_pOptions);
 
                 if (!dwOption)
@@ -1347,13 +1361,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 wprintf(L"ERROR: Unknown option: `%ls`\n\nUse %ls --help\n", pArg, g_ToolName);
                 return 1;
             }
-
-            PWSTR pValue = pArg;
-
-            for (; *pValue && (':' != *pValue); ++pValue);
-
-            if (*pValue)
-                *pValue++ = 0;
 
             if (dwOptions & (uint64_t(1) << dwOption))
             {
