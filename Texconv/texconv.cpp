@@ -214,6 +214,7 @@ namespace
         { L"dword",         OPT_DDS_DWORD_ALIGN },
         { L"dx10",          OPT_USE_DX10 },
         { L"dx9",           OPT_USE_DX9 },
+        { L"tga20",         OPT_TGA20 },
         { L"wicq",          OPT_WIC_QUALITY },
         { L"nologo",        OPT_NOLOGO },
         { L"sepalpha",      OPT_SEPALPHA },
@@ -235,7 +236,6 @@ namespace
         { L"nmapamp",       OPT_NORMAL_MAP_AMPLITUDE },
         { L"bc",            OPT_BC_COMPRESS },
         { L"c",             OPT_COLORKEY },
-        { L"x2bias",        OPT_X2_BIAS },
         { L"nits",          OPT_PAPER_WHITE_NITS },
     #ifdef USE_XBOX_EXTS
         { L"xbox",          OPT_USE_XBOX },
@@ -251,6 +251,7 @@ namespace
         { L"bad-tails",             OPT_DDS_BAD_DXTN_TAILS },
         { L"block-compress",        OPT_BC_COMPRESS },
         { L"color-key",             OPT_COLORKEY },
+        { L"dword-alignment",       OPT_DDS_DWORD_ALIGN },
         { L"expand-luminance",      OPT_EXPAND_LUMINANCE },
         { L"feature-level",         OPT_FEATURE_LEVEL },
         { L"file-list",             OPT_FILELIST },
@@ -266,8 +267,8 @@ namespace
         { L"invert-y",              OPT_INVERT_Y },
         { L"keep-coverage",         OPT_PRESERVE_ALPHA_COVERAGE },
         { L"mip-levels",            OPT_MIPLEVELS },
-        { L"normalmap-amplitude",   OPT_NORMAL_MAP_AMPLITUDE },
-        { L"normalmap",             OPT_NORMAL_MAP },
+        { L"normal-map-amplitude",  OPT_NORMAL_MAP_AMPLITUDE },
+        { L"normal-map",            OPT_NORMAL_MAP },
         { L"overwrite",             OPT_OVERWRITE },
         { L"paper-white-nits",      OPT_PAPER_WHITE_NITS },
         { L"permissive",            OPT_DDS_PERMISSIVE },
@@ -282,16 +283,21 @@ namespace
         { L"suffix",                OPT_SUFFIX },
         { L"swizzle",               OPT_SWIZZLE },
         { L"tga-zero-alpha",        OPT_TGAZEROALPHA },
-        { L"tga20",                 OPT_TGA20 },
         { L"timing",                OPT_TIMING },
         { L"to-lowercase",          OPT_TOLOWER },
         { L"tonemap",               OPT_TONEMAP },
+        { L"typeless-unorm",        OPT_TYPELESS_UNORM },
+        { L"typeless-float",        OPT_TYPELESS_FLOAT },
         { L"version",               OPT_VERSION },
         { L"vertical-flip",         OPT_VFLIP },
         { L"wic-lossless",          OPT_WIC_LOSSLESS },
         { L"wic-multiframe",        OPT_WIC_MULTIFRAME },
         { L"wic-quality",           OPT_WIC_QUALITY },
         { L"width",                 OPT_WIDTH },
+        { L"x2-bias",               OPT_X2_BIAS },
+    #ifdef USE_XBOX_EXTS
+        { L"xbox-mode",             OPT_XGMODE },
+    #endif
         { nullptr,                  0 }
     };
 
@@ -771,12 +777,13 @@ namespace
             L"                       converts height-map to normal-map\n"
             L"                       options must be one or more of\n"
             L"                          r, g, b, a, l, m, u, v, i, o\n"
-            L"   -nmapamp <weight>, --normalmap-amplitude <weight>\n"
+            L"   -nmapamp <weight>, --normal-map-amplitude <weight>\n"
             L"                       normal map amplitude (defaults to 1.0)\n"
             L"\n"
             L"                                  (DDS input only)\n"
-            L"   -t{u|f}                        TYPELESS format is treated as UNORM or FLOAT\n"
-            L"   -dword                         Use DWORD instead of BYTE alignment\n"
+            L"   -tu, --typeless-unorm          TYPELESS format is treated as UNORM\n"
+            L"   -tf, --typeless-float          TYPELESS format is treated as FLOAT\n"
+            L"   -dword, --dword-alignment      Use DWORD instead of BYTE alignment\n"
             L"   --bad-tails                    Fix for older DXTn with bad mipchain tails\n"
             L"   --permissive                   Allow some DX9 variants with unusual header values\n"
             L"   --ignore-mips                  Reads just the top-level mip which reads some invalid files\n"
@@ -788,14 +795,15 @@ namespace
             L"   -dx9                Force use of legacy DX9 header\n"
         #ifdef USE_XBOX_EXTS
             L"   -xbox               Tile/swizzle and use 'XBOX' variant of DDS\n"
-            L"   -xgmode <mode>      Tile/swizzle using provided memory layout mode\n"
+            L"   -xgmode <mode>, --xbox-mode <mode>\n"\
+            L"                       Tile/swizzle using provided memory layout mode\n"
         #endif
             L"\n"
             L"                       (TGA input only)\n"
             L"   --tga-zero-alpha    Allow all zero alpha channel files to be loaded 'as is'\n"
             L"\n"
             L"                       (TGA output only)\n"
-            L"   --tga20             Write file including TGA 2.0 extension area\n"
+            L"   -tga20              Write file including TGA 2.0 extension area\n"
             L"\n"
             L"                       (BMP, PNG, JPG, TIF, WDP output only)\n"
             L"   -wicq <quality>, --wic-quality <quality>\n"
@@ -826,7 +834,7 @@ namespace
             L"   -nits <value>, --paper-white-nits <value>\n"
             L"                       paper-white value in nits to use for HDR10 (def: 200.0)\n"
             L"   --tonemap           Apply a tonemap operator based on maximum luminance\n"
-            L"   -x2bias             Enable *2 - 1 conversion cases for unorm/pos-only-float\n"
+            L"   --x2-bias           Enable *2 - 1 conversion cases for unorm/pos-only-float\n"
             L"   --invert-y          Invert Y (i.e. green) channel values\n"
             L"   --reconstruct-z     Rebuild Z (blue) channel assuming X/Y are normals\n"
             L"   --swizzle <rgba>    Swizzle image channels using HLSL-style mask\n"
@@ -1261,7 +1269,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     std::list<SConversion> conversion;
     bool allowOpts = true;
 
-    for (int iArg = 1; iArg < argc; iArg++)
+    for (int iArg = 1; iArg < argc; ++iArg)
     {
         PWSTR pArg = argv[iArg];
 
@@ -1294,7 +1302,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }
                 }
             }
-            else if (('-' == pArg[0]) || ('/' == pArg[0]))
+            else
             {
                 pArg++;
                 dwOption = LookupByName(pArg, g_pOptions);
@@ -1315,9 +1323,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            PWSTR pValue;
+            PWSTR pValue = pArg;
 
-            for (pValue = pArg; *pValue && (':' != *pValue); pValue++);
+            for (; *pValue && (':' != *pValue); ++pValue);
 
             if (*pValue)
                 *pValue++ = 0;
