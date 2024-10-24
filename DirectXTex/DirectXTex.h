@@ -86,7 +86,7 @@ namespace DirectX
 
     FORMAT_TYPE __cdecl FormatDataType(_In_ DXGI_FORMAT fmt) noexcept;
 
-    enum CP_FLAGS : unsigned long
+    enum CP_FLAGS : uint32_t
     {
         CP_FLAGS_NONE = 0x0,
         // Normal operation
@@ -144,13 +144,13 @@ namespace DirectX
         TEX_DIMENSION_TEXTURE3D = 4,
     };
 
-    enum TEX_MISC_FLAG : unsigned long
+    enum TEX_MISC_FLAG : uint32_t
         // Subset here matches D3D10_RESOURCE_MISC_FLAG and D3D11_RESOURCE_MISC_FLAG
     {
         TEX_MISC_TEXTURECUBE = 0x4L,
     };
 
-    enum TEX_MISC_FLAG2 : unsigned long
+    enum TEX_MISC_FLAG2 : uint32_t
     {
         TEX_MISC2_ALPHA_MODE_MASK = 0x7L,
     };
@@ -210,7 +210,7 @@ namespace DirectX
         bool __cdecl IsDX10() const noexcept { return (fourCC == 0x30315844); }
     };
 
-    enum DDS_FLAGS : unsigned long
+    enum DDS_FLAGS : uint32_t
     {
         DDS_FLAGS_NONE = 0x0,
 
@@ -257,7 +257,7 @@ namespace DirectX
         // Enables the loader to read large dimension .dds files (i.e. greater than known hardware requirements)
     };
 
-    enum TGA_FLAGS : unsigned long
+    enum TGA_FLAGS : uint32_t
     {
         TGA_FLAGS_NONE = 0x0,
 
@@ -280,7 +280,7 @@ namespace DirectX
         // If no colorspace is specified in TGA 2.0 metadata, assume sRGB
     };
 
-    enum WIC_FLAGS : unsigned long
+    enum WIC_FLAGS : uint32_t
     {
         WIC_FLAGS_NONE = 0x0,
 
@@ -590,7 +590,7 @@ namespace DirectX
     //---------------------------------------------------------------------------------
     // Texture conversion, resizing, mipmap generation, and block compression
 
-    enum TEX_FR_FLAGS : unsigned long
+    enum TEX_FR_FLAGS : uint32_t
     {
         TEX_FR_ROTATE0 = 0x0,
         TEX_FR_ROTATE90 = 0x1,
@@ -608,7 +608,7 @@ namespace DirectX
         // Flip and/or rotate image
 #endif
 
-    enum TEX_FILTER_FLAGS : unsigned long
+    enum TEX_FILTER_FLAGS : uint32_t
     {
         TEX_FILTER_DEFAULT = 0,
 
@@ -662,9 +662,9 @@ namespace DirectX
         // Forces use of the WIC path even when logic would have picked a non-WIC path when both are an option
     };
 
-    constexpr unsigned long TEX_FILTER_DITHER_MASK = 0xF0000;
-    constexpr unsigned long TEX_FILTER_MODE_MASK = 0xF00000;
-    constexpr unsigned long TEX_FILTER_SRGB_MASK = 0xF000000;
+    constexpr uint32_t TEX_FILTER_DITHER_MASK = 0xF0000;
+    constexpr uint32_t TEX_FILTER_MODE_MASK = 0xF00000;
+    constexpr uint32_t TEX_FILTER_SRGB_MASK = 0xF000000;
 
     HRESULT __cdecl Resize(
         _In_ const Image& srcImage, _In_ size_t width, _In_ size_t height,
@@ -731,7 +731,7 @@ namespace DirectX
         _In_ float alphaReference, _Inout_ ScratchImage& mipChain) noexcept;
 
 
-    enum TEX_PMALPHA_FLAGS : unsigned long
+    enum TEX_PMALPHA_FLAGS : uint32_t
     {
         TEX_PMALPHA_DEFAULT = 0,
 
@@ -754,7 +754,7 @@ namespace DirectX
         _In_ TEX_PMALPHA_FLAGS flags, _Out_ ScratchImage& result) noexcept;
         // Converts to/from a premultiplied alpha version of the texture
 
-    enum TEX_COMPRESS_FLAGS : unsigned long
+    enum TEX_COMPRESS_FLAGS : uint32_t
     {
         TEX_COMPRESS_DEFAULT = 0,
 
@@ -840,7 +840,7 @@ namespace DirectX
     //---------------------------------------------------------------------------------
     // Normal map operations
 
-    enum CNMAP_FLAGS : unsigned long
+    enum CNMAP_FLAGS : uint32_t
     {
         CNMAP_DEFAULT = 0,
 
@@ -889,7 +889,7 @@ namespace DirectX
         _In_ const Image& srcImage, _In_ const Rect& srcRect, _In_ const Image& dstImage,
         _In_ TEX_FILTER_FLAGS filter, _In_ size_t xOffset, _In_ size_t yOffset) noexcept;
 
-    enum CMSE_FLAGS : unsigned long
+    enum CMSE_FLAGS : uint32_t
     {
         CMSE_DEFAULT = 0,
 
