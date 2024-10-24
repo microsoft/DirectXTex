@@ -176,6 +176,6 @@ namespace Xbox
     // DDS helper functions
     HRESULT __cdecl EncodeDDSHeader(
         const XboxImage& xbox,
-        _Out_writes_bytes_(maxsize) const uint8_t* pDestination, _In_ size_t maxsize) noexcept;
+        _Out_writes_bytes_(maxsize) uint8_t* pDestination, _In_ size_t maxsize) noexcept;
 
 } // namespace
