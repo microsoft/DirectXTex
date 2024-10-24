@@ -139,7 +139,7 @@ namespace
     // Decodes TGA header
     //-------------------------------------------------------------------------------------
     HRESULT DecodeTGAHeader(
-        _In_reads_bytes_(size) const void* pSource,
+        _In_reads_bytes_(size) const uint8_t* pSource,
         size_t size,
         TGA_FLAGS flags,
         _Out_ TexMetadata& metadata,
@@ -156,7 +156,7 @@ namespace
             return HRESULT_E_INVALID_DATA;
         }
 
-        auto pHeader = static_cast<const TGA_HEADER*>(pSource);
+        auto pHeader = reinterpret_cast<const TGA_HEADER*>(pSource);
 
         if (pHeader->bDescriptor & (TGA_FLAGS_INTERLEAVED_2WAY | TGA_FLAGS_INTERLEAVED_4WAY))
         {
@@ -1447,7 +1447,7 @@ namespace
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT DirectX::GetMetadataFromTGAMemory(
-    const void* pSource,
+    const uint8_t* pSource,
     size_t size,
     TGA_FLAGS flags,
     TexMetadata& metadata) noexcept
@@ -1641,7 +1641,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT DirectX::LoadFromTGAMemory(
-    const void* pSource,
+    const uint8_t* pSource,
     size_t size,
     TGA_FLAGS flags,
     TexMetadata* metadata,

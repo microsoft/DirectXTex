@@ -156,7 +156,7 @@ inline HRESULT __cdecl SaveToDDSFile(const Image& image, DDS_FLAGS flags, const 
 // Compatability helpers
 //=====================================================================================
 _Use_decl_annotations_
-inline HRESULT __cdecl GetMetadataFromTGAMemory(const void* pSource, size_t size, TexMetadata& metadata) noexcept
+inline HRESULT __cdecl GetMetadataFromTGAMemory(const uint8_t* pSource, size_t size, TexMetadata& metadata) noexcept
 {
     return GetMetadataFromTGAMemory(pSource, size, TGA_FLAGS_NONE, metadata);
 }
@@ -168,7 +168,7 @@ inline HRESULT __cdecl GetMetadataFromTGAFile(const wchar_t* szFile, TexMetadata
 }
 
 _Use_decl_annotations_
-inline HRESULT __cdecl LoadFromTGAMemory(const void* pSource, size_t size, TexMetadata* metadata, ScratchImage& image) noexcept
+inline HRESULT __cdecl LoadFromTGAMemory(const uint8_t* pSource, size_t size, TexMetadata* metadata, ScratchImage& image) noexcept
 {
     return LoadFromTGAMemory(pSource, size, TGA_FLAGS_NONE, metadata, image);
 }

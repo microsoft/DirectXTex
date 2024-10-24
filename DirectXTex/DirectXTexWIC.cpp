@@ -1221,7 +1221,7 @@ namespace
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT DirectX::GetMetadataFromWICMemory(
-    const void* pSource,
+    const uint8_t* pSource,
     size_t size,
     WIC_FLAGS flags,
     TexMetadata& metadata,
@@ -1244,7 +1244,7 @@ HRESULT DirectX::GetMetadataFromWICMemory(
     if (FAILED(hr))
         return hr;
 
-    hr = stream->InitializeFromMemory(static_cast<BYTE*>(const_cast<void*>(pSource)),
+    hr = stream->InitializeFromMemory(static_cast<BYTE*>(const_cast<uint8_t*>(pSource)),
         static_cast<UINT>(size));
     if (FAILED(hr))
         return hr;
@@ -1312,7 +1312,7 @@ HRESULT DirectX::GetMetadataFromWICFile(
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 HRESULT DirectX::LoadFromWICMemory(
-    const void* pSource,
+    const uint8_t* pSource,
     size_t size,
     WIC_FLAGS flags,
     TexMetadata* metadata,
@@ -1338,7 +1338,7 @@ HRESULT DirectX::LoadFromWICMemory(
     if (FAILED(hr))
         return hr;
 
-    hr = stream->InitializeFromMemory(static_cast<uint8_t*>(const_cast<void*>(pSource)), static_cast<DWORD>(size));
+    hr = stream->InitializeFromMemory(static_cast<uint8_t*>(const_cast<uint8_t*>(pSource)), static_cast<DWORD>(size));
     if (FAILED(hr))
         return hr;
 

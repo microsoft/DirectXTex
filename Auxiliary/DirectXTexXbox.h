@@ -41,6 +41,9 @@
 #include <d3d11_1.h>
 #endif
 
+#include <cstdint>
+#include <utility>
+
 #define DIRECTX_TEX_XBOX_VERSION 150
 
 namespace Xbox
@@ -95,13 +98,13 @@ namespace Xbox
     // Image I/O
 
     HRESULT __cdecl GetMetadataFromDDSMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox);
     HRESULT __cdecl GetMetadataFromDDSFile(
         _In_z_ const wchar_t* szFile, _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox);
 
     HRESULT __cdecl GetMetadataFromDDSMemoryEx(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox,
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat);
     HRESULT __cdecl GetMetadataFromDDSFileEx(
@@ -109,14 +112,14 @@ namespace Xbox
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat);
 
     HRESULT __cdecl LoadFromDDSMemory(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _Out_opt_ DirectX::TexMetadata* metadata, _Out_ XboxImage& image);
     HRESULT __cdecl LoadFromDDSFile(
         _In_z_ const wchar_t* szFile,
         _Out_opt_ DirectX::TexMetadata* metadata, _Out_ XboxImage& image);
 
     HRESULT __cdecl LoadFromDDSMemoryEx(
-        _In_reads_bytes_(size) const void* pSource, _In_ size_t size,
+        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
         _Out_opt_ DirectX::TexMetadata* metadata,
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat,
         _Out_ XboxImage& image);
@@ -173,6 +176,6 @@ namespace Xbox
     // DDS helper functions
     HRESULT __cdecl EncodeDDSHeader(
         const XboxImage& xbox,
-        _Out_writes_bytes_(maxsize) void* pDestination, _In_ size_t maxsize) noexcept;
+        _Out_writes_bytes_(maxsize) const uint8_t* pDestination, _In_ size_t maxsize) noexcept;
 
 } // namespace
