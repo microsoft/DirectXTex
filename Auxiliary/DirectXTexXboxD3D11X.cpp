@@ -45,7 +45,7 @@ HRESULT Xbox::CreateTexture(
     ID3D11DeviceX* d3dDevice,
     const XboxImage& xbox,
     ID3D11Resource** ppResource,
-    void** grfxMemory)
+    uint_8t** grfxMemory)
 {
     if (!d3dDevice || !ppResource || !grfxMemory)
         return E_INVALIDARG;
@@ -155,7 +155,7 @@ HRESULT Xbox::CreateShaderResourceView(
     ID3D11DeviceX* d3dDevice,
     const XboxImage& xbox,
     ID3D11ShaderResourceView** ppSRV,
-    void** grfxMemory)
+    uint_8t** grfxMemory)
 {
     if (!ppSRV)
         return E_INVALIDARG;
@@ -247,7 +247,7 @@ HRESULT Xbox::CreateShaderResourceView(
 // Free allocated graphics memory
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-void Xbox::FreeTextureMemory(ID3D11DeviceX* d3dDevice, void* grfxMemory)
+void Xbox::FreeTextureMemory(ID3D11DeviceX* d3dDevice, uint_8t* grfxMemory)
 {
     UNREFERENCED_PARAMETER(d3dDevice); // used only for overload resolution
 
