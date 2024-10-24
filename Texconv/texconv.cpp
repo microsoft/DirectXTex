@@ -1275,6 +1275,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 {
                     // "-- " is the POSIX standard for "end of options" marking to escape the '-' and '/' characters at the start of filepaths.
                     allowOpts = false;
+                    continue;
                 }
                 else
                 {
