@@ -115,15 +115,6 @@ namespace
     enum OPTIONS : uint32_t
     {
         OPT_RECURSIVE = 1,
-        OPT_FILELIST,
-        OPT_WIDTH,
-        OPT_HEIGHT,
-        OPT_FORMAT,
-        OPT_FILTER,
-        OPT_SRGBI,
-        OPT_SRGBO,
-        OPT_SRGB,
-        OPT_OUTPUTFILE,
         OPT_TOLOWER,
         OPT_OVERWRITE,
         OPT_USE_DX10,
@@ -133,12 +124,21 @@ namespace
         OPT_DEMUL_ALPHA,
         OPT_TA_WRAP,
         OPT_TA_MIRROR,
-        OPT_FEATURE_LEVEL,
         OPT_TONEMAP,
         OPT_GIF_BGCOLOR,
-        OPT_SWIZZLE,
         OPT_STRIP_MIPS,
         OPT_FLAGS_MAX,
+        OPT_FILELIST,
+        OPT_WIDTH,
+        OPT_HEIGHT,
+        OPT_FORMAT,
+        OPT_FILTER,
+        OPT_SRGBI,
+        OPT_SRGBO,
+        OPT_SRGB,
+        OPT_OUTPUTFILE,
+        OPT_FEATURE_LEVEL,
+        OPT_SWIZZLE,
         OPT_VERSION,
         OPT_HELP,
     };
@@ -916,6 +916,20 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case 0:
                 wprintf(L"ERROR: Unknown option: `%ls`\n\nUse %ls --help\n", pArg, g_ToolName);
                 return 1;
+
+            case OPT_FILELIST:
+            case OPT_WIDTH:
+            case OPT_HEIGHT:
+            case OPT_FORMAT:
+            case OPT_FILTER:
+            case OPT_SRGBI:
+            case OPT_SRGBO:
+            case OPT_SRGB:
+            case OPT_OUTPUTFILE:
+            case OPT_FEATURE_LEVEL:
+            case OPT_SWIZZLE:
+                // These don't use flag bits
+                break;
 
             case OPT_VERSION:
                 PrintLogo(true, g_ToolName, g_Description);
