@@ -115,10 +115,12 @@ namespace
         OPT_DIFF_COLOR,
         OPT_THRESHOLD,
         OPT_FILELIST,
-        OPT_MAX
+        OPT_FLAGS_MAX,
+        OPT_VERSION,
+        OPT_HELP,
     };
 
-    static_assert(OPT_MAX <= 32, "dwOptions is a unsigned int bitfield");
+    static_assert(OPT_FLAGS_MAX <= 32, "dwOptions is a unsigned int bitfield");
 
     //////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////
@@ -141,9 +143,6 @@ namespace
         { L"f",          OPT_FORMAT },
         { L"if",         OPT_FILTER },
         { L"dword",      OPT_DDS_DWORD_ALIGN },
-        { L"badtails",   OPT_DDS_BAD_DXTN_TAILS },
-        { L"permissive", OPT_DDS_PERMISSIVE },
-        { L"ignoremips", OPT_DDS_IGNORE_MIPS },
         { L"nologo",     OPT_NOLOGO },
         { L"o",          OPT_OUTPUTFILE },
         { L"l",          OPT_TOLOWER },
@@ -152,12 +151,42 @@ namespace
         { L"tu",         OPT_TYPELESS_UNORM },
         { L"tf",         OPT_TYPELESS_FLOAT },
         { L"xlum",       OPT_EXPAND_LUMINANCE },
-        { L"targetx",    OPT_TARGET_PIXELX },
-        { L"targety",    OPT_TARGET_PIXELY },
         { L"c",          OPT_DIFF_COLOR },
         { L"t",          OPT_THRESHOLD },
         { L"flist",      OPT_FILELIST },
+
+        // Deprecated options (recommend using new -- alternatives)
+        { L"badtails",   OPT_DDS_BAD_DXTN_TAILS },
+        { L"permissive", OPT_DDS_PERMISSIVE },
+        { L"ignoremips", OPT_DDS_IGNORE_MIPS },
+        { L"targetx",    OPT_TARGET_PIXELX },
+        { L"targety",    OPT_TARGET_PIXELY },
+
         { nullptr,       0 }
+    };
+
+    const SValue<uint32_t> g_pOptionsLong[] =
+    {
+        { L"bad-tails",             OPT_DDS_BAD_DXTN_TAILS },
+        { L"dword-alignment",       OPT_DDS_DWORD_ALIGN },
+        { L"expand-luminance",      OPT_EXPAND_LUMINANCE },
+        { L"file-list",             OPT_FILELIST },
+        { L"file-type",             OPT_FILETYPE },
+        { L"format",                OPT_FORMAT },
+        { L"help",                  OPT_HELP },
+        { L"ignore-mips",           OPT_DDS_IGNORE_MIPS },
+        { L"image-filter",          OPT_FILTER },
+        { L"overwrite",             OPT_OVERWRITE },
+        { L"permissive",            OPT_DDS_PERMISSIVE },
+        { L"target-x",              OPT_TARGET_PIXELX },
+        { L"target-y",              OPT_TARGET_PIXELY },
+        { L"to-lowercase",          OPT_TOLOWER },
+        { L"typeless-unorm",        OPT_TYPELESS_UNORM },
+        { L"typeless-float",        OPT_TYPELESS_FLOAT },
+        { L"version",               OPT_VERSION },
+        { L"diff-color",            OPT_DIFF_COLOR },
+        { L"threshold",             OPT_THRESHOLD },
+        { nullptr,                  0 }
     };
 
     #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
@@ -423,44 +452,51 @@ namespace
     {
         PrintLogo(false, g_ToolName, g_Description);
 
-        static const wchar_t *const s_usage =
+        static const wchar_t* const s_usage =
             L"Usage: texdiag <command> <options> [--] <files>\n"
-            L"\n"
+            L"\nCOMMANDS\n"
             L"   info                Output image metadata\n"
             L"   analyze             Analyze and summarize image information\n"
             L"   compare             Compare two images with MSE error metric\n"
             L"   diff                Generate difference image from two images\n"
             L"   dumpbc              Dump out compressed blocks (DDS BC only)\n"
             L"   dumpdds             Dump out all the images in a complex DDS\n"
-            L"\n"
+            L"\nOPTIONS\n"
             L"   -r                  wildcard filename search is recursive\n"
-            L"   -if <filter>        image filtering\n"
+            L"   -flist <filename>, --file-list <filename>\n"
+            L"                       use text file with a list of input files (one per line)\n"
             L"\n"
-            L"                       (DDS input only)\n"
-            L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n"
-            L"   -dword              Use DWORD instead of BYTE alignment\n"
-            L"   -badtails           Fix for older DXTn with bad mipchain tails\n"
-            L"   -permissive         Allow some DX9 variants with unusual header values\n"
-            L"   -ignoremips         Reads just the top-level mip which reads some invalid files\n"
-            L"   -xlum               expand legacy L8, L16, and A8P8 formats\n"
+            L"   -if <filter>, --image-filter <filter>   image filtering\n"
             L"\n"
-            L"                       (diff only)\n"
-            L"   -f <format>         format\n"
-            L"   -o <path/filename>  output filename for diff; output path for dumpdds\n"
-            L"   -l                  force output filename to lower case\n"
-            L"   -y                  overwrite existing output file (if any)\n"
-            L"   -c <hex-RGB>        highlight difference color (defaults to off)\n"
-            L"   -t <threshold>      highlight threshold (defaults to 0.25)\n"
+            L"                                  (DDS input only)\n"
+            L"   -tu, --typeless-unorm          TYPELESS format is treated as UNORM\n"
+            L"   -tf, --typeless-float          TYPELESS format is treated as FLOAT\n"
+            L"   -dword, --dword-alignment      Use DWORD instead of BYTE alignment\n"
+            L"   --bad-tails                    Fix for older DXTn with bad mipchain tails\n"
+            L"   --permissive                   Allow some DX9 variants with unusual header values\n"
+            L"   --ignore-mips                  Reads just the top-level mip which reads some invalid files\n"
+            L"   -xlum, --expand-luminance      Expand legacy L8, L16, and A8P8 formats\n"
+            L"\n"
+            L"                                  (diff only)\n"
+            L"   -f <format>, --format <format> pixel format for output\n"
+            L"   -o <filename>                  output filename for diff\n"
+            L"   -l, --to-lowercase             force output filename to lower case\n"
+            L"   -y, --overwrite                overwrite existing output file (if any)\n"
+            L"   -c <hex-RGB>, --diff-color <hex-RGB>\n"
+            L"                                  highlight difference color (defaults to off)\n"
+            L"   -t <threshold>, --threshold <threshold>\n"
+            L"                                  highlight threshold (defaults to 0.25)\n"
             L"\n"
             L"                       (dumpbc only)\n"
-            L"   -targetx <num>      dump pixels at location x (defaults to all)\n"
-            L"   -targety <num>      dump pixels at location y (defaults to all)\n"
+            L"   --target-x <num>    dump pixels at location x (defaults to all)\n"
+            L"   --target-y <num>    dump pixels at location y (defaults to all)\n"
             L"\n"
             L"                       (dumpdds only)\n"
-            L"   -ft <filetype>      output file type\n"
+            L"   -o <path>           output path for dumpdds\n"
+            L"   -ft <filetype>, --file-type <filetype>\n"
+            "                        output file type\n"
             L"\n"
             L"   -nologo             suppress copyright message\n"
-            L"   -flist <filename>   use text file with a list of input files (one per line)\n"
             L"\n"
             L"   '-- ' is needed if any input filepath starts with the '-' or '/' character\n";
 
@@ -3062,50 +3098,76 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     std::list<SConversion> conversion;
     bool allowOpts = true;
 
-    for (int iArg = 2; iArg < argc; iArg++)
+    for (int iArg = 2; iArg < argc; ++iArg)
     {
         PWSTR pArg = argv[iArg];
 
-        if (allowOpts
-            && ('-' == pArg[0]) && ('-' == pArg[1]))
+        if (allowOpts && (('-' == pArg[0]) || ('/' == pArg[0])))
         {
-            if (pArg[2] == 0)
+            uint64_t dwOption = 0;
+            PWSTR pValue = nullptr;
+
+            if (('-' == pArg[0]) && ('-' == pArg[1]))
             {
-                // "-- " is the POSIX standard for "end of options" marking to escape the '-' and '/' characters at the start of filepaths.
-                allowOpts = false;
-            }
-            else if (!_wcsicmp(pArg, L"--version"))
-            {
-                PrintLogo(true, g_ToolName, g_Description);
-                return 0;
-            }
-            else if (!_wcsicmp(pArg, L"--help"))
-            {
-                PrintUsage();
-                return 0;
+                if (pArg[2] == 0)
+                {
+                    // "-- " is the POSIX standard for "end of options" marking to escape the '-' and '/' characters at the start of filepaths.
+                    allowOpts = false;
+                    continue;
+                }
+                else
+                {
+                    pArg += 2;
+
+                    for (pValue = pArg; *pValue && (':' != *pValue) && ('=' != *pValue); ++pValue);
+
+                    if (*pValue)
+                        *pValue++ = 0;
+
+                    dwOption = LookupByName(pArg, g_pOptionsLong);
+
+                    if (dwOption == OPT_VERSION)
+                    {
+                        PrintLogo(true, g_ToolName, g_Description);
+                        return 0;
+                    }
+                    else if (dwOption == OPT_HELP)
+                    {
+                        PrintUsage();
+                        return 0;
+                    }
+                }
             }
             else
             {
-                wprintf(L"Unknown option: %ls\n", pArg);
+                pArg++;
+
+                for (pValue = pArg; *pValue && (':' != *pValue) && ('=' != *pValue); ++pValue);
+
+                if (*pValue)
+                    *pValue++ = 0;
+
+                dwOption = LookupByName(pArg, g_pOptions);
+
+                if (!dwOption)
+                {
+                    if (LookupByName(pArg, g_pOptionsLong))
+                    {
+                        wprintf(L"ERROR: did you mean `--%ls` (with two dashes)?\n", pArg);
+                        return 1;
+                    }
+                }
+            }
+
+            if (!dwOption)
+            {
+                wprintf(L"ERROR: Unknown option: `%ls`\n\nUse %ls --help\n", pArg, g_ToolName);
                 return 1;
             }
-        }
-        else if (allowOpts
-            && (('-' == pArg[0]) || ('/' == pArg[0])))
-        {
-            pArg++;
-            PWSTR pValue;
 
-            for (pValue = pArg; *pValue && (':' != *pValue); pValue++);
-
-            if (*pValue)
-                *pValue++ = 0;
-
-            const uint32_t dwOption = LookupByName(pArg, g_pOptions);
-
-            if (!dwOption || (dwOptions & (1 << dwOption)))
+            if (dwOptions & (1 << dwOption))
             {
-                PrintUsage();
+                wprintf(L"ERROR: Duplicate option: `%ls`\n\n", pArg);
                 return 1;
             }
 
