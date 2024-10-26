@@ -1315,17 +1315,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         *pValue++ = 0;
 
                     dwOption = LookupByName(pArg, g_pOptionsLong);
-
-                    if (dwOption == OPT_VERSION)
-                    {
-                        PrintLogo(true, g_ToolName, g_Description);
-                        return 0;
-                    }
-                    else if (dwOption == OPT_HELP)
-                    {
-                        PrintUsage();
-                        return 0;
-                    }
                 }
             }
             else
@@ -1349,19 +1338,30 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
             }
 
-            if (!dwOption)
+            switch (dwOption)
             {
+            case 0:
                 wprintf(L"ERROR: Unknown option: `%ls`\n\nUse %ls --help\n", pArg, g_ToolName);
                 return 1;
-            }
 
-            if (dwOptions & (uint64_t(1) << dwOption))
-            {
-                wprintf(L"ERROR: Duplicate option: `%ls`\n\n", pArg);
-                return 1;
-            }
+            case OPT_VERSION:
+                PrintLogo(true, g_ToolName, g_Description);
+                return 0;
 
-            dwOptions |= (uint64_t(1) << dwOption);
+            case OPT_HELP:
+                PrintUsage();
+                return 0;
+
+            default:
+                if (dwOptions & (uint64_t(1) << dwOption))
+                {
+                    wprintf(L"ERROR: Duplicate option: `%ls`\n\n", pArg);
+                    return 1;
+                }
+
+                dwOptions |= (uint64_t(1) << dwOption);
+                break;
+            }
 
             // Handle options with additional value parameter
             switch (dwOption)
