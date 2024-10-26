@@ -96,26 +96,26 @@ namespace
     enum OPTIONS : uint32_t
     {
         OPT_RECURSIVE = 1,
-        OPT_FORMAT,
-        OPT_FILTER,
         OPT_DDS_DWORD_ALIGN,
         OPT_DDS_BAD_DXTN_TAILS,
         OPT_DDS_PERMISSIVE,
         OPT_DDS_IGNORE_MIPS,
-        OPT_OUTPUTFILE,
         OPT_TOLOWER,
         OPT_OVERWRITE,
-        OPT_FILETYPE,
         OPT_NOLOGO,
         OPT_TYPELESS_UNORM,
         OPT_TYPELESS_FLOAT,
         OPT_EXPAND_LUMINANCE,
+        OPT_FLAGS_MAX,
+        OPT_FORMAT,
+        OPT_FILTER,
+        OPT_OUTPUTFILE,
+        OPT_FILETYPE,
         OPT_TARGET_PIXELX,
         OPT_TARGET_PIXELY,
         OPT_DIFF_COLOR,
         OPT_THRESHOLD,
         OPT_FILELIST,
-        OPT_FLAGS_MAX,
         OPT_VERSION,
         OPT_HELP,
     };
@@ -3153,6 +3153,18 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case 0:
                 wprintf(L"ERROR: Unknown option: `%ls`\n\nUse %ls --help\n", pArg, g_ToolName);
                 return 1;
+
+            case OPT_FORMAT:
+            case OPT_FILTER:
+            case OPT_OUTPUTFILE:
+            case OPT_FILETYPE:
+            case OPT_TARGET_PIXELX:
+            case OPT_TARGET_PIXELY:
+            case OPT_DIFF_COLOR:
+            case OPT_THRESHOLD:
+            case OPT_FILELIST:
+                // These don't use flag bits
+                break;
 
             case OPT_VERSION:
                 PrintLogo(true, g_ToolName, g_Description);
