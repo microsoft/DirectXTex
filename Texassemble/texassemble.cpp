@@ -344,18 +344,18 @@ namespace
         { nullptr,                      TEX_FILTER_DEFAULT                              }
     };
 
-    #define CODEC_DDS 0xFFFF0001
-    #define CODEC_TGA 0xFFFF0002
-    #define CODEC_HDR 0xFFFF0005
+    constexpr uint32_t CODEC_DDS = 0xFFFF0001;
+    constexpr uint32_t CODEC_TGA = 0xFFFF0002;
+    constexpr uint32_t CODEC_HDR = 0xFFFF0005;
 
     #ifdef USE_OPENEXR
-    #define CODEC_EXR 0xFFFF0006
+    constexpr uint32_t CODEC_EXR = 0xFFFF0008;
     #endif
     #ifdef USE_LIBJPEG
-    #define CODEC_JPEG 0xFFFF0007
+    constexpr uint32_t CODEC_JPEG = 0xFFFF0009;
     #endif
     #ifdef USE_LIBPNG
-    #define CODEC_PNG 0xFFFF0008
+    constexpr uint32_t CODEC_PNG = 0xFFFF000A;
     #endif
 
     const SValue<uint32_t> g_pExtFileTypes[] =

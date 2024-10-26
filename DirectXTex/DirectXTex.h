@@ -74,7 +74,7 @@ namespace DirectX
 
     size_t __cdecl BytesPerBlock(_In_ DXGI_FORMAT fmt) noexcept;
 
-    enum FORMAT_TYPE
+    enum FORMAT_TYPE : uint32_t
     {
         FORMAT_TYPE_TYPELESS,
         FORMAT_TYPE_FLOAT,
@@ -136,7 +136,7 @@ namespace DirectX
 
     //---------------------------------------------------------------------------------
     // Texture metadata
-    enum TEX_DIMENSION
+    enum TEX_DIMENSION : uint32_t
         // Subset here matches D3D10_RESOURCE_DIMENSION and D3D11_RESOURCE_DIMENSION
     {
         TEX_DIMENSION_TEXTURE1D = 2,
@@ -155,7 +155,7 @@ namespace DirectX
         TEX_MISC2_ALPHA_MODE_MASK = 0x7L,
     };
 
-    enum TEX_ALPHA_MODE
+    enum TEX_ALPHA_MODE : uint32_t
         // Matches DDS_ALPHA_MODE, encoded in MISC_FLAGS2
     {
         TEX_ALPHA_MODE_UNKNOWN = 0,
@@ -934,7 +934,7 @@ namespace DirectX
     //---------------------------------------------------------------------------------
     // WIC utility code
 #ifdef _WIN32
-    enum WICCodecs
+    enum WICCodecs : uint32_t
     {
         WIC_CODEC_BMP = 1,          // Windows Bitmap (.bmp)
         WIC_CODEC_JPEG,             // Joint Photographic Experts Group (.jpg, .jpeg)

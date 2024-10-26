@@ -544,22 +544,22 @@ namespace
         { nullptr, 0 },
     };
 
-    #define CODEC_DDS 0xFFFF0001
-    #define CODEC_TGA 0xFFFF0002
-    #define CODEC_HDP 0xFFFF0003
-    #define CODEC_JXR 0xFFFF0004
-    #define CODEC_HDR 0xFFFF0005
-    #define CODEC_PPM 0xFFFF0006
-    #define CODEC_PFM 0xFFFF0007
+    constexpr uint32_t CODEC_DDS = 0xFFFF0001;
+    constexpr uint32_t CODEC_TGA = 0xFFFF0002;
+    constexpr uint32_t CODEC_HDP = 0xFFFF0003;
+    constexpr uint32_t CODEC_JXR = 0xFFFF0004;
+    constexpr uint32_t CODEC_HDR = 0xFFFF0005;
+    constexpr uint32_t CODEC_PPM = 0xFFFF0006;
+    constexpr uint32_t CODEC_PFM = 0xFFFF0007;
 
     #ifdef USE_OPENEXR
-    #define CODEC_EXR 0xFFFF0008
+    constexpr uint32_t CODEC_EXR = 0xFFFF0008;
     #endif
     #ifdef USE_LIBJPEG
-    #define CODEC_JPEG 0xFFFF0009
+    constexpr uint32_t CODEC_JPEG = 0xFFFF0009;
     #endif
     #ifdef USE_LIBPNG
-    #define CODEC_PNG 0xFFFF000A
+    constexpr uint32_t CODEC_PNG = 0xFFFF000A;
     #endif
 
     const SValue<uint32_t> g_pSaveFileTypes[] =   // valid formats to write to
