@@ -423,7 +423,7 @@ namespace
     {
         PrintLogo(false, g_ToolName, g_Description);
 
-        static const wchar_t* const s_usage =
+        static const wchar_t *const s_usage =
             L"Usage: texdiag <command> <options> [--] <files>\n"
             L"\n"
             L"   info                Output image metadata\n"
@@ -446,7 +446,7 @@ namespace
             L"\n"
             L"                       (diff only)\n"
             L"   -f <format>         format\n"
-            L"   -o <filename>       output filename\n"
+            L"   -o <path/filename>  output filename for diff; output path for dumpdds\n"
             L"   -l                  force output filename to lower case\n"
             L"   -y                  overwrite existing output file (if any)\n"
             L"   -c <hex-RGB>        highlight difference color (defaults to off)\n"
@@ -3173,9 +3173,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_OUTPUTFILE:
-                if (dwCommand != CMD_DIFF)
+                if (dwCommand != CMD_DIFF && dwCommand != CMD_DUMPDDS)
                 {
-                    wprintf(L"-o only valid for use with diff command\n");
+                    wprintf(L"-o only valid for use with diff or dumpdds commands\n");
                     return 1;
                 }
                 else
@@ -3183,7 +3183,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     std::filesystem::path path(pValue);
                     outputFile = path.make_preferred().native();
 
-                    fileType = LookupByName(path.extension().c_str(), g_pExtFileTypes);
+                    if (dwCommand == CMD_DIFF)
+                    {
+                        fileType = LookupByName(path.extension().c_str(), g_pExtFileTypes);
+                    }
                 }
                 break;
 
@@ -3656,6 +3659,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 auto const ext = LookupByValue(fileType, g_pDumpFileTypes);
 
+                std::filesystem::path basePath(outputFile);
+
                 if (info.depth > 1)
                 {
                     wprintf(L"Writing by mip (%3zu) and slice (%3zu)...", info.mipLevels, info.depth);
@@ -3684,10 +3689,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                     swprintf_s(subFname, L"%ls_slice%03zu", curpath.stem().c_str(), slice);
                                 }
 
-                                outputFile.assign(subFname);
-                                outputFile.append(ext);
+                                std::filesystem::path output(basePath);
+                                output.append(subFname);
+                                output.replace_extension(ext);
 
-                                hr = SaveImage(img, outputFile.c_str(), fileType);
+                                hr = SaveImage(img, output.c_str(), fileType);
                                 if (FAILED(hr))
                                 {
                                     wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -3728,10 +3734,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                     swprintf_s(subFname, L"%ls_item%03zu", curpath.stem().c_str(), item);
                                 }
 
-                                outputFile.assign(subFname);
-                                outputFile.append(ext);
+                                std::filesystem::path output(basePath);
+                                output.append(subFname);
+                                output.replace_extension(ext);
 
-                                hr = SaveImage(img, outputFile.c_str(), fileType);
+                                hr = SaveImage(img, output.c_str(), fileType);
                                 if (FAILED(hr))
                                 {
                                     wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
