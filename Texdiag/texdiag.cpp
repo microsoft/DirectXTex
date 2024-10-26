@@ -3263,8 +3263,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     fileType = LookupByName(pValue, g_pDumpFileTypes);
                     if (!fileType)
                     {
-                        wprintf(L"Invalid value specified with -ft (%ls)\n", pValue);
-                        wprintf(L"\n");
+                        wprintf(L"Invalid value specified with -ft (%ls)\n\n", pValue);
                         PrintUsage();
                         return 1;
                     }

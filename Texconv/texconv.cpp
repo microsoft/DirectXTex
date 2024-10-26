@@ -1412,8 +1412,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_WIDTH:
                 if (swscanf_s(pValue, L"%zu", &width) != 1)
                 {
-                    wprintf(L"Invalid value specified with -w (%ls)\n", pValue);
-                    wprintf(L"\n");
+                    wprintf(L"Invalid value specified with -w (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
@@ -1432,8 +1431,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_MIPLEVELS:
                 if (swscanf_s(pValue, L"%zu", &mipLevels) != 1)
                 {
-                    wprintf(L"Invalid value specified with -m (%ls)\n", pValue);
-                    wprintf(L"\n");
+                    wprintf(L"Invalid value specified with -m (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
@@ -1459,8 +1457,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                             break;
 
                         default:
-                            wprintf(L"Invalid value specified with -f (%ls)\n", pValue);
-                            wprintf(L"\n");
+                            wprintf(L"Invalid value specified with -f (%ls)\n\n", pValue);
                             PrintUsage();
                             return 1;
                         }
@@ -1472,8 +1469,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 dwFilter = static_cast<TEX_FILTER_FLAGS>(LookupByName(pValue, g_pFilters));
                 if (!dwFilter)
                 {
-                    wprintf(L"Invalid value specified with -if (%ls)\n", pValue);
-                    wprintf(L"\n");
+                    wprintf(L"Invalid value specified with -if (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
@@ -1483,8 +1479,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 dwRotateColor = LookupByName(pValue, g_pRotateColor);
                 if (!dwRotateColor)
                 {
-                    wprintf(L"Invalid value specified with -rotatecolor (%ls)\n", pValue);
-                    wprintf(L"\n");
+                    wprintf(L"Invalid value specified with -rotatecolor (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
@@ -1529,8 +1524,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 FileType = LookupByName(pValue, g_pSaveFileTypes);
                 if (!FileType)
                 {
-                    wprintf(L"Invalid value specified with -ft (%ls)\n", pValue);
-                    wprintf(L"\n");
+                    wprintf(L"Invalid value specified with -ft (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
@@ -1671,8 +1665,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 maxSize = LookupByName(pValue, g_pFeatureLevels);
                 if (!maxSize)
                 {
-                    wprintf(L"Invalid value specified with -fl (%ls)\n", pValue);
-                    wprintf(L"\n");
+                    wprintf(L"Invalid value specified with -fl (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
@@ -1681,15 +1674,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_ALPHA_THRESHOLD:
                 if (swscanf_s(pValue, L"%f", &alphaThreshold) != 1)
                 {
-                    wprintf(L"Invalid value specified with -at (%ls)\n", pValue);
-                    wprintf(L"\n");
+                    wprintf(L"Invalid value specified with -at (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
                 else if (alphaThreshold < 0.f)
                 {
-                    wprintf(L"-at (%ls) parameter must be positive\n", pValue);
-                    wprintf(L"\n");
+                    wprintf(L"-at (%ls) parameter must be positive\n\n", pValue);
                     return 1;
                 }
                 break;
@@ -1697,15 +1688,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_ALPHA_WEIGHT:
                 if (swscanf_s(pValue, L"%f", &alphaWeight) != 1)
                 {
-                    wprintf(L"Invalid value specified with -aw (%ls)\n", pValue);
-                    wprintf(L"\n");
+                    wprintf(L"Invalid value specified with -aw (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
                 else if (alphaWeight < 0.f)
                 {
-                    wprintf(L"-aw (%ls) parameter must be positive\n", pValue);
-                    wprintf(L"\n");
+                    wprintf(L"-aw (%ls) parameter must be positive\n\n", pValue);
                     return 1;
                 }
                 break;
