@@ -241,6 +241,25 @@ namespace
         { L"xbox",          OPT_USE_XBOX },
         { L"xgmode",        OPT_XGMODE },
     #endif
+
+        // Deprecated options (recommend using new -- alternatives)
+        { L"badtails",      OPT_DDS_BAD_DXTN_TAILS },
+        { L"permissive",    OPT_DDS_PERMISSIVE },
+        { L"ignoremips",    OPT_DDS_IGNORE_MIPS },
+        { L"tgazeroalpha",  OPT_TGAZEROALPHA },
+        { L"wiclossless",   OPT_WIC_LOSSLESS },
+        { L"wicmulti",      OPT_WIC_MULTIFRAME },
+        { L"timing",        OPT_TIMING },
+        { L"keepcoverage",  OPT_PRESERVE_ALPHA_COVERAGE },
+        { L"singleproc",    OPT_FORCE_SINGLEPROC },
+        { L"tonemap",       OPT_TONEMAP },
+        { L"x2bias",        OPT_X2_BIAS },
+        { L"inverty",       OPT_INVERT_Y },
+        { L"reconstructz",  OPT_RECONSTRUCT_Z },
+        { L"rotatecolor",   OPT_ROTATE_COLOR },
+        { L"fixbc4x4",      OPT_BCNONMULT4FIX },
+        { L"swizzle",       OPT_SWIZZLE },
+
         { nullptr,          0 }
     };
 
@@ -299,23 +318,6 @@ namespace
         { L"xbox-mode",             OPT_XGMODE },
     #endif
         { nullptr,                  0 }
-    };
-
-    const SValue<const wchar_t*> g_pOptionsOld[] =
-    {
-        { L"badtails", L"bad-tails" },
-        { L"fixbc4x4", L"fix-bc-4x4" },
-        { L"ignoremips", L"ignore-mips" },
-        { L"inverty", L"invert-y" },
-        { L"keepcoverage", L"keep-coverage" },
-        { L"reconstructz", L"reconstruct-z" },
-        { L"rotatecolor", L"rotate-color" },
-        { L"singleproc", L"single-proc" },
-        { L"tgazeroalpha", L"tga-zero-alpha" },
-        { L"wiclossless", L"wic-lossless" },
-        { L"wicmulti", L"wic-multiframe" },
-        { L"x2bias", L"x2-bias" },
-        { nullptr, nullptr }
     };
 
     #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
@@ -1343,15 +1345,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     {
                         wprintf(L"ERROR: did you mean `--%ls` (with two dashes)?\n", pArg);
                         return 1;
-                    }
-                    else
-                    {
-                        auto hint = LookupByName(pArg, g_pOptionsOld);
-                        if (hint)
-                        {
-                            wprintf(L"ERROR: use `--%ls` (with two dashes) instead\n", hint);
-                            return 1;
-                        }
                     }
                 }
             }
