@@ -138,10 +138,12 @@ namespace
         OPT_GIF_BGCOLOR,
         OPT_SWIZZLE,
         OPT_STRIP_MIPS,
-        OPT_MAX
+        OPT_FLAGS_MAX,
+        OPT_VERSION,
+        OPT_HELP,
     };
 
-    static_assert(OPT_MAX <= 32, "dwOptions is a unsigned int bitfield");
+    static_assert(OPT_FLAGS_MAX <= 32, "dwOptions is a unsigned int bitfield");
 
     //////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////
@@ -194,11 +196,36 @@ namespace
         { L"wrap",      OPT_TA_WRAP },
         { L"mirror",    OPT_TA_MIRROR },
         { L"fl",        OPT_FEATURE_LEVEL },
+
+        // Deprecated options (recommend using new -- alternatives)
         { L"tonemap",   OPT_TONEMAP },
         { L"bgcolor",   OPT_GIF_BGCOLOR },
         { L"swizzle",   OPT_SWIZZLE },
         { L"stripmips", OPT_STRIP_MIPS },
+
         { nullptr,      0 }
+    };
+
+    const SValue<uint32_t> g_pOptionsLong[] =
+    {
+        { L"feature-level",         OPT_FEATURE_LEVEL },
+        { L"file-list",             OPT_FILELIST },
+        { L"format",                OPT_FORMAT },
+        { L"gif-bg-color",          OPT_GIF_BGCOLOR },
+        { L"height",                OPT_HEIGHT },
+        { L"help",                  OPT_HELP },
+        { L"image-filter",          OPT_FILTER },
+        { L"overwrite",             OPT_OVERWRITE },
+        { L"separate-alpha",        OPT_SEPALPHA },
+        { L"srgb-in",               OPT_SRGBI },
+        { L"srgb-out",              OPT_SRGBO },
+        { L"strip-mips",            OPT_STRIP_MIPS },
+        { L"swizzle",               OPT_SWIZZLE },
+        { L"to-lowercase",          OPT_TOLOWER },
+        { L"tonemap",               OPT_TONEMAP },
+        { L"version",               OPT_VERSION },
+        { L"width",                 OPT_WIDTH },
+        { nullptr,                  0 }
     };
 
     #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
@@ -500,7 +527,7 @@ namespace
 
         static const wchar_t* const s_usage =
             L"Usage: texassemble <command> <options> [--] <files>\n"
-            L"\n"
+            L"\nCOMMANDS\n"
             L"   cube                create cubemap\n"
             L"   volume              create volume map\n"
             L"   array               create texture array\n"
@@ -518,34 +545,43 @@ namespace
             L"   cube-from-ht        create cubemap from a h-tee image\n"
             L"   cube-from-hs        create cubemap from a h-strip image\n"
             L"   cube-from-vs        create cubemap from a v-strip image\n"
-            L"\n"
+            L"\nOPTIONS\n"
             L"   -r                  wildcard filename search is recursive\n"
-            L"   -flist <filename>   use text file with a list of input files (one per line)\n"
-            L"   -w <n>              width\n"
-            L"   -h <n>              height\n"
-            L"   -f <format>         format\n"
-            L"   -if <filter>        image filtering\n"
-            L"   -srgb{i|o}          sRGB {input, output}\n"
-            L"   -o <filename>       output filename\n"
-            L"   -l                  force output filename to lower case\n"
-            L"   -y                  overwrite existing output file (if any)\n"
-            L"   -sepalpha           resize alpha channel separately from color channels\n"
+            L"   -flist <filename>, --file-list <filename>\n"
+            L"                       use text file with a list of input files (one per line)\n"
+            L"\n"
+            L"   -w <n>, --width <n>                     width for output\n"
+            L"   -h <n>, --height <n>                    height for output\n"
+            L"   -f <format>, --format <format>          pixel format for output\n"
+            L"\n"
+            L"   -if <filter>, --image-filter <filter>   image filtering\n"
+            L"   -srgb{i|o}, --srgb-in, --srgb-out       sRGB {input, output}\n"
+            L"\n"
+            L"   -o <filename>                           output filename\n"
+            L"   -l, --to-lowercase                      force output filename to lower case\n"
+            L"   -y, --overwrite                         overwrite existing output file (if any)\n"
+            L"\n"
+            L"   -sepalpha, --separate-alpha   resize/generate mips alpha channel separately from color channels\n"
+            L"\n"
             L"   -nowic              Force non-WIC filtering\n"
             L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n"
             L"   -alpha              convert premultiplied alpha to straight alpha\n"
             L"   -dx10               Force use of 'DX10' extended header\n"
             L"   -nologo             suppress copyright message\n"
-            L"   -fl <feature-level> Set maximum feature level target (defaults to 11.0)\n"
+            L"\n"
+            L"   -fl <feature-level>, --feature-level <feature-level>\n"
+            L"                       Set maximum feature level target (defaults to 11.0)\n"
+            L"\n"
             L"   -tonemap            Apply a tonemap operator based on maximum luminance\n"
             L"\n"
             L"                       (gif only)\n"
-            L"   -bgcolor            Use background color instead of transparency\n"
+            L"   --gif-bg-color      Use background color instead of transparency\n"
             L"\n"
             L"                       (merge only)\n"
-            L"   -swizzle <rgba>     Select channels for merge (defaults to rgbB)\n"
+            L"   --swizzle <rgba>    Select channels for merge (defaults to rgbB)\n"
             L"\n"
             L"                       (cube, volume, array, cubearray, merge only)\n"
-            L"   -stripmips          Use only base image from input dds files\n"
+            L"   --strip-mips        Use only base image from input dds files\n"
             L"\n"
             L"   '-- ' is needed if any input filepath starts with the '-' or '/' character\n";
 
@@ -775,6 +811,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
+    // check for these before the command
     if (('-' == argv[1][0]) && ('-' == argv[1][1]))
     {
         if (!_wcsicmp(argv[1], L"--version"))
@@ -824,50 +861,76 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     std::list<SConversion> conversion;
     bool allowOpts = true;
 
-    for (int iArg = 2; iArg < argc; iArg++)
+    for (int iArg = 2; iArg < argc; ++iArg)
     {
         PWSTR pArg = argv[iArg];
 
-        if (allowOpts
-            && ('-' == pArg[0]) && ('-' == pArg[1]))
+        if (allowOpts && (('-' == pArg[0]) || ('/' == pArg[0])))
         {
-            if (pArg[2] == 0)
+            uint64_t dwOption = 0;
+            PWSTR pValue = nullptr;
+
+            if (('-' == pArg[0]) && ('-' == pArg[1]))
             {
-                // "-- " is the POSIX standard for "end of options" marking to escape the '-' and '/' characters at the start of filepaths.
-                allowOpts = false;
-            }
-            else if (!_wcsicmp(pArg, L"--version"))
-            {
-                PrintLogo(true, g_ToolName, g_Description);
-                return 0;
-            }
-            else if (!_wcsicmp(pArg, L"--help"))
-            {
-                PrintUsage();
-                return 0;
+                if (pArg[2] == 0)
+                {
+                    // "-- " is the POSIX standard for "end of options" marking to escape the '-' and '/' characters at the start of filepaths.
+                    allowOpts = false;
+                    continue;
+                }
+                else
+                {
+                    pArg += 2;
+
+                    for (pValue = pArg; *pValue && (':' != *pValue) && ('=' != *pValue); ++pValue);
+
+                    if (*pValue)
+                        *pValue++ = 0;
+
+                    dwOption = LookupByName(pArg, g_pOptionsLong);
+
+                    if (dwOption == OPT_VERSION)
+                    {
+                        PrintLogo(true, g_ToolName, g_Description);
+                        return 0;
+                    }
+                    else if (dwOption == OPT_HELP)
+                    {
+                        PrintUsage();
+                        return 0;
+                    }
+                }
             }
             else
             {
-                wprintf(L"Unknown option: %ls\n", pArg);
+                pArg++;
+
+                for (pValue = pArg; *pValue && (':' != *pValue) && ('=' != *pValue); ++pValue);
+
+                if (*pValue)
+                    *pValue++ = 0;
+
+                dwOption = LookupByName(pArg, g_pOptions);
+
+                if (!dwOption)
+                {
+                    if (LookupByName(pArg, g_pOptionsLong))
+                    {
+                        wprintf(L"ERROR: did you mean `--%ls` (with two dashes)?\n", pArg);
+                        return 1;
+                    }
+                }
+            }
+
+            if (!dwOption)
+            {
+                wprintf(L"ERROR: Unknown option: `%ls`\n\nUse %ls --help\n", pArg, g_ToolName);
                 return 1;
             }
-        }
-        else if (allowOpts
-            && (('-' == pArg[0]) || ('/' == pArg[0])))
-        {
-            pArg++;
-            PWSTR pValue;
 
-            for (pValue = pArg; *pValue && (':' != *pValue); pValue++);
-
-            if (*pValue)
-                *pValue++ = 0;
-
-            const uint32_t dwOption = LookupByName(pArg, g_pOptions);
-
-            if (!dwOption || (dwOptions & (1 << dwOption)))
+            if (dwOptions & (1 << dwOption))
             {
-                PrintUsage();
+                wprintf(L"ERROR: Duplicate option: `%ls`\n\n", pArg);
                 return 1;
             }
 
