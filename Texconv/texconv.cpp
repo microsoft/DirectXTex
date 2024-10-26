@@ -103,21 +103,8 @@ namespace
     enum OPTIONS : uint64_t
     {
         OPT_RECURSIVE = 1,
-        OPT_FILELIST,
-        OPT_WIDTH,
-        OPT_HEIGHT,
-        OPT_MIPLEVELS,
-        OPT_FORMAT,
-        OPT_FILTER,
-        OPT_SRGBI,
-        OPT_SRGBO,
-        OPT_SRGB,
-        OPT_PREFIX,
-        OPT_SUFFIX,
-        OPT_OUTPUTDIR,
         OPT_TOLOWER,
         OPT_OVERWRITE,
-        OPT_FILETYPE,
         OPT_HFLIP,
         OPT_VFLIP,
         OPT_DDS_DWORD_ALIGN,
@@ -128,7 +115,6 @@ namespace
         OPT_USE_DX9,
         OPT_TGA20,
         OPT_TGAZEROALPHA,
-        OPT_WIC_QUALITY,
         OPT_WIC_LOSSLESS,
         OPT_WIC_MULTIFRAME,
         OPT_NOLOGO,
@@ -145,28 +131,42 @@ namespace
         OPT_FORCE_SINGLEPROC,
         OPT_GPU,
         OPT_NOGPU,
-        OPT_FEATURE_LEVEL,
         OPT_FIT_POWEROF2,
-        OPT_ALPHA_THRESHOLD,
-        OPT_ALPHA_WEIGHT,
         OPT_NORMAL_MAP,
-        OPT_NORMAL_MAP_AMPLITUDE,
-        OPT_BC_COMPRESS,
         OPT_COLORKEY,
         OPT_TONEMAP,
         OPT_X2_BIAS,
         OPT_PRESERVE_ALPHA_COVERAGE,
         OPT_INVERT_Y,
         OPT_RECONSTRUCT_Z,
-        OPT_ROTATE_COLOR,
-        OPT_PAPER_WHITE_NITS,
         OPT_BCNONMULT4FIX,
-        OPT_SWIZZLE,
     #ifdef USE_XBOX_EXTS
         OPT_USE_XBOX,
         OPT_XGMODE,
     #endif
         OPT_FLAGS_MAX,
+        OPT_FILELIST,
+        OPT_WIDTH,
+        OPT_HEIGHT,
+        OPT_MIPLEVELS,
+        OPT_FORMAT,
+        OPT_FILTER,
+        OPT_SRGBI,
+        OPT_SRGBO,
+        OPT_SRGB,
+        OPT_PREFIX,
+        OPT_SUFFIX,
+        OPT_OUTPUTDIR,
+        OPT_FILETYPE,
+        OPT_WIC_QUALITY,
+        OPT_FEATURE_LEVEL,
+        OPT_ALPHA_THRESHOLD,
+        OPT_ALPHA_WEIGHT,
+        OPT_NORMAL_MAP_AMPLITUDE,
+        OPT_BC_COMPRESS,
+        OPT_ROTATE_COLOR,
+        OPT_PAPER_WHITE_NITS,
+        OPT_SWIZZLE,
         OPT_VERSION,
         OPT_HELP,
     };
@@ -1343,6 +1343,31 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case 0:
                 wprintf(L"ERROR: Unknown option: `%ls`\n\nUse %ls --help\n", pArg, g_ToolName);
                 return 1;
+
+            case OPT_FILELIST:
+            case OPT_WIDTH:
+            case OPT_HEIGHT:
+            case OPT_MIPLEVELS:
+            case OPT_FORMAT:
+            case OPT_FILTER:
+            case OPT_SRGBI:
+            case OPT_SRGBO:
+            case OPT_SRGB:
+            case OPT_PREFIX:
+            case OPT_SUFFIX:
+            case OPT_OUTPUTDIR:
+            case OPT_FILETYPE:
+            case OPT_WIC_QUALITY:
+            case OPT_FEATURE_LEVEL:
+            case OPT_ALPHA_THRESHOLD:
+            case OPT_ALPHA_WEIGHT:
+            case OPT_NORMAL_MAP_AMPLITUDE:
+            case OPT_BC_COMPRESS:
+            case OPT_ROTATE_COLOR:
+            case OPT_PAPER_WHITE_NITS:
+            case OPT_SWIZZLE:
+                // These don't use flag bits
+                break;
 
             case OPT_VERSION:
                 PrintLogo(true, g_ToolName, g_Description);
