@@ -1378,13 +1378,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 0;
 
             default:
-                if (dwOptions & (uint64_t(1) << dwOption))
+                if (dwOptions & (UINT64_C(1) << dwOption))
                 {
                     wprintf(L"ERROR: Duplicate option: `%ls`\n\n", pArg);
                     return 1;
                 }
 
-                dwOptions |= (uint64_t(1) << dwOption);
+                dwOptions |= (UINT64_C(1) << dwOption);
                 break;
             }
 
@@ -1556,7 +1556,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_PREMUL_ALPHA:
-                if (dwOptions & (uint64_t(1) << OPT_DEMUL_ALPHA))
+                if (dwOptions & (UINT64_C(1) << OPT_DEMUL_ALPHA))
                 {
                     wprintf(L"Can't use -pmalpha and -alpha at same time\n\n");
                     PrintUsage();
@@ -1565,7 +1565,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_DEMUL_ALPHA:
-                if (dwOptions & (uint64_t(1) << OPT_PREMUL_ALPHA))
+                if (dwOptions & (UINT64_C(1) << OPT_PREMUL_ALPHA))
                 {
                     wprintf(L"Can't use -pmalpha and -alpha at same time\n\n");
                     PrintUsage();
@@ -1796,7 +1796,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_USE_DX10:
-                if (dwOptions & (uint64_t(1) << OPT_USE_DX9))
+                if (dwOptions & (UINT64_C(1) << OPT_USE_DX9))
                 {
                     wprintf(L"Can't use -dx9 and -dx10 at same time\n\n");
                     PrintUsage();
@@ -1805,7 +1805,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_USE_DX9:
-                if (dwOptions & (uint64_t(1) << OPT_USE_DX10))
+                if (dwOptions & (UINT64_C(1) << OPT_USE_DX10))
                 {
                     wprintf(L"Can't use -dx9 and -dx10 at same time\n\n");
                     PrintUsage();
@@ -1927,7 +1927,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             const size_t count = conversion.size();
             std::filesystem::path path(pArg);
-            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (uint64_t(1) << OPT_RECURSIVE)) != 0, nullptr);
+            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (UINT64_C(1) << OPT_RECURSIVE)) != 0, nullptr);
             if (conversion.size() <= count)
             {
                 wprintf(L"No matching files found for %ls\n", pArg);
@@ -1949,7 +1949,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
-    if (~dwOptions & (uint64_t(1) << OPT_NOLOGO))
+    if (~dwOptions & (UINT64_C(1) << OPT_NOLOGO))
         PrintLogo(false, g_ToolName, g_Description);
 
     auto fileTypeName = LookupByValue(FileType, g_pSaveFileTypes);
@@ -2034,15 +2034,15 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         #endif // USE_XBOX_EXTS
             {
                 DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES;
-                if (dwOptions & (uint64_t(1) << OPT_DDS_DWORD_ALIGN))
+                if (dwOptions & (UINT64_C(1) << OPT_DDS_DWORD_ALIGN))
                     ddsFlags |= DDS_FLAGS_LEGACY_DWORD;
-                if (dwOptions & (uint64_t(1) << OPT_EXPAND_LUMINANCE))
+                if (dwOptions & (UINT64_C(1) << OPT_EXPAND_LUMINANCE))
                     ddsFlags |= DDS_FLAGS_EXPAND_LUMINANCE;
-                if (dwOptions & (uint64_t(1) << OPT_DDS_BAD_DXTN_TAILS))
+                if (dwOptions & (UINT64_C(1) << OPT_DDS_BAD_DXTN_TAILS))
                     ddsFlags |= DDS_FLAGS_BAD_DXTN_TAILS;
-                if (dwOptions & (uint64_t(1) << OPT_DDS_PERMISSIVE))
+                if (dwOptions & (UINT64_C(1) << OPT_DDS_PERMISSIVE))
                     ddsFlags |= DDS_FLAGS_PERMISSIVE;
-                if (dwOptions & (uint64_t(1) << OPT_DDS_IGNORE_MIPS))
+                if (dwOptions & (UINT64_C(1) << OPT_DDS_IGNORE_MIPS))
                     ddsFlags |= DDS_FLAGS_IGNORE_MIPS;
 
                 hr = LoadFromDDSFile(curpath.c_str(), ddsFlags, &info, *image);
@@ -2056,11 +2056,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             if (IsTypeless(info.format))
             {
-                if (dwOptions & (uint64_t(1) << OPT_TYPELESS_UNORM))
+                if (dwOptions & (UINT64_C(1) << OPT_TYPELESS_UNORM))
                 {
                     info.format = MakeTypelessUNORM(info.format);
                 }
-                else if (dwOptions & (uint64_t(1) << OPT_TYPELESS_FLOAT))
+                else if (dwOptions & (UINT64_C(1) << OPT_TYPELESS_FLOAT))
                 {
                     info.format = MakeTypelessFLOAT(info.format);
                 }
@@ -2088,7 +2088,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         else if (_wcsicmp(ext.c_str(), L".tga") == 0)
         {
             TGA_FLAGS tgaFlags = (IsBGR(format)) ? TGA_FLAGS_BGR : TGA_FLAGS_NONE;
-            if (dwOptions & (uint64_t(1) << OPT_TGAZEROALPHA))
+            if (dwOptions & (UINT64_C(1) << OPT_TGAZEROALPHA))
             {
                 tgaFlags |= TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA;
             }
@@ -2256,7 +2256,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             // Direct3D can only create BC resources with multiple-of-4 top levels
             if ((info.width % 4) != 0 || (info.height % 4) != 0)
             {
-                if (dwOptions & (uint64_t(1) << OPT_BCNONMULT4FIX))
+                if (dwOptions & (UINT64_C(1) << OPT_BCNONMULT4FIX))
                 {
                     std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                     if (!timage)
@@ -2360,7 +2360,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Undo Premultiplied Alpha (if requested) ---------------------------------
-        if ((dwOptions & (uint64_t(1) << OPT_DEMUL_ALPHA))
+        if ((dwOptions & (UINT64_C(1) << OPT_DEMUL_ALPHA))
             && HasAlpha(info.format)
             && info.format != DXGI_FORMAT_A8_UNORM)
         {
@@ -2411,7 +2411,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Flip/Rotate -------------------------------------------------------------
-        if (dwOptions & ((uint64_t(1) << OPT_HFLIP) | (uint64_t(1) << OPT_VFLIP)))
+        if (dwOptions & ((UINT64_C(1) << OPT_HFLIP) | (UINT64_C(1) << OPT_VFLIP)))
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -2422,10 +2422,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             TEX_FR_FLAGS dwFlags = TEX_FR_ROTATE0;
 
-            if (dwOptions & (uint64_t(1) << OPT_HFLIP))
+            if (dwOptions & (UINT64_C(1) << OPT_HFLIP))
                 dwFlags |= TEX_FR_FLIP_HORIZONTAL;
 
-            if (dwOptions & (uint64_t(1) << OPT_VFLIP))
+            if (dwOptions & (UINT64_C(1) << OPT_VFLIP))
                 dwFlags |= TEX_FR_FLIP_VERTICAL;
 
             assert(dwFlags != 0);
@@ -2472,7 +2472,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 sizewarn = true;
         }
 
-        if (dwOptions & (uint64_t(1) << OPT_FIT_POWEROF2))
+        if (dwOptions & (UINT64_C(1) << OPT_FIT_POWEROF2))
         {
             FitPowerOf2(info.width, info.height, twidth, theight, maxSize);
         }
@@ -2844,7 +2844,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Tonemap (if requested) --------------------------------------------------
-        if (dwOptions & uint64_t(1) << OPT_TONEMAP)
+        if (dwOptions & UINT64_C(1) << OPT_TONEMAP)
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -2924,7 +2924,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Convert -----------------------------------------------------------------
-        if (dwOptions & (uint64_t(1) << OPT_NORMAL_MAP))
+        if (dwOptions & (UINT64_C(1) << OPT_NORMAL_MAP))
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -3012,7 +3012,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- ColorKey/ChromaKey ------------------------------------------------------
-        if ((dwOptions & (uint64_t(1) << OPT_COLORKEY))
+        if ((dwOptions & (UINT64_C(1) << OPT_COLORKEY))
             && HasAlpha(info.format))
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
@@ -3071,7 +3071,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Invert Y Channel --------------------------------------------------------
-        if (dwOptions & (uint64_t(1) << OPT_INVERT_Y))
+        if (dwOptions & (UINT64_C(1) << OPT_INVERT_Y))
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -3120,7 +3120,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Reconstruct Z Channel ---------------------------------------------------
-        if (dwOptions & (uint64_t(1) << OPT_RECONSTRUCT_Z))
+        if (dwOptions & (UINT64_C(1) << OPT_RECONSTRUCT_Z))
         {
             std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
             if (!timage)
@@ -3382,7 +3382,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Premultiplied alpha (if requested) --------------------------------------
-        if ((dwOptions & (uint64_t(1) << OPT_PREMUL_ALPHA))
+        if ((dwOptions & (UINT64_C(1) << OPT_PREMUL_ALPHA))
             && HasAlpha(info.format)
             && info.format != DXGI_FORMAT_A8_UNORM)
         {
@@ -3552,7 +3552,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                             {
                                 s_tryonce = true;
 
-                                if (!(dwOptions & (uint64_t(1) << OPT_NOGPU)))
+                                if (!(dwOptions & (UINT64_C(1) << OPT_NOGPU)))
                                 {
                                     if (!CreateDevice(adapter, pDevice.GetAddressOf()))
                                         wprintf(L"\nWARNING: DirectCompute is not available, using BC6H / BC7 CPU codec\n");
@@ -3571,7 +3571,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                     TEX_COMPRESS_FLAGS cflags = dwCompress;
                 #ifdef _OPENMP
-                    if (!(dwOptions & (uint64_t(1) << OPT_FORCE_SINGLEPROC)))
+                    if (!(dwOptions & (UINT64_C(1) << OPT_FORCE_SINGLEPROC)))
                     {
                         cflags |= TEX_COMPRESS_PARALLEL;
                     }
@@ -3631,7 +3631,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 // Aleady set TEX_ALPHA_MODE_PREMULTIPLIED
             }
-            else if (dwOptions & (uint64_t(1) << OPT_SEPALPHA))
+            else if (dwOptions & (UINT64_C(1) << OPT_SEPALPHA))
             {
                 info.SetAlphaMode(TEX_ALPHA_MODE_CUSTOM);
             }
@@ -3652,7 +3652,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             const size_t nimg = image->GetImageCount();
 
         #ifdef USE_XBOX_EXTS
-            const bool isXboxOut = ((FileType == CODEC_DDS) && (dwOptions & (uint64_t(1) << OPT_USE_XBOX))) != 0;
+            const bool isXboxOut = ((FileType == CODEC_DDS) && (dwOptions & (UINT64_C(1) << OPT_USE_XBOX))) != 0;
         #else
             constexpr bool isXboxOut = false;
         #endif
@@ -3699,7 +3699,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             std::wstring destName = dest.c_str();
-            if (dwOptions & (uint64_t(1) << OPT_TOLOWER))
+            if (dwOptions & (UINT64_C(1) << OPT_TOLOWER))
             {
                 std::transform(destName.begin(), destName.end(), destName.begin(), towlower);
             }
@@ -3708,7 +3708,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             wprintf(L"writing %ls", destName.c_str());
             fflush(stdout);
 
-            if (~dwOptions & (uint64_t(1) << OPT_OVERWRITE))
+            if (~dwOptions & (UINT64_C(1) << OPT_OVERWRITE))
             {
                 if (GetFileAttributesW(destName.c_str()) != INVALID_FILE_ATTRIBUTES)
                 {
@@ -3736,11 +3736,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             #endif // USE_XBOX_EXTS
                 {
                     DDS_FLAGS ddsFlags = DDS_FLAGS_NONE;
-                    if (dwOptions & (uint64_t(1) << OPT_USE_DX10))
+                    if (dwOptions & (UINT64_C(1) << OPT_USE_DX10))
                     {
                         ddsFlags |= DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2;
                     }
-                    else if (dwOptions & (uint64_t(1) << OPT_USE_DX9))
+                    else if (dwOptions & (UINT64_C(1) << OPT_USE_DX9))
                     {
                         if (dxt5rxgb)
                         {
@@ -3755,7 +3755,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case CODEC_TGA:
-                hr = SaveToTGAFile(img[0], TGA_FLAGS_NONE, destName.c_str(), (dwOptions & (uint64_t(1) << OPT_TGA20)) ? &info : nullptr);
+                hr = SaveToTGAFile(img[0], TGA_FLAGS_NONE, destName.c_str(), (dwOptions & (UINT64_C(1) << OPT_TGA20)) ? &info : nullptr);
                 break;
 
             case CODEC_HDR:
@@ -3789,11 +3789,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             default:
                 {
                     const WICCodecs codec = (FileType == CODEC_HDP || FileType == CODEC_JXR) ? WIC_CODEC_WMP : static_cast<WICCodecs>(FileType);
-                    const size_t nimages = (dwOptions & (uint64_t(1) << OPT_WIC_MULTIFRAME)) ? nimg : 1;
+                    const size_t nimages = (dwOptions & (UINT64_C(1) << OPT_WIC_MULTIFRAME)) ? nimg : 1;
                     hr = SaveToWICFile(img, nimages, WIC_FLAGS_NONE, GetWICCodec(codec), destName.c_str(), nullptr,
                         [&](IPropertyBag2* props)
                         {
-                            const bool wicLossless = (dwOptions & (uint64_t(1) << OPT_WIC_LOSSLESS)) != 0;
+                            const bool wicLossless = (dwOptions & (UINT64_C(1) << OPT_WIC_LOSSLESS)) != 0;
 
                             switch (FileType)
                             {
@@ -3884,7 +3884,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     if (non4bc)
         wprintf(L"\nWARNING: Direct3D requires BC image to be multiple of 4 in width & height\n");
 
-    if (dwOptions & (uint64_t(1) << OPT_TIMING))
+    if (dwOptions & (UINT64_C(1) << OPT_TIMING))
     {
         LARGE_INTEGER qpcEnd = {};
         std::ignore = QueryPerformanceCounter(&qpcEnd);

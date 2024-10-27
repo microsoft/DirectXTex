@@ -534,15 +534,15 @@ namespace
         if (_wcsicmp(ext.c_str(), L".dds") == 0)
         {
             DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES;
-            if (dwOptions & (1u << OPT_DDS_DWORD_ALIGN))
+            if (dwOptions & (UINT32_C(1) << OPT_DDS_DWORD_ALIGN))
                 ddsFlags |= DDS_FLAGS_LEGACY_DWORD;
-            if (dwOptions & (1u << OPT_EXPAND_LUMINANCE))
+            if (dwOptions & (UINT32_C(1) << OPT_EXPAND_LUMINANCE))
                 ddsFlags |= DDS_FLAGS_EXPAND_LUMINANCE;
-            if (dwOptions & (1u << OPT_DDS_BAD_DXTN_TAILS))
+            if (dwOptions & (UINT32_C(1) << OPT_DDS_BAD_DXTN_TAILS))
                 ddsFlags |= DDS_FLAGS_BAD_DXTN_TAILS;
-            if (dwOptions & (1u << OPT_DDS_PERMISSIVE))
+            if (dwOptions & (UINT32_C(1) << OPT_DDS_PERMISSIVE))
                 ddsFlags |= DDS_FLAGS_PERMISSIVE;
-            if (dwOptions & (1u << OPT_DDS_IGNORE_MIPS))
+            if (dwOptions & (UINT32_C(1) << OPT_DDS_IGNORE_MIPS))
                 ddsFlags |= DDS_FLAGS_IGNORE_MIPS;
 
             HRESULT hr = LoadFromDDSFile(fileName, ddsFlags, &info, *image);
@@ -551,11 +551,11 @@ namespace
 
             if (IsTypeless(info.format))
             {
-                if (dwOptions & (1u << OPT_TYPELESS_UNORM))
+                if (dwOptions & (UINT32_C(1) << OPT_TYPELESS_UNORM))
                 {
                     info.format = MakeTypelessUNORM(info.format);
                 }
-                else if (dwOptions & (1u << OPT_TYPELESS_FLOAT))
+                else if (dwOptions & (UINT32_C(1) << OPT_TYPELESS_FLOAT))
                 {
                     info.format = MakeTypelessFLOAT(info.format);
                 }
@@ -3175,13 +3175,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 0;
 
             default:
-                if (dwOptions & (1u << dwOption))
+                if (dwOptions & (UINT32_C(1) << dwOption))
                 {
                     wprintf(L"ERROR: Duplicate option: `%ls`\n\n", pArg);
                     return 1;
                 }
 
-                dwOptions |= (1u << dwOption);
+                dwOptions |= (UINT32_C(1) << dwOption);
                 break;
             }
 
@@ -3353,7 +3353,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             const size_t count = conversion.size();
             std::filesystem::path path(pArg);
-            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (1u << OPT_RECURSIVE)) != 0, nullptr);
+            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (UINT32_C(1) << OPT_RECURSIVE)) != 0, nullptr);
             if (conversion.size() <= count)
             {
                 wprintf(L"No matching files found for %ls\n", pArg);
@@ -3375,7 +3375,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
-    if (~dwOptions & (1u << OPT_NOLOGO))
+    if (~dwOptions & (UINT32_C(1) << OPT_NOLOGO))
         PrintLogo(false, g_ToolName, g_Description);
 
     switch (dwCommand)
@@ -3456,12 +3456,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                if (dwOptions & (1u << OPT_TOLOWER))
+                if (dwOptions & (UINT32_C(1) << OPT_TOLOWER))
                 {
                     std::transform(outputFile.begin(), outputFile.end(), outputFile.begin(), towlower);
                 }
 
-                if (~dwOptions & (1u << OPT_OVERWRITE))
+                if (~dwOptions & (UINT32_C(1) << OPT_OVERWRITE))
                 {
                     if (GetFileAttributesW(outputFile.c_str()) != INVALID_FILE_ATTRIBUTES)
                     {

@@ -940,13 +940,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 0;
 
             default:
-                if (dwOptions & (1u << dwOption))
+                if (dwOptions & (UINT32_C(1) << dwOption))
                 {
                     wprintf(L"ERROR: Duplicate option: `%ls`\n\n", pArg);
                     return 1;
                 }
 
-                dwOptions |= (1u << dwOption);
+                dwOptions |= (UINT32_C(1) << dwOption);
                 break;
             }
 
@@ -1168,7 +1168,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             const size_t count = conversion.size();
             std::filesystem::path path(pArg);
-            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (1u << OPT_RECURSIVE)) != 0, nullptr);
+            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (UINT32_C(1) << OPT_RECURSIVE)) != 0, nullptr);
             if (conversion.size() <= count)
             {
                 wprintf(L"No matching files found for %ls\n", pArg);
@@ -1190,7 +1190,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
-    if (~dwOptions & (1u << OPT_NOLOGO))
+    if (~dwOptions & (UINT32_C(1) << OPT_NOLOGO))
         PrintLogo(false, g_ToolName, g_Description);
 
     switch (dwCommand)
@@ -1245,7 +1245,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             outputFile = curpath.stem().concat(L".dds").native();
         }
 
-        hr = LoadAnimatedGif(curpath.c_str(), loadedImages, (dwOptions & (1u << OPT_GIF_BGCOLOR)) != 0);
+        hr = LoadAnimatedGif(curpath.c_str(), loadedImages, (dwOptions & (UINT32_C(1) << OPT_GIF_BGCOLOR)) != 0);
         if (FAILED(hr))
         {
             wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -1372,7 +1372,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         wprintf(L"\nERROR: Can't assemble complex surfaces\n");
                         return 1;
                     }
-                    else if ((info.mipLevels > 1) && ((dwOptions & (1u << OPT_STRIP_MIPS)) == 0))
+                    else if ((info.mipLevels > 1) && ((dwOptions & (UINT32_C(1) << OPT_STRIP_MIPS)) == 0))
                     {
                         switch (dwCommand)
                         {
@@ -1552,7 +1552,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             // --- Strip Mips (if requested) -----------------------------------------------
-            if ((info.mipLevels > 1) && (dwOptions & (1u << OPT_STRIP_MIPS)))
+            if ((info.mipLevels > 1) && (dwOptions & (UINT32_C(1) << OPT_STRIP_MIPS)))
             {
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                 if (!timage)
@@ -1602,7 +1602,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             // --- Undo Premultiplied Alpha (if requested) ---------------------------------
-            if ((dwOptions & (1u << OPT_DEMUL_ALPHA))
+            if ((dwOptions & (UINT32_C(1) << OPT_DEMUL_ALPHA))
                 && HasAlpha(info.format)
                 && info.format != DXGI_FORMAT_A8_UNORM)
             {
@@ -1709,7 +1709,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             // --- Tonemap (if requested) --------------------------------------------------
-            if (dwOptions & (1u << OPT_TONEMAP))
+            if (dwOptions & (UINT32_C(1) << OPT_TONEMAP))
             {
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
                 if (!timage)
@@ -2049,12 +2049,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             wprintf(L"\n");
             fflush(stdout);
 
-            if (dwOptions & (1u << OPT_TOLOWER))
+            if (dwOptions & (UINT32_C(1) << OPT_TOLOWER))
             {
                 std::transform(outputFile.begin(), outputFile.end(), outputFile.begin(), towlower);
             }
 
-            if (~dwOptions & (1u << OPT_OVERWRITE))
+            if (~dwOptions & (UINT32_C(1) << OPT_OVERWRITE))
             {
                 if (GetFileAttributesW(outputFile.c_str()) != INVALID_FILE_ATTRIBUTES)
                 {
@@ -2117,12 +2117,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             wprintf(L"\n");
             fflush(stdout);
 
-            if (dwOptions & (1u << OPT_TOLOWER))
+            if (dwOptions & (UINT32_C(1) << OPT_TOLOWER))
             {
                 std::transform(outputFile.begin(), outputFile.end(), outputFile.begin(), towlower);
             }
 
-            if (~dwOptions & (1u << OPT_OVERWRITE))
+            if (~dwOptions & (UINT32_C(1) << OPT_OVERWRITE))
             {
                 if (GetFileAttributesW(outputFile.c_str()) != INVALID_FILE_ATTRIBUTES)
                 {
@@ -2186,12 +2186,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             wprintf(L"\n");
             fflush(stdout);
 
-            if (dwOptions & (1u << OPT_TOLOWER))
+            if (dwOptions & (UINT32_C(1) << OPT_TOLOWER))
             {
                 std::transform(outputFile.begin(), outputFile.end(), outputFile.begin(), towlower);
             }
 
-            if (~dwOptions & (1u << OPT_OVERWRITE))
+            if (~dwOptions & (UINT32_C(1) << OPT_OVERWRITE))
             {
                 if (GetFileAttributesW(outputFile.c_str()) != INVALID_FILE_ATTRIBUTES)
                 {
@@ -2385,12 +2385,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             wprintf(L"\n");
             fflush(stdout);
 
-            if (dwOptions & (1u << OPT_TOLOWER))
+            if (dwOptions & (UINT32_C(1) << OPT_TOLOWER))
             {
                 std::transform(outputFile.begin(), outputFile.end(), outputFile.begin(), towlower);
             }
 
-            if (~dwOptions & (1u << OPT_OVERWRITE))
+            if (~dwOptions & (UINT32_C(1) << OPT_OVERWRITE))
             {
                 if (GetFileAttributesW(outputFile.c_str()) != INVALID_FILE_ATTRIBUTES)
                 {
@@ -2400,7 +2400,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             hr = SaveToDDSFile(result.GetImages(), result.GetImageCount(), result.GetMetadata(),
-                (dwOptions & (1u << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
+                (dwOptions & (UINT32_C(1) << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
                 outputFile.c_str());
             if (FAILED(hr))
             {
@@ -2443,12 +2443,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             wprintf(L"\n");
             fflush(stdout);
 
-            if (dwOptions & (1u << OPT_TOLOWER))
+            if (dwOptions & (UINT32_C(1) << OPT_TOLOWER))
             {
                 std::transform(outputFile.begin(), outputFile.end(), outputFile.begin(), towlower);
             }
 
-            if (~dwOptions & (1u << OPT_OVERWRITE))
+            if (~dwOptions & (UINT32_C(1) << OPT_OVERWRITE))
             {
                 if (GetFileAttributesW(outputFile.c_str()) != INVALID_FILE_ATTRIBUTES)
                 {
@@ -2458,7 +2458,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             hr = SaveToDDSFile(result.GetImages(), result.GetImageCount(), result.GetMetadata(),
-                (dwOptions & (1u << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
+                (dwOptions & (UINT32_C(1) << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
                 outputFile.c_str());
             if (FAILED(hr))
             {
@@ -2532,7 +2532,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             case CMD_ARRAY:
             case CMD_GIF:
-                hr = result.InitializeArrayFromImages(&imageArray[0], imageArray.size(), (dwOptions & (1u << OPT_USE_DX10)) != 0);
+                hr = result.InitializeArrayFromImages(&imageArray[0], imageArray.size(), (dwOptions & (UINT32_C(1) << OPT_USE_DX10)) != 0);
                 break;
 
             case CMD_CUBE:
@@ -2556,12 +2556,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             wprintf(L"\n");
             fflush(stdout);
 
-            if (dwOptions & (1u << OPT_TOLOWER))
+            if (dwOptions & (UINT32_C(1) << OPT_TOLOWER))
             {
                 std::transform(outputFile.begin(), outputFile.end(), outputFile.begin(), towlower);
             }
 
-            if (~dwOptions & (1u << OPT_OVERWRITE))
+            if (~dwOptions & (UINT32_C(1) << OPT_OVERWRITE))
             {
                 if (GetFileAttributesW(outputFile.c_str()) != INVALID_FILE_ATTRIBUTES)
                 {
@@ -2571,7 +2571,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
 
             hr = SaveToDDSFile(result.GetImages(), result.GetImageCount(), result.GetMetadata(),
-                (dwOptions & (1u << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
+                (dwOptions & (UINT32_C(1) << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
                 outputFile.c_str());
             if (FAILED(hr))
             {
