@@ -96,29 +96,31 @@ namespace
     enum OPTIONS : uint32_t
     {
         OPT_RECURSIVE = 1,
-        OPT_FORMAT,
-        OPT_FILTER,
         OPT_DDS_DWORD_ALIGN,
         OPT_DDS_BAD_DXTN_TAILS,
         OPT_DDS_PERMISSIVE,
         OPT_DDS_IGNORE_MIPS,
-        OPT_OUTPUTFILE,
         OPT_TOLOWER,
         OPT_OVERWRITE,
-        OPT_FILETYPE,
         OPT_NOLOGO,
         OPT_TYPELESS_UNORM,
         OPT_TYPELESS_FLOAT,
         OPT_EXPAND_LUMINANCE,
+        OPT_FLAGS_MAX,
+        OPT_FORMAT,
+        OPT_FILTER,
+        OPT_OUTPUTFILE,
+        OPT_FILETYPE,
         OPT_TARGET_PIXELX,
         OPT_TARGET_PIXELY,
         OPT_DIFF_COLOR,
         OPT_THRESHOLD,
         OPT_FILELIST,
-        OPT_MAX
+        OPT_VERSION,
+        OPT_HELP,
     };
 
-    static_assert(OPT_MAX <= 32, "dwOptions is a unsigned int bitfield");
+    static_assert(OPT_FLAGS_MAX <= 32, "dwOptions is a unsigned int bitfield");
 
     //////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////
@@ -141,9 +143,6 @@ namespace
         { L"f",          OPT_FORMAT },
         { L"if",         OPT_FILTER },
         { L"dword",      OPT_DDS_DWORD_ALIGN },
-        { L"badtails",   OPT_DDS_BAD_DXTN_TAILS },
-        { L"permissive", OPT_DDS_PERMISSIVE },
-        { L"ignoremips", OPT_DDS_IGNORE_MIPS },
         { L"nologo",     OPT_NOLOGO },
         { L"o",          OPT_OUTPUTFILE },
         { L"l",          OPT_TOLOWER },
@@ -152,12 +151,42 @@ namespace
         { L"tu",         OPT_TYPELESS_UNORM },
         { L"tf",         OPT_TYPELESS_FLOAT },
         { L"xlum",       OPT_EXPAND_LUMINANCE },
-        { L"targetx",    OPT_TARGET_PIXELX },
-        { L"targety",    OPT_TARGET_PIXELY },
         { L"c",          OPT_DIFF_COLOR },
         { L"t",          OPT_THRESHOLD },
         { L"flist",      OPT_FILELIST },
+
+        // Deprecated options (recommend using new -- alternatives)
+        { L"badtails",   OPT_DDS_BAD_DXTN_TAILS },
+        { L"permissive", OPT_DDS_PERMISSIVE },
+        { L"ignoremips", OPT_DDS_IGNORE_MIPS },
+        { L"targetx",    OPT_TARGET_PIXELX },
+        { L"targety",    OPT_TARGET_PIXELY },
+
         { nullptr,       0 }
+    };
+
+    const SValue<uint32_t> g_pOptionsLong[] =
+    {
+        { L"bad-tails",             OPT_DDS_BAD_DXTN_TAILS },
+        { L"dword-alignment",       OPT_DDS_DWORD_ALIGN },
+        { L"expand-luminance",      OPT_EXPAND_LUMINANCE },
+        { L"file-list",             OPT_FILELIST },
+        { L"file-type",             OPT_FILETYPE },
+        { L"format",                OPT_FORMAT },
+        { L"help",                  OPT_HELP },
+        { L"ignore-mips",           OPT_DDS_IGNORE_MIPS },
+        { L"image-filter",          OPT_FILTER },
+        { L"overwrite",             OPT_OVERWRITE },
+        { L"permissive",            OPT_DDS_PERMISSIVE },
+        { L"target-x",              OPT_TARGET_PIXELX },
+        { L"target-y",              OPT_TARGET_PIXELY },
+        { L"to-lowercase",          OPT_TOLOWER },
+        { L"typeless-unorm",        OPT_TYPELESS_UNORM },
+        { L"typeless-float",        OPT_TYPELESS_FLOAT },
+        { L"version",               OPT_VERSION },
+        { L"diff-color",            OPT_DIFF_COLOR },
+        { L"threshold",             OPT_THRESHOLD },
+        { nullptr,                  0 }
     };
 
     #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
@@ -350,18 +379,18 @@ namespace
         { nullptr,                      TEX_FILTER_DEFAULT }
     };
 
-    #define CODEC_DDS 0xFFFF0001
-    #define CODEC_TGA 0xFFFF0002
-    #define CODEC_HDR 0xFFFF0005
+    constexpr uint32_t CODEC_DDS = 0xFFFF0001;
+    constexpr uint32_t CODEC_TGA = 0xFFFF0002;
+    constexpr uint32_t CODEC_HDR = 0xFFFF0005;
 
     #ifdef USE_OPENEXR
-    #define CODEC_EXR 0xFFFF0006
+    constexpr uint32_t CODEC_EXR = 0xFFFF0008;
     #endif
     #ifdef USE_LIBJPEG
-    #define CODEC_JPEG 0xFFFF0007
+    constexpr uint32_t CODEC_JPEG = 0xFFFF0009;
     #endif
     #ifdef USE_LIBPNG
-    #define CODEC_PNG 0xFFFF0008
+    constexpr uint32_t CODEC_PNG = 0xFFFF000A;
     #endif
 
     const SValue<uint32_t> g_pDumpFileTypes[] =
@@ -425,42 +454,49 @@ namespace
 
         static const wchar_t* const s_usage =
             L"Usage: texdiag <command> <options> [--] <files>\n"
-            L"\n"
+            L"\nCOMMANDS\n"
             L"   info                Output image metadata\n"
             L"   analyze             Analyze and summarize image information\n"
             L"   compare             Compare two images with MSE error metric\n"
             L"   diff                Generate difference image from two images\n"
             L"   dumpbc              Dump out compressed blocks (DDS BC only)\n"
             L"   dumpdds             Dump out all the images in a complex DDS\n"
-            L"\n"
+            L"\nOPTIONS\n"
             L"   -r                  wildcard filename search is recursive\n"
-            L"   -if <filter>        image filtering\n"
+            L"   -flist <filename>, --file-list <filename>\n"
+            L"                       use text file with a list of input files (one per line)\n"
             L"\n"
-            L"                       (DDS input only)\n"
-            L"   -t{u|f}             TYPELESS format is treated as UNORM or FLOAT\n"
-            L"   -dword              Use DWORD instead of BYTE alignment\n"
-            L"   -badtails           Fix for older DXTn with bad mipchain tails\n"
-            L"   -permissive         Allow some DX9 variants with unusual header values\n"
-            L"   -ignoremips         Reads just the top-level mip which reads some invalid files\n"
-            L"   -xlum               expand legacy L8, L16, and A8P8 formats\n"
+            L"   -if <filter>, --image-filter <filter>   image filtering\n"
             L"\n"
-            L"                       (diff only)\n"
-            L"   -f <format>         format\n"
-            L"   -o <filename>       output filename\n"
-            L"   -l                  force output filename to lower case\n"
-            L"   -y                  overwrite existing output file (if any)\n"
-            L"   -c <hex-RGB>        highlight difference color (defaults to off)\n"
-            L"   -t <threshold>      highlight threshold (defaults to 0.25)\n"
+            L"                                  (DDS input only)\n"
+            L"   -tu, --typeless-unorm          TYPELESS format is treated as UNORM\n"
+            L"   -tf, --typeless-float          TYPELESS format is treated as FLOAT\n"
+            L"   -dword, --dword-alignment      Use DWORD instead of BYTE alignment\n"
+            L"   --bad-tails                    Fix for older DXTn with bad mipchain tails\n"
+            L"   --permissive                   Allow some DX9 variants with unusual header values\n"
+            L"   --ignore-mips                  Reads just the top-level mip which reads some invalid files\n"
+            L"   -xlum, --expand-luminance      Expand legacy L8, L16, and A8P8 formats\n"
+            L"\n"
+            L"                                  (diff only)\n"
+            L"   -f <format>, --format <format> pixel format for output\n"
+            L"   -o <filename>                  output filename for diff\n"
+            L"   -l, --to-lowercase             force output filename to lower case\n"
+            L"   -y, --overwrite                overwrite existing output file (if any)\n"
+            L"   -c <hex-RGB>, --diff-color <hex-RGB>\n"
+            L"                                  highlight difference color (defaults to off)\n"
+            L"   -t <threshold>, --threshold <threshold>\n"
+            L"                                  highlight threshold (defaults to 0.25)\n"
             L"\n"
             L"                       (dumpbc only)\n"
-            L"   -targetx <num>      dump pixels at location x (defaults to all)\n"
-            L"   -targety <num>      dump pixels at location y (defaults to all)\n"
+            L"   --target-x <num>    dump pixels at location x (defaults to all)\n"
+            L"   --target-y <num>    dump pixels at location y (defaults to all)\n"
             L"\n"
             L"                       (dumpdds only)\n"
-            L"   -ft <filetype>      output file type\n"
+            L"   -o <path>           output path for dumpdds\n"
+            L"   -ft <filetype>, --file-type <filetype>\n"
+            "                        output file type\n"
             L"\n"
             L"   -nologo             suppress copyright message\n"
-            L"   -flist <filename>   use text file with a list of input files (one per line)\n"
             L"\n"
             L"   '-- ' is needed if any input filepath starts with the '-' or '/' character\n";
 
@@ -498,15 +534,15 @@ namespace
         if (_wcsicmp(ext.c_str(), L".dds") == 0)
         {
             DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES;
-            if (dwOptions & (1 << OPT_DDS_DWORD_ALIGN))
+            if (dwOptions & (UINT32_C(1) << OPT_DDS_DWORD_ALIGN))
                 ddsFlags |= DDS_FLAGS_LEGACY_DWORD;
-            if (dwOptions & (1 << OPT_EXPAND_LUMINANCE))
+            if (dwOptions & (UINT32_C(1) << OPT_EXPAND_LUMINANCE))
                 ddsFlags |= DDS_FLAGS_EXPAND_LUMINANCE;
-            if (dwOptions & (1 << OPT_DDS_BAD_DXTN_TAILS))
+            if (dwOptions & (UINT32_C(1) << OPT_DDS_BAD_DXTN_TAILS))
                 ddsFlags |= DDS_FLAGS_BAD_DXTN_TAILS;
-            if (dwOptions & (1 << OPT_DDS_PERMISSIVE))
+            if (dwOptions & (UINT32_C(1) << OPT_DDS_PERMISSIVE))
                 ddsFlags |= DDS_FLAGS_PERMISSIVE;
-            if (dwOptions & (1 << OPT_DDS_IGNORE_MIPS))
+            if (dwOptions & (UINT32_C(1) << OPT_DDS_IGNORE_MIPS))
                 ddsFlags |= DDS_FLAGS_IGNORE_MIPS;
 
             HRESULT hr = LoadFromDDSFile(fileName, ddsFlags, &info, *image);
@@ -515,11 +551,11 @@ namespace
 
             if (IsTypeless(info.format))
             {
-                if (dwOptions & (1 << OPT_TYPELESS_UNORM))
+                if (dwOptions & (UINT32_C(1) << OPT_TYPELESS_UNORM))
                 {
                     info.format = MakeTypelessUNORM(info.format);
                 }
-                else if (dwOptions & (1 << OPT_TYPELESS_FLOAT))
+                else if (dwOptions & (UINT32_C(1) << OPT_TYPELESS_FLOAT))
                 {
                     info.format = MakeTypelessFLOAT(info.format);
                 }
@@ -1352,7 +1388,7 @@ namespace
     //--------------------------------------------------------------------------------------
 #define SIGN_EXTEND(x,nb) ((((x)&(1<<((nb)-1)))?((~0)^((1<<(nb))-1)):0)|(x))
 
-#define NUM_PIXELS_PER_BLOCK 16
+    constexpr size_t NUM_PIXELS_PER_BLOCK = 16;
 
     void Print565(uint16_t rgb)
     {
@@ -3062,54 +3098,92 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     std::list<SConversion> conversion;
     bool allowOpts = true;
 
-    for (int iArg = 2; iArg < argc; iArg++)
+    for (int iArg = 2; iArg < argc; ++iArg)
     {
         PWSTR pArg = argv[iArg];
 
-        if (allowOpts
-            && ('-' == pArg[0]) && ('-' == pArg[1]))
+        if (allowOpts && (('-' == pArg[0]) || ('/' == pArg[0])))
         {
-            if (pArg[2] == 0)
+            uint32_t dwOption = 0;
+            PWSTR pValue = nullptr;
+
+            if (('-' == pArg[0]) && ('-' == pArg[1]))
             {
-                // "-- " is the POSIX standard for "end of options" marking to escape the '-' and '/' characters at the start of filepaths.
-                allowOpts = false;
-            }
-            else if (!_wcsicmp(pArg, L"--version"))
-            {
-                PrintLogo(true, g_ToolName, g_Description);
-                return 0;
-            }
-            else if (!_wcsicmp(pArg, L"--help"))
-            {
-                PrintUsage();
-                return 0;
+                if (pArg[2] == 0)
+                {
+                    // "-- " is the POSIX standard for "end of options" marking to escape the '-' and '/' characters at the start of filepaths.
+                    allowOpts = false;
+                    continue;
+                }
+                else
+                {
+                    pArg += 2;
+
+                    for (pValue = pArg; *pValue && (':' != *pValue) && ('=' != *pValue); ++pValue);
+
+                    if (*pValue)
+                        *pValue++ = 0;
+
+                    dwOption = LookupByName(pArg, g_pOptionsLong);
+                }
             }
             else
             {
-                wprintf(L"Unknown option: %ls\n", pArg);
-                return 1;
+                pArg++;
+
+                for (pValue = pArg; *pValue && (':' != *pValue) && ('=' != *pValue); ++pValue);
+
+                if (*pValue)
+                    *pValue++ = 0;
+
+                dwOption = LookupByName(pArg, g_pOptions);
+
+                if (!dwOption)
+                {
+                    if (LookupByName(pArg, g_pOptionsLong))
+                    {
+                        wprintf(L"ERROR: did you mean `--%ls` (with two dashes)?\n", pArg);
+                        return 1;
+                    }
+                }
             }
-        }
-        else if (allowOpts
-            && (('-' == pArg[0]) || ('/' == pArg[0])))
-        {
-            pArg++;
-            PWSTR pValue;
 
-            for (pValue = pArg; *pValue && (':' != *pValue); pValue++);
-
-            if (*pValue)
-                *pValue++ = 0;
-
-            const uint32_t dwOption = LookupByName(pArg, g_pOptions);
-
-            if (!dwOption || (dwOptions & (1 << dwOption)))
+            switch (dwOption)
             {
-                PrintUsage();
+            case 0:
+                wprintf(L"ERROR: Unknown option: `%ls`\n\nUse %ls --help\n", pArg, g_ToolName);
                 return 1;
-            }
 
-            dwOptions |= 1 << dwOption;
+            case OPT_FORMAT:
+            case OPT_FILTER:
+            case OPT_OUTPUTFILE:
+            case OPT_FILETYPE:
+            case OPT_TARGET_PIXELX:
+            case OPT_TARGET_PIXELY:
+            case OPT_DIFF_COLOR:
+            case OPT_THRESHOLD:
+            case OPT_FILELIST:
+                // These don't use flag bits
+                break;
+
+            case OPT_VERSION:
+                PrintLogo(true, g_ToolName, g_Description);
+                return 0;
+
+            case OPT_HELP:
+                PrintUsage();
+                return 0;
+
+            default:
+                if (dwOptions & (UINT32_C(1) << dwOption))
+                {
+                    wprintf(L"ERROR: Duplicate option: `%ls`\n\n", pArg);
+                    return 1;
+                }
+
+                dwOptions |= (UINT32_C(1) << dwOption);
+                break;
+            }
 
             // Handle options with additional value parameter
             switch (dwOption)
@@ -3173,9 +3247,9 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_OUTPUTFILE:
-                if (dwCommand != CMD_DIFF)
+                if (dwCommand != CMD_DIFF && dwCommand != CMD_DUMPDDS)
                 {
-                    wprintf(L"-o only valid for use with diff command\n");
+                    wprintf(L"-o only valid for use with diff or dumpdds commands\n");
                     return 1;
                 }
                 else
@@ -3183,7 +3257,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     std::filesystem::path path(pValue);
                     outputFile = path.make_preferred().native();
 
-                    fileType = LookupByName(path.extension().c_str(), g_pExtFileTypes);
+                    if (dwCommand == CMD_DIFF)
+                    {
+                        fileType = LookupByName(path.extension().c_str(), g_pExtFileTypes);
+                    }
                 }
                 break;
 
@@ -3198,8 +3275,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     fileType = LookupByName(pValue, g_pDumpFileTypes);
                     if (!fileType)
                     {
-                        wprintf(L"Invalid value specified with -ft (%ls)\n", pValue);
-                        wprintf(L"\n");
+                        wprintf(L"Invalid value specified with -ft (%ls)\n\n", pValue);
                         PrintUsage();
                         return 1;
                     }
@@ -3277,7 +3353,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             const size_t count = conversion.size();
             std::filesystem::path path(pArg);
-            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (1 << OPT_RECURSIVE)) != 0, nullptr);
+            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (UINT32_C(1) << OPT_RECURSIVE)) != 0, nullptr);
             if (conversion.size() <= count)
             {
                 wprintf(L"No matching files found for %ls\n", pArg);
@@ -3299,7 +3375,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
-    if (~dwOptions & (1 << OPT_NOLOGO))
+    if (~dwOptions & (UINT32_C(1) << OPT_NOLOGO))
         PrintLogo(false, g_ToolName, g_Description);
 
     switch (dwCommand)
@@ -3380,12 +3456,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                if (dwOptions & (1 << OPT_TOLOWER))
+                if (dwOptions & (UINT32_C(1) << OPT_TOLOWER))
                 {
                     std::transform(outputFile.begin(), outputFile.end(), outputFile.begin(), towlower);
                 }
 
-                if (~dwOptions & (1 << OPT_OVERWRITE))
+                if (~dwOptions & (UINT32_C(1) << OPT_OVERWRITE))
                 {
                     if (GetFileAttributesW(outputFile.c_str()) != INVALID_FILE_ATTRIBUTES)
                     {
@@ -3656,6 +3732,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 auto const ext = LookupByValue(fileType, g_pDumpFileTypes);
 
+                std::filesystem::path basePath(outputFile);
+
                 if (info.depth > 1)
                 {
                     wprintf(L"Writing by mip (%3zu) and slice (%3zu)...", info.mipLevels, info.depth);
@@ -3684,10 +3762,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                     swprintf_s(subFname, L"%ls_slice%03zu", curpath.stem().c_str(), slice);
                                 }
 
-                                outputFile.assign(subFname);
-                                outputFile.append(ext);
+                                std::filesystem::path output(basePath);
+                                output.append(subFname);
+                                output.replace_extension(ext);
 
-                                hr = SaveImage(img, outputFile.c_str(), fileType);
+                                hr = SaveImage(img, output.c_str(), fileType);
                                 if (FAILED(hr))
                                 {
                                     wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -3728,10 +3807,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                     swprintf_s(subFname, L"%ls_item%03zu", curpath.stem().c_str(), item);
                                 }
 
-                                outputFile.assign(subFname);
-                                outputFile.append(ext);
+                                std::filesystem::path output(basePath);
+                                output.append(subFname);
+                                output.replace_extension(ext);
 
-                                hr = SaveImage(img, outputFile.c_str(), fileType);
+                                hr = SaveImage(img, output.c_str(), fileType);
                                 if (FAILED(hr))
                                 {
                                     wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
