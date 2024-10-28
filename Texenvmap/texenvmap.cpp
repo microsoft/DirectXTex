@@ -99,15 +99,6 @@ namespace
     enum OPTIONS : uint32_t
     {
         OPT_RECURSIVE = 1,
-        OPT_FILELIST,
-        OPT_WIDTH,
-        OPT_HEIGHT,
-        OPT_FORMAT,
-        OPT_FILTER,
-        OPT_SRGBI,
-        OPT_SRGBO,
-        OPT_SRGB,
-        OPT_OUTPUTFILE,
         OPT_TOLOWER,
         OPT_OVERWRITE,
         OPT_USE_DX10,
@@ -118,10 +109,21 @@ namespace
         OPT_TA_WRAP,
         OPT_TA_MIRROR,
         OPT_GPU,
-        OPT_MAX
+        OPT_FLAGS_MAX,
+        OPT_FILELIST,
+        OPT_WIDTH,
+        OPT_HEIGHT,
+        OPT_FORMAT,
+        OPT_FILTER,
+        OPT_SRGBI,
+        OPT_SRGBO,
+        OPT_SRGB,
+        OPT_OUTPUTFILE,
+        OPT_VERSION,
+        OPT_HELP,
     };
 
-    static_assert(OPT_MAX <= 32, "dwOptions is a unsigned int bitfield");
+    static_assert(OPT_FLAGS_MAX <= 32, "dwOptions is a unsigned int bitfield");
 
     //////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////
@@ -158,6 +160,23 @@ namespace
         { L"mirror",    OPT_TA_MIRROR },
         { L"gpu",       OPT_GPU },
         { nullptr,      0 }
+    };
+
+    const SValue<uint32_t> g_pOptionsLong[] =
+    {
+        { L"file-list",             OPT_FILELIST },
+        { L"format",                OPT_FORMAT },
+        { L"height",                OPT_HEIGHT },
+        { L"help",                  OPT_HELP },
+        { L"image-filter",          OPT_FILTER },
+        { L"overwrite",             OPT_OVERWRITE },
+        { L"separate-alpha",        OPT_SEPALPHA },
+        { L"srgb-in",               OPT_SRGBI },
+        { L"srgb-out",              OPT_SRGBO },
+        { L"to-lowercase",          OPT_TOLOWER },
+        { L"version",               OPT_VERSION },
+        { L"width",                 OPT_WIDTH },
+        { nullptr,                  0 }
     };
 
     #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
@@ -229,19 +248,19 @@ namespace
         { nullptr,                      TEX_FILTER_DEFAULT                              }
     };
 
-#define CODEC_DDS 0xFFFF0001
-#define CODEC_TGA 0xFFFF0002
-#define CODEC_HDR 0xFFFF0005
+    constexpr uint32_t CODEC_DDS = 0xFFFF0001;
+    constexpr uint32_t CODEC_TGA = 0xFFFF0002;
+    constexpr uint32_t CODEC_HDR = 0xFFFF0005;
 
-#ifdef USE_OPENEXR
-#define CODEC_EXR 0xFFFF0006
-#endif
-#ifdef USE_LIBJPEG
-#define CODEC_JPEG 0xFFFF0007
-#endif
-#ifdef USE_LIBPNG
-#define CODEC_PNG 0xFFFF0008
-#endif
+    #ifdef USE_OPENEXR
+    constexpr uint32_t CODEC_EXR = 0xFFFF0008;
+    #endif
+    #ifdef USE_LIBJPEG
+    constexpr uint32_t CODEC_JPEG = 0xFFFF0009;
+    #endif
+    #ifdef USE_LIBPNG
+    constexpr uint32_t CODEC_PNG = 0xFFFF000A;
+    #endif
 
     const SValue<uint32_t> g_pExtFileTypes[] =
     {
@@ -381,20 +400,28 @@ namespace
 
         static const wchar_t* const s_usage =
             L"Usage: texenvmap <command> <options> [--] <files>\n\n"
+            L"\nCOMMANDS\n"
             L"   cubic               create cubic environment map\n"
             L"   sphere              create sphere environment map\n"
             L"   dualparabola        create dual-parabolic environment map\n"
+            L"\nOPTIONS\n"
             L"   -r                  wildcard filename search is recursive\n"
-            L"   -flist <filename>   use text file with a list of input files (one per line)\n"
-            L"   -w <n>              width\n"
-            L"   -h <n>              height\n"
-            L"   -f <format>         format\n"
-            L"   -if <filter>        image filtering\n"
-            L"   -srgb{i|o}          sRGB {input, output}\n"
-            L"   -o <filename>       output filename\n"
-            L"   -l                  force output filename to lower case\n"
-            L"   -y                  overwrite existing output file (if any)\n"
-            L"   -sepalpha           resize alpha channel separately from color channels\n"
+            L"   -flist <filename>, --file-list <filename>\n"
+            L"                       use text file with a list of input files (one per line)\n"
+            L"\n"
+            L"   -w <n>, --width <n>                     width for output\n"
+            L"   -h <n>, --height <n>                    height for output\n"
+            L"   -f <format>, --format <format>          pixel format for output\n"
+            L"\n"
+            L"   -if <filter>, --image-filter <filter>   image filtering\n"
+            L"   -srgb{i|o}, --srgb-in, --srgb-out       sRGB {input, output}\n"
+            L"\n"
+            L"   -o <filename>                            output filename\n"
+            L"   -l, --to-lowercase                      force output filename to lower case\n"
+            L"   -y, --overwrite                         overwrite existing output file (if any)\n"
+            L"\n"
+            L"   -sepalpha, --separate-alpha   resize/generate mips alpha channel separately from color channels\n"
+            L"\n"
             L"   -nowic              Force non-WIC filtering\n"
             L"   -wrap, -mirror      texture addressing mode (wrap, mirror, or clamp)\n"
             L"   -alpha              convert premultiplied alpha to straight alpha\n"
@@ -1098,49 +1125,88 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     {
         PWSTR pArg = argv[iArg];
 
-        if (allowOpts
-            && ('-' == pArg[0]) && ('-' == pArg[1]))
+        if (allowOpts && (('-' == pArg[0]) || ('/' == pArg[0])))
         {
-            if (pArg[2] == 0)
+            uint32_t dwOption = 0;
+            PWSTR pValue = nullptr;
+
+            if (('-' == pArg[0]) && ('-' == pArg[1]))
             {
-                // "-- " is the POSIX standard for "end of options" marking to escape the '-' and '/' characters at the start of filepaths.
-                allowOpts = false;
-            }
-            else if (!_wcsicmp(pArg, L"--version"))
-            {
-                PrintLogo(true, g_ToolName, g_Description);
-                return 0;
-            }
-            else if (!_wcsicmp(pArg, L"--help"))
-            {
-                PrintUsage();
-                return 0;
+                if (pArg[2] == 0)
+                {
+                    // "-- " is the POSIX standard for "end of options" marking to escape the '-' and '/' characters at the start of filepaths.
+                    allowOpts = false;
+                    continue;
+                }
+                else
+                {
+                    pArg += 2;
+
+                    for (pValue = pArg; *pValue && (':' != *pValue) && ('=' != *pValue); ++pValue);
+
+                    if (*pValue)
+                        *pValue++ = 0;
+
+                    dwOption = LookupByName(pArg, g_pOptionsLong);
+                }
             }
             else
             {
-                wprintf(L"Unknown option: %ls\n", pArg);
-                return 1;
+                pArg++;
+
+                for (pValue = pArg; *pValue && (':' != *pValue) && ('=' != *pValue); ++pValue);
+
+                if (*pValue)
+                    *pValue++ = 0;
+
+                dwOption = LookupByName(pArg, g_pOptions);
+
+                if (!dwOption)
+                {
+                    if (LookupByName(pArg, g_pOptionsLong))
+                    {
+                        wprintf(L"ERROR: did you mean `--%ls` (with two dashes)?\n", pArg);
+                        return 1;
+                    }
+                }
             }
-        }
-        else if (allowOpts
-            && (('-' == pArg[0]) || ('/' == pArg[0])))
-        {
-            pArg++;
-            PWSTR pValue;
 
-            for (pValue = pArg; *pValue && (':' != *pValue); pValue++);
-
-            if (*pValue)
-                *pValue++ = 0;
-
-            const uint32_t dwOption = LookupByName(pArg, g_pOptions);
-            if (!dwOption || (dwOptions & (1 << dwOption)))
+            switch (dwOption)
             {
-                PrintUsage();
+            case 0:
+                wprintf(L"ERROR: Unknown option: `%ls`\n\nUse %ls --help\n", pArg, g_ToolName);
                 return 1;
-            }
 
-            dwOptions |= 1 << dwOption;
+            case OPT_FILELIST:
+            case OPT_WIDTH:
+            case OPT_HEIGHT:
+            case OPT_FORMAT:
+            case OPT_FILTER:
+            case OPT_SRGBI:
+            case OPT_SRGBO:
+            case OPT_SRGB:
+            case OPT_OUTPUTFILE:
+                // These don't use flag bits
+                break;
+
+            case OPT_VERSION:
+                PrintLogo(true, g_ToolName, g_Description);
+                return 0;
+
+            case OPT_HELP:
+                PrintUsage();
+                return 0;
+
+            default:
+                if (dwOptions & (UINT32_C(1) << dwOption))
+                {
+                    wprintf(L"ERROR: Duplicate option: `%ls`\n\n", pArg);
+                    return 1;
+                }
+
+                dwOptions |= (UINT32_C(1) << dwOption);
+                break;
+            }
 
             // Handle options with additional value parameter
             switch (dwOption)
@@ -1303,7 +1369,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             const size_t count = conversion.size();
             std::filesystem::path path(pArg);
-            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (1 << OPT_RECURSIVE)) != 0, nullptr);
+            SearchForFiles(path.make_preferred(), conversion, (dwOptions & (UINT32_C(1) << OPT_RECURSIVE)) != 0, nullptr);
             if (conversion.size() <= count)
             {
                 wprintf(L"No matching files found for %ls\n", pArg);
@@ -1325,7 +1391,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
-    if (~dwOptions & (1 << OPT_NOLOGO))
+    if (~dwOptions & (UINT32_C(1) << OPT_NOLOGO))
         PrintLogo(false, g_ToolName, g_Description);
 
     ComPtr<ID3D11Device> pDevice;
@@ -1602,7 +1668,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         // --- Undo Premultiplied Alpha (if requested) ---------------------------------
-        if ((dwOptions & (1 << OPT_DEMUL_ALPHA))
+        if ((dwOptions & (UINT32_C(1) << OPT_DEMUL_ALPHA))
             && HasAlpha(info.format)
             && info.format != DXGI_FORMAT_A8_UNORM)
         {
@@ -1794,12 +1860,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     wprintf(L"\nWriting %ls ", outputFile.c_str());
     fflush(stdout);
 
-    if (dwOptions & (1 << OPT_TOLOWER))
+    if (dwOptions & (UINT32_C(1) << OPT_TOLOWER))
     {
         std::transform(outputFile.begin(), outputFile.end(), outputFile.begin(), towlower);
     }
 
-    if (~dwOptions & (1 << OPT_OVERWRITE))
+    if (~dwOptions & (UINT32_C(1) << OPT_OVERWRITE))
     {
         if (GetFileAttributesW(outputFile.c_str()) != INVALID_FILE_ATTRIBUTES)
         {
@@ -1836,7 +1902,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             mdata.dimension = TEX_DIMENSION_TEXTURE2D;
 
             hr = SaveToDDSFile(imageArray, 6, mdata,
-                (dwOptions & (1 << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
+                (dwOptions & (UINT32_C(1) << OPT_USE_DX10)) ? (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2) : DDS_FLAGS_NONE,
                 outputFile.c_str());
             if (FAILED(hr))
             {
