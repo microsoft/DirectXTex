@@ -7,7 +7,7 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 ## Release History
 
 ### October 28, 2024
-* All enums now use ``uint32_t`` as the underlying type rather than ``usigned long`` or ``int``.
+* All enums now use ``uint32_t`` as the underlying type rather than ``unsigned long`` or ``int``.
 * Added ``BytesPerBlock`` utility helper
 * Fixed bug in DirectX 12 `CaptureTexture` for MSAA resolve state handling
 * texassemble, texconv, texdiag:

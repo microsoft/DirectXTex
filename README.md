@@ -104,7 +104,7 @@ For a full change history, see [CHANGELOG.md](https://github.com/microsoft/Direc
 
 * The ``CompileShaders.cmd`` script must have Windows-style (CRLF) line-endings. If it is changed to Linux-style (LF) line-endings, it can fail to build all the required shaders.
 
-* As of the October 2024 release, the command-line tools also support GNU-style long options using ``--``. All existing switches conntinue to function, but some of the `-` options are now deprecated per this table:
+* As of the October 2024 release, the command-line tools also support GNU-style long options using ``--``. All existing switches continue to function, but some of the `-` options are now deprecated per this table:
 
 |texassemble||texconv||texdiag||
 |---|---|---|---|---|---|
