@@ -6,6 +6,16 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### October 28, 2024
+* All enums now use ``uint32_t`` as the underlying type rather than ``unsigned long`` or ``int``.
+* Added ``BytesPerBlock`` utility helper
+* Fixed bug in DirectX 12 `CaptureTexture` for MSAA resolve state handling
+* texassemble, texconv, texdiag:
+  * Add "GNU-style" *--long-options* to the command-line tools (all existing switches are still supported)
+  * Fixed bug in texdiag's ``dumpdds`` command output filename extension handling
+  * Refactored code to use shared header
+* CMake and MSBuild project updates
+
 ### September 4, 2024
 * DDS reader now accepts a variant of the "DX10" extended header
   * arraySize of 0 is treated as 1
