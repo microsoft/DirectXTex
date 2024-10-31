@@ -223,7 +223,7 @@ namespace Xbox
         const XboxImage& xbox,
         _Reserved_ std::nullptr_t, _In_ size_t maxsize) noexcept
     {
-        return EncodeDDSHeader(xbox, reinterpret_cast<uint8_t*>(nullptr), maxsize);
+        return EncodeDDSHeader(xbox, static_cast<uint8_t*>(nullptr), maxsize);
     }
 #endif
 
