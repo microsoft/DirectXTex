@@ -152,7 +152,7 @@ namespace Xbox
         _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
         _Out_opt_ DirectX::TexMetadata* metadata, _Out_ XboxImage& image)
     {
-        return LoadFromDDSMemory(reinterpret_cast<const uint8_t*>(pSource), size, metadta, image);
+        return LoadFromDDSMemory(reinterpret_cast<const uint8_t*>(pSource), size, metadata, image);
     }
 
     inline HRESULT __cdecl LoadFromDDSMemoryEx(
