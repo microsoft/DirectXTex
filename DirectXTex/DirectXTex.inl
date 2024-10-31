@@ -190,3 +190,85 @@ inline HRESULT __cdecl SaveToTGAFile(const Image& image, const wchar_t* szFile, 
 {
     return SaveToTGAFile(image, TGA_FLAGS_NONE, szFile, metadata);
 }
+
+
+//=====================================================================================
+// C++17 helpers
+//=====================================================================================
+#ifdef __cpp_lib_byte
+
+_Use_decl_annotations_
+inline HRESULT __cdecl GetMetadataFromDDSMemory(const std::byte* pSource, size_t size, DDS_FLAGS flags, TexMetadata& metadata) noexcept
+{
+    return GetMetadataFromDDSMemory(reinterpret_cast<const uint8_t*>(pSource), size, flags, metadata);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl LoadFromDDSMemory(const std::byte* pSource, size_t size, DDS_FLAGS flags, TexMetadata* metadata, ScratchImage& image) noexcept
+{
+    return LoadFromDDSMemory(reinterpret_cast<const uint8_t*>(pSource), size, flags, metadata, image);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl GetMetadataFromDDSMemoryEx(const std::byte* pSource, size_t size, DDS_FLAGS flags, TexMetadata& metadata, DDSMetaData* ddPixelFormat) noexcept
+{
+    return GetMetadataFromDDSMemoryEx(reinterpret_cast<const uint8_t*>(pSource), size, flags, metadata, ddPixelFormat);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl LoadFromDDSMemoryEx(const std::byte* pSource, size_t size, DDS_FLAGS flags, TexMetadata* metadata, DDSMetaData* ddPixelFormat, ScratchImage& image) noexcept
+{
+    return LoadFromDDSMemoryEx(reinterpret_cast<const uint8_t*>(pSource), size, flags, metadata, ddPixelFormat, image);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl GetMetadataFromHDRMemory(const std::byte* pSource, size_t size, TexMetadata& metadata) noexcept
+{
+    return GetMetadataFromHDRMemory(reinterpret_cast<const uint8_t*>(pSource), size, metadata);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl LoadFromHDRMemory(const std::byte* pSource, size_t size, TexMetadata* metadata, ScratchImage& image) noexcept
+{
+    return LoadFromHDRMemory(reinterpret_cast<const uint8_t*>(pSource), size, metadata, image);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl GetMetadataFromTGAMemory(const std::byte* pSource, size_t size, TGA_FLAGS flags, TexMetadata& metadata) noexcept
+{
+    return GetMetadataFromTGAMemory(reinterpret_cast<const uint8_t*>(pSource), size, flags, metadata);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl LoadFromTGAMemory(const std::byte* pSource, size_t size, TGA_FLAGS flags, TexMetadata* metadata, ScratchImage& image) noexcept
+{
+    return LoadFromTGAMemory(reinterpret_cast<const uint8_t*>(pSource), size, flags, metadata, image);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl EncodeDDSHeader(const TexMetadata& metadata, DDS_FLAGS flags, std::byte* pDestination, size_t maxsize, size_t& required) noexcept
+{
+    return EncodeDDSHeader(metadata, flags, reinterpret_cast<uint8_t*>(pDestination), maxsize, required);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl EncodeDDSHeader(const TexMetadata& metadata, DDS_FLAGS flags, std::nullptr_t, size_t maxsize, size_t& required) noexcept
+{
+    return EncodeDDSHeader(metadata, flags, static_cast<uint8_t*>(nullptr), maxsize, required);
+}
+
+#ifdef _WIN32
+_Use_decl_annotations_
+inline HRESULT __cdecl GetMetadataFromWICMemory(const std::byte* pSource, size_t size, WIC_FLAGS flags, TexMetadata& metadata, std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR)
+{
+    return GetMetadataFromWICMemory(reinterpret_cast<const uint8_t*>(pSource), size, flags, metadata, getMQR);
+}
+
+_Use_decl_annotations_
+inline HRESULT __cdecl LoadFromWICMemory(const std::byte* pSource, size_t size, WIC_FLAGS flags, TexMetadata* metadata, ScratchImage& image, std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR)
+{
+    return LoadFromWICMemory(reinterpret_cast<const uint8_t*>(pSource), size, flags, metadata, image, getMQR);
+}
+#endif // _WIN32
+
+#endif // __cpp_lib_byte

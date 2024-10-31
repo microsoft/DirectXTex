@@ -382,6 +382,34 @@ namespace DirectX
         _In_z_ const wchar_t* szFile,
         _Out_ TexMetadata& metadata) noexcept;
 
+#ifdef __cpp_lib_byte
+    HRESULT __cdecl GetMetadataFromDDSMemory(
+        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
+        _In_ DDS_FLAGS flags,
+        _Out_ TexMetadata& metadata) noexcept;
+    HRESULT __cdecl GetMetadataFromDDSMemoryEx(
+        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
+        _In_ DDS_FLAGS flags,
+        _Out_ TexMetadata& metadata,
+        _Out_opt_ DDSMetaData* ddPixelFormat) noexcept;
+    HRESULT __cdecl GetMetadataFromHDRMemory(
+        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
+        _Out_ TexMetadata& metadata) noexcept;
+    HRESULT __cdecl GetMetadataFromTGAMemory(
+        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
+        _In_ TGA_FLAGS flags,
+        _Out_ TexMetadata& metadata) noexcept;
+
+#ifdef _WIN32
+    HRESULT __cdecl GetMetadataFromWICMemory(
+        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
+        _In_ WIC_FLAGS flags,
+        _Out_ TexMetadata& metadata,
+        _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
+#endif
+#endif // __cpp_lib_byte
+
+
     //---------------------------------------------------------------------------------
     // Bitmap image container
     struct Image
@@ -589,6 +617,34 @@ namespace DirectX
 
     HRESULT __cdecl SaveToTGAMemory(_In_ const Image& image, _Out_ Blob& blob, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
     HRESULT __cdecl SaveToTGAFile(_In_ const Image& image, _In_z_ const wchar_t* szFile, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
+
+#ifdef __cpp_lib_byte
+    HRESULT __cdecl LoadFromDDSMemory(
+        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
+        _In_ DDS_FLAGS flags,
+        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
+    HRESULT __cdecl LoadFromDDSMemoryEx(
+        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
+        _In_ DDS_FLAGS flags,
+        _Out_opt_ TexMetadata* metadata,
+        _Out_opt_ DDSMetaData* ddPixelFormat,
+        _Out_ ScratchImage& image) noexcept;
+    HRESULT __cdecl LoadFromHDRMemory(
+        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
+        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
+    HRESULT __cdecl LoadFromTGAMemory(
+        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
+        _In_ TGA_FLAGS flags,
+        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
+
+#ifdef _WIN32
+    HRESULT __cdecl LoadFromWICMemory(
+        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
+        _In_ WIC_FLAGS flags,
+        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
+        _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
+#endif
+#endif // __cpp_lib_byte
 
     //---------------------------------------------------------------------------------
     // Texture conversion, resizing, mipmap generation, and block compression
@@ -958,6 +1014,18 @@ namespace DirectX
         _In_ const TexMetadata& metadata, DDS_FLAGS flags,
         _Out_writes_bytes_to_opt_(maxsize, required) uint8_t* pDestination, _In_ size_t maxsize,
         _Out_ size_t& required) noexcept;
+
+#ifdef __cpp_lib_byte
+    HRESULT __cdecl EncodeDDSHeader(
+        _In_ const TexMetadata& metadata, DDS_FLAGS flags,
+        _Out_writes_bytes_to_opt_(maxsize, required) std::byte* pDestination, _In_ size_t maxsize,
+        _Out_ size_t& required) noexcept;
+
+    HRESULT __cdecl EncodeDDSHeader(
+        _In_ const TexMetadata& metadata, DDS_FLAGS flags,
+        _Reserved_ std::nullptr_t, _In_ size_t maxsize,
+        _Out_ size_t& required) noexcept;
+#endif
 
     //---------------------------------------------------------------------------------
     // Direct3D interop
