@@ -161,7 +161,7 @@ namespace Xbox
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat,
         _Out_ XboxImage& image)
     {
-        return LoadFromDDSMemoryEx(reinterpret_cast<const uint8_t*>(pSource), size, metadata, ddPixelFormat);
+        return LoadFromDDSMemoryEx(reinterpret_cast<const uint8_t*>(pSource), size, metadata, ddPixelFormat, image);
     }
 #endif // __cpp_lib_byte
 
