@@ -1020,6 +1020,11 @@ namespace DirectX
         _In_ const TexMetadata& metadata, DDS_FLAGS flags,
         _Out_writes_bytes_to_opt_(maxsize, required) std::byte* pDestination, _In_ size_t maxsize,
         _Out_ size_t& required) noexcept;
+
+    HRESULT __cdecl EncodeDDSHeader(
+        _In_ const TexMetadata& metadata, DDS_FLAGS flags,
+        _Reserved_ std::nullptr_t, _In_ size_t maxsize,
+        _Out_ size_t& required) noexcept;
 #endif
 
     //---------------------------------------------------------------------------------

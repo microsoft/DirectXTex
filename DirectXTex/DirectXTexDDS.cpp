@@ -2317,7 +2317,7 @@ HRESULT DirectX::SaveToDDSMemory(
 
     // Determine memory required
     size_t required = 0;
-    HRESULT hr = EncodeDDSHeader(metadata, flags, static_cast<uint8_t*>(nullptr), 0, required);
+    HRESULT hr = EncodeDDSHeader(metadata, flags, nullptr, 0, required);
     if (FAILED(hr))
         return hr;
 

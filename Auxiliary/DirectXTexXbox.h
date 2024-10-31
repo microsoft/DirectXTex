@@ -218,6 +218,13 @@ namespace Xbox
     {
         return EncodeDDSHeader(xbox, reinterpret_cast<uint8_t*>(pDestination), maxsize);
     }
+
+    inline HRESULT __cdecl EncodeDDSHeader(
+        const XboxImage& xbox,
+        _Reserved_ std::nullptr_t, _In_ size_t maxsize) noexcept
+    {
+        return EncodeDDSHeader(xbox, reinterpret_cast<uint8_t*>(nullptr), maxsize);
+    }
 #endif
 
 } // namespace
