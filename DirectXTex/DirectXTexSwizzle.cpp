@@ -55,7 +55,7 @@ namespace
     constexpr size_t MAX_TEXTURE_DIMENSION = 16384u;
 
 #if defined(_M_X64) || defined(_M_ARM64) || __x86_64__ || __aarch64__
-    constexpr uint64_t MAX_TEXTURE_SIZE = 16384u * 16384u * 16u;
+    constexpr uint64_t MAX_TEXTURE_SIZE = UINT64_C(16384) * UINT64_C(16384) * 16u;
 #else
     constexpr uint64_t MAX_TEXTURE_SIZE = UINT32_MAX;
 #endif
