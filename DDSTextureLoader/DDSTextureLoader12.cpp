@@ -581,7 +581,7 @@ namespace
         _In_ size_t width,
         _In_ size_t height,
         _In_ DXGI_FORMAT fmt,
-        size_t* outNumBytes,
+        _Out_opt_ size_t* outNumBytes,
         _Out_opt_ size_t* outRowBytes,
         _Out_opt_ size_t* outNumRows) noexcept
     {
@@ -595,6 +595,9 @@ namespace
         size_t bpe = 0;
         switch (fmt)
         {
+        case DXGI_FORMAT_UNKNOWN:
+            return E_INVALIDARG;
+
         case DXGI_FORMAT_BC1_TYPELESS:
         case DXGI_FORMAT_BC1_UNORM:
         case DXGI_FORMAT_BC1_UNORM_SRGB:

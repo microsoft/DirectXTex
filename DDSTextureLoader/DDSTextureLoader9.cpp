@@ -416,7 +416,7 @@ namespace
         _In_ size_t width,
         _In_ size_t height,
         _In_ D3DFORMAT fmt,
-        size_t* outNumBytes,
+        _Out_opt_ size_t* outNumBytes,
         _Out_opt_ size_t* outRowBytes,
         _Out_opt_ size_t* outNumRows) noexcept
     {
@@ -429,6 +429,9 @@ namespace
         size_t bpe = 0;
         switch (static_cast<int>(fmt))
         {
+        case D3DFMT_UNKNOWN:
+            return E_INVALIDARG;
+
         case D3DFMT_DXT1:
             bc = true;
             bpe = 8;
