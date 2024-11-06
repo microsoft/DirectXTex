@@ -86,6 +86,9 @@ namespace
 
     HRESULT ReadData(_In_z_ const wchar_t* szFile, std::unique_ptr<uint8_t[]>& blob, size_t& blobSize)
     {
+        if (!szFile)
+            return E_INVALIDARG;
+
         blob.reset();
 
     #if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
@@ -361,6 +364,9 @@ HRESULT __cdecl SaveToPortablePixMap(
     _In_ const Image& image,
     _In_z_ const wchar_t* szFile) noexcept
 {
+    if (!szFile)
+        return E_INVALIDARG;
+
     switch (image.format)
     {
     case DXGI_FORMAT_R8G8B8A8_UNORM:
@@ -688,6 +694,9 @@ HRESULT __cdecl SaveToPortablePixMapHDR(
     _In_ const Image& image,
     _In_z_ const wchar_t* szFile) noexcept
 {
+    if (!szFile)
+        return E_INVALIDARG;
+
     switch (image.format)
     {
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
