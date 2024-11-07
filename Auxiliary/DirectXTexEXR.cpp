@@ -45,7 +45,12 @@
 #pragma warning(disable : 4244 4996)
 #include <ImfRgbaFile.h>
 #include <ImfIO.h>
+
+// https://openexr.com/en/latest/PortingGuide.html
+#include <OpenEXRConfig.h>
 #pragma warning(pop)
+
+#define COMBINED_OPENEXR_VERSION ((10000*OPENEXR_VERSION_MAJOR) + (100*OPENEXR_VERSION_MINOR) +  OPENEXR_VERSION_PATCH)
 
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -147,6 +152,13 @@ namespace
         {
             SetLastError(0);
         }
+
+#if COMBINED_OPENEXR_VERSION >= 30300
+        int64_t read(void *buf, uint64_t sz, uint64_t offset) override
+        {
+            return Imf::IStream::read(buf, sz, offset);
+        }
+#endif
 
     private:
         HANDLE m_hFile;
