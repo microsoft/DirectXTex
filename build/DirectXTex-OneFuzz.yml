@@ -104,7 +104,10 @@ jobs:
             "UBW8.TGA",
             "ucm8.tga",
             "testimg.ppm",
-            "grad4d.pfm";
+            "grad4d.pfm",
+            "grad4d.phm",
+            "grad4d_mono.pfm",
+            "grad4d_mono.phm";
 
         New-Item -ItemType Directory -Force -Path .drop\seeds\
 
