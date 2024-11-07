@@ -261,6 +261,9 @@ HRESULT DirectX::CompressEx(
         || IsTypeless(srcImage.format) || IsPlanar(srcImage.format) || IsPalettized(srcImage.format))
         return HRESULT_E_NOT_SUPPORTED;
 
+    if (!srcImage.pixels)
+        return E_POINTER;
+
     // Setup GPU compressor
     std::unique_ptr<GPUCompressBC> gpubc(new (std::nothrow) GPUCompressBC);
     if (!gpubc)
