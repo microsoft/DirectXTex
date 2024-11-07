@@ -449,9 +449,9 @@ HRESULT __cdecl SaveToPortablePixMap(
 
 
 //============================================================================
-// PFM (Portable Float Map)
+// PFM (Portable Float Map) / PHM (Portable Half Map)
 // http://paulbourke.net/dataformats/pbmhdr/
-// https://oyranos.org/2015/03/portable-float-map-with-16-bit-half/index.html
+// https://github.com/syoyo/libphm
 //============================================================================
 
 HRESULT __cdecl LoadFromPortablePixMapHDR(
