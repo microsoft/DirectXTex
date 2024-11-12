@@ -77,6 +77,11 @@ endif()
 include(GNUInstallDirs)
 include(build/CompilerAndLinker.cmake)
 
+if((DEFINED DIRECTX_ARCH) AND (${DIRECTX_ARCH} STREQUAL "arm64ec"))
+  # OpenEXR doesn't support ARM64EC
+  set(ENABLE_OPENEXR_SUPPORT OFF)
+endif()
+
 #--- Library
 set(LIBRARY_HEADERS
     DirectXTex/DirectXTex.h
