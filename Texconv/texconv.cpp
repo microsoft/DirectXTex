@@ -140,6 +140,7 @@ namespace
         OPT_INVERT_Y,
         OPT_RECONSTRUCT_Z,
         OPT_BCNONMULT4FIX,
+        OPT_IGNORE_SRGB_METADATA,
     #ifdef USE_XBOX_EXTS
         OPT_USE_XBOX,
         OPT_XGMODE,
@@ -282,6 +283,7 @@ namespace
         { L"help",                  OPT_HELP },
         { L"horizontal-flip",       OPT_HFLIP },
         { L"ignore-mips",           OPT_DDS_IGNORE_MIPS },
+        { L"ignore-srgb",           OPT_IGNORE_SRGB_METADATA },
         { L"image-filter",          OPT_FILTER },
         { L"invert-y",              OPT_INVERT_Y },
         { L"keep-coverage",         OPT_PRESERVE_ALPHA_COVERAGE },
@@ -817,6 +819,9 @@ namespace
             L"   -xgmode <mode>, --xbox-mode <mode>\n"\
             L"                       Tile/swizzle using provided memory layout mode\n"
         #endif
+            L"\n"
+            L"                       (PNG, JPG, TIF, TGA input only)\n"
+            L"   --ignore-srgb       Ignores any gamma setting in the metadata\n"
             L"\n"
             L"                       (TGA input only)\n"
             L"   --tga-zero-alpha    Allow all zero alpha channel files to be loaded 'as is'\n"
@@ -2088,6 +2093,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         else if (_wcsicmp(ext.c_str(), L".tga") == 0)
         {
             TGA_FLAGS tgaFlags = (IsBGR(format)) ? TGA_FLAGS_BGR : TGA_FLAGS_NONE;
+            if (dwOptions & (UINT64_C(1) << OPT_IGNORE_SRGB_METADATA))
+            {
+                tgaFlags |= TGA_FLAGS_IGNORE_SRGB;
+            }
             if (dwOptions & (UINT64_C(1) << OPT_TGAZEROALPHA))
             {
                 tgaFlags |= TGA_FLAGS_ALLOW_ALL_ZERO_ALPHA;
@@ -2179,7 +2188,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             WIC_FLAGS wicFlags = WIC_FLAGS_NONE | dwFilter;
             if (FileType == CODEC_DDS)
+            {
                 wicFlags |= WIC_FLAGS_ALL_FRAMES;
+            }
+            if (dwOptions & (UINT64_C(1) << OPT_IGNORE_SRGB_METADATA))
+            {
+                wicFlags |= WIC_FLAGS_IGNORE_SRGB;
+            }
 
             hr = LoadFromWICFile(curpath.c_str(), wicFlags, &info, *image);
             if (FAILED(hr))
@@ -3798,13 +3813,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                             switch (FileType)
                             {
                             case WIC_CODEC_JPEG:
-                                if (wicLossless || wicQuality >= 0.f)
+                                if (wicQuality >= 0.f)
                                 {
                                     PROPBAG2 options = {};
                                     VARIANT varValues = {};
                                     options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
                                     varValues.vt = VT_R4;
-                                    varValues.fltVal = (wicLossless) ? 1.f : wicQuality;
+                                    varValues.fltVal = wicQuality;
                                     std::ignore = props->Write(1, &options, &varValues);
                                 }
                                 break;
@@ -3822,6 +3837,30 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                     else if (wicQuality >= 0.f)
                                     {
                                         options.pstrName = const_cast<wchar_t*>(L"CompressionQuality");
+                                        varValues.vt = VT_R4;
+                                        varValues.fltVal = wicQuality;
+                                    }
+                                    std::ignore = props->Write(1, &options, &varValues);
+                                }
+                                break;
+
+                            case WIC_CODEC_HEIF:
+                                {
+                                    PROPBAG2 options = {};
+                                    VARIANT varValues = {};
+                                    if (wicLossless)
+                                    {
+                                        options.pstrName = const_cast<wchar_t*>(L"HeifCompressionMethod");
+                                        varValues.vt = VT_UI1;
+                                        #if defined(NTDDI_WIN10_CU)
+                                        varValues.bVal = WICHeifCompressionNone;
+                                        #else
+                                        varValues.bVal = 0x1 /* WICHeifCompressionNone */;
+                                        #endif
+                                    }
+                                    else if (wicQuality >= 0.f)
+                                    {
+                                        options.pstrName = const_cast<wchar_t*>(L"ImageQuality");
                                         varValues.vt = VT_R4;
                                         varValues.fltVal = wicQuality;
                                     }
