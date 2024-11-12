@@ -117,6 +117,7 @@ namespace
         OPT_TGAZEROALPHA,
         OPT_WIC_LOSSLESS,
         OPT_WIC_MULTIFRAME,
+        OPT_WIC_UNCOMPRESSED,
         OPT_NOLOGO,
         OPT_TIMING,
         OPT_SEPALPHA,
@@ -313,6 +314,7 @@ namespace
         { L"vertical-flip",         OPT_VFLIP },
         { L"wic-lossless",          OPT_WIC_LOSSLESS },
         { L"wic-multiframe",        OPT_WIC_MULTIFRAME },
+        { L"wic-uncompressed",      OPT_WIC_UNCOMPRESSED },
         { L"wic-quality",           OPT_WIC_QUALITY },
         { L"width",                 OPT_WIDTH },
         { L"x2-bias",               OPT_X2_BIAS },
@@ -593,7 +595,6 @@ namespace
     #ifdef USE_OPENEXR
         { L"exr",   CODEC_EXR      },
     #endif
-        { L"heic",  WIC_CODEC_HEIF },
         { L"heif",  WIC_CODEC_HEIF },
         { nullptr,  CODEC_DDS      }
     };
@@ -829,10 +830,11 @@ namespace
             L"                       (TGA output only)\n"
             L"   -tga20              Write file including TGA 2.0 extension area\n"
             L"\n"
-            L"                       (BMP, PNG, JPG, TIF, WDP output only)\n"
+            L"                       (BMP, PNG, JPG, TIF, WDP, and HIEF output only)\n"
             L"   -wicq <quality>, --wic-quality <quality>\n"
             L"                       When writing images with WIC use quality (0.0 to 1.0)\n"
             L"   --wic-lossless      When writing images with WIC use lossless mode\n"
+            L"   --wic-uncompressed  When writing images with WIC use uncompressed mode\n"
             L"   --wic-multiframe    When writing images with WIC encode multiframe images\n"
             L"\n"
             L"   -nologo             suppress copyright message\n"
@@ -2209,7 +2211,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }
                     else if (_wcsicmp(ext.c_str(), L".webp") == 0)
                     {
-                        wprintf(L"INFO: This format requires installing the WEBP Image Extensions - https://www.microsoft.com/p/webp-image-extensions/9pg2dk419drg\n");
+                        wprintf(L"INFO: This format requires installing the WEBP Image Extensions - https://apps.microsoft.com/detail/9PG2DK419DRG\n");
                     }
                 }
                 continue;
@@ -3808,7 +3810,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = SaveToWICFile(img, nimages, WIC_FLAGS_NONE, GetWICCodec(codec), destName.c_str(), nullptr,
                         [&](IPropertyBag2* props)
                         {
-                            const bool wicLossless = (dwOptions & (UINT64_C(1) << OPT_WIC_LOSSLESS)) != 0;
+                            const bool lossless = (dwOptions & (UINT64_C(1) << OPT_WIC_LOSSLESS)) != 0;
+                            const bool uncompressed = (dwOptions & (UINT64_C(1) << OPT_WIC_UNCOMPRESSED)) != 0;
 
                             switch (FileType)
                             {
@@ -3828,7 +3831,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 {
                                     PROPBAG2 options = {};
                                     VARIANT varValues = {};
-                                    if (wicLossless)
+                                    if (uncompressed)
                                     {
                                         options.pstrName = const_cast<wchar_t*>(L"TiffCompressionMethod");
                                         varValues.vt = VT_UI1;
@@ -3848,7 +3851,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 {
                                     PROPBAG2 options = {};
                                     VARIANT varValues = {};
-                                    if (wicLossless)
+                                    if (uncompressed)
                                     {
                                         options.pstrName = const_cast<wchar_t*>(L"HeifCompressionMethod");
                                         varValues.vt = VT_UI1;
@@ -3874,7 +3877,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                 {
                                     PROPBAG2 options = {};
                                     VARIANT varValues = {};
-                                    if (wicLossless)
+                                    if (lossless)
                                     {
                                         options.pstrName = const_cast<wchar_t*>(L"Lossless");
                                         varValues.vt = VT_BOOL;
