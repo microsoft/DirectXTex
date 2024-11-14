@@ -110,7 +110,9 @@ jobs:
     inputs:
       targetType: inline
       script: |
-        $props = "<Project>`n  <Import Project=`"`$(MSBuildThisFileDirectory)vcpkg\scripts\buildsystems\msbuild\vcpkg.props`" />`n  <ItemDefinitionGroup>`n    <ClCompile>`n      <PreprocessorDefinitions>USING_DIRECTX_HEADERS;%(PreprocessorDefinitions)</PreprocessorDefinitions>`n    </ClCompile>`n  </ItemDefinitionGroup>`n</Project>`n"
+        $props = "<Project>`n  <PropertyGroup>`n    <VcpkgEnableManifest>true</VcpkgEnableManifest>`n    <VcpkgManifestRoot>`$(MSBuildThisFileDirectory)\s\build</VcpkgManifestRoot>`n  </PropertyGroup>`n"
+        $props = $props + "  <Import Project=`"`$(MSBuildThisFileDirectory)vcpkg\scripts\buildsystems\msbuild\vcpkg.props`" />`n"
+        $props = $props + "  <ItemDefinitionGroup>`n    <ClCompile>`n`      <PreprocessorDefinitions>USING_DIRECTX_HEADERS;%(PreprocessorDefinitions)</PreprocessorDefinitions>`n    </ClCompile>`n  </ItemDefinitionGroup>`n</Project>"
         $targets = "<Project>`n  <Import Project=`"`$(MSBuildThisFileDirectory)vcpkg\scripts\buildsystems\msbuild\vcpkg.targets`" />`n</Project>`n"
         Set-Content -Path "Directory.Build.props" -Value $props
         Set-Content -Path "Directory.Build.targets" -Value $targets
