@@ -1,0 +1,166 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+#
+# https://go.microsoft.com/fwlink/?LinkId=248926
+
+# Builds the library and test suite using MSBuild+VCPKO
+
+schedules:
+- cron: "0 5 * * *"
+  displayName: 'Nightly build'
+  branches:
+    include:
+    - main
+
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    exclude:
+    - '*.md'
+    - LICENSE
+    - '.github/*'
+    - '.nuget/*'
+    - build/*.cmd
+    - build/OneFuzz*.json
+    - build/*.props
+    - build/*.ps1
+    - build/*.targets
+
+pr:
+  branches:
+    include:
+    - main
+  paths:
+    exclude:
+    - '*.md'
+    - LICENSE
+    - '.github/*'
+    - '.nuget/*'
+    - build/*.cmd
+    - build/OneFuzz*.json
+    - build/*.props
+    - build/*.ps1
+    - build/*.targets
+  drafts: false
+
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: refs/heads/main
+  - repository: vcpkgRepo
+    name: Microsoft/vcpkg
+    type: github
+    endpoint: microsoft
+    ref: refs/tags/$(VCPKG_TAG)
+  - repository: testRepo
+    name: walbourn/directxtextest
+    type: github
+    endpoint: microsoft
+    ref: refs/heads/main
+
+name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
+
+pool:
+  vmImage: windows-2022
+
+variables:
+  Codeql.Enabled: false
+  VCPKG_ROOT: $(Build.SourcesDirectory)/vcpkg
+  VCPKG_CMAKE_DIR: $(Build.SourcesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
+  VCPKG_MANIFEST_DIR: $(Build.SourcesDirectory)/build
+
+jobs:
+- job: VCPKG_BUILD
+  displayName: 'Build with MSBuild+VCPKG'
+  steps:
+  - checkout: self
+    clean: true
+    fetchTags: false
+    fetchDepth: 1
+    path: 's'
+  - checkout: vcpkgRepo
+    displayName: Fetch VCPKG
+    clean: true
+    fetchTags: false
+    fetchDepth: 1
+    path: 's/vcpkg'
+  - task: CmdLine@2
+    displayName: VCPKG Bootstrap
+    inputs:
+      script: |
+        call bootstrap-vcpkg.bat
+        echo ##vso[task.setvariable variable=VCPKG_DEFAULT_TRIPLET;]x64-windows
+        echo ##vso[task.setvariable variable=VCPKG_DEFAULT_HOST_TRIPLET;]x64-windows
+
+      workingDirectory: $(Build.SourcesDirectory)\vcpkg
+  - task: CmdLine@2
+    displayName: VCPKG install packages
+    inputs:
+      script: |
+        call vcpkg install --x-manifest-root=$(VCPKG_MANIFEST_DIR) --triplet=x64-windows
+        call vcpkg install --x-manifest-root=$(VCPKG_MANIFEST_DIR) --triplet=x86-windows
+        call vcpkg install --x-manifest-root=$(VCPKG_MANIFEST_DIR) --triplet=arm64-windows
+
+      workingDirectory: $(VCPKG_ROOT)
+  - task: PowerShell@2
+    displayName: Setup VCPKG Directory.Build.props and .target files
+    inputs:
+      targetType: inline
+      script: |
+        $props = "<Project>`n  <Import Project=`"`$(MSBuildThisFileDirectory)vcpkg\scripts\buildsystems\msbuild\vcpkg.props`" />`n</Project>`n"
+        $targets = "<Project>`n  <Import Project=`"`$(MSBuildThisFileDirectory)vcpkg\scripts\buildsystems\msbuild\vcpkg.targets`" />`n</Project>`n"
+        Set-Content -Path "Directory.Build.props" -Value $props
+        Set-Content -Path "Directory.Build.targets" -Value $targets
+
+      workingDirectory: $(Build.SourcesDirectory)
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 32dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x86
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 32rel
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x86
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 64dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x64
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 64rel
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: x64
+      configuration: Release
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln arm64dbg
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: ARM64
+      configuration: Debug
+      msbuildArchitecture: x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln arm64rel
+    inputs:
+      solution: DirectXTex_Desktop_2022_Win10.sln
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+      platform: ARM64
+      configuration: Release
+      msbuildArchitecture: x64
