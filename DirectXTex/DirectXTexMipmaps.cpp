@@ -457,16 +457,12 @@ HRESULT DirectX::Internal::ResizeSeparateColorAndAlpha(
             }
             else
             {
-            #if(_WIN32_WINNT >= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
                 if (iswic2)
                 {
                     colorBytesInPixel = colorBytesPerPixel = 12;
                     colorPixelFormat = GUID_WICPixelFormat96bppRGBFloat;
                 }
                 else
-                #else
-                UNREFERENCED_PARAMETER(iswic2);
-            #endif
                 {
                     colorBytesInPixel = 12;
                     colorBytesPerPixel = 16;
