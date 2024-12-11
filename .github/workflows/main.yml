@@ -61,6 +61,12 @@ jobs:
             build_type: arm64ec-Release
             arch: amd64_arm64
           - os: windows-2022
+            build_type: x64-Debug-Win8
+            arch: amd64
+          - os: windows-2022
+            build_type: x64-Release-Win8
+            arch: amd64
+          - os: windows-2022
             build_type: x64-Debug-Clang
             arch: amd64
           - os: windows-2022
