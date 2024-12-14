@@ -378,7 +378,7 @@ namespace
         }
 
         metadata.mipLevels = pHeader->mipMapCount;
-        if ((metadata.mipLevels == 0) || (flags & DDS_FLAGS_IGNORE_MIPS))
+        if (metadata.mipLevels == 0)
         {
             metadata.mipLevels = 1;
         }
@@ -648,6 +648,12 @@ namespace
             {
                 return HRESULT_E_NOT_SUPPORTED;
             }
+        }
+
+        // Special-handling flag for ignoring mipchains on simple DDS files
+        if ((flags & DDS_FLAGS_IGNORE_MIPS) && (metadata.arraySize == 1))
+        {
+            metadata.mipLevels = 1;
         }
 
         // Handle DDS-specific metadata
