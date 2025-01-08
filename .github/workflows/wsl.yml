@@ -30,7 +30,7 @@ jobs:
 
       matrix:
         build_type: [x64-Debug-Linux, x64-Release-Linux]
-        gcc: [10, 11, 12]
+        gcc: [12, 13, 14]
 
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
