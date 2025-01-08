@@ -1679,7 +1679,7 @@ HRESULT DirectX::LoadFromTGAMemory(
 
     const size_t remaining = size - offset - paletteOffset;
     if (remaining == 0)
-        return E_FAIL;
+        return HRESULT_E_HANDLE_EOF;
 
     const void* pPixels = static_cast<const uint8_t*>(pSource) + offset + paletteOffset;
 
@@ -2126,6 +2126,12 @@ HRESULT DirectX::LoadFromTGAFile(
             {
                 image.Release();
                 return hr;
+            }
+
+            if ((remaining - paletteOffset) == 0)
+            {
+                image.Release();
+                return HRESULT_E_HANDLE_EOF;
             }
         }
 
