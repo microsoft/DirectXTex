@@ -17,6 +17,8 @@ project (DirectXTex
 
 option(BUILD_TOOLS "Build tex command-line tools" ON)
 
+option(BUILD_SHARED_LIBS "Build DirectXTex as a shared library" OFF)
+
 option(BUILD_SAMPLE "Build DDSView sample (requires fxc.exe)" ON)
 
 # Includes the functions for Direct3D 11 resources and DirectCompute compression
@@ -220,7 +222,12 @@ if(BUILD_DX11 AND WIN32 AND (NOT (XBOX_CONSOLE_TARGET STREQUAL "durango")))
     endif()
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
+add_library(${PROJECT_NAME} ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE DIRECTX_TEX_EXPORT)
+	target_compile_definitions(${PROJECT_NAME} INTERFACE DIRECTX_TEX_IMPORT)
+endif()
 
 if(BUILD_DX11 AND WIN32)
    target_include_directories(${PROJECT_NAME} PRIVATE ${COMPILED_SHADERS})
