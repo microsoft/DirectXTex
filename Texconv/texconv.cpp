@@ -2010,7 +2010,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
 
         std::filesystem::path curpath(pConv->szSrc);
-        auto const ext = curpath.extension();
+        const auto ext = curpath.extension();
 
     #ifndef USE_XBOX_EXTS
         constexpr
@@ -3693,7 +3693,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     continue;
                 }
 
-                auto const err = static_cast<DWORD>(SHCreateDirectoryExW(nullptr, apath.c_str(), nullptr));
+                const auto err = static_cast<DWORD>(SHCreateDirectoryExW(nullptr, apath.c_str(), nullptr));
                 if (err != ERROR_SUCCESS && err != ERROR_ALREADY_EXISTS)
                 {
                     wprintf(L" directory creation FAILED (%08X%ls)\n",

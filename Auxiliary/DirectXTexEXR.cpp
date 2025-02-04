@@ -374,7 +374,7 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
         Imf::RgbaInputFile file(fileName.c_str());
 #endif
 
-        auto const dw = file.dataWindow();
+        const auto dw = file.dataWindow();
 
         const int width = dw.max.x - dw.min.x + 1;
         int height = dw.max.y - dw.min.y + 1;

@@ -983,8 +983,8 @@ _Use_decl_annotations_ bool DirectX::Internal::LoadScanline(
             auto sPtr = static_cast<const uint32_t*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(uint32_t) + 1); icount += sizeof(uint32_t))
             {
-                auto const d = static_cast<float>(*sPtr & 0xFFFFFF) / 16777215.f;
-                auto const s = static_cast<float>((*sPtr & 0xFF000000) >> 24);
+                const auto d = static_cast<float>(*sPtr & 0xFFFFFF) / 16777215.f;
+                const auto s = static_cast<float>((*sPtr & 0xFF000000) >> 24);
                 ++sPtr;
                 if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSet(d, s, 0.f, 1.f);
@@ -999,7 +999,7 @@ _Use_decl_annotations_ bool DirectX::Internal::LoadScanline(
             auto sPtr = static_cast<const uint32_t*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(uint32_t) + 1); icount += sizeof(uint32_t))
             {
-                auto const r = static_cast<float>(*sPtr & 0xFFFFFF) / 16777215.f;
+                const auto r = static_cast<float>(*sPtr & 0xFFFFFF) / 16777215.f;
                 ++sPtr;
                 if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSet(r, 0.f /* typeless component assumed zero */, 0.f, 1.f);
@@ -1014,7 +1014,7 @@ _Use_decl_annotations_ bool DirectX::Internal::LoadScanline(
             auto sPtr = static_cast<const uint32_t*>(pSource);
             for (size_t icount = 0; icount < (size - sizeof(uint32_t) + 1); icount += sizeof(uint32_t))
             {
-                auto const g = static_cast<float>((*sPtr & 0xFF000000) >> 24);
+                const auto g = static_cast<float>((*sPtr & 0xFF000000) >> 24);
                 ++sPtr;
                 if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSet(0.f /* typeless component assumed zero */, g, 0.f, 1.f);
@@ -1344,9 +1344,9 @@ _Use_decl_annotations_ bool DirectX::Internal::LoadScanline(
                 // G = 1.1678Y' - 0.3929Cb' - 0.8152Cr'
                 // B = 1.1678Y' + 2.0232Cb'
 
-                auto const r = static_cast<int>((76533 * y + 104905 * v + 32768) >> 16);
-                auto const g = static_cast<int>((76533 * y - 25747 * u - 53425 * v + 32768) >> 16);
-                auto const b = static_cast<int>((76533 * y + 132590 * u + 32768) >> 16);
+                const auto r = static_cast<int>((76533 * y + 104905 * v + 32768) >> 16);
+                const auto g = static_cast<int>((76533 * y - 25747 * u - 53425 * v + 32768) >> 16);
+                const auto b = static_cast<int>((76533 * y + 132590 * u + 32768) >> 16);
 
                 if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSet(float(std::min<int>(std::max<int>(r, 0), 1023)) / 1023.f,
@@ -1367,7 +1367,7 @@ _Use_decl_annotations_ bool DirectX::Internal::LoadScanline(
                 const int64_t u = int64_t(sPtr->x) - 32768;
                 const int64_t y = int64_t(sPtr->y) - 4096;
                 const int64_t v = int64_t(sPtr->z) - 32768;
-                auto const a = static_cast<int>(sPtr->w);
+                const auto a = static_cast<int>(sPtr->w);
                 ++sPtr;
 
                 // http://msdn.microsoft.com/en-us/library/windows/desktop/bb970578.aspx
@@ -1380,9 +1380,9 @@ _Use_decl_annotations_ bool DirectX::Internal::LoadScanline(
                 // G = 1.1689Y' - 0.3933Cb' - 0.8160Cr'
                 // B = 1.1689Y'+ 2.0251Cb'
 
-                auto const r = static_cast<int>((76607 * y + 105006 * v + 32768) >> 16);
-                auto const g = static_cast<int>((76607 * y - 25772 * u - 53477 * v + 32768) >> 16);
-                auto const b = static_cast<int>((76607 * y + 132718 * u + 32768) >> 16);
+                const auto r = static_cast<int>((76607 * y + 105006 * v + 32768) >> 16);
+                const auto g = static_cast<int>((76607 * y - 25772 * u - 53477 * v + 32768) >> 16);
+                const auto b = static_cast<int>((76607 * y + 132718 * u + 32768) >> 16);
 
                 if (dPtr >= ePtr) break;
                 *(dPtr++) = XMVectorSet(float(std::min<int>(std::max<int>(r, 0), 65535)) / 65535.f,
@@ -4716,7 +4716,7 @@ namespace
             filter &= ~(TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT);
         }
 
-        auto const wicsrgb = CheckWICColorSpace(pfGUID, targetGUID);
+        const auto wicsrgb = CheckWICColorSpace(pfGUID, targetGUID);
 
         if (wicsrgb != (filter & (TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT)))
         {
@@ -4943,7 +4943,7 @@ namespace
         {\
             const size_t rowPitch = srcImage.rowPitch;\
             \
-            auto const sourceE = reinterpret_cast<const srcType*>(pSrc + srcImage.slicePitch);\
+            const auto sourceE = reinterpret_cast<const srcType*>(pSrc + srcImage.slicePitch);\
             auto pSrcUV = pSrc + (srcImage.height * rowPitch);\
             \
             for(size_t y = 0; y < srcImage.height; y+= 2)\

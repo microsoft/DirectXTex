@@ -341,7 +341,7 @@ namespace
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        auto const dwMagicNumber = *static_cast<const uint32_t*>(pSource);
+        const auto dwMagicNumber = *static_cast<const uint32_t*>(pSource);
         if (dwMagicNumber != DDS_MAGIC)
         {
             return E_FAIL;
@@ -1942,9 +1942,9 @@ HRESULT DirectX::GetMetadataFromDDSFileEx(
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    auto const headerLen = static_cast<size_t>(bytesRead);
+    const auto headerLen = static_cast<size_t>(bytesRead);
 #else
-    auto const headerLen = std::min<size_t>(len, DDS_DX10_HEADER_SIZE);
+    const auto headerLen = std::min<size_t>(len, DDS_DX10_HEADER_SIZE);
 
     inFile.read(reinterpret_cast<char*>(header), headerLen);
     if (!inFile)
@@ -2124,9 +2124,9 @@ HRESULT DirectX::LoadFromDDSFileEx(
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    auto const headerLen = static_cast<size_t>(bytesRead);
+    const auto headerLen = static_cast<size_t>(bytesRead);
 #else
-    auto const headerLen = std::min<size_t>(len, DDS_DX10_HEADER_SIZE);
+    const auto headerLen = std::min<size_t>(len, DDS_DX10_HEADER_SIZE);
 
     inFile.read(reinterpret_cast<char*>(header), headerLen);
     if (!inFile)
@@ -2263,7 +2263,7 @@ HRESULT DirectX::LoadFromDDSFileEx(
         }
 
     #ifdef _WIN32
-        auto const pixelBytes = static_cast<DWORD>(image.GetPixelsSize());
+        const auto pixelBytes = static_cast<DWORD>(image.GetPixelsSize());
         if (!ReadFile(hFile.get(), image.GetPixels(), pixelBytes, &bytesRead, nullptr))
         {
             image.Release();

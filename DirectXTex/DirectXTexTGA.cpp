@@ -1413,7 +1413,7 @@ namespace
 
         if (ext && ext->wSize == sizeof(TGA_EXTENSION) && ext->wGammaDenominator != 0)
         {
-            auto const gamma = static_cast<float>(ext->wGammaNumerator) / static_cast<float>(ext->wGammaDenominator);
+            const auto gamma = static_cast<float>(ext->wGammaNumerator) / static_cast<float>(ext->wGammaDenominator);
             if (fabsf(gamma - 2.2f) < GAMMA_EPSILON || fabsf(gamma - 2.4f) < GAMMA_EPSILON)
             {
                 sRGB = true;
@@ -1550,7 +1550,7 @@ HRESULT DirectX::GetMetadataFromTGAFile(const wchar_t* szFile, TGA_FLAGS flags, 
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    auto const headerLen = static_cast<size_t>(bytesRead);
+    const auto headerLen = static_cast<size_t>(bytesRead);
 #else
     inFile.read(reinterpret_cast<char*>(header), TGA_HEADER_LEN);
     if (!inFile)
@@ -1814,7 +1814,7 @@ HRESULT DirectX::LoadFromTGAFile(
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    auto const headerLen = static_cast<size_t>(bytesRead);
+    const auto headerLen = static_cast<size_t>(bytesRead);
 #else
     inFile.read(reinterpret_cast<char*>(header), TGA_HEADER_LEN);
     if (!inFile)
@@ -1834,7 +1834,7 @@ HRESULT DirectX::LoadFromTGAFile(
         return HRESULT_E_INVALID_DATA;
 
     // Read the pixels
-    auto const remaining = len - offset;
+    const auto remaining = len - offset;
     if (remaining == 0)
         return E_FAIL;
 

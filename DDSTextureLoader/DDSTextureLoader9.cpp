@@ -156,7 +156,7 @@ namespace
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        auto const dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData);
+        const auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData);
         if (dwMagicNumber != DDS_MAGIC)
         {
             return E_FAIL;
@@ -259,7 +259,7 @@ namespace
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        auto const dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
+        const auto dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.get());
         if (dwMagicNumber != DDS_MAGIC)
         {
             ddsData.reset();

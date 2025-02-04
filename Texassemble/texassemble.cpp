@@ -1258,7 +1258,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         for (auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv)
         {
             std::filesystem::path curpath(pConv->szSrc);
-            auto const ext = curpath.extension();
+            const auto ext = curpath.extension();
 
             // Load source image
             if (pConv != conversion.begin())

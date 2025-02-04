@@ -203,7 +203,7 @@ namespace
         }
 
         // Use Newton's Method to find local minima of sum-of-squares error.
-        auto const fSteps = static_cast<float>(cSteps - 1);
+        const auto fSteps = static_cast<float>(cSteps - 1);
 
         for (size_t iIteration = 0; iIteration < 8; iIteration++)
         {
@@ -1032,8 +1032,8 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
     float fAlphaA, fAlphaB;
     OptimizeAlpha<false>(&fAlphaA, &fAlphaB, fAlpha, uSteps);
 
-    auto const bAlphaA = static_cast<uint8_t>(static_cast<int32_t>(fAlphaA * 255.0f + 0.5f));
-    auto const bAlphaB = static_cast<uint8_t>(static_cast<int32_t>(fAlphaB * 255.0f + 0.5f));
+    const auto bAlphaA = static_cast<uint8_t>(static_cast<int32_t>(fAlphaA * 255.0f + 0.5f));
+    const auto bAlphaB = static_cast<uint8_t>(static_cast<int32_t>(fAlphaB * 255.0f + 0.5f));
 
     fAlphaA = static_cast<float>(bAlphaA) * (1.0f / 255.0f);
     fAlphaB = static_cast<float>(bAlphaB) * (1.0f / 255.0f);
@@ -1084,7 +1084,7 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
     }
 
     // Encode alpha bitmap
-    auto const fSteps = static_cast<float>(uSteps - 1);
+    const auto fSteps = static_cast<float>(uSteps - 1);
     const float fScale = (fStep[0] != fStep[1]) ? (fSteps / (fStep[1] - fStep[0])) : 0.0f;
 
     if (flags & BC_FLAGS_DITHER_A)
