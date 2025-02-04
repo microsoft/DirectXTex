@@ -513,8 +513,8 @@ HRESULT DirectX::SaveToEXRFile(const Image& image, const wchar_t* szFile)
 
     try
     {
-        const int width = static_cast<int>(image.width);
-        const int height = static_cast<int>(image.height);
+        const auto width = static_cast<int>(image.width);
+        const auto height = static_cast<int>(image.height);
 
 #ifdef _WIN32
         Imf::RgbaOutputFile file(stream, Imf::Header(width, height), Imf::WRITE_RGBA);
@@ -529,7 +529,7 @@ HRESULT DirectX::SaveToEXRFile(const Image& image, const wchar_t* szFile)
         }
         else
         {
-            const uint64_t bytes = image.width * image.height;
+            const auto bytes = static_cast<uint64_t>(image.width) * static_cast<uint64_t>(image.height);
 
             if (bytes > static_cast<uint64_t>(UINT32_MAX))
             {

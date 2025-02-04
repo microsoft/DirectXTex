@@ -222,11 +222,19 @@ if(BUILD_DX11 AND WIN32 AND (NOT (XBOX_CONSOLE_TARGET STREQUAL "durango")))
     endif()
 endif()
 
-add_library(${PROJECT_NAME} ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
-
 if(WIN32 AND BUILD_SHARED_LIBS)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE DIRECTX_TEX_EXPORT)
-	target_compile_definitions(${PROJECT_NAME} INTERFACE DIRECTX_TEX_IMPORT)
+  message(STATUS "Build library as a DLL")
+
+  configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/build/DirectXTex.rc.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/DirectXTex.rc" @ONLY)
+
+  add_library(${PROJECT_NAME} SHARED ${LIBRARY_SOURCES} ${LIBRARY_HEADERS} "${CMAKE_CURRENT_BINARY_DIR}/DirectXTex.rc")
+
+  target_compile_definitions(${PROJECT_NAME} PRIVATE DIRECTX_TEX_EXPORT)
+  target_compile_definitions(${PROJECT_NAME} INTERFACE DIRECTX_TEX_IMPORT)
+else()
+  add_library(${PROJECT_NAME} ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
 endif()
 
 if(BUILD_DX11 AND WIN32)

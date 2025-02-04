@@ -74,3 +74,22 @@ jobs:
     - name: 'Build'
       working-directory: ${{ github.workspace }}
       run: cmake --build out/build/${{ matrix.build_type }}
+
+    - name: 'Clean up'
+      working-directory: ${{ github.workspace }}
+      run: rm -rf out
+
+    - name: 'Configure CMake (-shared)'
+      working-directory: ${{ github.workspace }}
+      run: >
+        cmake --preset=${{ matrix.build_type }} -DENABLE_OPENEXR_SUPPORT=ON -DENABLE_LIBJPEG_SUPPORT=ON -DENABLE_LIBPNG_SUPPORT=ON
+        -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/build"
+        -DVCPKG_TARGET_TRIPLET="x64-linux" -DBUILD_SHARED_LIBS=ON
+
+      env:
+        CC: gcc-${{ matrix.gcc }}
+        CXX: g++-${{ matrix.gcc }}
+
+    - name: 'Build (-shared)'
+      working-directory: ${{ github.workspace }}
+      run: cmake --build out/build/${{ matrix.build_type }}

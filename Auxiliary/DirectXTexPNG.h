@@ -18,16 +18,16 @@
 
 namespace DirectX
 {
-    HRESULT __cdecl GetMetadataFromPNGFile(
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromPNGFile(
         _In_z_ const wchar_t* szFile,
         _Out_ TexMetadata& metadata);
 
-    HRESULT __cdecl LoadFromPNGFile(
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromPNGFile(
         _In_z_ const wchar_t* szFile,
         _Out_opt_ TexMetadata* metadata,
         _Out_ ScratchImage& image);
 
-    HRESULT __cdecl SaveToPNGFile(
+    DIRECTX_TEX_API HRESULT __cdecl SaveToPNGFile(
         _In_ const Image& image,
         _In_z_ const wchar_t* szFile);
 }
