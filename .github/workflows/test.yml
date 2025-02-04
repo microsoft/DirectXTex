@@ -165,6 +165,8 @@ jobs:
         cmake --preset=${{ matrix.build_type }} -DBUILD_TESTING=ON -DBUILD_TOOLS=OFF -DBUILD_SAMPLE=OFF -DENABLE_LIBJPEG_SUPPORT=ON -DENABLE_LIBPNG_SUPPORT=ON
         -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/build"
         -DVCPKG_TARGET_TRIPLET="${env:VCPKG_DEFAULT_TRIPLET}" -DBUILD_SHARED_LIBS=ON
+      env:
+        VCPKG_BINARY_SOURCES: "clear"
 
     - name: 'Build (DLL)'
       working-directory: ${{ github.workspace }}
