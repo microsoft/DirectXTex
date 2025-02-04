@@ -172,7 +172,7 @@ namespace
             ScratchImage image;
             HRESULT hr = E_UNEXPECTED;
 
-            auto const srgb = GetSRGBFlags(compress);
+            const auto srgb = GetSRGBFlags(compress);
 
             switch (tformat)
             {

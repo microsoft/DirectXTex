@@ -1146,7 +1146,7 @@ namespace
 
             for (size_t y = 0; y < nheight; ++y)
             {
-                auto const& toY = lfY[y];
+                const auto& toY = lfY[y];
 
                 if (toY.u0 != u0)
                 {
@@ -1176,7 +1176,7 @@ namespace
 
                 for (size_t x = 0; x < nwidth; ++x)
                 {
-                    auto const& toX = lfX[x];
+                    const auto& toX = lfX[x];
 
                     BILINEAR_INTERPOLATE(target[x], toX, toY, row0, row1)
                 }
@@ -1269,7 +1269,7 @@ namespace
 
             for (size_t y = 0; y < nheight; ++y)
             {
-                auto const& toY = cfY[y];
+                const auto& toY = cfY[y];
 
                 // Scanline 1
                 if (toY.u0 != u0)
@@ -1360,7 +1360,7 @@ namespace
 
                 for (size_t x = 0; x < nwidth; ++x)
                 {
-                    auto const& toX = cfX[x];
+                    const auto& toX = cfX[x];
 
                     XMVECTOR C0, C1, C2, C3;
 
@@ -2050,7 +2050,7 @@ namespace
 
                 for (size_t slice = 0; slice < ndepth; ++slice)
                 {
-                    auto const& toZ = lfZ[slice];
+                    const auto& toZ = lfZ[slice];
 
                     const Image* srca = mipChain.GetImage(level - 1, 0, toZ.u0);
                     const Image* srcb = mipChain.GetImage(level - 1, 0, toZ.u1);
@@ -2068,7 +2068,7 @@ namespace
 
                     for (size_t y = 0; y < nheight; ++y)
                     {
-                        auto const& toY = lfY[y];
+                        const auto& toY = lfY[y];
 
                         if (toY.u0 != u0)
                         {
@@ -2101,7 +2101,7 @@ namespace
 
                         for (size_t x = 0; x < nwidth; ++x)
                         {
-                            auto const& toX = lfX[x];
+                            const auto& toX = lfX[x];
 
                             TRILINEAR_INTERPOLATE(target[x], toX, toY, toZ, urow0, urow1, vrow0, vrow1)
                         }
@@ -2131,7 +2131,7 @@ namespace
 
                 for (size_t y = 0; y < nheight; ++y)
                 {
-                    auto const& toY = lfY[y];
+                    const auto& toY = lfY[y];
 
                     if (toY.u0 != u0)
                     {
@@ -2161,7 +2161,7 @@ namespace
 
                     for (size_t x = 0; x < nwidth; ++x)
                     {
-                        auto const& toX = lfX[x];
+                        const auto& toX = lfX[x];
 
                         BILINEAR_INTERPOLATE(target[x], toX, toY, urow0, urow1)
                     }
@@ -2260,7 +2260,7 @@ namespace
 
                 for (size_t slice = 0; slice < ndepth; ++slice)
                 {
-                    auto const& toZ = cfZ[slice];
+                    const auto& toZ = cfZ[slice];
 
                     const Image* srca = mipChain.GetImage(level - 1, 0, toZ.u0);
                     const Image* srcb = mipChain.GetImage(level - 1, 0, toZ.u1);
@@ -2282,7 +2282,7 @@ namespace
 
                     for (size_t y = 0; y < nheight; ++y)
                     {
-                        auto const& toY = cfY[y];
+                        const auto& toY = cfY[y];
 
                         // Scanline 1
                         if (toY.u0 != u0)
@@ -2403,7 +2403,7 @@ namespace
 
                         for (size_t x = 0; x < nwidth; ++x)
                         {
-                            auto const& toX = cfX[x];
+                            const auto& toX = cfX[x];
 
                             XMVECTOR D[4];
 
@@ -2448,7 +2448,7 @@ namespace
 
                 for (size_t y = 0; y < nheight; ++y)
                 {
-                    auto const& toY = cfY[y];
+                    const auto& toY = cfY[y];
 
                     // Scanline 1
                     if (toY.u0 != u0)
@@ -2539,7 +2539,7 @@ namespace
 
                     for (size_t x = 0; x < nwidth; ++x)
                     {
-                        auto const& toX = cfX[x];
+                        const auto& toX = cfX[x];
 
                         XMVECTOR C0, C1, C2, C3;
                         CUBIC_INTERPOLATE(C0, toX.x, urow[0][toX.u0], urow[0][toX.u1], urow[0][toX.u2], urow[0][toX.u3]);

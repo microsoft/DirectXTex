@@ -230,7 +230,7 @@ namespace DirectX
         }
 
         // Use Newton's Method to find local minima of sum-of-squares error.
-        auto const fSteps = static_cast<float>(cSteps - 1);
+        const auto fSteps = static_cast<float>(cSteps - 1);
 
         for (size_t iIteration = 0; iIteration < 8; iIteration++)
         {

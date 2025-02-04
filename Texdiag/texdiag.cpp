@@ -529,7 +529,7 @@ namespace
             return E_OUTOFMEMORY;
 
         std::filesystem::path fname(fileName);
-        auto const ext = fname.extension();
+        const auto ext = fname.extension();
 
         if (_wcsicmp(ext.c_str(), L".dds") == 0)
         {
@@ -1392,9 +1392,9 @@ namespace
 
     void Print565(uint16_t rgb)
     {
-        auto const r = float(((rgb >> 11) & 31) * (1.0f / 31.0f));
-        auto const g = float(((rgb >> 5) & 63) * (1.0f / 63.0f));
-        auto const b = float(((rgb >> 0) & 31) * (1.0f / 31.0f));
+        const auto r = float(((rgb >> 11) & 31) * (1.0f / 31.0f));
+        const auto g = float(((rgb >> 5) & 63) * (1.0f / 63.0f));
+        const auto b = float(((rgb >> 0) & 31) * (1.0f / 31.0f));
 
         wprintf(L"(R: %.3f, G: %.3f, B: %.3f)", r, g, b);
     }
@@ -3434,7 +3434,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (outputFile.empty())
                 {
                     std::filesystem::path curpath(pImage1->szSrc);
-                    auto const ext = curpath.extension();
+                    const auto ext = curpath.extension();
 
                     if (_wcsicmp(ext.c_str(), L".bmp") == 0)
                     {
@@ -3717,7 +3717,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                 wprintf(L"\n       images = %zu\n", image->GetImageCount());
 
-                auto const sizeInKb = static_cast<uint32_t>(image->GetPixelsSize() / 1024);
+                const auto sizeInKb = static_cast<uint32_t>(image->GetPixelsSize() / 1024);
 
                 wprintf(L"   pixel size = %u (KB)\n\n", sizeInKb);
             }
@@ -3730,7 +3730,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
 
-                auto const ext = LookupByValue(fileType, g_pDumpFileTypes);
+                const auto ext = LookupByValue(fileType, g_pDumpFileTypes);
 
                 std::filesystem::path basePath(outputFile);
 

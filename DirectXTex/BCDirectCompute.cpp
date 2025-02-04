@@ -264,7 +264,7 @@ HRESULT GPUCompressBC::Prepare(size_t width, size_t height, uint32_t flags, DXGI
     if (sizeInBytes >= UINT32_MAX)
         return HRESULT_E_ARITHMETIC_OVERFLOW;
 
-    auto const bufferSize = static_cast<size_t>(sizeInBytes);
+    const auto bufferSize = static_cast<size_t>(sizeInBytes);
 
     {
         D3D11_BUFFER_DESC desc = {};
@@ -459,7 +459,7 @@ HRESULT GPUCompressBC::Compress(const Image& srcImage, const Image& destImage)
     const size_t xblocks = std::max<size_t>(1, (m_width + 3) >> 2);
     const size_t yblocks = std::max<size_t>(1, (m_height + 3) >> 2);
 
-    auto const num_total_blocks = static_cast<UINT>(xblocks * yblocks);
+    const auto num_total_blocks = static_cast<UINT>(xblocks * yblocks);
     UINT num_blocks = num_total_blocks;
     UINT start_block_id = 0;
     while (num_blocks > 0)
