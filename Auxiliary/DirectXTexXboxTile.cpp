@@ -34,7 +34,7 @@ namespace
         uint8_t* dptr = xbox.GetPointer();
         const uint8_t* endPtr = dptr + layout.SizeBytes;
 
-        for (uint32_t item = 0; item < nimages; ++item)
+        for (size_t item = 0; item < nimages; ++item)
         {
             const Image* img = images[item];
 
@@ -52,9 +52,9 @@ namespace
             {
             #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
                 UINT64 element = (packed) ? (x >> 1) : x;
-                size_t offset = computer->GetTexelElementOffsetBytes(0, level, element, 0, item, 0, nullptr);
+                size_t offset = computer->GetTexelElementOffsetBytes(0, level, element, 0, static_cast<uint32_t>(item), 0, nullptr);
             #else
-                size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, item, 0);
+                size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, static_cast<uint32_t>(item), 0);
             #endif
                 if (offset == size_t(-1))
                     return E_FAIL;
@@ -169,7 +169,7 @@ namespace
         const XG_RESOURCE_LAYOUT& layout,
         const XboxImage& xbox)
     {
-        if (!nimages)
+        if (!nimages || nimages > UINT32_MAX)
             return E_INVALIDARG;
 
         if (!images || !images[0] || !computer || !xbox.GetPointer())
@@ -230,7 +230,7 @@ namespace
             memset(tiled, 0, sizeof(XMVECTOR) * tiledPixels);
 
             // Perform tiling
-            for (uint32_t item = 0; item < nimages; ++item)
+            for (size_t item = 0; item < nimages; ++item)
             {
                 const Image* img = images[item];
 
@@ -248,9 +248,9 @@ namespace
                 for (size_t x = 0; x < img->width; ++x)
                 {
                 #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, item, 0, nullptr);
+                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, static_cast<uint32_t>(item), 0, nullptr);
                 #else
-                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, item, 0);
+                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, static_cast<uint32_t>(item), 0);
                 #endif
                     if (offset == size_t(-1))
                         return E_FAIL;
@@ -285,7 +285,7 @@ namespace
         _In_ XGTextureAddressComputer* computer,
         const XboxImage& xbox)
     {
-        if (!nimages)
+        if (!nimages || nimages > UINT32_MAX)
             return E_INVALIDARG;
 
         if (!images || !images[0] || !computer || !xbox.GetPointer())
@@ -294,7 +294,7 @@ namespace
         uint8_t* baseAddr = xbox.GetPointer();
         const auto& metadata = xbox.GetMetadata();
 
-        for (uint32_t item = 0; item < nimages; ++item)
+        for (size_t item = 0; item < nimages; ++item)
         {
             const Image* img = images[item];
 
@@ -445,7 +445,7 @@ HRESULT Xbox::Tile(
     XboxTileMode mode)
 {
     if (!srcImages
-        || !nimages
+        || !nimages || nimages > UINT32_MAX
         || metadata.width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
         || metadata.height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
         || metadata.depth > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
@@ -533,13 +533,13 @@ HRESULT Xbox::Tile(
             if (FAILED(hr))
                 return hr;
 
-            for (uint32_t level = 0; level < metadata.mipLevels; ++level)
+            for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
                 if (metadata.arraySize > 1)
                 {
                     std::vector<const Image*> images;
                     images.reserve(metadata.arraySize);
-                    for (uint32_t item = 0; item < metadata.arraySize; ++item)
+                    for (size_t item = 0; item < metadata.arraySize; ++item)
                     {
                         const size_t index = metadata.ComputeIndex(level, item, 0);
                         if (index >= nimages)
@@ -551,7 +551,7 @@ HRESULT Xbox::Tile(
                         images.push_back(&srcImages[index]);
                     }
 
-                    hr = Tile1D(&images[0], images.size(), level, computer.Get(), layout, xbox);
+                    hr = Tile1D(&images[0], images.size(), static_cast<uint32_t>(level), computer.Get(), layout, xbox);
                 }
                 else
                 {
@@ -563,7 +563,7 @@ HRESULT Xbox::Tile(
                     }
 
                     const Image* images = &srcImages[index];
-                    hr = Tile1D(&images, 1, level, computer.Get(), layout, xbox);
+                    hr = Tile1D(&images, 1, static_cast<uint32_t>(level), computer.Get(), layout, xbox);
                 }
 
                 if (FAILED(hr))
@@ -617,13 +617,13 @@ HRESULT Xbox::Tile(
             if (FAILED(hr))
                 return hr;
 
-            for (uint32_t level = 0; level < metadata.mipLevels; ++level)
+            for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
                 if (metadata.arraySize > 1)
                 {
                     std::vector<const Image*> images;
                     images.reserve(metadata.arraySize);
-                    for (uint32_t item = 0; item < metadata.arraySize; ++item)
+                    for (size_t item = 0; item < metadata.arraySize; ++item)
                     {
                         const size_t index = metadata.ComputeIndex(level, item, 0);
                         if (index >= nimages)
@@ -635,7 +635,7 @@ HRESULT Xbox::Tile(
                         images.push_back(&srcImages[index]);
                     }
 
-                    hr = Tile2D(&images[0], images.size(), level, computer.Get(), xbox);
+                    hr = Tile2D(&images[0], images.size(), static_cast<uint32_t>(level), computer.Get(), xbox);
                 }
                 else
                 {
@@ -647,7 +647,7 @@ HRESULT Xbox::Tile(
                     }
 
                     const Image* images = &srcImages[index];
-                    hr = Tile2D(&images, 1, level, computer.Get(), xbox);
+                    hr = Tile2D(&images, 1, static_cast<uint32_t>(level), computer.Get(), xbox);
                 }
 
                 if (FAILED(hr))
@@ -699,10 +699,10 @@ HRESULT Xbox::Tile(
             if (FAILED(hr))
                 return hr;
 
-            uint32_t d = static_cast<uint32_t>(metadata.depth);
+            auto d = static_cast<uint32_t>(metadata.depth);
 
             size_t index = 0;
-            for (uint32_t level = 0; level < metadata.mipLevels; ++level)
+            for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
                 if ((index + d) > nimages)
                 {
@@ -711,7 +711,7 @@ HRESULT Xbox::Tile(
                 }
 
                 // Relies on the fact that slices are contiguous
-                hr = Tile3D(srcImages[index], level, computer.Get(), xbox);
+                hr = Tile3D(srcImages[index], static_cast<uint32_t>(level), computer.Get(), xbox);
                 if (FAILED(hr))
                 {
                     xbox.Release();
