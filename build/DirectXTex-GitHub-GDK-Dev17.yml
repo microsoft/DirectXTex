@@ -26,6 +26,7 @@ pr:
     - build/*.cmake
     - build/SetupBWOI.*
     - DirectXTex/Shaders/CompileShaders.cmd
+    - Auxiliary/*Xbox*
 
 resources:
   repositories:
