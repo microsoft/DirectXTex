@@ -444,14 +444,38 @@ HRESULT Xbox::Tile(
     XboxImage& xbox,
     XboxTileMode mode)
 {
-    if (!srcImages
-        || !nimages || nimages > UINT32_MAX
-        || metadata.width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
-        || metadata.height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
-        || metadata.depth > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
-        || metadata.arraySize > D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION
-        || metadata.mipLevels > D3D11_REQ_MIP_LEVELS)
+    if (!srcImages || !nimages || nimages > UINT32_MAX)
         return E_INVALIDARG;
+
+    switch (metadata.dimension)
+    {
+    case TEX_DIMENSION_TEXTURE1D:
+        if (metadata.width > D3D11_REQ_TEXTURE1D_U_DIMENSION
+            || metadata.mipLevels > D3D11_REQ_MIP_LEVELS
+            || metadata.arraySize > D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION)
+            return E_INVALIDARG;
+        break;
+
+    case TEX_DIMENSION_TEXTURE2D:
+        if (metadata.width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
+            || metadata.height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
+            || metadata.mipLevels > D3D11_REQ_MIP_LEVELS
+            || metadata.arraySize > D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION)
+            return E_INVALIDARG;
+        break;
+
+    case TEX_DIMENSION_TEXTURE3D:
+        if (metadata.width > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
+            || metadata.height > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
+            || metadata.depth > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
+            || metadata.mipLevels > D3D11_REQ_MIP_LEVELS
+            || metadata.arraySize != 1)
+            return E_INVALIDARG;
+        break;
+
+    default:
+        return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+    }
 
     xbox.Release();
 

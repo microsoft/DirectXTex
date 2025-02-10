@@ -481,8 +481,8 @@ HRESULT Xbox::Detile(
 
     case TEX_DIMENSION_TEXTURE3D:
         {
-            if (metadata.width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
-                || metadata.height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
+            if (metadata.width > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
+                || metadata.height > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
                 || metadata.depth > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
                 || metadata.mipLevels > D3D11_REQ_MIP_LEVELS
                 || metadata.arraySize != 1)
