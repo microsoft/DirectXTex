@@ -32,7 +32,7 @@ namespace
         const uint8_t* sptr = xbox.GetPointer();
         const uint8_t* endPtr = sptr + layout.SizeBytes;
 
-        assert((nimages > 0) && (nimages < UINT32_MAX));
+        assert((nimages > 0) && (nimages <= UINT32_MAX));
 
         for (size_t item = 0; item < nimages; ++item)
         {
