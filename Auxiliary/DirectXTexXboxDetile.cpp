@@ -32,7 +32,9 @@ namespace
         const uint8_t* sptr = xbox.GetPointer();
         const uint8_t* endPtr = sptr + layout.SizeBytes;
 
-        for (uint32_t item = 0; item < nimages; ++item)
+        assert((nimages > 0) && (nimages <= UINT32_MAX));
+
+        for (size_t item = 0; item < nimages; ++item)
         {
             const Image* img = result[item];
             if (!img || !img->pixels)
@@ -49,9 +51,9 @@ namespace
             {
             #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
                 const UINT64 element = (packed) ? (x >> 1) : x;
-                const size_t offset = computer->GetTexelElementOffsetBytes(0, level, element, 0, item, 0, nullptr);
+                const size_t offset = computer->GetTexelElementOffsetBytes(0, static_cast<uint32_t>(level), element, 0, static_cast<uint32_t>(item), 0, nullptr);
             #else
-                const size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, item, 0);
+                const size_t offset = computer->GetTexelElementOffsetBytes(0, static_cast<uint32_t>(level), x, 0, static_cast<uint32_t>(item), 0);
             #endif
                 if (offset == size_t(-1))
                     return E_FAIL;
@@ -83,7 +85,7 @@ namespace
         _In_reads_(nimages) const Image** result,
         size_t nimages)
     {
-        if (!nimages)
+        if (!nimages || nimages > UINT32_MAX)
             return E_INVALIDARG;
 
         if (!xbox.GetPointer() || !computer || !result || !result[0])
@@ -150,7 +152,7 @@ namespace
                 return E_FAIL;
 
             // Perform detiling
-            for (uint32_t item = 0; item < nimages; ++item)
+            for (size_t item = 0; item < nimages; ++item)
             {
                 const Image* img = result[item];
                 if (!img || !img->pixels)
@@ -164,9 +166,9 @@ namespace
                 for (size_t x = 0; x < img->width; ++x)
                 {
                 #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, item, 0, nullptr);
+                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, static_cast<uint32_t>(item), 0, nullptr);
                 #else
-                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, item, 0);
+                    size_t offset = computer->GetTexelElementOffsetBytes(0, level, x, 0, static_cast<uint32_t>(item), 0);
                 #endif
                     if (offset == size_t(-1))
                         return E_FAIL;
@@ -199,7 +201,7 @@ namespace
         _In_reads_(nimages) const Image** result,
         size_t nimages)
     {
-        if (!nimages)
+        if (!nimages || nimages > UINT32_MAX)
             return E_INVALIDARG;
 
         if (!xbox.GetPointer() || !computer || !result || !result[0])
@@ -210,7 +212,7 @@ namespace
         uint8_t* baseAddr = xbox.GetPointer();
         const auto& metadata = xbox.GetMetadata();
 
-        for (uint32_t item = 0; item < nimages; ++item)
+        for (size_t item = 0; item < nimages; ++item)
         {
             const Image* img = result[item];
             if (!img || !img->pixels)
@@ -314,6 +316,11 @@ HRESULT Xbox::Detile(
     {
     case TEX_DIMENSION_TEXTURE1D:
         {
+            if (metadata.width > D3D11_REQ_TEXTURE1D_U_DIMENSION
+                || metadata.mipLevels > D3D11_REQ_MIP_LEVELS
+                || metadata.arraySize > D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION)
+                return E_INVALIDARG;
+
             XG_TEXTURE1D_DESC desc = {};
             desc.Width = static_cast<UINT>(metadata.width);
             desc.MipLevels = static_cast<UINT>(metadata.mipLevels);
@@ -348,13 +355,13 @@ HRESULT Xbox::Detile(
             if (FAILED(hr))
                 return hr;
 
-            for (uint32_t level = 0; level < metadata.mipLevels; ++level)
+            for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
                 if (metadata.arraySize > 1)
                 {
                     std::vector<const Image*> images;
                     images.reserve(metadata.arraySize);
-                    for (uint32_t item = 0; item < metadata.arraySize; ++item)
+                    for (size_t item = 0; item < metadata.arraySize; ++item)
                     {
                         const Image* img = image.GetImage(level, item, 0);
                         if (!img)
@@ -366,7 +373,7 @@ HRESULT Xbox::Detile(
                         images.push_back(img);
                     }
 
-                    hr = Detile1D(xbox, level, computer.Get(), layout, &images[0], images.size());
+                    hr = Detile1D(xbox, static_cast<uint32_t>(level), computer.Get(), layout, &images[0], images.size());
                 }
                 else
                 {
@@ -377,7 +384,7 @@ HRESULT Xbox::Detile(
                         return E_FAIL;
                     }
 
-                    hr = Detile1D(xbox, level, computer.Get(), layout, &img, 1);
+                    hr = Detile1D(xbox, static_cast<uint32_t>(level), computer.Get(), layout, &img, 1);
                 }
 
                 if (FAILED(hr))
@@ -391,6 +398,12 @@ HRESULT Xbox::Detile(
 
     case TEX_DIMENSION_TEXTURE2D:
         {
+            if (metadata.width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
+                || metadata.height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION
+                || metadata.mipLevels > D3D11_REQ_MIP_LEVELS
+                || metadata.arraySize > D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION)
+                return E_INVALIDARG;
+
             XG_TEXTURE2D_DESC desc = {};
             desc.Width = static_cast<UINT>(metadata.width);
             desc.Height = static_cast<UINT>(metadata.height);
@@ -427,13 +440,13 @@ HRESULT Xbox::Detile(
             if (FAILED(hr))
                 return hr;
 
-            for (uint32_t level = 0; level < metadata.mipLevels; ++level)
+            for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
                 if (metadata.arraySize > 1)
                 {
                     std::vector<const Image*> images;
                     images.reserve(metadata.arraySize);
-                    for (uint32_t item = 0; item < metadata.arraySize; ++item)
+                    for (size_t item = 0; item < metadata.arraySize; ++item)
                     {
                         const Image* img = image.GetImage(level, item, 0);
                         if (!img)
@@ -445,7 +458,7 @@ HRESULT Xbox::Detile(
                         images.push_back(img);
                     }
 
-                    hr = Detile2D(xbox, level, computer.Get(), &images[0], images.size());
+                    hr = Detile2D(xbox, static_cast<uint32_t>(level), computer.Get(), &images[0], images.size());
                 }
                 else
                 {
@@ -456,7 +469,7 @@ HRESULT Xbox::Detile(
                         return E_FAIL;
                     }
 
-                    hr = Detile2D(xbox, level, computer.Get(), &img, 1);
+                    hr = Detile2D(xbox, static_cast<uint32_t>(level), computer.Get(), &img, 1);
                 }
 
                 if (FAILED(hr))
@@ -470,6 +483,13 @@ HRESULT Xbox::Detile(
 
     case TEX_DIMENSION_TEXTURE3D:
         {
+            if (metadata.width > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
+                || metadata.height > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
+                || metadata.depth > D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION
+                || metadata.mipLevels > D3D11_REQ_MIP_LEVELS
+                || metadata.arraySize != 1)
+                return E_INVALIDARG;
+
             XG_TEXTURE3D_DESC desc = {};
             desc.Width = static_cast<UINT>(metadata.width);
             desc.Height = static_cast<UINT>(metadata.height);
@@ -504,10 +524,10 @@ HRESULT Xbox::Detile(
             if (FAILED(hr))
                 return hr;
 
-            uint32_t d = static_cast<uint32_t>(metadata.depth);
+            auto d = static_cast<uint32_t>(metadata.depth);
 
             size_t index = 0;
-            for (uint32_t level = 0; level < metadata.mipLevels; ++level)
+            for (size_t level = 0; level < metadata.mipLevels; ++level)
             {
                 if ((index + d) > image.GetImageCount())
                 {
@@ -516,7 +536,7 @@ HRESULT Xbox::Detile(
                 }
 
                 // Relies on the fact that slices are contiguous
-                hr = Detile3D(xbox, level, computer.Get(), image.GetImages()[index]);
+                hr = Detile3D(xbox, static_cast<uint32_t>(level), computer.Get(), image.GetImages()[index]);
                 if (FAILED(hr))
                 {
                     image.Release();

@@ -24,6 +24,9 @@ pr:
     - build/*.cmake
     - build/*.in
     - build/DirectXTex-GitHub-WSL-13.yml
+    - Auxiliary/*EXR*
+    - Auxiliary/*JPEG*
+    - Auxiliary/*PNG*
 
 resources:
   repositories:
