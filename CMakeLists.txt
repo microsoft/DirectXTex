@@ -233,6 +233,12 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 
   target_compile_definitions(${PROJECT_NAME} PRIVATE DIRECTX_TEX_EXPORT)
   target_compile_definitions(${PROJECT_NAME} INTERFACE DIRECTX_TEX_IMPORT)
+
+  if(XBOX_CONSOLE_TARGET MATCHES "scarlett")
+    target_link_libraries(${PROJECT_NAME} PRIVATE xgameplatform.lib xg_xs.lib xmem.lib)
+  elseif(XBOX_CONSOLE_TARGET MATCHES "xboxone")
+    target_link_libraries(${PROJECT_NAME} PRIVATE xgameplatform.lib xg_x.lib xmem.lib)
+  endif()
 else()
   add_library(${PROJECT_NAME} ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
 endif()
