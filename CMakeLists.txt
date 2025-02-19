@@ -15,6 +15,10 @@ project (DirectXTex
   HOMEPAGE_URL "https://go.microsoft.com/fwlink/?LinkId=248926"
   LANGUAGES CXX)
 
+if(DEFINED XBOX_CONSOLE_TARGET)
+  set(CMAKE_CXX_STANDARD_LIBRARIES "")
+endif()
+
 option(BUILD_TOOLS "Build tex command-line tools" ON)
 
 option(BUILD_SHARED_LIBS "Build DirectXTex as a shared library" OFF)
@@ -238,6 +242,8 @@ if(WIN32 AND BUILD_SHARED_LIBS)
     target_link_libraries(${PROJECT_NAME} PRIVATE xgameplatform.lib xg_xs.lib xmem.lib)
   elseif(XBOX_CONSOLE_TARGET MATCHES "xboxone")
     target_link_libraries(${PROJECT_NAME} PRIVATE xgameplatform.lib xg_x.lib xmem.lib)
+  elseif(XBOX_CONSOLE_TARGET MATCHES "durango")
+    target_link_libraries(${PROJECT_NAME} PRIVATE kernelx.lib xg_x.lib combase.lib)
   endif()
 else()
   add_library(${PROJECT_NAME} ${LIBRARY_SOURCES} ${LIBRARY_HEADERS})
