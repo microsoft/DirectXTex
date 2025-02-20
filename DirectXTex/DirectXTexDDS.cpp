@@ -2006,9 +2006,35 @@ HRESULT DirectX::LoadFromDDSMemoryEx(
             return E_FAIL;
     }
 
+    size_t remaining = size - offset;
+    if (remaining == 0)
+        return E_FAIL;
+
     hr = image.Initialize(mdata);
     if (FAILED(hr))
         return hr;
+
+    if (flags & DDS_FLAGS_PERMISSIVE)
+    {
+        // For cubemaps, DDS_HEADER_DXT10.arraySize is supposed to be 'number of cubes'.
+        // This handles cases where the value is incorrectly written as the original 6*numCubes value.
+        if ((mdata.miscFlags & TEX_MISC_TEXTURECUBE)
+            && (convFlags & CONV_FLAGS_DX10)
+            && (image.GetPixelsSize() > remaining)
+            && ((mdata.arraySize % 6) == 0))
+        {
+            mdata.arraySize = mdata.arraySize / 6;
+            hr = image.Initialize(mdata);
+            if (FAILED(hr))
+                return hr;
+
+            if (image.GetPixelsSize() > remaining)
+            {
+                image.Release();
+                return HRESULT_E_HANDLE_EOF;
+            }
+        }
+    }
 
     CP_FLAGS cflags = CP_FLAGS_NONE;
     if (flags & DDS_FLAGS_LEGACY_DWORD)
@@ -2195,6 +2221,28 @@ HRESULT DirectX::LoadFromDDSFileEx(
     if (FAILED(hr))
         return hr;
 
+    if (flags & DDS_FLAGS_PERMISSIVE)
+    {
+        // For cubemaps, DDS_HEADER_DXT10.arraySize is supposed to be 'number of cubes'.
+        // This handles cases where the value is incorrectly written as the original 6*numCubes value.
+        if ((mdata.miscFlags & TEX_MISC_TEXTURECUBE)
+            && (convFlags & CONV_FLAGS_DX10)
+            && (image.GetPixelsSize() > remaining)
+            && ((mdata.arraySize % 6) == 0))
+        {
+            mdata.arraySize = mdata.arraySize / 6;
+            hr = image.Initialize(mdata);
+            if (FAILED(hr))
+                return hr;
+
+            if (image.GetPixelsSize() > remaining)
+            {
+                image.Release();
+                return HRESULT_E_HANDLE_EOF;
+            }
+        }
+    }
+
     if ((convFlags & CONV_FLAGS_EXPAND) || (flags & (DDS_FLAGS_LEGACY_DWORD | DDS_FLAGS_BAD_DXTN_TAILS)))
     {
         std::unique_ptr<uint8_t[]> temp(new (std::nothrow) uint8_t[remaining]);
@@ -2370,7 +2418,7 @@ HRESULT DirectX::SaveToDDSMemory(
     size_t remaining = blob.GetBufferSize() - required;
     pDestination += required;
 
-    if (!remaining)
+    if (remaining == 0)
     {
         blob.Release();
         return E_FAIL;
