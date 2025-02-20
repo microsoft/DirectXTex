@@ -307,6 +307,19 @@ jobs:
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out\build\x64-Release-Scarlett-Clang
+  - task: DeleteFiles@1
+    inputs:
+      Contents: 'out/build'
+  - task: CMake@1
+    displayName: 'CMake (MSVC, DLL): Config Scarlett Debug'
+    inputs:
+      cwd: '$(Build.SourcesDirectory)'
+      cmakeArgs: --preset=x64-Debug-Scarlett -DBUILD_SHARED_LIBS=ON
+  - task: CMake@1
+    displayName: 'CMake (MSVC, DLL): Build Scarlett Debug'
+    inputs:
+      cwd: '$(Build.SourcesDirectory)'
+      cmakeArgs: --build out\build\x64-Debug-Scarlett
 
 - job: BUILD_GDK_CMAKE_XBONE
   displayName: 'Microsoft Game Development Kit (GDK) using CMake (XboxOne)'
@@ -413,3 +426,16 @@ jobs:
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out\build\x64-Release-XboxOne-Clang
+  - task: DeleteFiles@1
+    inputs:
+      Contents: 'out/build'
+  - task: CMake@1
+    displayName: 'CMake (MSVC, DLL): Config XboxOne Debug'
+    inputs:
+      cwd: '$(Build.SourcesDirectory)'
+      cmakeArgs: --preset=x64-Debug-XboxOne -DBUILD_SHARED_LIBS=ON
+  - task: CMake@1
+    displayName: 'CMake (MSVC, DLL): Build XboxOne Debug'
+    inputs:
+      cwd: '$(Build.SourcesDirectory)'
+      cmakeArgs: --build out\build\x64-Debug-XboxOne
