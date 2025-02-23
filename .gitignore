@@ -24,6 +24,8 @@ packages
 /DDSView/Shaders/*.pdb
 /DirectXTex/Shaders/Compiled/*.inc
 /DirectXTex/Shaders/Compiled/*.pdb
+/Texenvmap/Shaders/Compiled/*.inc
+/Texenvmap/Shaders/Compiled/*.pdb
 /ipch
 Debug
 Durango
