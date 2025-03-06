@@ -311,12 +311,12 @@ jobs:
     inputs:
       Contents: 'out/build'
   - task: CMake@1
-    displayName: 'CMake (MSVC, DLL): Config Scarlett Debug'
+    displayName: 'CMake (DLL): Config Scarlett Debug'
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --preset=x64-Debug-Scarlett -DBUILD_SHARED_LIBS=ON
   - task: CMake@1
-    displayName: 'CMake (MSVC, DLL): Build Scarlett Debug'
+    displayName: 'CMake (DLL): Build Scarlett Debug'
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out\build\x64-Debug-Scarlett
@@ -430,12 +430,12 @@ jobs:
     inputs:
       Contents: 'out/build'
   - task: CMake@1
-    displayName: 'CMake (MSVC, DLL): Config XboxOne Debug'
+    displayName: 'CMake (DLL): Config XboxOne Debug'
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --preset=x64-Debug-XboxOne -DBUILD_SHARED_LIBS=ON
   - task: CMake@1
-    displayName: 'CMake (MSVC, DLL): Build XboxOne Debug'
+    displayName: 'CMake (DLL): Build XboxOne Debug'
     inputs:
       cwd: '$(Build.SourcesDirectory)'
       cmakeArgs: --build out\build\x64-Debug-XboxOne
