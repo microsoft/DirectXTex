@@ -21,6 +21,8 @@ namespace
 #define deposit_bits(v,m) _pdep_u32(v,m)
 #define extract_bits(v,m) _pext_u32(v,m)
 #else
+    // For ARM64 we could use SVE2-BITPERM intrinsics BDEP/BEXT if supported by the platform/compiler.
+
     // N3864 - A constexpr bitwise operations library for C++
     // https://github.com/fmatthew5876/stdcxx-bitops
     uint32_t deposit_bits(uint32_t val, int mask) noexcept
@@ -295,8 +297,64 @@ namespace
         if (!dptr)
             return E_POINTER;
 
-        // TODO: linear to swizzle x,y,z
-        return E_NOTIMPL;
+        if (srcImages[0].rowPitch > UINT32_MAX
+            || srcImages[0].slicePitch > UINT32_MAX)
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+
+        const size_t height = isCompressed ? (srcImages[0].height + 3) / 4 : srcImages[0].height;
+        const size_t width  = isCompressed ? (srcImages[0].width  + 3) / 4 : srcImages[0].width;
+
+        const size_t maxOffset = height * width * depth * bytesPerPixel;
+        const size_t tail = destImage.slicePitch * depth;
+        if (maxOffset > tail)
+            return E_UNEXPECTED;
+
+        for(size_t z = 0; z < depth; ++z)
+        {
+            const uint8_t* sptr = srcImages[z].pixels;
+            if (!sptr)
+                return E_POINTER;
+
+            const size_t rowPitch = srcImages[z].rowPitch;
+            const uint8_t* endPtr = sptr + srcImages[z].slicePitch;
+            for (size_t y = 0; y < height; ++y)
+            {
+                if (sptr >= endPtr)
+                    return E_FAIL;
+
+                const uint8_t* sourcePixelPointer = sptr;
+                for (size_t x = 0; x < width; ++x)
+                {
+                    const uint32_t swizzleIndex = deposit_bits(static_cast<uint32_t>(x), xBytesMask)
+                        + deposit_bits(static_cast<uint32_t>(y), yBytesMask)
+                        + deposit_bits(static_cast<uint32_t>(z), zBytesMask);
+                    const size_t swizzleOffset = swizzleIndex * bytesPerPixel;
+                    if (swizzleOffset >= maxOffset)
+                        return E_UNEXPECTED;
+
+                    uint8_t* destPixelPointer = dptr + swizzleOffset;
+                    memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixel);
+
+                    sourcePixelPointer += bytesPerPixel;
+                }
+
+                sptr += rowPitch;
+            }
+        }
+
+        if (tail > maxOffset)
+        {
+            if (isCompressed)
+            {
+                // TODO: Pad with copy of last block
+            }
+            else
+            {
+                // TODO: zero out tail space
+            }
+        }
+
+        return S_OK;
     }
 
     //---------------------------------------------------------------------------------
@@ -473,6 +531,7 @@ HRESULT DirectX::StandardSwizzle(
 
             for(size_t slice = 0; slice < depth; ++slice, ++index)
             {
+                // Validate source image array.
                 if (index >= nimages)
                 {
                     result.Release();
@@ -502,6 +561,21 @@ HRESULT DirectX::StandardSwizzle(
                 assert(dst.format == metadata.format);
 
                 if (src.width != dst.width || src.height != dst.height)
+                {
+                    result.Release();
+                    return E_FAIL;
+                }
+
+                if (!src.rowPitch || !src.slicePitch)
+                {
+                    result.Release();
+                    return E_FAIL;
+                }
+
+                assert(dst.rowPitch != 0 && dst.slicePitch != 0);
+
+                uint64_t slicePitch = static_cast<uint64_t>(src.rowPitch) * static_cast<uint64_t>(src.height);
+                if (static_cast<uint64_t>(slicePitch) > src.slicePitch)
                 {
                     result.Release();
                     return E_FAIL;
@@ -643,70 +717,3 @@ HRESULT DirectX::StandardSwizzle(
 
     return S_OK;
 }
-
-
-#if 0
-    if (toSwizzle)
-    {
-        // row-major to z-order curve
-        const Image* destImages = result.GetImages();
-        for (size_t z = 0; z < depth; z++)
-        {
-            size_t rowPitch = srcImages[z].rowPitch;
-            const uint8_t* sptr = srcImages[z].pixels;
-            if (!sptr)
-                return E_POINTER;
-            for (size_t y = 0; y < height; y++)
-            {
-                for (size_t x = 0; x < width; x++)
-                {
-                    uint32_t swizzle3Dindex = deposit_bits(static_cast<uint32_t>(x), xBytesMask) + deposit_bits(static_cast<uint32_t>(y), yBytesMask) + deposit_bits(static_cast<uint32_t>(z), zBytesMask);
-                    uint32_t swizzle2Dindex = swizzle3Dindex % (metadata.width * metadata.height);
-                    uint32_t swizzleSlice   = swizzle3Dindex / (metadata.width * metadata.height);
-                    size_t swizzleOffset = swizzle2Dindex * bytesPerPixel;
-
-                    size_t rowMajorOffset = y * rowPitch + x * bytesPerPixel;
-
-                    uint8_t* dptr = destImages[swizzleSlice].pixels;
-                    if (!dptr)
-                        return E_POINTER;
-
-                    const uint8_t* sourcePixelPointer = sptr + rowMajorOffset;
-                    uint8_t* destPixelPointer = dptr + swizzleOffset;
-                    memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixel);
-                }
-            }
-        }
-    }
-    else
-    {
-        // z-order curve to row-major
-        const Image* destImages = result.GetImages();
-        for (size_t z = 0; z < depth; z++)
-        {
-            const uint8_t* sptr = srcImages[z].pixels;
-            if (!sptr)
-                return E_POINTER;
-
-            for (size_t swizzleIndex = 0; swizzleIndex < (width * height); swizzleIndex++)
-            {
-                size_t swizzleOffset = swizzleIndex * bytesPerPixel;
-                const uint8_t* sourcePixelPointer = sptr + swizzleOffset;
-
-                size_t index3D = z * width * height + swizzleIndex;
-                uint32_t destX = extract_bits(index3D, xBytesMask);
-                uint32_t destY = extract_bits(index3D, yBytesMask);
-                uint32_t destZ = extract_bits(index3D, zBytesMask);
-                size_t rowPitch = destImages[z].rowPitch;
-                size_t rowMajorOffset = destY * rowPitch + destX * bytesPerPixel;
-
-                uint8_t* dptr = destImages[destZ].pixels;
-                if (!dptr)
-                    return E_POINTER;
-                uint8_t* destPixelPointer = dptr + rowMajorOffset;
-
-                memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixel);
-            }
-        }
-    }
-#endif
