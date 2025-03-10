@@ -183,16 +183,9 @@ namespace
             sptr += rowPitch;
         }
 
-        if (tail > maxOffset)
+        if ((tail > maxOffset) && isCompressed)
         {
-            if (isCompressed)
-            {
-                // TODO: Pad with copy of last block
-            }
-            else
-            {
-                // TODO: zero out tail space
-            }
+            // TODO: Pad with copy of last block instead of all zeroes
         }
 
         return S_OK;
@@ -223,7 +216,6 @@ namespace
         const size_t height = isCompressed ? (srcImage.height + 3) / 4 : srcImage.height;
         const size_t width  = isCompressed ? (srcImage.width  + 3) / 4 : srcImage.width;
 
-        const size_t maxOffset = height * width * bytesPerPixel;
         const size_t rowPitch = destImage.rowPitch;
 
         const uint64_t totalPixels = static_cast<uint64_t>(width) * static_cast<uint64_t>(height);
@@ -234,6 +226,7 @@ namespace
         if (totalDataSize > MAX_TEXTURE_SIZE)
             return HRESULT_E_ARITHMETIC_OVERFLOW;
 
+        const size_t maxOffset = static_cast<size_t>(totalDataSize);
         const uint8_t* endPtr = sptr + static_cast<ptrdiff_t>(totalDataSize);
         for (size_t swizzleIndex = 0; swizzleIndex < static_cast<size_t>(totalPixels); ++swizzleIndex)
         {
@@ -277,9 +270,6 @@ namespace
     constexpr uint16_t VOLUME_STANDARD_SWIZZLE_Z_64  = 0b0010010011000111;
     constexpr uint16_t VOLUME_STANDARD_SWIZZLE_Z_128 = 0b0010010011001111;
 
-    // We rely on the fact that ScratchImage will put all slices in the same mip level
-    // in continous memory. We do not assume that is true of the source images.
-
     //---------------------------------------------------------------------------------
     // row-major to z-order curve
     //---------------------------------------------------------------------------------
@@ -293,6 +283,11 @@ namespace
         if (!srcImages || !depth)
             return E_INVALIDARG;
 
+        if (depth > UINT16_MAX)
+            return E_INVALIDARG;
+
+        // We rely on the fact that ScratchImage will put all slices in the same mip level
+        // in continous memory. We do not assume that is true of the source images.
         uint8_t* dptr = destImage.pixels;
         if (!dptr)
             return E_POINTER;
@@ -342,16 +337,9 @@ namespace
             }
         }
 
-        if (tail > maxOffset)
+        if ((tail > maxOffset) && isCompressed)
         {
-            if (isCompressed)
-            {
-                // TODO: Pad with copy of last block
-            }
-            else
-            {
-                // TODO: zero out tail space
-            }
+            // TODO: Pad with copy of last block instead of all zeroes
         }
 
         return S_OK;
@@ -370,12 +358,60 @@ namespace
         if (!srcImages || !depth)
             return E_INVALIDARG;
 
+        if (depth > UINT16_MAX)
+            return E_INVALIDARG;
+
+        // We rely on the fact that ScratchImage will put all slices in the same mip level
+        // in continous memory. We do not assume that is true of the source images.
         uint8_t* dptr = destImage.pixels;
         if (!dptr)
             return E_POINTER;
 
-        // TODO: swizzle x,y,z to linear
-        return E_NOTIMPL;
+        if (srcImages[0].rowPitch > UINT32_MAX
+            || srcImages[0].slicePitch > UINT32_MAX)
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+
+        const size_t height = isCompressed ? (srcImages[0].height + 3) / 4 : srcImages[0].height;
+        const size_t width  = isCompressed ? (srcImages[0].width  + 3) / 4 : srcImages[0].width;
+
+        const uint64_t totalPixels = static_cast<uint64_t>(width) * static_cast<uint64_t>(height);
+        if (totalPixels > UINT32_MAX)
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+
+        const size_t maxOffset = height * width * depth * bytesPerPixel;
+
+        const size_t rowPitch = destImage.rowPitch;
+        const size_t slicePitch = destImage.slicePitch;
+
+        size_t swizzleIndex = 0;
+        for(size_t z = 0; z < depth; ++z)
+        {
+            const uint8_t* sptr = srcImages[z].pixels;
+            if (!sptr)
+                return E_POINTER;
+
+            const uint8_t* endPtr = sptr + srcImages[z].slicePitch;
+
+            for(size_t j = 0; j < totalPixels; ++j, ++swizzleIndex)
+            {
+                if (sptr >= endPtr)
+                    return E_FAIL;
+
+                uint32_t destX = extract_bits(static_cast<uint32_t>(swizzleIndex), xBytesMask);
+                uint32_t destY = extract_bits(static_cast<uint32_t>(swizzleIndex), yBytesMask);
+                uint32_t destZ = extract_bits(static_cast<uint32_t>(swizzleIndex), zBytesMask);
+
+                size_t rowMajorOffset = destZ * slicePitch + destY * rowPitch + destX * bytesPerPixel;
+                if (rowMajorOffset >= maxOffset)
+                    return E_UNEXPECTED;
+
+                uint8_t* destPixelPointer = dptr + rowMajorOffset;
+                memcpy(destPixelPointer, sptr, bytesPerPixel);
+                sptr += bytesPerPixel;
+            }
+        }
+
+        return S_OK;
     }
 }
 
