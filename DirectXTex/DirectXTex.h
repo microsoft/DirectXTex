@@ -66,7 +66,7 @@ namespace DirectX
     DIRECTX_TEX_API bool __cdecl IsCompressed(_In_ DXGI_FORMAT fmt) noexcept;
     DIRECTX_TEX_API bool __cdecl IsPacked(_In_ DXGI_FORMAT fmt) noexcept;
     DIRECTX_TEX_API bool __cdecl IsVideo(_In_ DXGI_FORMAT fmt) noexcept;
-    DIRECTX_TEX_API bool __cdecl IsPlanar(_In_ DXGI_FORMAT fmt) noexcept;
+    DIRECTX_TEX_API bool __cdecl IsPlanar(_In_ DXGI_FORMAT fmt, _In_ bool isd3d12 = false) noexcept;
     DIRECTX_TEX_API bool __cdecl IsPalettized(_In_ DXGI_FORMAT fmt) noexcept;
     DIRECTX_TEX_API bool __cdecl IsDepthStencil(_In_ DXGI_FORMAT fmt) noexcept;
     DIRECTX_TEX_API bool __cdecl IsSRGB(_In_ DXGI_FORMAT fmt) noexcept;
