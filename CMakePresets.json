@@ -406,6 +406,15 @@
     { "name": "arm64ec-Debug"  , "configurePreset": "arm64ec-Debug" },
     { "name": "arm64ec-Release", "configurePreset": "arm64ec-Release" },
 
+    { "name": "x64-Debug-VCPKG"      , "configurePreset": "x64-Debug-VCPKG" },
+    { "name": "x64-Release-VCPKG"    , "configurePreset": "x64-Release-VCPKG" },
+    { "name": "x86-Debug-VCPKG"      , "configurePreset": "x86-Debug-VCPKG" },
+    { "name": "x86-Release-VCPKG"    , "configurePreset": "x86-Release-VCPKG" },
+    { "name": "arm64-Debug-VCPKG"    , "configurePreset": "arm64-Debug-VCPKG" },
+    { "name": "arm64-Release-VCPKG"  , "configurePreset": "arm64-Release-VCPKG" },
+    { "name": "arm64ec-Debug-VCPKG"  , "configurePreset": "arm64ec-Debug-VCPKG" },
+    { "name": "arm64ec-Release-VCPKG", "configurePreset": "arm64ec-Release-VCPKG" },
+
     { "name": "x64-Debug-Clang"    , "configurePreset": "x64-Debug-Clang" },
     { "name": "x64-Release-Clang"  , "configurePreset": "x64-Release-Clang" },
     { "name": "x86-Debug-Clang"    , "configurePreset": "x86-Debug-Clang" },
