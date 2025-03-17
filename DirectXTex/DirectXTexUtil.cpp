@@ -1247,6 +1247,158 @@ size_t DirectX::ComputeScanlines(DXGI_FORMAT fmt, size_t height) noexcept
 
 
 //-------------------------------------------------------------------------------------
+// Compute standard tile shape for 64KB tiles
+//-------------------------------------------------------------------------------------
+namespace
+{
+    constexpr size_t TILED_RESOURCE_TILE_SIZE_IN_BYTES = 65536;
+}
+
+_Use_decl_annotations_
+HRESULT DirectX::ComputeTileShape(
+    DXGI_FORMAT fmt,
+    TEX_DIMENSION dimension,
+    TileShape& tiling) noexcept
+{
+    tiling = {};
+
+    if (IsVideo(fmt) || IsPacked(fmt))
+        return E_INVALIDARG;
+
+    size_t bpp = BitsPerPixel(fmt);
+    if (bpp == 1 || bpp == 96)
+        return E_INVALIDARG;
+
+    switch(dimension)
+    {
+    case TEX_DIMENSION_TEXTURE1D:
+        tiling.width = (bpp) ? ((TILED_RESOURCE_TILE_SIZE_IN_BYTES * 8) / bpp) : TILED_RESOURCE_TILE_SIZE_IN_BYTES;
+        tiling.height = tiling.depth = 1;
+        break;
+
+    case TEX_DIMENSION_TEXTURE2D:
+        tiling.depth = 1;
+        if(IsCompressed(fmt))
+        {
+            size_t bpb = BytesPerBlock(fmt);
+            switch(bpb)
+            {
+            case 8:
+                tiling.width = 128 * 4;
+                tiling.height = 64 * 4;
+                break;
+
+            case 16:
+                tiling.width = tiling.height = 64 * 4;
+                break;
+
+            default:
+                return E_INVALIDARG;
+            }
+
+            assert(((tiling.width / 4) * (tiling.height / 4) * bpb) == TILED_RESOURCE_TILE_SIZE_IN_BYTES);
+        }
+        else
+        {
+            if (bpp <= 8)
+            {
+                tiling.width = tiling.height = 256;
+            }
+            else if (bpp <= 16)
+            {
+                tiling.width = 256;
+                tiling.height = 128;
+            }
+            else if (bpp <= 32)
+            {
+                tiling.width = tiling.height = 128;
+            }
+            else if (bpp <= 64)
+            {
+                tiling.width = 128;
+                tiling.height = 64;
+            }
+            else if (bpp <= 128)
+            {
+                tiling.width = tiling.height = 64;
+            }
+            else
+            {
+                tiling = {};
+                return E_INVALIDARG;
+            }
+
+            assert(((tiling.width * tiling.height * bpp) / 8) == TILED_RESOURCE_TILE_SIZE_IN_BYTES);
+        }
+        break;
+
+    case TEX_DIMENSION_TEXTURE3D:
+        if(IsCompressed(fmt))
+        {
+            size_t bpb = BytesPerBlock(fmt);
+            switch(bpb)
+            {
+            case 8:
+                tiling.width = 32 * 4;
+                tiling.height = 16 * 4;
+                tiling.depth = 16;
+                break;
+
+            case 16:
+                tiling.width = tiling.height = 16 * 4;
+                tiling.depth = 16;
+                break;
+
+            default:
+                return E_INVALIDARG;
+            }
+
+            assert(((tiling.width / 4) * (tiling.height / 4) * tiling.depth * bpb) == TILED_RESOURCE_TILE_SIZE_IN_BYTES);
+        }
+        else
+        {
+            if (bpp <= 8)
+            {
+                tiling.width = 64;
+                tiling.height = tiling.depth = 32;
+            }
+            else if (bpp <= 16)
+            {
+                tiling.width = tiling.height = tiling.depth = 32;
+            }
+            else if (bpp <= 32)
+            {
+                tiling.width = tiling.height = 32;
+                tiling.depth = 16;
+            }
+            else if (bpp <= 64)
+            {
+                tiling.width = 32;
+                tiling.height = tiling.depth = 16;
+            }
+            else if (bpp <= 128)
+            {
+                tiling.width = tiling.height = tiling.depth = 16;
+            }
+            else
+            {
+                tiling = {};
+                return E_INVALIDARG;
+            }
+
+            assert(((tiling.width * tiling.height * tiling.depth * bpp) / 8) == TILED_RESOURCE_TILE_SIZE_IN_BYTES);
+        }
+        break;
+
+    default:
+        return E_INVALIDARG;
+    }
+
+    return S_OK;
+}
+
+
+//-------------------------------------------------------------------------------------
 // Converts to an SRGB equivalent type if available
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_

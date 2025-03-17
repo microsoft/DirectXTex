@@ -514,6 +514,53 @@ namespace DirectX
     };
 
     //---------------------------------------------------------------------------------
+    // Tiling utilities
+
+    struct DIRECTX_TEX_API TileShape
+    {
+        size_t width;
+        size_t height;
+        size_t depth;
+
+        TileShape() = default;
+
+    #if defined(__d3d11_2_h__) || defined(__d3d11_x_h__)
+        TileShape(const D3D11_TILE_SHAPE& tile) :
+            width(tile.WidthInTexels),
+            height(tile.HeightInTexels),
+            depth(tile.DepthInTexels)
+        {
+        }
+
+        void GetTileShape11(D3D11_TILE_SHAPE& tile) const
+        {
+            tile.WidthInTexels = static_cast<UINT>(width);
+            tile.HeightInTexels = static_cast<UINT>(height);
+            tile.DepthInTexels = static_cast<UINT>(depth);
+        }
+    #endif
+
+    #if defined(__d3d12_h__) || defined(__d3d12_x_h__) || defined(__XBOX_D3D12_X__)
+        TileShape(const D3D12_TILE_SHAPE& tile) :
+            width(tile.WidthInTexels),
+            height(tile.HeightInTexels),
+            depth(tile.DepthInTexels)
+        {
+        }
+
+        void GetTileShape12(D3D12_TILE_SHAPE& tile) const
+        {
+            tile.WidthInTexels = static_cast<UINT>(width);
+            tile.HeightInTexels = static_cast<UINT>(height);
+            tile.DepthInTexels = static_cast<UINT>(depth);
+        }
+    #endif
+    };
+
+    DIRECTX_TEX_API HRESULT __cdecl ComputeTileShape(_In_ DXGI_FORMAT fmt, _In_ TEX_DIMENSION dimension,
+        _Out_ TileShape& tiling) noexcept;
+
+    //---------------------------------------------------------------------------------
     // Image I/O
 
     // DDS operations
