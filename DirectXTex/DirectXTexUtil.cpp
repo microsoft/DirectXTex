@@ -1265,20 +1265,25 @@ HRESULT DirectX::ComputeTileShape(
     if (IsVideo(fmt) || IsPacked(fmt))
         return E_INVALIDARG;
 
-    size_t bpp = BitsPerPixel(fmt);
-    if (!bpp || bpp == 1 || bpp == 96)
+    const size_t bpp = BitsPerPixel(fmt);
+    if (!bpp || bpp == 1 || bpp == 24 || bpp == 96)
         return E_INVALIDARG;
+
+    const bool iscompressed = IsCompressed(fmt);
 
     switch(dimension)
     {
     case TEX_DIMENSION_TEXTURE1D:
+        if (iscompressed)
+            return E_INVALIDARG;
+
         tiling.width = (bpp) ? ((TILED_RESOURCE_TILE_SIZE_IN_BYTES * 8) / bpp) : TILED_RESOURCE_TILE_SIZE_IN_BYTES;
         tiling.height = tiling.depth = 1;
         break;
 
     case TEX_DIMENSION_TEXTURE2D:
         tiling.depth = 1;
-        if(IsCompressed(fmt))
+        if(iscompressed)
         {
             size_t bpb = BytesPerBlock(fmt);
             switch(bpb)
@@ -1333,7 +1338,7 @@ HRESULT DirectX::ComputeTileShape(
         break;
 
     case TEX_DIMENSION_TEXTURE3D:
-        if(IsCompressed(fmt))
+        if(iscompressed)
         {
             size_t bpb = BytesPerBlock(fmt);
             switch(bpb)
