@@ -132,7 +132,7 @@
 #endif
 #include <d3d11_4.h>
 #else
-#include <d3d11_1.h>
+#include <d3d11_2.h>
 #endif
 #else // !WIN32
 #include <wsl/winadapter.h>
