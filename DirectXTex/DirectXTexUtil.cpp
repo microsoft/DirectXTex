@@ -1266,7 +1266,7 @@ HRESULT DirectX::ComputeTileShape(
         return E_INVALIDARG;
 
     size_t bpp = BitsPerPixel(fmt);
-    if (bpp == 1 || bpp == 96)
+    if (!bpp || bpp == 1 || bpp == 96)
         return E_INVALIDARG;
 
     switch(dimension)
