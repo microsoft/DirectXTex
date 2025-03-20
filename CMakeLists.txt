@@ -5,6 +5,10 @@ cmake_minimum_required (VERSION 3.20)
 
 set(DIRECTXTEX_VERSION 2.0.6)
 
+if(XBOX_CONSOLE_TARGET STREQUAL "durango")
+  set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
+endif()
+
 project (DirectXTex
   VERSION ${DIRECTXTEX_VERSION}
   DESCRIPTION "DirectX Texture Library"
