@@ -18,7 +18,7 @@ DirectXTex, a shared source library for reading and writing .DDS files, and perf
         <license type="expression">MIT</license>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <copyright>&#169; Microsoft Corporation. All rights reserved.</copyright>
-        <tags>DirectX  DirectXTex  native nativepackage</tags>
+        <tags>DirectX  DirectXTex  native nativepackage  ARM64</tags>
     </metadata>
 
     <files>
