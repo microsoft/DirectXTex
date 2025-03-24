@@ -47,7 +47,7 @@ struct IWICImagingFactory;
 struct IWICMetadataQueryReader;
 #endif
 
-#define DIRECTX_TEX_VERSION 206
+#define DIRECTX_TEX_VERSION 207
 
 #ifdef DIRECTX_TEX_EXPORT
 #define DIRECTX_TEX_API __declspec(dllexport)
