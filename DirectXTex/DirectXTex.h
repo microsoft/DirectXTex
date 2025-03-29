@@ -49,10 +49,18 @@ struct IWICMetadataQueryReader;
 
 #define DIRECTX_TEX_VERSION 207
 
-#ifdef DIRECTX_TEX_EXPORT
+#if defined(_WIN32) && defined(DIRECTX_TEX_EXPORT)
+#ifdef __GNUC__
+#define DIRECTX_TEX_API __attribute__ ((dllexport))
+#else
 #define DIRECTX_TEX_API __declspec(dllexport)
-#elif defined(DIRECTX_TEX_IMPORT)
+#endif
+#elif defined(_WIN32) && defined(DIRECTX_TEX_IMPORT)
+#ifdef __GNUC__
+#define DIRECTX_TEX_API __attribute__ ((dllimport))
+#else
 #define DIRECTX_TEX_API __declspec(dllimport)
+#endif
 #else
 #define DIRECTX_TEX_API
 #endif
