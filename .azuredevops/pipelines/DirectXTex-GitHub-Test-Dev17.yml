@@ -20,7 +20,7 @@ pr:
     - main
   paths:
     include:
-    - build/DirectXTex-GitHub-Test-Dev17.yml
+    - '.azuredevops/pipelines/DirectXTex-GitHub-Test-Dev17.yml'
 
 resources:
   repositories:

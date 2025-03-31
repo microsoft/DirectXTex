@@ -13,7 +13,12 @@ on:
     paths-ignore:
       - '*.md'
       - LICENSE
-      - build/*
+      - '.azuredevops/*'
+      - build/*.cmd
+      - build/*.props
+      - build/*.ps1
+      - build/*.targets
+      - build/*.xvd
 
 permissions:
   contents: read
