@@ -21,7 +21,7 @@ pr:
     - main
   paths:
     include:
-    - build/DirectXTex-SDL.yml
+    - '.azuredevops/pipelines/DirectXTex-SDL.yml'
 
 resources:
   repositories:

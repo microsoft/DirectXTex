@@ -20,10 +20,10 @@ pr:
     - main
   paths:
     include:
+    - '.azuredevops/pipelines/DirectXTex-GitHub-WSL-11.yml'
     - CMake*
     - build/*.cmake
     - build/*.in
-    - build/DirectXTex-GitHub-WSL-11.yml
     - Auxiliary/*EXR*
     - Auxiliary/*JPEG*
     - Auxiliary/*PNG*
