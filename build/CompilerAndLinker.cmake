@@ -47,7 +47,7 @@ endif()
 
 #--- Check DIRECTX_ARCH value
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    if(DIRECTX_ARCH MATCHES "x86|arm")
+    if(DIRECTX_ARCH MATCHES "x86|^arm$")
       message(FATAL_ERROR "64-bit toolset mismatch detected for DIRECTX_ARCH setting")
     endif()
 elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
