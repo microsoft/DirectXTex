@@ -499,7 +499,7 @@ namespace
         case DXGI_FORMAT_AYUV:
         case DXGI_FORMAT_Y410:
         case DXGI_FORMAT_YUY2:
-        case D3DFMT_X8B8G8R8:
+        case D3DFMT_X8B8G8R8_UNORM:
             return 32;
 
         case DXGI_FORMAT_P010:
@@ -771,7 +771,7 @@ namespace
 
                 if (ISBITMASK(0x000000ff, 0x0000ff00, 0x00ff0000, 0))
                 {
-                    return D3DFMT_X8B8G8R8;
+                    return D3DFMT_X8B8G8R8_UNORM;
                 }
 
                 // Note that many common DDS reader/writers (including D3DX) swap the
