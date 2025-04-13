@@ -768,7 +768,6 @@ namespace
                     return DXGI_FORMAT_B8G8R8X8_UNORM;
                 }
 
-                // No DXGI format maps to ISBITMASK(0x000000ff,0x0000ff00,0x00ff0000,0) aka D3DFMT_X8B8G8R8
                 if (ISBITMASK((0x000000ff,0x0000ff00,0x00ff0000,0))
                 {
                     return DXGI_FORMAT_B8G8R8X8_UNORM;
