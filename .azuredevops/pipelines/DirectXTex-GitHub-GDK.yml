@@ -61,12 +61,17 @@ pool:
   vmImage: windows-2019
 
 variables:
-  Codeql.Enabled: false
-  EXTRACTED_FOLDER: $(ExtractedFolder)
-  GDK_EDITION: $(GDKEditionNumber)
-  GDKEnableBWOI: true
-  URL_FEED: $(ADOFeedURL)
-  skipNugetSecurityAnalysis: true # We explicitly call this task so we don't need it to be auto-injected
+- group: dxtex-shared-variables
+- name: Codeql.Enabled
+  value: false
+- name: EXTRACTED_FOLDER
+  value: '$(ExtractedFolder)'
+- name: GDKEnableBWOI
+  value: true
+- name: URL_FEED
+  value: $(ADOFeedURL)
+- name: skipNugetSecurityAnalysis
+  value: true # We explicitly call this task so we don't need it to be auto-injected
 
 jobs:
 - job: BUILD_GDK
@@ -126,6 +131,7 @@ jobs:
       solution: build/SetupBWOI.targets
       msbuildVersion: 16.0
       msbuildArchitecture: x64
+      msbuildArguments: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_2019 pcdbg
     continueOnError: True
@@ -135,6 +141,7 @@ jobs:
       platform: Gaming.Desktop.x64
       configuration: Debug
       msbuildArchitecture: x64
+      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_2019 pcrel
     continueOnError: True
@@ -144,6 +151,7 @@ jobs:
       platform: Gaming.Desktop.x64
       configuration: Release
       msbuildArchitecture: x64
+      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_2019 xbdbg
     continueOnError: True
@@ -153,6 +161,7 @@ jobs:
       platform: Gaming.Xbox.XboxOne.x64
       configuration: Debug
       msbuildArchitecture: x64
+      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_2019 xbrel
     continueOnError: True
@@ -162,6 +171,7 @@ jobs:
       platform: Gaming.Xbox.XboxOne.x64
       configuration: Release
       msbuildArchitecture: x64
+      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_2019 scardbg
     continueOnError: True
@@ -171,6 +181,7 @@ jobs:
       platform: Gaming.Xbox.Scarlett.x64
       configuration: Debug
       msbuildArchitecture: x64
+      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_2019 scarrel
     continueOnError: True
@@ -180,6 +191,7 @@ jobs:
       platform: Gaming.Xbox.Scarlett.x64
       configuration: Release
       msbuildArchitecture: x64
+      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_2019 dbg
     continueOnError: True
@@ -190,6 +202,7 @@ jobs:
       platform: x64
       configuration: Debug
       msbuildArchitecture: x64
+      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_2019 rel
     continueOnError: True
@@ -200,6 +213,7 @@ jobs:
       platform: x64
       configuration: Release
       msbuildArchitecture: x64
+      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_2019 scardbg
     continueOnError: True
@@ -210,6 +224,7 @@ jobs:
       platform: x64
       configuration: Debug_Scarlett
       msbuildArchitecture: x64
+      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_2019 scarrel
     continueOnError: True
@@ -220,3 +235,4 @@ jobs:
       platform: x64
       configuration: Release_Scarlett
       msbuildArchitecture: x64
+      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
