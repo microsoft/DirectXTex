@@ -67,10 +67,15 @@ pool:
   vmImage: windows-2022
 
 variables:
-  Codeql.Enabled: false
-  VCPKG_ROOT: $(Build.SourcesDirectory)/vcpkg
-  VCPKG_CMAKE_DIR: $(Build.SourcesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
-  VCPKG_MANIFEST_DIR: $(Build.SourcesDirectory)/build
+- group: dxtex-shared-variables
+- name: Codeql.Enabled
+  value: false
+- name: VCPKG_ROOT
+  value: '$(Build.SourcesDirectory)/vcpkg'
+- name: VCPKG_CMAKE_DIR
+  value: '$(Build.SourcesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake'
+- name: VCPKG_MANIFEST_DIR
+  value: '$(Build.SourcesDirectory)/build'
 
 jobs:
 - job: VCPKG_BUILD

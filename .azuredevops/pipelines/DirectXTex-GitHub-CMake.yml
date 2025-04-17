@@ -59,13 +59,21 @@ resources:
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
 variables:
-  Codeql.Enabled: false
-  VCPKG_ROOT: $(Build.SourcesDirectory)/vcpkg
-  VCPKG_CMAKE_DIR: $(Build.SourcesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
-  VCPKG_MANIFEST_DIR: $(Build.SourcesDirectory)/build
-  VS_GENERATOR: 'Visual Studio 16 2019'
-  WIN10_SDK: '10.0.19041.0'
-  WIN11_SDK: '10.0.22000.0'
+- group: dxtex-shared-variables
+- name: Codeql.Enabled
+  value: false
+- name: VCPKG_ROOT
+  value: '$(Build.SourcesDirectory)/vcpkg'
+- name: VCPKG_CMAKE_DIR
+  value: '$(Build.SourcesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake'
+- name: VCPKG_MANIFEST_DIR
+  value: '$(Build.SourcesDirectory)/build'
+- name: VS_GENERATOR
+  value: 'Visual Studio 16 2019'
+- name: WIN10_SDK
+  value: '10.0.19041.0'
+- name: WIN11_SDK
+  value: '10.0.22000.0'
 
 pool:
   vmImage: windows-2019
