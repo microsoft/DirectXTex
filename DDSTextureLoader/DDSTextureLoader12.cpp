@@ -1030,19 +1030,29 @@ namespace
 
         return DXGI_FORMAT_UNKNOWN;
 
-        void SwizzleChannels(uint8_t* pixels, size_t PixelCount)
+        void SwizzleChannels8(uint8_t* pixels, size_t PixelCount) //8bit
         {
             for (size_t i = 0; i < PixelCount; ++i) 
-            {
-                uint8_t* p = pixels + (i * 4);
-                std::swap(p[0], p[2]);
-            }
+                {
+                    uint8_t* p = pixels + (i * 4);
+                    std::swap(p[0], p[2]);
+                }
+        }
+
+        void SwizzleChannels16(uint16_t* pixels, size_t PixelCount) //16 bit
+        {
+            for (size_t i = 0; i < PixelCount, ++i)
+                {
+                    uint16_t* p = pixels + (i * 4);
+                    std::swap(p[0], p[2]);
+                }
         }
 
         if (needSwizzle) 
         {
             const size_t PixelCount = header->width * header->height;
-            SwizzleChannels(const_cast<uint8_t*>(bitData), PixelCount);
+            SwizzleChannels8(const_cast<uint8_t*>(bitData), PixelCount); //8 bit
+            SwizzleChannels16(count_cast<uint16_t*>(bitData), PixelCount); //16 bit
         }
     }
 
