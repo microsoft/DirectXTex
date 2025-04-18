@@ -788,7 +788,11 @@ namespace
                     return DXGI_FORMAT_R10G10B10A2_UNORM;
                 }
 
-                // No DXGI format maps to ISBITMASK(0x000003ff,0x000ffc00,0x3ff00000,0xc0000000) aka D3DFMT_A2R10G10B10
+                if (ISBITMASK((0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000)))
+                {
+                    needSwizzle = true;
+                    return DXGI_FORMAT_R10G10B10A2_UNORM
+                }
 
                 if (ISBITMASK(0x0000ffff, 0xffff0000, 0, 0))
                 {
@@ -1025,21 +1029,22 @@ namespace
         }
 
         return DXGI_FORMAT_UNKNOWN;
-    }
-void SwizzleChannels(uint8_t* pixels, size_t PixelCount)
-{
-    for (size_t i = 0; i < PixelCount; ++i) 
-    {
-        uint8_t* p = pixels + (i * 4);
-        std::swap(p[0], p[2]);
-    }
-}
 
-if (needSwizzle) 
-{
-    const size_t PixelCount = header->width * header->height;
-    SwizzleChannels(const_cast<uint8_t*>(bitData), PixelCount);
-}
+        void SwizzleChannels(uint8_t* pixels, size_t PixelCount)
+        {
+            for (size_t i = 0; i < PixelCount; ++i) 
+            {
+                uint8_t* p = pixels + (i * 4);
+                std::swap(p[0], p[2]);
+            }
+        }
+
+        if (needSwizzle) 
+        {
+            const size_t PixelCount = header->width * header->height;
+            SwizzleChannels(const_cast<uint8_t*>(bitData), PixelCount);
+        }
+    }
 
 #undef ISBITMASK
 
