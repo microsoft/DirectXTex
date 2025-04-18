@@ -62,6 +62,13 @@ jobs:
         env:
           CompileShadersOutput: ${{ github.workspace }}/out/Shaders/Compiled
 
+      - name: 'Build Shaders (TEXENVMAP)'
+        shell: cmd
+        working-directory: ./Texenvmap/Shaders
+        run: CompileShaders.cmd
+        env:
+          CompileShadersOutput: ${{ github.workspace }}/out/Shaders/Compiled
+
       - name: Initialize MSVC Code Analysis
         uses: microsoft/msvc-code-analysis-action@24c285ab36952c9e9182f4b78dfafbac38a7e5ee # v0.1.1
         id: run-analysis
