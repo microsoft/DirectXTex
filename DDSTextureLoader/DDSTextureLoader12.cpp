@@ -744,8 +744,10 @@ namespace
     //--------------------------------------------------------------------------------------
 #define ISBITMASK( r,g,b,a ) ( ddpf.RBitMask == r && ddpf.GBitMask == g && ddpf.BBitMask == b && ddpf.ABitMask == a )
 
-    DXGI_FORMAT GetDXGIFormat(const DDS_PIXELFORMAT& ddpf) noexcept
+    DXGI_FORMAT GetDXGIFormat(const DDS_PIXELFORMAT& ddpf, bool& needSwizzle) noexcept
     {
+        needSwizzle = false;
+
         if (ddpf.flags & DDS_RGB)
         {
             // Note that sRGB formats are written using the "DX10" extended header
@@ -768,7 +770,11 @@ namespace
                     return DXGI_FORMAT_B8G8R8X8_UNORM;
                 }
 
-                // No DXGI format maps to ISBITMASK(0x000000ff,0x0000ff00,0x00ff0000,0) aka D3DFMT_X8B8G8R8
+                if (ISBITMASK((0x000000ff, 0x0000ff00, 0x00ff0000, 0))
+                {
+                    needSwizzle = true;
+                    return DXGI_FORMAT_B8G8R8X8_UNORM;
+                }
 
                 // Note that many common DDS reader/writers (including D3DX) swap the
                 // the RED/BLUE masks for 10:10:10:2 formats. We assume
@@ -782,7 +788,11 @@ namespace
                     return DXGI_FORMAT_R10G10B10A2_UNORM;
                 }
 
-                // No DXGI format maps to ISBITMASK(0x000003ff,0x000ffc00,0x3ff00000,0xc0000000) aka D3DFMT_A2R10G10B10
+                if (ISBITMASK((0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000)))
+                {
+                    needSwizzle = true;
+                    return DXGI_FORMAT_R10G10B10A2_UNORM
+                }
 
                 if (ISBITMASK(0x0000ffff, 0xffff0000, 0, 0))
                 {
@@ -1019,6 +1029,31 @@ namespace
         }
 
         return DXGI_FORMAT_UNKNOWN;
+
+        void SwizzleChannels8(uint8_t* pixels, size_t PixelCount) //8bit
+        {
+            for (size_t i = 0; i < PixelCount; ++i) 
+                {
+                    uint8_t* p = pixels + (i * 4);
+                    std::swap(p[0], p[2]);
+                }
+        }
+
+        void SwizzleChannels16(uint16_t* pixels, size_t PixelCount) //16 bit
+        {
+            for (size_t i = 0; i < PixelCount, ++i)
+                {
+                    uint16_t* p = pixels + (i * 4);
+                    std::swap(p[0], p[2]);
+                }
+        }
+
+        if (needSwizzle) 
+        {
+            const size_t PixelCount = header->width * header->height;
+            SwizzleChannels8(const_cast<uint8_t*>(bitData), PixelCount); //8 bit
+            SwizzleChannels16(count_cast<uint16_t*>(bitData), PixelCount); //16 bit
+        }
     }
 
 #undef ISBITMASK
