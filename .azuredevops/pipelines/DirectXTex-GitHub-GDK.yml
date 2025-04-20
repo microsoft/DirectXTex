@@ -198,41 +198,37 @@ jobs:
     inputs:
       solution: DirectXTex_GXDK_PC_2019.sln
       vsVersion: 16.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
       platform: x64
       configuration: Debug
       msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_2019 rel
     continueOnError: True
     inputs:
       solution: DirectXTex_GXDK_PC_2019.sln
       vsVersion: 16.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
       platform: x64
       configuration: Release
       msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_2019 scardbg
     continueOnError: True
     inputs:
       solution: DirectXTex_GXDK_PC_2019.sln
       vsVersion: 16.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
       platform: x64
       configuration: Debug_Scarlett
       msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_2019 scarrel
     continueOnError: True
     inputs:
       solution: DirectXTex_GXDK_PC_2019.sln
       vsVersion: 16.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
       platform: x64
       configuration: Release_Scarlett
       msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
