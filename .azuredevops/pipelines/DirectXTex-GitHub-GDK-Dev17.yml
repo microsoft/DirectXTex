@@ -50,6 +50,8 @@ variables:
   value: true
 - name: URL_FEED
   value: $(ADOFeedURL)
+- name: VC_PATH
+  value: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC'
 - name: skipNugetSecurityAnalysis
   value: true # We explicitly call this task so we don't need it to be auto-injected
 
