@@ -50,6 +50,8 @@ variables:
   value: true
 - name: URL_FEED
   value: $(ADOFeedURL)
+- name: VC_PATH
+  value: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC'
 - name: skipNugetSecurityAnalysis
   value: true # We explicitly call this task so we don't need it to be auto-injected
 
@@ -178,44 +180,40 @@ jobs:
     inputs:
       solution: DirectXTex_GXDK_PC_2022.sln
       vsVersion: 17.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
       platform: x64
       configuration: Debug
       msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_2022 rel
     continueOnError: True
     inputs:
       solution: DirectXTex_GXDK_PC_2022.sln
       vsVersion: 17.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
       platform: x64
       configuration: Release
       msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_2022 scardbg
     continueOnError: True
     inputs:
       solution: DirectXTex_GXDK_PC_2022.sln
       vsVersion: 17.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
       platform: x64
       configuration: Debug_Scarlett
       msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_2022 scarrel
     continueOnError: True
     inputs:
       solution: DirectXTex_GXDK_PC_2022.sln
       vsVersion: 17.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
       platform: x64
       configuration: Release_Scarlett
       msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
 
 - job: BUILD_GDK_CMAKE_SCAR
   displayName: 'Microsoft Game Development Kit (GDK) using CMake (Scarlett)'
