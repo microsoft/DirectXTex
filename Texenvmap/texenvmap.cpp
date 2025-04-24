@@ -1089,6 +1089,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
+    // check for these before the command
     if (('-' == argv[1][0]) && ('-' == argv[1][1]))
     {
         if (!_wcsicmp(argv[1], L"--version"))
@@ -1121,7 +1122,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     std::list<SConversion> conversion;
     bool allowOpts = true;
 
-    for (int iArg = 2; iArg < argc; iArg++)
+    for (int iArg = 2; iArg < argc; ++iArg)
     {
         PWSTR pArg = argv[iArg];
 
@@ -1459,7 +1460,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     for (auto pConv = conversion.begin(); pConv != conversion.end(); ++pConv)
     {
         std::filesystem::path curpath(pConv->szSrc);
-        auto const ext = curpath.extension();
+        const auto ext = curpath.extension();
 
         // Load source image
         if (pConv != conversion.begin())
@@ -1613,7 +1614,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED [converttosingleplane] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-                continue;
+                return 1;
             }
 
             auto& tinfo = timage->GetMetadata();
@@ -1649,7 +1650,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             if (FAILED(hr))
             {
                 wprintf(L" FAILED [decompress] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-                continue;
+                return 1;
             }
 
             auto& tinfo = timage->GetMetadata();
@@ -1697,7 +1698,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (FAILED(hr))
                 {
                     wprintf(L" FAILED [demultiply alpha] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
-                    continue;
+                    return 1;
                 }
 
                 auto& tinfo = timage->GetMetadata();
