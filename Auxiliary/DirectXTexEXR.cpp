@@ -490,11 +490,9 @@ HRESULT DirectX::SaveToEXRFile(const Image& image, const wchar_t* szFile)
     }
 
     // Create file and write header
-    ScopedHandle hFile(safe_handle(CreateFileW(
+    ScopedHandle hFile(safe_handle(CreateFile2(
         szFile,
-        GENERIC_WRITE, 0,
-        nullptr,
-        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
+        GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING,
         nullptr)));
     if (!hFile)
     {
