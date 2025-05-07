@@ -209,12 +209,12 @@ namespace Xbox
     // DDS helper functions
     DIRECTX_TEX_API HRESULT __cdecl EncodeDDSHeader(
         const XboxImage& xbox,
-        _Out_writes_bytes_(maxsize) uint8_t* pDestination, _In_ size_t maxsize) noexcept;
+        _Out_writes_bytes_opt_(maxsize) uint8_t* pDestination, _In_ size_t maxsize) noexcept;
 
 #ifdef __cpp_lib_byte
     inline HRESULT __cdecl EncodeDDSHeader(
         const XboxImage& xbox,
-        _Out_writes_bytes_(maxsize) std::byte* pDestination, _In_ size_t maxsize) noexcept
+        _Out_writes_bytes_opt_(maxsize) std::byte* pDestination, _In_ size_t maxsize) noexcept
     {
         return EncodeDDSHeader(xbox, reinterpret_cast<uint8_t*>(pDestination), maxsize);
     }
