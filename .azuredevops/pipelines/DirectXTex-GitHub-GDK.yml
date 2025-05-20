@@ -134,5 +134,5 @@ jobs:
       msbuildArguments: /p:GDKEditionNumber=$(GDK_EDITION)
   - template: '/.azuredevops/templates/DirectXTex-build-gdk.yml'
     parameters:
-      msVersion: 16.0
+      msVersion: '16.0'
       vsYear: 2019

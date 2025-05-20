@@ -5,12 +5,12 @@
 
 parameters:
 - name: msVersion
-  type: number
-  values:
-    - 16.0
-    - 17.0
-- name: vsYear
   type: string
+  values:
+    - '16.0'
+    - '17.0'
+- name: vsYear
+  type: number
   values:
     - 2019
     - 2022
