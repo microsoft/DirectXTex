@@ -21,6 +21,7 @@ pr:
   paths:
     include:
     - '.azuredevops/pipelines/DirectXTex-GitHub-GDK-Dev17.yml'
+    - '.azuredevops/templates/DirectXTex-build-gdk.yml'
     - CMakeList.txt
     - build/*.in
     - build/*.cmake
