@@ -48,35 +48,35 @@ jobs:
       Release_x64:
         BuildPlatform: x64
         BuildConfiguration: Release
-        Spectre: false
+        SpectreMitigation: false
       Debug_x64:
         BuildPlatform: x64
         BuildConfiguration: Debug
-        Spectre: false
+        SpectreMitigation: false
       Release_x86:
         BuildPlatform: x86
         BuildConfiguration: Release
-        Spectre: false
+        SpectreMitigation: false
       Debug_x86:
         BuildPlatform: x86
         BuildConfiguration: Debug
-        Spectre: false
+        SpectreMitigation: false
       Release_x64_SpectreMitigated:
         BuildPlatform: x64
         BuildConfiguration: Release
-        Spectre: true
+        SpectreMitigation: 'Spectre'
       Debug_x64_SpectreMitigated:
         BuildPlatform: x64
         BuildConfiguration: Debug
-        Spectre: true
+        SpectreMitigation: 'Spectre'
       Release_x86_SpectreMitigated:
         BuildPlatform: x86
         BuildConfiguration: Release
-        Spectre: true
+        SpectreMitigation: 'Spectre'
       Debug_x86_SpectreMitigated:
         BuildPlatform: x86
         BuildConfiguration: Debug
-        Spectre: true
+        SpectreMitigation: 'Spectre'
   steps:
   - checkout: self
     clean: true
@@ -85,13 +85,13 @@ jobs:
     displayName: Build solution DirectXTex_Desktop_2019.sln
     inputs:
       solution: DirectXTex_Desktop_2019.sln
-      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=$(Spectre)
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=$(SpectreMitigation)
       platform: '$(BuildPlatform)'
       configuration: '$(BuildConfiguration)'
   - task: VSBuild@1
     displayName: Build solution DirectXTex_Desktop_2019_Win10.sln
     inputs:
       solution: DirectXTex_Desktop_2019_Win10.sln
-      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=$(Spectre)
+      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:SpectreMitigation=$(SpectreMitigation)
       platform: '$(BuildPlatform)'
       configuration: '$(BuildConfiguration)'
