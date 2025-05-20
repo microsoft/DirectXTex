@@ -5,6 +5,7 @@
 
 # Template used by SDK-release and SDK-prerelease pipelines
 
+steps:
 - task: VSBuild@1
   displayName: Build solution DirectXTex_Windows10_2022.sln 32dbg
   inputs:
