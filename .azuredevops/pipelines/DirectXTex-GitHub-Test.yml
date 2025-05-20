@@ -49,9 +49,24 @@ variables:
 
 jobs:
 - job: DESKTOP_BUILD
-  displayName: 'Win32 Desktop for x64/x86'
+  displayName: 'Windows Desktop for x64/x86'
   timeoutInMinutes: 120
   cancelTimeoutInMinutes: 1
+  strategy:
+    maxParallel: 2
+    matrix:
+      Release_x64:
+        BuildPlatform: x64
+        BuildConfiguration: Release
+      Debug_x64:
+        BuildPlatform: x64
+        BuildConfiguration: Debug
+      Release_x86:
+        BuildPlatform: x86
+        BuildConfiguration: Release
+      Debug_x86:
+        BuildPlatform: x86
+        BuildConfiguration: Debug
   steps:
   - checkout: self
     clean: true
@@ -73,69 +88,21 @@ jobs:
       feedRestore: $(GUID_FEED)
       includeNuGetOrg: false
   - task: VSBuild@1
-    displayName: Build solution DirectXTex_Tests_Desktop_2019.sln 32dbg
+    displayName: Build solution DirectXTex_Tests_Desktop_2019.sln
     inputs:
       solution: Tests/DirectXTex_Tests_Desktop_2019.sln
       vsVersion: 16.0
       msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: x86
-      configuration: Debug
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_Tests_Desktop_2019.sln 32rel
-    inputs:
-      solution: Tests/DirectXTex_Tests_Desktop_2019.sln
-      vsVersion: 16.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: x86
-      configuration: Release
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_Tests_Desktop_2019.sln 64dbg
-    inputs:
-      solution: Tests/DirectXTex_Tests_Desktop_2019.sln
-      vsVersion: 16.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: x64
-      configuration: Debug
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_Tests_Desktop_2019.sln 64rel
-    inputs:
-      solution: Tests/DirectXTex_Tests_Desktop_2019.sln
-      vsVersion: 16.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: x64
-      configuration: Release
+      platform: '$(BuildPlatform)'
+      configuration: '$(BuildConfiguration)'
   - task: VSBuild@1
     displayName: Build solution DirectXTex_Tests_Desktop_2019_Win10.sln 32dbg
     inputs:
       solution: Tests/DirectXTex_Tests_Desktop_2019_Win10.sln
       vsVersion: 16.0
       msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: x86
-      configuration: Debug
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_Tests_Desktop_2019_Win10.sln 32rel
-    inputs:
-      solution: Tests/DirectXTex_Tests_Desktop_2019_Win10.sln
-      vsVersion: 16.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: x86
-      configuration: Release
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_Tests_Desktop_2019_Win10.sln 64dbg
-    inputs:
-      solution: Tests/DirectXTex_Tests_Desktop_2019_Win10.sln
-      vsVersion: 16.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: x64
-      configuration: Debug
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_Tests_Desktop_2019_Win10.sln 64rel
-    inputs:
-      solution: Tests/DirectXTex_Tests_Desktop_2019_Win10.sln
-      vsVersion: 16.0
-      msbuildArgs: /p:PreferredToolArchitecture=x64
-      platform: x64
-      configuration: Release
+      platform: '$(BuildPlatform)'
+      configuration: '$(BuildConfiguration)'
 
 - job: CMAKE_BUILD_X64
   displayName: 'CMake for X64 BUILD_TESTING=ON'
