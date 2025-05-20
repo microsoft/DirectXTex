@@ -114,8 +114,7 @@ jobs:
       msbuildVersion: 17.0
       msbuildArchitecture: x64
       msbuildArguments: /p:GDKEditionNumber=$(GDK_EDITION)
-  - extends:
-    template: '/.azuredevops/pipelines/DirectXTex-build-gdk.yml'
+  - template: '/.azuredevops/templates/DirectXTex-build-gdk.yml'
     parameters:
       msVersion: 17.0
       vsYear: 2022
