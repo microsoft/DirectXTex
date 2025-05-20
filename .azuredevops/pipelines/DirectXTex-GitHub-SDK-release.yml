@@ -97,7 +97,7 @@ jobs:
       SourceFolder: build
       Contents: 'Directory.Build.props'
       TargetFolder: $(Build.SourcesDirectory)
-  - template: '.azuredevops/templates/DirectXTex-build-win32.yml'
+  - template: '/.azuredevops/templates/DirectXTex-build-win32.yml'
 
 - job: UWP_BUILD
   displayName: 'Universal Windows Platform (UWP)'
@@ -154,4 +154,4 @@ jobs:
       SourceFolder: build
       Contents: 'Directory.Build.props'
       TargetFolder: $(Build.SourcesDirectory)
-  - template: '.azuredevops/templates/DirectXTex-build-uwp.yml'
+  - template: '/.azuredevops/templates/DirectXTex-build-uwp.yml'
