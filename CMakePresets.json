@@ -422,6 +422,11 @@
     { "name": "arm64-Debug-Clang"  , "configurePreset": "arm64-Debug-Clang" },
     { "name": "arm64-Release-Clang", "configurePreset": "arm64-Release-Clang" },
 
+    { "name": "x64-Debug-GDKX"     , "configurePreset": "x64-Debug-GDKX" },
+    { "name": "x64-Release-GDKX"   , "configurePreset": "x64-Release-GDKX" },
+    { "name": "x64-Debug-GDKX-S"   , "configurePreset": "x64-Debug-GDKX-S" },
+    { "name": "x64-Release-GDKX-S" , "configurePreset": "x64-Release-GDKX-S" },
+
     { "name": "x64-Debug-MinGW"    , "configurePreset": "x64-Debug-MinGW" },
     { "name": "x64-Release-MinGW"  , "configurePreset": "x64-Release-MinGW" },
     { "name": "x86-Debug-MinGW"    , "configurePreset": "x86-Debug-MinGW" },
