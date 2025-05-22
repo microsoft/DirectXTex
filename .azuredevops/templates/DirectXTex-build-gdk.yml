@@ -3,6 +3,8 @@
 #
 # http://go.microsoft.com/fwlink/?LinkId=248926
 
+# Template used by GitHub-GDK-* pipelines
+
 parameters:
 - name: msVersion
   type: string
@@ -16,103 +18,103 @@ parameters:
     - 2022
 
 steps:
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} pcdbg
-    continueOnError: True
-    inputs:
-      solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
-      vsVersion: ${{ parameters.msVersion }}
-      platform: Gaming.Desktop.x64
-      configuration: Debug
-      msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} pcrel
-    continueOnError: True
-    inputs:
-      solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
-      vsVersion: ${{ parameters.msVersion }}
-      platform: Gaming.Desktop.x64
-      configuration: Release
-      msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} xbdbg
-    continueOnError: True
-    inputs:
-      solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
-      vsVersion: ${{ parameters.msVersion }}
-      platform: Gaming.Xbox.XboxOne.x64
-      configuration: Debug
-      msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} xbrel
-    continueOnError: True
-    inputs:
-      solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
-      vsVersion: ${{ parameters.msVersion }}
-      platform: Gaming.Xbox.XboxOne.x64
-      configuration: Release
-      msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} scardbg
-    continueOnError: True
-    inputs:
-      solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
-      vsVersion: ${{ parameters.msVersion }}
-      platform: Gaming.Xbox.Scarlett.x64
-      configuration: Debug
-      msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} scarrel
-    continueOnError: True
-    inputs:
-      solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
-      vsVersion: ${{ parameters.msVersion }}
-      platform: Gaming.Xbox.Scarlett.x64
-      configuration: Release
-      msbuildArchitecture: x64
-      msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_GDK_PC_${{ parameters.vsYear }} dbg
-    continueOnError: True
-    inputs:
-      solution: DirectXTex_GXDK_PC_${{ parameters.vsYear }}.sln
-      vsVersion: ${{ parameters.msVersion }}
-      platform: x64
-      configuration: Debug
-      msbuildArchitecture: x64
-      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_GDK_PC_${{ parameters.vsYear }} rel
-    continueOnError: True
-    inputs:
-      solution: DirectXTex_GXDK_PC_${{ parameters.vsYear }}.sln
-      vsVersion: ${{ parameters.msVersion }}
-      platform: x64
-      configuration: Release
-      msbuildArchitecture: x64
-      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_GDK_PC_${{ parameters.vsYear }} scardbg
-    continueOnError: True
-    inputs:
-      solution: DirectXTex_GXDK_PC_${{ parameters.vsYear }}.sln
-      vsVersion: ${{ parameters.msVersion }}
-      platform: x64
-      configuration: Debug_Scarlett
-      msbuildArchitecture: x64
-      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
-  - task: VSBuild@1
-    displayName: Build solution DirectXTex_GDK_PC_${{ parameters.vsYear }} scarrel
-    continueOnError: True
-    inputs:
-      solution: DirectXTex_GXDK_PC_${{ parameters.vsYear }}.sln
-      vsVersion: ${{ parameters.msVersion }}
-      platform: x64
-      configuration: Release_Scarlett
-      msbuildArchitecture: x64
-      msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
+- task: VSBuild@1
+  displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} pcdbg
+  continueOnError: True
+  inputs:
+    solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
+    vsVersion: ${{ parameters.msVersion }}
+    platform: Gaming.Desktop.x64
+    configuration: Debug
+    msbuildArchitecture: x64
+    msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+- task: VSBuild@1
+  displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} pcrel
+  continueOnError: True
+  inputs:
+    solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
+    vsVersion: ${{ parameters.msVersion }}
+    platform: Gaming.Desktop.x64
+    configuration: Release
+    msbuildArchitecture: x64
+    msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+- task: VSBuild@1
+  displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} xbdbg
+  continueOnError: True
+  inputs:
+    solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
+    vsVersion: ${{ parameters.msVersion }}
+    platform: Gaming.Xbox.XboxOne.x64
+    configuration: Debug
+    msbuildArchitecture: x64
+    msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+- task: VSBuild@1
+  displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} xbrel
+  continueOnError: True
+  inputs:
+    solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
+    vsVersion: ${{ parameters.msVersion }}
+    platform: Gaming.Xbox.XboxOne.x64
+    configuration: Release
+    msbuildArchitecture: x64
+    msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+- task: VSBuild@1
+  displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} scardbg
+  continueOnError: True
+  inputs:
+    solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
+    vsVersion: ${{ parameters.msVersion }}
+    platform: Gaming.Xbox.Scarlett.x64
+    configuration: Debug
+    msbuildArchitecture: x64
+    msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+- task: VSBuild@1
+  displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} scarrel
+  continueOnError: True
+  inputs:
+    solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
+    vsVersion: ${{ parameters.msVersion }}
+    platform: Gaming.Xbox.Scarlett.x64
+    configuration: Release
+    msbuildArchitecture: x64
+    msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
+- task: VSBuild@1
+  displayName: Build solution DirectXTex_GDK_PC_${{ parameters.vsYear }} dbg
+  continueOnError: True
+  inputs:
+    solution: DirectXTex_GXDK_PC_${{ parameters.vsYear }}.sln
+    vsVersion: ${{ parameters.msVersion }}
+    platform: x64
+    configuration: Debug
+    msbuildArchitecture: x64
+    msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
+- task: VSBuild@1
+  displayName: Build solution DirectXTex_GDK_PC_${{ parameters.vsYear }} rel
+  continueOnError: True
+  inputs:
+    solution: DirectXTex_GXDK_PC_${{ parameters.vsYear }}.sln
+    vsVersion: ${{ parameters.msVersion }}
+    platform: x64
+    configuration: Release
+    msbuildArchitecture: x64
+    msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
+- task: VSBuild@1
+  displayName: Build solution DirectXTex_GDK_PC_${{ parameters.vsYear }} scardbg
+  continueOnError: True
+  inputs:
+    solution: DirectXTex_GXDK_PC_${{ parameters.vsYear }}.sln
+    vsVersion: ${{ parameters.msVersion }}
+    platform: x64
+    configuration: Debug_Scarlett
+    msbuildArchitecture: x64
+    msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
+- task: VSBuild@1
+  displayName: Build solution DirectXTex_GDK_PC_${{ parameters.vsYear }} scarrel
+  continueOnError: True
+  inputs:
+    solution: DirectXTex_GXDK_PC_${{ parameters.vsYear }}.sln
+    vsVersion: ${{ parameters.msVersion }}
+    platform: x64
+    configuration: Release_Scarlett
+    msbuildArchitecture: x64
+    msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
