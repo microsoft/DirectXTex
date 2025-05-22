@@ -36,7 +36,7 @@ pr:
     exclude:
     - '*.md'
     - LICENSE
-    - '.github/*'
+    - '.github/**'
     - '.nuget/*'
     - build/*.cmd
     - build/OneFuzz*.json
