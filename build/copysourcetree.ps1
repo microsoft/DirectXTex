@@ -8,20 +8,45 @@ Licensed under the MIT License.
 Copies the source tree excluding various .git and control files.
 
 .DESCRIPTION
-This script is used to extract a 'clean' source tree for deplying tests.
+This script is used to extract a minimal source tree for testing.
 
 .PARAMETER FilePath
 Indicates the root of the tree to copy to.
 
 .PARAMETER Overwrite
-Indicates overwrite of existing content.
+Indicates overwrite of existing content if present.
+
+.PARAMETER Clean
+Delete content in the target directory before copying.
+
+.EXAMPLE
+copysourcetree.ps1 -Destination D:\temp\abc
+
+.EXAMPLE
+Remove-Item D:\temp\abc -Recurse -force -ErrorAction SilentlyContinue | Out-Null
+New-Item -Path D:\Temp -Name "abc" -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
+.\build\copysourcetree.ps1 -Destination D:\temp\abc
+robocopy /mir D:\temp\abc\DirectXTex \\durfs\durango\TestContent\samples\nightly_dist_directxtex\DirectXTex
+robocopy /mir D:\Microsoft\directxtexmedia \\durfs\durango\TestContent\samples\nightly_dist_directxtex\directxtexmedia /XD D:\Microsoft\directxtexmedia\.git
+
+Update internal test share.
 #>
 
 param(
     [Parameter(Mandatory)]
     [string]$Destination,
-    [switch]$Overwrite
+    [switch]$Quiet,
+    [switch]$Overwrite,
+    [switch]$Clean
 )
+
+$xcopyFlags = "/Y/S"
+if($Quiet) {
+    $xcopyFlags += "/Q"
+}
+else {
+    $xcopyFlags += "/F"
+}
 
 function Copy-Source {
 
@@ -46,7 +71,7 @@ function Copy-Source {
 
     $filters | ForEach-Object {
         $files = Join-Path -Path $Path -ChildPath $_
-        xcopy /Y/S/Q /EXCLUDE:$excludefile $files $Destination
+        xcopy $xcopyFlags /EXCLUDE:$excludefile $files $Destination
         if ($LastExitCode -ne 0) {
             Write-Error "Failed copying source files" -ErrorAction Stop
         }
@@ -57,17 +82,26 @@ if (-Not (Test-Path $Destination)) {
     Write-Error "ERROR: -Destination folder does not exist" -ErrorAction Stop
 }
 
-$targetreadme = Join-Path -Path $Destination -ChildPath "README.md"
+$destdir = Join-Path $Destination -ChildPath "DirectXTex"
+
+$targetreadme = Join-Path -Path $destdir -ChildPath "README.md"
 
 if ((Test-Path $targetreadme) -And (-Not $Overwrite)) {
     Write-Error "ERROR: Destination folder contains files. Use -Overwrite to proceed anyhow." -ErrorAction Stop
 }
+
+if($Clean) {
+    Write-Host "Clean..."
+    Remove-Item $destdir -Recurse -force -ErrorAction SilentlyContinue | Out-Null
+}
+
+New-Item -Path $Destination -Name "DirectXTex" -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
 
 $sourcedir = Split-Path -Path $PSScriptRoot -Parent
 
 $readme = Join-Path -Path $sourcedir -ChildPath "README.md"
 $license = Join-Path -Path $sourcedir -ChildPath "LICENSE"
 
-Copy-Item $readme -Destination $Destination
-Copy-Item $license -Destination $Destination
-Copy-Source -Path $sourcedir -Destination $Destination
+Copy-Item $readme -Destination $destdir
+Copy-Item $license -Destination $destdir
+Copy-Source -Path $sourcedir -Destination $destdir
