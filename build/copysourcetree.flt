@@ -1,0 +1,14 @@
+.azuredevops\
+.git\
+.github\
+.nuget\
+.vs\
+build\
+wiki\
+DDSTextureLoader\
+ScreenGrab\
+WICTextureLoader\
+texassemble\
+texconv\
+texdiag\
+DDSView\
