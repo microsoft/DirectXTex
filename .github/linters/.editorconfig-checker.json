@@ -4,6 +4,6 @@
         ".git",
         "LICENSE",
         "Tests",
-        "Common\\.h"
+        "Common/d3dx12.h"
     ]
 }
