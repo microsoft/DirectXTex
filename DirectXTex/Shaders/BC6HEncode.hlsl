@@ -2259,8 +2259,8 @@ void block_package(inout uint4 block, int2x3 endPoint, uint mode_type) // for mo
     if (mode_type == candidateModeFlag[10])
     {
         /* block.x |= candidateModeMemory[10];
-         block.y |= ( ( endPoint[1].r << 3 ) & 0x00001FF8 ) | ( ( endPoint[1].g << 13 ) & 0x007FE000 ) | ( ( endPoint[1].b << 23 ) & 0xFF800000 );
-         block.z |= ( endPoint[1].b >> 9 ) & 0x00000001;*/
+        block.y |= ( ( endPoint[1].r << 3 ) & 0x00001FF8 ) | ( ( endPoint[1].g << 13 ) & 0x007FE000 ) | ( ( endPoint[1].b << 23 ) & 0xFF800000 );
+        block.z |= ( endPoint[1].b >> 9 ) & 0x00000001;*/
 
         block.x |= ((candidateModeMemory[10] >> 0) & 1) << 0;
         block.x |= ((candidateModeMemory[10] >> 1) & 1) << 1;

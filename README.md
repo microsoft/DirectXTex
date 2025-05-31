@@ -34,7 +34,7 @@ These components are designed to work without requiring any content from the leg
 
   * This DirectXTex sample is an implementation of the [texconv](https://github.com/Microsoft/DirectXTex/wiki/Texconv) command-line texture utility from the DirectX SDK utilizing DirectXTex rather than D3DX.
 
-    It supports the same arguments as the *Texture Conversion Tool Extended* (``texconvex.exe``) legacy DirectX SDK utility. The primary differences are the ``-10`` and ``-11`` arguments are not applicable and the filter names (``POINT``, ``LINEAR``, ``CUBIC``, ``FANT`` or ``BOX``, ``TRIANGLE``, ``*_DITHER``, ``*_DITHER_DIFFUSION``). This also includes support for the JPEG XR (HD Photo) bitmap format.
+    It supports the same arguments as the _Texture Conversion Tool Extended_ (``texconvex.exe``) legacy DirectX SDK utility. The primary differences are the ``-10`` and ``-11`` arguments are not applicable and the filter names (``POINT``, ``LINEAR``, ``CUBIC``, ``FANT`` or ``BOX``, ``TRIANGLE``, ``*_DITHER``, ``*_DITHER_DIFFUSION``). This also includes support for the JPEG XR (HD Photo) bitmap format.
 
 * ``Texassemble\``
 
@@ -50,7 +50,7 @@ These components are designed to work without requiring any content from the leg
 
 * ``DDSTextureLoader\``
 
-  * This contains a streamlined version of the legacy DirectX SDK sample *DDSWithoutD3DX11* texture loading code for a simple light-weight runtime DDS loader. There are versions for Direct3D 9, Direct3D 11, and Direct3D 12. This performs no runtime pixel data conversions. This is ideal for runtime usage, and supports the full complement of Direct3D texture  resources (1D, 2D, volume maps, cubemaps, mipmap levels, texture arrays, BC formats, etc.).
+  * This contains a streamlined version of the legacy DirectX SDK sample _DDSWithoutD3DX11_ texture loading code for a simple light-weight runtime DDS loader. There are versions for Direct3D 9, Direct3D 11, and Direct3D 12. This performs no runtime pixel data conversions. This is ideal for runtime usage, and supports the full complement of Direct3D texture  resources (1D, 2D, volume maps, cubemaps, mipmap levels, texture arrays, BC formats, etc.).
 
 * ``ScreenGrab\``
 
@@ -87,7 +87,7 @@ For a full change history, see [CHANGELOG.md](https://github.com/microsoft/Direc
 
 * Starting with the July 2022 release, the ``bool forceSRGB`` parameter for the **CreateTextureEx** and **CreateShaderResourceViewEx** functions is now a ``CREATETEX_FLAGS`` typed enum bitmask flag parameter. This may have a _breaking change_ impact to client code. Replace ``true`` with ``CREATETEX_FORCE_SRGB`` and ``false`` with ``CREATETEX_DEFAULT``.
 
-* Starting with the June 2020 release, this library makes use of typed enum bitmask flags per the recommendation of the _C++ Standard_ section *17.5.2.1.3 Bitmask types*. This is consistent with Direct3D 12's use of the ``DEFINE_ENUM_FLAG_OPERATORS`` macro. This may have _breaking change_ impacts to client code:
+* Starting with the June 2020 release, this library makes use of typed enum bitmask flags per the recommendation of the _C++ Standard_ section _17.5.2.1.3 Bitmask types_. This is consistent with Direct3D 12's use of the ``DEFINE_ENUM_FLAG_OPERATORS`` macro. This may have _breaking change_ impacts to client code:
 
   * You cannot pass the ``0`` literal as your flags value. Instead you must make use of the appropriate default enum value: ``CP_FLAGS_NONE``, ``DDS_FLAGS_NONE``, ``WIC_FLAGS_NONE``, ``TEX_FR_ROTATE0``, ``TEX_FILTER_DEFAULT``, ``TEX_FILTER_DEFAULT``, ``TEX_FILTER_DEFAULT``, ``CNMAP_DEFAULT``, or ``CNMAP_DEFAULT``.
 
