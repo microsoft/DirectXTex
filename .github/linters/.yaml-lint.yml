@@ -1,0 +1,15 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
+ignore-from-file: .gitignore
+
+extends: default
+
+rules:
+  truthy:
+    check-keys: false
+  document-start: disable
+  line-length:
+    max: 150
+  comments:
+    min-spaces-from-content: 1
