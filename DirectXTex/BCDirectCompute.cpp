@@ -22,24 +22,24 @@ namespace
 {
     namespace cs5
     {
-        #include "BC7Encode_EncodeBlockCS.inc"
-        #include "BC7Encode_TryMode02CS.inc"
-        #include "BC7Encode_TryMode137CS.inc"
-        #include "BC7Encode_TryMode456CS.inc"
-        #include "BC6HEncode_EncodeBlockCS.inc"
-        #include "BC6HEncode_TryModeG10CS.inc"
-        #include "BC6HEncode_TryModeLE10CS.inc"
+    #include "BC7Encode_EncodeBlockCS.inc"
+    #include "BC7Encode_TryMode02CS.inc"
+    #include "BC7Encode_TryMode137CS.inc"
+    #include "BC7Encode_TryMode456CS.inc"
+    #include "BC6HEncode_EncodeBlockCS.inc"
+    #include "BC6HEncode_TryModeG10CS.inc"
+    #include "BC6HEncode_TryModeLE10CS.inc"
     }
 
     namespace cs4
     {
-        #include "BC7Encode_EncodeBlockCS_cs40.inc"
-        #include "BC7Encode_TryMode02CS_cs40.inc"
-        #include "BC7Encode_TryMode137CS_cs40.inc"
-        #include "BC7Encode_TryMode456CS_cs40.inc"
-        #include "BC6HEncode_EncodeBlockCS_cs40.inc"
-        #include "BC6HEncode_TryModeG10CS_cs40.inc"
-        #include "BC6HEncode_TryModeLE10CS_cs40.inc"
+    #include "BC7Encode_EncodeBlockCS_cs40.inc"
+    #include "BC7Encode_TryMode02CS_cs40.inc"
+    #include "BC7Encode_TryMode137CS_cs40.inc"
+    #include "BC7Encode_TryMode456CS_cs40.inc"
+    #include "BC6HEncode_EncodeBlockCS_cs40.inc"
+    #include "BC6HEncode_TryModeG10CS_cs40.inc"
+    #include "BC6HEncode_TryModeLE10CS_cs40.inc"
     }
 
     struct BufferBC6HBC7
@@ -101,8 +101,7 @@ GPUCompressBC::GPUCompressBC() noexcept :
     m_bc7_mode137(false),
     m_width(0),
     m_height(0)
-{
-}
+{}
 
 
 //-------------------------------------------------------------------------------------

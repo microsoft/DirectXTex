@@ -153,12 +153,12 @@ namespace
             SetLastError(0);
         }
 
-#if COMBINED_OPENEXR_VERSION >= 30300
+    #if COMBINED_OPENEXR_VERSION >= 30300
         int64_t read(void *buf, uint64_t sz, uint64_t offset) override
         {
             return Imf::IStream::read(buf, sz, offset);
         }
-#endif
+    #endif
 
     private:
         HANDLE m_hFile;
@@ -169,7 +169,8 @@ namespace
     {
     public:
         OutputStream(HANDLE hFile, const char fileName[]) :
-            OStream(fileName), m_hFile(hFile) {}
+            OStream(fileName), m_hFile(hFile)
+        {}
 
         OutputStream(const OutputStream&) = delete;
         OutputStream& operator = (const OutputStream&) = delete;
@@ -259,11 +260,11 @@ HRESULT DirectX::GetMetadataFromEXRFile(const wchar_t* szFile, TexMetadata& meta
 
     try
     {
-#ifdef _WIN32
+    #ifdef _WIN32
         Imf::RgbaInputFile file(stream);
-#else
+    #else
         Imf::RgbaInputFile file(fileName.c_str());
-#endif
+    #endif
 
         const auto dw = file.dataWindow();
 
@@ -293,9 +294,9 @@ HRESULT DirectX::GetMetadataFromEXRFile(const wchar_t* szFile, TexMetadata& meta
 #ifdef _WIN32
     catch (const com_exception& exc)
     {
-#ifdef _DEBUG
+    #ifdef _DEBUG
         OutputDebugStringA(exc.what());
-#endif
+    #endif
         hr = exc.get_result();
     }
 #endif
@@ -368,11 +369,11 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
 
     try
     {
-#ifdef _WIN32
+    #ifdef _WIN32
         Imf::RgbaInputFile file(stream);
-#else
+    #else
         Imf::RgbaInputFile file(fileName.c_str());
-#endif
+    #endif
 
         const auto dw = file.dataWindow();
 
@@ -403,7 +404,7 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
         }
 
         hr = image.Initialize2D(DXGI_FORMAT_R16G16B16A16_FLOAT,
-                static_cast<size_t>(width), static_cast<size_t>(height), arraySize, 1u);
+            static_cast<size_t>(width), static_cast<size_t>(height), arraySize, 1u);
 
         if (FAILED(hr))
             return hr;
@@ -414,9 +415,9 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
 #ifdef _WIN32
     catch (const com_exception& exc)
     {
-#ifdef _DEBUG
+    #ifdef _DEBUG
         OutputDebugStringA(exc.what());
-#endif
+    #endif
         hr = exc.get_result();
     }
 #endif
@@ -514,11 +515,11 @@ HRESULT DirectX::SaveToEXRFile(const Image& image, const wchar_t* szFile)
         const auto width = static_cast<int>(image.width);
         const auto height = static_cast<int>(image.height);
 
-#ifdef _WIN32
+    #ifdef _WIN32
         Imf::RgbaOutputFile file(stream, Imf::Header(width, height), Imf::WRITE_RGBA);
-#else
+    #else
         Imf::RgbaOutputFile file(fileName.c_str(), Imf::Header(width, height), Imf::WRITE_RGBA);
-#endif
+    #endif
 
         if (image.format == DXGI_FORMAT_R16G16B16A16_FLOAT)
         {
@@ -586,9 +587,9 @@ HRESULT DirectX::SaveToEXRFile(const Image& image, const wchar_t* szFile)
 #ifdef _WIN32
     catch (const com_exception& exc)
     {
-#ifdef _DEBUG
+    #ifdef _DEBUG
         OutputDebugStringA(exc.what());
-#endif
+    #endif
         hr = exc.get_result();
     }
 #endif

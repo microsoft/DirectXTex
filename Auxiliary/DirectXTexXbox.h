@@ -62,9 +62,13 @@ namespace Xbox
     {
     public:
         XboxImage() noexcept
-            : dataSize(0), baseAlignment(0), tilemode(c_XboxTileModeInvalid), metadata{}, memory(nullptr) {}
+            : dataSize(0), baseAlignment(0), tilemode(c_XboxTileModeInvalid), metadata{}, memory(nullptr)
+        {}
         XboxImage(XboxImage&& moveFrom) noexcept
-            : dataSize(0), baseAlignment(0), tilemode(c_XboxTileModeInvalid), metadata{}, memory(nullptr) { *this = std::move(moveFrom); }
+            : dataSize(0), baseAlignment(0), tilemode(c_XboxTileModeInvalid), metadata{}, memory(nullptr)
+        {
+            *this = std::move(moveFrom);
+        }
         ~XboxImage() { Release(); }
 
         XboxImage& __cdecl operator= (XboxImage&& moveFrom) noexcept;

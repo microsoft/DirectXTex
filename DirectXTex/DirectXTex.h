@@ -441,9 +441,13 @@ namespace DirectX
     {
     public:
         ScratchImage() noexcept
-            : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr) {}
+            : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr)
+        {}
         ScratchImage(ScratchImage&& moveFrom) noexcept
-            : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr) { *this = std::move(moveFrom); }
+            : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr)
+        {
+            *this = std::move(moveFrom);
+        }
         ~ScratchImage() { Release(); }
 
         ScratchImage& __cdecl operator= (ScratchImage&& moveFrom) noexcept;
@@ -537,8 +541,7 @@ namespace DirectX
             width(tile.WidthInTexels),
             height(tile.HeightInTexels),
             depth(tile.DepthInTexels)
-        {
-        }
+        {}
 
         void GetTileShape11(D3D11_TILE_SHAPE& tile) const
         {
@@ -553,8 +556,7 @@ namespace DirectX
             width(tile.WidthInTexels),
             height(tile.HeightInTexels),
             depth(tile.DepthInTexels)
-        {
-        }
+        {}
 
         void GetTileShape12(D3D12_TILE_SHAPE& tile) const
         {
