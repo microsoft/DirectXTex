@@ -4,6 +4,6 @@
         ".git",
         "LICENSE",
         "Tests",
-        "Common"
+        "Common\\.h"
     ]
 }
