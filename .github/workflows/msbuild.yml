@@ -37,6 +37,9 @@ jobs:
         vs: [2019, 2022]
         build_type: [Debug, Release]
         platform: [x86, x64, ARM64]
+        exclude:
+          - vs: 2019
+            platform: ARM64
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
