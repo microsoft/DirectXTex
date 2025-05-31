@@ -6,7 +6,7 @@ http://go.microsoft.com/fwlink/?LinkId=248926
 
 Copyright (c) Microsoft Corporation.
 
-**March 24, 2025**
+## March 24, 2025
 
 This package contains DirectXTex, a shared source library for reading and writing ``.DDS`` files, and performing various texture content processing operations including resizing, format conversion, mip-map generation, block compression for Direct3D runtime texture resources, and height-map to normal-map conversion. This library makes use of the Windows Image Component (WIC) APIs. It also includes ``.TGA`` and ``.HDR`` readers and writers since these image file formats are commonly used for texture content processing pipelines, but are not currently supported by a built-in WIC codec.
 
@@ -18,55 +18,54 @@ These components are designed to work without requiring any content from the leg
 
 * ``DirectXTex\``
 
-  + This contains the DirectXTex library. This includes a full-featured DDS reader and writer including legacy format conversions, a TGA reader and writer, a HDR reader and writer, a WIC-based bitmap reader and writer (BMP, JPEG, PNG, TIFF, and HD Photo), and various texture processing functions. This is intended primarily for tool usage.
+  * This contains the DirectXTex library. This includes a full-featured DDS reader and writer including legacy format conversions, a TGA reader and writer, a HDR reader and writer, a WIC-based bitmap reader and writer (BMP, JPEG, PNG, TIFF, and HD Photo), and various texture processing functions. This is intended primarily for tool usage.
 
 > The majority of the header files here are intended for internal implementation of the library only (``BC.h``, ``BCDirectCompute.h``, ``DDS.h``, ``DirectXTexP.h``, etc.). Only ``DirectXTex.h`` and ``DirectXTex.inl`` are meant as the 'public' header for the library.
 
 * ``Auxiliary\``
 
-  + Contains optional source files for the DirectXTex library, such as adapter loading functions using the OpenEXR library, Xbox texture tiling extensions, etc.
+  * Contains optional source files for the DirectXTex library, such as adapter loading functions using the OpenEXR library, Xbox texture tiling extensions, etc.
 
 * ``Common\``
 
-  + Contains shared source headers used by the DirectXTex library and tools.
+  * Contains shared source headers used by the DirectXTex library and tools.
 
 * ``Texconv\``
 
-  + This DirectXTex sample is an implementation of the [texconv](https://github.com/Microsoft/DirectXTex/wiki/Texconv) command-line texture utility from the DirectX SDK utilizing DirectXTex rather than D3DX.
+  * This DirectXTex sample is an implementation of the [texconv](https://github.com/Microsoft/DirectXTex/wiki/Texconv) command-line texture utility from the DirectX SDK utilizing DirectXTex rather than D3DX.
 
     It supports the same arguments as the *Texture Conversion Tool Extended* (``texconvex.exe``) legacy DirectX SDK utility. The primary differences are the ``-10`` and ``-11`` arguments are not applicable and the filter names (``POINT``, ``LINEAR``, ``CUBIC``, ``FANT`` or ``BOX``, ``TRIANGLE``, ``*_DITHER``, ``*_DITHER_DIFFUSION``). This also includes support for the JPEG XR (HD Photo) bitmap format.
 
 * ``Texassemble\``
 
-  + This DirectXTex sample is a [command-line utility](https://github.com/Microsoft/DirectXTex/wiki/Texassemble) for creating cubemaps, volume maps, or texture arrays from a set of individual input image files.
+  * This DirectXTex sample is a [command-line utility](https://github.com/Microsoft/DirectXTex/wiki/Texassemble) for creating cubemaps, volume maps, or texture arrays from a set of individual input image files.
 
 * ``Texdiag\``
 
-  + This DirectXTex sample is a [command-line utility](https://github.com/Microsoft/DirectXTex/wiki/Texdiag) for analyzing image contents, primarily for debugging purposes.
+  * This DirectXTex sample is a [command-line utility](https://github.com/Microsoft/DirectXTex/wiki/Texdiag) for analyzing image contents, primarily for debugging purposes.
 
 * ``DDSView\``
 
-  + This DirectXTex sample is a simple Direct3D 11-based viewer for DDS files. For array textures or volume maps, the "<" and ">" keyboard keys will show different images contained in the DDS. The "1" through "0" keys can also be used to jump to a specific image index.
+  * This DirectXTex sample is a simple Direct3D 11-based viewer for DDS files. For array textures or volume maps, the "<" and ">" keyboard keys will show different images contained in the DDS. The "1" through "0" keys can also be used to jump to a specific image index.
 
 * ``DDSTextureLoader\``
 
-  + This contains a streamlined version of the legacy DirectX SDK sample *DDSWithoutD3DX11* texture loading code for a simple light-weight runtime DDS loader. There are versions for Direct3D 9, Direct3D 11, and Direct3D 12. This performs no runtime pixel data conversions. This is ideal for runtime usage, and supports the full complement of Direct3D texture  resources (1D, 2D, volume maps, cubemaps, mipmap levels, texture arrays, BC formats, etc.).
+  * This contains a streamlined version of the legacy DirectX SDK sample *DDSWithoutD3DX11* texture loading code for a simple light-weight runtime DDS loader. There are versions for Direct3D 9, Direct3D 11, and Direct3D 12. This performs no runtime pixel data conversions. This is ideal for runtime usage, and supports the full complement of Direct3D texture  resources (1D, 2D, volume maps, cubemaps, mipmap levels, texture arrays, BC formats, etc.).
 
 * ``ScreenGrab\``
 
-  + This contains texture writing modules for Direct3D 9, Direct3D 11, and Direct3D 12 primarily intended for creating screenshots. The images are written as a DDS or as an image file format using WIC.
+  * This contains texture writing modules for Direct3D 9, Direct3D 11, and Direct3D 12 primarily intended for creating screenshots. The images are written as a DDS or as an image file format using WIC.
 
 * ``WICTextureLoader\``
 
-  + This contains a Direct3D 9, Direct3D 11 and Direct3D 12 2D texture loader that uses WIC to load a bitmap (BMP, JPEG, PNG, HD Photo, or other WIC supported file container), resize if needed based on the current feature level (or by explicit parameter), format convert to a DXGI_FORMAT if required, and then create a 2D texture. Note this does not support 1D textures, volume textures, cubemaps, or texture arrays. DDSTextureLoader is recommended for fully "precooked" textures for maximum performance and image quality, but this loader can be useful for creating simple 2D texture from standard image files at runtime.
+  * This contains a Direct3D 9, Direct3D 11 and Direct3D 12 2D texture loader that uses WIC to load a bitmap (BMP, JPEG, PNG, HD Photo, or other WIC supported file container), resize if needed based on the current feature level (or by explicit parameter), format convert to a DXGI_FORMAT if required, and then create a 2D texture. Note this does not support 1D textures, volume textures, cubemaps, or texture arrays. DDSTextureLoader is recommended for fully "precooked" textures for maximum performance and image quality, but this loader can be useful for creating simple 2D texture from standard image files at runtime.
 
 > DDSTextureLoader11, ScreenGrab11, and WICTextureLoader11 are 'stand-alone' versions of the same modules provided in the [DirectX Tool Kit for DX11](https://github.com/Microsoft/DirectXTK)
-
 > DDSTextureLoader12, ScreenGrab12, and WICTextureLoader12 are 'stand-alone' versions of the same modules provided in the [DirectX Tool Kit for DX12](https://github.com/Microsoft/DirectXTK12).
 
 * ``build\``
 
-  + Contains miscellaneous build files and scripts.
+  * Contains miscellaneous build files and scripts.
 
 ## Documentation
 
@@ -86,9 +85,9 @@ For a full change history, see [CHANGELOG.md](https://github.com/microsoft/Direc
 
 * Starting with the March 2025 release, Windows 7 and Windows 8.0 support has been retired.
 
-* Starting with the July 2022 release, the ``bool forceSRGB`` parameter for the CreateTextureEx and CreateShaderResourceViewEx functions is now a ``CREATETEX_FLAGS`` typed enum bitmask flag parameter. This may have a *breaking change* impact to client code. Replace ``true`` with ``CREATETEX_FORCE_SRGB`` and ``false`` with ``CREATETEX_DEFAULT``.
+* Starting with the July 2022 release, the ``bool forceSRGB`` parameter for the CreateTextureEx and CreateShaderResourceViewEx functions is now a ``CREATETEX_FLAGS`` typed enum bitmask flag parameter. This may have a _breaking change_ impact to client code. Replace ``true`` with ``CREATETEX_FORCE_SRGB`` and ``false`` with ``CREATETEX_DEFAULT``.
 
-* Starting with the June 2020 release, this library makes use of typed enum bitmask flags per the recommendation of the _C++ Standard_ section *17.5.2.1.3 Bitmask types*. This is consistent with Direct3D 12's use of the ``DEFINE_ENUM_FLAG_OPERATORS`` macro. This may have *breaking change* impacts to client code:
+* Starting with the June 2020 release, this library makes use of typed enum bitmask flags per the recommendation of the _C++ Standard_ section *17.5.2.1.3 Bitmask types*. This is consistent with Direct3D 12's use of the ``DEFINE_ENUM_FLAG_OPERATORS`` macro. This may have _breaking change_ impacts to client code:
 
   * You cannot pass the ``0`` literal as your flags value. Instead you must make use of the appropriate default enum value: ``CP_FLAGS_NONE``, ``DDS_FLAGS_NONE``, ``WIC_FLAGS_NONE``, ``TEX_FR_ROTATE0``, ``TEX_FILTER_DEFAULT``, ``TEX_FILTER_DEFAULT``, ``TEX_FILTER_DEFAULT``, ``CNMAP_DEFAULT``, or ``CNMAP_DEFAULT``.
 
@@ -100,7 +99,7 @@ For a full change history, see [CHANGELOG.md](https://github.com/microsoft/Direc
 
 * The UWP projects and the Win10 classic desktop project include configurations for the ARM64 platform. Building these requires installing the ARM64 toolset.
 
-* For ARM64/AArch64 development, the VS 2022 compiler is strongly recommended over the VS 2019 toolset. The Windows SDK (26100 or later) is not compatible with VS 2019 for Win32 on ARM64 development. *Note that the ARM32/AArch32 platform is [deprecated](https://learn.microsoft.com/windows/arm/arm32-to-arm64)*.
+* For ARM64/AArch64 development, the VS 2022 compiler is strongly recommended over the VS 2019 toolset. The Windows SDK (26100 or later) is not compatible with VS 2019 for Win32 on ARM64 development. _Note that the ARM32/AArch32 platform is [deprecated](https://learn.microsoft.com/windows/arm/arm32-to-arm64)_.
 
 * When using clang/LLVM for the ARM64/AArch64 platform, the Windows 11 SDK ([22000](https://walbourn.github.io/windows-sdk-for-windows-11/)) or later is required.
 
@@ -113,8 +112,8 @@ For a full change history, see [CHANGELOG.md](https://github.com/microsoft/Direc
 |-tonemap|--tonemap|-badtails|--bad-tails|-badtails|--bad-tails|
 |-bgcolor|--gif-bg-color|-fixbc4x4|--fix-bc-4x4|-ignoremips|--ignore-mips|
 |-swizzle|--swizzle|-ignoremips|--ignore-mips|-permissive|--permissive|
-|-stripmips|--strip-mips|-inverty|--invert-y|-targetx|--target-x||-targety|--target-y|
-|||-keepcoverage|--keep-coverage|||
+|-stripmips|--strip-mips|-inverty|--invert-y|-targetx|--target-x|
+|||-keepcoverage|--keep-coverage|-targety|--target-y|
 |||-permissive|--permissive|||
 |||-reconstructz|--reconstruct-z|||
 |||-rotatecolor|--rotate-color|||
@@ -129,7 +128,7 @@ For a full change history, see [CHANGELOG.md](https://github.com/microsoft/Direc
 
 ## Support
 
-For questions, consider using [Stack Overflow](https://stackoverflow.com/questions/tagged/directxtk) with the *directxtk* tag, or the [DirectX Discord Server](https://discord.gg/directx) in the *dx12-developers* or *dx9-dx11-developers* channel.
+For questions, consider using [Stack Overflow](https://stackoverflow.com/questions/tagged/directxtk) with the _directxtk_ tag, or the [DirectX Discord Server](https://discord.gg/directx) in the _dx12-developers_ or _dx9-dx11-developers_ channel.
 
 For bug reports and feature requests, please use GitHub [issues](https://github.com/microsoft/DirectXTex/issues) for this project.
 
