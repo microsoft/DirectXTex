@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-2022 # has v142 tools but not v142 spectre libs
 
     strategy:
       fail-fast: false
@@ -49,33 +49,33 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: >
           msbuild /m /p:Configuration=${{ matrix.build_type }} /p:Platform=${{ matrix.platform }}
-          ./DirectXTex_Desktop_${{ matrix.vs }}.sln
+          DirectXTex_Desktop_${{ matrix.vs }}.sln
 
       - name: 'Build (Windows 10)'
         working-directory: ${{ github.workspace }}
         run: >
           msbuild /m /p:Configuration=${{ matrix.build_type }} /p:Platform=${{ matrix.platform }}
-          ./DirectXTex_Desktop_${{ matrix.vs }}_Win10.sln
+          DirectXTex_Desktop_${{ matrix.vs }}_Win10.sln
 
       - if: matrix.vs == '2022'
         name: 'Build (UWP)'
         working-directory: ${{ github.workspace }}
         run: >
           msbuild /m /p:Configuration=${{ matrix.build_type }} /p:Platform=${{ matrix.platform }}
-          ./DirectXTex_Windows10_2022.sln
+          DirectXTex_Windows10_2022.sln
 
-      - if: matrix.platform != 'ARM64'
+      - if: matrix.platform != 'ARM64' && matrix.vs != '2019'
         name: 'Build (Spectre)'
         working-directory: ${{ github.workspace }}
         run: >
           msbuild /m /p:Configuration=${{ matrix.build_type }} /p:Platform=${{ matrix.platform }}
           /p:SpectreMitigation=Spectre
-          ./DirectXTex_Desktop_${{ matrix.vs }}.sln
+          DirectXTex_Desktop_${{ matrix.vs }}.sln
 
-      - if: matrix.platform != 'ARM64'
+      - if: matrix.platform != 'ARM64' && matrix.vs != '2019'
         name: 'Build (Spectre Windows 10)'
         working-directory: ${{ github.workspace }}
         run: >
           msbuild /m /p:Configuration=${{ matrix.build_type }} /p:Platform=${{ matrix.platform }}
           /p:SpectreMitigation=Spectre
-          ./DirectXTex_Desktop_${{ matrix.vs }}_Win10.sln
+          DirectXTex_Desktop_${{ matrix.vs }}_Win10.sln
