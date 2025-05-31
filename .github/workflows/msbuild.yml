@@ -68,12 +68,14 @@ jobs:
         name: 'Build (Spectre)'
         working-directory: ${{ github.workspace }}
         run: >
-          msbuild /m /p:SpectreMitigation=Spectre /p:Configuration=${{ matrix.build_type }} /p:Platform=${{ matrix.platform }}
+          msbuild /m /p:Configuration=${{ matrix.build_type }} /p:Platform=${{ matrix.platform }}
+          /p:SpectreMitigation=Spectre
           ./DirectXTex_Desktop_${{ matrix.vs }}.sln
 
       - if: matrix.platform != 'ARM64'
         name: 'Build (Spectre Windows 10)'
         working-directory: ${{ github.workspace }}
         run: >
-          msbuild /m /p:SpectreMitigation=Spectre /p:Configuration=${{ matrix.build_type }} /p:Platform=${{ matrix.platform }}
+          msbuild /m /p:Configuration=${{ matrix.build_type }} /p:Platform=${{ matrix.platform }}
+          /p:SpectreMitigation=Spectre
           ./DirectXTex_Desktop_${{ matrix.vs }}_Win10.sln
