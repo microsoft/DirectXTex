@@ -1,0 +1,9 @@
+{
+    "Format": "github-actions",
+    "exclude": [
+        ".git",
+        "LICENSE",
+        "Tests",
+        "Common/d3dx12.h"
+    ]
+}

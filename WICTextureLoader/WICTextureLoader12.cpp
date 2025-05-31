@@ -78,7 +78,8 @@ namespace
 
         constexpr WICTranslate(const GUID& wg, DXGI_FORMAT fmt) noexcept :
             wic(wg),
-            format(fmt) {}
+            format(fmt)
+        {}
     };
 
     constexpr WICTranslate g_WICFormats[] =
@@ -118,7 +119,8 @@ namespace
 
         constexpr WICConvert(const GUID& src, const GUID& tgt) noexcept :
             source(src),
-            target(tgt) {}
+            target(tgt)
+        {}
     };
 
     constexpr WICConvert g_WICConvert[] =
@@ -209,18 +211,17 @@ namespace
     }
 
     //---------------------------------------------------------------------------------
-    #if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
+#if !defined(NO_D3D12_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
     template<UINT TNameLength>
     inline void SetDebugObjectName(_In_ ID3D12DeviceChild* resource, _In_z_ const wchar_t(&name)[TNameLength]) noexcept
     {
         resource->SetName(name);
     }
-    #else
+#else
     template<UINT TNameLength>
     inline void SetDebugObjectName(_In_ ID3D12DeviceChild*, _In_z_ const wchar_t(&)[TNameLength]) noexcept
-    {
-    }
-    #endif
+    {}
+#endif
 
     inline uint32_t CountMips(uint32_t width, uint32_t height) noexcept
     {

@@ -324,7 +324,7 @@ namespace
         { nullptr,                  0 }
     };
 
-    #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
+#define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
 
     const SValue<DXGI_FORMAT> g_pFormats[] =
     {
@@ -510,7 +510,7 @@ namespace
         { nullptr, DXGI_FORMAT_UNKNOWN }
     };
 
-    #undef DEFFMT
+#undef DEFFMT
 
     const SValue<uint32_t> g_pFilters[] =
     {
@@ -556,15 +556,15 @@ namespace
     constexpr uint32_t CODEC_PPM = 0xFFFF0006;
     constexpr uint32_t CODEC_PFM = 0xFFFF0007;
 
-    #ifdef USE_OPENEXR
+#ifdef USE_OPENEXR
     constexpr uint32_t CODEC_EXR = 0xFFFF0008;
-    #endif
-    #ifdef USE_LIBJPEG
+#endif
+#ifdef USE_LIBJPEG
     constexpr uint32_t CODEC_JPEG = 0xFFFF0009;
-    #endif
-    #ifdef USE_LIBPNG
+#endif
+#ifdef USE_LIBPNG
     constexpr uint32_t CODEC_PNG = 0xFFFF000A;
-    #endif
+#endif
 
     const SValue<uint32_t> g_pSaveFileTypes[] =   // valid formats to write to
     {
@@ -1421,10 +1421,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_PAPER_WHITE_NITS:
             case OPT_PRESERVE_ALPHA_COVERAGE:
             case OPT_SWIZZLE:
-        #ifdef USE_XBOX_EXTS
+            #ifdef USE_XBOX_EXTS
             case OPT_XGMODE:
-        #endif
-                // These support either "-arg:value" or "-arg value"
+            #endif
+                    // These support either "-arg:value" or "-arg value"
                 if (!*pValue)
                 {
                     if ((iArg + 1 >= argc))
@@ -1895,7 +1895,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 break;
 
-        #ifdef USE_XBOX_EXTS
+            #ifdef USE_XBOX_EXTS
             case OPT_XGMODE:
                 {
                 #ifdef _USE_SCARLETT
@@ -1927,7 +1927,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     XGSetHardwareVersion(static_cast<XG_HARDWARE_VERSION>(mode));
                     break;
                 }
-        #endif // USE_XBOX_EXTS
+            #endif // USE_XBOX_EXTS
             }
         }
         else if (wcspbrk(pArg, L"?*") != nullptr)
@@ -2014,8 +2014,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     #ifndef USE_XBOX_EXTS
         constexpr
-    #endif
-        bool isXbox = false;
+        #endif
+            bool isXbox = false;
         if (_wcsicmp(ext.c_str(), L".dds") == 0 || _wcsicmp(ext.c_str(), L".ddx") == 0)
         {
         #ifdef USE_XBOX_EXTS
@@ -2038,7 +2038,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
             }
             else
-        #endif // USE_XBOX_EXTS
+            #endif // USE_XBOX_EXTS
             {
                 DDS_FLAGS ddsFlags = DDS_FLAGS_ALLOW_LARGE_FILES;
                 if (dwOptions & (UINT64_C(1) << OPT_DDS_DWORD_ALIGN))
@@ -3750,7 +3750,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     }
                 }
                 else
-            #endif // USE_XBOX_EXTS
+                #endif // USE_XBOX_EXTS
                 {
                     DDS_FLAGS ddsFlags = DDS_FLAGS_NONE;
                     if (dwOptions & (UINT64_C(1) << OPT_USE_DX10))
@@ -3856,11 +3856,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                                     {
                                         options.pstrName = const_cast<wchar_t*>(L"HeifCompressionMethod");
                                         varValues.vt = VT_UI1;
-                                        #if defined(NTDDI_WIN10_CU)
+                                    #if defined(NTDDI_WIN10_CU)
                                         varValues.bVal = WICHeifCompressionNone;
-                                        #else
+                                    #else
                                         varValues.bVal = 0x1 /* WICHeifCompressionNone */;
-                                        #endif
+                                    #endif
                                     }
                                     else if (wicQuality >= 0.f)
                                     {

@@ -49,7 +49,8 @@ namespace
         constexpr WICTranslate(const GUID& wg, DXGI_FORMAT fmt, bool isrgb) noexcept :
             wic(wg),
             format(fmt),
-            srgb(isrgb) {}
+            srgb(isrgb)
+        {}
     };
 
     constexpr WICTranslate g_WICFormats[] =
@@ -264,11 +265,11 @@ REFGUID DirectX::GetWICCodec(WICCodecs codec) noexcept
     case WIC_CODEC_ICO:
         return GUID_ContainerFormatIco;
 
-#ifdef NTDDI_WIN10_RS4
+    #ifdef NTDDI_WIN10_RS4
     case WIC_CODEC_HEIF:
         // This requires installing https://aka.ms/heif
         return GUID_ContainerFormatHeif;
-#endif
+    #endif
 
     default:
         return GUID_NULL;
@@ -1062,13 +1063,13 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
             return E_INVALIDARG;
         }
 
-        #if (__cplusplus >= 201703L)
-            [[fallthrough]];
-        #elif defined(__clang__)
-            [[clang::fallthrough]];
-        #elif defined(_MSC_VER)
-            __fallthrough;
-        #endif
+    #if (__cplusplus >= 201703L)
+        [[fallthrough]];
+    #elif defined(__clang__)
+        [[clang::fallthrough]];
+    #elif defined(_MSC_VER)
+        __fallthrough;
+    #endif
 
     case XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT:
     case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
@@ -1271,7 +1272,7 @@ HRESULT DirectX::ComputeTileShape(
 
     const bool iscompressed = IsCompressed(fmt);
 
-    switch(dimension)
+    switch (dimension)
     {
     case TEX_DIMENSION_TEXTURE1D:
         if (iscompressed)
@@ -1283,10 +1284,10 @@ HRESULT DirectX::ComputeTileShape(
 
     case TEX_DIMENSION_TEXTURE2D:
         tiling.depth = 1;
-        if(iscompressed)
+        if (iscompressed)
         {
             size_t bpb = BytesPerBlock(fmt);
-            switch(bpb)
+            switch (bpb)
             {
             case 8:
                 tiling.width = 128 * 4;
@@ -1338,10 +1339,10 @@ HRESULT DirectX::ComputeTileShape(
         break;
 
     case TEX_DIMENSION_TEXTURE3D:
-        if(iscompressed)
+        if (iscompressed)
         {
             size_t bpb = BytesPerBlock(fmt);
-            switch(bpb)
+            switch (bpb)
             {
             case 8:
                 tiling.width = 32 * 4;

@@ -131,7 +131,7 @@ static const uint2 candidateFixUpIndex1DOrdered[128] = //Same with candidateFixU
     { 5,15},{10,15},{ 8,15},{13,15},
     { 3,15},{12,15},{ 3,15},{ 3, 8},
 };
-//static const uint4x4 candidateRotation[4] = 
+//static const uint4x4 candidateRotation[4] =
 //{
 //    {1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1},
 //    {0,0,0,1},{0,1,0,0},{0,0,1,0},{1,0,0,0},
@@ -142,37 +142,49 @@ static const uint2 candidateFixUpIndex1DOrdered[128] = //Same with candidateFixU
 //                                            {2,3}, //color index and alpha index can exchange
 //                                            {2,2},{4,4},{2,2}};
 
-static const uint aWeight[3][16] = { {0,  4,  9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64},
-                                    {0,  9, 18, 27, 37, 46, 55, 64,  0,  0,  0,  0,  0,  0,  0,  0},
-                                    {0, 21, 43, 64,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0} };
+static const uint aWeight[3][16] =
+{
+    {0,  4,  9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64},
+    {0,  9, 18, 27, 37, 46, 55, 64,  0,  0,  0,  0,  0,  0,  0,  0},
+    {0, 21, 43, 64,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0}
+};
 
 //4 bit index: 0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64
-static const uint aStep[3][64] = { { 0, 0, 0, 1, 1, 1, 1, 2,
-                                    2, 2, 2, 2, 3, 3, 3, 3,
-                                    4, 4, 4, 4, 5, 5, 5, 5,
-                                    6, 6, 6, 6, 6, 7, 7, 7,
-                                    7, 8, 8, 8, 8, 9, 9, 9,
-                                    9,10,10,10,10,10,11,11,
-                                   11,11,12,12,12,12,13,13,
-                                   13,13,14,14,14,14,15,15 },
+static const uint aStep[3][64] =
+{
+    {
+        0, 0, 0, 1, 1, 1, 1, 2,
+        2, 2, 2, 2, 3, 3, 3, 3,
+        4, 4, 4, 4, 5, 5, 5, 5,
+        6, 6, 6, 6, 6, 7, 7, 7,
+        7, 8, 8, 8, 8, 9, 9, 9,
+        9,10,10,10,10,10,11,11,
+        11,11,12,12,12,12,13,13,
+        13,13,14,14,14,14,15,15
+    },
     //3 bit index: 0, 9, 18, 27, 37, 46, 55, 64
-        { 0,0,0,0,0,1,1,1,
+    {
+        0,0,0,0,0,1,1,1,
         1,1,1,1,1,1,2,2,
         2,2,2,2,2,2,2,3,
         3,3,3,3,3,3,3,3,
         3,4,4,4,4,4,4,4,
         4,4,5,5,5,5,5,5,
         5,5,5,6,6,6,6,6,
-        6,6,6,6,7,7,7,7 },
+        6,6,6,6,7,7,7,7
+    },
     //2 bit index: 0, 21, 43, 64
-        { 0,0,0,0,0,0,0,0,
+    {
+        0,0,0,0,0,0,0,0,
         0,0,0,1,1,1,1,1,
         1,1,1,1,1,1,1,1,
         1,1,1,1,1,1,1,1,
         1,2,2,2,2,2,2,2,
         2,2,2,2,2,2,2,2,
         2,2,2,2,2,2,3,3,
-        3,3,3,3,3,3,3,3 } };
+        3,3,3,3,3,3,3,3
+    }
+};
 
 cbuffer cbCS : register(b0)
 {
@@ -1561,18 +1573,18 @@ void EncodeBlockCS(uint GI : SV_GroupIndex, uint3 groupID : SV_GroupID)
 //    uint precisionMask = ((1 << bits) - 1) << (8 - bits);
 //    uint precisionHalf = (1 << (7-bits));
 //
-//    uint4 truncated = color & precisionMask; 
+//    uint4 truncated = color & precisionMask;
 //    uint4 rounded = min(255, color + precisionHalf) & precisionMask;
-//    
+//
 //    uint4 truncated_bak = truncated = truncated | (truncated >> bits);
 //    uint4 rounded_bak = rounded = rounded | (rounded >> bits);
 //
 //    uint4 color_bak = color;
-//    
+//
 //    Ensure_A_Is_Larger( rounded, color );
 //    Ensure_A_Is_Larger( truncated, color_bak );
 //
-//    if (dot(rounded - color, rounded - color) < 
+//    if (dot(rounded - color, rounded - color) <
 //        dot(truncated - color_bak, truncated - color_bak))
 //    {
 //        return rounded_bak;

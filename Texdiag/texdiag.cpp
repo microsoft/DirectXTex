@@ -189,7 +189,7 @@ namespace
         { nullptr,                  0 }
     };
 
-    #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
+#define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
 
     const SValue<DXGI_FORMAT> g_pFormats[] =
     {
@@ -354,7 +354,7 @@ namespace
         { nullptr, DXGI_FORMAT_UNKNOWN }
     };
 
-    #undef DEFFMT
+#undef DEFFMT
 
     const SValue<uint32_t> g_pFilters[] =
     {
@@ -383,15 +383,15 @@ namespace
     constexpr uint32_t CODEC_TGA = 0xFFFF0002;
     constexpr uint32_t CODEC_HDR = 0xFFFF0005;
 
-    #ifdef USE_OPENEXR
+#ifdef USE_OPENEXR
     constexpr uint32_t CODEC_EXR = 0xFFFF0008;
-    #endif
-    #ifdef USE_LIBJPEG
+#endif
+#ifdef USE_LIBJPEG
     constexpr uint32_t CODEC_JPEG = 0xFFFF0009;
-    #endif
-    #ifdef USE_LIBPNG
+#endif
+#ifdef USE_LIBPNG
     constexpr uint32_t CODEC_PNG = 0xFFFF000A;
-    #endif
+#endif
 
     const SValue<uint32_t> g_pDumpFileTypes[] =
     {
@@ -633,18 +633,18 @@ namespace
         case CODEC_HDR:
             return SaveToHDRFile(*image, fileName);
 
-    #ifdef USE_OPENEXR
+        #ifdef USE_OPENEXR
         case CODEC_EXR:
             return SaveToEXRFile(*image, fileName);
-    #endif
-    #ifdef USE_LIBJPEG
+        #endif
+        #ifdef USE_LIBJPEG
         case CODEC_JPEG:
             return SaveToJPEGFile(*image, fileName);
-    #endif
-    #ifdef USE_LIBPNG
+        #endif
+        #ifdef USE_LIBPNG
         case CODEC_PNG:
             return SaveToPNGFile(*image, fileName);
-    #endif
+        #endif
         default:
             return SaveToWICFile(*image, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(codec)), fileName);
         }

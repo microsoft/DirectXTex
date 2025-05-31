@@ -228,7 +228,7 @@ namespace
         { nullptr,                  0 }
     };
 
-    #define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
+#define DEFFMT(fmt) { L## #fmt, DXGI_FORMAT_ ## fmt }
 
     const SValue<DXGI_FORMAT> g_pFormats[] =
     {
@@ -307,7 +307,7 @@ namespace
         { nullptr, DXGI_FORMAT_UNKNOWN }
     };
 
-    #undef DEFFMT
+#undef DEFFMT
 
     const SValue<DXGI_FORMAT> g_pFormatAliases[] =
     {
@@ -348,15 +348,15 @@ namespace
     constexpr uint32_t CODEC_TGA = 0xFFFF0002;
     constexpr uint32_t CODEC_HDR = 0xFFFF0005;
 
-    #ifdef USE_OPENEXR
+#ifdef USE_OPENEXR
     constexpr uint32_t CODEC_EXR = 0xFFFF0008;
-    #endif
-    #ifdef USE_LIBJPEG
+#endif
+#ifdef USE_LIBJPEG
     constexpr uint32_t CODEC_JPEG = 0xFFFF0009;
-    #endif
-    #ifdef USE_LIBPNG
+#endif
+#ifdef USE_LIBPNG
     constexpr uint32_t CODEC_PNG = 0xFFFF000A;
-    #endif
+#endif
 
     const SValue<uint32_t> g_pExtFileTypes[] =
     {
@@ -612,18 +612,18 @@ namespace
         case CODEC_HDR:
             return SaveToHDRFile(img, szOutputFile);
 
-    #ifdef USE_OPENEXR
+        #ifdef USE_OPENEXR
         case CODEC_EXR:
             return SaveToEXRFile(img, szOutputFile);
-    #endif
-    #ifdef USE_LIBJPEG
+        #endif
+        #ifdef USE_LIBJPEG
         case CODEC_JPEG:
             return SaveToJPEGFile(img, szOutputFile);
-    #endif
-    #ifdef USE_LIBPNG
+        #endif
+        #ifdef USE_LIBPNG
         case CODEC_PNG:
             return SaveToPNGFile(img, szOutputFile);
-    #endif
+        #endif
 
         default:
             {
@@ -1386,7 +1386,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
                         default:
                             break;
-                       }
+                        }
                     }
                 }
                 else if (_wcsicmp(ext.c_str(), L".tga") == 0)
@@ -2028,7 +2028,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = FlipRotate(*img, flipRotate, tmp);
                     if (SUCCEEDED(hr))
                     {
-                        hr = CopyRectangle(*tmp.GetImage(0,0,0), rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
+                        hr = CopyRectangle(*tmp.GetImage(0, 0, 0), rect, *dest, dwFilter | dwFilterOpts, offsetx, offsety);
                     }
                 }
                 else
@@ -2374,7 +2374,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     hr = FlipRotate(*dest, flipRotate, tmp);
                     if (SUCCEEDED(hr))
                     {
-                        hr = CopyRectangle(*tmp.GetImage(0,0,0), Rect(0, 0, twidth, theight), *dest, dwFilter | dwFilterOpts, 0, 0);
+                        hr = CopyRectangle(*tmp.GetImage(0, 0, 0), Rect(0, 0, twidth, theight), *dest, dwFilter | dwFilterOpts, 0, 0);
                     }
                 }
             }

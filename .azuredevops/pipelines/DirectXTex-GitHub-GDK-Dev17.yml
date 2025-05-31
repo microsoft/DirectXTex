@@ -6,35 +6,35 @@
 # Builds the library using the Microsoft GDK.
 
 schedules:
-- cron: "30 3 * * *"
-  displayName: 'Nightly build'
-  branches:
-    include:
-    - main
+  - cron: "30 3 * * *"
+    displayName: 'Nightly build'
+    branches:
+      include:
+        - main
 
 trigger: none
 
 pr:
   branches:
     include:
-    - main
+      - main
   paths:
     include:
-    - '.azuredevops/pipelines/DirectXTex-GitHub-GDK-Dev17.yml'
-    - '.azuredevops/templates/DirectXTex-build-gdk.yml'
-    - CMakeList.txt
-    - build/*.in
-    - build/*.cmake
-    - build/SetupBWOI.*
-    - DirectXTex/Shaders/CompileShaders.cmd
-    - Auxiliary/*Xbox*
+      - '.azuredevops/pipelines/DirectXTex-GitHub-GDK-Dev17.yml'
+      - '.azuredevops/templates/DirectXTex-build-gdk.yml'
+      - CMakeList.txt
+      - build/*.in
+      - build/*.cmake
+      - build/SetupBWOI.*
+      - DirectXTex/Shaders/CompileShaders.cmd
+      - Auxiliary/*Xbox*
 
 resources:
   repositories:
-  - repository: self
-    type: git
-    ref: refs/heads/main
-    trigger: none
+    - repository: self
+      type: git
+      ref: refs/heads/main
+      trigger: none
 
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
@@ -42,318 +42,318 @@ pool:
   vmImage: windows-2022
 
 variables:
-- group: dxtex-shared-variables
-- name: Codeql.Enabled
-  value: false
-- name: EXTRACTED_FOLDER
-  value: '$(ExtractedFolder)'
-- name: GDKEnableBWOI
-  value: true
-- name: URL_FEED
-  value: $(ADOFeedURL)
-- name: VC_PATH
-  value: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC'
-- name: skipNugetSecurityAnalysis
-  value: true # We explicitly call this task so we don't need it to be auto-injected
+  - group: dxtex-shared-variables
+  - name: Codeql.Enabled
+    value: false
+  - name: EXTRACTED_FOLDER
+    value: '$(ExtractedFolder)'
+  - name: GDKEnableBWOI
+    value: true
+  - name: URL_FEED
+    value: $(ADOFeedURL)
+  - name: VC_PATH
+    value: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC'
+  - name: skipNugetSecurityAnalysis
+    value: true # We explicitly call this task so we don't need it to be auto-injected
 
 jobs:
-- job: BUILD_GDK
-  displayName: 'Microsoft Game Development Kit (GDK)'
-  timeoutInMinutes: 120
-  cancelTimeoutInMinutes: 1
-  steps:
-  - checkout: self
-    clean: true
-    fetchTags: false
-  - task: NuGetToolInstaller@1
-    displayName: 'Use NuGet'
-  - task: PowerShell@2
-    displayName: 'Create nuget.config with single source'
-    inputs:
-      targetType: inline
-      script: |
-        $xml = @'
-        <?xml version="1.0" encoding="utf-8"?>
-        <configuration>
-          <packageSources>
-            <clear />
-          </packageSources>
-        </configuration>
-        '@
-        $xml | Set-Content -Path "$(Build.SourcesDirectory)\NuGet.config"
+  - job: BUILD_GDK
+    displayName: 'Microsoft Game Development Kit (GDK)'
+    timeoutInMinutes: 120
+    cancelTimeoutInMinutes: 1
+    steps:
+      - checkout: self
+        clean: true
+        fetchTags: false
+      - task: NuGetToolInstaller@1
+        displayName: 'Use NuGet'
+      - task: PowerShell@2
+        displayName: 'Create nuget.config with single source'
+        inputs:
+          targetType: inline
+          script: |
+            $xml = @'
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            '@
+            $xml | Set-Content -Path "$(Build.SourcesDirectory)\NuGet.config"
 
-  - task: NuGetCommand@2
-    # We have to use a nuget.config to provide the feed for the 'nuget install' option.
-    displayName: 'NuGet set package source to ADO feed'
-    inputs:
-      command: custom
-      arguments: sources add -Name xboxgdk -Source $(URL_FEED) -ConfigFile $(Build.SourcesDirectory)\NuGet.config
-  - task: nuget-security-analysis@0
-    displayName: 'Secure Supply Chain Analysis'
-  - task: NuGetAuthenticate@1
-    displayName: 'NuGet Auth'
-  - task: NuGetCommand@2
-    displayName: NuGet install PGDK
-    inputs:
-      command: custom
-      arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
-  - task: NuGetCommand@2
-    displayName: NuGet install GDKX
-    inputs:
-      command: custom
-      arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
-  - task: CopyFiles@2
-    displayName: Set up Directory.Build.props
-    inputs:
-      SourceFolder: build
-      Contents: 'Directory.Build.props'
-      TargetFolder: $(Build.SourcesDirectory)
-  - task: MSBuild@1
-    displayName: Setup BWOI VCTargets
-    inputs:
-      solution: build/SetupBWOI.targets
-      msbuildVersion: 17.0
-      msbuildArchitecture: x64
-      msbuildArguments: /p:GDKEditionNumber=$(GDK_EDITION)
-  - template: '/.azuredevops/templates/DirectXTex-build-gdk.yml'
-    parameters:
-      msVersion: '17.0'
-      vsYear: 2022
+      - task: NuGetCommand@2
+        # We have to use a nuget.config to provide the feed for the 'nuget install' option.
+        displayName: 'NuGet set package source to ADO feed'
+        inputs:
+          command: custom
+          arguments: sources add -Name xboxgdk -Source $(URL_FEED) -ConfigFile $(Build.SourcesDirectory)\NuGet.config
+      - task: nuget-security-analysis@0
+        displayName: 'Secure Supply Chain Analysis'
+      - task: NuGetAuthenticate@1
+        displayName: 'NuGet Auth'
+      - task: NuGetCommand@2
+        displayName: NuGet install PGDK
+        inputs:
+          command: custom
+          arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
+      - task: NuGetCommand@2
+        displayName: NuGet install GDKX
+        inputs:
+          command: custom
+          arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
+      - task: CopyFiles@2
+        displayName: Set up Directory.Build.props
+        inputs:
+          SourceFolder: build
+          Contents: 'Directory.Build.props'
+          TargetFolder: $(Build.SourcesDirectory)
+      - task: MSBuild@1
+        displayName: Setup BWOI VCTargets
+        inputs:
+          solution: build/SetupBWOI.targets
+          msbuildVersion: 17.0
+          msbuildArchitecture: x64
+          msbuildArguments: /p:GDKEditionNumber=$(GDK_EDITION)
+      - template: '/.azuredevops/templates/DirectXTex-build-gdk.yml'
+        parameters:
+          msVersion: '17.0'
+          vsYear: 2022
 
-- job: BUILD_GDK_CMAKE_SCAR
-  displayName: 'Microsoft Game Development Kit (GDK) using CMake (Scarlett)'
-  timeoutInMinutes: 120
-  cancelTimeoutInMinutes: 1
-  steps:
-  - checkout: self
-    clean: true
-    fetchTags: false
-  - task: NuGetToolInstaller@1
-    displayName: 'Use NuGet'
-  - task: PowerShell@2
-    displayName: 'Create nuget.config with single source'
-    inputs:
-      targetType: inline
-      script: |
-        $xml = @'
-        <?xml version="1.0" encoding="utf-8"?>
-        <configuration>
-          <packageSources>
-            <clear />
-          </packageSources>
-        </configuration>
-        '@
-        $xml | Set-Content -Path "$(Build.SourcesDirectory)\NuGet.config"
+  - job: BUILD_GDK_CMAKE_SCAR
+    displayName: 'Microsoft Game Development Kit (GDK) using CMake (Scarlett)'
+    timeoutInMinutes: 120
+    cancelTimeoutInMinutes: 1
+    steps:
+      - checkout: self
+        clean: true
+        fetchTags: false
+      - task: NuGetToolInstaller@1
+        displayName: 'Use NuGet'
+      - task: PowerShell@2
+        displayName: 'Create nuget.config with single source'
+        inputs:
+          targetType: inline
+          script: |
+            $xml = @'
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            '@
+            $xml | Set-Content -Path "$(Build.SourcesDirectory)\NuGet.config"
 
-  - task: NuGetCommand@2
-    # We have to use a nuget.config to provide the feed for the 'nuget install' option.
-    displayName: 'NuGet set package source to ADO feed'
-    inputs:
-      command: custom
-      arguments: sources add -Name xboxgdk -Source $(URL_FEED) -ConfigFile $(Build.SourcesDirectory)\NuGet.config
-  - task: nuget-security-analysis@0
-    displayName: 'Secure Supply Chain Analysis'
-  - task: NuGetAuthenticate@1
-    displayName: 'NuGet Auth'
-  - task: NuGetCommand@2
-    displayName: NuGet install PGDK
-    inputs:
-      command: custom
-      arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
-  - task: NuGetCommand@2
-    displayName: NuGet install GDKX
-    inputs:
-      command: custom
-      arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
-  - task: CmdLine@2
-    displayName: Setup BWOI for GDK command-line
-    inputs:
-      script: |
-        call "$(VC_PATH)\Auxiliary\Build\vcvars64.bat"
-        echo ##vso[task.setvariable variable=WindowsSdkVerBinPath;]%WindowsSdkVerBinPath%
-        echo ##vso[task.prependpath]%VSINSTALLDIR%Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja
-        echo ##vso[task.prependpath]%VCINSTALLDIR%Tools\Llvm\x64\bin
-        echo ##vso[task.prependpath]%WindowsSdkBinPath%x64
-        echo ##vso[task.prependpath]%WindowsSdkVerBinPath%x64
-        echo ##vso[task.prependpath]%VCToolsInstallDir%bin\HostX64\x64
-        call $(Build.SourcesDirectory)\build\SetupBWOI.cmd $(EXTRACTED_FOLDER) $(GDK_EDITION) Scarlett
-        echo ##vso[task.setvariable variable=GameDKLatest;]%GameDKLatest%
-        echo ##vso[task.setvariable variable=GRDKLatest;]%GRDKLatest%
-        echo ##vso[task.setvariable variable=GXDKLatest;]%GXDKLatest%
-        echo ##vso[task.setvariable variable=INCLUDE;]%INCLUDE%
-        echo ##vso[task.setvariable variable=LIB;]%LIB%
-        echo ##vso[task.prependpath]%ADDBIN%
+      - task: NuGetCommand@2
+        # We have to use a nuget.config to provide the feed for the 'nuget install' option.
+        displayName: 'NuGet set package source to ADO feed'
+        inputs:
+          command: custom
+          arguments: sources add -Name xboxgdk -Source $(URL_FEED) -ConfigFile $(Build.SourcesDirectory)\NuGet.config
+      - task: nuget-security-analysis@0
+        displayName: 'Secure Supply Chain Analysis'
+      - task: NuGetAuthenticate@1
+        displayName: 'NuGet Auth'
+      - task: NuGetCommand@2
+        displayName: NuGet install PGDK
+        inputs:
+          command: custom
+          arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
+      - task: NuGetCommand@2
+        displayName: NuGet install GDKX
+        inputs:
+          command: custom
+          arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
+      - task: CmdLine@2
+        displayName: Setup BWOI for GDK command-line
+        inputs:
+          script: |
+            call "$(VC_PATH)\Auxiliary\Build\vcvars64.bat"
+            echo ##vso[task.setvariable variable=WindowsSdkVerBinPath;]%WindowsSdkVerBinPath%
+            echo ##vso[task.prependpath]%VSINSTALLDIR%Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja
+            echo ##vso[task.prependpath]%VCINSTALLDIR%Tools\Llvm\x64\bin
+            echo ##vso[task.prependpath]%WindowsSdkBinPath%x64
+            echo ##vso[task.prependpath]%WindowsSdkVerBinPath%x64
+            echo ##vso[task.prependpath]%VCToolsInstallDir%bin\HostX64\x64
+            call $(Build.SourcesDirectory)\build\SetupBWOI.cmd $(EXTRACTED_FOLDER) $(GDK_EDITION) Scarlett
+            echo ##vso[task.setvariable variable=GameDKLatest;]%GameDKLatest%
+            echo ##vso[task.setvariable variable=GRDKLatest;]%GRDKLatest%
+            echo ##vso[task.setvariable variable=GXDKLatest;]%GXDKLatest%
+            echo ##vso[task.setvariable variable=INCLUDE;]%INCLUDE%
+            echo ##vso[task.setvariable variable=LIB;]%LIB%
+            echo ##vso[task.prependpath]%ADDBIN%
 
-      failOnStderr: true
-  - task: CMake@1
-    displayName: 'CMake (MSVC): Config Scarlett Debug'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --preset=x64-Debug-Scarlett
-  - task: CMake@1
-    displayName: 'CMake (MSVC): Build Scarlett Debug'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --build out\build\x64-Debug-Scarlett
-  - task: CMake@1
-    displayName: 'CMake (MSVC): Config Scarlett Release'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --preset=x64-Release-Scarlett
-  - task: CMake@1
-    displayName: 'CMake (MSVC): Build Scarlett Release'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --build out\build\x64-Release-Scarlett
-  - task: CMake@1
-    displayName: 'CMake (Clang): Config Scarlett Debug'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --preset=x64-Debug-Scarlett-Clang
-  - task: CMake@1
-    displayName: 'CMake (Clang): Build Scarlett Debug'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --build out\build\x64-Debug-Scarlett-Clang
-  - task: CMake@1
-    displayName: 'CMake (Clang): Config Scarlett Release'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --preset=x64-Release-Scarlett-Clang
-  - task: CMake@1
-    displayName: 'CMake (Clang): Build Scarlett Release'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --build out\build\x64-Release-Scarlett-Clang
-  - task: DeleteFiles@1
-    inputs:
-      Contents: 'out/build'
-  - task: CMake@1
-    displayName: 'CMake (DLL): Config Scarlett Debug'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --preset=x64-Debug-Scarlett -DBUILD_SHARED_LIBS=ON
-  - task: CMake@1
-    displayName: 'CMake (DLL): Build Scarlett Debug'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --build out\build\x64-Debug-Scarlett
+          failOnStderr: true
+      - task: CMake@1
+        displayName: 'CMake (MSVC): Config Scarlett Debug'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --preset=x64-Debug-Scarlett
+      - task: CMake@1
+        displayName: 'CMake (MSVC): Build Scarlett Debug'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --build out\build\x64-Debug-Scarlett
+      - task: CMake@1
+        displayName: 'CMake (MSVC): Config Scarlett Release'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --preset=x64-Release-Scarlett
+      - task: CMake@1
+        displayName: 'CMake (MSVC): Build Scarlett Release'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --build out\build\x64-Release-Scarlett
+      - task: CMake@1
+        displayName: 'CMake (Clang): Config Scarlett Debug'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --preset=x64-Debug-Scarlett-Clang
+      - task: CMake@1
+        displayName: 'CMake (Clang): Build Scarlett Debug'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --build out\build\x64-Debug-Scarlett-Clang
+      - task: CMake@1
+        displayName: 'CMake (Clang): Config Scarlett Release'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --preset=x64-Release-Scarlett-Clang
+      - task: CMake@1
+        displayName: 'CMake (Clang): Build Scarlett Release'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --build out\build\x64-Release-Scarlett-Clang
+      - task: DeleteFiles@1
+        inputs:
+          Contents: 'out/build'
+      - task: CMake@1
+        displayName: 'CMake (DLL): Config Scarlett Debug'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --preset=x64-Debug-Scarlett -DBUILD_SHARED_LIBS=ON
+      - task: CMake@1
+        displayName: 'CMake (DLL): Build Scarlett Debug'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --build out\build\x64-Debug-Scarlett
 
-- job: BUILD_GDK_CMAKE_XBONE
-  displayName: 'Microsoft Game Development Kit (GDK) using CMake (XboxOne)'
-  timeoutInMinutes: 120
-  cancelTimeoutInMinutes: 1
-  steps:
-  - checkout: self
-    clean: true
-    fetchTags: false
-  - task: NuGetToolInstaller@1
-    displayName: 'Use NuGet'
-  - task: PowerShell@2
-    displayName: 'Create nuget.config with single source'
-    inputs:
-      targetType: inline
-      script: |
-        $xml = @'
-        <?xml version="1.0" encoding="utf-8"?>
-        <configuration>
-          <packageSources>
-            <clear />
-          </packageSources>
-        </configuration>
-        '@
-        $xml | Set-Content -Path "$(Build.SourcesDirectory)\NuGet.config"
+  - job: BUILD_GDK_CMAKE_XBONE
+    displayName: 'Microsoft Game Development Kit (GDK) using CMake (XboxOne)'
+    timeoutInMinutes: 120
+    cancelTimeoutInMinutes: 1
+    steps:
+      - checkout: self
+        clean: true
+        fetchTags: false
+      - task: NuGetToolInstaller@1
+        displayName: 'Use NuGet'
+      - task: PowerShell@2
+        displayName: 'Create nuget.config with single source'
+        inputs:
+          targetType: inline
+          script: |
+            $xml = @'
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            '@
+            $xml | Set-Content -Path "$(Build.SourcesDirectory)\NuGet.config"
 
-  - task: NuGetCommand@2
-    # We have to use a nuget.config to provide the feed for the 'nuget install' option.
-    displayName: 'NuGet set package source to ADO feed'
-    inputs:
-      command: custom
-      arguments: sources add -Name xboxgdk -Source $(URL_FEED) -ConfigFile $(Build.SourcesDirectory)\NuGet.config
-  - task: nuget-security-analysis@0
-    displayName: 'Secure Supply Chain Analysis'
-  - task: NuGetAuthenticate@1
-    displayName: 'NuGet Auth'
-  - task: NuGetCommand@2
-    displayName: NuGet install PGDK
-    inputs:
-      command: custom
-      arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
-  - task: NuGetCommand@2
-    displayName: NuGet install GDKX
-    inputs:
-      command: custom
-      arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
-  - task: CmdLine@2
-    displayName: Setup BWOI for GDK command-line
-    inputs:
-      script: |
-        call "$(VC_PATH)\Auxiliary\Build\vcvars64.bat"
-        echo ##vso[task.setvariable variable=WindowsSdkVerBinPath;]%WindowsSdkVerBinPath%
-        echo ##vso[task.prependpath]%VSINSTALLDIR%Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja
-        echo ##vso[task.prependpath]%VCINSTALLDIR%Tools\Llvm\x64\bin
-        echo ##vso[task.prependpath]%WindowsSdkBinPath%x64
-        echo ##vso[task.prependpath]%WindowsSdkVerBinPath%x64
-        echo ##vso[task.prependpath]%VCToolsInstallDir%bin\HostX64\x64
-        call $(Build.SourcesDirectory)\build\SetupBWOI.cmd $(EXTRACTED_FOLDER) $(GDK_EDITION) XboxOne
-        echo ##vso[task.setvariable variable=GameDKLatest;]%GameDKLatest%
-        echo ##vso[task.setvariable variable=GRDKLatest;]%GRDKLatest%
-        echo ##vso[task.setvariable variable=GXDKLatest;]%GXDKLatest%
-        echo ##vso[task.setvariable variable=INCLUDE;]%INCLUDE%
-        echo ##vso[task.setvariable variable=LIB;]%LIB%
-        echo ##vso[task.prependpath]%ADDBIN%
+      - task: NuGetCommand@2
+        # We have to use a nuget.config to provide the feed for the 'nuget install' option.
+        displayName: 'NuGet set package source to ADO feed'
+        inputs:
+          command: custom
+          arguments: sources add -Name xboxgdk -Source $(URL_FEED) -ConfigFile $(Build.SourcesDirectory)\NuGet.config
+      - task: nuget-security-analysis@0
+        displayName: 'Secure Supply Chain Analysis'
+      - task: NuGetAuthenticate@1
+        displayName: 'NuGet Auth'
+      - task: NuGetCommand@2
+        displayName: NuGet install PGDK
+        inputs:
+          command: custom
+          arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
+      - task: NuGetCommand@2
+        displayName: NuGet install GDKX
+        inputs:
+          command: custom
+          arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
+      - task: CmdLine@2
+        displayName: Setup BWOI for GDK command-line
+        inputs:
+          script: |
+            call "$(VC_PATH)\Auxiliary\Build\vcvars64.bat"
+            echo ##vso[task.setvariable variable=WindowsSdkVerBinPath;]%WindowsSdkVerBinPath%
+            echo ##vso[task.prependpath]%VSINSTALLDIR%Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja
+            echo ##vso[task.prependpath]%VCINSTALLDIR%Tools\Llvm\x64\bin
+            echo ##vso[task.prependpath]%WindowsSdkBinPath%x64
+            echo ##vso[task.prependpath]%WindowsSdkVerBinPath%x64
+            echo ##vso[task.prependpath]%VCToolsInstallDir%bin\HostX64\x64
+            call $(Build.SourcesDirectory)\build\SetupBWOI.cmd $(EXTRACTED_FOLDER) $(GDK_EDITION) XboxOne
+            echo ##vso[task.setvariable variable=GameDKLatest;]%GameDKLatest%
+            echo ##vso[task.setvariable variable=GRDKLatest;]%GRDKLatest%
+            echo ##vso[task.setvariable variable=GXDKLatest;]%GXDKLatest%
+            echo ##vso[task.setvariable variable=INCLUDE;]%INCLUDE%
+            echo ##vso[task.setvariable variable=LIB;]%LIB%
+            echo ##vso[task.prependpath]%ADDBIN%
 
-      failOnStderr: true
-  - task: CMake@1
-    displayName: 'CMake (MSVC): Config XboxOne Debug'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --preset=x64-Debug-XboxOne
-  - task: CMake@1
-    displayName: 'CMake (MSVC): Build XboxOne Debug'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --build out\build\x64-Debug-XboxOne
-  - task: CMake@1
-    displayName: 'CMake (MSVC): Config XboxOne Release'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --preset=x64-Release-XboxOne
-  - task: CMake@1
-    displayName: 'CMake (MSVC): Build XboxOne Release'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --build out\build\x64-Release-XboxOne
-  - task: CMake@1
-    displayName: 'CMake (Clang): Config XboxOne Debug'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --preset=x64-Debug-XboxOne-Clang
-  - task: CMake@1
-    displayName: 'CMake (Clang): Build XboxOne Debug'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --build out\build\x64-Debug-XboxOne-Clang
-  - task: CMake@1
-    displayName: 'CMake (Clang): Config XboxOne Release'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --preset=x64-Release-XboxOne-Clang
-  - task: CMake@1
-    displayName: 'CMake (Clang): Build XboxOne Release'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --build out\build\x64-Release-XboxOne-Clang
-  - task: DeleteFiles@1
-    inputs:
-      Contents: 'out/build'
-  - task: CMake@1
-    displayName: 'CMake (DLL): Config XboxOne Debug'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --preset=x64-Debug-XboxOne -DBUILD_SHARED_LIBS=ON
-  - task: CMake@1
-    displayName: 'CMake (DLL): Build XboxOne Debug'
-    inputs:
-      cwd: '$(Build.SourcesDirectory)'
-      cmakeArgs: --build out\build\x64-Debug-XboxOne
+          failOnStderr: true
+      - task: CMake@1
+        displayName: 'CMake (MSVC): Config XboxOne Debug'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --preset=x64-Debug-XboxOne
+      - task: CMake@1
+        displayName: 'CMake (MSVC): Build XboxOne Debug'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --build out\build\x64-Debug-XboxOne
+      - task: CMake@1
+        displayName: 'CMake (MSVC): Config XboxOne Release'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --preset=x64-Release-XboxOne
+      - task: CMake@1
+        displayName: 'CMake (MSVC): Build XboxOne Release'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --build out\build\x64-Release-XboxOne
+      - task: CMake@1
+        displayName: 'CMake (Clang): Config XboxOne Debug'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --preset=x64-Debug-XboxOne-Clang
+      - task: CMake@1
+        displayName: 'CMake (Clang): Build XboxOne Debug'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --build out\build\x64-Debug-XboxOne-Clang
+      - task: CMake@1
+        displayName: 'CMake (Clang): Config XboxOne Release'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --preset=x64-Release-XboxOne-Clang
+      - task: CMake@1
+        displayName: 'CMake (Clang): Build XboxOne Release'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --build out\build\x64-Release-XboxOne-Clang
+      - task: DeleteFiles@1
+        inputs:
+          Contents: 'out/build'
+      - task: CMake@1
+        displayName: 'CMake (DLL): Config XboxOne Debug'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --preset=x64-Debug-XboxOne -DBUILD_SHARED_LIBS=ON
+      - task: CMake@1
+        displayName: 'CMake (DLL): Build XboxOne Debug'
+        inputs:
+          cwd: '$(Build.SourcesDirectory)'
+          cmakeArgs: --build out\build\x64-Debug-XboxOne
