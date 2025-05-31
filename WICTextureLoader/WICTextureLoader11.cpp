@@ -64,22 +64,21 @@ using Microsoft::WRL::ComPtr;
 namespace
 {
     //--------------------------------------------------------------------------------------
-    #if !defined(NO_D3D11_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
+#if !defined(NO_D3D11_DEBUG_NAME) && ( defined(_DEBUG) || defined(PROFILE) )
     template<UINT TNameLength>
     inline void SetDebugObjectName(_In_ ID3D11DeviceChild* resource, _In_ const char(&name)[TNameLength]) noexcept
     {
         resource->SetPrivateData(WKPDID_D3DDebugObjectName, TNameLength - 1, name);
     }
-    #else
+#else
     template<UINT TNameLength>
     inline void SetDebugObjectName(_In_ ID3D11DeviceChild*, _In_ const char(&)[TNameLength]) noexcept
-    {
-    }
-    #endif
+    {}
+#endif
 
-    //-------------------------------------------------------------------------------------
-    // WIC Pixel Format Translation Data
-    //-------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------
+// WIC Pixel Format Translation Data
+//-------------------------------------------------------------------------------------
     struct WICTranslate
     {
         const GUID&         wic;
@@ -87,7 +86,8 @@ namespace
 
         constexpr WICTranslate(const GUID& wg, DXGI_FORMAT fmt) noexcept :
             wic(wg),
-            format(fmt) {}
+            format(fmt)
+        {}
     };
 
     constexpr WICTranslate g_WICFormats[] =
@@ -125,7 +125,8 @@ namespace
 
         constexpr WICConvert(const GUID& src, const GUID& tgt) noexcept :
             source(src),
-            target(tgt) {}
+            target(tgt)
+        {}
     };
 
     constexpr WICConvert g_WICConvert[] =

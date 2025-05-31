@@ -66,7 +66,8 @@ namespace
 
         constexpr WICTranslate(const GUID& wg, D3DFORMAT fmt) noexcept :
             wic(wg),
-            format(fmt) {}
+            format(fmt)
+        {}
     };
 
     constexpr WICTranslate g_WICFormats[] =
@@ -102,7 +103,8 @@ namespace
 
         constexpr WICConvert(const GUID& src, const GUID& tgt) noexcept :
             source(src),
-            target(tgt) {}
+            target(tgt)
+        {}
     };
 
     constexpr WICConvert g_WICConvert[] =

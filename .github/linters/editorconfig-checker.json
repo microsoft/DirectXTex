@@ -3,6 +3,7 @@
     "exclude": [
         ".git",
         "LICENSE",
-        "Tests"
+        "Tests",
+        "Common/d3dx12.h"
     ]
 }
