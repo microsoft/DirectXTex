@@ -1068,37 +1068,37 @@ const D3DX_BC6H::ModeInfo D3DX_BC6H::ms_aInfo[D3DX_BC6H::c_NumModes] =
 
 const int D3DX_BC6H::ms_aModeToInfo[D3DX_BC6H::c_NumModeInfo] =
 {
-     0, // Mode 1   - 0x00
-     1, // Mode 2   - 0x01
-     2, // Mode 3   - 0x02
+    0,  // Mode 1   - 0x00
+    1,  // Mode 2   - 0x01
+    2,  // Mode 3   - 0x02
     10, // Mode 11  - 0x03
     -1, // Invalid  - 0x04
     -1, // Invalid  - 0x05
-     3, // Mode 4   - 0x06
+    3,  // Mode 4   - 0x06
     11, // Mode 12  - 0x07
     -1, // Invalid  - 0x08
     -1, // Invalid  - 0x09
-     4, // Mode 5   - 0x0a
+    4,  // Mode 5   - 0x0a
     12, // Mode 13  - 0x0b
     -1, // Invalid  - 0x0c
     -1, // Invalid  - 0x0d
-     5, // Mode 6   - 0x0e
+    5,  // Mode 6   - 0x0e
     13, // Mode 14  - 0x0f
     -1, // Invalid  - 0x10
     -1, // Invalid  - 0x11
-     6, // Mode 7   - 0x12
+    6,  // Mode 7   - 0x12
     -1, // Reserved - 0x13
     -1, // Invalid  - 0x14
     -1, // Invalid  - 0x15
-     7, // Mode 8   - 0x16
+    7,  // Mode 8   - 0x16
     -1, // Reserved - 0x17
     -1, // Invalid  - 0x18
     -1, // Invalid  - 0x19
-     8, // Mode 9   - 0x1a
+    8,  // Mode 9   - 0x1a
     -1, // Reserved - 0x1b
     -1, // Invalid  - 0x1c
     -1, // Invalid  - 0x1d
-     9, // Mode 10  - 0x1e
+    9,  // Mode 10  - 0x1e
     -1, // Resreved - 0x1f
 };
 
