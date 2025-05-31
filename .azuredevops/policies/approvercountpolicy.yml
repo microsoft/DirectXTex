@@ -1,7 +1,7 @@
 name: approver_count
 description: Approver count policy for mscodehub/DirectXTex/DirectXTex repository
 resource: repository
-where: 
+where:
 configuration:
   approverCountPolicySettings:
     isBlocking: true

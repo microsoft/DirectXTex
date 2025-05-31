@@ -20,7 +20,7 @@ parameters:
 steps:
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} pcdbg
-    continueOnError: True
+    continueOnError: true
     inputs:
       solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
       vsVersion: ${{ parameters.msVersion }}
@@ -30,7 +30,7 @@ steps:
       msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} pcrel
-    continueOnError: True
+    continueOnError: true
     inputs:
       solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
       vsVersion: ${{ parameters.msVersion }}
@@ -40,7 +40,7 @@ steps:
       msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} xbdbg
-    continueOnError: True
+    continueOnError: true
     inputs:
       solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
       vsVersion: ${{ parameters.msVersion }}
@@ -50,7 +50,7 @@ steps:
       msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} xbrel
-    continueOnError: True
+    continueOnError: true
     inputs:
       solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
       vsVersion: ${{ parameters.msVersion }}
@@ -60,7 +60,7 @@ steps:
       msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} scardbg
-    continueOnError: True
+    continueOnError: true
     inputs:
       solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
       vsVersion: ${{ parameters.msVersion }}
@@ -70,7 +70,7 @@ steps:
       msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_${{ parameters.vsYear }} scarrel
-    continueOnError: True
+    continueOnError: true
     inputs:
       solution: DirectXTex_GDK_${{ parameters.vsYear }}.sln
       vsVersion: ${{ parameters.msVersion }}
@@ -80,7 +80,7 @@ steps:
       msbuildArgs: /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_${{ parameters.vsYear }} dbg
-    continueOnError: True
+    continueOnError: true
     inputs:
       solution: DirectXTex_GXDK_PC_${{ parameters.vsYear }}.sln
       vsVersion: ${{ parameters.msVersion }}
@@ -90,7 +90,7 @@ steps:
       msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_${{ parameters.vsYear }} rel
-    continueOnError: True
+    continueOnError: true
     inputs:
       solution: DirectXTex_GXDK_PC_${{ parameters.vsYear }}.sln
       vsVersion: ${{ parameters.msVersion }}
@@ -100,7 +100,7 @@ steps:
       msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_${{ parameters.vsYear }} scardbg
-    continueOnError: True
+    continueOnError: true
     inputs:
       solution: DirectXTex_GXDK_PC_${{ parameters.vsYear }}.sln
       vsVersion: ${{ parameters.msVersion }}
@@ -110,7 +110,7 @@ steps:
       msbuildArgs: /p:PreferredToolArchitecture=x64 /p:GDKEditionNumber=$(GDK_EDITION)
   - task: VSBuild@1
     displayName: Build solution DirectXTex_GDK_PC_${{ parameters.vsYear }} scarrel
-    continueOnError: True
+    continueOnError: true
     inputs:
       solution: DirectXTex_GXDK_PC_${{ parameters.vsYear }}.sln
       vsVersion: ${{ parameters.msVersion }}

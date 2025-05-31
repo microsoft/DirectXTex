@@ -10,7 +10,7 @@ schedules:
     displayName: 'Submit for File Fuzzing (Monthly)'
     branches:
       include:
-      - main
+        - main
     always: true
 
 trigger: none

@@ -10,7 +10,7 @@ schedules:
     displayName: 'Three times a week'
     branches:
       include:
-      - main
+        - main
     always: true
 
 # GitHub Actions handles CodeQL and PREFAST for CI/PR

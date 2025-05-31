@@ -10,7 +10,7 @@ schedules:
     displayName: 'Nightly build'
     branches:
       include:
-      - main
+        - main
 
 # GitHub Actions handles test suite for CI/PR
 trigger: none

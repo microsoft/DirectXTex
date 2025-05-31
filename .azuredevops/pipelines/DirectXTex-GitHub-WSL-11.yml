@@ -10,7 +10,7 @@ schedules:
     displayName: 'Nightly build'
     branches:
       include:
-      - main
+        - main
 
 trigger: none
 
