@@ -6,52 +6,52 @@
 # Template used by SDK-release and SDK-prerelease pipelines
 
 steps:
-- task: VSBuild@1
-  displayName: Build solution DirectXTex_Windows10_2022.sln 32dbg
-  inputs:
-    solution: DirectXTex_Windows10_2022.sln
-    platform: x86
-    configuration: Debug
-    msbuildArchitecture: x64
-    msbuildArgs: /p:PreferredToolArchitecture=x64
-- task: VSBuild@1
-  displayName: Build solution DirectXTex_Windows10_2022.sln 32rel
-  inputs:
-    solution: DirectXTex_Windows10_2022.sln
-    platform: x86
-    configuration: Release
-    msbuildArchitecture: x64
-    msbuildArgs: /p:PreferredToolArchitecture=x64
-- task: VSBuild@1
-  displayName: Build solution DirectXTex_Windows10_2022.sln 64dbg
-  inputs:
-    solution: DirectXTex_Windows10_2022.sln
-    platform: x64
-    configuration: Debug
-    msbuildArchitecture: x64
-    msbuildArgs: /p:PreferredToolArchitecture=x64
-- task: VSBuild@1
-  displayName: Build solution DirectXTex_Windows10_2022.sln 64rel
-  inputs:
-    solution: DirectXTex_Windows10_2022.sln
-    platform: x64
-    configuration: Release
-    msbuildArchitecture: x64
-    msbuildArgs: /p:PreferredToolArchitecture=x64
-# Windows on ARM 32-bit is deprecated. https://learn.microsoft.com/windows/arm/arm32-to-arm64
-- task: VSBuild@1
-  displayName: Build solution DirectXTex_Windows10_2022.sln arm64dbg
-  inputs:
-    solution: DirectXTex_Windows10_2022.sln
-    platform: ARM64
-    configuration: Debug
-    msbuildArchitecture: x64
-    msbuildArgs: /p:PreferredToolArchitecture=x64
-- task: VSBuild@1
-  displayName: Build solution DirectXTex_Windows10_2022.sln arm64rel
-  inputs:
-    solution: DirectXTex_Windows10_2022.sln
-    platform: ARM64
-    configuration: Release
-    msbuildArchitecture: x64
-    msbuildArgs: /p:PreferredToolArchitecture=x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln 32dbg
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      platform: x86
+      configuration: Debug
+      msbuildArchitecture: x64
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln 32rel
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      platform: x86
+      configuration: Release
+      msbuildArchitecture: x64
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln 64dbg
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      platform: x64
+      configuration: Debug
+      msbuildArchitecture: x64
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln 64rel
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      platform: x64
+      configuration: Release
+      msbuildArchitecture: x64
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+  # Windows on ARM 32-bit is deprecated. https://learn.microsoft.com/windows/arm/arm32-to-arm64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln arm64dbg
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      platform: ARM64
+      configuration: Debug
+      msbuildArchitecture: x64
+      msbuildArgs: /p:PreferredToolArchitecture=x64
+  - task: VSBuild@1
+    displayName: Build solution DirectXTex_Windows10_2022.sln arm64rel
+    inputs:
+      solution: DirectXTex_Windows10_2022.sln
+      platform: ARM64
+      configuration: Release
+      msbuildArchitecture: x64
+      msbuildArgs: /p:PreferredToolArchitecture=x64
