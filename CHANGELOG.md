@@ -6,6 +6,11 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### July 9, 2025
+* Reformat source using updated .editorconfig settings and general lint cleanup
+* Minor code review
+* CMake project updates
+
 ### March 24, 2025
 * C++17 `std::byte` support for `FromMemory` functions
 * Added **ComputeTileShape** method to compute Direct3D Tiled Resource standard dimensions
