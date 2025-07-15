@@ -3,7 +3,7 @@
 #
 # https://go.microsoft.com/fwlink/?LinkId=248926
 
-name: 'BVTs (x64)'
+name: 'BVTs (arm64)'
 
 on:
   push:
@@ -38,16 +38,14 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-11-arm
     timeout-minutes: 60
 
     strategy:
       fail-fast: false
 
       matrix:
-        toolver: ['14.29', '14']
-        build_type: [x64-Release]
-        arch: [amd64]
+        build_type: [arm64-Release]
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -64,35 +62,11 @@ jobs:
 
       - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
         with:
-          arch: ${{ matrix.arch }}
-          toolset: ${{ matrix.toolver }}
+          arch: arm64
 
       - name: 'Set triplet'
         shell: pwsh
-        run: |
-          if ("${{ matrix.arch }}" -eq "amd64")
-          {
-              echo "VCPKG_DEFAULT_TRIPLET=x64-windows" >> $env:GITHUB_ENV
-          }
-          elseif ("${{ matrix.arch }}" -eq "amd64_x86")
-          {
-              echo "VCPKG_DEFAULT_TRIPLET=x86-windows" >> $env:GITHUB_ENV
-          }
-          elseif ("${{ matrix.arch }}" -eq "amd64_arm64")
-          {
-              if ("${{ matrix.build_type }}" -match "^arm64ec")
-              {
-                  echo "VCPKG_DEFAULT_TRIPLET=arm64ec-windows" >> $env:GITHUB_ENV
-              }
-              else
-              {
-                  echo "VCPKG_DEFAULT_TRIPLET=arm64-windows" >> $env:GITHUB_ENV
-              }
-          }
-          else
-          {
-              echo "::error Unknown architecture/build-type triplet mapping"
-          }
+        run: echo "VCPKG_DEFAULT_TRIPLET=arm64-windows" >> $env:GITHUB_ENV
 
       - name: Get vcpkg commit hash
         shell: pwsh
