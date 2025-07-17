@@ -51,12 +51,14 @@ variables:
     value: '10.0.19041.0'
   - name: EXTRACTED_FOLDER
     value: '$(ExtractedFolder)'
+  - name: GDK_EDITION
+    value: $(GDKEditionNumber)
   - name: URL_FEED
     value: $(ADOFeedURL)
   - name: VC_PATH
     value: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC'
   - name: GameDKLatest
-    value: '$(ExtractedFolder)\Microsoft.gdk.xbox.$(GDK_EDITION)\native\$(GDK_EDITION)\'
+    value: '$(ExtractedFolder)\Microsoft.gdk.xbox\native\$(GDK_EDITION)\'
   - name: skipNugetSecurityAnalysis
     value: true # We explicitly call this task so we don't need it to be auto-injected
 
@@ -97,16 +99,13 @@ jobs:
         displayName: 'Secure Supply Chain Analysis'
       - task: NuGetAuthenticate@1
         displayName: 'NuGet Auth'
-      - task: NuGetCommand@2
-        displayName: NuGet install PGDK
+      - task: PowerShell@2
+        displayName: 'NuGet Install GDK'
         inputs:
-          command: custom
-          arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
-      - task: NuGetCommand@2
-        displayName: NuGet install GDKX
-        inputs:
-          command: custom
-          arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
+          targetType: filePath
+          filePath: ./build/RestoreGDK.ps1
+          arguments: -GDKEditionNumber $(GDK_EDITION) -OutputDirectory $(EXTRACTED_FOLDER)
+          failOnStderr: true
       - task: CMake@1
         displayName: 'CMake (MSVC): Config x64 (Xbox Series X|S)'
         inputs:
@@ -251,16 +250,13 @@ jobs:
         displayName: 'Secure Supply Chain Analysis'
       - task: NuGetAuthenticate@1
         displayName: 'NuGet Auth'
-      - task: NuGetCommand@2
-        displayName: NuGet install PGDK
+      - task: PowerShell@2
+        displayName: 'NuGet Install GDK'
         inputs:
-          command: custom
-          arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
-      - task: NuGetCommand@2
-        displayName: NuGet install GDKX
-        inputs:
-          command: custom
-          arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
+          targetType: filePath
+          filePath: ./build/RestoreGDK.ps1
+          arguments: -GDKEditionNumber $(GDK_EDITION) -OutputDirectory $(EXTRACTED_FOLDER)
+          failOnStderr: true
       - task: CmdLine@2
         displayName: Setup BWOI for GDK command-line
         inputs:
@@ -345,16 +341,13 @@ jobs:
         displayName: 'Secure Supply Chain Analysis'
       - task: NuGetAuthenticate@1
         displayName: 'NuGet Auth'
-      - task: NuGetCommand@2
-        displayName: NuGet install PGDK
+      - task: PowerShell@2
+        displayName: 'NuGet Install GDK'
         inputs:
-          command: custom
-          arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
-      - task: NuGetCommand@2
-        displayName: NuGet install GDKX
-        inputs:
-          command: custom
-          arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
+          targetType: filePath
+          filePath: ./build/RestoreGDK.ps1
+          arguments: -GDKEditionNumber $(GDK_EDITION) -OutputDirectory $(EXTRACTED_FOLDER)
+          failOnStderr: true
       - task: CmdLine@2
         displayName: Setup BWOI for GDK command-line
         inputs:
