@@ -32,7 +32,6 @@ resources:
     - repository: self
       type: git
       ref: refs/heads/main
-      trigger: none
     - repository: testRepo
       name: walbourn/directxtextest
       type: github

@@ -58,7 +58,7 @@ resources:
 name: $(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
 
 pool:
-  vmImage: windows-2019
+  vmImage: windows-2022
 
 variables:
   - group: dxtex-shared-variables
@@ -128,10 +128,9 @@ jobs:
         displayName: Setup BWOI VCTargets
         inputs:
           solution: build/SetupBWOI.targets
-          msbuildVersion: 16.0
           msbuildArchitecture: x64
           msbuildArguments: /p:GDKEditionNumber=$(GDK_EDITION)
       - template: '/.azuredevops/templates/DirectXTex-build-gdk.yml'
         parameters:
-          msVersion: '16.0'
+          msVersion: '17.0'
           vsYear: 2019
