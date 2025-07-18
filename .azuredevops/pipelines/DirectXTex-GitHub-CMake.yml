@@ -147,44 +147,11 @@ jobs:
           cwd: $(Build.SourcesDirectory)
           cmakeArgs: --build out4 -v --config Debug
       - task: CMake@1
-        displayName: 'CMake (MSVC Spectre): Config x64'
-        inputs:
-          cwd: $(Build.SourcesDirectory)
-          cmakeArgs: >
-            -G "$(VS_GENERATOR)" -T v142 -A x64 -B out5
-            -DENABLE_SPECTRE_MITIGATION=ON -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON
-            -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
-            -DBUILD_DX12=OFF
-      - task: CMake@1
-        displayName: 'CMake (MSVC Spectre): Build x64 Debug'
-        inputs:
-          cwd: $(Build.SourcesDirectory)
-          cmakeArgs: --build out5 -v --config Debug
-      - task: CMake@1
-        displayName: 'CMake (MSVC Spectre): Build x64 Release'
-        inputs:
-          cwd: $(Build.SourcesDirectory)
-          cmakeArgs: --build out5 -v --config RelWithDebInfo
-      - task: CMake@1
-        displayName: 'CMake (Win10 Spectre): Config'
-        inputs:
-          cwd: $(Build.SourcesDirectory)
-          cmakeArgs: >
-            -G "$(VS_GENERATOR)" -T v142 -A x64 -B out6
-            -DENABLE_SPECTRE_MITIGATION=ON -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON
-            -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
-            -DBUILD_DX12=ON
-      - task: CMake@1
-        displayName: 'CMake (Win10 Spectre): Build'
-        inputs:
-          cwd: $(Build.SourcesDirectory)
-          cmakeArgs: --build out6 -v --config Debug
-      - task: CMake@1
         displayName: 'CMake (NO_WCHAR_T): Config'
         inputs:
           cwd: $(Build.SourcesDirectory)
           cmakeArgs: >
-            -G "$(VS_GENERATOR)" -T v142 -A x64 -B out7
+            -G "$(VS_GENERATOR)" -T v142 -A x64 -B out5
             -DNO_WCHAR_T=ON -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON
             -DCMAKE_SYSTEM_VERSION=$(WIN11_SDK)
             -DBUILD_DX12=ON
@@ -192,13 +159,13 @@ jobs:
         displayName: 'CMake (NO_WCHAR_T): Build'
         inputs:
           cwd: $(Build.SourcesDirectory)
-          cmakeArgs: --build out7 -v --config Debug
+          cmakeArgs: --build out5 -v --config Debug
       - task: CMake@1
         displayName: 'CMake (DLL): Config x64'
         inputs:
           cwd: $(Build.SourcesDirectory)
           cmakeArgs: >
-            -G "$(VS_GENERATOR)" -T v142 -A x64 -B out8
+            -G "$(VS_GENERATOR)" -T v142 -A x64 -B out6
             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
             -DBUILD_DX12=ON
             -DBUILD_SHARED_LIBS=ON
@@ -206,25 +173,25 @@ jobs:
         displayName: 'CMake (DLL): Build x64 Debug'
         inputs:
           cwd: $(Build.SourcesDirectory)
-          cmakeArgs: --build out8 -v --config Debug
+          cmakeArgs: --build out6 -v --config Debug
       - task: CMake@1
         displayName: 'CMake (DLL): Build x64 Release'
         inputs:
           cwd: $(Build.SourcesDirectory)
-          cmakeArgs: --build out8 -v --config RelWithDebInfo
+          cmakeArgs: --build out6 -v --config RelWithDebInfo
       - task: CMake@1
         displayName: 'CMake (UWP DLL): Config x64'
         inputs:
           cwd: $(Build.SourcesDirectory)
           cmakeArgs: >
-            -G "$(VS_GENERATOR)" -T v142 -A x64 -B out9
+            -G "$(VS_GENERATOR)" -T v142 -A x64 -B out7
             -DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON -DCMAKE_SYSTEM_VERSION=10.0
             -DBUILD_SHARED_LIBS=ON
       - task: CMake@1
         displayName: 'CMake (UWP DLL): Build x64'
         inputs:
           cwd: $(Build.SourcesDirectory)
-          cmakeArgs: --build out9 -v
+          cmakeArgs: --build out7 -v
 
   - job: CMAKE_BUILD_VCPKG
     displayName: CMake using VCPKG

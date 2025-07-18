@@ -61,22 +61,7 @@ jobs:
           BuildPlatform: x86
           BuildConfiguration: Debug
           SpectreMitigation: false
-        Release_x64_SpectreMitigated:
-          BuildPlatform: x64
-          BuildConfiguration: Release
-          SpectreMitigation: 'Spectre'
-        Debug_x64_SpectreMitigated:
-          BuildPlatform: x64
-          BuildConfiguration: Debug
-          SpectreMitigation: 'Spectre'
-        Release_x86_SpectreMitigated:
-          BuildPlatform: x86
-          BuildConfiguration: Release
-          SpectreMitigation: 'Spectre'
-        Debug_x86_SpectreMitigated:
-          BuildPlatform: x86
-          BuildConfiguration: Debug
-          SpectreMitigation: 'Spectre'
+        # windows-2022 image is missing v142 spectre-mitigated libraries
     steps:
       - checkout: self
         clean: true
