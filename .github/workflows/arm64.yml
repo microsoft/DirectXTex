@@ -1,0 +1,77 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+#
+# http://go.microsoft.com/fwlink/?LinkId=248926
+
+name: 'CMake (Windows on ARM64)'
+
+on:
+  push:
+    branches: "main"
+    paths-ignore:
+      - '*.md'
+      - LICENSE
+      - '.azuredevops/**'
+      - '.nuget/*'
+      - build/*.cmd
+      - build/*.json
+      - build/*.props
+      - build/*.ps1
+      - build/*.targets
+      - build/*.xvd
+  pull_request:
+    branches: "main"
+    paths-ignore:
+      - '*.md'
+      - LICENSE
+      - '.azuredevops/**'
+      - '.nuget/*'
+      - build/*.cmd
+      - build/*.json
+      - build/*.props
+      - build/*.ps1
+      - build/*.targets
+      - build/*.xvd
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-11-arm
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        build_type: [arm64-Debug, arm64-Release, arm64-Debug-UWP, arm64-Release-UWP]
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: 'Install Ninja'
+        run: choco install ninja
+
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          arch: arm64
+
+      - name: 'Configure CMake'
+        working-directory: ${{ github.workspace }}
+        run: cmake --preset=${{ matrix.build_type }}
+
+      - name: 'Build'
+        working-directory: ${{ github.workspace }}
+        run: cmake --build out\build\${{ matrix.build_type }}
+
+      - name: 'Clean up'
+        working-directory: ${{ github.workspace }}
+        run: Remove-Item -Path out -Recurse -Force
+
+      - name: 'Configure CMake (DLL)'
+        working-directory: ${{ github.workspace }}
+        run: cmake --preset=${{ matrix.build_type }} -DBUILD_SHARED_LIBS=ON
+
+      - name: 'Build (DLL)'
+        working-directory: ${{ github.workspace }}
+        run: cmake --build out\build\${{ matrix.build_type }}

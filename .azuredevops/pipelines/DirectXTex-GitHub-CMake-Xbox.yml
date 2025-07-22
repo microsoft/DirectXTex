@@ -58,20 +58,22 @@ variables:
   - name: Codeql.Enabled
     value: false
   - name: VS_GENERATOR
-    value: 'Visual Studio 16 2019'
+    value: 'Visual Studio 17 2022'
   - name: WIN10_SDK
     value: '10.0.19041.0'
   - name: EXTRACTED_FOLDER
     value: '$(ExtractedFolder)'
+  - name: GDK_EDITION
+    value: $(GDKEditionNumber)
   - name: URL_FEED
     value: $(ADOFeedURL)
   - name: GameDKLatest
-    value: '$(ExtractedFolder)\Microsoft.gdk.xbox.$(GDK_EDITION)\native\$(GDK_EDITION)\'
+    value: '$(ExtractedFolder)\Microsoft.gdk.xbox\native\$(GDK_EDITION)\'
   - name: skipNugetSecurityAnalysis
     value: true # We explicitly call this task so we don't need it to be auto-injected
 
 pool:
-  vmImage: windows-2019
+  vmImage: windows-2022
 
 jobs:
   - job: CMAKE_BUILD
@@ -107,22 +109,19 @@ jobs:
         displayName: 'Secure Supply Chain Analysis'
       - task: NuGetAuthenticate@1
         displayName: 'NuGet Auth'
-      - task: NuGetCommand@2
-        displayName: NuGet install PGDK
+      - task: PowerShell@2
+        displayName: 'NuGet Install GDK'
         inputs:
-          command: custom
-          arguments: install -prerelease Microsoft.GDK.PC.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
-      - task: NuGetCommand@2
-        displayName: NuGet install GDKX
-        inputs:
-          command: custom
-          arguments: install -prerelease Microsoft.GDK.Xbox.$(GDK_EDITION) -ExcludeVersion -OutputDirectory $(EXTRACTED_FOLDER)
+          targetType: filePath
+          filePath: ./build/RestoreGDK.ps1
+          arguments: -GDKEditionNumber $(GDK_EDITION) -OutputDirectory $(EXTRACTED_FOLDER)
+          failOnStderr: true
       - task: CMake@1
         displayName: 'CMake (MSVC): Config x64 (Xbox Series X|S)'
         inputs:
           cwd: ''
           cmakeArgs: >
-            -G "$(VS_GENERATOR)" -A x64 -B out
+            -G "$(VS_GENERATOR)" -T v142 -A x64 -B out
             -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
             -DBUILD_XBOX_EXTS_SCARLETT=ON -DBUILD_SAMPLE=OFF
       - task: CMake@1
@@ -136,65 +135,29 @@ jobs:
           cwd: ''
           cmakeArgs: --build out -v --config RelWithDebInfo
       - task: CMake@1
-        displayName: 'CMake (ClangCl): Config x64 (Xbox Series X|S)'
-        inputs:
-          cwd: ''
-          cmakeArgs: >
-            -G "$(VS_GENERATOR)" -A x64 -T clangcl -B out2
-            -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
-            -DBUILD_XBOX_EXTS_SCARLETT=ON -DBUILD_SAMPLE=OFF
-      - task: CMake@1
-        displayName: 'CMake (ClangCl): Build x64 Debug (Xbox Series X|S)'
-        inputs:
-          cwd: ''
-          cmakeArgs: --build out2 -v --config Debug
-      - task: CMake@1
-        displayName: 'CMake (ClangCl): Build x64 Release (Xbox Series X|S)'
-        inputs:
-          cwd: ''
-          cmakeArgs: --build out2 -v --config RelWithDebInfo
-      - task: CMake@1
         displayName: 'CMake (MSVC): Config x64 (Xbox One)'
         inputs:
           cwd: ''
           cmakeArgs: >
-            -G "$(VS_GENERATOR)" -A x64 -B out3
+            -G "$(VS_GENERATOR)" -T v142 -A x64 -B out2
             -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
             -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF
       - task: CMake@1
         displayName: 'CMake (MSVC): Build x64 Debug (Xbox One)'
         inputs:
           cwd: ''
-          cmakeArgs: --build out3 -v --config Debug
+          cmakeArgs: --build out2 -v --config Debug
       - task: CMake@1
         displayName: 'CMake (MSVC): Build x64 Release (Xbox One)'
         inputs:
           cwd: ''
-          cmakeArgs: --build out3 -v --config RelWithDebInfo
-      - task: CMake@1
-        displayName: 'CMake (ClangCl): Config x64 (Xbox One)'
-        inputs:
-          cwd: ''
-          cmakeArgs: >
-            -G "$(VS_GENERATOR)" -A x64 -T clangcl -B out4
-            -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
-            -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF
-      - task: CMake@1
-        displayName: 'CMake (ClangCl): Build x64 Debug (Xbox One)'
-        inputs:
-          cwd: ''
-          cmakeArgs: --build out4 -v --config Debug
-      - task: CMake@1
-        displayName: 'CMake (ClangCl): Build x64 Release (Xbox One)'
-        inputs:
-          cwd: ''
-          cmakeArgs: --build out4 -v --config RelWithDebInfo
+          cmakeArgs: --build out2 -v --config RelWithDebInfo
       - task: CMake@1
         displayName: 'CMake (DLL): Config x64 (Xbox Series X|S)'
         inputs:
           cwd: ''
           cmakeArgs: >
-            -G "$(VS_GENERATOR)" -A x64 -B out5
+            -G "$(VS_GENERATOR)" -T v142 -A x64 -B out3
             -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
             -DBUILD_XBOX_EXTS_SCARLETT=ON -DBUILD_SAMPLE=OFF
             -DBUILD_SHARED_LIBS=ON
@@ -202,18 +165,18 @@ jobs:
         displayName: 'CMake (DLL): Build x64 Debug (Xbox Series X|S)'
         inputs:
           cwd: ''
-          cmakeArgs: --build out5 -v --config Debug
+          cmakeArgs: --build out3 -v --config Debug
       - task: CMake@1
         displayName: 'CMake (DLL): Build x64 Release (Xbox Series X|S)'
         inputs:
           cwd: ''
-          cmakeArgs: --build out5 -v --config RelWithDebInfo
+          cmakeArgs: --build out3 -v --config RelWithDebInfo
       - task: CMake@1
         displayName: 'CMake (DLL): Config x64 (Xbox One)'
         inputs:
           cwd: ''
           cmakeArgs: >
-            -G "$(VS_GENERATOR)" -A x64 -B out6
+            -G "$(VS_GENERATOR)" -T v142 -A x64 -B out4
             -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
             -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF
             -DBUILD_SHARED_LIBS=ON
@@ -221,9 +184,9 @@ jobs:
         displayName: 'CMake (DLL): Build x64 Debug (Xbox One)'
         inputs:
           cwd: ''
-          cmakeArgs: --build out6 -v --config Debug
+          cmakeArgs: --build out4 -v --config Debug
       - task: CMake@1
         displayName: 'CMake (DLL): Build x64 Release (Xbox One)'
         inputs:
           cwd: ''
-          cmakeArgs: --build out6 -v --config RelWithDebInfo
+          cmakeArgs: --build out4 -v --config RelWithDebInfo

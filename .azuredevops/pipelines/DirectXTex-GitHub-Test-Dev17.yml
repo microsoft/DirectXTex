@@ -39,9 +39,13 @@ pool:
   vmImage: windows-2022
 
 variables:
-  Codeql.Enabled: false
-  VC_PATH: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC'
-  GUID_FEED: $(ADOFeedGUID)
+  - group: dxtex-shared-variables
+  - name: Codeql.Enabled
+    value: false
+  - name: VC_PATH
+    value: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC'
+  - name: GUID_FEED
+    value: $(ADOFeedGUID)
 
 jobs:
   - job: DESKTOP_BUILD
@@ -93,7 +97,6 @@ jobs:
         displayName: Build solution DirectXTex_Tests_Desktop_2022.sln
         inputs:
           solution: Tests/DirectXTex_Tests_Desktop_2022.sln
-          vsVersion: 17.0
           msbuildArgs: /p:PreferredToolArchitecture=x64
           platform: '$(BuildPlatform)'
           configuration: '$(BuildConfiguration)'
@@ -103,7 +106,6 @@ jobs:
         displayName: Build solution DirectXTex_Tests_Desktop_2022_Win10.sln
         inputs:
           solution: Tests/DirectXTex_Tests_Desktop_2022_Win10.sln
-          vsVersion: 17.0
           msbuildArgs: /p:PreferredToolArchitecture=x64
           platform: '$(BuildPlatform)'
           configuration: '$(BuildConfiguration)'
