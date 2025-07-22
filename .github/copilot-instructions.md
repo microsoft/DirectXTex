@@ -31,15 +31,23 @@ These instructions define how GitHub Copilot should assist with this project. Th
 ## File Structure
 
 ```txt
-.azuredevops/ # Azure DevOps pipeline configuration and policy files.
-.github/      # GitHub Actions workflow files and linter configuration files.
-build/        # Miscellaneous build files and scripts.
-DirectXTex/   # DirectXTex implementation files.
-texassemble/  # CLI tool for creating complex DDS files from multiple image files.
-texconv/      # CLI tool for converting image files to DDS texture files including block compression, mipmaps, and resizing.
-texdiag/      # CLI tool for diagnosing and validating DDS texture files.
-Tests/        # Tests are designed to be cloned from a separate repository at this location.
+.azuredevops/     # Azure DevOps pipeline configuration and policy files.
+.github/          # GitHub Actions workflow files and linter configuration files.
+.nuget/           # NuGet package configuration files.
+build/            # Miscellaneous build files and scripts.
+Auxiliary/        # Auxiliary functions such as Xbox tiling extensions, OpenEXR support, etc.
+DirectXTex/       # DirectXTex implementation files.
+DDSView/          # Sample application for viewing DDS texture files using DirectXTex.
+texassemble/      # CLI tool for creating complex DDS files from multiple image files.
+texconv/          # CLI tool for converting image files to DDS texture files including block compression, mipmaps, and resizing.
+texdiag/          # CLI tool for diagnosing and validating DDS texture files.
+DDSTextureLoader/ # Standalone version of the DDS texture loader for Direct3D 9/11/12.
+ScreenGrab/       # Standalone version of the screenshot capture utility for Direct3D 9/11/12.
+WICTextureLoader/ # Standalone versoin of the WIC texture loader for Direct3D 9/11/12.
+Tests/            # Tests are designed to be cloned from a separate repository at this location.
 ```
+
+> Note that DDSTextureLoader, ScreenGrab, and WICTextureLoader are standalone version of utilities which are also included in the *DirectX Tool Kit for DirectX 11* and *DirectX Tool Kit for DirectX 12*.
 
 ## Patterns
 
