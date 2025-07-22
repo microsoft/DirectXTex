@@ -37,6 +37,7 @@ These instructions define how GitHub Copilot should assist with this project. Th
 build/            # Miscellaneous build files and scripts.
 Auxiliary/        # Auxiliary functions such as Xbox tiling extensions, OpenEXR support, etc.
 DirectXTex/       # DirectXTex implementation files.
+  Shaders/        # HLSL shader files.
 DDSView/          # Sample application for viewing DDS texture files using DirectXTex.
 texassemble/      # CLI tool for creating complex DDS files from multiple image files.
 texconv/          # CLI tool for converting image files to DDS texture files including block compression, mipmaps, and resizing.
