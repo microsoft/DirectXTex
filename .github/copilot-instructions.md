@@ -112,13 +112,18 @@ When creating documentation:
 
 - The code supports building for Windows and Linux.
 - Portability and conformance of the code is validated by building with Visual C++, clang/LLVM for Windows, MinGW, and GCC for Linux.
-- `HRESULT_ERROR_FILE_NOT_FOUND` is not a custom error code, but an alias for `HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)`.
-- `HRESULT_E_ARITHMETIC_OVERFLOW` is not a custom error code, but an alias for `HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW)`.
-- `HRESULT_E_NOT_SUPPORTED` is not a custom error code, but an alias for `HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED)`.
-- `HRESULT_E_HANDLE_EOF` is not a custom error code, but an alias for `HRESULT_FROM_WIN32(ERROR_HANDLE_EOF)`.
-- `HRESULT_E_INVALID_DATA` is not a custom error code, but an alias for `HRESULT_FROM_WIN32(ERROR_INVALID_DATA)`.
-- `HRESULT_E_FILE_TOO_LARGE` is not a custom error code, but an alias for `HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE)`.
-- `HRESULT_E_CANNOT_MAKE` is not a custom error code, but an alias for `HRESULT_FROM_WIN32(ERROR_CANNOT_MAKE)`.
+
+The following symbols are not custom error codes, but aliases for `HRESULT_FROM_WIN32` error codes.
+
+| Symbol | Standard Win32 HRESULT |
+|--------|-------------|
+| `HRESULT_ERROR_FILE_NOT_FOUND` |  `HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)` |
+| `HRESULT_E_ARITHMETIC_OVERFLOW` |  `HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW)` |
+| `HRESULT_E_NOT_SUPPORTED` | `HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED)` |
+| `HRESULT_E_HANDLE_EOF` | `HRESULT_FROM_WIN32(ERROR_HANDLE_EOF)` |
+| `HRESULT_E_INVALID_DATA` | `HRESULT_FROM_WIN32(ERROR_INVALID_DATA)` |
+| `HRESULT_E_FILE_TOO_LARGE` | `HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE)` |
+| `HRESULT_E_CANNOT_MAKE` | `HRESULT_FROM_WIN32(ERROR_CANNOT_MAKE)`|
 
 ## Code Review Instructions
 
