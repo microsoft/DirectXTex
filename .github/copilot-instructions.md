@@ -136,6 +136,10 @@ When reviewing code, focus on the following aspects:
 - Clarity and maintainability of the code.
 - Adequate comments where necessary.
 - Public interfaces located in `DirectXTex.h` should be clearly defined and documented on the GitHub wiki.
+- Optional functions are located in `DirectXTexEXR.h`, `DirectXTexJPEG.h`, `DirectXTexPNG.h`, and `DirectXTexXbox.h` in the `Auxiliary` folder.
+- Standalone modules for loading textures from DDS Files are located in `DDSTextureLoader9.h`, `DDSTextureLoader11.h`, and `DDSTextureLoader12.h` in the `DDSTextureLoader` folder.
+- Standalone modules are loading textures using WIC are located in `WICTextureLoader9.h`, `WICTextureLoader11.h`, and `WICTextureLoader12.h` in the `WICTextureLoader` folder.
+- Standalone modules for capturing screenshots are located in `ScreenGrab9.h`, `ScreenGrab11.h`, and `ScreenGrab12.h` in the `ScreenGrab` folder.
 - Compliance with the project's architecture and design patterns.
 - Ensure that all public functions and classes are covered by unit tests located on [GitHub](https://github.com/walbourn/directxtextest.git) where applicable. Report any gaps in test coverage.
 - Check for performance implications, especially in geometry processing algorithms.
