@@ -73,7 +73,7 @@ variables:
   - name: WIN10_SDK
     value: '10.0.19041.0'
   - name: WIN11_SDK
-    value: '10.0.22000.0'
+    value: '10.0.26100.0'
 
 pool:
   vmImage: windows-2022
