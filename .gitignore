@@ -18,6 +18,7 @@
 *.VC.db
 *.nupkg
 .vs
+.vscode
 [Bb]in
 packages
 /DDSView/Shaders/*.inc
