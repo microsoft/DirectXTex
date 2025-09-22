@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-cmake_minimum_required (VERSION 3.20)
+cmake_minimum_required (VERSION 3.21)
 
 set(DIRECTXTEX_VERSION 2.0.8)
 
@@ -509,13 +509,11 @@ if(BUILD_TOOLS AND WIN32)
     target_compile_definitions(texconv PRIVATE USE_XBOX_EXTS)
     target_link_libraries(texconv PUBLIC $<TARGET_NAME_IF_EXISTS:Xbox::GDKX> $<TARGET_NAME_IF_EXISTS:Xbox::XDK>)
 
-    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.21")
-      add_custom_command(TARGET texconv POST_BUILD
-          COMMAND ${CMAKE_COMMAND} -E copy
-          $<TARGET_RUNTIME_DLLS:texconv> $<TARGET_FILE_DIR:texconv>
-          COMMAND_EXPAND_LISTS
-          )
-    endif()
+    add_custom_command(TARGET texconv POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_RUNTIME_DLLS:texconv> $<TARGET_FILE_DIR:texconv>
+        COMMAND_EXPAND_LISTS
+        )
   endif()
 endif()
 
