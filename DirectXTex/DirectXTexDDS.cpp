@@ -325,7 +325,7 @@ namespace
         _Inout_ uint32_t& convFlags) noexcept
     {
         if (!pSource)
-            return E_INVALIDARG;
+            return E_POINTER;
 
         metadata = {};
         if (ddPixelFormat)
