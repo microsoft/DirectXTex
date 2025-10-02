@@ -65,36 +65,48 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(GameDKXboxLatest)'!=''">
+    <XboxOneIncludePath>$(GameDKXboxLatest)xbox\include\devpctools;$(GameDKXboxLatest)xbox\include\devpctools\gen8</XboxOneIncludePath>
+    <XboxOneLibPath>$(GameDKXboxLatest)xbox\lib\devpctools\gen8</XboxOneLibPath>
+    <ScarlettIncludePath>$(GameDKXboxLatest)xbox\include\devpctools;$(GameDKXboxLatest)xbox\include\devpctools\gen9</ScarlettIncludePath>
+    <ScarlettLibPath>$(GameDKXboxLatest)xbox\lib\devpctools\gen9</ScarlettLibPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(GameDKXboxLatest)'==''">
+    <XboxOneIncludePath>$(GameDKLatest)GXDK\toolKit\include;$(GameDKLatest)GXDK\toolKit\include\XboxOne</XboxOneIncludePath>
+    <XboxOneLibPath>$(GameDKLatest)GXDK\toolKit\lib\amd64\XboxOne</XboxOneLibPath>
+    <ScarlettIncludePath>$(GameDKLatest)GXDK\toolKit\include;$(GameDKLatest)GXDK\toolKit\include\Scarlett</ScarlettIncludePath>
+    <ScarlettLibPath>$(GameDKLatest)GXDK\toolKit\lib\amd64\Scarlett</ScarlettLibPath>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|X64'">
     <OutDir>Bin\GXDKPC_2022\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>Bin\GXDKPC_2022\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
-    <IncludePath>$(GameDKLatest)GXDK\toolKit\include;$(GameDKLatest)GXDK\toolKit\include\XboxOne;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>$(GameDKLatest)GXDK\toolKit\lib\amd64\XboxOne;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(XboxOneIncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(XboxOneLibPath);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <GenerateManifest>true</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Scarlett|X64'">
     <OutDir>Bin\GXDKPC_2022\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>Bin\GXDKPC_2022\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
-    <IncludePath>$(GameDKLatest)GXDK\toolKit\include;$(GameDKLatest)GXDK\toolKit\include\Scarlett;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>$(GameDKLatest)GXDK\toolKit\lib\amd64\Scarlett;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(ScarlettIncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(ScarlettLibPath);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <GenerateManifest>true</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'">
     <OutDir>Bin\GXDKPC_2022\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>Bin\GXDKPC_2022\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
-    <IncludePath>$(GameDKLatest)GXDK\toolKit\include;$(GameDKLatest)GXDK\toolKit\include\XboxOne;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>$(GameDKLatest)GXDK\toolKit\lib\amd64\XboxOne;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(XboxOneIncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(XboxOneLibPath);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <GenerateManifest>true</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Scarlett|X64'">
     <OutDir>Bin\GXDKPC_2022\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>Bin\GXDKPC_2022\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DirectXTex</TargetName>
-    <IncludePath>$(GameDKLatest)GXDK\toolKit\include;$(GameDKLatest)GXDK\toolKit\include\Scarlett;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>$(GameDKLatest)GXDK\toolKit\lib\amd64\Scarlett;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(ScarlettIncludePath);$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(ScarlettLibPath);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <GenerateManifest>true</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|X64'">
