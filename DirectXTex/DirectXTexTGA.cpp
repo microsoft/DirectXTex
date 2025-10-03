@@ -147,7 +147,7 @@ namespace
         _Inout_opt_ uint32_t* convFlags) noexcept
     {
         if (!pSource)
-            return E_INVALIDARG;
+            return E_POINTER;
 
         memset(&metadata, 0, sizeof(TexMetadata));
 
