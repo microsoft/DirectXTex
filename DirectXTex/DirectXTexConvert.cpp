@@ -5448,7 +5448,7 @@ HRESULT DirectX::ConvertToSinglePlane(
     const TexMetadata& metadata,
     ScratchImage& result) noexcept
 {
-    if (!srcImages || !nimages)
+    if (!srcImages || !nimages || !IsPlanar(metadata.format))
         return E_INVALIDARG;
 
     if (metadata.IsVolumemap())
