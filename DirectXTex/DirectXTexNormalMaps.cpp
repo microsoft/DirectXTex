@@ -261,7 +261,10 @@ HRESULT DirectX::ComputeNormalMap(
     DXGI_FORMAT format,
     ScratchImage& normalMap) noexcept
 {
-    if (!srcImage.pixels || !IsValid(format))
+    if (!srcImage.pixels)
+        return E_POINTER;
+
+    if (!IsValid(srcImage.format) || !IsValid(format))
         return E_INVALIDARG;
 
     static_assert(CNMAP_CHANNEL_RED == 0x1, "CNMAP_CHANNEL_ flag values don't match mask");
@@ -319,7 +322,7 @@ HRESULT DirectX::ComputeNormalMap(
     DXGI_FORMAT format,
     ScratchImage& normalMaps) noexcept
 {
-    if (!srcImages || !nimages || !IsValid(format))
+    if (!srcImages || !nimages || !IsValid(metadata.format) || !IsValid(format))
         return E_INVALIDARG;
 
     if (IsCompressed(format) || IsCompressed(metadata.format)
