@@ -297,4 +297,7 @@
     <Delete Files="@(_ATGShaderHeaders)" />
     <Delete Files="@(_ATGShaderSymbols)" />
   </Target>
+  <Target Name="GDKEditionCheck" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(GameDKXboxLatest)'=='' AND '$(GameDKLatest)'=='' " Text="GameDKXboxLatest or GameDKLatest property is required" />
+  </Target>
 </Project>
