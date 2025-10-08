@@ -952,7 +952,9 @@ HRESULT DirectX::Resize(
     if (!srcImages || !nimages || width == 0 || height == 0)
         return E_INVALIDARG;
 
-    if ((width > UINT32_MAX) || (height > UINT32_MAX))
+    if ((width > UINT32_MAX) || (height > UINT32_MAX)
+        || (metadata.width > UINT32_MAX)
+        || (metadata.height > UINT32_MAX))
         return E_INVALIDARG;
 
     TexMetadata mdata2 = metadata;
