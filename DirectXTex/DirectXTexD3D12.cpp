@@ -137,11 +137,11 @@ namespace
         }
 
         if (!pCommandQ || !pSource || !pStaging)
-            return E_INVALIDARG;
+            return E_POINTER;
 
         numberOfPlanes = D3D12GetFormatPlaneCount(device, desc.Format);
         if (!numberOfPlanes)
-            return E_INVALIDARG;
+            return E_UNEXPECTED;
 
         if ((numberOfPlanes > 1) && IsDepthStencil(desc.Format))
         {
@@ -588,7 +588,7 @@ HRESULT DirectX::PrepareUpload(
 
     const UINT numberOfPlanes = D3D12GetFormatPlaneCount(pDevice, metadata.format);
     if (!numberOfPlanes)
-        return E_INVALIDARG;
+        return E_UNEXPECTED;
 
     if ((numberOfPlanes > 1) && IsDepthStencil(metadata.format))
     {
