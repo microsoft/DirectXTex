@@ -962,7 +962,8 @@ HRESULT DirectX::EncodeDDSHeader(
         if (metadata.miscFlags & TEX_MISC_TEXTURECUBE)
         {
             ext->miscFlag |= TEX_MISC_TEXTURECUBE;
-            assert((metadata.arraySize % 6) == 0);
+            if ((metadata.arraySize % 6) != 0)
+                return E_INVALIDARG;
             ext->arraySize = static_cast<UINT>(metadata.arraySize / 6);
         }
         else

@@ -254,7 +254,7 @@ HRESULT DirectX::CompressEx(
     ScratchImage& image,
     std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
-    if (!pDevice || IsCompressed(srcImage.format) || !IsCompressed(format))
+    if (!pDevice || IsCompressed(srcImage.format) || !IsCompressed(format) || !IsValid(srcImage.format))
         return E_INVALIDARG;
 
     if (IsTypeless(format)
@@ -329,7 +329,7 @@ HRESULT DirectX::CompressEx(
     ScratchImage& cImages,
     std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
-    if (!pDevice || !srcImages || !nimages)
+    if (!pDevice || !srcImages || !nimages || !IsValid(metadata.format))
         return E_INVALIDARG;
 
     if (IsCompressed(metadata.format) || !IsCompressed(format))

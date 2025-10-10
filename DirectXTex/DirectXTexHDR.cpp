@@ -101,7 +101,7 @@ namespace
         float& exposure) noexcept
     {
         if (!pSource)
-            return E_INVALIDARG;
+            return E_POINTER;
 
         memset(&metadata, 0, sizeof(TexMetadata));
 

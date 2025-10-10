@@ -147,7 +147,7 @@ namespace
         _Inout_opt_ uint32_t* convFlags) noexcept
     {
         if (!pSource)
-            return E_INVALIDARG;
+            return E_POINTER;
 
         memset(&metadata, 0, sizeof(TexMetadata));
 
@@ -400,9 +400,9 @@ namespace
         _In_ const Image* image,
         _In_ uint32_t convFlags) noexcept
     {
-        assert(pSource && size > 0);
+        assert(size > 0);
 
-        if (!image || !image->pixels)
+        if (!pSource || !image || !image->pixels)
             return E_POINTER;
 
         // Compute TGA image data pitch
@@ -928,9 +928,9 @@ namespace
         _In_ uint32_t convFlags,
         _In_opt_ const uint8_t* palette) noexcept
     {
-        assert(pSource && size > 0);
+        assert(size > 0);
 
-        if (!image || !image->pixels)
+        if (!pSource || !image || !image->pixels)
             return E_POINTER;
 
         // Compute TGA image data pitch

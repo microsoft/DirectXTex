@@ -775,7 +775,7 @@ HRESULT DirectX::CreateShaderResourceViewEx(
         break;
 
     default:
-        return E_FAIL;
+        return E_UNEXPECTED;
     }
 
     hr = pDevice->CreateShaderResourceView(resource.Get(), &SRVDesc, ppSRV);

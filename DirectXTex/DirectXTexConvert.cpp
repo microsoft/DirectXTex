@@ -5108,7 +5108,9 @@ HRESULT DirectX::ConvertEx(
     ScratchImage& image,
     std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
-    if ((srcImage.format == format) || !IsValid(format))
+    if ((srcImage.format == format)
+        || !IsValid(format)
+        || !IsValid(srcImage.format))
         return E_INVALIDARG;
 
     if (!srcImage.pixels)
@@ -5202,7 +5204,10 @@ HRESULT DirectX::ConvertEx(
     ScratchImage& result,
     std::function<bool __cdecl(size_t, size_t)> statusCallback)
 {
-    if (!srcImages || !nimages || (metadata.format == format) || !IsValid(format))
+    if (!srcImages || !nimages
+        || (metadata.format == format)
+        || !IsValid(format)
+        || !IsValid(metadata.format))
         return E_INVALIDARG;
 
     if (IsCompressed(metadata.format) || IsCompressed(format)
@@ -5448,7 +5453,7 @@ HRESULT DirectX::ConvertToSinglePlane(
     const TexMetadata& metadata,
     ScratchImage& result) noexcept
 {
-    if (!srcImages || !nimages)
+    if (!srcImages || !nimages || !IsPlanar(metadata.format))
         return E_INVALIDARG;
 
     if (metadata.IsVolumemap())
