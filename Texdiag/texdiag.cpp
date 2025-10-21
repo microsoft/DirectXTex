@@ -591,7 +591,7 @@ namespace
     #ifdef USE_LIBPNG
         else if (_wcsicmp(ext.c_str(), L".png") == 0)
         {
-            return LoadFromPNGFile(fileName, &info, *image);
+            return LoadFromPNGFile(fileName, PNG_FLAGS_NONE, &info, *image);
         }
     #endif
         else
@@ -643,7 +643,7 @@ namespace
         #endif
         #ifdef USE_LIBPNG
         case CODEC_PNG:
-            return SaveToPNGFile(*image, fileName);
+            return SaveToPNGFile(*image, PNG_FLAGS_NONE, fileName);
         #endif
         default:
             return SaveToWICFile(*image, WIC_FLAGS_NONE, GetWICCodec(static_cast<WICCodecs>(codec)), fileName);

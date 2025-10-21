@@ -17,6 +17,13 @@
 *.ilk
 *.VC.db
 *.nupkg
+*.dds
+*.png
+*.tga
+*.jpg
+*.bmp
+*.gif
+*.tif
 .vs
 .vscode
 [Bb]in
