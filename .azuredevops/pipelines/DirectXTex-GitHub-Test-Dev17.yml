@@ -93,6 +93,12 @@ jobs:
           solution: Tests/DirectXTex_Tests_Desktop_2022.sln
           feedRestore: $(GUID_FEED)
           includeNuGetOrg: false
+      - task: MSBuild@1
+        displayName: Log Information
+        inputs:
+          solution: build/LogInfo.targets
+          platform: '$(BuildPlatform)'
+          configuration: '$(BuildConfiguration)'
       - task: VSBuild@1
         displayName: Build solution DirectXTex_Tests_Desktop_2022.sln
         inputs:

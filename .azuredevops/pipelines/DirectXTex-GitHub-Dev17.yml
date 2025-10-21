@@ -97,6 +97,12 @@ jobs:
       - checkout: self
         clean: true
         fetchTags: false
+      - task: MSBuild@1
+        displayName: Log Information
+        inputs:
+          solution: build/LogInfo.targets
+          platform: '$(BuildPlatform)'
+          configuration: '$(BuildConfiguration)'
       - task: VSBuild@1
         displayName: Build solution DirectXTex_Desktop_2022.sln
         inputs:
@@ -144,6 +150,12 @@ jobs:
       - checkout: self
         clean: true
         fetchTags: false
+      - task: MSBuild@1
+        displayName: Log Information
+        inputs:
+          solution: build/LogInfo.targets
+          platform: '$(BuildPlatform)'
+          configuration: '$(BuildConfiguration)'
       - task: VSBuild@1
         displayName: Build solution DirectXTex_Windows10_2022.sln
         inputs:
