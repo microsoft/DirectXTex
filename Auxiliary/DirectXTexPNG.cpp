@@ -354,6 +354,7 @@ namespace
                 using_srgb = true;
                 [[fallthrough]];
             case DXGI_FORMAT_B8G8R8X8_UNORM:
+                using_bgr = true;
                 strip_alpha = true;
                 color_type = PNG_COLOR_TYPE_RGB;
                 break;
@@ -370,12 +371,15 @@ namespace
                 PNG_INTERLACE_NONE,
                 PNG_COMPRESSION_TYPE_DEFAULT,
                 PNG_FILTER_TYPE_DEFAULT);
+
             png_write_info(st, info);
 
             if (strip_alpha)
                 png_set_filler(st, 0, PNG_FILLER_AFTER);
             if (using_bgr)
                 png_set_bgr(st);
+            if (bit_depth == 16)
+                png_set_swap(st);
 
             if (color_type != PNG_COLOR_TYPE_GRAY)
             {
