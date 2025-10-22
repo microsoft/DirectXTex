@@ -123,55 +123,67 @@ namespace
             png_set_read_fn(st, fin, &OnPNGRead);
         }
 
-        void Update() noexcept(false)
+        void Update(PNG_FLAGS& flags) noexcept(false)
         {
             png_read_info(st, info);
+
             // check for unsupported cases
-            png_byte interlacing = png_get_interlace_type(st, info);
+            auto interlacing = png_get_interlace_type(st, info);
             if (interlacing != PNG_INTERLACE_NONE)
             {
                 throw std::invalid_argument{ "interlacing not supported" };
             }
+
             // color handling
-            png_byte color_type = png_get_color_type(st, info);
-            if (color_type == PNG_COLOR_TYPE_GRAY)
+            auto color_type = png_get_color_type(st, info);
+            if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_PALETTE)
             {
-                // bit_depth will be 8 or 16
-                if (png_get_bit_depth(st, info) < 8)
-                    png_set_expand_gray_1_2_4_to_8(st);
+                png_set_expand(st);
             }
-            else if (color_type == PNG_COLOR_TYPE_PALETTE)
+            else if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
             {
-                // request RGB color
-                png_set_palette_to_rgb(st);
-                if (png_get_valid(st, info, PNG_INFO_tRNS))
-                    png_set_tRNS_to_alpha(st);
+                flags |= PNG_FLAGS_IGNORE_SRGB;
+                png_set_gray_to_rgb(st);
             }
-            // Here we don't know if the pixel data is in BGR/RGB order
-            // png_set_bgr(st);
-            png_set_alpha_mode(st, PNG_ALPHA_STANDARD, PNG_DEFAULT_sRGB);
+
+            // bit-depth
+            if (png_get_bit_depth(st, info) > 8)
+            {
+                png_set_swap(st);
+            }
+
+            // Request libpng the alpha change, but keep RGB untouched.
+            png_set_alpha_mode(st, PNG_ALPHA_STANDARD, PNG_GAMMA_LINEAR);
+
+            // Deal with custom color profiles
+            if( png_get_valid( st, info, PNG_INFO_gAMA ) )
+            {
+                double gamma = 0;
+                double screen_gamma = 2.2;
+
+                if( png_get_gAMA( st, info, &gamma ) )
+                {
+                    // If gamma == 1.0, then the data is internally linear.
+                    if( abs( gamma - 1.0 ) > 1e6 )
+                        png_set_gamma( st, screen_gamma, gamma );
+                }
+            }
+
             // make 4 component
             // using `png_set_add_alpha` here may confuse `TEX_ALPHA_MODE_OPAQUE` estimation
-            if (png_get_channels(st, info) == 3)
-                png_set_filler(st, 0, PNG_FILLER_AFTER);
-            // prefer DXGI_FORMAT_R8G8B8A8_UNORM. strip in decode
-            //if (png_get_bit_depth(st, info) > 8)
-            //    png_set_strip_16(st);
+            if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_PALETTE)
+                png_set_filler(st, png_get_bit_depth(st, info) == 16 ? 0xffff : 0xff, PNG_FILLER_AFTER);
+
             png_read_update_info(st, info);
         }
 
         /// @note must call `Update` before this
-        /// @todo Proper detection of DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB
-        DXGI_FORMAT GuessFormat() const noexcept(false)
+        DXGI_FORMAT GuessFormat(PNG_FLAGS flags) const noexcept(false)
         {
-            // 1 or 4. 1 is for gray
             auto c = png_get_channels(st, info);
             if (c == 1)
             {
-                if (png_get_bit_depth(st, info) == 16)
-                    return DXGI_FORMAT_R16_UNORM;
-                // with `png_set_expand_gray_1_2_4_to_8`, libpng will change to R8_UNORM
-                return DXGI_FORMAT_R8_UNORM;
+                return (png_get_bit_depth(st, info) == 16) ? DXGI_FORMAT_R16_UNORM : DXGI_FORMAT_R8_UNORM;
             }
 
             // 8 or 16. expanded if 1, 2, 4
@@ -181,15 +193,39 @@ namespace
             if (d != 8)
                 throw std::runtime_error{ "unexpected info from libpng" };
 
-            int intent = 0;
-            if (png_get_sRGB(st, info, &intent) == PNG_INFO_sRGB)
-                return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+            // RGB/BGR and sRGB or not
+            DXGI_FORMAT linear = DXGI_FORMAT_R8G8B8A8_UNORM;
+            DXGI_FORMAT srgb = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+            if (flags & PNG_FLAGS_BGR)
+            {
+                png_set_bgr(st);
+                linear = DXGI_FORMAT_B8G8R8A8_UNORM;
+                srgb = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+            }
 
-            return DXGI_FORMAT_R8G8B8A8_UNORM;
+            if (flags & PNG_FLAGS_IGNORE_SRGB)
+                return linear;
+
+            int intent = 0;
+            if (png_get_sRGB(st, info, &intent) != 0)
+                return srgb;
+
+            if( png_get_valid( st, info, PNG_INFO_gAMA ) )
+            {
+                double gamma = 0;
+                if( png_get_gAMA( st, info, &gamma ) )
+                {
+                    // This PNG is explicitly linear.
+                    if( abs( gamma - 1.0 ) <= 1e6 )
+                        return linear;
+                }
+            }
+
+            return (flags & PNG_FLAGS_DEFAULT_LINEAR) ? linear : srgb;
         }
 
         /// @todo More correct DXGI_FORMAT mapping
-        void GetHeader(TexMetadata& metadata) noexcept(false)
+        void GetHeader(PNG_FLAGS flags, TexMetadata& metadata) noexcept(false)
         {
             metadata = {};
             metadata.width = png_get_image_width(st, info);
@@ -198,36 +234,49 @@ namespace
             metadata.mipLevels = 1;
             metadata.depth = 1;
             metadata.dimension = TEX_DIMENSION_TEXTURE2D;
-            metadata.format = GuessFormat();
-            png_byte color_type = png_get_color_type(st, info);
+            metadata.format = GuessFormat(flags);
+            auto color_type = png_get_color_type(st, info);
             bool have_alpha = (color_type & PNG_COLOR_MASK_ALPHA);
-            if (have_alpha == false && (metadata.format != DXGI_FORMAT_R8_UNORM))
-                metadata.miscFlags2 |= TEX_ALPHA_MODE_OPAQUE;
+            if (have_alpha == false
+                && (metadata.format != DXGI_FORMAT_R8_UNORM)
+                && (metadata.format != DXGI_FORMAT_R16_UNORM))
+            {
+                if (metadata.format == DXGI_FORMAT_B8G8R8A8_UNORM)
+                    metadata.format = DXGI_FORMAT_B8G8R8X8_UNORM;
+                else if (metadata.format == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB)
+                    metadata.format = DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
+                else
+                    metadata.miscFlags2 |= TEX_ALPHA_MODE_OPAQUE;
+            }
         }
 
         /// @todo More correct DXGI_FORMAT mapping
-        HRESULT GetImage(TexMetadata& metadata, ScratchImage& image) noexcept(false)
+        HRESULT GetImage(PNG_FLAGS flags, TexMetadata& metadata, ScratchImage& image) noexcept(false)
         {
             metadata = {};
-            GetHeader(metadata);
+            GetHeader(flags, metadata);
 
-            if (auto hr = image.Initialize2D(metadata.format, metadata.width, metadata.height, metadata.arraySize, metadata.mipLevels); FAILED(hr))
+            if (auto hr = image.Initialize2D(metadata.format, metadata.width, metadata.height, 1, 1); FAILED(hr))
                 return hr;
-            auto* dest = image.GetPixels();
-            const auto stride = metadata.width * png_get_channels(st, info);
-            std::vector<png_byte*> rows(metadata.height);
-            for (auto i = 0u; i < metadata.height; ++i)
-                rows[i] = dest + (stride * i);
 
+            const auto img = *image.GetImage(0, 0, 0);
+            if (!img.pixels)
+                return E_POINTER;
+
+            std::vector<png_byte*> rows(img.height);
+            for (auto i = 0u; i < img.height; ++i)
+            {
+                rows[i] = img.pixels + (img.rowPitch * i);
+            }
             png_read_rows(st, rows.data(), nullptr, static_cast<uint32_t>(rows.size()));
             png_read_end(st, info);
             return S_OK;
         }
 
-        HRESULT GetImage(ScratchImage& image) noexcept(false)
+        HRESULT GetImage(PNG_FLAGS flags, ScratchImage& image) noexcept(false)
         {
             TexMetadata metadata{};
-            return GetImage(metadata, image);
+            return GetImage(flags, metadata, image);
         }
     };
 
@@ -263,25 +312,53 @@ namespace
             png_init_io(st, fout);
         }
 
-        HRESULT WriteImage(const Image& image) noexcept(false)
+        HRESULT WriteImage(PNG_FLAGS flags, const Image& image) noexcept(false)
         {
             int color_type = PNG_COLOR_TYPE_RGB;
             bool using_bgr = false;
-            int channel = 4;
+            bool using_srgb = false;
             int bit_depth = 8;
+            bool strip_alpha = false;
             switch (image.format)
             {
             case DXGI_FORMAT_R8_UNORM:
                 color_type = PNG_COLOR_TYPE_GRAY;
-                channel = 1;
                 break;
+
+            case DXGI_FORMAT_R16_UNORM:
+                color_type = PNG_COLOR_TYPE_GRAY;
+                bit_depth = 16;
+                break;
+
             case DXGI_FORMAT_B8G8R8A8_UNORM:
-            case DXGI_FORMAT_B8G8R8X8_UNORM:
                 using_bgr = true;
                 [[fallthrough]];
             case DXGI_FORMAT_R8G8B8A8_UNORM:
                 color_type = PNG_COLOR_TYPE_RGBA;
                 break;
+
+            case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+                using_bgr = true;
+                [[fallthrough]];
+            case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+                using_srgb = true;
+                color_type = PNG_COLOR_TYPE_RGBA;
+                break;
+
+            case DXGI_FORMAT_R16G16B16A16_UNORM:
+                color_type = PNG_COLOR_TYPE_RGBA;
+                bit_depth = 16;
+                break;
+
+            case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+                using_srgb = true;
+                [[fallthrough]];
+            case DXGI_FORMAT_B8G8R8X8_UNORM:
+                using_bgr = true;
+                strip_alpha = true;
+                color_type = PNG_COLOR_TYPE_RGB;
+                break;
+
             default:
                 return HRESULT_E_NOT_SUPPORTED;
             }
@@ -294,17 +371,34 @@ namespace
                 PNG_INTERLACE_NONE,
                 PNG_COMPRESSION_TYPE_DEFAULT,
                 PNG_FILTER_TYPE_DEFAULT);
+
             png_write_info(st, info);
+
+            if (strip_alpha)
+                png_set_filler(st, 0, PNG_FILLER_AFTER);
             if (using_bgr)
                 png_set_bgr(st);
+            if (bit_depth == 16)
+                png_set_swap(st);
 
-            const size_t stride = static_cast<size_t>(channel) * image.width;
+            if (color_type != PNG_COLOR_TYPE_GRAY)
+            {
+                if (flags & PNG_FLAGS_FORCE_LINEAR)
+                {
+                    png_set_gAMA(st, info, 1.0);
+                }
+                else if (using_srgb || (flags & PNG_FLAGS_FORCE_SRGB))
+                {
+                    png_set_sRGB(st, info, PNG_sRGB_INTENT_PERCEPTUAL);
+                }
+            }
+
             std::vector<png_bytep> rows(image.height);
             for (size_t i = 0u; i< image.height; ++i)
-                rows[i] = image.pixels + stride * i;
-            png_write_rows(st, rows.data(), static_cast<uint32_t>(rows.size()));
-
-            // actual write will be done here
+            {
+                rows[i] = image.pixels + (image.rowPitch * i);
+            }
+            png_write_image(st, rows.data());
             png_write_end(st, info);
             return S_OK;
         }
@@ -314,6 +408,7 @@ namespace
 _Use_decl_annotations_
 HRESULT DirectX::GetMetadataFromPNGFile(
     const wchar_t* file,
+    PNG_FLAGS flags,
     TexMetadata& metadata)
 {
     if (!file)
@@ -324,8 +419,8 @@ HRESULT DirectX::GetMetadataFromPNGFile(
         auto fin = OpenFILE(file);
         PNGDecompress decoder{};
         decoder.UseInput(fin.get());
-        decoder.Update();
-        decoder.GetHeader(metadata);
+        decoder.Update(flags);
+        decoder.GetHeader(flags, metadata);
         return S_OK;
     }
     catch (const std::bad_alloc&)
@@ -353,6 +448,7 @@ HRESULT DirectX::GetMetadataFromPNGFile(
 _Use_decl_annotations_
 HRESULT DirectX::LoadFromPNGFile(
     const wchar_t* file,
+    PNG_FLAGS flags,
     TexMetadata* metadata,
     ScratchImage& image)
 {
@@ -366,10 +462,10 @@ HRESULT DirectX::LoadFromPNGFile(
         auto fin = OpenFILE(file);
         PNGDecompress decoder{};
         decoder.UseInput(fin.get());
-        decoder.Update();
+        decoder.Update(flags);
         if (metadata == nullptr)
-            return decoder.GetImage(image);
-        return decoder.GetImage(*metadata, image);
+            return decoder.GetImage(flags, image);
+        return decoder.GetImage(flags, *metadata, image);
     }
     catch (const std::bad_alloc&)
     {
@@ -399,6 +495,7 @@ HRESULT DirectX::LoadFromPNGFile(
 _Use_decl_annotations_
 HRESULT DirectX::SaveToPNGFile(
     const Image& image,
+    PNG_FLAGS flags,
     const wchar_t* file)
 {
     if (!file)
@@ -409,7 +506,7 @@ HRESULT DirectX::SaveToPNGFile(
         auto fout = CreateFILE(file);
         PNGCompress encoder{};
         encoder.UseOutput(fout.get());
-        return encoder.WriteImage(image);
+        return encoder.WriteImage(flags, image);
     }
     catch (const std::bad_alloc&)
     {

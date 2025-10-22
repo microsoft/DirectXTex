@@ -2169,7 +2169,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     #ifdef USE_LIBPNG
         else if (_wcsicmp(ext.c_str(), L".png") == 0)
         {
-            hr = LoadFromPNGFile(curpath.c_str(), &info, *image);
+            PNG_FLAGS pngFlags = (IsBGR(format)) ? PNG_FLAGS_BGR : PNG_FLAGS_NONE;
+            if (dwOptions & (UINT64_C(1) << OPT_IGNORE_SRGB_METADATA))
+            {
+                pngFlags |= PNG_FLAGS_IGNORE_SRGB;
+            }
+
+            hr = LoadFromPNGFile(curpath.c_str(), pngFlags, &info, *image);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -3799,7 +3805,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             #endif
             #ifdef USE_LIBPNG
             case CODEC_PNG:
-                hr = SaveToPNGFile(img[0], destName.c_str());
+                hr = SaveToPNGFile(img[0], PNG_FLAGS_NONE, destName.c_str());
                 break;
             #endif
 
