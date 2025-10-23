@@ -163,17 +163,20 @@ namespace
 
     #ifndef LIBJPEG_TURBO_VERSION
         // shift pixels with padding in reverse order (to make it work in-memory)
-        void ShiftPixels(ScratchImage& image) noexcept
+        void ShiftPixels(const Image& image) noexcept
         {
-            size_t num_pixels = dec.output_width * dec.output_height;
-            uint8_t* dst = image.GetPixels();
-            const uint8_t* src = dst;
-            for (size_t i = num_pixels - 1; i > 0; i -= 1)
+            uint8_t* scanline = image.pixels;
+            for (size_t y = 0; y < image.height; ++y)
             {
-                dst[4*i + 0] = src[3*i + 0];
-                dst[4*i + 1] = src[3*i + 1];
-                dst[4*i + 2] = src[3*i + 2];
-                dst[4*i + 3] = 0;
+                for (size_t i = (image.width - 1); i > 0; i -= 1)
+                {
+                    scanline[4*i + 0] = scanline[3*i + 0];
+                    scanline[4*i + 1] = scanline[3*i + 1];
+                    scanline[4*i + 2] = scanline[3*i + 2];
+                    scanline[4*i + 3] = 0xff;
+                }
+
+                scanline += image.rowPitch;
             }
         }
     #endif
@@ -225,10 +228,9 @@ namespace
 
         #ifndef LIBJPEG_TURBO_VERSION
             // if NOT TurboJPEG, we need to make 3 component images to 4 component image
-            if (dec.out_color_space != JCS_GRAYSCALE
-                && dec.out_color_space != JCS_RGB565)
+            if (dec.out_color_space != JCS_GRAYSCALE)
             {
-                ShiftPixels(image);
+                ShiftPixels(img);
             }
         #endif
 
@@ -292,8 +294,10 @@ namespace
                 break;
             #else
             case DXGI_FORMAT_R8G8B8A8_UNORM:
+            case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
                 enc.input_components = 3;
                 enc.in_color_space = JCS_RGB;
+                break;
             #endif
 
             default:
@@ -313,7 +317,7 @@ namespace
         #ifndef LIBJPEG_TURBO_VERSION
             if (enc.input_components == 3)
             {
-                const size_t stride = enc.image_width * static_cast<size_t>(enc.input_components)
+                const size_t stride = enc.image_width * static_cast<size_t>(enc.input_components);
                 auto scanline = std::make_unique<uint8_t[]>(stride);
                 JSAMPROW rows[1]{ scanline.get() };
 
@@ -321,7 +325,7 @@ namespace
                 {
                     // Copy 4 to 3 components
                     const uint8_t* src = image.pixels + enc.next_scanline * image.rowPitch;
-                    const uint8_t* dst = scanline.get();
+                    uint8_t* dst = scanline.get();
                     for(size_t i=0; i < image.width; ++i)
                     {
                         dst[3*i + 0] = src[4*i + 0];
