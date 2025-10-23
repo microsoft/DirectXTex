@@ -2157,7 +2157,13 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     #ifdef USE_LIBJPEG
         else if (_wcsicmp(ext.c_str(), L".jpg") == 0 || _wcsicmp(ext.c_str(), L".jpeg") == 0)
         {
-            hr = LoadFromJPEGFile(curpath.c_str(), &info, *image);
+            JPEG_FLAGS jpegFlags = JPEG_FLAGS_NONE;
+            if (dwOptions & (UINT64_C(1) << OPT_IGNORE_SRGB_METADATA))
+            {
+                jpegFlags |= JPEG_FLAGS_DEFAULT_LINEAR;
+            }
+
+            hr = LoadFromJPEGFile(curpath.c_str(), jpegFlags, &info, *image);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -3800,7 +3806,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             #endif
             #ifdef USE_LIBJPEG
             case CODEC_JPEG:
-                hr = SaveToJPEGFile(img[0], destName.c_str());
+                hr = SaveToJPEGFile(img[0], JPEG_FLAGS_NONE, destName.c_str());
                 break;
             #endif
             #ifdef USE_LIBPNG
