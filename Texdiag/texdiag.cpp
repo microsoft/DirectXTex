@@ -585,7 +585,7 @@ namespace
     #ifdef USE_LIBJPEG
         else if (_wcsicmp(ext.c_str(), L".jpg") == 0 || _wcsicmp(ext.c_str(), L".jpeg") == 0)
         {
-            return LoadFromJPEGFile(fileName, &info, *image);
+            return LoadFromJPEGFile(fileName, JPEG_FLAGS_NONE, &info, *image);
         }
     #endif
     #ifdef USE_LIBPNG
@@ -639,7 +639,7 @@ namespace
         #endif
         #ifdef USE_LIBJPEG
         case CODEC_JPEG:
-            return SaveToJPEGFile(*image, fileName);
+            return SaveToJPEGFile(*image, JPEG_FLAGS_NONE, fileName);
         #endif
         #ifdef USE_LIBPNG
         case CODEC_PNG:
