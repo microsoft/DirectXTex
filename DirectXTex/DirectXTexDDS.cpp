@@ -2731,7 +2731,7 @@ HRESULT DirectX::SaveToDDSFile(
         return E_FAIL;
 #endif
 
-   const bool use24bpp = ((metadata.format == DXGI_FORMAT_B8G8R8X8_UNORM)
+    const bool use24bpp = ((metadata.format == DXGI_FORMAT_B8G8R8X8_UNORM)
         && (flags & DDS_FLAGS_FORCE_24BPP_RGB)
         && !(flags & (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2))) != 0;
 
