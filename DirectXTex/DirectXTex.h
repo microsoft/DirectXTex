@@ -268,6 +268,9 @@ namespace DirectX
         DDS_FLAGS_FORCE_DXT5_RXGB = 0x80000,
         // Force use of 'RXGB' instead of 'DXT5' for DDS write of BC3_UNORM data
 
+        DDS_FLAGS_FORCE_24BPP_RGB = 0x100000,
+        // Force use of 'RGB' 24bpp legacy Direct3D 9 format for DDS write of B8G8R8X8_UNORM data
+
         DDS_FLAGS_ALLOW_LARGE_FILES = 0x1000000,
         // Enables the loader to read large dimension .dds files (i.e. greater than known hardware requirements)
     };

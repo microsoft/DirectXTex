@@ -189,6 +189,7 @@ namespace
     {
         FORMAT_DXT5_NM = 1,
         FORMAT_DXT5_RXGB,
+        FORMAT_24BPP_LEGACY,
     };
 
     static_assert(OPT_FLAGS_MAX <= 64, "dwOptions is a unsigned int bitfield");
@@ -450,6 +451,7 @@ namespace
         { L"BC3n", FORMAT_DXT5_NM },
         { L"DXT5nm", FORMAT_DXT5_NM },
         { L"RXGB", FORMAT_DXT5_RXGB },
+        { L"RGB24", FORMAT_24BPP_LEGACY },
 
         { nullptr, 0 }
     };
@@ -1271,6 +1273,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     bool keepRecursiveDirs = false;
     bool dxt5nm = false;
     bool dxt5rxgb = false;
+    bool use24bpp = false;
     uint32_t swizzleElements[4] = { 0, 1, 2, 3 };
     uint32_t zeroElements[4] = {};
     uint32_t oneElements[4] = {};
@@ -1486,6 +1489,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         case FORMAT_DXT5_RXGB:
                             format = DXGI_FORMAT_BC3_UNORM;
                             dxt5rxgb = true;
+                            break;
+
+                        case FORMAT_24BPP_LEGACY:
+                            format = DXGI_FORMAT_B8G8R8X8_UNORM;
+                            use24bpp = true;
                             break;
 
                         default:
@@ -3774,6 +3782,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                         if (dxt5rxgb)
                         {
                             ddsFlags |= DDS_FLAGS_FORCE_DXT5_RXGB;
+                        }
+                        else if (use24bpp)
+                        {
+                            ddsFlags |= DDS_FLAGS_FORCE_24BPP_RGB;
                         }
 
                         ddsFlags |= DDS_FLAGS_FORCE_DX9_LEGACY;

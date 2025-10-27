@@ -669,6 +669,22 @@ namespace
 
         return S_OK;
     }
+
+    inline void CopyScanline24bpp(
+        _Out_writes_bytes_(width * 3) uint8_t* pDestination,
+        _In_reads_bytes_(width * 4) const uint8_t* pSource,
+        size_t width) noexcept
+    {
+        for (size_t x = 0; x < width; ++x)
+        {
+            pDestination[0] = pSource[0]; // B
+            pDestination[1] = pSource[1]; // G
+            pDestination[2] = pSource[2]; // R
+
+            pSource += 4;
+            pDestination += 3;
+        }
+    }
 }
 
 
@@ -706,6 +722,7 @@ HRESULT DirectX::EncodeDDSHeader(
         flags |= DDS_FLAGS_FORCE_DX10_EXT;
     }
 
+    CP_FLAGS pitchFlags = CP_FLAGS_NONE;
     DDS_PIXELFORMAT ddpf = {};
     if (!(flags & DDS_FLAGS_FORCE_DX10_EXT))
     {
@@ -729,7 +746,18 @@ HRESULT DirectX::EncodeDDSHeader(
         case DXGI_FORMAT_R8G8B8A8_SNORM:        memcpy(&ddpf, &DDSPF_Q8W8V8U8, sizeof(DDS_PIXELFORMAT)); break;
         case DXGI_FORMAT_R16G16_SNORM:          memcpy(&ddpf, &DDSPF_V16U16, sizeof(DDS_PIXELFORMAT)); break;
         case DXGI_FORMAT_B8G8R8A8_UNORM:        memcpy(&ddpf, &DDSPF_A8R8G8B8, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.1
-        case DXGI_FORMAT_B8G8R8X8_UNORM:        memcpy(&ddpf, &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.1
+        case DXGI_FORMAT_B8G8R8X8_UNORM:
+            if (flags & DDS_FLAGS_FORCE_24BPP_RGB)
+            {
+
+                memcpy(&ddpf, &DDSPF_R8G8B8, sizeof(DDS_PIXELFORMAT)); // No DXGI equivalent
+                pitchFlags |= CP_FLAGS_24BPP;
+            }
+            else
+            {
+                memcpy(&ddpf, &DDSPF_X8R8G8B8, sizeof(DDS_PIXELFORMAT)); // DXGI 1.1
+            }
+            break;
         case DXGI_FORMAT_B4G4R4A4_UNORM:        memcpy(&ddpf, &DDSPF_A4R4G4B4, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.2
         case DXGI_FORMAT_YUY2:                  memcpy(&ddpf, &DDSPF_YUY2, sizeof(DDS_PIXELFORMAT)); break; // DXGI 1.2
 
@@ -922,7 +950,9 @@ HRESULT DirectX::EncodeDDSHeader(
     }
 
     size_t rowPitch, slicePitch;
-    HRESULT hr = ComputePitch(metadata.format, metadata.width, metadata.height, rowPitch, slicePitch, CP_FLAGS_NONE);
+    HRESULT hr = ComputePitch(metadata.format,
+        metadata.width, metadata.height,
+        rowPitch, slicePitch, pitchFlags);
     if (FAILED(hr))
         return hr;
 
@@ -2371,6 +2401,9 @@ HRESULT DirectX::SaveToDDSMemory(
         return hr;
 
     bool fastpath = true;
+    const bool use24bpp = ((metadata.format == DXGI_FORMAT_B8G8R8X8_UNORM)
+        && (flags & DDS_FLAGS_FORCE_24BPP_RGB)
+        && !(flags & (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2))) != 0;
 
     for (size_t i = 0; i < nimages; ++i)
     {
@@ -2381,7 +2414,10 @@ HRESULT DirectX::SaveToDDSMemory(
             return E_FAIL;
 
         size_t ddsRowPitch, ddsSlicePitch;
-        hr = ComputePitch(metadata.format, images[i].width, images[i].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_NONE);
+        hr = ComputePitch(metadata.format,
+            images[i].width, images[i].height,
+            ddsRowPitch, ddsSlicePitch,
+            (use24bpp) ? CP_FLAGS_24BPP : CP_FLAGS_NONE);
         if (FAILED(hr))
             return hr;
 
@@ -2446,6 +2482,40 @@ HRESULT DirectX::SaveToDDSMemory(
 
                         pDestination += pixsize;
                         remaining -= pixsize;
+                    }
+                    else if (use24bpp)
+                    {
+                        size_t ddsRowPitch, ddsSlicePitch;
+                        hr = ComputePitch(metadata.format, images[index].width, images[index].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_24BPP);
+                        if (FAILED(hr))
+                        {
+                            blob.Release();
+                            return hr;
+                        }
+
+                        const size_t rowPitch = images[index].rowPitch;
+                        const uint8_t * __restrict sPtr = images[index].pixels;
+                        uint8_t * __restrict dPtr = pDestination;
+
+                        const size_t csize = std::min<size_t>(metadata.width * 3, ddsRowPitch);
+                        size_t tremaining = remaining;
+                        for (size_t j = 0; j < images[index].height; ++j)
+                        {
+                            if (tremaining < csize)
+                            {
+                                blob.Release();
+                                return E_FAIL;
+                            }
+
+                            CopyScanline24bpp(dPtr, sPtr, images[index].width);
+
+                            sPtr += rowPitch;
+                            dPtr += ddsRowPitch;
+                            tremaining -= ddsRowPitch;
+                        }
+
+                        pDestination += ddsSlicePitch;
+                        remaining -= ddsSlicePitch;
                     }
                     else
                     {
@@ -2518,6 +2588,40 @@ HRESULT DirectX::SaveToDDSMemory(
 
                         pDestination += pixsize;
                         remaining -= pixsize;
+                    }
+                    else if (use24bpp)
+                    {
+                        size_t ddsRowPitch, ddsSlicePitch;
+                        hr = ComputePitch(metadata.format, images[index].width, images[index].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_24BPP);
+                        if (FAILED(hr))
+                        {
+                            blob.Release();
+                            return hr;
+                        }
+
+                        const size_t rowPitch = images[index].rowPitch;
+                        const uint8_t * __restrict sPtr = images[index].pixels;
+                        uint8_t * __restrict dPtr = pDestination;
+
+                        const size_t csize = std::min<size_t>(metadata.width * 3, ddsRowPitch);
+                        size_t tremaining = remaining;
+                        for (size_t j = 0; j < images[index].height; ++j)
+                        {
+                            if (tremaining < csize)
+                            {
+                                blob.Release();
+                                return E_FAIL;
+                            }
+
+                            CopyScanline24bpp(dPtr, sPtr, images[index].width);
+
+                            sPtr += rowPitch;
+                            dPtr += ddsRowPitch;
+                            tremaining -= ddsRowPitch;
+                        }
+
+                        pDestination += ddsSlicePitch;
+                        remaining -= ddsSlicePitch;
                     }
                     else
                     {
@@ -2627,6 +2731,26 @@ HRESULT DirectX::SaveToDDSFile(
         return E_FAIL;
 #endif
 
+    const bool use24bpp = ((metadata.format == DXGI_FORMAT_B8G8R8X8_UNORM)
+        && (flags & DDS_FLAGS_FORCE_24BPP_RGB)
+        && !(flags & (DDS_FLAGS_FORCE_DX10_EXT | DDS_FLAGS_FORCE_DX10_EXT_MISC2))) != 0;
+
+    std::unique_ptr<uint8_t[]> tempRow;
+    if (use24bpp)
+    {
+        uint64_t lineSize = uint64_t(metadata.width) * 3;
+        if (lineSize > UINT32_MAX)
+        {
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+        }
+
+        tempRow.reset(new (std::nothrow) uint8_t[static_cast<size_t>(lineSize)]);
+        if (!tempRow)
+        {
+            return E_OUTOFMEMORY;
+        }
+    }
+
     // Write images
     switch (static_cast<DDS_RESOURCE_DIMENSION>(metadata.dimension))
     {
@@ -2648,7 +2772,10 @@ HRESULT DirectX::SaveToDDSFile(
                     assert(images[index].slicePitch > 0);
 
                     size_t ddsRowPitch, ddsSlicePitch;
-                    hr = ComputePitch(metadata.format, images[index].width, images[index].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_NONE);
+                    hr = ComputePitch(metadata.format,
+                        images[index].width, images[index].height,
+                        ddsRowPitch, ddsSlicePitch,
+                        (use24bpp) ? CP_FLAGS_24BPP : CP_FLAGS_NONE);
                     if (FAILED(hr))
                         return hr;
 
@@ -2669,6 +2796,35 @@ HRESULT DirectX::SaveToDDSFile(
                         if (!outFile)
                             return E_FAIL;
                     #endif
+                    }
+                    else if (use24bpp)
+                    {
+                        const size_t rowPitch = images[index].rowPitch;
+                        const uint8_t * __restrict sPtr = images[index].pixels;
+
+                        assert(ddsRowPitch <= metadata.width * 3u);
+                        for (size_t j = 0; j < images[index].height; ++j)
+                        {
+                            CopyScanline24bpp(tempRow.get(), sPtr, images[index].width);
+
+                        #ifdef _WIN32
+                            if (!WriteFile(hFile.get(), tempRow.get(), static_cast<DWORD>(ddsRowPitch), &bytesWritten, nullptr))
+                            {
+                                return HRESULT_FROM_WIN32(GetLastError());
+                            }
+
+                            if (bytesWritten != ddsRowPitch)
+                            {
+                                return E_FAIL;
+                            }
+                        #else
+                            outFile.write(reinterpret_cast<const char*>(tempRow.get()), static_cast<std::streamsize>(ddsRowPitch));
+                            if (!outFile)
+                                return E_FAIL;
+                        #endif
+
+                            sPtr += rowPitch;
+                        }
                     }
                     else
                     {
@@ -2733,7 +2889,10 @@ HRESULT DirectX::SaveToDDSFile(
                     assert(images[index].slicePitch > 0);
 
                     size_t ddsRowPitch, ddsSlicePitch;
-                    hr = ComputePitch(metadata.format, images[index].width, images[index].height, ddsRowPitch, ddsSlicePitch, CP_FLAGS_NONE);
+                    hr = ComputePitch(metadata.format,
+                        images[index].width, images[index].height,
+                        ddsRowPitch, ddsSlicePitch,
+                        (use24bpp) ? CP_FLAGS_24BPP : CP_FLAGS_NONE);
                     if (FAILED(hr))
                         return hr;
 
@@ -2754,6 +2913,34 @@ HRESULT DirectX::SaveToDDSFile(
                         if (!outFile)
                             return E_FAIL;
                     #endif
+                    }
+                    else if (use24bpp)
+                    {
+                        const size_t rowPitch = images[index].rowPitch;
+                        const uint8_t * __restrict sPtr = images[index].pixels;
+
+                        assert(ddsRowPitch <= metadata.width * 3u);
+                        for (size_t j = 0; j < images[index].height; ++j)
+                        {
+                            CopyScanline24bpp(tempRow.get(), sPtr, images[index].width);
+
+                        #ifdef _WIN32
+                            if (!WriteFile(hFile.get(), tempRow.get(), static_cast<DWORD>(ddsRowPitch), &bytesWritten, nullptr))
+                            {
+                                return HRESULT_FROM_WIN32(GetLastError());
+                            }
+
+                            if (bytesWritten != ddsRowPitch)
+                            {
+                                return E_FAIL;
+                            }
+                        #else
+                            outFile.write(reinterpret_cast<const char*>(tempRow.get()), static_cast<std::streamsize>(ddsRowPitch));
+                            if (!outFile)
+                                return E_FAIL;
+                        #endif
+                            sPtr += rowPitch;
+                        }
                     }
                     else
                     {
