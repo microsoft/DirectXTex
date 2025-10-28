@@ -164,7 +164,7 @@ namespace
                 if( png_get_gAMA( st, info, &gamma ) )
                 {
                     // If gamma == 1.0, then the data is internally linear.
-                    if( abs( gamma - 1.0 ) > 1e6 )
+                    if( abs( gamma - 1.0 ) > 1e-6 )
                         png_set_gamma( st, screen_gamma, gamma );
                 }
             }
@@ -216,7 +216,7 @@ namespace
                 if( png_get_gAMA( st, info, &gamma ) )
                 {
                     // This PNG is explicitly linear.
-                    if( abs( gamma - 1.0 ) <= 1e6 )
+                    if( abs( gamma - 1.0 ) <= 1e-6 )
                         return linear;
                 }
             }
