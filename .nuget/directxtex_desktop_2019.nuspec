@@ -10,7 +10,7 @@
         <description>This version is for Windows desktop applications using Visual Studio 2019 (16.11) or Visual Studio 2022 on Windows 8.1 or later.
 
 DirectXTex, a shared source library for reading and writing .DDS files, and performing various texture content processing operations including resizing, format conversion, mip-map generation, block compression for Direct3D runtime texture resources, and height-map to normal-map conversion. This library makes use of the Windows Image Component (WIC) APIs. It also includes simple .TGA and .HDR readers and writers since these image file format are commonly used for texture content processing pipelines, but are not currently supported by a built-in WIC codec.</description>
-        <releaseNotes>Matches the July 9, 2025 release on GitHub.</releaseNotes>
+        <releaseNotes>Matches the October 27, 2025 release on GitHub.</releaseNotes>
         <projectUrl>http://go.microsoft.com/fwlink/?LinkId=248926</projectUrl>
         <repository type="git" url="https://github.com/microsoft/DirectXTex.git" />
         <icon>images\icon.jpg</icon>

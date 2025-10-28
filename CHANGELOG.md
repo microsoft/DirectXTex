@@ -6,6 +6,16 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### October 27, 2025
+* DDS writer now supports a `DDS_FLAGS_FORCE_24BPP_RGB` flag
+* JPEG and PNG auxiliary reader/writer various bug fixes
+  * *breaking change* All functions now take flags `PNG_FLAGS` or `JPEG_FLAGS`
+* Minor code review
+* Added October 2025 GDK projects for VS 2022
+* CMake project update to use 3.21 minimum
+* texconv:
+  * The `-f` format now accepts `RGB24`
+
 ### July 9, 2025
 * Reformat source using updated .editorconfig settings and general lint cleanup
 * Minor code review
@@ -48,6 +58,7 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 * Xbox auxiliary now has **EncodeDDSHeader** function
 * ScreenGrab9 minor DDS header fix when writing A2W10V10U10 legacy mixed formats
 * CMake project updates including support for ARM64EC
+
 * Added GitHub Actions YAML files
 
 ### June 4, 2024
