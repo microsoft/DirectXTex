@@ -350,16 +350,16 @@ namespace
         switch (info.GetAlphaMode())
         {
         case TEX_ALPHA_MODE_OPAQUE:
-            wprintf(L" \x0e0:Opaque");
+            wprintf(L" \x03B1:Opaque");
             break;
         case TEX_ALPHA_MODE_PREMULTIPLIED:
-            wprintf(L" \x0e0:PM");
+            wprintf(L" \x03B1:PM");
             break;
         case TEX_ALPHA_MODE_STRAIGHT:
-            wprintf(L" \x0e0:NonPM");
+            wprintf(L" \x03B1:NonPM");
             break;
         case TEX_ALPHA_MODE_CUSTOM:
-            wprintf(L" \x0e0:Custom");
+            wprintf(L" \x03B1:Custom");
             break;
         case TEX_ALPHA_MODE_UNKNOWN:
             break;
@@ -481,7 +481,7 @@ namespace
                 return false;
         }
 
-        D3D_FEATURE_LEVEL featureLevels[] =
+        const D3D_FEATURE_LEVEL featureLevels[] =
         {
             D3D_FEATURE_LEVEL_11_0,
             D3D_FEATURE_LEVEL_10_1,
@@ -533,7 +533,7 @@ namespace
                     hr = pAdapter->GetDesc(&desc);
                     if (SUCCEEDED(hr))
                     {
-                        wprintf(L"[Using Direct3D on \"%ls\"]\n\n", desc.Description);
+                        wprintf(L"\n[Using Direct3D on \"%ls\"]\n\n", desc.Description);
                     }
                 }
             }
@@ -1021,7 +1021,7 @@ namespace
             float bestScore = FLT_MAX;
             for (size_t y = maxsize; y > 0; y >>= 1)
             {
-                float score = fabsf((float(x) / float(y)) - origAR);
+                const float score = fabsf((float(x) / float(y)) - origAR);
                 if (score < bestScore)
                 {
                     bestScore = score;
@@ -1038,7 +1038,7 @@ namespace
             float bestScore = FLT_MAX;
             for (size_t x = maxsize; x > 0; x >>= 1)
             {
-                float score = fabsf((float(x) / float(y)) - origAR);
+                const float score = fabsf((float(x) / float(y)) - origAR);
                 if (score < bestScore)
                 {
                     bestScore = score;
@@ -1075,7 +1075,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     std::locale::global(std::locale(""));
 
     // Initialize COM (needed for WIC)
-    HRESULT hr = hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr))
     {
         wprintf(L"Failed to initialize COM (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -1241,7 +1241,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_WIDTH:
                 if (swscanf_s(pValue, L"%zu", &width) != 1)
                 {
-                    wprintf(L"Invalid value specified with -w (%ls)\n", pValue);
+                    wprintf(L"Invalid value specified with -w (%ls)\n\n", pValue);
+                    PrintUsage();
                     return 1;
                 }
                 break;
@@ -1249,7 +1250,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_HEIGHT:
                 if (swscanf_s(pValue, L"%zu", &height) != 1)
                 {
-                    wprintf(L"Invalid value specified with -h (%ls)\n", pValue);
+                    wprintf(L"Invalid value specified with -h (%ls)\n\n", pValue);
+                    PrintUsage();
                     return 1;
                 }
                 break;
@@ -1262,6 +1264,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     if (!format)
                     {
                         wprintf(L"Invalid value specified with -f (%ls)\n", pValue);
+                        PrintUsage();
                         return 1;
                     }
                 }
@@ -1543,7 +1546,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     #ifdef USE_LIBJPEG
         else if (_wcsicmp(ext.c_str(), L".jpg") == 0 || _wcsicmp(ext.c_str(), L".jpeg") == 0)
         {
-            hr = LoadFromJPEGFile(curpath.c_str(), &info, *image);
+            hr = LoadFromJPEGFile(curpath.c_str(), JPEG_FLAGS_NONE, &info, *image);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -1554,7 +1557,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     #ifdef USE_LIBPNG
         else if (_wcsicmp(ext.c_str(), L".png") == 0)
         {
-            hr = LoadFromPNGFile(curpath.c_str(), &info, *image);
+            hr = LoadFromPNGFile(curpath.c_str(), PNG_FLAGS_NONE, &info, *image);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
@@ -1613,7 +1616,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             hr = ConvertToSinglePlane(img, nimg, info, *timage);
             if (FAILED(hr))
             {
-                wprintf(L" FAILED [converttosingleplane] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
+                wprintf(L" FAILED [converttosingleplane] (%08X%ls)\n",
+                    static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
 
@@ -1635,7 +1639,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         // --- Decompress --------------------------------------------------------------
         if (IsCompressed(info.format))
         {
-            const Image* img = image->GetImage(0, 0, 0);
+            auto img = image->GetImage(0, 0, 0);
             assert(img);
             const size_t nimg = image->GetImageCount();
 
@@ -1646,7 +1650,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            hr = Decompress(img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage.get());
+            hr = Decompress(img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED [decompress] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
