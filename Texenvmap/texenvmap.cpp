@@ -809,8 +809,8 @@ namespace
             viewPort.TopLeftX = viewPort.TopLeftY = 0.f;
             viewPort.Width = static_cast<float>(width);
             viewPort.Height = static_cast<float>(height);
-            viewPort.MinDepth = D3D11_MIN_DEPTH;
-            viewPort.MaxDepth = D3D11_MAX_DEPTH;
+            viewPort.MinDepth = 0.f /*D3D11_MIN_DEPTH*/;
+            viewPort.MaxDepth = 1.f /*D3D11_MAX_DEPTH*/;
 
             return hr;
         }
@@ -1263,7 +1263,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     format = static_cast<DXGI_FORMAT>(LookupByName(pValue, g_pFormatAliases));
                     if (!format)
                     {
-                        wprintf(L"Invalid value specified with -f (%ls)\n", pValue);
+                        wprintf(L"Invalid value specified with -f (%ls)\n\n", pValue);
                         PrintUsage();
                         return 1;
                     }
@@ -1274,7 +1274,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 dwFilter = static_cast<TEX_FILTER_FLAGS>(LookupByName(pValue, g_pFilters));
                 if (!dwFilter)
                 {
-                    wprintf(L"Invalid value specified with -if (%ls)\n", pValue);
+                    wprintf(L"Invalid value specified with -if (%ls)\n\n", pValue);
+                    PrintUsage();
                     return 1;
                 }
                 break;
@@ -1343,7 +1344,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 }
                 else if (adapter < 0)
                 {
-                    wprintf(L"Adapter index (%ls)\n\n", pValue);
+                    wprintf(L"Invalid adapter index (%ls)\n\n", pValue);
                     PrintUsage();
                     return 1;
                 }
