@@ -102,6 +102,15 @@ jobs:
         parameters:
           windows: true
           scarlett: true
+      - task: CmdLine@2
+        displayName: Setup required env variables
+        inputs:
+          script: |
+            call $(Build.SourcesDirectory)\build\SetupBWOI.cmd $(EXTRACTED_FOLDER) $(GDK_EDITION) Scarlett
+            echo ##vso[task.setvariable variable=GameDK;]%GameDK%
+            echo ##vso[task.setvariable variable=GameDKLatest;]%GameDKLatest%
+            echo ##vso[task.setvariable variable=GameDKXboxLatest;]%GameDKXboxLatest%
+
       - task: CMake@1
         displayName: 'CMake (MSVC): Config x64 (Xbox Series X|S)'
         inputs:
@@ -195,6 +204,15 @@ jobs:
         parameters:
           windows: true
           scarlett: false
+      - task: CmdLine@2
+        displayName: Setup required env variables
+        inputs:
+          script: |
+            call $(Build.SourcesDirectory)\build\SetupBWOI.cmd $(EXTRACTED_FOLDER) $(GDK_EDITION) XboxOne
+            echo ##vso[task.setvariable variable=GameDK;]%GameDK%
+            echo ##vso[task.setvariable variable=GameDKLatest;]%GameDKLatest%
+            echo ##vso[task.setvariable variable=GameDKXboxLatest;]%GameDKXboxLatest%
+
       - task: CMake@1
         displayName: 'CMake (MSVC): Config x64 (Xbox One)'
         inputs:
