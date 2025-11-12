@@ -112,12 +112,17 @@ jobs:
       - task: NuGetAuthenticate@1
         displayName: 'NuGet Auth'
       - task: PowerShell@2
-        displayName: 'NuGet Install GDK'
+        displayName: 'NuGet Install PC GDK'
         inputs:
           targetType: filePath
           filePath: ./build/RestoreGDK.ps1
           arguments: -GDKEditionNumber $(GDK_EDITION) -OutputDirectory $(EXTRACTED_FOLDER)
           failOnStderr: true
+      - task: NuGetCommand@2
+        displayName: 'NuGet install Xbox GDK'
+        inputs:
+          command: custom
+          arguments: 'install -directdownload Microsoft.GDK.Xbox -ExcludeVersion -Version $(GDKNuGetPackageVersion) -OutputDirectory $(EXTRACTED_FOLDER)'
       - task: CopyFiles@2
         displayName: Set up Directory.Build.props
         inputs:

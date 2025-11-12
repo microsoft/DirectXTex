@@ -76,7 +76,7 @@ pool:
   vmImage: windows-2022
 
 jobs:
-  - job: CMAKE_BUILD
+  - job: CMAKE_BUILD_VS
     displayName: CMake using VS Generator
     steps:
       - checkout: self
@@ -116,6 +116,11 @@ jobs:
           filePath: ./build/RestoreGDK.ps1
           arguments: -GDKEditionNumber $(GDK_EDITION) -OutputDirectory $(EXTRACTED_FOLDER)
           failOnStderr: true
+      - task: NuGetCommand@2
+        displayName: 'NuGet install Xbox GDK'
+        inputs:
+          command: custom
+          arguments: 'install -directdownload Microsoft.GDK.Xbox -ExcludeVersion -Version $(GDKNuGetPackageVersion) -OutputDirectory $(EXTRACTED_FOLDER)'
       - task: CMake@1
         displayName: 'CMake (MSVC): Config x64 (Xbox Series X|S)'
         inputs:
