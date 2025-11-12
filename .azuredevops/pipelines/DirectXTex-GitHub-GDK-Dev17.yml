@@ -295,13 +295,6 @@ jobs:
         parameters:
           windows: false
           scarlett: true
-      - task: PowerShell@2
-        displayName: 'NuGet Install GDK'
-        inputs:
-          targetType: filePath
-          filePath: ./build/RestoreGDK.ps1
-          arguments: -GDKEditionNumber $(GDK_EDITION) -OutputDirectory $(EXTRACTED_FOLDER)
-          failOnStderr: true
       - task: CmdLine@2
         displayName: Setup BWOI for GDK command-line
         inputs:
