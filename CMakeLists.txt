@@ -142,7 +142,7 @@ if(DEFINED XBOX_CONSOLE_TARGET)
     endif()
 
 elseif((BUILD_XBOX_EXTS_XBOXONE OR BUILD_XBOX_EXTS_SCARLETT) AND WIN32)
-    if(DEFINED ENV{GameDKXboxLatest})
+    if((DEFINED ENV{GameDKXboxLatest}) AND (NOT ("$ENV{GameDKXboxLatest}" STREQUAL "")))
         cmake_path(SET GameDK_DIR "$ENV{GameDKXboxLatest}")
     elseif(DEFINED ENV{GameDKLatest})
         cmake_path(SET GameDK_DIR "$ENV{GameDKLatest}")

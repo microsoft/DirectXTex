@@ -12,25 +12,9 @@
 
     <_AlternativeVCTargetsPath170>$(ExtractedFolder)VCTargets170\</_AlternativeVCTargetsPath170>
     <_AlternativeVCTargetsPath160>$(ExtractedFolder)VCTargets160\</_AlternativeVCTargetsPath160>
-    <_AlternativeVCTargetsPath150 Condition="'$(GDKEditionNumber)' != '' AND '$(GDKEditionNumber)' &lt; '241000'">$(ExtractedFolder)VCTargets150\</_AlternativeVCTargetsPath150>
 
     <!-- Workaround for VS bug -->
     <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(GDKEditionNumber)' != '' AND '$(GDKEditionNumber)' &lt; '220300'">
-    <_PCNuGetPackage>Microsoft.PGDK</_PCNuGetPackage>
-    <_XboxNuGetPackage>Microsoft.GDK</_XboxNuGetPackage>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(GDKEditionNumber)' != '' AND '$(GDKEditionNumber)' &gt;= '220300'">
-    <_PCNuGetPackage>Microsoft.GDK.PC</_PCNuGetPackage>
-    <_XboxNuGetPackage>Microsoft.GDK.Xbox</_XboxNuGetPackage>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(GDKEditionNumber)' != '' AND '$(GDKEditionNumber)' &lt; '241000'">
-    <_PCNuGetPackage>$(_PCNuGetPackage).$(GDKEditionNumber)</_PCNuGetPackage>
-    <_XboxNuGetPackage>$(_XboxNuGetPackage).$(GDKEditionNumber)</_XboxNuGetPackage>
   </PropertyGroup>
 
   <!-- Windows SDK NuGet -->
@@ -47,11 +31,32 @@
           Project="$(ExtractedFolder)Microsoft.Windows.SDK.cpp.arm64\build\native\Microsoft.Windows.SDK.cpp.arm64.props" />
 
   <!-- Microsoft GDK NuGet -->
-  <Import Condition="'$(GDKEnableBWOI)' == 'true' and $(Platform.Contains('x64')) and Exists('$(ExtractedFolder)$(_PCNuGetPackage)\build\$(_PCNuGetPackage).props')"
-          Project="$(ExtractedFolder)$(_PCNuGetPackage)\build\$(_PCNuGetPackage).props" />
+  <Import Condition="'$(GDKEnableBWOI)' == 'true' and Exists('$(ExtractedFolder)Microsoft.GDK.Core\build\Microsoft.GDK.Core.props')"
+          Project="$(ExtractedFolder)Microsoft.GDK.Core\build\Microsoft.GDK.Core.props" />
 
-  <Import Condition="'$(GDKEnableBWOI)' == 'true' and $(Platform.Contains('x64')) and Exists('$(ExtractedFolder)$(_XboxNuGetPackage)\build\$(_XboxNuGetPackage).props')"
-          Project="$(ExtractedFolder)$(_XboxNuGetPackage)\build\$(_XboxNuGetPackage).props" />
+  <Import Condition="'$(GDKEnableBWOI)' == 'true' and '$(Platform)'=='ARM64' and Exists('$(ExtractedFolder)Microsoft.GDK.Windows\build\Microsoft.GDK.Windows.props')"
+          Project="$(ExtractedFolder)Microsoft.GDK.Windows\build\Microsoft.GDK.Windows.props" />
+  <Import Condition="'$(GDKEnableBWOI)' == 'true' and '$(Platform)'=='x64' and Exists('$(ExtractedFolder)Microsoft.GDK.Windows\build\Microsoft.GDK.Windows.props')"
+          Project="$(ExtractedFolder)Microsoft.GDK.Windows\build\Microsoft.GDK.Windows.props" />
+  <Import Condition="'$(GDKEnableBWOI)' == 'true' and '$(Platform)'=='Gaming.Desktop.x64' and Exists('$(ExtractedFolder)Microsoft.GDK.Windows\build\Microsoft.GDK.Windows.props')"
+          Project="$(ExtractedFolder)Microsoft.GDK.Windows\build\Microsoft.GDK.Windows.props" />
+
+  <ImportGroup Condition="'$(GDKEnableBWOI)' == 'true' and Exists('$(ExtractedFolder)Microsoft.GDK.Xbox.XboxSeriesX_S\build\Microsoft.GDK.Xbox.XboxSeriesX_S.props')">
+    <Import Project="$(ExtractedFolder)Microsoft.GDK.Xbox.XboxSeriesX_S\build\Microsoft.GDK.Xbox.XboxSeriesX_S.props" />
+    <Import Project="$(ExtractedFolder)Microsoft.GDK.Xbox.GameOS\build\Microsoft.GDK.Xbox.GameOS.props" />
+  </ImportGroup>
+
+  <ImportGroup Condition="'$(GDKEnableBWOI)' == 'true' and Exists('$(ExtractedFolder)Microsoft.GDK.Xbox.XboxOne\build\Microsoft.GDK.Xbox.XboxOne.props')">
+    <Import Project="$(ExtractedFolder)Microsoft.GDK.Xbox.XboxOne\build\Microsoft.GDK.Xbox.XboxOne.props" />
+    <Import Project="$(ExtractedFolder)Microsoft.GDK.Xbox.GameOS\build\Microsoft.GDK.Xbox.GameOS.props" />
+  </ImportGroup>
+
+  <!-- Microsoft GDK NuGet (Old Layouts)-->
+  <Import Condition="'$(GDKEnableBWOI)' == 'true' and $(Platform.Contains('x64')) and Exists('$(ExtractedFolder)Microsoft.GDK.PC\build\Microsoft.GDK.PC.props')"
+          Project="$(ExtractedFolder)Microsoft.GDK.PC\build\Microsoft.GDK.PC.props" />
+
+  <Import Condition="'$(GDKEnableBWOI)' == 'true' and $(Platform.Contains('x64')) and Exists('$(ExtractedFolder)Microsoft.GDK.Xbox\build\Microsoft.GDK.Xbox.props')"
+          Project="$(ExtractedFolder)Microsoft.GDK.Xbox\build\Microsoft.GDK.Xbox.props" />
 
   <!-- Remove copy of real gameos.xvd since this is a build validation only pipeline -->
   <PropertyGroup Condition="'$(Platform)' == 'Gaming.Xbox.XboxOne.x64' or '$(Platform)' == 'Gaming.Xbox.Scarlett.x64'">
@@ -66,21 +71,18 @@
   <PropertyGroup Condition="'$(Platform)' == 'Gaming.Xbox.XboxOne.x64' and '$(VisualStudioVersion)' == '16.0'">
     <AdditionalVCTargetsPath>$(_AlternativeVCTargetsPath160)</AdditionalVCTargetsPath>
     <DisableInstalledVCTargetsUse>true</DisableInstalledVCTargetsUse>
-    <VCTargetsPath15 Condition="'$(_AlternativeVCTargetsPath150)'!=''">$(_AlternativeVCTargetsPath150)</VCTargetsPath15>
     <VCTargetsPath16>$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Platform)' == 'Gaming.Xbox.Scarlett.x64' and '$(VisualStudioVersion)' == '16.0'">
     <AdditionalVCTargetsPath>$(_AlternativeVCTargetsPath160)</AdditionalVCTargetsPath>
     <DisableInstalledVCTargetsUse>true</DisableInstalledVCTargetsUse>
-    <VCTargetsPath15 Condition="'$(_AlternativeVCTargetsPath150)'!=''">$(_AlternativeVCTargetsPath150)</VCTargetsPath15>
     <VCTargetsPath16>$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Platform)' == 'Gaming.Desktop.x64' and '$(VisualStudioVersion)' == '16.0'">
     <AdditionalVCTargetsPath>$(_AlternativeVCTargetsPath160)</AdditionalVCTargetsPath>
     <DisableInstalledVCTargetsUse>true</DisableInstalledVCTargetsUse>
-    <VCTargetsPath15 Condition="'$(_AlternativeVCTargetsPath150)'!=''">$(_AlternativeVCTargetsPath150)</VCTargetsPath15>
     <VCTargetsPath16>$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
   </PropertyGroup>
 
@@ -91,21 +93,18 @@
   -->
   <PropertyGroup Condition="'$(Platform)' == 'Gaming.Xbox.XboxOne.x64' and '$(VisualStudioVersion)' == '17.0'">
     <DisableInstalledVCTargetsUse>true</DisableInstalledVCTargetsUse>
-    <VCTargetsPath15 Condition="'$(_AlternativeVCTargetsPath150)'!=''">$(_AlternativeVCTargetsPath150)</VCTargetsPath15>
     <VCTargetsPath16 Condition="'$(_AlternativeVCTargetsPath160)'!=''">$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
     <VCTargetsPath17>$(_AlternativeVCTargetsPath170)</VCTargetsPath17>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Platform)' == 'Gaming.Xbox.Scarlett.x64' and '$(VisualStudioVersion)' == '17.0'">
     <DisableInstalledVCTargetsUse>true</DisableInstalledVCTargetsUse>
-    <VCTargetsPath15 Condition="'$(_AlternativeVCTargetsPath150)'!=''">$(_AlternativeVCTargetsPath150)</VCTargetsPath15>
     <VCTargetsPath16 Condition="'$(_AlternativeVCTargetsPath160)'!=''">$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
     <VCTargetsPath17>$(_AlternativeVCTargetsPath170)</VCTargetsPath17>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Platform)' == 'Gaming.Desktop.x64' and '$(VisualStudioVersion)' == '17.0'">
     <DisableInstalledVCTargetsUse>true</DisableInstalledVCTargetsUse>
-    <VCTargetsPath15 Condition="'$(_AlternativeVCTargetsPath150)'!=''">$(_AlternativeVCTargetsPath150)</VCTargetsPath15>
     <VCTargetsPath16 Condition="'$(_AlternativeVCTargetsPath160)'!=''">$(_AlternativeVCTargetsPath160)</VCTargetsPath16>
     <VCTargetsPath17>$(_AlternativeVCTargetsPath170)</VCTargetsPath17>
   </PropertyGroup>

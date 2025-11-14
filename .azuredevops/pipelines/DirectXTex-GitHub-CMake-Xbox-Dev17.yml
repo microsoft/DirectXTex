@@ -65,8 +65,8 @@ pool:
   vmImage: windows-2022
 
 jobs:
-  - job: CMAKE_BUILD
-    displayName: CMake using VS Generator
+  - job: CMAKE_BUILD_VS_SCAR
+    displayName: CMake using VS Generator (x64+Xbox Series X|S)
     steps:
       - checkout: self
         clean: true
@@ -98,13 +98,19 @@ jobs:
         displayName: 'Secure Supply Chain Analysis'
       - task: NuGetAuthenticate@1
         displayName: 'NuGet Auth'
-      - task: PowerShell@2
-        displayName: 'NuGet Install GDK'
+      - template: '/.azuredevops/templates/DirectXTex-setup-gdk-auto.yml'
+        parameters:
+          windows: true
+          scarlett: true
+      - task: CmdLine@2
+        displayName: Setup required env variables
         inputs:
-          targetType: filePath
-          filePath: ./build/RestoreGDK.ps1
-          arguments: -GDKEditionNumber $(GDK_EDITION) -OutputDirectory $(EXTRACTED_FOLDER)
-          failOnStderr: true
+          script: |
+            call $(Build.SourcesDirectory)\build\SetupBWOI.cmd $(EXTRACTED_FOLDER) $(GDK_EDITION) Scarlett
+            echo ##vso[task.setvariable variable=GameDK;]%GameDK%
+            echo ##vso[task.setvariable variable=GameDKLatest;]%GameDKLatest%
+            echo ##vso[task.setvariable variable=GameDKXboxLatest;]%GameDKXboxLatest%
+
       - task: CMake@1
         displayName: 'CMake (MSVC): Config x64 (Xbox Series X|S)'
         inputs:
@@ -142,47 +148,11 @@ jobs:
           cwd: ''
           cmakeArgs: --build out2 -v --config RelWithDebInfo
       - task: CMake@1
-        displayName: 'CMake (MSVC): Config x64 (Xbox One)'
-        inputs:
-          cwd: ''
-          cmakeArgs: >
-            -G "$(VS_GENERATOR)" -A x64 -B out3
-            -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
-            -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF
-      - task: CMake@1
-        displayName: 'CMake (MSVC): Build x64 Debug (Xbox One)'
-        inputs:
-          cwd: ''
-          cmakeArgs: --build out3 -v --config Debug
-      - task: CMake@1
-        displayName: 'CMake (MSVC): Build x64 Release (Xbox One)'
-        inputs:
-          cwd: ''
-          cmakeArgs: --build out3 -v --config RelWithDebInfo
-      - task: CMake@1
-        displayName: 'CMake (ClangCl): Config x64 (Xbox One)'
-        inputs:
-          cwd: ''
-          cmakeArgs: >
-            -G "$(VS_GENERATOR)" -A x64 -T clangcl -B out4
-            -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
-            -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF
-      - task: CMake@1
-        displayName: 'CMake (ClangCl): Build x64 Debug (Xbox One)'
-        inputs:
-          cwd: ''
-          cmakeArgs: --build out4 -v --config Debug
-      - task: CMake@1
-        displayName: 'CMake (ClangCl): Build x64 Release (Xbox One)'
-        inputs:
-          cwd: ''
-          cmakeArgs: --build out4 -v --config RelWithDebInfo
-      - task: CMake@1
         displayName: 'CMake (DLL): Config x64 (Xbox Series X|S)'
         inputs:
           cwd: ''
           cmakeArgs: >
-            -G "$(VS_GENERATOR)" -A x64 -B out5
+            -G "$(VS_GENERATOR)" -A x64 -B out3
             -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
             -DBUILD_XBOX_EXTS_SCARLETT=ON -DBUILD_SAMPLE=OFF
             -DBUILD_SHARED_LIBS=ON
@@ -190,13 +160,101 @@ jobs:
         displayName: 'CMake (DLL): Build x64 Debug (Xbox Series X|S)'
         inputs:
           cwd: ''
-          cmakeArgs: --build out5 -v --config Debug
+          cmakeArgs: --build out3 -v --config Debug
+      - task: CMake@1
+        displayName: 'CMake (DLL): Build x64 Release (Xbox Series X|S)'
+        inputs:
+          cwd: ''
+          cmakeArgs: --build out3 -v --config RelWithDebInfo
+
+  - job: CMAKE_BUILD_VS_XBONE
+    displayName: CMake using VS Generator (x64+Xbox One)
+    steps:
+      - checkout: self
+        clean: true
+        fetchTags: false
+      - task: NuGetToolInstaller@1
+        displayName: 'Use NuGet'
+      - task: PowerShell@2
+        displayName: 'Create nuget.config with single source'
+        inputs:
+          targetType: inline
+          script: |
+            $xml = @'
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <packageSources>
+                <clear />
+              </packageSources>
+            </configuration>
+            '@
+            $xml | Set-Content -Path "$(Build.SourcesDirectory)\NuGet.config"
+
+      - task: NuGetCommand@2
+        # We have to use a nuget.config to provide the feed for the 'nuget install' option.
+        displayName: 'NuGet set package source to ADO feed'
+        inputs:
+          command: custom
+          arguments: sources add -Name xboxgdk -Source $(URL_FEED) -ConfigFile $(Build.SourcesDirectory)\NuGet.config
+      - task: nuget-security-analysis@0
+        displayName: 'Secure Supply Chain Analysis'
+      - task: NuGetAuthenticate@1
+        displayName: 'NuGet Auth'
+      - template: '/.azuredevops/templates/DirectXTex-setup-gdk-auto.yml'
+        parameters:
+          windows: true
+          scarlett: false
+      - task: CmdLine@2
+        displayName: Setup required env variables
+        inputs:
+          script: |
+            call $(Build.SourcesDirectory)\build\SetupBWOI.cmd $(EXTRACTED_FOLDER) $(GDK_EDITION) XboxOne
+            echo ##vso[task.setvariable variable=GameDK;]%GameDK%
+            echo ##vso[task.setvariable variable=GameDKLatest;]%GameDKLatest%
+            echo ##vso[task.setvariable variable=GameDKXboxLatest;]%GameDKXboxLatest%
+
+      - task: CMake@1
+        displayName: 'CMake (MSVC): Config x64 (Xbox One)'
+        inputs:
+          cwd: ''
+          cmakeArgs: >
+            -G "$(VS_GENERATOR)" -A x64 -B out
+            -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
+            -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF
+      - task: CMake@1
+        displayName: 'CMake (MSVC): Build x64 Debug (Xbox One)'
+        inputs:
+          cwd: ''
+          cmakeArgs: --build out -v --config Debug
+      - task: CMake@1
+        displayName: 'CMake (MSVC): Build x64 Release (Xbox One)'
+        inputs:
+          cwd: ''
+          cmakeArgs: --build out -v --config RelWithDebInfo
+      - task: CMake@1
+        displayName: 'CMake (ClangCl): Config x64 (Xbox One)'
+        inputs:
+          cwd: ''
+          cmakeArgs: >
+            -G "$(VS_GENERATOR)" -A x64 -T clangcl -B out2
+            -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
+            -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF
+      - task: CMake@1
+        displayName: 'CMake (ClangCl): Build x64 Debug (Xbox One)'
+        inputs:
+          cwd: ''
+          cmakeArgs: --build out2 -v --config Debug
+      - task: CMake@1
+        displayName: 'CMake (ClangCl): Build x64 Release (Xbox One)'
+        inputs:
+          cwd: ''
+          cmakeArgs: --build out2 -v --config RelWithDebInfo
       - task: CMake@1
         displayName: 'CMake (DLL): Config x64 (Xbox One)'
         inputs:
           cwd: ''
           cmakeArgs: >
-            -G "$(VS_GENERATOR)" -A x64 -B out6
+            -G "$(VS_GENERATOR)" -A x64 -B out3
             -DCMAKE_SYSTEM_VERSION=$(WIN10_SDK)
             -DBUILD_XBOX_EXTS_XBOXONE=ON -DBUILD_SAMPLE=OFF
             -DBUILD_SHARED_LIBS=ON
@@ -204,7 +262,12 @@ jobs:
         displayName: 'CMake (DLL): Build x64 Debug (Xbox One)'
         inputs:
           cwd: ''
-          cmakeArgs: --build out6 -v --config Debug
+          cmakeArgs: --build out3 -v --config Debug
+      - task: CMake@1
+        displayName: 'CMake (DLL): Build x64 Release (Xbox One)'
+        inputs:
+          cwd: ''
+          cmakeArgs: --build out3 -v --config Release
 
   - job: BUILD_GDK_CMAKE_XS
     displayName: 'Xbox Series X|S Extensions BUILD_TESTING=ON'
@@ -249,13 +312,10 @@ jobs:
         displayName: 'Secure Supply Chain Analysis'
       - task: NuGetAuthenticate@1
         displayName: 'NuGet Auth'
-      - task: PowerShell@2
-        displayName: 'NuGet Install GDK'
-        inputs:
-          targetType: filePath
-          filePath: ./build/RestoreGDK.ps1
-          arguments: -GDKEditionNumber $(GDK_EDITION) -OutputDirectory $(EXTRACTED_FOLDER)
-          failOnStderr: true
+      - template: '/.azuredevops/templates/DirectXTex-setup-gdk-auto.yml'
+        parameters:
+          windows: true
+          scarlett: true
       - task: CmdLine@2
         displayName: Setup BWOI for GDK command-line
         inputs:
@@ -268,7 +328,10 @@ jobs:
             echo ##vso[task.prependpath]%WindowsSdkVerBinPath%x64
             echo ##vso[task.prependpath]%VCToolsInstallDir%bin\HostX64\x64
             call $(Build.SourcesDirectory)\build\SetupBWOI.cmd $(EXTRACTED_FOLDER) $(GDK_EDITION) Scarlett
+            echo ##vso[task.setvariable variable=GameDK;]%GameDK%
             echo ##vso[task.setvariable variable=GameDKLatest;]%GameDKLatest%
+            echo ##vso[task.setvariable variable=GameDKCoreLatest;]%GameDKCoreLatest%
+            echo ##vso[task.setvariable variable=GameDKXboxLatest;]%GameDKXboxLatest%
             echo ##vso[task.setvariable variable=GRDKLatest;]%GRDKLatest%
             echo ##vso[task.setvariable variable=GXDKLatest;]%GXDKLatest%
             echo ##vso[task.setvariable variable=INCLUDE;]%INCLUDE%
@@ -340,13 +403,10 @@ jobs:
         displayName: 'Secure Supply Chain Analysis'
       - task: NuGetAuthenticate@1
         displayName: 'NuGet Auth'
-      - task: PowerShell@2
-        displayName: 'NuGet Install GDK'
-        inputs:
-          targetType: filePath
-          filePath: ./build/RestoreGDK.ps1
-          arguments: -GDKEditionNumber $(GDK_EDITION) -OutputDirectory $(EXTRACTED_FOLDER)
-          failOnStderr: true
+      - template: '/.azuredevops/templates/DirectXTex-setup-gdk-auto.yml'
+        parameters:
+          windows: true
+          scarlett: false
       - task: CmdLine@2
         displayName: Setup BWOI for GDK command-line
         inputs:
@@ -359,7 +419,10 @@ jobs:
             echo ##vso[task.prependpath]%WindowsSdkVerBinPath%x64
             echo ##vso[task.prependpath]%VCToolsInstallDir%bin\HostX64\x64
             call $(Build.SourcesDirectory)\build\SetupBWOI.cmd $(EXTRACTED_FOLDER) $(GDK_EDITION) XboxOne
+            echo ##vso[task.setvariable variable=GameDK;]%GameDK%
             echo ##vso[task.setvariable variable=GameDKLatest;]%GameDKLatest%
+            echo ##vso[task.setvariable variable=GameDKCoreLatest;]%GameDKCoreLatest%
+            echo ##vso[task.setvariable variable=GameDKXboxLatest;]%GameDKXboxLatest%
             echo ##vso[task.setvariable variable=GRDKLatest;]%GRDKLatest%
             echo ##vso[task.setvariable variable=GXDKLatest;]%GXDKLatest%
             echo ##vso[task.setvariable variable=INCLUDE;]%INCLUDE%

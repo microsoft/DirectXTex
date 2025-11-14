@@ -1,0 +1,55 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+#
+# http://go.microsoft.com/fwlink/?LinkId=248926
+
+# Template used by GitHub-GDK-* pipelines
+
+parameters:
+  - name: windows
+    type: boolean
+    default: true
+  - name: scarlett
+    type: boolean
+    default: true
+
+steps:
+  - task: PowerShell@2
+    displayName: 'NuGet Install GDK'
+    inputs:
+      targetType: filePath
+      filePath: ./build/RestoreGDK.ps1
+      arguments: -GDKEditionNumber $(GDK_EDITION) -OutputDirectory $(EXTRACTED_FOLDER) -AutoLayout
+      failOnStderr: true
+  - task: NuGetCommand@2
+    displayName: 'NuGet install GDK (Windows)'
+    condition: and(ge(variables.GDKEditionNumber, '251000'), eq(${{ parameters.windows }}, true))
+    inputs:
+      command: custom
+      arguments: >
+        install -directdownload Microsoft.GDK.Windows -ExcludeVersion -Version $(GDKNuGetPackageVersion)
+        -OutputDirectory $(EXTRACTED_FOLDER)
+  - task: NuGetCommand@2
+    displayName: 'NuGet install GDK (Xbox Series X|S)'
+    condition: and(ge(variables.GDKEditionNumber, '251000'), eq(${{ parameters.scarlett }}, true))
+    inputs:
+      command: custom
+      arguments: >
+        install -directdownload Microsoft.GDK.Xbox.XboxSeriesX_S -ExcludeVersion -Version $(GDKNuGetPackageVersion)
+        -OutputDirectory $(EXTRACTED_FOLDER)
+  - task: NuGetCommand@2
+    displayName: 'NuGet install GDK (Xbox One)'
+    condition: and(ge(variables.GDKEditionNumber, '251000'), eq(${{ parameters.scarlett }}, false))
+    inputs:
+      command: custom
+      arguments: >
+        install -directdownload Microsoft.GDK.Xbox.XboxOne -ExcludeVersion -Version $(GDKNuGetPackageVersion)
+        -OutputDirectory $(EXTRACTED_FOLDER)
+  - task: NuGetCommand@2
+    displayName: 'NuGet install GDK (Xbox)'
+    condition: lt(variables.GDKEditionNumber, '251000')
+    inputs:
+      command: custom
+      arguments: >
+        install -directdownload Microsoft.GDK.Xbox -ExcludeVersion -Version $(GDKNuGetPackageVersion)
+        -OutputDirectory $(EXTRACTED_FOLDER)
