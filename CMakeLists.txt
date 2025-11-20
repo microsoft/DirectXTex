@@ -493,6 +493,29 @@ if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
   target_link_libraries(texconv PRIVATE ${PROJECT_NAME} ole32.lib shell32.lib version.lib)
   source_group(texconv REGULAR_EXPRESSION Texconv/*.*)
   list(APPEND TOOL_EXES texconv)
+
+  if (NOT USE_PREBUILT_SHADERS)
+    add_custom_command(
+        OUTPUT "${COMPILED_SHADERS}/Texenvmap_VSBasic.inc"
+        MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/Texenvmap/Shaders/CompileShaders.cmd"
+        DEPENDS "Texenvmap/Shaders/Texenvmap.hlsl"
+        COMMENT "Generating HLSL shaders for texenvmap..."
+        COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_SHADERS}" $<$<BOOL:${DIRECTX_FXC_TOOL}>:LegacyShaderCompiler=${DIRECTX_FXC_TOOL}> CompileShaders.cmd > "${COMPILED_SHADERS}/compileshaders_envmap.log"
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/Texenvmap/Shaders"
+        USES_TERMINAL)
+  endif()
+
+  add_executable(texenvmap
+    Texenvmap/texenvmap.cpp
+    Texenvmap/texenvmap.rc
+    Common/CmdLineHelpers.h
+    Common/settings.manifest
+    ${COMPILED_SHADERS}/Texenvmap_VSBasic.inc)
+  target_compile_features(texenvmap PRIVATE cxx_std_17)
+  target_include_directories(texenvmap PRIVATE ${COMPILED_SHADERS})
+  target_link_libraries(texenvmap PRIVATE ${PROJECT_NAME} ole32.lib version.lib)
+  source_group(texenvmap REGULAR_EXPRESSION Texenvmap/*.*)
+  list(APPEND TOOL_EXES texenvmap)
 endif()
 
 if(BUILD_TOOLS AND WIN32)
