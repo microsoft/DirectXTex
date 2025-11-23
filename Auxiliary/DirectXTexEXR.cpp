@@ -61,9 +61,50 @@ static_assert(sizeof(Imf::Rgba) == 8, "Mismatch size");
 using namespace DirectX;
 using PackedVector::XMHALF4;
 
-#ifdef _WIN32
 namespace
 {
+    class InputStream : public Imf::IStream
+    {
+    public:
+        InputStream(const uint8_t* data, size_t size)
+            : IStream("InputStream")
+            , m_DataPtr(data)
+            , m_DataSize(size)
+            , m_Position(0)
+        {}
+
+        bool read(char c[], int n) override
+        {
+            memcpy(c, m_DataPtr + m_Position, n);
+            m_Position += n;
+
+            return m_Position < m_DataSize;
+        }
+
+        uint64_t tellg() override
+        {
+            return m_Position;
+        }
+
+        void seekg(uint64_t pos) override
+        {
+            m_Position = pos;
+        }
+
+    #if COMBINED_OPENEXR_VERSION > 30300
+        int64_t read(void *buf, uint64_t sz, uint64_t offset) override
+        {
+            return Imf::IStream::read(buf, sz, offset);
+        }
+    #endif
+
+    private:
+        const uint8_t* m_DataPtr;
+        size_t m_DataSize;
+        size_t m_Position;
+    };
+
+#ifdef _WIN32
     class com_exception : public std::exception
     {
     public:
@@ -82,10 +123,10 @@ namespace
         HRESULT result;
     };
 
-    class InputStream : public Imf::IStream
+    class InputFileStream : public Imf::IStream
     {
     public:
-        InputStream(HANDLE hFile, const char fileName[]) :
+        InputFileStream(HANDLE hFile, const char fileName[]) :
             IStream(fileName), m_hFile(hFile)
         {
             const LARGE_INTEGER dist = {};
@@ -103,11 +144,11 @@ namespace
             }
         }
 
-        InputStream(const InputStream&) = delete;
-        InputStream& operator = (const InputStream&) = delete;
+        InputFileStream(const InputFileStream&) = delete;
+        InputFileStream& operator = (const InputFileStream&) = delete;
 
-        InputStream(InputStream&&) = delete;
-        InputStream& operator=(InputStream&&) = delete;
+        InputFileStream(InputFileStream&&) = delete;
+        InputFileStream& operator=(InputFileStream&&) = delete;
 
         bool read(char c[], int n) override
         {
@@ -153,7 +194,7 @@ namespace
             SetLastError(0);
         }
 
-    #if COMBINED_OPENEXR_VERSION >= 30300
+    #if COMBINED_OPENEXR_VERSION > 30300
         int64_t read(void *buf, uint64_t sz, uint64_t offset) override
         {
             return Imf::IStream::read(buf, sz, offset);
@@ -165,18 +206,18 @@ namespace
         LONGLONG m_EOF;
     };
 
-    class OutputStream : public Imf::OStream
+    class OutputFileStream : public Imf::OStream
     {
     public:
-        OutputStream(HANDLE hFile, const char fileName[]) :
+        OutputFileStream(HANDLE hFile, const char fileName[]) :
             OStream(fileName), m_hFile(hFile)
         {}
 
-        OutputStream(const OutputStream&) = delete;
-        OutputStream& operator = (const OutputStream&) = delete;
+        OutputFileStream(const OutputFileStream&) = delete;
+        OutputFileStream& operator = (const OutputFileStream&) = delete;
 
-        OutputStream(OutputStream&&) = delete;
-        OutputStream& operator=(OutputStream&&) = delete;
+        OutputFileStream(OutputFileStream&&) = delete;
+        OutputFileStream& operator=(OutputFileStream&&) = delete;
 
         void write(const char c[], int n) override
         {
@@ -211,9 +252,8 @@ namespace
     private:
         HANDLE m_hFile;
     };
-}
 #endif // _WIN32
-
+}
 
 //=====================================================================================
 // Entry-points
@@ -250,7 +290,7 @@ HRESULT DirectX::GetMetadataFromEXRFile(const wchar_t* szFile, TexMetadata& meta
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    InputStream stream(hFile.get(), fileName.c_str());
+    InputFileStream stream(hFile.get(), fileName.c_str());
 #else
     std::wstring wFileName(szFile);
     std::string fileName(wFileName.cbegin(), wFileName.cend());
@@ -320,16 +360,13 @@ HRESULT DirectX::GetMetadataFromEXRFile(const wchar_t* szFile, TexMetadata& meta
     return hr;
 }
 
-
 //-------------------------------------------------------------------------------------
-// Load a EXR file from disk
+// Load 
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, ScratchImage& image)
+template <typename StreamType>
+HRESULT LoadFromEXRCommon(StreamType& stream, TexMetadata* metadata, ScratchImage& image)
 {
-    if (!szFile)
-        return E_INVALIDARG;
-
     image.Release();
 
     if (metadata)
@@ -337,43 +374,11 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
         memset(metadata, 0, sizeof(TexMetadata));
     }
 
-#ifdef _WIN32
-    std::string fileName;
-    const int nameLength = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, nullptr, 0, nullptr, nullptr);
-    if (nameLength > 0)
-    {
-        fileName.resize(static_cast<size_t>(nameLength));
-        const int result = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, fileName.data(), nameLength, nullptr, nullptr);
-        if (result <= 0)
-        {
-            fileName.clear();
-        }
-    }
-
-    ScopedHandle hFile(safe_handle(CreateFile2(
-        szFile,
-        GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING,
-        nullptr)));
-    if (!hFile)
-    {
-        return HRESULT_FROM_WIN32(GetLastError());
-    }
-
-    InputStream stream(hFile.get(), fileName.c_str());
-#else
-    std::wstring wFileName(szFile);
-    std::string fileName(wFileName.cbegin(), wFileName.cend());
-#endif
-
     HRESULT hr = S_OK;
 
     try
     {
-    #ifdef _WIN32
         Imf::RgbaInputFile file(stream);
-    #else
-        Imf::RgbaInputFile file(fileName.c_str());
-    #endif
 
         const auto dw = file.dataWindow();
 
@@ -446,6 +451,59 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
     return hr;
 }
 
+//-------------------------------------------------------------------------------------
+// Load a EXR file from memory
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
+HRESULT DirectX::LoadFromEXRMemory(const uint8_t* pSource, size_t size, TexMetadata* metadata, ScratchImage& image)
+{
+    if (!pSource || !size)
+        return E_INVALIDARG;
+
+    InputStream stream(pSource, size);
+    return LoadFromEXRCommon(stream, metadata, image);
+}
+
+//-------------------------------------------------------------------------------------
+// Load a EXR file from disk
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
+HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, ScratchImage& image)
+{
+    if (!szFile)
+        return E_INVALIDARG;
+
+#ifdef _WIN32
+    std::string fileName;
+    const int nameLength = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, nullptr, 0, nullptr, nullptr);
+    if (nameLength > 0)
+    {
+        fileName.resize(static_cast<size_t>(nameLength));
+        const int result = WideCharToMultiByte(CP_UTF8, 0, szFile, -1, fileName.data(), nameLength, nullptr, nullptr);
+        if (result <= 0)
+        {
+            fileName.clear();
+        }
+    }
+
+    ScopedHandle hFile(safe_handle(CreateFile2(
+        szFile,
+        GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING,
+        nullptr)));
+    if (!hFile)
+    {
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    InputFileStream stream(hFile.get(), fileName.c_str());
+    return LoadFromEXRCommon(stream, metadata, image);
+#else
+    std::wstring wFileName(szFile);
+    std::string fileName(wFileName.cbegin(), wFileName.cend());
+    return LoadFromEXRCommon(fileName.c_str(), metadata, image);
+#endif
+}
+
 
 //-------------------------------------------------------------------------------------
 // Save a EXR file to disk
@@ -502,7 +560,7 @@ HRESULT DirectX::SaveToEXRFile(const Image& image, const wchar_t* szFile)
 
     auto_delete_file delonfail(hFile.get());
 
-    OutputStream stream(hFile.get(), fileName.c_str());
+    OutputFileStream stream(hFile.get(), fileName.c_str());
 #else
     std::wstring wFileName(szFile);
     std::string fileName(wFileName.cbegin(), wFileName.cend());
