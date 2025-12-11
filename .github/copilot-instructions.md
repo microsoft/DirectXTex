@@ -116,7 +116,7 @@ When creating documentation:
 The following symbols are not custom error codes, but aliases for `HRESULT_FROM_WIN32` error codes.
 
 | Symbol | Standard Win32 HRESULT |
-|--------|-------------|
+| -------- | ------------- |
 | `HRESULT_ERROR_FILE_NOT_FOUND` |  `HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)` |
 | `HRESULT_E_ARITHMETIC_OVERFLOW` |  `HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW)` |
 | `HRESULT_E_NOT_SUPPORTED` | `HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED)` |
