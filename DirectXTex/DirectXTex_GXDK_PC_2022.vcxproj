@@ -252,6 +252,7 @@
     <ClCompile Include="DirectXTexNormalMaps.cpp" />
     <ClCompile Include="DirectXTexPMAlpha.cpp" />
     <ClCompile Include="DirectXTexResize.cpp" />
+    <ClCompile Include="DirectXTexSwizzle.cpp" />
     <ClCompile Include="DirectXTexTGA.cpp" />
     <ClCompile Include="DirectXTexUtil.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
