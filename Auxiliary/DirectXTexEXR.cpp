@@ -365,7 +365,7 @@ HRESULT DirectX::GetMetadataFromEXRFile(const wchar_t* szFile, TexMetadata& meta
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
 template <typename StreamType>
-HRESULT LoadFromEXRCommon(StreamType& stream, TexMetadata* metadata, ScratchImage& image)
+HRESULT LoadFromEXRCommon(StreamType stream, TexMetadata* metadata, ScratchImage& image)
 {
     image.Release();
 
@@ -460,8 +460,7 @@ HRESULT DirectX::LoadFromEXRMemory(const uint8_t* pSource, size_t size, TexMetad
     if (!pSource || !size)
         return E_INVALIDARG;
 
-    InputStream stream(pSource, size);
-    return LoadFromEXRCommon(stream, metadata, image);
+    return LoadFromEXRCommon(InputStream(pSource, size), metadata, image);
 }
 
 //-------------------------------------------------------------------------------------
@@ -495,8 +494,7 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    InputFileStream stream(hFile.get(), fileName.c_str());
-    return LoadFromEXRCommon(stream, metadata, image);
+    return LoadFromEXRCommon(InputFileStream(hFile.get(), fileName.c_str()), metadata, image);
 #else
     std::wstring wFileName(szFile);
     std::string fileName(wFileName.cbegin(), wFileName.cend());
