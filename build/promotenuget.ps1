@@ -74,7 +74,7 @@ foreach ($package in $packages) {
     try
     {
         Write-Host "Checking if $package version $Version exists..."
-        $response = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers
+        Invoke-RestMethod -Uri $uri -Method Get -Headers $headers
     }
     catch
     {
