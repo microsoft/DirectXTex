@@ -792,7 +792,7 @@ HRESULT DirectX::SaveWICTextureToFile(
         if (g_WIC2)
             pfGuid = GUID_WICPixelFormat32bppRGB;
         else
-            HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
         break;
 
     default:
