@@ -28,6 +28,7 @@ on:
       - build/*.ps1
       - build/*.targets
       - build/*.xvd
+  workflow_dispatch: {}
 
 permissions:
   contents: read
