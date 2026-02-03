@@ -433,6 +433,22 @@ namespace
                 metadata.dimension = TEX_DIMENSION_TEXTURE1D;
                 break;
 
+            case 0 /* D3Dxx_RESOURCE_DIMENSION_UNKNOWN */:
+                if (!(flags & DDS_FLAGS_PERMISSIVE))
+                {
+                    return HRESULT_E_INVALID_DATA;
+                }
+
+                // Known variant which assumes it is a 2D texture
+
+                #if (__cplusplus >= 201703L)
+                    [[fallthrough]];
+                #elif defined(__clang__)
+                    [[clang::fallthrough]];
+                #elif defined(_MSC_VER)
+                    __fallthrough;
+                #endif
+
             case DDS_DIMENSION_TEXTURE2D:
                 if (d3d10ext->miscFlag & DDS_RESOURCE_MISC_TEXTURECUBE)
                 {
