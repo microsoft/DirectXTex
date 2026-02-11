@@ -1,0 +1,22 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Profile" />
+    <BuildType Name="Release" />
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Sample/">
+    <Project Path="DDSView/DDSView_Desktop_2026.vcxproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Folder Name="/Tools/">
+    <Project Path="Texassemble/Texassemble_Desktop_2026.vcxproj" />
+    <Project Path="Texconv/Texconv_Desktop_2026.vcxproj" />
+    <Project Path="Texdiag/texdiag_Desktop_2026.vcxproj" />
+  </Folder>
+  <Project Path="DirectXTex/DirectXTex_Desktop_2026.vcxproj" />
+</Solution>
