@@ -103,4 +103,4 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: >
           msbuild /m /p:Configuration=${{ matrix.build_type }} /p:Platform=${{ matrix.platform }}
-          DirectXTex_Desktop_2026_Win10.slnx
+          DirectXTex_Desktop_2026.slnx
