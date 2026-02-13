@@ -194,7 +194,9 @@ namespace
     const XMVECTORF32 g_Grayscale = { { { 0.2125f, 0.7154f, 0.0721f, 0.0f } } };
     const XMVECTORF32 g_HalfMin = { { { -65504.f, -65504.f, -65504.f, -65504.f } } };
     const XMVECTORF32 g_HalfMax = { { { 65504.f, 65504.f, 65504.f, 65504.f } } };
-    const XMVECTORF32 g_8BitBias = { { { 0.5f / 255.f, 0.5f / 255.f, 0.5f / 255.f, 0.5f / 255.f } } };
+
+    constexpr float g_8BitBias = 0.5f / 255.f;
+    const XMVECTORF32 g_8BitBiasV = { { { g_8BitBias, g_8BitBias, g_8BitBias, g_8BitBias } } };
 }
 
 //-------------------------------------------------------------------------------------
@@ -1762,7 +1764,7 @@ bool DirectX::Internal::StoreScanline(
             for (size_t icount = 0; icount < (size - sizeof(XMUBYTEN4) + 1); icount += sizeof(XMUBYTEN4))
             {
                 if (sPtr >= ePtr) break;
-                const XMVECTOR v = XMVectorAdd(*sPtr++, g_8BitBias);
+                const XMVECTOR v = XMVectorAdd(*sPtr++, g_8BitBiasV);
                 XMStoreUByteN4(dPtr++, v);
             }
             return true;
@@ -1960,7 +1962,7 @@ bool DirectX::Internal::StoreScanline(
             for (size_t icount = 0; icount < size; icount += sizeof(uint8_t))
             {
                 if (sPtr >= ePtr) break;
-                float v = XMVectorGetX(*sPtr++);
+                float v = XMVectorGetX(*sPtr++) + g_8BitBias;
                 v = std::max<float>(std::min<float>(v, 1.f), 0.f);
                 *(dPtr++) = static_cast<uint8_t>(v * 255.f);
             }
@@ -2020,7 +2022,7 @@ bool DirectX::Internal::StoreScanline(
             for (size_t icount = 0; icount < size; icount += sizeof(uint8_t))
             {
                 if (sPtr >= ePtr) break;
-                float v = XMVectorGetW(*sPtr++);
+                float v = XMVectorGetW(*sPtr++) + g_8BitBias;
                 v = std::max<float>(std::min<float>(v, 1.f), 0.f);
                 *(dPtr++) = static_cast<uint8_t>(v * 255.f);
             }
@@ -2065,7 +2067,7 @@ bool DirectX::Internal::StoreScanline(
                 const XMVECTOR v0 = *sPtr++;
                 const XMVECTOR v1 = (sPtr < ePtr) ? XMVectorSplatY(*sPtr++) : XMVectorZero();
                 XMVECTOR v = XMVectorSelect(v1, v0, g_XMSelect1110);
-                v = XMVectorAdd(v, g_8BitBias);
+                v = XMVectorAdd(v, g_8BitBiasV);
                 XMStoreUByteN4(dPtr++, v);
             }
             return true;
@@ -2084,7 +2086,7 @@ bool DirectX::Internal::StoreScanline(
                 const XMVECTOR v0 = XMVectorSwizzle<1, 0, 3, 2>(*sPtr++);
                 const XMVECTOR v1 = (sPtr < ePtr) ? XMVectorSplatY(*sPtr++) : XMVectorZero();
                 XMVECTOR v = XMVectorSelect(v1, v0, select1101);
-                v = XMVectorAdd(v, g_8BitBias);
+                v = XMVectorAdd(v, g_8BitBiasV);
                 XMStoreUByteN4(dPtr++, v);
             }
             return true;
@@ -2145,7 +2147,7 @@ bool DirectX::Internal::StoreScanline(
             {
                 if (sPtr >= ePtr) break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>(*sPtr++);
-                v = XMVectorAdd(v, g_8BitBias);
+                v = XMVectorAdd(v, g_8BitBiasV);
                 XMStoreUByteN4(dPtr++, v);
             }
             return true;
@@ -2161,7 +2163,7 @@ bool DirectX::Internal::StoreScanline(
             {
                 if (sPtr >= ePtr) break;
                 XMVECTOR v = XMVectorPermute<2, 1, 0, 7>(*sPtr++, g_XMIdentityR3);
-                v = XMVectorAdd(v, g_8BitBias);
+                v = XMVectorAdd(v, g_8BitBiasV);
                 XMStoreUByteN4(dPtr++, v);
             }
             return true;
