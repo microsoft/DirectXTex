@@ -113,6 +113,9 @@
     <ClCompile Include="..\Auxiliary\DirectXTexXboxTile.cpp">
       <Filter>Auxiliary</Filter>
     </ClCompile>
+    <ClCompile Include="DirectXTexSwizzle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="BC.h">
