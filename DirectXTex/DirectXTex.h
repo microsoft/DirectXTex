@@ -458,7 +458,7 @@ namespace DirectX
         ScratchImage(const ScratchImage&) = delete;
         ScratchImage& operator=(const ScratchImage&) = delete;
 
-        HRESULT __cdecl Initialize(_In_ const TexMetadata& mdata, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
+        HRESULT __cdecl Initialize(_In_ const TexMetadata& mdata, _In_ CP_FLAGS flags = CP_FLAGS_NONE, _In_ bool owning = true) noexcept;
 
         HRESULT __cdecl Initialize1D(_In_ DXGI_FORMAT fmt, _In_ size_t length, _In_ size_t arraySize, _In_ size_t mipLevels, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
         HRESULT __cdecl Initialize2D(_In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t arraySize, _In_ size_t mipLevels, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
@@ -476,6 +476,7 @@ namespace DirectX
 
         const TexMetadata& __cdecl GetMetadata() const noexcept { return m_metadata; }
         const Image* __cdecl GetImage(_In_ size_t mip, _In_ size_t item, _In_ size_t slice) const noexcept;
+        const Image* __cdecl SetNonOwningImagePixels(_In_ size_t mip, _In_ size_t item, _In_ size_t slice, _In_ uint8_t* pixels) const noexcept;
 
         const Image* __cdecl GetImages() const noexcept { return m_image; }
         size_t __cdecl GetImageCount() const noexcept { return m_nimages; }
