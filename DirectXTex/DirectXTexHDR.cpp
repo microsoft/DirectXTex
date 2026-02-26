@@ -219,7 +219,7 @@ namespace
             }
         }
 
-        if (!formatFound)
+        if (!formatFound || (size < 3))
         {
             return E_FAIL;
         }
