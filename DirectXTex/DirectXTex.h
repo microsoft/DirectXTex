@@ -576,9 +576,25 @@ namespace DirectX
     //---------------------------------------------------------------------------------
     // Image I/O
 
+    class DIRECTX_TEX_API InputStream
+    {
+    public:
+        virtual ~InputStream() = default;
+
+        virtual bool Read(_Out_writes_bytes_(size) void* data, _In_ size_t size) = 0;
+
+        virtual bool Seek(_In_ size_t position) = 0;
+
+        virtual size_t Size() = 0;
+    };
+
     // DDS operations
     DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemory(
         _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
+        _In_ DDS_FLAGS flags,
+        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSStream(
+        _In_ InputStream& stream,
         _In_ DDS_FLAGS flags,
         _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
     DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSFile(
@@ -588,6 +604,12 @@ namespace DirectX
 
     DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemoryEx(
         _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
+        _In_ DDS_FLAGS flags,
+        _Out_opt_ TexMetadata* metadata,
+        _Out_opt_ DDSMetaData* ddPixelFormat,
+        _Out_ ScratchImage& image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSStreamEx(
+        _In_ InputStream& stream,
         _In_ DDS_FLAGS flags,
         _Out_opt_ TexMetadata* metadata,
         _Out_opt_ DDSMetaData* ddPixelFormat,
