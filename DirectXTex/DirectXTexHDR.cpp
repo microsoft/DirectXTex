@@ -219,7 +219,7 @@ namespace
             }
         }
 
-        if (!formatFound)
+        if (!formatFound || (size < 3))
         {
             return E_FAIL;
         }
@@ -227,7 +227,7 @@ namespace
         // Get orientation
         char orientation[256] = {};
 
-        const size_t len = FindEOL(info, std::min<size_t>(sizeof(orientation), size - 1));
+        const size_t len = FindEOL(info, std::min<size_t>(sizeof(orientation) - 1, size));
         if (len == size_t(-1)
             || len <= 2)
         {
@@ -236,7 +236,7 @@ namespace
 
         strncpy_s(orientation, info, len);
 
-        if (orientation[0] != '-' && orientation[1] != 'Y')
+        if (orientation[0] != '-' || orientation[1] != 'Y')
         {
             // We only support the -Y +X orientation (see top of file)
             return (static_cast<unsigned long>(((orientation[0] == '+' || orientation[0] == '-') && (orientation[1] == 'X' || orientation[1] == 'Y'))))
