@@ -2113,6 +2113,190 @@ HRESULT DirectX::LoadFromDDSMemoryEx(
 
 
 //-------------------------------------------------------------------------------------
+// Load a DDS file from stream
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_
+HRESULT DirectX::LoadFromDDSStream(
+    InputStream& stream,
+    DDS_FLAGS flags,
+    TexMetadata* metadata,
+    ScratchImage& image) noexcept
+{
+    return LoadFromDDSStreamEx(stream, flags, metadata, nullptr, image);
+}
+
+_Use_decl_annotations_
+HRESULT DirectX::LoadFromDDSStreamEx(
+    InputStream& stream,
+    DDS_FLAGS flags,
+    TexMetadata* metadata,
+    DDSMetaData* ddPixelFormat,
+    ScratchImage& image) noexcept
+{
+    image.Release();
+
+    size_t fileLen = stream.Size();
+    if (fileLen == 0)
+        return E_FAIL;
+
+    if (fileLen > UINT32_MAX)
+        return HRESULT_E_FILE_TOO_LARGE;
+
+    const size_t len = fileLen;
+
+    // Need at least enough data to fill the standard header and magic number to be a valid DDS
+    if (len < DDS_MIN_HEADER_SIZE)
+    {
+        return E_FAIL;
+    }
+
+    // Read the header in (including extended header if present)
+    uint8_t header[DDS_DX10_HEADER_SIZE] = {};
+
+    const auto headerLen = std::min<size_t>(len, DDS_DX10_HEADER_SIZE);
+
+    if (!stream.Read(header, headerLen))
+        return E_FAIL;
+
+    uint32_t convFlags = 0;
+    TexMetadata mdata;
+    HRESULT hr = DecodeDDSHeader(header, headerLen, flags, mdata, ddPixelFormat, convFlags);
+    if (FAILED(hr))
+        return hr;
+
+    size_t offset = DDS_DX10_HEADER_SIZE;
+
+    if (!(convFlags & CONV_FLAGS_DX10))
+    {
+        if (!stream.Seek(DDS_MIN_HEADER_SIZE))
+            return E_FAIL;
+
+        offset = DDS_MIN_HEADER_SIZE;
+    }
+
+    std::unique_ptr<uint32_t[]> pal8;
+    if (convFlags & CONV_FLAGS_PAL8)
+    {
+        pal8.reset(new (std::nothrow) uint32_t[256]);
+        if (!pal8)
+        {
+            return E_OUTOFMEMORY;
+        }
+
+        if (!stream.Read(pal8.get(), 256 * sizeof(uint32_t)))
+            return E_FAIL;
+
+        offset += (256 * sizeof(uint32_t));
+    }
+
+    const size_t remaining = len - offset;
+    if (remaining == 0)
+        return E_FAIL;
+
+    hr = image.Initialize(mdata);
+    if (FAILED(hr))
+        return hr;
+
+    if (flags & DDS_FLAGS_PERMISSIVE)
+    {
+        // For cubemaps, DDS_HEADER_DXT10.arraySize is supposed to be 'number of cubes'.
+        // This handles cases where the value is incorrectly written as the original 6*numCubes value.
+        if ((mdata.miscFlags & TEX_MISC_TEXTURECUBE)
+            && (convFlags & CONV_FLAGS_DX10)
+            && (image.GetPixelsSize() > remaining)
+            && ((mdata.arraySize % 6) == 0))
+        {
+            mdata.arraySize = mdata.arraySize / 6;
+            hr = image.Initialize(mdata);
+            if (FAILED(hr))
+                return hr;
+
+            if (image.GetPixelsSize() > remaining)
+            {
+                image.Release();
+                return HRESULT_E_HANDLE_EOF;
+            }
+        }
+    }
+
+    if ((convFlags & CONV_FLAGS_EXPAND) || (flags & (DDS_FLAGS_LEGACY_DWORD | DDS_FLAGS_BAD_DXTN_TAILS)))
+    {
+        std::unique_ptr<uint8_t[]> temp(new (std::nothrow) uint8_t[remaining]);
+        if (!temp)
+        {
+            image.Release();
+            return E_OUTOFMEMORY;
+        }
+
+        if (!stream.Read(temp.get(), remaining))
+        {
+            image.Release();
+            return E_FAIL;
+        }
+
+        CP_FLAGS cflags = CP_FLAGS_NONE;
+        if (flags & DDS_FLAGS_LEGACY_DWORD)
+        {
+            cflags |= CP_FLAGS_LEGACY_DWORD;
+        }
+        if (flags & DDS_FLAGS_BAD_DXTN_TAILS)
+        {
+            cflags |= CP_FLAGS_BAD_DXTN_TAILS;
+        }
+
+        hr = CopyImage(temp.get(),
+            remaining,
+            mdata,
+            cflags,
+            convFlags,
+            pal8.get(),
+            image);
+        if (FAILED(hr))
+        {
+            image.Release();
+            return hr;
+        }
+    }
+    else
+    {
+        if (remaining < image.GetPixelsSize())
+        {
+            image.Release();
+            return HRESULT_E_HANDLE_EOF;
+        }
+
+        if (image.GetPixelsSize() > UINT32_MAX)
+        {
+            image.Release();
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+        }
+
+        if (!stream.Read(image.GetPixels(), image.GetPixelsSize()))
+        {
+            image.Release();
+            return E_FAIL;
+        }
+
+        if (convFlags & (CONV_FLAGS_SWIZZLE | CONV_FLAGS_NOALPHA | CONV_FLAGS_L8U8V8 | CONV_FLAGS_WUV10))
+        {
+            // Swizzle/copy image in place
+            hr = CopyImageInPlace(convFlags, image);
+            if (FAILED(hr))
+            {
+                image.Release();
+                return hr;
+            }
+        }
+    }
+
+    if (metadata)
+        memcpy(metadata, &mdata, sizeof(TexMetadata));
+
+    return S_OK;
+}
+
+
+//-------------------------------------------------------------------------------------
 // Load a DDS file from disk
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_

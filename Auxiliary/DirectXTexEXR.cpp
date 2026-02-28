@@ -82,10 +82,10 @@ namespace
         HRESULT result;
     };
 
-    class InputStream : public Imf::IStream
+    class EXRInputStream : public Imf::IStream
     {
     public:
-        InputStream(HANDLE hFile, const char fileName[]) :
+        EXRInputStream(HANDLE hFile, const char fileName[]) :
             IStream(fileName), m_hFile(hFile)
         {
             const LARGE_INTEGER dist = {};
@@ -103,11 +103,11 @@ namespace
             }
         }
 
-        InputStream(const InputStream&) = delete;
-        InputStream& operator = (const InputStream&) = delete;
+        EXRInputStream(const EXRInputStream&) = delete;
+        EXRInputStream& operator = (const EXRInputStream&) = delete;
 
-        InputStream(InputStream&&) = delete;
-        InputStream& operator=(InputStream&&) = delete;
+        EXRInputStream(EXRInputStream&&) = delete;
+        EXRInputStream& operator=(EXRInputStream&&) = delete;
 
         bool read(char c[], int n) override
         {
@@ -165,18 +165,18 @@ namespace
         LONGLONG m_EOF;
     };
 
-    class OutputStream : public Imf::OStream
+    class EXROutputStream : public Imf::OStream
     {
     public:
-        OutputStream(HANDLE hFile, const char fileName[]) :
+        EXROutputStream(HANDLE hFile, const char fileName[]) :
             OStream(fileName), m_hFile(hFile)
         {}
 
-        OutputStream(const OutputStream&) = delete;
-        OutputStream& operator = (const OutputStream&) = delete;
+        EXROutputStream(const EXROutputStream&) = delete;
+        EXROutputStream& operator = (const EXROutputStream&) = delete;
 
-        OutputStream(OutputStream&&) = delete;
-        OutputStream& operator=(OutputStream&&) = delete;
+        EXROutputStream(EXROutputStream&&) = delete;
+        EXROutputStream& operator=(EXROutputStream&&) = delete;
 
         void write(const char c[], int n) override
         {
@@ -250,7 +250,7 @@ HRESULT DirectX::GetMetadataFromEXRFile(const wchar_t* szFile, TexMetadata& meta
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    InputStream stream(hFile.get(), fileName.c_str());
+    EXRInputStream stream(hFile.get(), fileName.c_str());
 #else
     std::wstring wFileName(szFile);
     std::string fileName(wFileName.cbegin(), wFileName.cend());
@@ -359,7 +359,7 @@ HRESULT DirectX::LoadFromEXRFile(const wchar_t* szFile, TexMetadata* metadata, S
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    InputStream stream(hFile.get(), fileName.c_str());
+    EXRInputStream stream(hFile.get(), fileName.c_str());
 #else
     std::wstring wFileName(szFile);
     std::string fileName(wFileName.cbegin(), wFileName.cend());
@@ -502,7 +502,7 @@ HRESULT DirectX::SaveToEXRFile(const Image& image, const wchar_t* szFile)
 
     auto_delete_file delonfail(hFile.get());
 
-    OutputStream stream(hFile.get(), fileName.c_str());
+    EXROutputStream stream(hFile.get(), fileName.c_str());
 #else
     std::wstring wFileName(szFile);
     std::string fileName(wFileName.cbegin(), wFileName.cend());
