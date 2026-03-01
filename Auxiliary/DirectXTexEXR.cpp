@@ -363,9 +363,8 @@ HRESULT DirectX::GetMetadataFromEXRFile(const wchar_t* szFile, TexMetadata& meta
 //-------------------------------------------------------------------------------------
 // Load 
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
 template <typename StreamType>
-HRESULT LoadFromEXRCommon(StreamType stream, TexMetadata* metadata, ScratchImage& image)
+HRESULT LoadFromEXRCommon(StreamType stream, _Out_opt_ TexMetadata* metadata, ScratchImage& image)
 {
     image.Release();
 
