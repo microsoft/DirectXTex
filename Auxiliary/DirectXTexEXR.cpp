@@ -253,6 +253,96 @@ namespace
         HANDLE m_hFile;
     };
 #endif // _WIN32
+
+    //-------------------------------------------------------------------------------------
+    // Load 
+    //-------------------------------------------------------------------------------------
+    template <typename StreamType>
+    HRESULT LoadFromEXRCommon(StreamType stream, _Out_opt_ TexMetadata* metadata, ScratchImage& image)
+    {
+        image.Release();
+
+        if (metadata)
+        {
+            memset(metadata, 0, sizeof(TexMetadata));
+        }
+
+        HRESULT hr = S_OK;
+
+        try
+        {
+            Imf::RgbaInputFile file(stream);
+
+            const auto dw = file.dataWindow();
+
+            const int width = dw.max.x - dw.min.x + 1;
+            int height = dw.max.y - dw.min.y + 1;
+            size_t arraySize = 1;
+
+            if (width < 1 || height < 1)
+                return E_FAIL;
+
+            if (file.header().find("envmap") != file.header().end())
+            {
+                if (width == height / 6)
+                {
+                    height = width;
+                    arraySize = 6;
+                }
+            }
+
+            if (metadata)
+            {
+                metadata->width = static_cast<size_t>(width);
+                metadata->height = static_cast<size_t>(height);
+                metadata->depth = metadata->mipLevels = 1;
+                metadata->arraySize = arraySize;
+                metadata->format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+                metadata->dimension = TEX_DIMENSION_TEXTURE2D;
+            }
+
+            hr = image.Initialize2D(DXGI_FORMAT_R16G16B16A16_FLOAT,
+                static_cast<size_t>(width), static_cast<size_t>(height), arraySize, 1u);
+
+            if (FAILED(hr))
+                return hr;
+
+            file.setFrameBuffer(reinterpret_cast<Imf::Rgba*>(image.GetPixels()) - dw.min.x - dw.min.y * width, 1, static_cast<size_t>(width));
+            file.readPixels(dw.min.y, dw.max.y);
+        }
+    #ifdef _WIN32
+        catch (const com_exception& exc)
+        {
+        #ifdef _DEBUG
+            OutputDebugStringA(exc.what());
+        #endif
+            hr = exc.get_result();
+        }
+    #endif
+    #if defined(_WIN32) && defined(_DEBUG)
+        catch (const std::exception& exc)
+        {
+            OutputDebugStringA(exc.what());
+            hr = E_FAIL;
+        }
+    #else
+        catch (const std::exception&)
+        {
+            hr = E_FAIL;
+        }
+    #endif
+        catch (...)
+        {
+            hr = E_UNEXPECTED;
+        }
+
+        if (FAILED(hr))
+        {
+            image.Release();
+        }
+
+        return hr;
+    }
 }
 
 //=====================================================================================
@@ -355,96 +445,6 @@ HRESULT DirectX::GetMetadataFromEXRFile(const wchar_t* szFile, TexMetadata& meta
     catch (...)
     {
         hr = E_UNEXPECTED;
-    }
-
-    return hr;
-}
-
-//-------------------------------------------------------------------------------------
-// Load 
-//-------------------------------------------------------------------------------------
-template <typename StreamType>
-HRESULT LoadFromEXRCommon(StreamType stream, _Out_opt_ TexMetadata* metadata, ScratchImage& image)
-{
-    image.Release();
-
-    if (metadata)
-    {
-        memset(metadata, 0, sizeof(TexMetadata));
-    }
-
-    HRESULT hr = S_OK;
-
-    try
-    {
-        Imf::RgbaInputFile file(stream);
-
-        const auto dw = file.dataWindow();
-
-        const int width = dw.max.x - dw.min.x + 1;
-        int height = dw.max.y - dw.min.y + 1;
-        size_t arraySize = 1;
-
-        if (width < 1 || height < 1)
-            return E_FAIL;
-
-        if (file.header().find("envmap") != file.header().end())
-        {
-            if (width == height / 6)
-            {
-                height = width;
-                arraySize = 6;
-            }
-        }
-
-        if (metadata)
-        {
-            metadata->width = static_cast<size_t>(width);
-            metadata->height = static_cast<size_t>(height);
-            metadata->depth = metadata->mipLevels = 1;
-            metadata->arraySize = arraySize;
-            metadata->format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-            metadata->dimension = TEX_DIMENSION_TEXTURE2D;
-        }
-
-        hr = image.Initialize2D(DXGI_FORMAT_R16G16B16A16_FLOAT,
-            static_cast<size_t>(width), static_cast<size_t>(height), arraySize, 1u);
-
-        if (FAILED(hr))
-            return hr;
-
-        file.setFrameBuffer(reinterpret_cast<Imf::Rgba*>(image.GetPixels()) - dw.min.x - dw.min.y * width, 1, static_cast<size_t>(width));
-        file.readPixels(dw.min.y, dw.max.y);
-    }
-#ifdef _WIN32
-    catch (const com_exception& exc)
-    {
-    #ifdef _DEBUG
-        OutputDebugStringA(exc.what());
-    #endif
-        hr = exc.get_result();
-    }
-#endif
-#if defined(_WIN32) && defined(_DEBUG)
-    catch (const std::exception& exc)
-    {
-        OutputDebugStringA(exc.what());
-        hr = E_FAIL;
-    }
-#else
-    catch (const std::exception&)
-    {
-        hr = E_FAIL;
-    }
-#endif
-    catch (...)
-    {
-        hr = E_UNEXPECTED;
-    }
-
-    if (FAILED(hr))
-    {
-        image.Release();
     }
 
     return hr;
