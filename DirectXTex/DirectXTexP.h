@@ -442,9 +442,6 @@ namespace DirectX
         //---------------------------------------------------------------------------------
         // Misc helper functions
         bool __cdecl IsAlphaAllOpaqueBC(_In_ const Image& cImage) noexcept;
-        bool __cdecl CalculateMipLevels(_In_ size_t width, _In_ size_t height, _Inout_ size_t& mipLevels) noexcept;
-        bool __cdecl CalculateMipLevels3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth,
-            _Inout_ size_t& mipLevels) noexcept;
 
     #ifdef _WIN32
         HRESULT __cdecl ResizeSeparateColorAndAlpha(_In_ IWICImagingFactory* pWIC,

@@ -506,7 +506,7 @@ namespace
                 {
                     // Allow cases where mipCount was computed incorrectly
                     size_t maxMips = 0;
-                    std::ignore = Internal::CalculateMipLevels3D(metadata.width, metadata.height, metadata.depth, maxMips);
+                    std::ignore = CalculateMipLevels3D(metadata.width, metadata.height, metadata.depth, maxMips);
                     metadata.mipLevels = std::min(metadata.mipLevels, maxMips);
                 }
             }
@@ -533,7 +533,7 @@ namespace
                 {
                     // Allow cases where mipCount was computed incorrectly
                     size_t maxMips = 0;
-                    std::ignore = Internal::CalculateMipLevels(metadata.width, metadata.height, maxMips);
+                    std::ignore = CalculateMipLevels(metadata.width, metadata.height, maxMips);
                     metadata.mipLevels = std::min(metadata.mipLevels, maxMips);
                 }
             }
