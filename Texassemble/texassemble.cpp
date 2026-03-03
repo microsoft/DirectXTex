@@ -131,6 +131,7 @@ namespace
         OPT_FILELIST,
         OPT_WIDTH,
         OPT_HEIGHT,
+        OPT_MIPLEVELS,
         OPT_FORMAT,
         OPT_FILTER,
         OPT_SRGBI,
@@ -180,6 +181,7 @@ namespace
         { L"flist",     OPT_FILELIST },
         { L"w",         OPT_WIDTH },
         { L"h",         OPT_HEIGHT },
+        { L"m",         OPT_MIPLEVELS },
         { L"f",         OPT_FORMAT },
         { L"if",        OPT_FILTER },
         { L"srgbi",     OPT_SRGBI },
@@ -215,6 +217,7 @@ namespace
         { L"height",                OPT_HEIGHT },
         { L"help",                  OPT_HELP },
         { L"image-filter",          OPT_FILTER },
+        { L"mip-levels",            OPT_MIPLEVELS },
         { L"overwrite",             OPT_OVERWRITE },
         { L"separate-alpha",        OPT_SEPALPHA },
         { L"srgb-in",               OPT_SRGBI },
@@ -545,6 +548,7 @@ namespace
             L"   cube-from-ht        create cubemap from a h-tee image\n"
             L"   cube-from-hs        create cubemap from a h-strip image\n"
             L"   cube-from-vs        create cubemap from a v-strip image\n"
+            L"   from-mips           create texture with provided mipmap images\n"
             L"\nOPTIONS\n"
             L"   -r                  wildcard filename search is recursive\n"
             L"   -flist <filename>, --file-list <filename>\n"
@@ -552,6 +556,7 @@ namespace
             L"\n"
             L"   -w <n>, --width <n>                     width for output\n"
             L"   -h <n>, --height <n>                    height for output\n"
+            L"   -m <n>, --mip-levels <n>                miplevels for output (*-from-mips only)\n"
             L"   -f <format>, --format <format>          pixel format for output\n"
             L"\n"
             L"   -if <filter>, --image-filter <filter>   image filtering\n"
@@ -775,6 +780,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     // Parameters and defaults
     size_t width = 0;
     size_t height = 0;
+    size_t mipLevels = 0;
 
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
     TEX_FILTER_FLAGS dwFilter = TEX_FILTER_DEFAULT;
@@ -920,6 +926,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_FILELIST:
             case OPT_WIDTH:
             case OPT_HEIGHT:
+            case OPT_MIPLEVELS:
             case OPT_FORMAT:
             case OPT_FILTER:
             case OPT_SRGBI:
@@ -956,6 +963,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             case OPT_FILELIST:
             case OPT_WIDTH:
             case OPT_HEIGHT:
+            case OPT_MIPLEVELS:
             case OPT_FORMAT:
             case OPT_FILTER:
             case OPT_OUTPUTFILE:
@@ -992,6 +1000,19 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if (swscanf_s(pValue, L"%zu", &height) != 1)
                 {
                     wprintf(L"Invalid value specified with -h (%ls)\n", pValue);
+                    return 1;
+                }
+                break;
+
+            case OPT_MIPLEVELS:
+                if (dwCommand != CMD_FROM_MIPS)
+                {
+                    wprintf(L"-m option only applies to *-from-mips command\n");
+                    return 1;
+                }
+                else if (swscanf_s(pValue, L"%zu", &mipLevels) != 1)
+                {
+                    wprintf(L"Invalid value specified with -m (%ls)\n", pValue);
                     return 1;
                 }
                 break;
@@ -1221,6 +1242,28 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         {
             wprintf(L"ERROR: merge output only accepts 2 input files\n");
             return 1;
+        }
+        break;
+
+    case CMD_FROM_MIPS:
+        if (conversion.size() < 2)
+        {
+            wprintf(L"ERROR: *-from-mips command requires at least 2 input files\n");
+            return 1;
+        }
+        else if (width != 0 && height != 0)
+        {
+            if (!CalculateMipLevels(width, height, mipLevels))
+            {
+                wprintf(L"ERROR: mipLevels value invalid for given dimensions (%zu x %zu)\n", width, height);
+                return 1;
+            }
+
+            if (conversion.size() != mipLevels)
+            {
+                wprintf(L"ERROR: number of input files doesn't match the specified mip levels for given dimensions (%zu x %zu, %zu mip levels)\n", width, height, mipLevels);
+                return 1;
+            }
         }
         break;
 
@@ -1660,10 +1703,25 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
                 height = info.height;
             }
+
             size_t targetWidth = width;
             size_t targetHeight = height;
             if (dwCommand == CMD_FROM_MIPS)
             {
+                if (!conversionIndex)
+                {
+                    if (mipLevels == 0)
+                    {
+                        mipLevels = conversion.size();
+                    }
+
+                    if (!CalculateMipLevels(width, height, mipLevels))
+                    {
+                        wprintf(L"\nERROR: Too many input mips provided for the given dimensions of %zu x %zu.\n", width, height);
+                        return 1;
+                    }
+                }
+
                 size_t mipdiv = 1;
                 for (size_t i = 0; i < conversionIndex; ++i)
                 {

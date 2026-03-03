@@ -143,6 +143,10 @@ namespace DirectX
 
     DIRECTX_TEX_API size_t __cdecl ComputeScanlines(_In_ DXGI_FORMAT fmt, _In_ size_t height) noexcept;
 
+    DIRECTX_TEX_API bool __cdecl CalculateMipLevels(_In_ size_t width, _In_ size_t height, _Inout_ size_t& mipLevels) noexcept;
+    DIRECTX_TEX_API bool __cdecl CalculateMipLevels3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth,
+        _Inout_ size_t& mipLevels) noexcept;
+
     DIRECTX_TEX_API DXGI_FORMAT __cdecl MakeSRGB(_In_ DXGI_FORMAT fmt) noexcept;
     DIRECTX_TEX_API DXGI_FORMAT __cdecl MakeLinear(_In_ DXGI_FORMAT fmt) noexcept;
     DIRECTX_TEX_API DXGI_FORMAT __cdecl MakeTypeless(_In_ DXGI_FORMAT fmt) noexcept;
