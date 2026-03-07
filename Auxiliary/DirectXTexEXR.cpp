@@ -255,7 +255,7 @@ namespace
 #endif // _WIN32
 
     //-------------------------------------------------------------------------------------
-    // Load 
+    // Load
     //-------------------------------------------------------------------------------------
     template <typename StreamType>
     HRESULT LoadFromEXRCommon(StreamType stream, _Out_opt_ TexMetadata* metadata, ScratchImage& image)
@@ -414,6 +414,7 @@ HRESULT DirectX::GetMetadataFromEXRFile(const wchar_t* szFile, TexMetadata& meta
             }
         }
 
+        metadata = {};
         metadata.width = static_cast<size_t>(width);
         metadata.height = static_cast<size_t>(height);
         metadata.depth = metadata.mipLevels = 1;
