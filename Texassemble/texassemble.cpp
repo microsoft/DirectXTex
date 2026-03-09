@@ -551,6 +551,7 @@ namespace
             L"   cube-from-hs        create cubemap from a h-strip image\n"
             L"   cube-from-vs        create cubemap from a v-strip image\n"
             L"   from-mips           create texture with provided mipmap images\n"
+            L"   cube-from-mips      create cubemap with provided mipmap images per face\n"
             L"\nOPTIONS\n"
             L"   -r                  wildcard filename search is recursive\n"
             L"   -flist <filename>, --file-list <filename>\n"
@@ -1960,7 +1961,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             images += info.arraySize;
             loadedImages.emplace_back(std::move(image));
-            ++conversionIndex;
+            conversionIndex++;
         }
     }
 
@@ -2590,11 +2591,11 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     return 1;
                 }
                 index++;
-                ++mipIndex;
+                mipIndex++;
 
                 if ((dwCommand == CMD_CUBE_FROM_MIPS) && (index % mipLevels) == 0)
                 {
-                    ++arrayIndex;
+                    arrayIndex++;
                     mipIndex = 0;
                 }
             }
