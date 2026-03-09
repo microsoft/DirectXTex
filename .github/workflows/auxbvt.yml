@@ -132,4 +132,4 @@ jobs:
 
       - name: 'Run BVTs'
         working-directory: ${{ github.workspace }}
-        run: ctest --preset=${{ matrix.build_type }} --output-on-failure -L EXR|JPG|PNG
+        run: ctest --preset=${{ matrix.build_type }} --output-on-failure -L "EXR|JPG|PNG"
