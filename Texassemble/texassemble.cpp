@@ -109,6 +109,7 @@ namespace
         CMD_CUBE_FROM_HS,
         CMD_CUBE_FROM_VS,
         CMD_FROM_MIPS,
+        CMD_CUBE_FROM_MIPS,
         CMD_MAX
     };
 
@@ -172,6 +173,7 @@ namespace
         { L"cube-from-hs",      CMD_CUBE_FROM_HS },
         { L"cube-from-vs",      CMD_CUBE_FROM_VS },
         { L"from-mips",         CMD_FROM_MIPS },
+        { L"cube-from-mips",    CMD_CUBE_FROM_MIPS },
         { nullptr,          0 }
     };
 
@@ -855,6 +857,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_CUBE_FROM_HS:
     case CMD_CUBE_FROM_VS:
     case CMD_FROM_MIPS:
+    case CMD_CUBE_FROM_MIPS:
         break;
 
     default:
@@ -1005,7 +1008,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 break;
 
             case OPT_MIPLEVELS:
-                if (dwCommand != CMD_FROM_MIPS)
+                if (dwCommand != CMD_FROM_MIPS && dwCommand != CMD_CUBE_FROM_MIPS)
                 {
                     wprintf(L"-m option only applies to *-from-mips command\n");
                     return 1;
@@ -1076,7 +1079,6 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                     case CMD_V_STRIP:
                     case CMD_MERGE:
                     case CMD_ARRAY_STRIP:
-                    case CMD_FROM_MIPS:
                         break;
 
                     default:
@@ -1248,7 +1250,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_FROM_MIPS:
         if (conversion.size() < 2)
         {
-            wprintf(L"ERROR: *-from-mips command requires at least 2 input files\n");
+            wprintf(L"ERROR: from-mips command requires at least 2 input files\n");
             return 1;
         }
         else if (width != 0 && height != 0)
@@ -1261,7 +1263,36 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             if (conversion.size() != mipLevels)
             {
-                wprintf(L"ERROR: number of input files doesn't match the specified mip levels for given dimensions (%zu x %zu, %zu mip levels)\n", width, height, mipLevels);
+                wprintf(L"ERROR: number of input files (%zu) doesn't match the specified mip levels for given dimensions (%zu x %zu, %zu mip levels)\n",
+                    conversion.size(), width, height, mipLevels);
+                return 1;
+            }
+        }
+        break;
+
+    case CMD_CUBE_FROM_MIPS:
+        if (conversion.size() < 12)
+        {
+            wprintf(L"ERROR: cube-from-mips command requires at least 12 input files\n");
+            return 1;
+        }
+        else if (conversion.size() % 6 != 0)
+        {
+            wprintf(L"ERROR: cube-from-mips command requires a multiple of 6 input files (one set for each face of the cubemap)\n");
+            return 1;
+        }
+        else if (width != 0 && height != 0)
+        {
+            if (!CalculateMipLevels(width, height, mipLevels))
+            {
+                wprintf(L"ERROR: mipLevels value invalid for given dimensions (%zu x %zu)\n", width, height);
+                return 1;
+            }
+
+            if (conversion.size() != (mipLevels * 6))
+            {
+                wprintf(L"ERROR: number of input files (%zu) doesn't match the specified mip levels for given dimensions (%zu x %zu, %zu mip levels)\n",
+                    conversion.size(), width, height, mipLevels);
                 return 1;
             }
         }
@@ -1706,36 +1737,78 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
             size_t targetWidth = width;
             size_t targetHeight = height;
-            if (dwCommand == CMD_FROM_MIPS)
+            switch(dwCommand)
             {
-                if (!conversionIndex)
+            case  CMD_FROM_MIPS:
                 {
-                    if (mipLevels == 0)
+                    if (!conversionIndex)
                     {
-                        mipLevels = conversion.size();
+                        if (mipLevels == 0)
+                        {
+                            mipLevels = conversion.size();
+                        }
+
+                        if (!CalculateMipLevels(width, height, mipLevels))
+                        {
+                            wprintf(L"\nERROR: Too many input mips provided for the given dimensions of %zu x %zu.\n", width, height);
+                            return 1;
+                        }
                     }
 
-                    if (!CalculateMipLevels(width, height, mipLevels))
+                    size_t mipdiv = 1;
+                    for (size_t i = 0; i < conversionIndex; ++i)
                     {
-                        wprintf(L"\nERROR: Too many input mips provided for the given dimensions of %zu x %zu.\n", width, height);
+                        mipdiv = mipdiv + mipdiv;
+                    }
+
+                    targetWidth /= mipdiv;
+                    targetHeight /= mipdiv;
+                    if (targetWidth == 0 || targetHeight == 0)
+                    {
+                        wprintf(L"\nERROR: Too many input mips provided. For the dimensions of the first mip provided, only %zu input mips can be used.\n", conversionIndex);
                         return 1;
                     }
                 }
+                break;
 
-                size_t mipdiv = 1;
-                for (size_t i = 0; i < conversionIndex; ++i)
+            case CMD_CUBE_FROM_MIPS:
                 {
-                    mipdiv = mipdiv + mipdiv;
-                }
+                    if (!conversionIndex)
+                    {
+                        if (mipLevels == 0)
+                        {
+                            mipLevels = conversion.size() / 6;
+                        }
 
-                targetWidth /= mipdiv;
-                targetHeight /= mipdiv;
-                if (targetWidth == 0 || targetHeight == 0)
-                {
-                    wprintf(L"\nERROR: Too many input mips provided. For the dimensions of the first mip provided, only %zu input mips can be used.\n", conversionIndex);
-                    return 1;
+                        if (!CalculateMipLevels(width, height, mipLevels))
+                        {
+                            wprintf(L"\nERROR: Too many input mips provided for the given dimensions of %zu x %zu.\n", width, height);
+                            return 1;
+                        }
+                    }
+
+                    size_t t = conversionIndex % mipLevels;
+
+                    size_t mipdiv = 1;
+                    for (size_t i = 0; i < t; ++i)
+                    {
+                        mipdiv = mipdiv + mipdiv;
+                    }
+
+                    targetWidth /= mipdiv;
+                    targetHeight /= mipdiv;
+                    if (targetWidth == 0 || targetHeight == 0)
+                    {
+                        wprintf(L"\nERROR: Too many input mips provided. For the dimensions of the first mip provided, only %zu input mips can be used.\n", conversionIndex);
+                        return 1;
+                    }
                 }
+                break;
+
+            default:
+                break;
             }
+
             if (info.width != targetWidth || info.height != targetHeight)
             {
                 std::unique_ptr<ScratchImage> timage(new (std::nothrow) ScratchImage);
@@ -2470,33 +2543,62 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             break;
         }
     case CMD_FROM_MIPS:
+    case CMD_CUBE_FROM_MIPS:
         {
-            auto src = loadedImages.cbegin();
             ScratchImage result;
-            hr = result.Initialize2D(format, width, height, 1, images);
+            switch(dwCommand)
+            {
+            case CMD_FROM_MIPS:
+                hr = result.Initialize2D(format, width, height, 1, mipLevels);
+                break;
+
+            case CMD_CUBE_FROM_MIPS:
+                hr = result.InitializeCube(format, width, height, 1, mipLevels);
+                break;
+
+            default:
+                break;
+            }
             if (FAILED(hr))
             {
                 wprintf(L"FAILED setting up result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                 return 1;
             }
-            size_t mipdiv = 1;
+
+            size_t mipIndex = 0;
             size_t index = 0;
+            size_t arrayIndex = 0;
+            auto src = loadedImages.cbegin();
             for (auto it = src; it != loadedImages.cend(); ++it)
             {
-                auto dest = result.GetImage(index, 0, 0);
                 const ScratchImage* simage = it->get();
                 assert(simage != nullptr);
                 const Image* img = simage->GetImage(0, 0, 0);
                 assert(img != nullptr);
-                hr = CopyRectangle(*img, Rect(0, 0, width / mipdiv, height / mipdiv), *dest, dwFilter | dwFilterOpts, 0, 0);
+
+                auto dest = result.GetImage(mipIndex, arrayIndex, 0);
+                if (!dest)
+                {
+                    wprintf(L"FAILED building result image\n");
+                    return 1;
+                }
+
+                hr = CopyRectangle(*img, Rect(0, 0, dest->width, dest->height), *dest, dwFilter | dwFilterOpts, 0, 0);
                 if (FAILED(hr))
                 {
                     wprintf(L"FAILED building result image (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
                     return 1;
                 }
                 index++;
-                mipdiv *= 2;
+                ++mipIndex;
+
+                if ((dwCommand == CMD_CUBE_FROM_MIPS) && (index % mipLevels) == 0)
+                {
+                    ++arrayIndex;
+                    mipIndex = 0;
+                }
             }
+
             // Write texture2D
             wprintf(L"\nWriting %ls ", outputFile.c_str());
             PrintInfo(result.GetMetadata());
