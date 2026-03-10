@@ -1,0 +1,135 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+#
+# https://go.microsoft.com/fwlink/?LinkId=248926
+
+name: 'BVTs (Auxiliary)'
+
+on:
+  push:
+    branches: "main"
+    paths-ignore:
+      - '*.md'
+      - LICENSE
+      - '.azuredevops/**'
+      - '.nuget/*'
+      - build/*.cmd
+      - build/*.json
+      - build/*.props
+      - build/*.ps1
+      - build/*.targets
+      - build/*.xvd
+  pull_request:
+    branches: "main"
+    paths-ignore:
+      - '*.md'
+      - LICENSE
+      - '.azuredevops/**'
+      - '.nuget/*'
+      - build/*.cmd
+      - build/*.json
+      - build/*.props
+      - build/*.ps1
+      - build/*.targets
+      - build/*.xvd
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        toolver: ['14.29', '14']
+        build_type: [x64-Release]
+        arch: [amd64]
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Clone test repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: walbourn/directxtextest
+          path: Tests
+          ref: main
+
+      - name: 'Install Ninja'
+        run: choco install ninja
+
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          arch: ${{ matrix.arch }}
+          toolset: ${{ matrix.toolver }}
+
+      - name: 'Set triplet'
+        shell: pwsh
+        run: |
+          if ("${{ matrix.arch }}" -eq "amd64")
+          {
+              echo "VCPKG_DEFAULT_TRIPLET=x64-windows" >> $env:GITHUB_ENV
+          }
+          elseif ("${{ matrix.arch }}" -eq "amd64_x86")
+          {
+              echo "VCPKG_DEFAULT_TRIPLET=x86-windows" >> $env:GITHUB_ENV
+          }
+          elseif ("${{ matrix.arch }}" -eq "amd64_arm64")
+          {
+              if ("${{ matrix.build_type }}" -match "^arm64ec")
+              {
+                  echo "VCPKG_DEFAULT_TRIPLET=arm64ec-windows" >> $env:GITHUB_ENV
+              }
+              else
+              {
+                  echo "VCPKG_DEFAULT_TRIPLET=arm64-windows" >> $env:GITHUB_ENV
+              }
+          }
+          else
+          {
+              echo "::error Unknown architecture/build-type triplet mapping"
+          }
+
+      - name: Get vcpkg commit hash
+        shell: pwsh
+        run: |
+          if ($Env:vcpkgRelease) {
+              echo "Using vcpkg commit from repo variable..."
+              $VCPKG_COMMIT_ID = $Env:vcpkgRelease
+          }
+          else {
+              echo "Fetching latest vcpkg commit hash..."
+              $commit = (git ls-remote https://github.com/microsoft/vcpkg.git HEAD | Select-String -Pattern '([a-f0-9]{40})').Matches.Value
+              $VCPKG_COMMIT_ID = $commit
+          }
+          Write-Host "VCPKG_COMMIT_ID=$VCPKG_COMMIT_ID"
+          echo "VCPKG_COMMIT_ID=$VCPKG_COMMIT_ID" >> $env:GITHUB_ENV
+        env:
+          vcpkgRelease: '${{ vars.VCPKG_COMMIT_ID }}'
+
+      - uses: lukka/run-vcpkg@7d259227a1fb6471a0253dd5ab7419835228f7d7 # v11
+        with:
+          runVcpkgInstall: true
+          vcpkgJsonGlob: '**/build/vcpkg.json'
+          vcpkgGitCommitId: '${{ env.VCPKG_COMMIT_ID }}'
+
+      - name: 'Configure CMake'
+        working-directory: ${{ github.workspace }}
+        run: >
+          cmake --preset=${{ matrix.build_type }} -DBUILD_TESTING=ON -DBUILD_TOOLS=OFF -DBUILD_SAMPLE=OFF -DBUILD_BVT=ON
+          -DENABLE_OPENEXR_SUPPORT=ON -DENABLE_LIBJPEG_SUPPORT=ON -DENABLE_LIBPNG_SUPPORT=ON
+          -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/build"
+          -DVCPKG_TARGET_TRIPLET="${env:VCPKG_DEFAULT_TRIPLET}"
+
+      - name: 'Build'
+        working-directory: ${{ github.workspace }}
+        run: cmake --build out\build\${{ matrix.build_type }}
+
+      - name: 'Run BVTs'
+        working-directory: ${{ github.workspace }}
+        run: ctest --preset=${{ matrix.build_type }} --output-on-failure -L "EXR|JPG|PNG"
