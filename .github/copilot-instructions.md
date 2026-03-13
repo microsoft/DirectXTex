@@ -73,7 +73,7 @@ All public API functions must use SAL annotations on every parameter. Use `_Use_
 Common annotations:
 
 | Annotation | Meaning |
-|---|---|
+| --- | --- |
 | `_In_` | Input parameter |
 | `_Out_` | Output parameter |
 | `_Inout_` | Bidirectional parameter |
@@ -83,6 +83,7 @@ Common annotations:
 | `_Out_opt_` | Optional output parameter |
 
 Example:
+
 ```cpp
 // Header (DirectXTex.h)
 DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemory(
@@ -139,7 +140,7 @@ See [this blog post](https://walbourn.github.io/modern-c++-bitmask-types/) for m
 ## Naming Conventions
 
 | Element | Convention | Example |
-|---|---|---|
+| --- | --- | --- |
 | Classes / structs | PascalCase | `ScratchImage`, `TexMetadata` |
 | Public functions | PascalCase + `__cdecl` | `ComputePitch`, `IsCompressed` |
 | Private data members | `m_` prefix | `m_nimages`, `m_metadata` |
@@ -230,7 +231,7 @@ When creating documentation:
 Use these established guards — do not invent new ones:
 
 | Guard | Purpose |
-|---|---|
+| --- | --- |
 | `_WIN32` | Windows platform (desktop, UWP, Xbox) |
 | `_GAMING_XBOX_SCARLETT` | Xbox Series X\|S (check before `_GAMING_XBOX`) |
 | `_GAMING_XBOX` | Xbox One / Scarlett GDK fallback |
