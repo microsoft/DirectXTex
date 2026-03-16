@@ -47,6 +47,7 @@ DDSTextureLoader/ # Standalone version of the DDS texture loader for Direct3D 9/
 ScreenGrab/       # Standalone version of the screenshot capture utility for Direct3D 9/11/12.
 WICTextureLoader/ # Standalone versoin of the WIC texture loader for Direct3D 9/11/12.
 Tests/            # Tests are designed to be cloned from a separate repository at this location.
+wiki/             # Local clone of the GitHub wiki documentation repository.
 ```
 
 > Note that DDSTextureLoader, ScreenGrab, and WICTextureLoader are standalone version of utilities which are also included in the *DirectX Tool Kit for DirectX 11* and *DirectX Tool Kit for DirectX 12*.
@@ -103,7 +104,7 @@ HRESULT __cdecl GetMetadataFromDDSMemory(
 #### Calling Convention and DLL Export
 
 - All public functions use `__cdecl` explicitly for ABI stability.
-- All public function declarations are prefixed with `DIRECTX_TEX_API`, which wraps `__declspec(dllexport)` / `__declspec(dllimport)` or the GCC `__attribute__` equivalent when using `BUILD_SHARED_LIBS` in CMake.
+- All public function declarations are prefixed with `DIRECTX_TEX_API`, which wraps `__declspec(dllexport)` / `__declspec(dllimport)` (or the MinGW `__attribute__` equivalent) when the `DIRECTX_TEX_EXPORT` or `DIRECTX_TEX_IMPORT` preprocessor symbols are defined. CMake sets these automatically when `BUILD_SHARED_LIBS=ON`.
 
 #### `noexcept` Rules
 
@@ -174,7 +175,7 @@ The project does **not** use Doxygen. API documentation is maintained exclusivel
 
 ## HLSL Shader Compilation
 
-Shaders in `DirectXTex/Shaders/` are compiled with **FXC** (not DXC), producing embedded C++ header files (`.inc`) that are checked in alongside the source:
+Shaders in `DirectXTex/Shaders/` are compiled with **FXC** (not DXC), producing embedded C++ header files (`.inc`):
 
 - Each shader is compiled twice: `cs_5_0` (primary) and `cs_4_0` with `/DEMULATE_F16C` (legacy fallback).
 - Standard compiler flags: `/nologo /WX /Ges /Zi /Zpc /Qstrip_reflect /Qstrip_debug`
@@ -241,8 +242,11 @@ Use these established guards — do not invent new ones:
 | `__MINGW32__` | MinGW compatibility headers |
 | `__GNUC__` | MinGW/GCC DLL attribute equivalents |
 | `_M_ARM64` / `_M_X64` / `_M_IX86` | Architecture-specific code paths for MSVC (`#ifdef`) |
+| `_M_ARM64EC` | ARM64EC ABI (ARM64 code with x64 interop) for MSVC |
 | `__aarch64__` / `__x86_64__` / `__i386__` | Additional architecture-specific symbols for MinGW/GNUC (`#if`) |
 | `USING_DIRECTX_HEADERS` | External DirectX-Headers package in use |
+
+> `_M_ARM`/ `__arm__` is legacy 32-bit ARM which is deprecated.
 
 Non-Windows builds (Linux/WSL) omit WIC entirely and use `<directx/dxgiformat.h>` and `<wsl/winadapter.h>` from the DirectX-Headers package instead of the Windows SDK.
 
