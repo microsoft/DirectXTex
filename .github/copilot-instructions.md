@@ -233,17 +233,20 @@ Use these established guards — do not invent new ones:
 | Guard | Purpose |
 | --- | --- |
 | `_WIN32` | Windows platform (desktop, UWP, Xbox) |
-| `_GAMING_XBOX_SCARLETT` | Xbox Series X\|S (check before `_GAMING_XBOX`) |
-| `_GAMING_XBOX` | Xbox One / Scarlett GDK fallback |
+| `_GAMING_XBOX` | Xbox One or Xbox Series X\|S |
+| `_GAMING_XBOX_SCARLETT` | Xbox Series X\|S |
 | `_XBOX_ONE && _TITLE` | Xbox One XDK (legacy) |
-| `_MSC_VER` | MSVC-specific pragmas and warning suppression |
+| `_MSC_VER` | MSVC-specific (and MSVC-like clang-cl) pragmas and warning suppression |
 | `__clang__` | Clang/LLVM diagnostic suppressions |
 | `__MINGW32__` | MinGW compatibility headers |
-| `__GNUC__` | GCC DLL attribute equivalents |
-| `_M_ARM64` / `_M_IX86` | Architecture-specific code paths |
+| `__GNUC__` | MinGW/GCC DLL attribute equivalents |
+|  `_M_ARM64` / `_M_X64` / `_M_IX86` | Architecture-specific code paths for MSVC (`#ifdef`) |
+| `__aarch64__` / `__x86_64__` / `__i386__` | Additional architecture-specific symbols for MinGW/GNUC (`#if`) |
 | `USING_DIRECTX_HEADERS` | External DirectX-Headers package in use |
 
 Non-Windows builds (Linux/WSL) omit WIC entirely and use `<directx/dxgiformat.h>` and `<wsl/winadapter.h>` from the DirectX-Headers package instead of the Windows SDK.
+
+### Error Codes
 
 The following symbols are not custom error codes, but aliases for `HRESULT_FROM_WIN32` error codes.
 
