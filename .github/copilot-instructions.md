@@ -240,7 +240,7 @@ Use these established guards — do not invent new ones:
 | `__clang__` | Clang/LLVM diagnostic suppressions |
 | `__MINGW32__` | MinGW compatibility headers |
 | `__GNUC__` | MinGW/GCC DLL attribute equivalents |
-|  `_M_ARM64` / `_M_X64` / `_M_IX86` | Architecture-specific code paths for MSVC (`#ifdef`) |
+| `_M_ARM64` / `_M_X64` / `_M_IX86` | Architecture-specific code paths for MSVC (`#ifdef`) |
 | `__aarch64__` / `__x86_64__` / `__i386__` | Additional architecture-specific symbols for MinGW/GNUC (`#if`) |
 | `USING_DIRECTX_HEADERS` | External DirectX-Headers package in use |
 
