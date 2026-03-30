@@ -55,6 +55,8 @@
 #include <dxgi.h>
 #include <dxgiformat.h>
 
+#include <shellapi.h>
+
 #include <wincodec.h>
 
 #ifdef  _MSC_VER
@@ -93,6 +95,7 @@ namespace
         CMD_CUBIC = 1,
         CMD_SPHERE,
         CMD_DUAL_PARABOLA,
+        CMD_FEEDBACK,
         CMD_MAX
     };
 
@@ -134,6 +137,7 @@ namespace
         { L"cubic",         CMD_CUBIC },
         { L"sphere",        CMD_SPHERE },
         { L"parabola",      CMD_DUAL_PARABOLA },
+        { L"feedback",      CMD_FEEDBACK },
         { nullptr,          0 }
     };
 
@@ -404,6 +408,7 @@ namespace
             L"   cubic               create cubic environment map\n"
             L"   sphere              create sphere environment map\n"
             L"   dualparabola        create dual-parabolic environment map\n"
+            L"   feedback            file an issue for this tool\n"
             L"\nOPTIONS\n"
             L"   -r                  wildcard filename search is recursive\n"
             L"   -flist <filename>, --file-list <filename>\n"
@@ -1111,6 +1116,10 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_SPHERE:
     case CMD_DUAL_PARABOLA:
         break;
+
+    case CMD_FEEDBACK:
+        std::ignore = ShellExecuteW(nullptr, L"open", L"https://github.com/microsoft/DirectXTex/issues", nullptr, nullptr, SW_SHOW);
+        return 0;
 
     default:
         wprintf(L"Must use one of: ");
