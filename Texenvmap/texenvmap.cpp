@@ -89,12 +89,14 @@ namespace
 {
     const wchar_t* g_ToolName = L"texenvmap";
     const wchar_t* g_Description = L"Microsoft (R) DirectX Environment Map Tool [DirectXTex]";
+    const wchar_t* g_FeedbackURL = L"https://github.com/microsoft/DirectXTex/issues";
 
     enum COMMANDS : uint32_t
     {
         CMD_CUBIC = 1,
         CMD_SPHERE,
         CMD_DUAL_PARABOLA,
+        CMD_HELP,
         CMD_FEEDBACK,
         CMD_MAX
     };
@@ -137,6 +139,7 @@ namespace
         { L"cubic",         CMD_CUBIC },
         { L"sphere",        CMD_SPHERE },
         { L"parabola",      CMD_DUAL_PARABOLA },
+        { L"help",          CMD_HELP },
         { L"feedback",      CMD_FEEDBACK },
         { nullptr,          0 }
     };
@@ -398,16 +401,19 @@ namespace
         return SUCCEEDED(s_CreateDXGIFactory1(IID_PPV_ARGS(pFactory)));
     }
 
-    void PrintUsage()
+    void PrintUsage(bool full = false)
     {
         PrintLogo(false, g_ToolName, g_Description);
 
         static const wchar_t* const s_usage =
-            L"Usage: texenvmap <command> <options> [--] <files>\n\n"
+            L"Usage: texenvmap <command> <options> [--] <files>\n\n";
+
+        static const wchar_t* const s_fullUsage =
             L"\nCOMMANDS\n"
             L"   cubic               create cubic environment map\n"
             L"   sphere              create sphere environment map\n"
             L"   dualparabola        create dual-parabolic environment map\n"
+            L"   help                display this usage information\n"
             L"   feedback            file an issue for this tool\n"
             L"\nOPTIONS\n"
             L"   -r                  wildcard filename search is recursive\n"
@@ -437,6 +443,11 @@ namespace
             L"   '-- ' is needed if any input filepath starts with the '-' or '/' character\n";
 
         wprintf(L"%ls", s_usage);
+
+        if (!full)
+            return;
+
+        wprintf(L"%ls", s_fullUsage);
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -1104,9 +1115,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else if (!_wcsicmp(argv[1], L"--help"))
         {
-            PrintUsage();
+            PrintUsage(true);
             return 0;
         }
+    }
+    else if (!_wcsicmp(argv[1], L"/?"))
+    {
+        PrintUsage(true);
+        return 0;
     }
 
     const uint32_t dwCommand = LookupByName(argv[1], g_pCommands);
@@ -1117,8 +1133,12 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_DUAL_PARABOLA:
         break;
 
+    case CMD_HELP:
+        PrintUsage(true);
+        return 0;
+
     case CMD_FEEDBACK:
-        std::ignore = ShellExecuteW(nullptr, L"open", L"https://github.com/microsoft/DirectXTex/issues", nullptr, nullptr, SW_SHOW);
+        std::ignore = ShellExecuteW(nullptr, L"open", g_FeedbackURL, nullptr, nullptr, SW_SHOW);
         return 0;
 
     default:
