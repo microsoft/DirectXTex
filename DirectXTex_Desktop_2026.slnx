@@ -8,15 +8,16 @@
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/Sample/">
-    <Project Path="DDSView/DDSView_Desktop_2026.vcxproj" />
+    <Project Path="DDSView/DDSView_Desktop_2026.vcxproj" Id="9d3edcad-a800-43f0-b77f-fe6e4dfa3d84" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
   <Folder Name="/Tools/">
-    <Project Path="Texassemble/Texassemble_Desktop_2026.vcxproj" />
-    <Project Path="Texconv/Texconv_Desktop_2026.vcxproj" />
-    <Project Path="Texdiag/texdiag_Desktop_2026.vcxproj" />
+    <Project Path="Texassemble/Texassemble_Desktop_2026.vcxproj" Id="8f18cbd7-4116-4956-bcd8-20d688a4cbd1" />
+    <Project Path="Texconv/Texconv_Desktop_2026.vcxproj" Id="c3a65381-8fd3-4f69-b29e-654b4b0ed136" />
+    <Project Path="Texdiag/Texdiag_Desktop_2026.vcxproj" Id="8e31a619-f4f8-413f-a973-4ee37b1aaa5d" />
+    <Project Path="Texenvmap/Texenvmap_Desktop_2026.vcxproj" Id="618e1a32-0334-4deb-b1d0-f0a0afc1de5c" />
   </Folder>
-  <Project Path="DirectXTex/DirectXTex_Desktop_2026.vcxproj" />
+  <Project Path="DirectXTex/DirectXTex_Desktop_2026.vcxproj" Id="371b9fa9-4c90-4ac6-a123-aced756d6c77" />
 </Solution>
