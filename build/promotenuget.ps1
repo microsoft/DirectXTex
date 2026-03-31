@@ -64,7 +64,7 @@ $bodyRelease = @{
     }
 } | ConvertTo-Json
 
-$packages = @('directxtex_desktop_2019', 'directxtex_desktop_win10', 'directxtex_uwp')
+$packages = @('directxtex_desktop_win10', 'directxtex_uwp')
 
 # Check if all packages exist
 $allPackagesSucceeded = $true
