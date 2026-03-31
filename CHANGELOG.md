@@ -6,6 +6,20 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### March 31, 2026
+* `CalculateMipLevels` and `CalculateMipLevels3D` are now public functions
+* DDS reader `DDS_FLAGS_PERMISSIVE` supports a DX10 variant with zero dimension value (assumed to be 2D)
+* HDR reader validation fix for a malformed header that could result in a buffer over-read
+* Auxiliary EXR reader now has `LoadFromEXRMemory`
+* Added bit-bias to `DXGI_FORMAT_R8_UNORM` format conversions for consistency
+* Fixed ScreenGrab9 missing return statement for unsupported pixel format
+* Updated D3DX12 internal copy with latest changes from DirectX-Headers GitHub
+* VS 2026 support
+* Retire VS 2019 projects
+* CMake project updates
+* texassemble: added new *cube-from-mips* command
+* texassemble, texconv, texdiag: updated to support feedback
+
 ### October 27, 2025
 * DDS writer now supports a `DDS_FLAGS_FORCE_24BPP_RGB` flag
 * JPEG and PNG auxiliary reader/writer various bug fixes
@@ -58,7 +72,6 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 * Xbox auxiliary now has **EncodeDDSHeader** function
 * ScreenGrab9 minor DDS header fix when writing A2W10V10U10 legacy mixed formats
 * CMake project updates including support for ARM64EC
-
 * Added GitHub Actions YAML files
 
 ### June 4, 2024
