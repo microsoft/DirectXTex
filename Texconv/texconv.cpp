@@ -81,6 +81,8 @@
 #include "DirectXTexXbox.h"
 #endif
 
+#include <shellapi.h>
+
 #define TOOL_VERSION DIRECTX_TEX_VERSION
 #include "CmdLineHelpers.h"
 
@@ -99,6 +101,7 @@ namespace
 #else
     const wchar_t* g_Description = L"Microsoft (R) DirectX Texture Converter [DirectXTex]";
 #endif
+    const wchar_t* g_FeedbackURL = L"https://github.com/microsoft/DirectXTex/issues";
 
     enum OPTIONS : uint64_t
     {
@@ -655,12 +658,12 @@ HRESULT __cdecl SaveToPortablePixMapHDR(
 
 namespace
 {
-    constexpr static bool ispow2(size_t x)
+    constexpr static bool ispow2(size_t x) noexcept
     {
         return ((x != 0) && !(x & (x - 1)));
     }
 
-    void PrintInfo(const TexMetadata& info, bool isXbox)
+    void PrintInfo(const TexMetadata& info, bool isXbox) noexcept
     {
         wprintf(L" (%zux%zu", info.width, info.height);
 
@@ -725,7 +728,7 @@ namespace
     }
 
     _Success_(return)
-        bool GetDXGIFactory(_Outptr_ IDXGIFactory1** pFactory)
+        bool GetDXGIFactory(_Outptr_ IDXGIFactory1** pFactory) noexcept
     {
         if (!pFactory)
             return false;
@@ -750,13 +753,14 @@ namespace
         return SUCCEEDED(s_CreateDXGIFactory1(IID_PPV_ARGS(pFactory)));
     }
 
-    void PrintUsage()
+    void PrintUsage(bool full = false) noexcept
     {
         PrintLogo(false, g_ToolName, g_Description);
 
         static const wchar_t* const s_usage =
-            L"Usage: texconv <options> [--] <files>\n"
-            L"\n"
+            L"Usage: texconv <options> [--] <files>\n\n";
+
+        static const wchar_t* const s_fullUsage =
             L"   -r                  wildcard filename search is recursive\n"
             L"     -r:flatten        flatten the directory structure (default)\n"
             L"     -r:keep           keep the directory structure\n"
@@ -871,6 +875,11 @@ namespace
 
         wprintf(L"%ls", s_usage);
 
+        if (!full)
+            return;
+
+        wprintf(L"%ls", s_fullUsage);
+
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
         wprintf(L"      ");
@@ -910,7 +919,7 @@ namespace
     }
 
     _Success_(return)
-        bool CreateDevice(int adapter, _Outptr_ ID3D11Device** pDevice)
+        bool CreateDevice(int adapter, _Outptr_ ID3D11Device** pDevice) noexcept
     {
         if (!pDevice)
             return false;
@@ -1007,7 +1016,7 @@ namespace
             return false;
     }
 
-    void FitPowerOf2(size_t origx, size_t origy, _Inout_ size_t& targetx, _Inout_ size_t& targety, size_t maxsize)
+    void FitPowerOf2(size_t origx, size_t origy, _Inout_ size_t& targetx, _Inout_ size_t& targety, size_t maxsize) noexcept
     {
         const float origAR = float(origx) / float(origy);
 
@@ -1133,13 +1142,13 @@ namespace
         0.f,            0.f,           0.f,          1.f
     };
 
-    inline float LinearToST2084(float normalizedLinearValue)
+    inline float LinearToST2084(float normalizedLinearValue) noexcept
     {
         const float ST2084 = pow((0.8359375f + 18.8515625f * pow(abs(normalizedLinearValue), 0.1593017578f)) / (1.0f + 18.6875f * pow(abs(normalizedLinearValue), 0.1593017578f)), 78.84375f);
         return ST2084;  // Don't clamp between [0..1], so we can still perform operations on scene values higher than 10,000 nits
     }
 
-    inline float ST2084ToLinear(float ST2084)
+    inline float ST2084ToLinear(float ST2084) noexcept
     {
         const float normalizedLinear = pow(std::max(pow(abs(ST2084), 1.0f / 78.84375f) - 0.8359375f, 0.0f) / (18.8515625f - 18.6875f * pow(abs(ST2084), 1.0f / 78.84375f)), 1.0f / 0.1593017578f);
         return normalizedLinear;
@@ -1149,7 +1158,7 @@ namespace
         _In_reads_(4) const wchar_t* mask,
         _Out_writes_(4) uint32_t* swizzleElements,
         _Out_writes_(4) uint32_t* zeroElements,
-        _Out_writes_(4) uint32_t* oneElements)
+        _Out_writes_(4) uint32_t* oneElements) noexcept
     {
         if (!mask || !swizzleElements || !zeroElements || !oneElements)
             return false;
@@ -1294,6 +1303,24 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     }
 
     // Process command line
+    if (argc < 2)
+    {
+        PrintUsage();
+        return 0;
+    }
+
+    // check for these first
+    if (!_wcsicmp(argv[1], L"help") || !_wcsicmp(argv[1], L"/?"))
+    {
+        PrintUsage(true);
+        return 0;
+    }
+    else if (!_wcsicmp(argv[1], L"feedback"))
+    {
+        std::ignore = ShellExecuteW(nullptr, L"open", g_FeedbackURL, nullptr, nullptr, SW_SHOW);
+        return 0;
+    }
+
     uint64_t dwOptions = 0;
     std::list<SConversion> conversion;
     bool allowOpts = true;
@@ -1384,7 +1411,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 0;
 
             case OPT_HELP:
-                PrintUsage();
+                PrintUsage(true);
                 return 0;
 
             default:
