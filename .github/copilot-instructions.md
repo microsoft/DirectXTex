@@ -163,7 +163,7 @@ Every source file (`.cpp`, `.h`, `.hlsl`, etc.) must begin with this block:
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
-// http://go.microsoft.com/fwlink/?LinkId=248926
+// https://go.microsoft.com/fwlink/?LinkId=248926
 //-------------------------------------------------------------------------------------
 ```
 
