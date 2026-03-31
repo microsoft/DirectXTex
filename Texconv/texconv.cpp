@@ -658,12 +658,12 @@ HRESULT __cdecl SaveToPortablePixMapHDR(
 
 namespace
 {
-    constexpr static bool ispow2(size_t x)
+    constexpr static bool ispow2(size_t x) noexcept
     {
         return ((x != 0) && !(x & (x - 1)));
     }
 
-    void PrintInfo(const TexMetadata& info, bool isXbox)
+    void PrintInfo(const TexMetadata& info, bool isXbox) noexcept
     {
         wprintf(L" (%zux%zu", info.width, info.height);
 
@@ -728,7 +728,7 @@ namespace
     }
 
     _Success_(return)
-        bool GetDXGIFactory(_Outptr_ IDXGIFactory1** pFactory)
+        bool GetDXGIFactory(_Outptr_ IDXGIFactory1** pFactory) noexcept
     {
         if (!pFactory)
             return false;
@@ -753,7 +753,7 @@ namespace
         return SUCCEEDED(s_CreateDXGIFactory1(IID_PPV_ARGS(pFactory)));
     }
 
-    void PrintUsage(bool full = false)
+    void PrintUsage(bool full = false) noexcept
     {
         PrintLogo(false, g_ToolName, g_Description);
 
@@ -919,7 +919,7 @@ namespace
     }
 
     _Success_(return)
-        bool CreateDevice(int adapter, _Outptr_ ID3D11Device** pDevice)
+        bool CreateDevice(int adapter, _Outptr_ ID3D11Device** pDevice) noexcept
     {
         if (!pDevice)
             return false;
@@ -1016,7 +1016,7 @@ namespace
             return false;
     }
 
-    void FitPowerOf2(size_t origx, size_t origy, _Inout_ size_t& targetx, _Inout_ size_t& targety, size_t maxsize)
+    void FitPowerOf2(size_t origx, size_t origy, _Inout_ size_t& targetx, _Inout_ size_t& targety, size_t maxsize) noexcept
     {
         const float origAR = float(origx) / float(origy);
 
@@ -1142,13 +1142,13 @@ namespace
         0.f,            0.f,           0.f,          1.f
     };
 
-    inline float LinearToST2084(float normalizedLinearValue)
+    inline float LinearToST2084(float normalizedLinearValue) noexcept
     {
         const float ST2084 = pow((0.8359375f + 18.8515625f * pow(abs(normalizedLinearValue), 0.1593017578f)) / (1.0f + 18.6875f * pow(abs(normalizedLinearValue), 0.1593017578f)), 78.84375f);
         return ST2084;  // Don't clamp between [0..1], so we can still perform operations on scene values higher than 10,000 nits
     }
 
-    inline float ST2084ToLinear(float ST2084)
+    inline float ST2084ToLinear(float ST2084) noexcept
     {
         const float normalizedLinear = pow(std::max(pow(abs(ST2084), 1.0f / 78.84375f) - 0.8359375f, 0.0f) / (18.8515625f - 18.6875f * pow(abs(ST2084), 1.0f / 78.84375f)), 1.0f / 0.1593017578f);
         return normalizedLinear;
@@ -1158,7 +1158,7 @@ namespace
         _In_reads_(4) const wchar_t* mask,
         _Out_writes_(4) uint32_t* swizzleElements,
         _Out_writes_(4) uint32_t* zeroElements,
-        _Out_writes_(4) uint32_t* oneElements)
+        _Out_writes_(4) uint32_t* oneElements) noexcept
     {
         if (!mask || !swizzleElements || !zeroElements || !oneElements)
             return false;

@@ -474,7 +474,7 @@ HRESULT LoadAnimatedGif(const wchar_t* szFile,
 
 namespace
 {
-    void PrintInfo(const TexMetadata& info)
+    void PrintInfo(const TexMetadata& info) noexcept
     {
         wprintf(L" (%zux%zu", info.width, info.height);
 
@@ -533,7 +533,7 @@ namespace
         wprintf(L")");
     }
 
-    void PrintUsage(bool full = false)
+    void PrintUsage(bool full = false) noexcept
     {
         PrintLogo(false, g_ToolName, g_Description);
 
@@ -621,7 +621,7 @@ namespace
         PrintList(13, g_pFeatureLevels);
     }
 
-    HRESULT SaveImageFile(const Image& img, uint32_t fileType, const wchar_t* szOutputFile)
+    HRESULT SaveImageFile(const Image& img, uint32_t fileType, const wchar_t* szOutputFile) noexcept
     {
         switch (fileType)
         {
@@ -663,7 +663,7 @@ namespace
         _In_reads_(4) const wchar_t* mask,
         _Out_writes_(4) uint32_t* permuteElements,
         _Out_writes_(4) uint32_t* zeroElements,
-        _Out_writes_(4) uint32_t* oneElements)
+        _Out_writes_(4) uint32_t* oneElements) noexcept
     {
         if (!mask || !permuteElements || !zeroElements || !oneElements)
             return false;
