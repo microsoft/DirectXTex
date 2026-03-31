@@ -1,6 +1,6 @@
 # DirectXTex texture processing library
 
-http://go.microsoft.com/fwlink/?LinkId=248926
+https://go.microsoft.com/fwlink/?LinkId=248926
 
 Release available for download on [GitHub](https://github.com/microsoft/DirectXTex/releases)
 
