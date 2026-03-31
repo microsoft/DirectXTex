@@ -75,6 +75,8 @@
 #include "DirectXTexPNG.h"
 #endif
 
+#include <shellapi.h>
+
 #define TOOL_VERSION DIRECTX_TEX_VERSION
 #include "CmdLineHelpers.h"
 
@@ -86,6 +88,7 @@ namespace
 {
     const wchar_t* g_ToolName = L"texassemble";
     const wchar_t* g_Description = L"Microsoft (R) DirectX Texture Assembler [DirectXTex]";
+    const wchar_t* g_FeedbackURL = L"https://github.com/microsoft/DirectXTex/issues";
 
     enum COMMANDS : uint32_t
     {
@@ -110,6 +113,8 @@ namespace
         CMD_CUBE_FROM_VS,
         CMD_FROM_MIPS,
         CMD_CUBE_FROM_MIPS,
+        CMD_HELP,
+        CMD_FEEDBACK,
         CMD_MAX
     };
 
@@ -174,6 +179,8 @@ namespace
         { L"cube-from-vs",      CMD_CUBE_FROM_VS },
         { L"from-mips",         CMD_FROM_MIPS },
         { L"cube-from-mips",    CMD_CUBE_FROM_MIPS },
+        { L"help",              CMD_HELP },
+        { L"feedback",          CMD_FEEDBACK },
         { nullptr,          0 }
     };
 
@@ -526,13 +533,15 @@ namespace
         wprintf(L")");
     }
 
-    void PrintUsage()
+    void PrintUsage(bool full = false)
     {
         PrintLogo(false, g_ToolName, g_Description);
 
         static const wchar_t* const s_usage =
-            L"Usage: texassemble <command> <options> [--] <files>\n"
-            L"\nCOMMANDS\n"
+            L"Usage: texassemble <command> <options> [--] <files>\n\n";
+
+        static const wchar_t* const s_fullUsage =
+            L"COMMANDS\n"
             L"   cube                create cubemap\n"
             L"   volume              create volume map\n"
             L"   array               create texture array\n"
@@ -594,6 +603,11 @@ namespace
             L"   '-- ' is needed if any input filepath starts with the '-' or '/' character\n";
 
         wprintf(L"%ls", s_usage);
+
+        if (!full)
+            return;
+
+        wprintf(L"%ls", s_fullUsage);
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -830,9 +844,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else if (!_wcsicmp(argv[1], L"--help"))
         {
-            PrintUsage();
+            PrintUsage(true);
             return 0;
         }
+    }
+    else if (!_wcsicmp(argv[1], L"/?"))
+    {
+        PrintUsage(true);
+        return 0;
     }
 
     const uint32_t dwCommand = LookupByName(argv[1], g_pCommands);
@@ -860,6 +879,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_FROM_MIPS:
     case CMD_CUBE_FROM_MIPS:
         break;
+
+    case CMD_HELP:
+        PrintUsage(true);
+        return 0;
+
+    case CMD_FEEDBACK:
+        std::ignore = ShellExecuteW(nullptr, L"open", g_FeedbackURL, nullptr, nullptr, SW_SHOW);
+        return 0;
 
     default:
         wprintf(L"Must use one of: ");

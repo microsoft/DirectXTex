@@ -81,6 +81,8 @@
 #include "DirectXTexXbox.h"
 #endif
 
+#include <shellapi.h>
+
 #define TOOL_VERSION DIRECTX_TEX_VERSION
 #include "CmdLineHelpers.h"
 
@@ -99,6 +101,7 @@ namespace
 #else
     const wchar_t* g_Description = L"Microsoft (R) DirectX Texture Converter [DirectXTex]";
 #endif
+    const wchar_t* g_FeedbackURL = L"https://github.com/microsoft/DirectXTex/issues";
 
     enum OPTIONS : uint64_t
     {
@@ -750,13 +753,14 @@ namespace
         return SUCCEEDED(s_CreateDXGIFactory1(IID_PPV_ARGS(pFactory)));
     }
 
-    void PrintUsage()
+    void PrintUsage(bool full = false)
     {
         PrintLogo(false, g_ToolName, g_Description);
 
         static const wchar_t* const s_usage =
-            L"Usage: texconv <options> [--] <files>\n"
-            L"\n"
+            L"Usage: texconv <options> [--] <files>\n\n";
+
+        static const wchar_t* const s_fullUsage =
             L"   -r                  wildcard filename search is recursive\n"
             L"     -r:flatten        flatten the directory structure (default)\n"
             L"     -r:keep           keep the directory structure\n"
@@ -870,6 +874,11 @@ namespace
             L"   '-- ' is needed if any input filepath starts with the '-' or '/' character\n";
 
         wprintf(L"%ls", s_usage);
+
+        if (!full)
+            return;
+
+        wprintf(L"%ls", s_fullUsage);
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -1294,6 +1303,24 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     }
 
     // Process command line
+    if (argc < 2)
+    {
+        PrintUsage();
+        return 0;
+    }
+
+    // check for these first
+    if (!_wcsicmp(argv[1], L"help") || !_wcsicmp(argv[1], L"/?"))
+    {
+        PrintUsage(true);
+        return 0;
+    }
+    else if (!_wcsicmp(argv[1], L"feedback"))
+    {
+        std::ignore = ShellExecuteW(nullptr, L"open", g_FeedbackURL, nullptr, nullptr, SW_SHOW);
+        return 0;
+    }
+
     uint64_t dwOptions = 0;
     std::list<SConversion> conversion;
     bool allowOpts = true;
@@ -1384,7 +1411,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 0;
 
             case OPT_HELP:
-                PrintUsage();
+                PrintUsage(true);
                 return 0;
 
             default:

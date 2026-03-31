@@ -71,6 +71,8 @@
 #include "DirectXTexPNG.h"
 #endif
 
+#include <shellapi.h>
+
 #define TOOL_VERSION DIRECTX_TEX_VERSION
 #include "CmdLineHelpers.h"
 
@@ -81,6 +83,7 @@ namespace
 {
     const wchar_t* g_ToolName = L"texdiag";
     const wchar_t* g_Description = L"Microsoft (R) DirectX Texture Diagnostic Tool [DirectXTex]";
+    const wchar_t* g_FeedbackURL = L"https://github.com/microsoft/DirectXTex/issues";
 
     enum COMMANDS : uint32_t
     {
@@ -90,6 +93,8 @@ namespace
         CMD_DIFF,
         CMD_DUMPBC,
         CMD_DUMPDDS,
+        CMD_HELP,
+        CMD_FEEDBACK,
         CMD_MAX
     };
 
@@ -134,6 +139,8 @@ namespace
         { L"diff",      CMD_DIFF },
         { L"dumpbc",    CMD_DUMPBC },
         { L"dumpdds",   CMD_DUMPDDS },
+        { L"help",      CMD_HELP },
+        { L"feedback",  CMD_FEEDBACK },
         { nullptr,      0 }
     };
 
@@ -448,13 +455,15 @@ namespace
         { nullptr,  CODEC_DDS      }
     };
 
-    void PrintUsage()
+    void PrintUsage(bool full = false)
     {
         PrintLogo(false, g_ToolName, g_Description);
 
         static const wchar_t* const s_usage =
-            L"Usage: texdiag <command> <options> [--] <files>\n"
-            L"\nCOMMANDS\n"
+            L"Usage: texdiag <command> <options> [--] <files>\n\n";
+
+        static const wchar_t* const s_fullUsage =
+            L"COMMANDS\n"
             L"   info                Output image metadata\n"
             L"   analyze             Analyze and summarize image information\n"
             L"   compare             Compare two images with MSE error metric\n"
@@ -501,6 +510,11 @@ namespace
             L"   '-- ' is needed if any input filepath starts with the '-' or '/' character\n";
 
         wprintf(L"%ls", s_usage);
+
+        if (!full)
+            return;
+
+        wprintf(L"%ls", s_fullUsage);
 
         wprintf(L"\n   <format>: ");
         PrintList(13, g_pFormats);
@@ -3064,6 +3078,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         return 0;
     }
 
+    // check for these before the command
     if (('-' == argv[1][0]) && ('-' == argv[1][1]))
     {
         if (!_wcsicmp(argv[1], L"--version"))
@@ -3073,9 +3088,14 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
         }
         else if (!_wcsicmp(argv[1], L"--help"))
         {
-            PrintUsage();
+            PrintUsage(true);
             return 0;
         }
+    }
+    else if (!_wcsicmp(argv[1], L"/?"))
+    {
+        PrintUsage(true);
+        return 0;
     }
 
     const uint32_t dwCommand = LookupByName(argv[1], g_pCommands);
@@ -3089,8 +3109,17 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     case CMD_DUMPDDS:
         break;
 
+    case CMD_HELP:
+        PrintUsage(true);
+        return 0;
+
+    case CMD_FEEDBACK:
+        std::ignore = ShellExecuteW(nullptr, L"open", g_FeedbackURL, nullptr, nullptr, SW_SHOW);
+        return 0;
+
     default:
-        wprintf(L"Must use one of: info, analyze, compare, diff, dumpbc, or dumpdds\n\n");
+        wprintf(L"Must use one of: ");
+        PrintList(4, g_pCommands);
         return 1;
     }
 
