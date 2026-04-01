@@ -9,13 +9,13 @@ parameters:
   - name: msVersion
     type: string
     values:
-      - '16.0'
       - '17.0'
+      - '18.0'
   - name: vsYear
     type: number
     values:
-      - 2019
       - 2022
+      - 2026
 
 steps:
   - task: VSBuild@1
