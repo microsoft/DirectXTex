@@ -93,7 +93,7 @@ namespace
 
         void seekg(uint64_t pos) override
         {
-            if (pos > m_DataSize)
+            if (pos > static_cast<uint64_t>(m_DataSize))
             {
                 throw std::out_of_range("Seek position is out of range");
             }
