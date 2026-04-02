@@ -98,7 +98,7 @@ namespace
                 throw std::out_of_range("Seek position is out of range");
             }
 
-            m_Position = pos;
+            m_Position = static_cast<size_t>(pos);
         }
 
     #if COMBINED_OPENEXR_VERSION > 30300
