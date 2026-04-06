@@ -75,6 +75,11 @@ namespace
 
         bool read(char c[], int n) override
         {
+            if (n < 0 || m_Position + n > m_DataSize)
+            {
+                throw std::out_of_range("Read request is out of range");
+            }
+
             memcpy(c, m_DataPtr + m_Position, n);
             m_Position += n;
 
@@ -88,7 +93,12 @@ namespace
 
         void seekg(uint64_t pos) override
         {
-            m_Position = pos;
+            if (pos > static_cast<uint64_t>(m_DataSize))
+            {
+                throw std::out_of_range("Seek position is out of range");
+            }
+
+            m_Position = static_cast<size_t>(pos);
         }
 
     #if COMBINED_OPENEXR_VERSION > 30300

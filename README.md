@@ -2,7 +2,7 @@
 
 # DirectXTex texture processing library
 
-http://go.microsoft.com/fwlink/?LinkId=248926
+https://go.microsoft.com/fwlink/?LinkId=248926
 
 Copyright (c) Microsoft Corporation.
 
