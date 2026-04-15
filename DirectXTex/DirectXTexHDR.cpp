@@ -794,7 +794,7 @@ HRESULT DirectX::LoadFromHDRMemory(const uint8_t* pSource, size_t size, TexMetad
                         sourcePtr += 2;
                         pixelLen -= 2;
                     }
-                    else if ((size < size_t(runLen) + 1) || ((pixelCount + size_t(runLen)) > mdata.width))
+                    else if ((pixelLen < size_t(runLen) + 1) || ((pixelCount + size_t(runLen)) > mdata.width))
                     {
                         image.Release();
                         return E_FAIL;
