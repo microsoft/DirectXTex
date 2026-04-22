@@ -12,6 +12,7 @@ on:
       - '*.md'
       - LICENSE
       - '.azuredevops/**'
+      - '.github/*.md'
       - '.nuget/*'
       - build/*.cmd
       - build/*.json
@@ -25,6 +26,7 @@ on:
       - '*.md'
       - LICENSE
       - '.azuredevops/**'
+      - '.github/*.md'
       - '.nuget/*'
       - build/*.cmd
       - build/*.json

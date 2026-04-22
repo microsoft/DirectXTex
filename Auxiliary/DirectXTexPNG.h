@@ -20,7 +20,7 @@ namespace DirectX
 {
     enum PNG_FLAGS : uint32_t
     {
-        PNG_FLAGS_NONE = 0x0,
+        PNG_FLAGS_NONE = 0,
 
         PNG_FLAGS_BGR = 0x1,
         // 24bpp files are returned as BGRX; 32bpp files are returned as BGRA

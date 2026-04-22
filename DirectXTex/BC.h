@@ -29,7 +29,7 @@ namespace DirectX
 
     enum BC_FLAGS : uint32_t
     {
-        BC_FLAGS_NONE = 0x0,
+        BC_FLAGS_NONE = 0,
 
         BC_FLAGS_DITHER_RGB = 0x10000,
         // Enables dithering for RGB colors for BC1-3

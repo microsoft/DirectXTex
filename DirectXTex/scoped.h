@@ -5,6 +5,9 @@
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+//
+// https://go.microsoft.com/fwlink/?LinkId=248926
+// https://go.microsoft.com/fwlink/?LinkID=324981
 //-------------------------------------------------------------------------------------
 
 #pragma once
