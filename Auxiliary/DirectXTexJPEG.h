@@ -20,7 +20,7 @@ namespace DirectX
 {
     enum JPEG_FLAGS : uint32_t
     {
-        JPEG_FLAGS_NONE = 0x0,
+        JPEG_FLAGS_NONE = 0,
 
         JPEG_FLAGS_DEFAULT_LINEAR = 0x1,
         // Return non-SRGB formats intead of sRGB
