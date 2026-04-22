@@ -14,17 +14,17 @@ These instructions define how GitHub Copilot should assist with this project. Th
 
 - See the tutorial at [Getting Started](https://github.com/microsoft/DirectXTex/wiki/Getting-Started).
 - The recommended way to integrate *DirectXTex* into your project is by using the *vcpkg* Package Manager.
-- You can make use of the nuget.org packages **directxtex_desktop_2019**, **directxtex_desktop_win10**, or **directxtex_uwp**.
+- You can make use of the nuget.org packages **directxtex_desktop_win10**, or **directxtex_uwp**.
 - You can also use the library source code directly in your project or as a git submodule.
 
 ## General Guidelines
 
-- **Code Style**: The project uses an .editorconfig file to enforce coding standards. Follow the rules defined in `.editorconfig` for indentation, line endings, and other formatting. Additional information can be found on the wiki at [Implementation](https://github.com/microsoft/DirectXTK/wiki/Implementation). The library implementation is written to be compatible with C++14 features, but C++17 is required to build the project for the command-line tools which utilize C++17 filesystem for long file path support.
-> Notable `.editorconfig` rules: C/C++ files use 4-space indentation, `crlf` line endings, and `latin1` charset — avoid non-ASCII characters in source files. HLSL files have separate indent/spacing rules defined in `.editorconfig`.
+- **Code Style**: The project uses an .editorconfig file to enforce coding standards. Follow the rules defined in `.editorconfig` for indentation, line endings, and other formatting. Additional information can be found on the wiki at [Implementation](https://github.com/microsoft/DirectXTK/wiki/Implementation). The library's public API requires C++11, and the project builds with C++17 (`CMAKE_CXX_STANDARD 17`). The command-line tools also use C++17, including `<filesystem>` for long file path support. This code is designed to build with Visual Studio 2022, Visual Studio 2026, clang for Windows v12 or later, or MinGW 12.2.
+> Notable `.editorconfig` rules: C/C++ and HLSL files use 4-space indentation, `crlf` line endings, and `latin1` charset — avoid non-ASCII characters in source files. HLSL files have separate indent/spacing rules defined in `.editorconfig`.
 - **Documentation**: The project provides documentation in the form of wiki pages available at [Documentation](https://github.com/microsoft/DirectXTex/wiki/).
 - **Error Handling**: Use C++ exceptions for error handling and uses RAII smart pointers to ensure resources are properly managed. For some functions that return HRESULT error codes, they are marked `noexcept`, use `std::nothrow` for memory allocation, and should not throw exceptions.
-- **Testing**: Unit tests for this project are implemented in this repository [Test Suite](https://github.com/walbourn/directxtextest/) and can be run using CTest per the instructions at [Test Documentation](https://github.com/walbourn/directxtextest/wiki).
-- **Security**: This project uses secure coding practices from the Microsoft Secure Coding Guidelines, and is subject to the `SECURITY.md` file in the root of the repository. Functions that read input from geometry files are subject to OneFuzz fuzz testing to ensure they are secure against malformed files.
+- **Testing**: Unit tests for this project are implemented in this repository [Test Suite](https://github.com/walbourn/directxtextest/) and can be run using CTest per the instructions at [Test Documentation](https://github.com/walbourn/directxtextest/wiki). See [test copilot instructions](https://github.com/walbourn/directxtextest/blob/main/.github/copilot-instructions.md) for additional information on the tests.
+- **Security**: This project uses secure coding practices from the Microsoft Secure Coding Guidelines, and is subject to the `SECURITY.md` file in the root of the repository. Functions that read input from image files are subject to OneFuzz fuzz testing to ensure they are secure against malformed files.
 - **Dependencies**: The project uses CMake and VCPKG for managing dependencies, making optional use of DirectXMath and DirectX-Headers. The project can be built without these dependencies, relying on the Windows SDK for core functionality.
 - **Continuous Integration**: This project implements GitHub Actions for continuous integration, ensuring that all code changes are tested and validated before merging. This includes building the project for a number of configurations and toolsets, running a subset of unit tests, and static code analysis including GitHub super-linter, CodeQL, and MSVC Code Analysis.
 - **Code of Conduct**: The project adheres to the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). All contributors are expected to follow this code of conduct in all interactions related to the project.
@@ -37,15 +37,16 @@ These instructions define how GitHub Copilot should assist with this project. Th
 .nuget/           # NuGet package configuration files.
 build/            # Miscellaneous build files and scripts.
 Auxiliary/        # Auxiliary functions such as Xbox tiling extensions, OpenEXR support, etc.
+Common/           # Common utility functions shared between the library and command-line tools.
 DirectXTex/       # DirectXTex implementation files.
   Shaders/        # HLSL shader files.
 DDSView/          # Sample application for viewing DDS texture files using DirectXTex.
-texassemble/      # CLI tool for creating complex DDS files from multiple image files.
-texconv/          # CLI tool for converting image files to DDS texture files including block compression, mipmaps, and resizing.
-texdiag/          # CLI tool for diagnosing and validating DDS texture files.
+Texassemble/      # CLI tool for creating complex DDS files from multiple image files.
+Texconv/          # CLI tool for converting image files to DDS texture files including block compression, mipmaps, and resizing.
+Texdiag/          # CLI tool for diagnosing and validating DDS texture files.
 DDSTextureLoader/ # Standalone version of the DDS texture loader for Direct3D 9/11/12.
 ScreenGrab/       # Standalone version of the screenshot capture utility for Direct3D 9/11/12.
-WICTextureLoader/ # Standalone versoin of the WIC texture loader for Direct3D 9/11/12.
+WICTextureLoader/ # Standalone version of the WIC texture loader for Direct3D 9/11/12.
 Tests/            # Tests are designed to be cloned from a separate repository at this location.
 wiki/             # Local clone of the GitHub wiki documentation repository.
 ```
@@ -58,7 +59,7 @@ wiki/             # Local clone of the GitHub wiki documentation repository.
 
 - Use RAII for all resource ownership (memory, file handles, etc.).
 - Many classes utilize the pImpl idiom to hide implementation details, and to enable optimized memory alignment in the implementation.
-- Use `std::unique_ptr` for exclusive ownership and `std::shared_ptr` for shared ownership.
+- Use `std::unique_ptr` for exclusive ownership.
 - Use `Microsoft::WRL::ComPtr` for COM object management.
 - Make use of anonymous namespaces to limit scope of functions and variables.
 - Make use of `assert` for debugging checks, but be sure to validate input parameters in release builds.
@@ -66,6 +67,7 @@ wiki/             # Local clone of the GitHub wiki documentation repository.
 - Explicitly utilize `= default` or `=delete` for copy constructors, assignment operators, move constructors and move-assignment operators where appropriate.
 - Use 16-byte alignment (`_aligned_malloc` / `_aligned_free`) to support SIMD operations in the implementation, but do not expose this requirement in public APIs.
 > For non-Windows support, the implementation uses C++17 `aligned_alloc` instead of `_aligned_malloc`.
+- All implementation `.cpp` files include `DirectXTexP.h` as their first include (precompiled header). MinGW builds skip precompiled headers.
 
 #### SAL Annotations
 
@@ -110,11 +112,11 @@ HRESULT __cdecl GetMetadataFromDDSMemory(
 
 - All query and utility functions that cannot fail (e.g., `IsCompressed`, `IsCubemap`, `ComputePitch`) are marked `noexcept`.
 - All HRESULT-returning I/O and processing functions are also `noexcept` — errors are communicated via return code, never via exceptions.
-- Constructors and functions that perform heap allocation or utilize Standard C++ containers that may throw are marked `noexcept(false)`.
+> Note that HRESULT-returning functions that use `std::function` are not marked `noexcept` because the user-provided function could throw.
 
 #### Enum Flags Pattern
 
-Flags enums follow this pattern — a `uint32_t`-based unscoped enum with a `_NONE = 0x0` base case, followed by a call to `DEFINE_ENUM_FLAG_OPERATORS` (defined in `DirectXTex.inl`) to enable `|`, `&`, and `~` operators:
+Flags enums follow this pattern — a `uint32_t`-based unscoped enum with a `_NONE = 0` or `_DEFAULT = 0` base case, followed by a call to `DEFINE_ENUM_FLAG_OPERATORS` (invoked in `DirectXTex.inl`) to enable `|`, `&`, and `~` operators:
 
 ```cpp
 enum TEX_FILTER_FLAGS : uint32_t
@@ -135,7 +137,7 @@ See [this blog post](https://walbourn.github.io/modern-c++-bitmask-types/) for m
 
 - Don’t use raw pointers for ownership.
 - Avoid macros for constants—prefer `constexpr` or `inline` `const`.
-- Don’t put implementation logic in header files unless using templates, although the SimpleMath library does use an .inl file for performance.
+- Don't put implementation logic in header files unless using templates, although the DirectXTex library does use an .inl file for performance for a few specific utility functions that are called in tight loops (e.g., `IsValid`, `IsCompressed`).
 - Avoid using `using namespace` in header files to prevent polluting the global namespace.
 
 ## Naming Conventions
@@ -147,7 +149,7 @@ See [this blog post](https://walbourn.github.io/modern-c++-bitmask-types/) for m
 | Private data members | `m_` prefix | `m_nimages`, `m_metadata` |
 | Enum type names | UPPER_SNAKE_CASE | `TEX_DIMENSION`, `CP_FLAGS` |
 | Enum values | UPPER_SNAKE_CASE | `CP_FLAGS_NONE`, `TEX_ALPHA_MODE_PREMULTIPLIED` |
-| Flag enum suffix | `_FLAGS` with `_NONE = 0x0` base | `DDS_FLAGS`, `WIC_FLAGS` |
+| Flag enum suffix | `_FLAGS` with `_NONE = 0` or `_DEFAULT = 0` base | `DDS_FLAGS`, `WIC_FLAGS` |
 | Files | PascalCase | `DirectXTex.h`, `BC6HEncode.hlsl` |
 
 ## File Header Convention
@@ -186,7 +188,7 @@ Shaders in `DirectXTex/Shaders/` are compiled with **FXC** (not DXC), producing 
 
 - [Source git repository on GitHub](https://github.com/microsoft/DirectXTex.git)
 - [DirectXTex documentation git repository on GitHub](https://github.com/microsoft/DirectXTex.wiki.git)
-- [DirectXTex test suite git repository on GitHub](https://github.com/walbourn/directxtextest.wiki.git).
+- [DirectXTex test suite git repository on GitHub](https://github.com/walbourn/directxtextest.git).
 - [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
 - [Microsoft Secure Coding Guidelines](https://learn.microsoft.com/en-us/security/develop/secure-coding-guidelines)
 - [CMake Documentation](https://cmake.org/documentation/)
@@ -224,8 +226,9 @@ When creating documentation:
 
 ## Cross-platform Support Notes
 
-- The code supports building for Windows and Linux.
-- Portability and conformance of the code is validated by building with Visual C++, clang/LLVM for Windows, MinGW, and GCC for Linux.
+- The code targets Win32 desktop applications for Windows 8.1 or later, Xbox One, Xbox Series X\|S, Universal Windows Platform (UWP) apps for Windows 10 and Windows 11, and Linux.
+- Portability and conformance of the code is validated by building with Visual C++, clang/LLVM for Windows, MinGW, and GCC for Linux compilers.
+- The project ships MSBuild projects for Visual Studio 2022 (`.sln` / `.vcxproj`) and Visual Studio 2026 (`.slnx` / `.vcxproj`). VS 2019 projects have been retired.
 
 ### Platform and Compiler `#ifdef` Guards
 
@@ -234,9 +237,10 @@ Use these established guards — do not invent new ones:
 | Guard | Purpose |
 | --- | --- |
 | `_WIN32` | Windows platform (desktop, UWP, Xbox) |
-| `_GAMING_XBOX` | Xbox One or Xbox Series X\|S |
-| `_GAMING_XBOX_SCARLETT` | Xbox Series X\|S |
-| `_XBOX_ONE && _TITLE` | Xbox One XDK (legacy) |
+| `_GAMING_XBOX` | Xbox platform (GDK - covers both Xbox One and Xbox Series X\|S) |
+| `_GAMING_XBOX_SCARLETT` | Xbox Series X\|S (GDK with Xbox Extensions) |
+| `_GAMING_XBOX_XBOXONE` | Xbox One (GDK with Xbox Extensions) |
+| `_XBOX_ONE && _TITLE` | Legacy Xbox One XDK |
 | `_MSC_VER` | MSVC-specific (and MSVC-like clang-cl) pragmas and warning suppression |
 | `__clang__` | Clang/LLVM diagnostic suppressions |
 | `__MINGW32__` | MinGW compatibility headers |
@@ -277,11 +281,11 @@ When reviewing code, focus on the following aspects:
 - Public interfaces located in `DirectXTex.h` should be clearly defined and documented on the GitHub wiki.
 - Optional functions are located in `DirectXTexEXR.h`, `DirectXTexJPEG.h`, `DirectXTexPNG.h`, and `DirectXTexXbox.h` in the `Auxiliary` folder.
 - Standalone modules for loading textures from DDS Files are located in `DDSTextureLoader9.h`, `DDSTextureLoader11.h`, and `DDSTextureLoader12.h` in the `DDSTextureLoader` folder.
-- Standalone modules are loading textures using WIC are located in `WICTextureLoader9.h`, `WICTextureLoader11.h`, and `WICTextureLoader12.h` in the `WICTextureLoader` folder.
+- Standalone modules for loading textures using WIC are located in `WICTextureLoader9.h`, `WICTextureLoader11.h`, and `WICTextureLoader12.h` in the `WICTextureLoader` folder.
 - Standalone modules for capturing screenshots are located in `ScreenGrab9.h`, `ScreenGrab11.h`, and `ScreenGrab12.h` in the `ScreenGrab` folder.
 - Compliance with the project's architecture and design patterns.
 - Ensure that all public functions and classes are covered by unit tests located on [GitHub](https://github.com/walbourn/directxtextest.git) where applicable. Report any gaps in test coverage.
-- Check for performance implications, especially in geometry processing algorithms.
+- Check for performance implications, especially in texture processing algorithms.
 - Provide brutally honest feedback on code quality, design, and potential improvements as needed.
 
 ## Documentation Review Instructions
@@ -291,4 +295,4 @@ When reviewing documentation, do the following:
 - Read the code located in [this git repository](https://github.com/microsoft/DirectXTex.git) in the main branch.
 - Review the public interface defined in `DirectXTex.h`.
 - Read the documentation on the wiki located in [this git repository](https://github.com/microsoft/DirectXTex.wiki.git).
-- Report any specific gaps in the documentation compared to the public interface
+- Report any specific gaps in the documentation compared to the public interface.
