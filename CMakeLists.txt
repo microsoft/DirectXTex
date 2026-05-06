@@ -267,7 +267,8 @@ endif()
 source_group(${PROJECT_NAME} REGULAR_EXPRESSION DirectXTex/*.*)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/DirectXTex>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/DirectXTex>)
+target_include_directories(${PROJECT_NAME} SYSTEM INTERFACE
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
@@ -393,14 +394,18 @@ endif()
 
 if(directxmath_FOUND)
     message(STATUS "Using DirectXMath package")
-    target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectXMath)
+    if((NOT MINGW) AND WIN32)
+      target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectXMath)
+    endif()
 endif()
 
 if(directx-headers_FOUND)
     message(STATUS "Using DirectX-Headers package")
-    target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectX-Headers)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE USING_DIRECTX_HEADERS)
-    target_compile_options(${PROJECT_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC,Intel>:/wd4062> $<$<CXX_COMPILER_ID:Clang,IntelLLVM>:-Wno-switch-enum>)
+    if((NOT MINGW) AND WIN32)
+      target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectX-Headers)
+      target_compile_definitions(${PROJECT_NAME} PRIVATE USING_DIRECTX_HEADERS)
+      target_compile_options(${PROJECT_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC,Intel>:/wd4062> $<$<CXX_COMPILER_ID:Clang,IntelLLVM>:-Wno-switch-enum>)
+    endif()
 endif()
 
 #--- Package
@@ -437,10 +442,9 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME})
 
 # Create pkg-config file
-include(build/JoinPaths.cmake)
 # from: https://github.com/jtojnar/cmake-snips#concatenating-paths-when-building-pkg-config-files
-join_paths(DIRECTXTEX_INCLUDEDIR_FOR_PKG_CONFIG "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
-join_paths(DIRECTXTEX_LIBDIR_FOR_PKG_CONFIG "\${prefix}"     "${CMAKE_INSTALL_LIBDIR}")
+cmake_path(APPEND DIRECTXTEX_INCLUDEDIR_FOR_PKG_CONFIG "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
+cmake_path(APPEND DIRECTXTEX_LIBDIR_FOR_PKG_CONFIG "\${prefix}"     "${CMAKE_INSTALL_LIBDIR}")
 
 set(DIRECTXTEX_DEP_L "")
 if(ENABLE_OPENEXR_SUPPORT)
@@ -688,6 +692,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     endforeach()
 
     if(BUILD_FUZZING AND (NOT WINDOWS_STORE))
+      # Prevent fuzzing builds (which is otherwise configured as a Release mode) from disabling assertions
       string(REPLACE "/DNDEBUG" "" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
       string(REPLACE "/DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
 
@@ -703,7 +708,7 @@ endif()
 if(WIN32)
     if(XBOX_CONSOLE_TARGET STREQUAL "durango")
         set(WINVER 0x0602)
-    elseif(BUILD_DX12 OR (${DIRECTX_ARCH} MATCHES "^arm64"))
+    elseif(BUILD_DX12 OR (DIRECTX_ARCH MATCHES "^arm64"))
         message(STATUS "Building with DirectX 12 Runtime support")
         set(WINVER 0x0A00)
     else()
@@ -722,7 +727,7 @@ if(WIN32)
     endif()
 endif()
 
-if(BUILD_TOOLS AND BUILD_DX11 AND WIN32)
+if(BUILD_TOOLS AND BUILD_DX11 AND WIN32 AND (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR))
     set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT texconv)
 endif()
 
