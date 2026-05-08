@@ -47,7 +47,7 @@ struct IWICImagingFactory;
 struct IWICMetadataQueryReader;
 #endif
 
-#define DIRECTX_TEX_VERSION 210
+#define DIRECTX_TEX_VERSION 211
 
 #if defined(_WIN32) && defined(DIRECTX_TEX_EXPORT)
 #ifdef __GNUC__
