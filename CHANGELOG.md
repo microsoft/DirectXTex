@@ -6,6 +6,11 @@ Release available for download on [GitHub](https://github.com/microsoft/DirectXT
 
 ## Release History
 
+### May 7, 2026
+* HDR reader fix for an out-of-bads read when reading a malformed header
+* CMake project updates
+* Minor comments cleanup
+
 ### March 31, 2026
 * `CalculateMipLevels` and `CalculateMipLevels3D` are now public functions
 * DDS reader `DDS_FLAGS_PERMISSIVE` supports a DX10 variant with zero dimension value (assumed to be 2D)
