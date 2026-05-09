@@ -32,37 +32,37 @@ set StrTrim=%StrTrim: ##=%
 set CompileShadersOutput=%StrTrim:##=%
 @if not exist "%CompileShadersOutput%" mkdir "%CompileShadersOutput%"
 
-set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EVS /Tvs_4_1 /Fh%CompileShadersOutput%\ddsview_vs.inc
+set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EVS /Tvs_4_1 "/Fh%CompileShadersOutput%\ddsview_vs.inc"
 echo %FXC%
 %FXC%
 @if ERRORLEVEL 1 goto error
 
-set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EPS_1D /Tps_4_1 /Fh%CompileShadersOutput%\ddsview_ps1D.inc
+set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EPS_1D /Tps_4_1 "/Fh%CompileShadersOutput%\ddsview_ps1D.inc"
 echo %FXC%
 %FXC%
 @if ERRORLEVEL 1 goto error
 
-set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EPS_1DArray /Tps_4_1 /Fh%CompileShadersOutput%\ddsview_ps1Darray.inc
+set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EPS_1DArray /Tps_4_1 "/Fh%CompileShadersOutput%\ddsview_ps1Darray.inc"
 echo %FXC%
 %FXC%
 @if ERRORLEVEL 1 goto error
 
-set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EPS_2D /Tps_4_1 /Fh%CompileShadersOutput%\ddsview_ps2D.inc
+set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EPS_2D /Tps_4_1 "/Fh%CompileShadersOutput%\ddsview_ps2D.inc"
 echo %FXC%
 %FXC%
 @if ERRORLEVEL 1 goto error
 
-set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EPS_2DArray /Tps_4_1 /Fh%CompileShadersOutput%\ddsview_ps2Darray.inc
+set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EPS_2DArray /Tps_4_1 "/Fh%CompileShadersOutput%\ddsview_ps2Darray.inc"
 echo %FXC%
 %FXC%
 @if ERRORLEVEL 1 goto error
 
-set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EPS_3D /Tps_4_1 /Fh%CompileShadersOutput%\ddsview_ps3D.inc
+set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EPS_3D /Tps_4_1 "/Fh%CompileShadersOutput%\ddsview_ps3D.inc"
 echo %FXC%
 %FXC%
 @if ERRORLEVEL 1 goto error
 
-set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EPS_Cube /Tps_4_1 /Fh%CompileShadersOutput%\ddsview_psCube.inc
+set FXC=%PCFXC% ddsview.hlsl %FXCOPTS% /EPS_Cube /Tps_4_1 "/Fh%CompileShadersOutput%\ddsview_psCube.inc"
 echo %FXC%
 %FXC%
 @if ERRORLEVEL 1 goto error
