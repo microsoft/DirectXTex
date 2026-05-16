@@ -335,7 +335,8 @@ namespace DirectX
         _Success_(return) bool __cdecl SetupImageArray(
             _In_reads_bytes_(pixelSize) uint8_t* pMemory, _In_ size_t pixelSize,
             _In_ const TexMetadata& metadata, _In_ CP_FLAGS cpFlags,
-            _Out_writes_(nImages) Image* images, _In_ size_t nImages) noexcept;
+            _Out_writes_(nImages) Image* images, _In_ size_t nImages,
+            _In_ bool owning = true) noexcept;
 
         //---------------------------------------------------------------------------------
         // Conversion helper functions
