@@ -14,6 +14,7 @@ description: Guide for performing the DirectXTex release process. Use this skill
   - VCPKG at `d:\vcpkg` (synced with `main` branch)
   - WinGet at `D:\winget-pkgs` (synced with `master` branch, only if tool updates needed)
 
+<!-- markdownlint-disable MD029 -->
 ## Steps
 
 ### Phase 1: Prepare Release
