@@ -13,6 +13,7 @@ description: Guide for performing the DirectXTex release process. Use this skill
 - Local repositories:
   - VCPKG at `d:\vcpkg` (synced with `main` branch)
   - WinGet at `D:\winget-pkgs` (synced with `master` branch, only if tool updates needed)
+- PATs will be needed for scripts that access GitHub and ADO.
 
 <!-- markdownlint-disable MD029 -->
 ## Steps
@@ -45,7 +46,7 @@ description: Guide for performing the DirectXTex release process. Use this skill
 ### Phase 5: NuGet Validation and Publishing
 
 14. Validate the NuGet packages with <https://github.com/walbourn/contentexporter> by pushing the NuGet packages to a local Packages Source folder, updating the NuGet packages from that folder, and then build the project.
-15. Run the PowerShell script `build\promotenuget.ps1` with the `-Release` parameter to promote the version to the Release view on the project-scoped ADO feed.
+15. Run the PowerShell script `build\promotenuget.ps1 -Version <version> -Release` to promote the version to the Release view on the project-scoped ADO feed. The `-Version` parameter is required and should match the NuGet package version (e.g., `2026.6.2.1`).
 16. Run the MSCodeHub pipeline to publish the NuGet packages to nuget.org. The pipeline will automatically push the most recent package promoted to the Release view to nuget.org.
 
 ### Phase 6: VCPKG Port Update
@@ -54,7 +55,7 @@ description: Guide for performing the DirectXTex release process. Use this skill
 18. Run the PowerShell script `build\updatevcpkg.ps1` to update the DirectXTex port in VCPKG with the new release version. This will edit the files in `ports\directxtex`.
     If the port includes patches, review them to determine if they should be removed or updated for the new release (the `updatevcpkg.ps1` script will warn about this).
 19. Test the VCPKG port using the script at `assets/vcpkgdxtex.cmd` (in this skill folder). Copy it to `d:\vcpkg` and run from there after bootstrapping VCPKG.
-20. Run `.\vcpkg --x-add-version directxtex` to update the VCPKG versioning history.
+20. Run `.\vcpkg x-add-version directxtex` to update the VCPKG versioning history.
 21. Submit a PR to the VCPKG repository to update the DirectXTex port back to the main GitHub repo. The PR will be reviewed and merged by the VCPKG maintainers.
 
 ### Phase 7: WinGet Manifests (Conditional)
