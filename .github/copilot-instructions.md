@@ -47,6 +47,7 @@ Texdiag/          # CLI tool for diagnosing and validating DDS texture files.
 DDSTextureLoader/ # Standalone version of the DDS texture loader for Direct3D 9/11/12.
 ScreenGrab/       # Standalone version of the screenshot capture utility for Direct3D 9/11/12.
 WICTextureLoader/ # Standalone version of the WIC texture loader for Direct3D 9/11/12.
+skills/           # Published CoPilot skills for use by developers.
 Tests/            # Tests are designed to be cloned from a separate repository at this location.
 wiki/             # Local clone of the GitHub wiki documentation repository.
 ```
