@@ -1,5 +1,5 @@
 ---
-name: DirectXTex Usage
+name: directxtex-usage
 description: Guide for integrating and using the DirectXTex texture processing library in new projects. Use this skill when asked about adding DirectXTex to a project, loading/saving textures, format conversion, mipmap generation, block compression, or Direct3D resource creation.
 ---
 
