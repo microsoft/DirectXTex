@@ -82,7 +82,7 @@ For CoPilot CLI assistance with using DirectXTex, try:
 ```bash
 winget install GitHub.Copilot
 winget install GitHub.cli
-gh skill install microsoft/directxtex directxtex-usage
+gh skill install microsoft/directxtex
 copilot
 /skills list
 ```
