@@ -1,6 +1,12 @@
 ---
 name: texture-converter
-description: Guide for using the texconv command-line texture conversion tool. Use this skill when asked about converting textures, compressing images to DDS/BC formats, generating mipmaps, resizing textures, creating normal maps, or performing HDR tone mapping from the command line.
+description: >-
+  Guide for using the texconv command-line texture conversion tool. Use this skill when asked about converting textures, compressing images
+  to DDS/BC formats, generating mipmaps, resizing textures, creating normal maps, or performing HDR tone mapping from the command line.
+license: MIT
+metadata:
+  author: chuckw
+  version: "1.0"
 ---
 
 # Texconv Texture Converter

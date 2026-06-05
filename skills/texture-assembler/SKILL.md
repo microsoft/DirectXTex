@@ -1,6 +1,13 @@
 ---
 name: texture-assembler
-description: Guide for using the texassemble command-line tool to create cubemaps, volume maps, texture arrays, and other assembled DDS textures from individual images. Use this skill when asked about creating cubemaps, volume textures, texture arrays, merging channels, converting animated GIFs to textures, or extracting cubemap faces to cross/strip layouts.
+description: >-
+  Guide for using the texassemble command-line tool to create cubemaps, volume maps, texture arrays, and other assembled DDS textures from individual images.
+  Use this skill when asked about creating cubemaps, volume textures, texture arrays, merging channels, converting animated GIFs to textures, or extracting
+  cubemap faces to cross/strip layouts.
+license: MIT
+metadata:
+  author: chuckw
+  version: "1.0"
 ---
 
 # Texassemble Texture Assembler
