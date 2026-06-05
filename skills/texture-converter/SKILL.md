@@ -41,7 +41,7 @@ vcpkg install directxtex[tools]
 
 ## Syntax
 
-```
+```plaintext
 texconv [options] [--file-list <filename>] <file-name(s)>
 ```
 
@@ -53,67 +53,67 @@ The command-line uses Windows-style `-` or `/` for options. It also supports `--
 
 ### Convert to BC7 compressed DDS with mipmaps
 
-```
+```plaintext
 texconv -f BC7_UNORM -m 0 -y diffuse.png
 ```
 
 ### Convert to BC1 (DXT1) with power-of-2 resize
 
-```
+```plaintext
 texconv -pow2 -f BC1_UNORM cat.jpg
 ```
 
 ### Batch convert all PNG files recursively
 
-```
+```plaintext
 texconv -r C:\Textures\*.png
 ```
 
 ### Convert HDR to BMP with tone mapping
 
-```
+```plaintext
 texconv myimage.hdr -tonemap -ft BMP
 ```
 
 ### Generate normal map from height map
 
-```
+```plaintext
 texconv -nmap lo -nmapamp 2 -f R8G8B8A8_UNORM heightmap.png
 ```
 
 ### Convert for legacy Direct3D 9 with feature level cap
 
-```
+```plaintext
 texconv -pow2 -fl 9.3 -f BC3_UNORM -m 1 *.bmp
 ```
 
 ### Output to a specific directory with prefix/suffix
 
-```
+```plaintext
 texconv -o output_dir -px hd_ -sx _bc7 -f BC7_UNORM *.png
 ```
 
 ### Convert to PNG from DDS
 
-```
+```plaintext
 texconv -ft png -y texture.dds
 ```
 
 ### Premultiplied alpha conversion
 
-```
+```plaintext
 texconv -pmalpha -f BC3_UNORM ui_element.png
 ```
 
 ### HDR10 colorspace conversion
 
-```
+```plaintext
 texconv --rotate-color 709toHDR10 -nits 200 -f R10G10B10A2_UNORM scene.hdr
 ```
 
 ### Swizzle channels
 
-```
+```plaintext
 texconv --swizzle rrrg -f BC5_UNORM normal.png
 ```
 

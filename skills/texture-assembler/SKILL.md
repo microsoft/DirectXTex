@@ -44,7 +44,7 @@ vcpkg install directxtex[tools]
 
 ## Syntax
 
-```
+```plaintext
 texassemble <command> [options] [--file-list <filename>] <file-name(s)>
 ```
 
@@ -82,55 +82,55 @@ The command-line uses Windows-style `-` or `/` for options. It also supports `--
 
 ### Create a cubemap from six face images
 
-```
+```plaintext
 texassemble cube -w 256 -h 256 -o cubemap.dds posx.jpg negx.jpg posy.jpg negy.jpg posz.jpg negz.jpg
 ```
 
 ### Create a volume (3D) texture
 
-```
+```plaintext
 texassemble volume -w 256 -h 256 -o volume.dds slice0.png slice1.png slice2.png slice3.png
 ```
 
 ### Create a texture array
 
-```
+```plaintext
 texassemble array -o array.dds frame0.png frame1.png frame2.png frame3.png
 ```
 
 ### Extract cubemap to horizontal cross layout
 
-```
+```plaintext
 texassemble h-cross cubemap.dds
 ```
 
 ### Create cubemap from a vertical cross image
 
-```
+```plaintext
 texassemble cube-from-vc -o cubemap.dds cross_layout.png
 ```
 
 ### Merge channels from two images
 
-```
+```plaintext
 texassemble merge -o combined.png color.png alpha_source.bmp
 ```
 
 ### Merge with custom swizzle (roughness into alpha)
 
-```
+```plaintext
 texassemble merge --swizzle rgbR -o packed.png albedo.png roughness.png
 ```
 
 ### Convert animated GIF to texture array
 
-```
+```plaintext
 texassemble gif -o animation.dds animated.gif
 ```
 
 ### Create mipmapped texture from individual mip images
 
-```
+```plaintext
 texassemble from-mips -o texture.dds mip0.png mip1.png mip2.png mip3.png
 ```
 
