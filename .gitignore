@@ -48,3 +48,4 @@ x64
 /CMakeUserPresets.json
 /build/vcpkg_installed
 /build/*.exe
+!**/skills/**

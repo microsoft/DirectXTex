@@ -67,9 +67,25 @@ These components are designed to work without requiring any content from the leg
 
   * Contains miscellaneous build files and scripts.
 
+* ``skills\``
+
+  * Contains published CoPilot skills for use by developers.
+
 ## Documentation
 
 Documentation is available on the [GitHub wiki](https://github.com/Microsoft/DirectXTex/wiki).
+
+## CoPilot Usage
+
+For CoPilot CLI assistance with using DirectXTex, try:
+
+```bash
+winget install GitHub.Copilot
+winget install GitHub.cli
+gh skill install microsoft/directxtex
+copilot
+/skills list
+```
 
 ## Notices
 
