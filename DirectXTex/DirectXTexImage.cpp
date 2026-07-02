@@ -148,9 +148,10 @@ bool DirectX::Internal::SetupImageArray(
     const TexMetadata& metadata,
     CP_FLAGS cpFlags,
     Image* images,
-    size_t nImages) noexcept
+    size_t nImages,
+    bool owning) noexcept
 {
-    assert(pMemory);
+    assert(pMemory || !owning);
     assert(pixelSize > 0);
     assert(nImages > 0);
 
@@ -191,7 +192,7 @@ bool DirectX::Internal::SetupImageArray(
                 images[index].format = metadata.format;
                 images[index].rowPitch = rowPitch;
                 images[index].slicePitch = slicePitch;
-                images[index].pixels = pixels;
+                images[index].pixels = owning ? pixels : nullptr;
                 ++index;
 
                 pixels += slicePitch;
@@ -240,7 +241,7 @@ bool DirectX::Internal::SetupImageArray(
                     images[index].format = metadata.format;
                     images[index].rowPitch = rowPitch;
                     images[index].slicePitch = slicePitch;
-                    images[index].pixels = pixels;
+                    images[index].pixels = owning ? pixels : nullptr;
                     ++index;
 
                     pixels += slicePitch;
@@ -297,7 +298,7 @@ ScratchImage& ScratchImage::operator= (ScratchImage&& moveFrom) noexcept
 // Methods
 //-------------------------------------------------------------------------------------
 _Use_decl_annotations_
-HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags) noexcept
+HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags, bool owning) noexcept
 {
     if (!IsValid(mdata.format))
         return E_INVALIDARG;
@@ -367,16 +368,19 @@ HRESULT ScratchImage::Initialize(const TexMetadata& mdata, CP_FLAGS flags) noexc
     m_nimages = nimages;
     memset(m_image, 0, sizeof(Image) * nimages);
 
-    m_memory = static_cast<uint8_t*>(_aligned_malloc(pixelSize, 16));
-    if (!m_memory)
+    if (owning)
     {
-        Release();
-        return E_OUTOFMEMORY;
+        m_memory = static_cast<uint8_t*>(_aligned_malloc(pixelSize, 16));
+        if (!m_memory)
+        {
+            Release();
+            return E_OUTOFMEMORY;
+        }
+        memset(m_memory, 0, pixelSize);
     }
-    memset(m_memory, 0, pixelSize);
     m_size = pixelSize;
 
-    if (!SetupImageArray(m_memory, pixelSize, m_metadata, flags, m_image, nimages))
+    if (!SetupImageArray(m_memory, pixelSize, m_metadata, flags, m_image, nimages, owning))
     {
         Release();
         return E_FAIL;
@@ -795,6 +799,21 @@ const Image* ScratchImage::GetImage(size_t mip, size_t item, size_t slice) const
     }
 
     return &m_image[index];
+}
+
+_Use_decl_annotations_
+const Image* ScratchImage::SetNonOwningImagePixels(size_t mip, size_t item, size_t slice, uint8_t* pixels) const noexcept
+{
+    if (!m_size || m_memory)
+        return nullptr;
+
+    const Image* image = GetImage(mip, item, slice);
+    if (!image)
+        return nullptr;
+
+    const_cast<Image*>(image)->pixels = pixels;
+
+    return image;
 }
 
 bool ScratchImage::IsAlphaAllOpaque() const noexcept
