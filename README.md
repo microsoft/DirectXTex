@@ -99,7 +99,7 @@ FOR SECURITY ADVISORIES, see [GitHub](https://github.com/microsoft/DirectXTex/se
 
 For a full change history, see [CHANGELOG.md](https://github.com/microsoft/DirectXTex/blob/main/CHANGELOG.md).
 
-* The _directxtex_ NuGet package is deprecated. The best way to integrate the latest DirectXTex into your C++ project is using [vcpkg](https://github.com/microsoft/vcpkg/tree/master/ports/directxtex).
+* The _directxtex_desktop_win10_ and _directxtex_uwp_ NuGet packages are deprecated. The best way to integrate the latest DirectXTex into your C++ project is using [vcpkg](https://github.com/microsoft/vcpkg/tree/master/ports/directxtex).
 
 * The CMake projects require 3.21 or later.
 
