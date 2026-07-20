@@ -10,7 +10,7 @@ Copyright (c) Microsoft Corporation.
 
 This package contains DirectXTex, a shared source library for reading and writing ``.DDS`` files, and performing various texture content processing operations including resizing, format conversion, mip-map generation, block compression for Direct3D runtime texture resources, and height-map to normal-map conversion. This library makes use of the Windows Image Component (WIC) APIs. It also includes ``.TGA`` and ``.HDR`` readers and writers since these image file formats are commonly used for texture content processing pipelines, but are not currently supported by a built-in WIC codec.
 
-This code is designed to build with Visual Studio 2022, Visual Studio 2026, clang for Windows v12 or later, or MinGW 12.2. Use of the Windows 10 May 2020 Update SDK ([19041](https://walbourn.github.io/windows-10-may-2020-update-sdk/)) or later is required for Visual Studio. It can also be built for Windows Subsystem for Linux using GCC 11 or later.
+This code is designed to build with Visual Studio 2022, Visual Studio 2026, clang for Windows v12 or later, or MinGW. Use of the Windows 10 May 2020 Update SDK ([19041](https://walbourn.github.io/windows-10-may-2020-update-sdk/)) or later is required for Visual Studio. It can also be built for Windows Subsystem for Linux using GCC 11 or later.
 
 These components are designed to work without requiring any content from the legacy DirectX SDK. For details, see [Where is the DirectX SDK?](https://aka.ms/dxsdk).
 
@@ -99,6 +99,8 @@ FOR SECURITY ADVISORIES, see [GitHub](https://github.com/microsoft/DirectXTex/se
 
 For a full change history, see [CHANGELOG.md](https://github.com/microsoft/DirectXTex/blob/main/CHANGELOG.md).
 
+* The _directxtex_desktop_win10_ and _directxtex_uwp_ NuGet packages are deprecated. The best way to integrate the latest DirectXTex into your C++ project is using [vcpkg](https://github.com/microsoft/vcpkg/tree/master/ports/directxtex).
+
 * The CMake projects require 3.21 or later.
 
 * Starting with the October 2025 release, the _Auxiliary_ functions for loading and saving JPEG and PNG files now take a flag parameter after the filename.
@@ -172,6 +174,10 @@ The DirectXTex library is the work of Chuck Walbourn, with contributions from Ma
 
 Thanks to Paul Penson for his help with the implementation of ``MemoryStreamOnBlob``.
 
-Thanks to Andrew Farrier and Scott Matloff for their on-going help with code reviews.
-
 Thanks to Park DongHa for their contribution of the JPEG/PNG auxiliary functions.
+
+Thanks to Isaac Plunkett, Danny Chen, Jesse Natalie, and James Stanard for their help with the Standard Swizzle implementation.
+
+Thanks to Andrew Farrier, Jon Martin, and Scott Matloff for their help with code reviews.
+
+Thanks to Shawn Hargreaves and Nada Ouf for their continued support for this library.

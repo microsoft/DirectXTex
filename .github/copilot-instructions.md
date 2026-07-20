@@ -275,7 +275,7 @@ The following symbols are not custom error codes, but aliases for `HRESULT_FROM_
 
 When reviewing code, focus on the following aspects:
 
-- Adherence to coding standards defined in `.editorconfig` and on the [wiki](https://github.com/microsoft/DirectXTK/wiki/Implementation).
+- Adherence to coding standards defined in `.editorconfig` and on the [wiki](https://github.com/microsoft/DirectXTex/wiki/Implementation).
 - Make coding recommendations based on the *C++ Core Guidelines*.
 - Proper use of RAII and smart pointers.
 - Correct error handling practices and C++ Exception safety.
