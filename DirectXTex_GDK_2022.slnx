@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Profile" />
+    <BuildType Name="Release" />
+    <Platform Name="Gaming.Desktop.x64" />
+    <Platform Name="Gaming.Xbox.Scarlett.x64" />
+    <Platform Name="Gaming.Xbox.XboxOne.x64" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Project Path="DirectXTex/DirectXTex_GDK_2022.vcxproj" Id="e66dd892-857b-4e89-b135-5e2a971a9933" />
+</Solution>

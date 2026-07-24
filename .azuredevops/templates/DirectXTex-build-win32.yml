@@ -7,81 +7,81 @@
 
 steps:
   - task: VSBuild@1
-    displayName: Build solution DirectXTex_Desktop_2022.sln 32dbg
+    displayName: Build solution DirectXTex_Desktop_2022 32dbg
     inputs:
-      solution: DirectXTex_Desktop_2022.sln
+      solution: DirectXTex_Desktop_2022.slnx
       platform: x86
       configuration: Debug
       msbuildArchitecture: x64
       msbuildArgs: /p:PreferredToolArchitecture=x64
   - task: VSBuild@1
-    displayName: Build solution DirectXTex_Desktop_2022.sln 32rel
+    displayName: Build solution DirectXTex_Desktop_2022 32rel
     inputs:
-      solution: DirectXTex_Desktop_2022.sln
+      solution: DirectXTex_Desktop_2022.slnx
       platform: x86
       configuration: Release
       msbuildArchitecture: x64
       msbuildArgs: /p:PreferredToolArchitecture=x64
   - task: VSBuild@1
-    displayName: Build solution DirectXTex_Desktop_2022.sln 64dbg
+    displayName: Build solution DirectXTex_Desktop_2022 64dbg
     inputs:
-      solution: DirectXTex_Desktop_2022.sln
+      solution: DirectXTex_Desktop_2022.slnx
       platform: x64
       configuration: Debug
       msbuildArchitecture: x64
       msbuildArgs: /p:PreferredToolArchitecture=x64
   - task: VSBuild@1
-    displayName: Build solution DirectXTex_Desktop_2022.sln 64rel
+    displayName: Build solution DirectXTex_Desktop_2022 64rel
     inputs:
-      solution: DirectXTex_Desktop_2022.sln
+      solution: DirectXTex_Desktop_2022.slnx
       platform: x64
       configuration: Release
       msbuildArchitecture: x64
       msbuildArgs: /p:PreferredToolArchitecture=x64
   - task: VSBuild@1
-    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 32dbg
+    displayName: Build solution DirectXTex_Desktop_2022_Win10 32dbg
     inputs:
-      solution: DirectXTex_Desktop_2022_Win10.sln
+      solution: DirectXTex_Desktop_2022_Win10.slnx
       platform: x86
       configuration: Debug
       msbuildArchitecture: x64
       msbuildArgs: /p:PreferredToolArchitecture=x64
   - task: VSBuild@1
-    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 32rel
+    displayName: Build solution DirectXTex_Desktop_2022_Win10 32rel
     inputs:
-      solution: DirectXTex_Desktop_2022_Win10.sln
+      solution: DirectXTex_Desktop_2022_Win10.slnx
       platform: x86
       configuration: Release
       msbuildArchitecture: x64
       msbuildArgs: /p:PreferredToolArchitecture=x64
   - task: VSBuild@1
-    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 64dbg
+    displayName: Build solution DirectXTex_Desktop_2022_Win10 64dbg
     inputs:
-      solution: DirectXTex_Desktop_2022_Win10.sln
+      solution: DirectXTex_Desktop_2022_Win10.slnx
       platform: x64
       configuration: Debug
       msbuildArchitecture: x64
       msbuildArgs: /p:PreferredToolArchitecture=x64
   - task: VSBuild@1
-    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln 64rel
+    displayName: Build solution DirectXTex_Desktop_2022_Win10 64rel
     inputs:
-      solution: DirectXTex_Desktop_2022_Win10.sln
+      solution: DirectXTex_Desktop_2022_Win10.slnx
       platform: x64
       configuration: Release
       msbuildArchitecture: x64
       msbuildArgs: /p:PreferredToolArchitecture=x64
   - task: VSBuild@1
-    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln arm64dbg
+    displayName: Build solution DirectXTex_Desktop_2022_Win10 arm64dbg
     inputs:
-      solution: DirectXTex_Desktop_2022_Win10.sln
+      solution: DirectXTex_Desktop_2022_Win10.slnx
       platform: ARM64
       configuration: Debug
       msbuildArchitecture: x64
       msbuildArgs: /p:PreferredToolArchitecture=x64
   - task: VSBuild@1
-    displayName: Build solution DirectXTex_Desktop_2022_Win10.sln arm64rel
+    displayName: Build solution DirectXTex_Desktop_2022_Win10 arm64rel
     inputs:
-      solution: DirectXTex_Desktop_2022_Win10.sln
+      solution: DirectXTex_Desktop_2022_Win10.slnx
       platform: ARM64
       configuration: Release
       msbuildArchitecture: x64
