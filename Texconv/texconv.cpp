@@ -2391,7 +2391,59 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 return 1;
             }
 
-            hr = Decompress(img, nimg, info, DXGI_FORMAT_UNKNOWN /* picks good default */, *timage);
+            DXGI_FORMAT formatDecompress = DXGI_FORMAT_UNKNOWN;
+
+            // Check common cases where we need more than 1 or 2 channels for later operations.
+            switch (info.format)
+            {
+            case DXGI_FORMAT_BC4_SNORM:
+                if ((dwOptions & ((UINT64_C(1) << OPT_INVERT_Y) | (UINT64_C(1)) << OPT_RECONSTRUCT_Z))
+                    || swizzleElements[1] != 1 || swizzleElements[2] != 2 || swizzleElements[3] != 3
+                    || zeroElements[1] != 0 || zeroElements[2] != 0 || zeroElements[3] != 0
+                    || oneElements[1] != 0 || oneElements[2] != 0 || oneElements[3] != 0)
+                {
+                    formatDecompress = DXGI_FORMAT_R8G8B8A8_SNORM;
+                }
+                break;
+
+            case DXGI_FORMAT_BC5_SNORM:
+                if ((dwOptions & (UINT64_C(1) << OPT_RECONSTRUCT_Z))
+                    || swizzleElements[2] != 2 || swizzleElements[3] != 3
+                    || zeroElements[2] != 0 || zeroElements[3] != 0
+                    || oneElements[2] != 0 || oneElements[3] != 0)
+                {
+                    formatDecompress = DXGI_FORMAT_R8G8B8A8_SNORM;
+                }
+                break;
+
+            case DXGI_FORMAT_BC4_TYPELESS:
+            case DXGI_FORMAT_BC4_UNORM:
+                if ((dwOptions & ((UINT64_C(1) << OPT_INVERT_Y) | (UINT64_C(1)) << OPT_RECONSTRUCT_Z))
+                    || swizzleElements[1] != 1 || swizzleElements[2] != 2 || swizzleElements[3] != 3
+                    || zeroElements[1] != 0 || zeroElements[2] != 0 || zeroElements[3] != 0
+                    || oneElements[1] != 0 || oneElements[2] != 0 || oneElements[3] != 0)
+                {
+                    formatDecompress = DXGI_FORMAT_R8G8B8A8_UNORM;
+                }
+                break;
+
+            case DXGI_FORMAT_BC5_TYPELESS:
+            case DXGI_FORMAT_BC5_UNORM:
+                if ((dwOptions & (UINT64_C(1) << OPT_RECONSTRUCT_Z))
+                    || swizzleElements[2] != 2 || swizzleElements[3] != 3
+                    || zeroElements[2] != 0 || zeroElements[3] != 0
+                    || oneElements[2] != 0 || oneElements[3] != 0)
+                {
+                    formatDecompress = DXGI_FORMAT_R8G8B8A8_UNORM;
+                }
+                break;
+
+            default:
+                // Let the decompressor pick the format.
+                break;
+            }
+
+            hr = Decompress(img, nimg, info, formatDecompress, *timage);
             if (FAILED(hr))
             {
                 wprintf(L" FAILED [decompress] (%08X%ls)\n", static_cast<unsigned int>(hr), GetErrorDesc(hr));
