@@ -2400,7 +2400,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if ((dwOptions & ((UINT64_C(1) << OPT_INVERT_Y) | (UINT64_C(1)) << OPT_RECONSTRUCT_Z))
                     || swizzleElements[1] != 1 || swizzleElements[2] != 2 || swizzleElements[3] != 3
                     || zeroElements[1] != 0 || zeroElements[2] != 0 || zeroElements[3] != 0
-                    || oneElements[1] != 0 || oneElements[2] != 0 || oneElements[3] != 0)
+                    || oneElements[1] != 0 || oneElements[2] != 0 || oneElements[3] != 0
+                    || dxt5nm || dxt5rxgb)
                 {
                     formatDecompress = DXGI_FORMAT_R8G8B8A8_SNORM;
                 }
@@ -2410,7 +2411,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if ((dwOptions & (UINT64_C(1) << OPT_RECONSTRUCT_Z))
                     || swizzleElements[2] != 2 || swizzleElements[3] != 3
                     || zeroElements[2] != 0 || zeroElements[3] != 0
-                    || oneElements[2] != 0 || oneElements[3] != 0)
+                    || oneElements[2] != 0 || oneElements[3] != 0
+                    || dxt5nm || dxt5rxgb)
                 {
                     formatDecompress = DXGI_FORMAT_R8G8B8A8_SNORM;
                 }
@@ -2421,7 +2423,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if ((dwOptions & ((UINT64_C(1) << OPT_INVERT_Y) | (UINT64_C(1)) << OPT_RECONSTRUCT_Z))
                     || swizzleElements[1] != 1 || swizzleElements[2] != 2 || swizzleElements[3] != 3
                     || zeroElements[1] != 0 || zeroElements[2] != 0 || zeroElements[3] != 0
-                    || oneElements[1] != 0 || oneElements[2] != 0 || oneElements[3] != 0)
+                    || oneElements[1] != 0 || oneElements[2] != 0 || oneElements[3] != 0
+                    || dxt5nm || dxt5rxgb)
                 {
                     formatDecompress = DXGI_FORMAT_R8G8B8A8_UNORM;
                 }
@@ -2432,7 +2435,8 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
                 if ((dwOptions & (UINT64_C(1) << OPT_RECONSTRUCT_Z))
                     || swizzleElements[2] != 2 || swizzleElements[3] != 3
                     || zeroElements[2] != 0 || zeroElements[3] != 0
-                    || oneElements[2] != 0 || oneElements[3] != 0)
+                    || oneElements[2] != 0 || oneElements[3] != 0
+                    || dxt5nm || dxt5rxgb)
                 {
                     formatDecompress = DXGI_FORMAT_R8G8B8A8_UNORM;
                 }
