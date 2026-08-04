@@ -229,7 +229,7 @@ if(BUILD_DX11 AND WIN32 AND (NOT (XBOX_CONSOLE_TARGET STREQUAL "durango")))
             MAIN_DEPENDENCY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd"
             DEPENDS ${SHADER_SOURCES}
             COMMENT "Generating HLSL shaders..."
-            COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_SHADERS}" $<$<BOOL:${DIRECTX_FXC_TOOL}>:LegacyShaderCompiler=${DIRECTX_FXC_TOOL}> CompileShaders.cmd > "${COMPILED_SHADERS}/compileshaders.log"
+            COMMAND ${CMAKE_COMMAND} -E env CompileShadersOutput="${COMPILED_SHADERS}" $<$<BOOL:${DIRECTX_FXC_TOOL}>:LegacyShaderCompiler=${DIRECTX_FXC_TOOL}> "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders/CompileShaders.cmd" > "${COMPILED_SHADERS}/compileshaders.log"
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/DirectXTex/Shaders"
             USES_TERMINAL)
     endif()
