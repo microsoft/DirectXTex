@@ -1,0 +1,13 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Debug_Scarlett" />
+    <BuildType Name="Release" />
+    <BuildType Name="Release_Scarlett" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Project Path="DirectXTex/DirectXTex_GXDK_PC_2022.vcxproj" Id="9e4d1c18-9e5e-4b35-83be-74830b9b3c34" />
+</Solution>

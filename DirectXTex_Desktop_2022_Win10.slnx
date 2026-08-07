@@ -1,0 +1,19 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Profile" />
+    <BuildType Name="Release" />
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Folder Name="/Tools/">
+    <Project Path="Texassemble/Texassemble_Desktop_2022_Win10.vcxproj" Id="8f18cbd7-4116-4956-bcd8-20d688a4cbd1" />
+    <Project Path="Texconv/Texconv_Desktop_2022_Win10.vcxproj" Id="c3a65381-8fd3-4f69-b29e-654b4b0ed136" />
+    <Project Path="Texdiag/texdiag_Desktop_2022_Win10.vcxproj" Id="8e31a619-f4f8-413f-a973-4ee37b1aaa5d" />
+  </Folder>
+  <Project DefaultStartup="true" Path="DirectXTex/DirectXTex_Desktop_2022_Win10.vcxproj" Id="371b9fa9-4c90-4ac6-a123-aced756d6c77" />
+</Solution>
