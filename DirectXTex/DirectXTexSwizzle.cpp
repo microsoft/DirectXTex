@@ -25,26 +25,26 @@ namespace
 
     // N3864 - A constexpr bitwise operations library for C++
     // https://github.com/fmatthew5876/stdcxx-bitops
-    uint32_t deposit_bits(uint32_t val, int mask) noexcept
+    uint32_t deposit_bits(uint32_t val, uint32_t mask) noexcept
     {
         uint32_t res = 0;
         for (uint32_t bb = 1; mask != 0; bb += bb)
         {
             if (val & bb)
             {
-                res |= mask & (-mask);
+                res |= mask & (~(mask - 1u));
             }
             mask &= (mask - 1);
         }
         return res;
     }
 
-    uint32_t extract_bits(uint32_t val, int mask) noexcept
+    uint32_t extract_bits(uint32_t val, uint32_t mask) noexcept
     {
         uint32_t res = 0;
         for (uint32_t bb = 1; mask != 0; bb += bb)
         {
-            if (val & mask & -mask)
+            if (val & mask & (~(mask - 1u)))
             {
                 res |= bb;
             }
@@ -61,6 +61,8 @@ namespace
 #else
     constexpr uint64_t MAX_TEXTURE_SIZE = UINT32_MAX;
 #endif
+
+    constexpr size_t STANDARD_TILE_SIZE = 65536u;
 
     // Standard Swizzle is not defined for these formats.
     bool IsExcludedFormat(DXGI_FORMAT fmt) noexcept
@@ -132,17 +134,29 @@ namespace
     //---------------------------------------------------------------------------------
     // row-major to z-order curve
     //---------------------------------------------------------------------------------
-    template<int xBytesMask, size_t bytesPerPixelOrBlock>
+    template<uint32_t xBytesMask, size_t bytesPerPixelOrBlock, bool isCompressed>
     HRESULT LinearToStandardSwizzle2D(
         const Image& srcImage,
-        const Image& destImage,
-        bool isCompressed) noexcept
+        const Image& destImage) noexcept
     {
         assert((srcImage.format == destImage.format) || (srcImage.width == destImage.width) || (srcImage.height == destImage.height));
 
         const uint8_t* sptr = srcImage.pixels;
         if (!sptr)
             return E_POINTER;
+
+        const size_t height = isCompressed ? (srcImage.height + 3) / 4 : srcImage.height;
+        const size_t width = isCompressed ? (srcImage.width  + 3) / 4 : srcImage.width;
+
+        uint64_t value = static_cast<uint64_t>(width) * bytesPerPixelOrBlock;
+        if (value > STANDARD_TILE_SIZE)
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+        const uint32_t widthInBytes = static_cast<uint32_t>(value);
+
+        value *= static_cast<uint64_t>(height);
+        if (value > STANDARD_TILE_SIZE)
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+        const uint32_t tileSizeInBytes = static_cast<uint32_t>(value);
 
         uint8_t* dptr = destImage.pixels;
         if (!dptr)
@@ -151,41 +165,48 @@ namespace
         if (srcImage.rowPitch > UINT32_MAX)
             return HRESULT_E_ARITHMETIC_OVERFLOW;
 
-        const size_t height = isCompressed ? (srcImage.height + 3) / 4 : srcImage.height;
-        const size_t width  = isCompressed ? (srcImage.width  + 3) / 4 : srcImage.width;
-
-        const size_t maxOffset = height * width * bytesPerPixelOrBlock;
-        const size_t tail = destImage.rowPitch * destImage.height;
-        if (maxOffset > tail)
-            return E_UNEXPECTED;
-
         const size_t rowPitch = srcImage.rowPitch;
+
+        uint8_t data[bytesPerPixelOrBlock] = {};
+
         const uint8_t* endPtr = sptr + (rowPitch * height);
-        for (size_t y = 0; y < height; ++y)
+        for (uint32_t zz = 0; zz < tileSizeInBytes; zz += bytesPerPixelOrBlock)
         {
-            if (sptr >= endPtr)
-                return E_FAIL;
+            uint32_t xx = extract_bits(zz, xBytesMask);
+            uint32_t yy = extract_bits(zz, ~xBytesMask);
 
-            const uint8_t* sourcePixelPointer = sptr;
-            for (size_t x = 0; x < width; ++x)
+        #if (__cplusplus >= 201703L)
+            if constexpr (isCompressed)
+        #else
+            if (isCompressed)
+        #endif
             {
-                const uint32_t swizzleIndex = deposit_bits(static_cast<uint32_t>(x), xBytesMask) + deposit_bits(static_cast<uint32_t>(y), ~xBytesMask);
-                const size_t swizzleOffset = swizzleIndex * bytesPerPixelOrBlock;
-                if (swizzleOffset >= maxOffset)
-                    return E_UNEXPECTED;
+                // This path pads with copies of the final block rather than zero-fill.
+                if (xx < widthInBytes && yy < height)
+                {
+                    const uint8_t * sourcePixelPointer = sptr + (yy * rowPitch) + xx;
+                    if (sourcePixelPointer >= endPtr)
+                        return E_FAIL;
 
-                uint8_t* destPixelPointer = dptr + swizzleOffset;
-                memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixelOrBlock);
+                    memcpy(data, sourcePixelPointer, bytesPerPixelOrBlock);
+                }
 
-                sourcePixelPointer += bytesPerPixelOrBlock;
+                memcpy(dptr, data, bytesPerPixelOrBlock);
+            }
+            else if (xx < widthInBytes && yy < height)
+            {
+                const uint8_t * sourcePixelPointer = sptr + (yy * rowPitch) + xx;
+                if (sourcePixelPointer >= endPtr)
+                    return E_FAIL;
+
+                memcpy(dptr, sourcePixelPointer, bytesPerPixelOrBlock);
+            }
+            else
+            {
+                memcpy(dptr, data, bytesPerPixelOrBlock);
             }
 
-            sptr += rowPitch;
-        }
-
-        if ((tail > maxOffset) && isCompressed)
-        {
-            // TODO: Pad with copy of last block instead of all zeroes
+            dptr += bytesPerPixelOrBlock;
         }
 
         return S_OK;
@@ -194,7 +215,7 @@ namespace
     //---------------------------------------------------------------------------------
     // z-order curve to row-major
     //---------------------------------------------------------------------------------
-    template<int xBytesMask, size_t bytesPerPixelOrBlock>
+    template<uint32_t xBytesMask, size_t bytesPerPixelOrBlock>
     HRESULT StandardSwizzleToLinear2D(
         const Image& srcImage,
         const Image& destImage,
@@ -206,43 +227,46 @@ namespace
         if (!sptr)
             return E_POINTER;
 
-        uint8_t* dptr = destImage.pixels;
-        if (!dptr)
-            return E_POINTER;
-
         if (srcImage.rowPitch > UINT32_MAX)
             return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         const size_t height = isCompressed ? (srcImage.height + 3) / 4 : srcImage.height;
         const size_t width  = isCompressed ? (srcImage.width  + 3) / 4 : srcImage.width;
 
+        uint64_t value = static_cast<uint64_t>(width) * bytesPerPixelOrBlock;
+        if (value > STANDARD_TILE_SIZE)
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+        const uint32_t widthInBytes = static_cast<uint32_t>(value);
+
+        value *= static_cast<uint64_t>(height);
+        if (value > STANDARD_TILE_SIZE)
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+        const uint32_t tileSizeInBytes = static_cast<uint32_t>(value);
+
+        uint8_t* dptr = destImage.pixels;
+        if (!dptr)
+            return E_POINTER;
+
         const size_t rowPitch = destImage.rowPitch;
 
-        const uint64_t totalPixels = static_cast<uint64_t>(width) * static_cast<uint64_t>(height);
-        if (totalPixels > UINT32_MAX)
-            return HRESULT_E_ARITHMETIC_OVERFLOW;
-
-        const uint64_t totalDataSize = totalPixels * static_cast<uint64_t>(bytesPerPixelOrBlock);
-        if (totalDataSize > MAX_TEXTURE_SIZE)
-            return HRESULT_E_ARITHMETIC_OVERFLOW;
-
-        const size_t maxOffset = static_cast<size_t>(totalDataSize);
-        const uint8_t* endPtr = sptr + static_cast<ptrdiff_t>(totalDataSize);
-        for (size_t swizzleIndex = 0; swizzleIndex < static_cast<size_t>(totalPixels); ++swizzleIndex)
+        const uint8_t* endPtr = sptr + tileSizeInBytes;
+        for(uint32_t yy = 0; yy < height; ++yy)
         {
-            if (sptr >= endPtr)
-                return E_FAIL;
+            for(uint32_t xx = 0; xx < widthInBytes; xx += bytesPerPixelOrBlock)
+            {
+                const uint32_t swizzleOffset = deposit_bits(xx, xBytesMask) | deposit_bits(yy, ~xBytesMask);
+                if (swizzleOffset >= tileSizeInBytes)
+                    return E_UNEXPECTED;
 
-            uint32_t destX = extract_bits(static_cast<uint32_t>(swizzleIndex), xBytesMask);
-            uint32_t destY = extract_bits(static_cast<uint32_t>(swizzleIndex), ~xBytesMask);
+                const uint8_t* sourcePixelPointer = sptr + swizzleOffset;
+                if (sourcePixelPointer >= endPtr)
+                    return E_FAIL;
 
-            size_t rowMajorOffset = destY * rowPitch + destX * bytesPerPixelOrBlock;
-            if (rowMajorOffset >= maxOffset)
-                return E_UNEXPECTED;
+                uint8_t* destPixelPointer = dptr + xx;
+                memcpy(destPixelPointer, sourcePixelPointer, bytesPerPixelOrBlock);
+            }
 
-            uint8_t* destPixelPointer = dptr + rowMajorOffset;
-            memcpy(destPixelPointer, sptr, bytesPerPixelOrBlock);
-            sptr += bytesPerPixelOrBlock;
+            dptr += rowPitch;
         }
 
         return S_OK;
@@ -273,13 +297,14 @@ namespace
     //---------------------------------------------------------------------------------
     // row-major to z-order curve
     //---------------------------------------------------------------------------------
-    template<int xBytesMask, int yBytesMask, int zBytesMask, size_t bytesPerPixelOrBlock>
+    template<int xBytesMask, uint32_t yBytesMask, uint32_t zBytesMask, size_t bytesPerPixelOrBlock>
     HRESULT LinearToStandardSwizzle3D(
         _In_reads_(depth) const Image* srcImages,
         const Image& destImage,
         size_t depth,
         bool isCompressed) noexcept
     {
+        // TODO: rewrite!
         if (!srcImages || !depth)
             return E_INVALIDARG;
 
@@ -321,8 +346,8 @@ namespace
                 for (size_t x = 0; x < width; ++x)
                 {
                     const uint32_t swizzleIndex = deposit_bits(static_cast<uint32_t>(x), xBytesMask)
-                        + deposit_bits(static_cast<uint32_t>(y), yBytesMask)
-                        + deposit_bits(static_cast<uint32_t>(z), zBytesMask);
+                        | deposit_bits(static_cast<uint32_t>(y), yBytesMask)
+                        | deposit_bits(static_cast<uint32_t>(z), zBytesMask);
                     const size_t swizzleOffset = swizzleIndex * bytesPerPixelOrBlock;
                     if (swizzleOffset >= maxOffset)
                         return E_UNEXPECTED;
@@ -348,13 +373,15 @@ namespace
     //---------------------------------------------------------------------------------
     // z-order curve to row-major
     //---------------------------------------------------------------------------------
-    template<int xBytesMask, int yBytesMask, int zBytesMask, size_t bytesPerPixelOrBlock>
+    template<uint32_t xBytesMask, uint32_t yBytesMask, uint32_t zBytesMask, size_t bytesPerPixelOrBlock>
     HRESULT StandardSwizzleToLinear3D(
         _In_reads_(depth) const Image* srcImages,
         const Image& destImage,
         size_t depth,
         bool isCompressed) noexcept
     {
+        // TODO: rewrite!
+
         if (!srcImages || !depth)
             return E_INVALIDARG;
 
@@ -448,7 +475,7 @@ HRESULT DirectX::StandardSwizzle(
     if (!bytesPerPixelOrBlock)
     {
         result.Release();
-        return E_FAIL;
+        return E_UNEXPECTED;
     }
 
     const auto dstImage = result.GetImage(0, 0, 0);
@@ -460,23 +487,38 @@ HRESULT DirectX::StandardSwizzle(
 
     if (toSwizzle)
     {
-        switch(bytesPerPixelOrBlock)
+        if (isCompressed)
         {
-        case 1:
-            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_8, 1>(srcImage, *dstImage, false);
-            break;
-        case 2:
-            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_16, 2>(srcImage, *dstImage, false);
-            break;
-        case 8:
-            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_64, 8>(srcImage, *dstImage, isCompressed);
-            break;
-        case 16:
-            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_128, 16>(srcImage, *dstImage, isCompressed);
-            break;
-        default:
-            hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_32, 4>(srcImage, *dstImage, false);
-            break;
+            switch (bytesPerPixelOrBlock)
+            {
+            case 8:
+                hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_64, 8, true>(srcImage, *dstImage);
+                break;
+            default:
+                hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_128, 16, true>(srcImage, *dstImage);
+                break;
+            }
+        }
+        else
+        {
+            switch (bytesPerPixelOrBlock)
+            {
+            case 1:
+                hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_8, 1, false>(srcImage, *dstImage);
+                break;
+            case 2:
+                hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_16, 2, false>(srcImage, *dstImage);
+                break;
+            case 8:
+                hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_64, 8, false>(srcImage, *dstImage);
+                break;
+            case 16:
+                hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_128, 16, false>(srcImage, *dstImage);
+                break;
+            default:
+                hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_32, 4, false>(srcImage, *dstImage);
+                break;
+            }
         }
     }
     else
@@ -546,7 +588,7 @@ HRESULT DirectX::StandardSwizzle(
     if (!bytesPerPixelOrBlock)
     {
         result.Release();
-        return E_FAIL;
+        return E_UNEXPECTED;
     }
 
     const Image* dest = result.GetImages();
@@ -702,23 +744,38 @@ HRESULT DirectX::StandardSwizzle(
 
             if (toSwizzle)
             {
-                switch(bytesPerPixelOrBlock)
+                if (isCompressed)
                 {
-                case 1:
-                    hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_8, 1>(src, dst, false);
-                    break;
-                case 2:
-                    hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_16, 2>(src, dst, false);
-                    break;
-                case 8:
-                    hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_64, 8>(src, dst, isCompressed);
-                    break;
-                case 16:
-                    hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_128, 16>(src, dst, isCompressed);
-                    break;
-                default:
-                    hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_32, 4>(src, dst, false);
-                    break;
+                    switch (bytesPerPixelOrBlock)
+                    {
+                    case 8:
+                        hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_64, 8, true>(src, dst);
+                        break;
+                    default:
+                        hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_128, 16, true>(src, dst);
+                        break;
+                    }
+                }
+                else
+                {
+                    switch (bytesPerPixelOrBlock)
+                    {
+                    case 1:
+                        hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_8, 1, false>(src, dst);
+                        break;
+                    case 2:
+                        hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_16, 2, false>(src, dst);
+                        break;
+                    case 8:
+                        hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_64, 8, false>(src, dst);
+                        break;
+                    case 16:
+                        hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_128, 16, false>(src, dst);
+                        break;
+                    default:
+                        hr = LinearToStandardSwizzle2D<STANDARD_SWIZZLE_MASK_32, 4, false>(src, dst);
+                        break;
+                    }
                 }
             }
             else
