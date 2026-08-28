@@ -3124,6 +3124,28 @@ struct CD3DX12_RT_FORMAT_ARRAY : public D3D12_RT_FORMAT_ARRAY
 };
 
 //------------------------------------------------------------------------------------------------
+#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 618)
+struct CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC : public D3D12_SERIALIZED_ROOT_SIGNATURE_DESC
+{
+    CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC() = default;
+    explicit CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC(const D3D12_SERIALIZED_ROOT_SIGNATURE_DESC& o) noexcept :
+        D3D12_SERIALIZED_ROOT_SIGNATURE_DESC(o)
+    {
+    }
+    explicit CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC( CD3DX12_DEFAULT ) noexcept
+    {
+        pSerializedBlob = nullptr;
+        SerializedBlobSizeInBytes = 0;
+    }
+    explicit CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC( const void* pData, SIZE_T size) noexcept
+    {
+        pSerializedBlob = pData;
+        SerializedBlobSizeInBytes = size;
+    }
+};
+#endif
+
+//------------------------------------------------------------------------------------------------
 // Pipeline State Stream Helpers
 //------------------------------------------------------------------------------------------------
 
@@ -3189,6 +3211,9 @@ typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< DXGI_SAMPLE_DESC,              
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< UINT,                               D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_MASK,    DefaultSampleMask> CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_MASK;
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< D3D12_CACHED_PIPELINE_STATE,        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CACHED_PSO>                        CD3DX12_PIPELINE_STATE_STREAM_CACHED_PSO;
 typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT< CD3DX12_VIEW_INSTANCING_DESC,       D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VIEW_INSTANCING, CD3DX12_DEFAULT>  CD3DX12_PIPELINE_STATE_STREAM_VIEW_INSTANCING;
+#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 618)
+typedef CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT<CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC, D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SERIALIZED_ROOT_SIGNATURE>      CD3DX12_PIPELINE_STATE_STREAM_SERIALIZED_ROOT_SIGNATURE;
+#endif
 
 //------------------------------------------------------------------------------------------------
 // Stream Parser Helpers
@@ -3230,6 +3255,9 @@ struct ID3DX12PipelineParserCallbacks
     virtual void SampleMaskCb(UINT) {}
     virtual void ViewInstancingCb(const D3D12_VIEW_INSTANCING_DESC&) {}
     virtual void CachedPSOCb(const D3D12_CACHED_PIPELINE_STATE&) {}
+#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 618)
+    virtual void SerializedRootSignatureCb(const D3D12_SERIALIZED_ROOT_SIGNATURE_DESC&) {}
+#endif
 
     // Error Callbacks
     virtual void ErrorBadInputParameter(UINT /*ParameterIndex*/) {}
@@ -3261,6 +3289,131 @@ struct D3DX12_MESH_SHADER_PIPELINE_STATE_DESC
     D3D12_CACHED_PIPELINE_STATE   CachedPSO;
     D3D12_PIPELINE_STATE_FLAGS    Flags;
 };
+
+#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 618)
+struct CD3DX12_PIPELINE_STATE_STREAM6
+{
+    CD3DX12_PIPELINE_STATE_STREAM6() = default;
+    // Mesh and amplification shaders must be set manually, since they do not have representation in D3D12_GRAPHICS_PIPELINE_STATE_DESC
+    CD3DX12_PIPELINE_STATE_STREAM6(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& Desc) noexcept
+        : Flags(Desc.Flags)
+        , NodeMask(Desc.NodeMask)
+        , pRootSignature(Desc.pRootSignature)
+        , InputLayout(Desc.InputLayout)
+        , IBStripCutValue(Desc.IBStripCutValue)
+        , PrimitiveTopologyType(Desc.PrimitiveTopologyType)
+        , VS(Desc.VS)
+        , GS(Desc.GS)
+        , StreamOutput(Desc.StreamOutput)
+        , HS(Desc.HS)
+        , DS(Desc.DS)
+        , PS(Desc.PS)
+        , BlendState(CD3DX12_BLEND_DESC(Desc.BlendState))
+        , DepthStencilState(CD3DX12_DEPTH_STENCIL_DESC2(Desc.DepthStencilState))
+        , DSVFormat(Desc.DSVFormat)
+        , RasterizerState(CD3DX12_RASTERIZER_DESC2(Desc.RasterizerState))
+        , RTVFormats(CD3DX12_RT_FORMAT_ARRAY(Desc.RTVFormats, Desc.NumRenderTargets))
+        , SampleDesc(Desc.SampleDesc)
+        , SampleMask(Desc.SampleMask)
+        , CachedPSO(Desc.CachedPSO)
+        , ViewInstancingDesc(CD3DX12_VIEW_INSTANCING_DESC(CD3DX12_DEFAULT()))
+        , SerializedRootSignature(CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC(CD3DX12_DEFAULT()))
+    {
+    }
+    CD3DX12_PIPELINE_STATE_STREAM6(const D3DX12_MESH_SHADER_PIPELINE_STATE_DESC& Desc) noexcept
+        : Flags(Desc.Flags)
+        , NodeMask(Desc.NodeMask)
+        , pRootSignature(Desc.pRootSignature)
+        , PrimitiveTopologyType(Desc.PrimitiveTopologyType)
+        , PS(Desc.PS)
+        , AS(Desc.AS)
+        , MS(Desc.MS)
+        , BlendState(CD3DX12_BLEND_DESC(Desc.BlendState))
+        , DepthStencilState(CD3DX12_DEPTH_STENCIL_DESC2(Desc.DepthStencilState))
+        , DSVFormat(Desc.DSVFormat)
+        , RasterizerState(CD3DX12_RASTERIZER_DESC2(Desc.RasterizerState))
+        , RTVFormats(CD3DX12_RT_FORMAT_ARRAY(Desc.RTVFormats, Desc.NumRenderTargets))
+        , SampleDesc(Desc.SampleDesc)
+        , SampleMask(Desc.SampleMask)
+        , CachedPSO(Desc.CachedPSO)
+        , ViewInstancingDesc(CD3DX12_VIEW_INSTANCING_DESC(CD3DX12_DEFAULT()))
+        , SerializedRootSignature(CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC(CD3DX12_DEFAULT()))
+    {
+    }
+    CD3DX12_PIPELINE_STATE_STREAM6(const D3D12_COMPUTE_PIPELINE_STATE_DESC& Desc) noexcept
+        : Flags(Desc.Flags)
+        , NodeMask(Desc.NodeMask)
+        , pRootSignature(Desc.pRootSignature)
+        , CS(CD3DX12_SHADER_BYTECODE(Desc.CS))
+        , CachedPSO(Desc.CachedPSO)
+        , SerializedRootSignature(CD3DX12_SERIALIZED_ROOT_SIGNATURE_DESC(CD3DX12_DEFAULT()))
+    {
+        static_cast<D3D12_DEPTH_STENCIL_DESC2&>(DepthStencilState).DepthEnable = false;
+    }
+    CD3DX12_PIPELINE_STATE_STREAM_FLAGS Flags;
+    CD3DX12_PIPELINE_STATE_STREAM_NODE_MASK NodeMask;
+    CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE pRootSignature;
+    CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
+    CD3DX12_PIPELINE_STATE_STREAM_IB_STRIP_CUT_VALUE IBStripCutValue;
+    CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
+    CD3DX12_PIPELINE_STATE_STREAM_VS VS;
+    CD3DX12_PIPELINE_STATE_STREAM_GS GS;
+    CD3DX12_PIPELINE_STATE_STREAM_STREAM_OUTPUT StreamOutput;
+    CD3DX12_PIPELINE_STATE_STREAM_HS HS;
+    CD3DX12_PIPELINE_STATE_STREAM_DS DS;
+    CD3DX12_PIPELINE_STATE_STREAM_PS PS;
+    CD3DX12_PIPELINE_STATE_STREAM_AS AS;
+    CD3DX12_PIPELINE_STATE_STREAM_MS MS;
+    CD3DX12_PIPELINE_STATE_STREAM_CS CS;
+    CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC BlendState;
+    CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL2 DepthStencilState;
+    CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
+    CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER2 RasterizerState;
+    CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
+    CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_DESC SampleDesc;
+    CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_MASK SampleMask;
+    CD3DX12_PIPELINE_STATE_STREAM_CACHED_PSO CachedPSO;
+    CD3DX12_PIPELINE_STATE_STREAM_VIEW_INSTANCING ViewInstancingDesc;
+    CD3DX12_PIPELINE_STATE_STREAM_SERIALIZED_ROOT_SIGNATURE SerializedRootSignature;
+
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC GraphicsDescV0() const noexcept
+    {
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC D;
+        D.Flags = this->Flags;
+        D.NodeMask = this->NodeMask;
+        D.pRootSignature = this->pRootSignature;
+        D.InputLayout = this->InputLayout;
+        D.IBStripCutValue = this->IBStripCutValue;
+        D.PrimitiveTopologyType = this->PrimitiveTopologyType;
+        D.VS = this->VS;
+        D.GS = this->GS;
+        D.StreamOutput = this->StreamOutput;
+        D.HS = this->HS;
+        D.DS = this->DS;
+        D.PS = this->PS;
+        D.BlendState = this->BlendState;
+        D.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC2(D3D12_DEPTH_STENCIL_DESC2(this->DepthStencilState));
+        D.DSVFormat = this->DSVFormat;
+        D.RasterizerState = CD3DX12_RASTERIZER_DESC2(D3D12_RASTERIZER_DESC2(this->RasterizerState));
+        D.NumRenderTargets = D3D12_RT_FORMAT_ARRAY(this->RTVFormats).NumRenderTargets;
+        memcpy(D.RTVFormats, D3D12_RT_FORMAT_ARRAY(this->RTVFormats).RTFormats, sizeof(D.RTVFormats));
+        D.SampleDesc = this->SampleDesc;
+        D.SampleMask = this->SampleMask;
+        D.CachedPSO = this->CachedPSO;
+        return D;
+    }
+    D3D12_COMPUTE_PIPELINE_STATE_DESC ComputeDescV0() const noexcept
+    {
+        D3D12_COMPUTE_PIPELINE_STATE_DESC D;
+        D.Flags = this->Flags;
+        D.NodeMask = this->NodeMask;
+        D.pRootSignature = this->pRootSignature;
+        D.CS = this->CS;
+        D.CachedPSO = this->CachedPSO;
+        return D;
+    }
+};
+#endif
 
 #if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 610)
 // Use CD3DX12_PIPELINE_STATE_STREAM5 for D3D12_RASTERIZER_DESC2 when CheckFeatureSupport returns true for Options19::RasterizerDesc2Supported is true
@@ -4803,7 +4956,7 @@ inline bool operator==( const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC &a, const D3D
 //================================================================================================
 #include <list>
 #include <forward_list>
-#include <vector>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -7703,6 +7856,14 @@ public: // Function declaration
     D3D12_TIGHT_ALIGNMENT_TIER TightAlignmentSupportTier() const noexcept;
 #endif
 
+#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 619)
+    // D3D12_OPTIONS22
+    BOOL ShaderExecutionReorderingActuallyReorders() const noexcept;
+    BOOL CreateByteOffsetViewsSupported() const noexcept;
+    UINT Max1DDispatchSize() const noexcept;
+    UINT Max1DDispatchMeshSize() const noexcept;
+#endif
+
 private: // Private structs and helpers declaration
     struct ProtectedResourceSessionTypesLocal : D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES
     {
@@ -7791,6 +7952,9 @@ private: // Member data
 #endif
 #if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 612)
     D3D12_FEATURE_DATA_D3D12_OPTIONS21 m_dOptions21;
+#endif
+#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 619)
+    D3D12_FEATURE_DATA_D3D12_OPTIONS22 m_dOptions22;
 #endif
 #if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 617)
     D3D12_FEATURE_DATA_TIGHT_ALIGNMENT m_dTightAlignment;
@@ -7888,6 +8052,9 @@ inline CD3DX12FeatureSupport::CD3DX12FeatureSupport() noexcept
 #endif
 #if defined (D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 612)
 , m_dOptions21{}
+#endif
+#if defined (D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 619)
+, m_dOptions22{}
 #endif
 #if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 617)
 , m_dTightAlignment{}
@@ -8064,6 +8231,13 @@ inline HRESULT CD3DX12FeatureSupport::Init(ID3D12Device* pDevice)
     if (FAILED(m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &m_dOptions21, sizeof(m_dOptions21))))
     {
         m_dOptions21 = {};
+    }
+#endif
+
+#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 619)
+    if (FAILED(m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS22, &m_dOptions22, sizeof(m_dOptions22))))
+    {
+        m_dOptions22 = {};
     }
 #endif
 
@@ -8455,6 +8629,14 @@ FEATURE_SUPPORT_GET(D3D12_WORK_GRAPHS_TIER, m_dOptions21, WorkGraphsTier);
 #if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 617)
 // 51: TightAlignment
 FEATURE_SUPPORT_GET_NAME(D3D12_TIGHT_ALIGNMENT_TIER, m_dTightAlignment, SupportTier, TightAlignmentSupportTier);
+#endif
+
+#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 619)
+// 52: Options22
+FEATURE_SUPPORT_GET(BOOL, m_dOptions22, ShaderExecutionReorderingActuallyReorders);
+FEATURE_SUPPORT_GET(BOOL, m_dOptions22, CreateByteOffsetViewsSupported);
+FEATURE_SUPPORT_GET(UINT, m_dOptions22, Max1DDispatchSize);
+FEATURE_SUPPORT_GET(UINT, m_dOptions22, Max1DDispatchMeshSize);
 #endif
 
 // Helper function to decide the highest shader model supported by the system
