@@ -29,10 +29,9 @@
 
 #include <png.h>
 
-
 using namespace DirectX;
 using std::filesystem::path;
-using ScopedFILE = std::unique_ptr<FILE, int(*)(FILE*)>;
+using ScopedFILE = std::unique_ptr<FILE, int (*)(FILE*)>;
 
 namespace
 {
@@ -40,7 +39,7 @@ namespace
     ScopedFILE OpenFILE(const path& p) noexcept(false)
     {
         const std::wstring fpath = p.generic_wstring();
-        FILE* fp = nullptr;
+        FILE*              fp    = nullptr;
         if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"rb"); ec)
             throw std::system_error{ static_cast<int>(_doserrno), std::system_category(), "_wfopen_s" };
         return { fp, &fclose };
@@ -48,7 +47,7 @@ namespace
     ScopedFILE CreateFILE(const path& p) noexcept(false)
     {
         const std::wstring fpath = p.generic_wstring();
-        FILE* fp = nullptr;
+        FILE*              fp    = nullptr;
         if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"w+b"); ec)
             throw std::system_error{ static_cast<int>(_doserrno), std::system_category(), "_wfopen_s" };
         return { fp, &fclose };
@@ -57,7 +56,7 @@ namespace
     ScopedFILE OpenFILE(const path& p) noexcept(false)
     {
         const std::string fpath = p.generic_string();
-        FILE* fp = fopen(fpath.c_str(), "rb");
+        FILE*             fp    = fopen(fpath.c_str(), "rb");
         if (!fp)
             throw std::system_error{ errno, std::system_category(), "fopen" };
         return { fp, &fclose };
@@ -65,7 +64,7 @@ namespace
     ScopedFILE CreateFILE(const path& p) noexcept(false)
     {
         const std::string fpath = p.generic_string();
-        FILE* fp = fopen(fpath.c_str(), "w+b");
+        FILE*             fp    = fopen(fpath.c_str(), "w+b");
         if (!fp)
             throw std::system_error{ errno, std::system_category(), "fopen" };
         return { fp, &fclose };
@@ -85,20 +84,21 @@ namespace
     /// @note If the PNG contains some extra chunks like EXIF, this will be used
     void OnPNGRead(png_structp st, png_bytep ptr, size_t len)
     {
-        FILE* fin = reinterpret_cast<FILE*>(png_get_io_ptr(st));
+        FILE* fin   = reinterpret_cast<FILE*>(png_get_io_ptr(st));
         std::ignore = fread(ptr, len, 1, fin);
     }
-
 
     /// @see http://www.libpng.org/pub/png/libpng.html
     /// @see http://www.libpng.org/pub/png/libpng-manual.txt
     class PNGDecompress final
     {
         png_structp st;
-        png_infop info;
+        png_infop   info;
 
     public:
-        PNGDecompress() noexcept(false) : st{ nullptr }, info{ nullptr }
+        PNGDecompress() noexcept(false)
+            : st{ nullptr },
+              info{ nullptr }
         {
             st = png_create_read_struct(PNG_LIBPNG_VER_STRING, this, &OnPNGError, &OnPNGWarning);
             if (!st)
@@ -111,10 +111,7 @@ namespace
             }
         }
 
-        ~PNGDecompress() noexcept
-        {
-            png_destroy_read_struct(&st, &info, nullptr);
-        }
+        ~PNGDecompress() noexcept { png_destroy_read_struct(&st, &info, nullptr); }
 
         void UseInput(FILE* fin) noexcept
         {
@@ -156,16 +153,16 @@ namespace
             png_set_alpha_mode(st, PNG_ALPHA_STANDARD, PNG_GAMMA_LINEAR);
 
             // Deal with custom color profiles
-            if( png_get_valid( st, info, PNG_INFO_gAMA ) )
+            if (png_get_valid(st, info, PNG_INFO_gAMA))
             {
-                double gamma = 0;
+                double gamma        = 0;
                 double screen_gamma = 2.2;
 
-                if( png_get_gAMA( st, info, &gamma ) )
+                if (png_get_gAMA(st, info, &gamma))
                 {
                     // If gamma == 1.0, then the data is internally linear.
-                    if( abs( gamma - 1.0 ) > 1e-6 )
-                        png_set_gamma( st, screen_gamma, gamma );
+                    if (abs(gamma - 1.0) > 1e-6)
+                        png_set_gamma(st, screen_gamma, gamma);
                 }
             }
 
@@ -195,12 +192,12 @@ namespace
 
             // RGB/BGR and sRGB or not
             DXGI_FORMAT linear = DXGI_FORMAT_R8G8B8A8_UNORM;
-            DXGI_FORMAT srgb = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+            DXGI_FORMAT srgb   = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
             if (flags & PNG_FLAGS_BGR)
             {
                 png_set_bgr(st);
                 linear = DXGI_FORMAT_B8G8R8A8_UNORM;
-                srgb = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+                srgb   = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
             }
 
             if (flags & PNG_FLAGS_IGNORE_SRGB)
@@ -210,13 +207,13 @@ namespace
             if (png_get_sRGB(st, info, &intent) != 0)
                 return srgb;
 
-            if( png_get_valid( st, info, PNG_INFO_gAMA ) )
+            if (png_get_valid(st, info, PNG_INFO_gAMA))
             {
                 double gamma = 0;
-                if( png_get_gAMA( st, info, &gamma ) )
+                if (png_get_gAMA(st, info, &gamma))
                 {
                     // This PNG is explicitly linear.
-                    if( abs( gamma - 1.0 ) <= 1e-6 )
+                    if (abs(gamma - 1.0) <= 1e-6)
                         return linear;
                 }
             }
@@ -227,19 +224,17 @@ namespace
         /// @todo More correct DXGI_FORMAT mapping
         void GetHeader(PNG_FLAGS flags, TexMetadata& metadata) noexcept(false)
         {
-            metadata = {};
-            metadata.width = png_get_image_width(st, info);
-            metadata.height = png_get_image_height(st, info);
+            metadata           = {};
+            metadata.width     = png_get_image_width(st, info);
+            metadata.height    = png_get_image_height(st, info);
             metadata.arraySize = 1;
             metadata.mipLevels = 1;
-            metadata.depth = 1;
+            metadata.depth     = 1;
             metadata.dimension = TEX_DIMENSION_TEXTURE2D;
-            metadata.format = GuessFormat(flags);
-            auto color_type = png_get_color_type(st, info);
-            bool have_alpha = (color_type & PNG_COLOR_MASK_ALPHA);
-            if (have_alpha == false
-                && (metadata.format != DXGI_FORMAT_R8_UNORM)
-                && (metadata.format != DXGI_FORMAT_R16_UNORM))
+            metadata.format    = GuessFormat(flags);
+            auto color_type    = png_get_color_type(st, info);
+            bool have_alpha    = (color_type & PNG_COLOR_MASK_ALPHA);
+            if (have_alpha == false && (metadata.format != DXGI_FORMAT_R8_UNORM) && (metadata.format != DXGI_FORMAT_R16_UNORM))
             {
                 if (metadata.format == DXGI_FORMAT_B8G8R8A8_UNORM)
                     metadata.format = DXGI_FORMAT_B8G8R8X8_UNORM;
@@ -285,10 +280,12 @@ namespace
     class PNGCompress final
     {
         png_structp st;
-        png_infop info;
+        png_infop   info;
 
     public:
-        PNGCompress() noexcept(false) : st{ nullptr }, info{ nullptr }
+        PNGCompress() noexcept(false)
+            : st{ nullptr },
+              info{ nullptr }
         {
             st = png_create_write_struct(PNG_LIBPNG_VER_STRING, this, &OnPNGError, &OnPNGWarning);
             if (!st)
@@ -302,44 +299,30 @@ namespace
             png_set_compression_level(st, 0);
         }
 
-        ~PNGCompress() noexcept
-        {
-            png_destroy_write_struct(&st, &info);
-        }
+        ~PNGCompress() noexcept { png_destroy_write_struct(&st, &info); }
 
-        void UseOutput(FILE* fout) noexcept
-        {
-            png_init_io(st, fout);
-        }
+        void UseOutput(FILE* fout) noexcept { png_init_io(st, fout); }
 
         HRESULT WriteImage(PNG_FLAGS flags, const Image& image) noexcept(false)
         {
-            int color_type = PNG_COLOR_TYPE_RGB;
-            bool using_bgr = false;
-            bool using_srgb = false;
-            int bit_depth = 8;
+            int  color_type  = PNG_COLOR_TYPE_RGB;
+            bool using_bgr   = false;
+            bool using_srgb  = false;
+            int  bit_depth   = 8;
             bool strip_alpha = false;
             switch (image.format)
             {
-            case DXGI_FORMAT_R8_UNORM:
-                color_type = PNG_COLOR_TYPE_GRAY;
-                break;
+            case DXGI_FORMAT_R8_UNORM: color_type = PNG_COLOR_TYPE_GRAY; break;
 
             case DXGI_FORMAT_R16_UNORM:
                 color_type = PNG_COLOR_TYPE_GRAY;
-                bit_depth = 16;
+                bit_depth  = 16;
                 break;
 
-            case DXGI_FORMAT_B8G8R8A8_UNORM:
-                using_bgr = true;
-                [[fallthrough]];
-            case DXGI_FORMAT_R8G8B8A8_UNORM:
-                color_type = PNG_COLOR_TYPE_RGBA;
-                break;
+            case DXGI_FORMAT_B8G8R8A8_UNORM:      using_bgr = true; [[fallthrough]];
+            case DXGI_FORMAT_R8G8B8A8_UNORM:      color_type = PNG_COLOR_TYPE_RGBA; break;
 
-            case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-                using_bgr = true;
-                [[fallthrough]];
+            case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB: using_bgr = true; [[fallthrough]];
             case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
                 using_srgb = true;
                 color_type = PNG_COLOR_TYPE_RGBA;
@@ -347,23 +330,21 @@ namespace
 
             case DXGI_FORMAT_R16G16B16A16_UNORM:
                 color_type = PNG_COLOR_TYPE_RGBA;
-                bit_depth = 16;
+                bit_depth  = 16;
                 break;
 
-            case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-                using_srgb = true;
-                [[fallthrough]];
+            case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB: using_srgb = true; [[fallthrough]];
             case DXGI_FORMAT_B8G8R8X8_UNORM:
-                using_bgr = true;
+                using_bgr   = true;
                 strip_alpha = true;
-                color_type = PNG_COLOR_TYPE_RGB;
+                color_type  = PNG_COLOR_TYPE_RGB;
                 break;
 
-            default:
-                return HRESULT_E_NOT_SUPPORTED;
+            default: return HRESULT_E_NOT_SUPPORTED;
             }
 
-            png_set_IHDR(st, info,
+            png_set_IHDR(st,
+                info,
                 static_cast<uint32_t>(image.width),
                 static_cast<uint32_t>(image.height),
                 bit_depth,
@@ -394,7 +375,7 @@ namespace
             }
 
             std::vector<png_bytep> rows(image.height);
-            for (size_t i = 0u; i< image.height; ++i)
+            for (size_t i = 0u; i < image.height; ++i)
             {
                 rows[i] = image.pixels + (image.rowPitch * i);
             }
@@ -403,20 +384,16 @@ namespace
             return S_OK;
         }
     };
-}
+} // namespace
 
-_Use_decl_annotations_
-HRESULT DirectX::GetMetadataFromPNGFile(
-    const wchar_t* file,
-    PNG_FLAGS flags,
-    TexMetadata& metadata)
+_Use_decl_annotations_ HRESULT DirectX::GetMetadataFromPNGFile(const wchar_t* file, PNG_FLAGS flags, TexMetadata& metadata)
 {
     if (!file)
         return E_INVALIDARG;
 
     try
     {
-        auto fin = OpenFILE(file);
+        auto          fin = OpenFILE(file);
         PNGDecompress decoder{};
         decoder.UseInput(fin.get());
         decoder.Update(flags);
@@ -429,11 +406,11 @@ HRESULT DirectX::GetMetadataFromPNGFile(
     }
     catch (const std::system_error& ec)
     {
-    #ifdef _WIN32
+#ifdef _WIN32
         return HRESULT_FROM_WIN32(static_cast<unsigned long>(ec.code().value()));
-    #else
+#else
         return (ec.code().value() == ENOENT) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
-    #endif
+#endif
     }
     catch (const std::invalid_argument&)
     {
@@ -445,12 +422,7 @@ HRESULT DirectX::GetMetadataFromPNGFile(
     }
 }
 
-_Use_decl_annotations_
-HRESULT DirectX::LoadFromPNGFile(
-    const wchar_t* file,
-    PNG_FLAGS flags,
-    TexMetadata* metadata,
-    ScratchImage& image)
+_Use_decl_annotations_ HRESULT DirectX::LoadFromPNGFile(const wchar_t* file, PNG_FLAGS flags, TexMetadata* metadata, ScratchImage& image)
 {
     if (!file)
         return E_INVALIDARG;
@@ -459,7 +431,7 @@ HRESULT DirectX::LoadFromPNGFile(
 
     try
     {
-        auto fin = OpenFILE(file);
+        auto          fin = OpenFILE(file);
         PNGDecompress decoder{};
         decoder.UseInput(fin.get());
         decoder.Update(flags);
@@ -475,11 +447,11 @@ HRESULT DirectX::LoadFromPNGFile(
     catch (const std::system_error& ec)
     {
         image.Release();
-    #ifdef _WIN32
+#ifdef _WIN32
         return HRESULT_FROM_WIN32(static_cast<unsigned long>(ec.code().value()));
-    #else
+#else
         return (ec.code().value() == ENOENT) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
-    #endif
+#endif
     }
     catch (const std::invalid_argument&)
     {
@@ -492,18 +464,14 @@ HRESULT DirectX::LoadFromPNGFile(
     }
 }
 
-_Use_decl_annotations_
-HRESULT DirectX::SaveToPNGFile(
-    const Image& image,
-    PNG_FLAGS flags,
-    const wchar_t* file)
+_Use_decl_annotations_ HRESULT DirectX::SaveToPNGFile(const Image& image, PNG_FLAGS flags, const wchar_t* file)
 {
     if (!file)
         return E_INVALIDARG;
 
     try
     {
-        auto fout = CreateFILE(file);
+        auto        fout = CreateFILE(file);
         PNGCompress encoder{};
         encoder.UseOutput(fout.get());
         return encoder.WriteImage(flags, image);
@@ -514,11 +482,11 @@ HRESULT DirectX::SaveToPNGFile(
     }
     catch (const std::system_error& ec)
     {
-    #ifdef _WIN32
+#ifdef _WIN32
         return HRESULT_FROM_WIN32(static_cast<unsigned long>(ec.code().value()));
-    #else
+#else
         return (ec.code().value() == ENOENT) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
-    #endif
+#endif
     }
     catch (const std::exception&)
     {

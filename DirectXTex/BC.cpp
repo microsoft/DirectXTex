@@ -12,8 +12,8 @@
 #include "DirectXTexP.h"
 
 // Experiemental encoding variants, not enabled by default
-//#define COLOR_WEIGHTS
-//#define COLOR_AVG_0WEIGHTS
+// #define COLOR_WEIGHTS
+// #define COLOR_AVG_0WEIGHTS
 
 #include "BC.h"
 
@@ -33,7 +33,7 @@ namespace
     //-------------------------------------------------------------------------------------
     // Decode/Encode RGB 5/6/5 colors
     //-------------------------------------------------------------------------------------
-    inline void Decode565(_Out_ HDRColorA *pColor, _In_ const uint16_t w565) noexcept
+    inline void Decode565(_Out_ HDRColorA* pColor, _In_ const uint16_t w565) noexcept
     {
         pColor->r = static_cast<float>((w565 >> 11) & 31) * (1.0f / 31.0f);
         pColor->g = static_cast<float>((w565 >> 5) & 63) * (1.0f / 63.0f);
@@ -41,7 +41,7 @@ namespace
         pColor->a = 1.0f;
     }
 
-    inline uint16_t Encode565(_In_ const HDRColorA *pColor) noexcept
+    inline uint16_t Encode565(_In_ const HDRColorA* pColor) noexcept
     {
         HDRColorA Color;
 
@@ -52,31 +52,27 @@ namespace
 
         uint16_t w;
 
-        w = static_cast<uint16_t>(
-            (static_cast<int32_t>(Color.r * 31.0f + 0.5f) << 11)
-            | (static_cast<int32_t>(Color.g * 63.0f + 0.5f) << 5)
-            | (static_cast<int32_t>(Color.b * 31.0f + 0.5f) << 0));
+        w = static_cast<uint16_t>((static_cast<int32_t>(Color.r * 31.0f + 0.5f) << 11) | (static_cast<int32_t>(Color.g * 63.0f + 0.5f) << 5)
+                                  | (static_cast<int32_t>(Color.b * 31.0f + 0.5f) << 0));
 
         return w;
     }
 
-
     //-------------------------------------------------------------------------------------
-    void OptimizeRGB(
-        _Out_ HDRColorA *pX,
-        _Out_ HDRColorA *pY,
-        _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA *pPoints,
-        uint32_t cSteps,
-        uint32_t flags) noexcept
+    void OptimizeRGB(_Out_ HDRColorA*                     pX,
+        _Out_ HDRColorA*                                  pY,
+        _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* pPoints,
+        uint32_t                                          cSteps,
+        uint32_t                                          flags) noexcept
     {
-        constexpr float fEpsilon = (0.25f / 64.0f) * (0.25f / 64.0f);
-        static const float pC3[] = { 2.0f / 2.0f, 1.0f / 2.0f, 0.0f / 2.0f };
-        static const float pD3[] = { 0.0f / 2.0f, 1.0f / 2.0f, 2.0f / 2.0f };
-        static const float pC4[] = { 3.0f / 3.0f, 2.0f / 3.0f, 1.0f / 3.0f, 0.0f / 3.0f };
-        static const float pD4[] = { 0.0f / 3.0f, 1.0f / 3.0f, 2.0f / 3.0f, 3.0f / 3.0f };
+        constexpr float    fEpsilon = (0.25f / 64.0f) * (0.25f / 64.0f);
+        static const float pC3[]    = { 2.0f / 2.0f, 1.0f / 2.0f, 0.0f / 2.0f };
+        static const float pD3[]    = { 0.0f / 2.0f, 1.0f / 2.0f, 2.0f / 2.0f };
+        static const float pC4[]    = { 3.0f / 3.0f, 2.0f / 3.0f, 1.0f / 3.0f, 0.0f / 3.0f };
+        static const float pD4[]    = { 0.0f / 3.0f, 1.0f / 3.0f, 2.0f / 3.0f, 3.0f / 3.0f };
 
-        const float *pC = (3 == cSteps) ? pC3 : pC4;
-        const float *pD = (3 == cSteps) ? pD3 : pD4;
+        const float* pC = (3 == cSteps) ? pC3 : pC4;
+        const float* pD = (3 == cSteps) ? pD3 : pD4;
 
         // Find Min and Max points, as starting point
         HDRColorA X = (flags & BC_FLAGS_UNIFORM) ? HDRColorA(1.f, 1.f, 1.f, 1.f) : g_Luminance;
@@ -84,9 +80,9 @@ namespace
 
         for (size_t iPoint = 0; iPoint < NUM_PIXELS_PER_BLOCK; iPoint++)
         {
-        #ifdef COLOR_WEIGHTS
+#ifdef COLOR_WEIGHTS
             if (pPoints[iPoint].a > 0.0f)
-            #endif // COLOR_WEIGHTS
+#endif // COLOR_WEIGHTS
             {
                 if (pPoints[iPoint].r < X.r)
                     X.r = pPoints[iPoint].r;
@@ -116,8 +112,14 @@ namespace
         // Single color block.. no need to root-find
         if (fAB < FLT_MIN)
         {
-            pX->r = X.r; pX->g = X.g; pX->b = X.b; pX->a = 1.0f;
-            pY->r = Y.r; pY->g = Y.g; pY->b = Y.b; pY->a = 1.0f;
+            pX->r = X.r;
+            pX->g = X.g;
+            pX->b = X.b;
+            pX->a = 1.0f;
+            pY->r = Y.r;
+            pY->g = Y.g;
+            pY->b = Y.b;
+            pY->a = 1.0f;
             return;
         }
 
@@ -126,11 +128,7 @@ namespace
 
         HDRColorA Dir(AB.r * fABInv, AB.g * fABInv, AB.b * fABInv, 0.0f);
 
-        const HDRColorA Mid(
-            (X.r + Y.r) * 0.5f,
-            (X.g + Y.g) * 0.5f,
-            (X.b + Y.b) * 0.5f,
-            0.0f);
+        const HDRColorA Mid((X.r + Y.r) * 0.5f, (X.g + Y.g) * 0.5f, (X.b + Y.b) * 0.5f, 0.0f);
 
         float fDir[4] = {};
 
@@ -144,7 +142,7 @@ namespace
 
             float f;
 
-        #ifdef COLOR_WEIGHTS
+#ifdef COLOR_WEIGHTS
             f = Pt.r + Pt.g + Pt.b;
             fDir[0] += pPoints[iPoint].a * f * f;
 
@@ -156,7 +154,7 @@ namespace
 
             f = Pt.r - Pt.g - Pt.b;
             fDir[3] += pPoints[iPoint].a * f * f;
-        #else
+#else
             f = Pt.r + Pt.g + Pt.b;
             fDir[0] += f * f;
 
@@ -168,11 +166,11 @@ namespace
 
             f = Pt.r - Pt.g - Pt.b;
             fDir[3] += f * f;
-        #endif // COLOR_WEIGHTS
+#endif // COLOR_WEIGHTS
         }
 
-        float fDirMax = fDir[0];
-        size_t  iDirMax = 0;
+        float  fDirMax = fDir[0];
+        size_t iDirMax = 0;
 
         for (size_t iDir = 1; iDir < 4; iDir++)
         {
@@ -185,20 +183,29 @@ namespace
 
         if (iDirMax & 2)
         {
-            const float f = X.g; X.g = Y.g; Y.g = f;
+            const float f = X.g;
+            X.g           = Y.g;
+            Y.g           = f;
         }
 
         if (iDirMax & 1)
         {
-            const float f = X.b; X.b = Y.b; Y.b = f;
+            const float f = X.b;
+            X.b           = Y.b;
+            Y.b           = f;
         }
-
 
         // Two color block.. no need to root-find
         if (fAB < 1.0f / 4096.0f)
         {
-            pX->r = X.r; pX->g = X.g; pX->b = X.b; pX->a = 1.0f;
-            pY->r = Y.r; pY->g = Y.g; pY->b = Y.b; pY->a = 1.0f;
+            pX->r = X.r;
+            pX->g = X.g;
+            pX->b = X.b;
+            pX->a = 1.0f;
+            pY->r = Y.r;
+            pY->g = Y.g;
+            pY->b = Y.b;
+            pY->a = 1.0f;
             return;
         }
 
@@ -218,7 +225,6 @@ namespace
                 pSteps[iStep].a = 1.0f;
             }
 
-
             // Calculate color direction
             Dir.r = Y.r - X.r;
             Dir.g = Y.g - X.g;
@@ -235,19 +241,16 @@ namespace
             Dir.g *= fScale;
             Dir.b *= fScale;
 
-
             // Evaluate function, and derivatives
-            float d2X = 0.f;
-            float d2Y = 0.f;
-            HDRColorA dX = {};
-            HDRColorA dY = {};
+            float     d2X = 0.f;
+            float     d2Y = 0.f;
+            HDRColorA dX  = {};
+            HDRColorA dY  = {};
 
             for (size_t iPoint = 0; iPoint < NUM_PIXELS_PER_BLOCK; iPoint++)
             {
-                const float fDot = (pPoints[iPoint].r - X.r) * Dir.r +
-                    (pPoints[iPoint].g - X.g) * Dir.g +
-                    (pPoints[iPoint].b - X.b) * Dir.b;
-
+                const float fDot
+                    = (pPoints[iPoint].r - X.r) * Dir.r + (pPoints[iPoint].g - X.g) * Dir.g + (pPoints[iPoint].b - X.b) * Dir.b;
 
                 uint32_t iStep;
                 if (fDot <= 0.0f)
@@ -257,20 +260,19 @@ namespace
                 else
                     iStep = uint32_t(fDot + 0.5f);
 
-
                 HDRColorA Diff;
                 Diff.r = pSteps[iStep].r - pPoints[iPoint].r;
                 Diff.g = pSteps[iStep].g - pPoints[iPoint].g;
                 Diff.b = pSteps[iStep].b - pPoints[iPoint].b;
                 Diff.a = 0.0f;
 
-            #ifdef COLOR_WEIGHTS
+#ifdef COLOR_WEIGHTS
                 const float fC = pC[iStep] * pPoints[iPoint].a * (1.0f / 8.0f);
                 const float fD = pD[iStep] * pPoints[iPoint].a * (1.0f / 8.0f);
-            #else
+#else
                 const float fC = pC[iStep] * (1.0f / 8.0f);
                 const float fD = pD[iStep] * (1.0f / 8.0f);
-            #endif // COLOR_WEIGHTS
+#endif // COLOR_WEIGHTS
 
                 d2X += fC * pC[iStep];
                 dX.r += fC * Diff.r;
@@ -302,23 +304,25 @@ namespace
                 Y.b += dY.b * f;
             }
 
-            if ((dX.r * dX.r < fEpsilon) && (dX.g * dX.g < fEpsilon) && (dX.b * dX.b < fEpsilon) &&
-                (dY.r * dY.r < fEpsilon) && (dY.g * dY.g < fEpsilon) && (dY.b * dY.b < fEpsilon))
+            if ((dX.r * dX.r < fEpsilon) && (dX.g * dX.g < fEpsilon) && (dX.b * dX.b < fEpsilon) && (dY.r * dY.r < fEpsilon)
+                && (dY.g * dY.g < fEpsilon) && (dY.b * dY.b < fEpsilon))
             {
                 break;
             }
         }
 
-        pX->r = X.r; pX->g = X.g; pX->b = X.b; pX->a = 1.0f;
-        pY->r = Y.r; pY->g = Y.g; pY->b = Y.b; pY->a = 1.0f;
+        pX->r = X.r;
+        pX->g = X.g;
+        pX->b = X.b;
+        pX->a = 1.0f;
+        pY->r = Y.r;
+        pY->g = Y.g;
+        pY->b = Y.b;
+        pY->a = 1.0f;
     }
 
-
     //-------------------------------------------------------------------------------------
-    inline void DecodeBC1(
-        _Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor,
-        _In_ const D3DX_BC1 *pBC,
-        bool isbc1) noexcept
+    inline void DecodeBC1(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR* pColor, _In_ const D3DX_BC1* pBC, bool isbc1) noexcept
     {
         assert(pColor && pBC);
         static_assert(sizeof(D3DX_BC1) == 8, "D3DX_BC1 should be 8 bytes");
@@ -341,7 +345,7 @@ namespace
         if (isbc1 && (pBC->rgb[0] <= pBC->rgb[1]))
         {
             clr2 = XMVectorLerp(clr0, clr1, 0.5f);
-            clr3 = XMVectorZero();  // Alpha of 0
+            clr3 = XMVectorZero(); // Alpha of 0
         }
         else
         {
@@ -355,9 +359,9 @@ namespace
         {
             switch (dw & 3)
             {
-            case 0: pColor[i] = clr0; break;
-            case 1: pColor[i] = clr1; break;
-            case 2: pColor[i] = clr2; break;
+            case 0:  pColor[i] = clr0; break;
+            case 1:  pColor[i] = clr1; break;
+            case 2:  pColor[i] = clr2; break;
 
             case 3:
             default: pColor[i] = clr3; break;
@@ -365,14 +369,12 @@ namespace
         }
     }
 
-
     //-------------------------------------------------------------------------------------
-    void EncodeBC1(
-        _Out_ D3DX_BC1 *pBC,
-        _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA *pColor,
-        bool bColorKey,
-        float threshold,
-        uint32_t flags) noexcept
+    void EncodeBC1(_Out_ D3DX_BC1*                        pBC,
+        _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* pColor,
+        bool                                              bColorKey,
+        float                                             threshold,
+        uint32_t                                          flags) noexcept
     {
         assert(pBC && pColor);
         static_assert(sizeof(D3DX_BC1) == 8, "D3DX_BC1 should be 8 bytes");
@@ -434,11 +436,11 @@ namespace
             Color[i].g = static_cast<float>(static_cast<int32_t>(Clr.g * 63.0f + 0.5f)) * (1.0f / 63.0f);
             Color[i].b = static_cast<float>(static_cast<int32_t>(Clr.b * 31.0f + 0.5f)) * (1.0f / 31.0f);
 
-        #ifdef COLOR_WEIGHTS
+#ifdef COLOR_WEIGHTS
             Color[i].a = pColor[i].a;
-        #else
+#else
             Color[i].a = 1.0f;
-        #endif // COLOR_WEIGHTS
+#endif // COLOR_WEIGHTS
 
             if (flags & BC_FLAGS_DITHER_RGB)
             {
@@ -565,7 +567,7 @@ namespace
 
         static const size_t pSteps3[] = { 0, 2, 1 };
         static const size_t pSteps4[] = { 0, 2, 3, 1 };
-        const size_t *pSteps;
+        const size_t*       pSteps;
 
         if (3 == uSteps)
         {
@@ -588,7 +590,7 @@ namespace
         Dir.b = Step[1].b - Step[0].b;
         Dir.a = 0.0f;
 
-        const auto fSteps = static_cast<float>(uSteps - 1);
+        const auto  fSteps = static_cast<float>(uSteps - 1);
         const float fScale = (wColorA != wColorB) ? (fSteps / (Dir.r * Dir.r + Dir.g * Dir.g + Dir.b * Dir.b)) : 0.0f;
 
         Dir.r *= fScale;
@@ -686,9 +688,9 @@ namespace
 
     //-------------------------------------------------------------------------------------
 #ifdef COLOR_WEIGHTS
-    void EncodeSolidBC1(_Out_ D3DX_BC1 *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA *pColor)
+    void EncodeSolidBC1(_Out_ D3DX_BC1* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const HDRColorA* pColor)
     {
-    #ifdef COLOR_AVG_0WEIGHTS
+#ifdef COLOR_AVG_0WEIGHTS
         // Compute avg color
         HDRColorA Color;
         Color.r = pColor[0].r;
@@ -707,9 +709,9 @@ namespace
         Color.b *= 1.0f / 16.0f;
 
         const uint16_t wColor = Encode565(&Color);
-    #else
+#else
         const uint16_t wColor = 0x0000;
-    #endif // COLOR_AVG_0WEIGHTS
+#endif // COLOR_AVG_0WEIGHTS
 
         // Encode solid block
         pBC->rgb[0] = wColor;
@@ -717,8 +719,7 @@ namespace
         pBC->bitmap = 0x00000000;
     }
 #endif // COLOR_WEIGHTS
-}
-
+} // namespace
 
 //=====================================================================================
 // Entry points
@@ -727,15 +728,13 @@ namespace
 //-------------------------------------------------------------------------------------
 // BC1 Compression
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-void DirectX::D3DXDecodeBC1(XMVECTOR *pColor, const uint8_t *pBC) noexcept
+_Use_decl_annotations_ void DirectX::D3DXDecodeBC1(XMVECTOR* pColor, const uint8_t* pBC) noexcept
 {
-    auto pBC1 = reinterpret_cast<const D3DX_BC1 *>(pBC);
+    auto pBC1 = reinterpret_cast<const D3DX_BC1*>(pBC);
     DecodeBC1(pColor, pBC1, true);
 }
 
-_Use_decl_annotations_
-void DirectX::D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshold, uint32_t flags) noexcept
+_Use_decl_annotations_ void DirectX::D3DXEncodeBC1(uint8_t* pBC, const XMVECTOR* pColor, float threshold, uint32_t flags) noexcept
 {
     assert(pBC && pColor);
 
@@ -790,21 +789,19 @@ void DirectX::D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshol
         }
     }
 
-    auto pBC1 = reinterpret_cast<D3DX_BC1 *>(pBC);
+    auto pBC1 = reinterpret_cast<D3DX_BC1*>(pBC);
     EncodeBC1(pBC1, Color, true, threshold, flags);
 }
-
 
 //-------------------------------------------------------------------------------------
 // BC2 Compression
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-void DirectX::D3DXDecodeBC2(XMVECTOR *pColor, const uint8_t *pBC) noexcept
+_Use_decl_annotations_ void DirectX::D3DXDecodeBC2(XMVECTOR* pColor, const uint8_t* pBC) noexcept
 {
     assert(pColor && pBC);
     static_assert(sizeof(D3DX_BC2) == 16, "D3DX_BC2 should be 16 bytes");
 
-    auto pBC2 = reinterpret_cast<const D3DX_BC2 *>(pBC);
+    auto pBC2 = reinterpret_cast<const D3DX_BC2*>(pBC);
 
     // RGB part
     DecodeBC1(pColor, &pBC2->bc1, false);
@@ -814,7 +811,7 @@ void DirectX::D3DXDecodeBC2(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 
     for (size_t i = 0; i < 8; ++i, dw >>= 4)
     {
-    #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
+#pragma prefast(suppress : 22103, "writing blocks in two halves confuses tool")
         pColor[i] = XMVectorSetW(pColor[i], static_cast<float>(dw & 0xf) * (1.0f / 15.0f));
     }
 
@@ -824,8 +821,7 @@ void DirectX::D3DXDecodeBC2(XMVECTOR *pColor, const uint8_t *pBC) noexcept
         pColor[i] = XMVectorSetW(pColor[i], static_cast<float>(dw & 0xf) * (1.0f / 15.0f));
 }
 
-_Use_decl_annotations_
-void DirectX::D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
+_Use_decl_annotations_ void DirectX::D3DXEncodeBC2(uint8_t* pBC, const XMVECTOR* pColor, uint32_t flags) noexcept
 {
     assert(pBC && pColor);
     static_assert(sizeof(D3DX_BC2) == 16, "D3DX_BC2 should be 16 bytes");
@@ -836,7 +832,7 @@ void DirectX::D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
         XMStoreFloat4(reinterpret_cast<XMFLOAT4*>(&Color[i]), pColor[i]);
     }
 
-    auto pBC2 = reinterpret_cast<D3DX_BC2 *>(pBC);
+    auto pBC2 = reinterpret_cast<D3DX_BC2*>(pBC);
 
     // 4-bit alpha part.  Dithered using Floyd Stienberg error diffusion.
     pBC2->bitmap[0] = 0;
@@ -894,17 +890,15 @@ void DirectX::D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
     EncodeBC1(&pBC2->bc1, Color, false, 0.f, flags);
 }
 
-
 //-------------------------------------------------------------------------------------
 // BC3 Compression
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-void DirectX::D3DXDecodeBC3(XMVECTOR *pColor, const uint8_t *pBC) noexcept
+_Use_decl_annotations_ void DirectX::D3DXDecodeBC3(XMVECTOR* pColor, const uint8_t* pBC) noexcept
 {
     assert(pColor && pBC);
     static_assert(sizeof(D3DX_BC3) == 16, "D3DX_BC3 should be 16 bytes");
 
-    auto pBC3 = reinterpret_cast<const D3DX_BC3 *>(pBC);
+    auto pBC3 = reinterpret_cast<const D3DX_BC3*>(pBC);
 
     // RGB part
     DecodeBC1(pColor, &pBC3->bc1, false);
@@ -940,8 +934,7 @@ void DirectX::D3DXDecodeBC3(XMVECTOR *pColor, const uint8_t *pBC) noexcept
         pColor[i] = XMVectorSetW(pColor[i], fAlpha[dw & 0x7]);
 }
 
-_Use_decl_annotations_
-void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
+_Use_decl_annotations_ void DirectX::D3DXEncodeBC3(uint8_t* pBC, const XMVECTOR* pColor, uint32_t flags) noexcept
 {
     assert(pBC && pColor);
     static_assert(sizeof(D3DX_BC3) == 16, "D3DX_BC3 should be 16 bytes");
@@ -952,7 +945,7 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
         XMStoreFloat4(reinterpret_cast<XMFLOAT4*>(&Color[i]), pColor[i]);
     }
 
-    auto pBC3 = reinterpret_cast<D3DX_BC3 *>(pBC);
+    auto pBC3 = reinterpret_cast<D3DX_BC3*>(pBC);
 
     // Quantize block to A8, using Floyd Stienberg error diffusion.  This
     // increases the chance that colors will map directly to the quantized
@@ -1050,8 +1043,8 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
     static const size_t pSteps6[] = { 0, 2, 3, 4, 5, 1 };
     static const size_t pSteps8[] = { 0, 2, 3, 4, 5, 6, 7, 1 };
 
-    const size_t *pSteps;
-    float fStep[8] = {};
+    const size_t* pSteps;
+    float         fStep[8] = {};
 
     if (6 == uSteps)
     {
@@ -1084,7 +1077,7 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
     }
 
     // Encode alpha bitmap
-    const auto fSteps = static_cast<float>(uSteps - 1);
+    const auto  fSteps = static_cast<float>(uSteps - 1);
     const float fScale = (fStep[0] != fStep[1]) ? (fSteps / (fStep[1] - fStep[0])) : 0.0f;
 
     if (flags & BC_FLAGS_DITHER_A)
@@ -1134,8 +1127,8 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
             }
         }
 
-        pBC3->bitmap[0 + iSet * 3] = reinterpret_cast<uint8_t *>(&dw)[0];
-        pBC3->bitmap[1 + iSet * 3] = reinterpret_cast<uint8_t *>(&dw)[1];
-        pBC3->bitmap[2 + iSet * 3] = reinterpret_cast<uint8_t *>(&dw)[2];
+        pBC3->bitmap[0 + iSet * 3] = reinterpret_cast<uint8_t*>(&dw)[0];
+        pBC3->bitmap[1 + iSet * 3] = reinterpret_cast<uint8_t*>(&dw)[1];
+        pBC3->bitmap[2 + iSet * 3] = reinterpret_cast<uint8_t*>(&dw)[2];
     }
 }

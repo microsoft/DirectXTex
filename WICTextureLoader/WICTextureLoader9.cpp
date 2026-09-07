@@ -61,17 +61,16 @@ namespace
     //-------------------------------------------------------------------------------------
     struct WICTranslate
     {
-        const GUID&         wic;
-        D3DFORMAT           format;
+        const GUID& wic;
+        D3DFORMAT   format;
 
-        constexpr WICTranslate(const GUID& wg, D3DFORMAT fmt) noexcept :
-            wic(wg),
-            format(fmt)
+        constexpr WICTranslate(const GUID& wg, D3DFORMAT fmt) noexcept
+            : wic(wg),
+              format(fmt)
         {}
     };
 
-    constexpr WICTranslate g_WICFormats[] =
-    {
+    constexpr WICTranslate g_WICFormats[] = {
         // clang-format off
         { GUID_WICPixelFormat128bppRGBAFloat,       D3DFMT_A32B32G32R32F },
 
@@ -103,14 +102,13 @@ namespace
         const GUID& source;
         const GUID& target;
 
-        constexpr WICConvert(const GUID& src, const GUID& tgt) noexcept :
-            source(src),
-            target(tgt)
+        constexpr WICConvert(const GUID& src, const GUID& tgt) noexcept
+            : source(src),
+              target(tgt)
         {}
     };
 
-    constexpr WICConvert g_WICConvert[] =
-    {
+    constexpr WICConvert g_WICConvert[] = {
         // clang-format off
         // Note target GUID in this conversion table must be one of those directly supported formats (above).
 
@@ -173,13 +171,7 @@ namespace
     //--------------------------------------------------------------------------------------
     BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID* ifactory) noexcept
     {
-        HRESULT hr = CoCreateInstance(
-            CLSID_WICImagingFactory2,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            __uuidof(IWICImagingFactory2),
-            ifactory
-        );
+        HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory2, nullptr, CLSCTX_INPROC_SERVER, __uuidof(IWICImagingFactory2), ifactory);
 
         if (SUCCEEDED(hr))
         {
@@ -188,13 +180,7 @@ namespace
         }
         else
         {
-            hr = CoCreateInstance(
-                CLSID_WICImagingFactory1,
-                nullptr,
-                CLSCTX_INPROC_SERVER,
-                __uuidof(IWICImagingFactory),
-                ifactory
-            );
+            hr = CoCreateInstance(CLSID_WICImagingFactory1, nullptr, CLSCTX_INPROC_SERVER, __uuidof(IWICImagingFactory), ifactory);
             return SUCCEEDED(hr) ? TRUE : FALSE;
         }
     }
@@ -204,11 +190,7 @@ namespace
         static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
         IWICImagingFactory* factory = nullptr;
-        if (!InitOnceExecuteOnce(
-            &s_initOnce,
-            InitializeWICFactory,
-            nullptr,
-            reinterpret_cast<LPVOID*>(&factory)))
+        if (!InitOnceExecuteOnce(&s_initOnce, InitializeWICFactory, nullptr, reinterpret_cast<LPVOID*>(&factory)))
         {
             return nullptr;
         }
@@ -236,7 +218,11 @@ namespace
         if (origx > origy)
         {
             size_t x;
-            for (x = maxsize; x > 1; x >>= 1) { if (x <= targetx) break; }
+            for (x = maxsize; x > 1; x >>= 1)
+            {
+                if (x <= targetx)
+                    break;
+            }
             targetx = UINT(x);
 
             float bestScore = FLT_MAX;
@@ -246,14 +232,18 @@ namespace
                 if (score < bestScore)
                 {
                     bestScore = score;
-                    targety = UINT(y);
+                    targety   = UINT(y);
                 }
             }
         }
         else
         {
             size_t y;
-            for (y = maxsize; y > 1; y >>= 1) { if (y <= targety) break; }
+            for (y = maxsize; y > 1; y >>= 1)
+            {
+                if (y <= targety)
+                    break;
+            }
             targety = UINT(y);
 
             float bestScore = FLT_MAX;
@@ -263,23 +253,22 @@ namespace
                 if (score < bestScore)
                 {
                     bestScore = score;
-                    targetx = UINT(x);
+                    targetx   = UINT(x);
                 }
             }
         }
     }
 
     //---------------------------------------------------------------------------------
-    HRESULT CreateTextureFromWIC(
-        _In_ LPDIRECT3DDEVICE9 device,
-        _In_ IWICBitmapFrameDecode* frame,
-        _In_ size_t maxsize,
-        _In_ DWORD usage,
-        _In_ D3DPOOL pool,
-        _In_ WIC_LOADER_FLAGS loadFlags,
-        _Outptr_ LPDIRECT3DTEXTURE9* texture) noexcept
+    HRESULT CreateTextureFromWIC(_In_ LPDIRECT3DDEVICE9 device,
+        _In_ IWICBitmapFrameDecode*                     frame,
+        _In_ size_t                                     maxsize,
+        _In_ DWORD                                      usage,
+        _In_ D3DPOOL                                    pool,
+        _In_ WIC_LOADER_FLAGS                           loadFlags,
+        _Outptr_ LPDIRECT3DTEXTURE9*                    texture) noexcept
     {
-        UINT width, height;
+        UINT    width, height;
         HRESULT hr = frame->GetSize(&width, &height);
         if (FAILED(hr))
             return hr;
@@ -296,7 +285,7 @@ namespace
 
         assert(maxsize > 0);
 
-        UINT twidth = width;
+        UINT twidth  = width;
         UINT theight = height;
         if (loadFlags & WIC_LOADER_FIT_POW2)
         {
@@ -307,20 +296,20 @@ namespace
             const float ar = static_cast<float>(height) / static_cast<float>(width);
             if (width > height)
             {
-                twidth = static_cast<UINT>(maxsize);
+                twidth  = static_cast<UINT>(maxsize);
                 theight = std::max<UINT>(1, static_cast<UINT>(static_cast<float>(maxsize) * ar));
             }
             else
             {
                 theight = static_cast<UINT>(maxsize);
-                twidth = std::max<UINT>(1, static_cast<UINT>(static_cast<float>(maxsize) / ar));
+                twidth  = std::max<UINT>(1, static_cast<UINT>(static_cast<float>(maxsize) / ar));
             }
             assert(twidth <= maxsize && theight <= maxsize);
         }
 
         if (loadFlags & WIC_LOADER_MAKE_SQUARE)
         {
-            twidth = std::max<UINT>(twidth, theight);
+            twidth  = std::max<UINT>(twidth, theight);
             theight = twidth;
         }
 
@@ -363,9 +352,7 @@ namespace
             usage |= D3DUSAGE_AUTOGENMIPMAP;
 
         ComPtr<IDirect3DTexture9> pTexture;
-        hr = device->CreateTexture(twidth, theight, 1u,
-            usage, format, pool,
-            pTexture.GetAddressOf(), nullptr);
+        hr = device->CreateTexture(twidth, theight, 1u, usage, format, pool, pTexture.GetAddressOf(), nullptr);
         if (FAILED(hr))
             return hr;
 
@@ -373,9 +360,7 @@ namespace
         ComPtr<IDirect3DTexture9> pStagingTexture;
         if (pool == D3DPOOL_DEFAULT)
         {
-            hr = device->CreateTexture(twidth, theight, 1u,
-                0u, format, D3DPOOL_SYSTEMMEM,
-                pStagingTexture.GetAddressOf(), nullptr);
+            hr = device->CreateTexture(twidth, theight, 1u, 0u, format, D3DPOOL_SYSTEMMEM, pStagingTexture.GetAddressOf(), nullptr);
             if (FAILED(hr))
                 return hr;
         }
@@ -385,7 +370,7 @@ namespace
         }
 
         D3DLOCKED_RECT LockedRect = {};
-        hr = pStagingTexture->LockRect(0, &LockedRect, nullptr, 0);
+        hr                        = pStagingTexture->LockRect(0, &LockedRect, nullptr, 0);
         if (FAILED(hr))
             return hr;
 
@@ -399,16 +384,16 @@ namespace
         }
 
         // Load image data
-        if (memcmp(&convertGUID, &pixelFormat, sizeof(GUID)) == 0
-            && twidth == width
-            && theight == height)
+        if (memcmp(&convertGUID, &pixelFormat, sizeof(GUID)) == 0 && twidth == width && theight == height)
         {
             // No format conversion or resize needed
             hr = pStagingTexture->LockRect(0, &LockedRect, nullptr, 0);
             if (FAILED(hr))
                 return hr;
 
-            hr = frame->CopyPixels(nullptr, static_cast<UINT>(LockedRect.Pitch), static_cast<UINT>(numBytes),
+            hr = frame->CopyPixels(nullptr,
+                static_cast<UINT>(LockedRect.Pitch),
+                static_cast<UINT>(numBytes),
                 static_cast<BYTE*>(LockedRect.pBits));
 
             pStagingTexture->UnlockRect(0);
@@ -444,7 +429,9 @@ namespace
                 if (FAILED(hr))
                     return hr;
 
-                hr = scaler->CopyPixels(nullptr, static_cast<UINT>(LockedRect.Pitch), static_cast<UINT>(numBytes),
+                hr = scaler->CopyPixels(nullptr,
+                    static_cast<UINT>(LockedRect.Pitch),
+                    static_cast<UINT>(numBytes),
                     static_cast<BYTE*>(LockedRect.pBits));
 
                 pStagingTexture->UnlockRect(0);
@@ -460,13 +447,18 @@ namespace
                     return hr;
 
                 BOOL canConvert = FALSE;
-                hr = FC->CanConvert(pfScaler, convertGUID, &canConvert);
+                hr              = FC->CanConvert(pfScaler, convertGUID, &canConvert);
                 if (FAILED(hr) || !canConvert)
                 {
                     return E_UNEXPECTED;
                 }
 
-                hr = FC->Initialize(scaler.Get(), convertGUID, WICBitmapDitherTypeErrorDiffusion, nullptr, 0, WICBitmapPaletteTypeMedianCut);
+                hr = FC->Initialize(scaler.Get(),
+                    convertGUID,
+                    WICBitmapDitherTypeErrorDiffusion,
+                    nullptr,
+                    0,
+                    WICBitmapPaletteTypeMedianCut);
                 if (FAILED(hr))
                     return hr;
 
@@ -474,7 +466,9 @@ namespace
                 if (FAILED(hr))
                     return hr;
 
-                hr = FC->CopyPixels(nullptr, static_cast<UINT>(LockedRect.Pitch), static_cast<UINT>(numBytes),
+                hr = FC->CopyPixels(nullptr,
+                    static_cast<UINT>(LockedRect.Pitch),
+                    static_cast<UINT>(numBytes),
                     static_cast<BYTE*>(LockedRect.pBits));
 
                 pStagingTexture->UnlockRect(0);
@@ -496,7 +490,7 @@ namespace
                 return hr;
 
             BOOL canConvert = FALSE;
-            hr = FC->CanConvert(pixelFormat, convertGUID, &canConvert);
+            hr              = FC->CanConvert(pixelFormat, convertGUID, &canConvert);
             if (FAILED(hr) || !canConvert)
             {
                 return E_UNEXPECTED;
@@ -510,7 +504,9 @@ namespace
             if (FAILED(hr))
                 return hr;
 
-            hr = FC->CopyPixels(nullptr, static_cast<UINT>(LockedRect.Pitch), static_cast<UINT>(numBytes),
+            hr = FC->CopyPixels(nullptr,
+                static_cast<UINT>(LockedRect.Pitch),
+                static_cast<UINT>(numBytes),
                 static_cast<BYTE*>(LockedRect.pBits));
 
             pStagingTexture->UnlockRect(0);
@@ -533,29 +529,24 @@ namespace
 } // anonymous namespace
 
 //--------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::CreateWICTextureFromMemory(
-    LPDIRECT3DDEVICE9 d3dDevice,
-    const uint8_t* wicData,
-    size_t wicDataSize,
-    LPDIRECT3DTEXTURE9* texture,
-    size_t maxsize,
-    WIC_LOADER_FLAGS loadFlags) noexcept
+_Use_decl_annotations_ HRESULT DirectX::CreateWICTextureFromMemory(LPDIRECT3DDEVICE9 d3dDevice,
+    const uint8_t*                                                                   wicData,
+    size_t                                                                           wicDataSize,
+    LPDIRECT3DTEXTURE9*                                                              texture,
+    size_t                                                                           maxsize,
+    WIC_LOADER_FLAGS                                                                 loadFlags) noexcept
 {
     return CreateWICTextureFromMemoryEx(d3dDevice, wicData, wicDataSize, maxsize, 0u, D3DPOOL_DEFAULT, loadFlags, texture);
 }
 
-
-_Use_decl_annotations_
-HRESULT DirectX::CreateWICTextureFromMemoryEx(
-    LPDIRECT3DDEVICE9 d3dDevice,
-    const uint8_t* wicData,
-    size_t wicDataSize,
-    _In_ size_t maxsize,
-    _In_ DWORD usage,
-    _In_ D3DPOOL pool,
-    _In_ WIC_LOADER_FLAGS loadFlags,
-    LPDIRECT3DTEXTURE9* texture) noexcept
+_Use_decl_annotations_ HRESULT DirectX::CreateWICTextureFromMemoryEx(LPDIRECT3DDEVICE9 d3dDevice,
+    const uint8_t*                                                                     wicData,
+    size_t                                                                             wicDataSize,
+    _In_ size_t                                                                        maxsize,
+    _In_ DWORD                                                                         usage,
+    _In_ D3DPOOL                                                                       pool,
+    _In_ WIC_LOADER_FLAGS                                                              loadFlags,
+    LPDIRECT3DTEXTURE9*                                                                texture) noexcept
 {
     if (texture)
     {
@@ -577,7 +568,7 @@ HRESULT DirectX::CreateWICTextureFromMemoryEx(
 
     // Create input stream for memory
     ComPtr<IWICStream> stream;
-    HRESULT hr = pWIC->CreateStream(stream.GetAddressOf());
+    HRESULT            hr = pWIC->CreateStream(stream.GetAddressOf());
     if (FAILED(hr))
         return hr;
 
@@ -600,26 +591,22 @@ HRESULT DirectX::CreateWICTextureFromMemoryEx(
 }
 
 //--------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::CreateWICTextureFromFile(
-    LPDIRECT3DDEVICE9 d3dDevice,
-    const wchar_t* fileName,
-    LPDIRECT3DTEXTURE9* texture,
-    size_t maxsize,
-    WIC_LOADER_FLAGS loadFlags) noexcept
+_Use_decl_annotations_ HRESULT DirectX::CreateWICTextureFromFile(LPDIRECT3DDEVICE9 d3dDevice,
+    const wchar_t*                                                                 fileName,
+    LPDIRECT3DTEXTURE9*                                                            texture,
+    size_t                                                                         maxsize,
+    WIC_LOADER_FLAGS                                                               loadFlags) noexcept
 {
     return CreateWICTextureFromFileEx(d3dDevice, fileName, maxsize, 0u, D3DPOOL_DEFAULT, loadFlags, texture);
 }
 
-_Use_decl_annotations_
-HRESULT DirectX::CreateWICTextureFromFileEx(
-    LPDIRECT3DDEVICE9 d3dDevice,
-    const wchar_t* fileName,
-    size_t maxsize,
-    DWORD usage,
-    D3DPOOL pool,
-    WIC_LOADER_FLAGS loadFlags,
-    LPDIRECT3DTEXTURE9* texture) noexcept
+_Use_decl_annotations_ HRESULT DirectX::CreateWICTextureFromFileEx(LPDIRECT3DDEVICE9 d3dDevice,
+    const wchar_t*                                                                   fileName,
+    size_t                                                                           maxsize,
+    DWORD                                                                            usage,
+    D3DPOOL                                                                          pool,
+    WIC_LOADER_FLAGS                                                                 loadFlags,
+    LPDIRECT3DTEXTURE9*                                                              texture) noexcept
 {
     if (texture)
     {
@@ -635,11 +622,7 @@ HRESULT DirectX::CreateWICTextureFromFileEx(
 
     // Initialize WIC
     ComPtr<IWICBitmapDecoder> decoder;
-    HRESULT hr = pWIC->CreateDecoderFromFilename(fileName,
-        nullptr,
-        GENERIC_READ,
-        WICDecodeMetadataCacheOnDemand,
-        decoder.GetAddressOf());
+    HRESULT hr = pWIC->CreateDecoderFromFilename(fileName, nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf());
     if (FAILED(hr))
         return hr;
 

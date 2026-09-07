@@ -12,7 +12,7 @@
 // https://go.microsoft.com/fwlink/?LinkId=248926
 //--------------------------------------------------------------------------------------
 
-#ifdef  _MSC_VER
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #endif
@@ -22,7 +22,7 @@
 #define NOMCX
 #define NOSERVICE
 #define NOHELP
-#ifdef  _MSC_VER
+#ifdef _MSC_VER
 #pragma warning(pop)
 #endif
 
@@ -39,20 +39,27 @@ using namespace DirectX;
 
 namespace
 {
-    struct handle_closer { void operator()(HANDLE h) noexcept { if (h) CloseHandle(h); } };
+    struct handle_closer
+    {
+        void operator()(HANDLE h) noexcept
+        {
+            if (h)
+                CloseHandle(h);
+        }
+    };
 
     using ScopedHandle = std::unique_ptr<void, handle_closer>;
 
-    inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
+    inline HANDLE safe_handle(HANDLE h) noexcept
+    {
+        return (h == INVALID_HANDLE_VALUE) ? nullptr : h;
+    }
 
     HRESULT ReadData(_In_z_ const wchar_t* szFile, std::unique_ptr<uint8_t[]>& blob, size_t& blobSize)
     {
         blob.reset();
 
-        ScopedHandle hFile(safe_handle(CreateFile2(
-            szFile,
-            GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING,
-            nullptr)));
+        ScopedHandle hFile(safe_handle(CreateFile2(szFile, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, nullptr)));
         if (!hFile)
         {
             return HRESULT_FROM_WIN32(GetLastError());
@@ -100,11 +107,10 @@ namespace
         return S_OK;
     }
 
-    HRESULT LoadFromExtendedBMPMemory(
-        _In_reads_bytes_(size) const void* pSource,
-        _In_ size_t size,
-        _Out_opt_ TexMetadata* metadata,
-        _Out_ ScratchImage& image)
+    HRESULT LoadFromExtendedBMPMemory(_In_reads_bytes_(size) const void* pSource,
+        _In_ size_t                                                      size,
+        _Out_opt_ TexMetadata*                                           metadata,
+        _Out_ ScratchImage&                                              image)
     {
         // This loads from non-standard BMP files that are not supported by WIC
         image.Release();
@@ -142,8 +148,7 @@ namespace
             format = DXGI_FORMAT_BC3_UNORM;
             break;
 
-        default:
-            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        default: return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
         }
 
         HRESULT hr = image.Initialize2D(format, size_t(header->biWidth), size_t(header->biHeight), 1, 1);
@@ -171,17 +176,14 @@ namespace
 
         return S_OK;
     }
-}
+} // namespace
 
-HRESULT __cdecl LoadFromBMPEx(
-    _In_z_ const wchar_t* szFile,
-    _In_ WIC_FLAGS flags,
-    _Out_opt_ TexMetadata* metadata,
-    _Out_ ScratchImage& image) noexcept
+HRESULT __cdecl
+LoadFromBMPEx(_In_z_ const wchar_t* szFile, _In_ WIC_FLAGS flags, _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept
 {
     std::unique_ptr<uint8_t[]> bmpData;
-    size_t bmpSize;
-    HRESULT hr = ReadData(szFile, bmpData, bmpSize);
+    size_t                     bmpSize;
+    HRESULT                    hr = ReadData(szFile, bmpData, bmpSize);
     if (FAILED(hr))
         return hr;
 

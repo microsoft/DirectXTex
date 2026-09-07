@@ -15,7 +15,6 @@
 
 #include "DirectXTex.h"
 
-
 namespace DirectX
 {
     enum PNG_FLAGS : uint32_t
@@ -38,21 +37,12 @@ namespace DirectX
         // Writes linear gamma metadata into the file reguardless of format
     };
 
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromPNGFile(
-        _In_z_ const wchar_t* szFile,
-        PNG_FLAGS flags,
-        _Out_ TexMetadata& metadata);
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromPNGFile(_In_z_ const wchar_t* szFile, PNG_FLAGS flags, _Out_ TexMetadata& metadata);
 
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromPNGFile(
-        _In_z_ const wchar_t* szFile,
-        PNG_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata,
-        _Out_ ScratchImage& image);
+    DIRECTX_TEX_API HRESULT __cdecl
+    LoadFromPNGFile(_In_z_ const wchar_t* szFile, PNG_FLAGS flags, _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image);
 
-    DIRECTX_TEX_API HRESULT __cdecl SaveToPNGFile(
-        _In_ const Image& image,
-        PNG_FLAGS flags,
-        _In_z_ const wchar_t* szFile);
+    DIRECTX_TEX_API HRESULT __cdecl SaveToPNGFile(_In_ const Image& image, PNG_FLAGS flags, _In_z_ const wchar_t* szFile);
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -60,9 +50,9 @@ namespace DirectX
 #pragma clang diagnostic ignored "-Wextra-semi-stmt"
 #endif
 
-DEFINE_ENUM_FLAG_OPERATORS(PNG_FLAGS);
+    DEFINE_ENUM_FLAG_OPERATORS(PNG_FLAGS);
 
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-}
+} // namespace DirectX

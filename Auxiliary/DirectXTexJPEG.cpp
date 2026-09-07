@@ -34,10 +34,9 @@
 #include <jpeglib.h>
 #include <jerror.h>
 
-
 using namespace DirectX;
 using std::filesystem::path;
-using ScopedFILE = std::unique_ptr<FILE, int(*)(FILE*)>;
+using ScopedFILE = std::unique_ptr<FILE, int (*)(FILE*)>;
 
 namespace
 {
@@ -45,7 +44,7 @@ namespace
     ScopedFILE OpenFILE(const path& p) noexcept(false)
     {
         const std::wstring fpath = p.generic_wstring();
-        FILE* fp = nullptr;
+        FILE*              fp    = nullptr;
         if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"rb"); ec)
             throw std::system_error{ static_cast<int>(_doserrno), std::system_category(), "_wfopen_s" };
         return { fp, &fclose };
@@ -53,7 +52,7 @@ namespace
     ScopedFILE CreateFILE(const path& p) noexcept(false)
     {
         const std::wstring fpath = p.generic_wstring();
-        FILE* fp = nullptr;
+        FILE*              fp    = nullptr;
         if (auto ec = _wfopen_s(&fp, fpath.c_str(), L"w+b"); ec)
             throw std::system_error{ static_cast<int>(_doserrno), std::system_category(), "_wfopen_s" };
         return { fp, &fclose };
@@ -62,7 +61,7 @@ namespace
     ScopedFILE OpenFILE(const path& p) noexcept(false)
     {
         const std::string fpath = p.generic_string();
-        FILE* fp = fopen(fpath.c_str(), "rb");
+        FILE*             fp    = fopen(fpath.c_str(), "rb");
         if (!fp)
             throw std::system_error{ errno, std::system_category(), "fopen" };
         return { fp, &fclose };
@@ -70,7 +69,7 @@ namespace
     ScopedFILE CreateFILE(const path& p) noexcept(false)
     {
         const std::string fpath = p.generic_string();
-        FILE* fp = fopen(fpath.c_str(), "w+b");
+        FILE*             fp    = fopen(fpath.c_str(), "w+b");
         if (!fp)
             throw std::system_error{ errno, std::system_category(), "fopen" };
         return { fp, &fclose };
@@ -89,27 +88,24 @@ namespace
 
     class JPEGDecompress final
     {
-        jpeg_error_mgr err;
+        jpeg_error_mgr         err;
         jpeg_decompress_struct dec;
-        JPEG_FLAGS userFlags;
+        JPEG_FLAGS             userFlags;
 
     public:
-        JPEGDecompress(JPEG_FLAGS flags) : err{}, dec{}, userFlags(flags)
+        JPEGDecompress(JPEG_FLAGS flags)
+            : err{},
+              dec{},
+              userFlags(flags)
         {
             jpeg_std_error(&err);
             err.error_exit = &OnJPEGError;
-            dec.err = &err;
+            dec.err        = &err;
             jpeg_create_decompress(&dec);
         }
-        ~JPEGDecompress() noexcept
-        {
-            jpeg_destroy_decompress(&dec);
-        }
+        ~JPEGDecompress() noexcept { jpeg_destroy_decompress(&dec); }
 
-        void UseInput(FILE* fin) noexcept
-        {
-            jpeg_stdio_src(&dec, fin);
-        }
+        void UseInput(FILE* fin) noexcept { jpeg_stdio_src(&dec, fin); }
 
         DXGI_FORMAT TranslateColor(J_COLOR_SPACE colorspace) noexcept
         {
@@ -117,29 +113,27 @@ namespace
             {
             case JCS_GRAYSCALE: // 1 component
                 return DXGI_FORMAT_R8_UNORM;
-            case JCS_RGB: // 3 component, Standard RGB
+            case JCS_RGB:       // 3 component, Standard RGB
                 return (userFlags & JPEG_FLAGS_DEFAULT_LINEAR) ? DXGI_FORMAT_R8G8B8A8_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-            case JCS_YCbCr: // 3 component, YCbCr
-            default:
-                return DXGI_FORMAT_UNKNOWN;
+            case JCS_YCbCr:     // 3 component, YCbCr
+            default:        return DXGI_FORMAT_UNKNOWN;
             }
         }
 
         void GetMetadata(TexMetadata& metadata) noexcept(false)
         {
-            metadata.width = dec.image_width;
-            metadata.height = dec.image_height;
-            metadata.depth = 1;
+            metadata.width     = dec.image_width;
+            metadata.height    = dec.image_height;
+            metadata.depth     = 1;
             metadata.arraySize = 1;
             metadata.mipLevels = 1;
             metadata.dimension = TEX_DIMENSION_TEXTURE2D;
-            metadata.format = TranslateColor(dec.out_color_space);
+            metadata.format    = TranslateColor(dec.out_color_space);
             if (metadata.format == DXGI_FORMAT_UNKNOWN)
             {
                 throw std::runtime_error{ "unexpected out_color_space in jpeg_decompress_struct" };
             }
-            if (metadata.format == DXGI_FORMAT_R8G8B8A8_UNORM
-                || metadata.format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
+            if (metadata.format == DXGI_FORMAT_R8G8B8A8_UNORM || metadata.format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
             {
                 metadata.miscFlags2 |= TEX_ALPHA_MODE_OPAQUE;
             }
@@ -150,18 +144,15 @@ namespace
             metadata = {};
             switch (jpeg_read_header(&dec, false))
             {
-            case JPEG_HEADER_TABLES_ONLY:
-                [[fallthrough]];
-            case JPEG_HEADER_OK:
-                break;
-            case JPEG_SUSPENDED:
-                return E_FAIL;
+            case JPEG_HEADER_TABLES_ONLY: [[fallthrough]];
+            case JPEG_HEADER_OK:          break;
+            case JPEG_SUSPENDED:          return E_FAIL;
             }
             GetMetadata(metadata);
             return S_OK;
         }
 
-    #ifndef LIBJPEG_TURBO_VERSION
+#ifndef LIBJPEG_TURBO_VERSION
         // shift pixels with padding in reverse order (to make it work in-memory)
         void ShiftPixels(const Image& image) noexcept
         {
@@ -170,41 +161,37 @@ namespace
             {
                 for (size_t i = (image.width - 1); i > 0; i -= 1)
                 {
-                    scanline[4*i + 0] = scanline[3*i + 0];
-                    scanline[4*i + 1] = scanline[3*i + 1];
-                    scanline[4*i + 2] = scanline[3*i + 2];
-                    scanline[4*i + 3] = 0xff;
+                    scanline[4 * i + 0] = scanline[3 * i + 0];
+                    scanline[4 * i + 1] = scanline[3 * i + 1];
+                    scanline[4 * i + 2] = scanline[3 * i + 2];
+                    scanline[4 * i + 3] = 0xff;
                 }
 
                 scanline += image.rowPitch;
             }
         }
-    #endif
+#endif
 
         HRESULT GetImage(TexMetadata& metadata, ScratchImage& image) noexcept(false)
         {
             metadata = {};
             switch (jpeg_read_header(&dec, true))
             {
-            case JPEG_HEADER_TABLES_ONLY:
-                GetMetadata(metadata);
-                [[fallthrough]];
-            case JPEG_SUSPENDED:
-                return E_FAIL;
-            case JPEG_HEADER_OK:
-                break;
+            case JPEG_HEADER_TABLES_ONLY: GetMetadata(metadata); [[fallthrough]];
+            case JPEG_SUSPENDED:          return E_FAIL;
+            case JPEG_HEADER_OK:          break;
             }
             GetMetadata(metadata);
 
             if (auto hr = image.Initialize2D(metadata.format, metadata.width, metadata.height, 1u, 1u); FAILED(hr))
                 return hr;
 
-        #ifdef LIBJPEG_TURBO_VERSION
+#ifdef LIBJPEG_TURBO_VERSION
             if (dec.out_color_space != JCS_GRAYSCALE)
             {
                 dec.out_color_space = JCS_EXT_RGBA;
             }
-        #endif
+#endif
             if (jpeg_start_decompress(&dec) == false)
                 return E_FAIL;
 
@@ -226,13 +213,13 @@ namespace
             if (jpeg_finish_decompress(&dec) == false)
                 return E_FAIL;
 
-        #ifndef LIBJPEG_TURBO_VERSION
+#ifndef LIBJPEG_TURBO_VERSION
             // if NOT TurboJPEG, we need to make 3 component images to 4 component image
             if (dec.out_color_space != JCS_GRAYSCALE)
             {
                 ShiftPixels(img);
             }
-        #endif
+#endif
 
             return S_OK;
         }
@@ -246,27 +233,24 @@ namespace
 
     class JPEGCompress final
     {
-        jpeg_error_mgr err;
+        jpeg_error_mgr       err;
         jpeg_compress_struct enc;
-        JPEG_FLAGS userFlags;
+        JPEG_FLAGS           userFlags;
 
     public:
-        JPEGCompress(JPEG_FLAGS flags) : err{}, enc{}, userFlags(flags)
+        JPEGCompress(JPEG_FLAGS flags)
+            : err{},
+              enc{},
+              userFlags(flags)
         {
             jpeg_std_error(&err);
             err.error_exit = &OnJPEGError;
-            enc.err = &err;
+            enc.err        = &err;
             jpeg_create_compress(&enc);
         }
-        ~JPEGCompress() noexcept
-        {
-            jpeg_destroy_compress(&enc);
-        }
+        ~JPEGCompress() noexcept { jpeg_destroy_compress(&enc); }
 
-        void UseOutput(FILE* fout)
-        {
-            jpeg_stdio_dest(&enc, fout);
-        }
+        void UseOutput(FILE* fout) { jpeg_stdio_dest(&enc, fout); }
 
         HRESULT WriteImage(const Image& image) noexcept(false)
         {
@@ -274,39 +258,38 @@ namespace
             {
             case DXGI_FORMAT_R8_UNORM:
                 enc.input_components = 1;
-                enc.in_color_space = JCS_GRAYSCALE;
+                enc.in_color_space   = JCS_GRAYSCALE;
                 break;
-            #ifdef LIBJPEG_TURBO_VERSION
+#ifdef LIBJPEG_TURBO_VERSION
             case DXGI_FORMAT_R8G8B8A8_UNORM:
             case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
                 enc.input_components = 4;
-                enc.in_color_space = JCS_EXT_RGBA;
+                enc.in_color_space   = JCS_EXT_RGBA;
                 break;
             case DXGI_FORMAT_B8G8R8A8_UNORM:
             case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
                 enc.input_components = 4;
-                enc.in_color_space = JCS_EXT_BGRA;
+                enc.in_color_space   = JCS_EXT_BGRA;
                 break;
             case DXGI_FORMAT_B8G8R8X8_UNORM:
             case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
                 enc.input_components = 4;
-                enc.in_color_space = JCS_EXT_BGRX;
+                enc.in_color_space   = JCS_EXT_BGRX;
                 break;
-            #else
+#else
             case DXGI_FORMAT_R8G8B8A8_UNORM:
             case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
                 enc.input_components = 3;
-                enc.in_color_space = JCS_RGB;
+                enc.in_color_space   = JCS_RGB;
                 break;
-            #endif
+#endif
 
-            default:
-                return HRESULT_E_NOT_SUPPORTED;
+            default: return HRESULT_E_NOT_SUPPORTED;
             }
 
             // TODO: Add sRGB intent?
 
-            enc.image_width = static_cast<JDIMENSION>(image.width);
+            enc.image_width  = static_cast<JDIMENSION>(image.width);
             enc.image_height = static_cast<JDIMENSION>(image.height);
             jpeg_set_defaults(&enc);
             jpeg_set_quality(&enc, 100, true);
@@ -314,30 +297,30 @@ namespace
             // we will write a row each time ...
             jpeg_start_compress(&enc, true);
 
-        #ifndef LIBJPEG_TURBO_VERSION
+#ifndef LIBJPEG_TURBO_VERSION
             if (enc.input_components == 3)
             {
-                const size_t stride = enc.image_width * static_cast<size_t>(enc.input_components);
-                auto scanline = std::make_unique<uint8_t[]>(stride);
-                JSAMPROW rows[1]{ scanline.get() };
+                const size_t stride   = enc.image_width * static_cast<size_t>(enc.input_components);
+                auto         scanline = std::make_unique<uint8_t[]>(stride);
+                JSAMPROW     rows[1]{ scanline.get() };
 
                 while (enc.next_scanline < enc.image_height)
                 {
                     // Copy 4 to 3 components
                     const uint8_t* src = image.pixels + enc.next_scanline * image.rowPitch;
-                    uint8_t* dst = scanline.get();
-                    for(size_t i=0; i < image.width; ++i)
+                    uint8_t*       dst = scanline.get();
+                    for (size_t i = 0; i < image.width; ++i)
                     {
-                        dst[3*i + 0] = src[4*i + 0];
-                        dst[3*i + 1] = src[4*i + 1];
-                        dst[3*i + 2] = src[4*i + 2];
+                        dst[3 * i + 0] = src[4 * i + 0];
+                        dst[3 * i + 1] = src[4 * i + 1];
+                        dst[3 * i + 2] = src[4 * i + 2];
                     }
 
                     jpeg_write_scanlines(&enc, rows, 1);
                 }
             }
             else
-        #endif
+#endif
             {
                 while (enc.next_scanline < enc.image_height)
                 {
@@ -350,20 +333,16 @@ namespace
             return S_OK;
         }
     };
-}
+} // namespace
 
-_Use_decl_annotations_
-HRESULT DirectX::GetMetadataFromJPEGFile(
-    const wchar_t* file,
-    JPEG_FLAGS flags,
-    TexMetadata& metadata)
+_Use_decl_annotations_ HRESULT DirectX::GetMetadataFromJPEGFile(const wchar_t* file, JPEG_FLAGS flags, TexMetadata& metadata)
 {
     if (!file)
         return E_INVALIDARG;
 
     try
     {
-        auto fin = OpenFILE(file);
+        auto           fin = OpenFILE(file);
         JPEGDecompress decoder(flags);
         decoder.UseInput(fin.get());
         return decoder.GetHeader(metadata);
@@ -374,11 +353,11 @@ HRESULT DirectX::GetMetadataFromJPEGFile(
     }
     catch (const std::system_error& ec)
     {
-    #ifdef _WIN32
+#ifdef _WIN32
         return HRESULT_FROM_WIN32(static_cast<unsigned long>(ec.code().value()));
-    #else
+#else
         return (ec.code().value() == ENOENT) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
-    #endif
+#endif
     }
     catch (const std::exception&)
     {
@@ -386,12 +365,7 @@ HRESULT DirectX::GetMetadataFromJPEGFile(
     }
 }
 
-_Use_decl_annotations_
-HRESULT DirectX::LoadFromJPEGFile(
-    const wchar_t* file,
-    JPEG_FLAGS flags,
-    TexMetadata* metadata,
-    ScratchImage&image)
+_Use_decl_annotations_ HRESULT DirectX::LoadFromJPEGFile(const wchar_t* file, JPEG_FLAGS flags, TexMetadata* metadata, ScratchImage& image)
 {
     if (!file)
         return E_INVALIDARG;
@@ -400,7 +374,7 @@ HRESULT DirectX::LoadFromJPEGFile(
 
     try
     {
-        auto fin = OpenFILE(file);
+        auto           fin = OpenFILE(file);
         JPEGDecompress decoder(flags);
         decoder.UseInput(fin.get());
         if (!metadata)
@@ -415,11 +389,11 @@ HRESULT DirectX::LoadFromJPEGFile(
     catch (const std::system_error& ec)
     {
         image.Release();
-    #ifdef _WIN32
+#ifdef _WIN32
         return HRESULT_FROM_WIN32(static_cast<unsigned long>(ec.code().value()));
-    #else
+#else
         return (ec.code().value() == ENOENT) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
-    #endif
+#endif
     }
     catch (const std::exception&)
     {
@@ -428,18 +402,14 @@ HRESULT DirectX::LoadFromJPEGFile(
     }
 }
 
-_Use_decl_annotations_
-HRESULT DirectX::SaveToJPEGFile(
-    const Image& image,
-    JPEG_FLAGS flags,
-    const wchar_t* file)
+_Use_decl_annotations_ HRESULT DirectX::SaveToJPEGFile(const Image& image, JPEG_FLAGS flags, const wchar_t* file)
 {
     if (!file)
         return E_INVALIDARG;
 
     try
     {
-        auto fout = CreateFILE(file);
+        auto         fout = CreateFILE(file);
         JPEGCompress encoder(flags);
         encoder.UseOutput(fout.get());
         return encoder.WriteImage(image);
@@ -450,11 +420,11 @@ HRESULT DirectX::SaveToJPEGFile(
     }
     catch (const std::system_error& ec)
     {
-    #ifdef _WIN32
+#ifdef _WIN32
         return HRESULT_FROM_WIN32(static_cast<unsigned long>(ec.code().value()));
-    #else
+#else
         return (ec.code().value() == ENOENT) ? HRESULT_ERROR_FILE_NOT_FOUND : E_FAIL;
-    #endif
+#endif
     }
     catch (const std::exception&)
     {

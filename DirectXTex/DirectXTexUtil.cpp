@@ -46,15 +46,14 @@ namespace
         DXGI_FORMAT format;
         bool        srgb;
 
-        constexpr WICTranslate(const GUID& wg, DXGI_FORMAT fmt, bool isrgb) noexcept :
-            wic(wg),
-            format(fmt),
-            srgb(isrgb)
+        constexpr WICTranslate(const GUID& wg, DXGI_FORMAT fmt, bool isrgb) noexcept
+            : wic(wg),
+              format(fmt),
+              srgb(isrgb)
         {}
     };
 
-    constexpr WICTranslate g_WICFormats[] =
-    {
+    constexpr WICTranslate g_WICFormats[] = {
         // clang-format off
         { GUID_WICPixelFormat128bppRGBAFloat,       DXGI_FORMAT_R32G32B32A32_FLOAT,         false },
 
@@ -82,18 +81,12 @@ namespace
         // clang-format on
     };
 
-    bool g_WIC2 = false;
+    bool                g_WIC2    = false;
     IWICImagingFactory* g_Factory = nullptr;
 
-    BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID *ifactory) noexcept
+    BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID* ifactory) noexcept
     {
-        HRESULT hr = CoCreateInstance(
-            CLSID_WICImagingFactory2,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            __uuidof(IWICImagingFactory2),
-            ifactory
-        );
+        HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory2, nullptr, CLSCTX_INPROC_SERVER, __uuidof(IWICImagingFactory2), ifactory);
 
         if (SUCCEEDED(hr))
         {
@@ -105,19 +98,13 @@ namespace
         {
             g_WIC2 = false;
 
-            hr = CoCreateInstance(
-                CLSID_WICImagingFactory1,
-                nullptr,
-                CLSCTX_INPROC_SERVER,
-                __uuidof(IWICImagingFactory),
-                ifactory
-            );
+            hr = CoCreateInstance(CLSID_WICImagingFactory1, nullptr, CLSCTX_INPROC_SERVER, __uuidof(IWICImagingFactory), ifactory);
             return SUCCEEDED(hr) ? TRUE : FALSE;
         }
     }
 
 #else // !WIN32
-    inline void * _aligned_malloc(size_t size, size_t alignment)
+    inline void* _aligned_malloc(size_t size, size_t alignment)
     {
         size = (size + alignment - 1) & ~(alignment - 1);
         return std::aligned_alloc(alignment, size);
@@ -125,16 +112,14 @@ namespace
 
 #define _aligned_free free
 #endif
-}
-
+} // namespace
 
 #ifdef _WIN32
 //=====================================================================================
 // WIC Utilities
 //=====================================================================================
 
-_Use_decl_annotations_
-DXGI_FORMAT DirectX::Internal::WICToDXGI(const GUID& guid) noexcept
+_Use_decl_annotations_ DXGI_FORMAT DirectX::Internal::WICToDXGI(const GUID& guid) noexcept
 {
     for (size_t i = 0; i < std::size(g_WICFormats); ++i)
     {
@@ -151,8 +136,7 @@ DXGI_FORMAT DirectX::Internal::WICToDXGI(const GUID& guid) noexcept
     return DXGI_FORMAT_UNKNOWN;
 }
 
-_Use_decl_annotations_
-bool DirectX::Internal::DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR) noexcept
+_Use_decl_annotations_ bool DirectX::Internal::DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGBvsBGR) noexcept
 {
     switch (format)
     {
@@ -170,21 +154,13 @@ bool DirectX::Internal::DXGIToWIC(DXGI_FORMAT format, GUID& guid, bool ignoreRGB
         }
         return true;
 
-    case DXGI_FORMAT_D32_FLOAT:
-        memcpy(&guid, &GUID_WICPixelFormat32bppGrayFloat, sizeof(GUID));
-        return true;
+    case DXGI_FORMAT_D32_FLOAT:           memcpy(&guid, &GUID_WICPixelFormat32bppGrayFloat, sizeof(GUID)); return true;
 
-    case DXGI_FORMAT_D16_UNORM:
-        memcpy(&guid, &GUID_WICPixelFormat16bppGray, sizeof(GUID));
-        return true;
+    case DXGI_FORMAT_D16_UNORM:           memcpy(&guid, &GUID_WICPixelFormat16bppGray, sizeof(GUID)); return true;
 
-    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-        memcpy(&guid, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID));
-        return true;
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB: memcpy(&guid, &GUID_WICPixelFormat32bppBGRA, sizeof(GUID)); return true;
 
-    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-        memcpy(&guid, &GUID_WICPixelFormat32bppBGR, sizeof(GUID));
-        return true;
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB: memcpy(&guid, &GUID_WICPixelFormat32bppBGR, sizeof(GUID)); return true;
 
     case DXGI_FORMAT_R32G32B32_FLOAT:
         if (g_WIC2)
@@ -237,47 +213,36 @@ TEX_FILTER_FLAGS DirectX::Internal::CheckWICColorSpace(_In_ const GUID& sourceGU
     return srgb;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Public helper function to get common WIC codec GUIDs
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-REFGUID DirectX::GetWICCodec(WICCodecs codec) noexcept
+_Use_decl_annotations_ REFGUID DirectX::GetWICCodec(WICCodecs codec) noexcept
 {
     switch (codec)
     {
-    case WIC_CODEC_BMP:
-        return GUID_ContainerFormatBmp;
+    case WIC_CODEC_BMP:  return GUID_ContainerFormatBmp;
 
-    case WIC_CODEC_JPEG:
-        return GUID_ContainerFormatJpeg;
+    case WIC_CODEC_JPEG: return GUID_ContainerFormatJpeg;
 
-    case WIC_CODEC_PNG:
-        return GUID_ContainerFormatPng;
+    case WIC_CODEC_PNG:  return GUID_ContainerFormatPng;
 
-    case WIC_CODEC_TIFF:
-        return GUID_ContainerFormatTiff;
+    case WIC_CODEC_TIFF: return GUID_ContainerFormatTiff;
 
-    case WIC_CODEC_GIF:
-        return GUID_ContainerFormatGif;
+    case WIC_CODEC_GIF:  return GUID_ContainerFormatGif;
 
-    case WIC_CODEC_WMP:
-        return GUID_ContainerFormatWmp;
+    case WIC_CODEC_WMP:  return GUID_ContainerFormatWmp;
 
-    case WIC_CODEC_ICO:
-        return GUID_ContainerFormatIco;
+    case WIC_CODEC_ICO:  return GUID_ContainerFormatIco;
 
-    #ifdef NTDDI_WIN10_RS4
+#ifdef NTDDI_WIN10_RS4
     case WIC_CODEC_HEIF:
         // This requires installing https://aka.ms/heif
         return GUID_ContainerFormatHeif;
-    #endif
+#endif
 
-    default:
-        return GUID_NULL;
+    default: return GUID_NULL;
     }
 }
-
 
 //-------------------------------------------------------------------------------------
 // Singleton function for WIC factory
@@ -292,10 +257,7 @@ IWICImagingFactory* DirectX::GetWICFactory(bool& iswic2) noexcept
 
     static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
 
-    if (!InitOnceExecuteOnce(&s_initOnce,
-        InitializeWICFactory,
-        nullptr,
-        reinterpret_cast<LPVOID*>(&g_Factory)))
+    if (!InitOnceExecuteOnce(&s_initOnce, InitializeWICFactory, nullptr, reinterpret_cast<LPVOID*>(&g_Factory)))
     {
         return nullptr;
     }
@@ -303,7 +265,6 @@ IWICImagingFactory* DirectX::GetWICFactory(bool& iswic2) noexcept
     iswic2 = g_WIC2;
     return g_Factory;
 }
-
 
 //-------------------------------------------------------------------------------------
 // Optional initializer for WIC factory
@@ -317,7 +278,7 @@ void DirectX::SetWICFactory(_In_opt_ IWICImagingFactory* pWIC) noexcept
     if (pWIC)
     {
         ComPtr<IWICImagingFactory2> wic2;
-        HRESULT hr = pWIC->QueryInterface(IID_PPV_ARGS(wic2.GetAddressOf()));
+        HRESULT                     hr = pWIC->QueryInterface(IID_PPV_ARGS(wic2.GetAddressOf()));
         if (SUCCEEDED(hr))
         {
             iswic2 = true;
@@ -332,14 +293,12 @@ void DirectX::SetWICFactory(_In_opt_ IWICImagingFactory* pWIC) noexcept
 }
 #endif // WIN32
 
-
 //=====================================================================================
 // DXGI Format Utilities
 //=====================================================================================
 
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-bool DirectX::IsPacked(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ bool DirectX::IsPacked(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -350,15 +309,12 @@ bool DirectX::IsPacked(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_Y216: // 4:2:2 16-bit
         return true;
 
-    default:
-        return false;
+    default: return false;
     }
 }
 
-
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-bool DirectX::IsVideo(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ bool DirectX::IsVideo(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -387,15 +343,12 @@ bool DirectX::IsVideo(DXGI_FORMAT fmt) noexcept
         // These video formats are for JPEG Hardware decode (DXGI 1.4)
         return true;
 
-    default:
-        return false;
+    default: return false;
     }
 }
 
-
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-bool DirectX::IsPlanar(DXGI_FORMAT fmt, bool isd3d12) noexcept
+_Use_decl_annotations_ bool DirectX::IsPlanar(DXGI_FORMAT fmt, bool isd3d12) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -406,19 +359,18 @@ bool DirectX::IsPlanar(DXGI_FORMAT fmt, bool isd3d12) noexcept
     case DXGI_FORMAT_R24G8_TYPELESS:
     case DXGI_FORMAT_D24_UNORM_S8_UINT:
     case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
-    case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
-        return isd3d12; // Direct3D 12 considers these planar, Direct3D 11 does not.
+    case DXGI_FORMAT_X24_TYPELESS_G8_UINT:     return isd3d12; // Direct3D 12 considers these planar, Direct3D 11 does not.
 
-    case DXGI_FORMAT_NV12:      // 4:2:0 8-bit
-    case DXGI_FORMAT_P010:      // 4:2:0 10-bit
-    case DXGI_FORMAT_P016:      // 4:2:0 16-bit
-    case DXGI_FORMAT_420_OPAQUE:// 4:2:0 8-bit
-    case DXGI_FORMAT_NV11:      // 4:1:1 8-bit
+    case DXGI_FORMAT_NV12:                                 // 4:2:0 8-bit
+    case DXGI_FORMAT_P010:                                 // 4:2:0 10-bit
+    case DXGI_FORMAT_P016:                                 // 4:2:0 16-bit
+    case DXGI_FORMAT_420_OPAQUE:                           // 4:2:0 8-bit
+    case DXGI_FORMAT_NV11:                                 // 4:1:1 8-bit
 
-    case WIN10_DXGI_FORMAT_P208: // 4:2:2 8-bit
-    case WIN10_DXGI_FORMAT_V208: // 4:4:0 8-bit
-    case WIN10_DXGI_FORMAT_V408: // 4:4:4 8-bit
-        // These are JPEG Hardware decode formats (DXGI 1.4)
+    case WIN10_DXGI_FORMAT_P208:                           // 4:2:2 8-bit
+    case WIN10_DXGI_FORMAT_V208:                           // 4:4:0 8-bit
+    case WIN10_DXGI_FORMAT_V408:                           // 4:4:4 8-bit
+                                 // These are JPEG Hardware decode formats (DXGI 1.4)
 
     case XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT:
     case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
@@ -426,15 +378,12 @@ bool DirectX::IsPlanar(DXGI_FORMAT fmt, bool isd3d12) noexcept
         // These are Xbox One platform specific types
         return true;
 
-    default:
-        return false;
+    default: return false;
     }
 }
 
-
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-bool DirectX::IsDepthStencil(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ bool DirectX::IsDepthStencil(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -450,18 +399,14 @@ bool DirectX::IsDepthStencil(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_D16_UNORM:
     case XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT:
     case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
-    case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:
-        return true;
+    case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:  return true;
 
-    default:
-        return false;
+    default:                                     return false;
     }
 }
 
-
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-bool DirectX::IsBGR(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ bool DirectX::IsBGR(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -474,18 +419,14 @@ bool DirectX::IsBGR(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_B8G8R8X8_TYPELESS:
     case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
     case DXGI_FORMAT_B4G4R4A4_UNORM:
-    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
-        return true;
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM: return true;
 
-    default:
-        return false;
+    default:                               return false;
     }
 }
 
-
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-bool DirectX::IsTypeless(DXGI_FORMAT fmt, bool partialTypeless) noexcept
+_Use_decl_annotations_ bool DirectX::IsTypeless(DXGI_FORMAT fmt, bool partialTypeless) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -510,26 +451,21 @@ bool DirectX::IsTypeless(DXGI_FORMAT fmt, bool partialTypeless) noexcept
     case DXGI_FORMAT_B8G8R8A8_TYPELESS:
     case DXGI_FORMAT_B8G8R8X8_TYPELESS:
     case DXGI_FORMAT_BC6H_TYPELESS:
-    case DXGI_FORMAT_BC7_TYPELESS:
-        return true;
+    case DXGI_FORMAT_BC7_TYPELESS:               return true;
 
     case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
     case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
     case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
     case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
     case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
-    case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:
-        return partialTypeless;
+    case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:  return partialTypeless;
 
-    default:
-        return false;
+    default:                                     return false;
     }
 }
 
-
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-bool DirectX::HasAlpha(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ bool DirectX::HasAlpha(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -580,34 +516,28 @@ bool DirectX::HasAlpha(DXGI_FORMAT fmt) noexcept
     case XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT:
     case XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT:
     case XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM:
-    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
-        return true;
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:          return true;
 
-    default:
-        return false;
+    default:                                        return false;
     }
 }
-
 
 //-------------------------------------------------------------------------------------
 // Returns bits-per-pixel for a given DXGI format, or 0 on failure
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-size_t DirectX::BitsPerPixel(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ size_t DirectX::BitsPerPixel(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
     case DXGI_FORMAT_R32G32B32A32_TYPELESS:
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
     case DXGI_FORMAT_R32G32B32A32_UINT:
-    case DXGI_FORMAT_R32G32B32A32_SINT:
-        return 128;
+    case DXGI_FORMAT_R32G32B32A32_SINT:             return 128;
 
     case DXGI_FORMAT_R32G32B32_TYPELESS:
     case DXGI_FORMAT_R32G32B32_FLOAT:
     case DXGI_FORMAT_R32G32B32_UINT:
-    case DXGI_FORMAT_R32G32B32_SINT:
-        return 96;
+    case DXGI_FORMAT_R32G32B32_SINT:                return 96;
 
     case DXGI_FORMAT_R16G16B16A16_TYPELESS:
     case DXGI_FORMAT_R16G16B16A16_FLOAT:
@@ -625,8 +555,7 @@ size_t DirectX::BitsPerPixel(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
     case DXGI_FORMAT_Y416:
     case DXGI_FORMAT_Y210:
-    case DXGI_FORMAT_Y216:
-        return 64;
+    case DXGI_FORMAT_Y216:                          return 64;
 
     case DXGI_FORMAT_R10G10B10A2_TYPELESS:
     case DXGI_FORMAT_R10G10B10A2_UNORM:
@@ -668,16 +597,14 @@ size_t DirectX::BitsPerPixel(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_YUY2:
     case XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT:
     case XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT:
-    case XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM:
-        return 32;
+    case XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM: return 32;
 
     case DXGI_FORMAT_P010:
     case DXGI_FORMAT_P016:
     case XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT:
     case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
     case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:
-    case WIN10_DXGI_FORMAT_V408:
-        return 24;
+    case WIN10_DXGI_FORMAT_V408:                    return 24;
 
     case DXGI_FORMAT_R8G8_TYPELESS:
     case DXGI_FORMAT_R8G8_UNORM:
@@ -697,13 +624,11 @@ size_t DirectX::BitsPerPixel(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_B4G4R4A4_UNORM:
     case WIN10_DXGI_FORMAT_P208:
     case WIN10_DXGI_FORMAT_V208:
-    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
-        return 16;
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:          return 16;
 
     case DXGI_FORMAT_NV12:
     case DXGI_FORMAT_420_OPAQUE:
-    case DXGI_FORMAT_NV11:
-        return 12;
+    case DXGI_FORMAT_NV11:                          return 12;
 
     case DXGI_FORMAT_R8_TYPELESS:
     case DXGI_FORMAT_R8_UNORM:
@@ -729,32 +654,26 @@ size_t DirectX::BitsPerPixel(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_AI44:
     case DXGI_FORMAT_IA44:
     case DXGI_FORMAT_P8:
-    case XBOX_DXGI_FORMAT_R4G4_UNORM:
-        return 8;
+    case XBOX_DXGI_FORMAT_R4G4_UNORM:               return 8;
 
-    case DXGI_FORMAT_R1_UNORM:
-        return 1;
+    case DXGI_FORMAT_R1_UNORM:                      return 1;
 
     case DXGI_FORMAT_BC1_TYPELESS:
     case DXGI_FORMAT_BC1_UNORM:
     case DXGI_FORMAT_BC1_UNORM_SRGB:
     case DXGI_FORMAT_BC4_TYPELESS:
     case DXGI_FORMAT_BC4_UNORM:
-    case DXGI_FORMAT_BC4_SNORM:
-        return 4;
+    case DXGI_FORMAT_BC4_SNORM:                     return 4;
 
-    default:
-        return 0;
+    default:                                        return 0;
     }
 }
-
 
 //-------------------------------------------------------------------------------------
 // Returns bits-per-color-channel for a given DXGI format, or 0 on failure
 // For mixed formats, it returns the largest color-depth in the format
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-size_t DirectX::BitsPerColor(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ size_t DirectX::BitsPerColor(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
@@ -778,14 +697,12 @@ size_t DirectX::BitsPerColor(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_D32_FLOAT:
     case DXGI_FORMAT_R32_FLOAT:
     case DXGI_FORMAT_R32_UINT:
-    case DXGI_FORMAT_R32_SINT:
-        return 32;
+    case DXGI_FORMAT_R32_SINT:                      return 32;
 
     case DXGI_FORMAT_R24G8_TYPELESS:
     case DXGI_FORMAT_D24_UNORM_S8_UINT:
     case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
-    case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
-        return 24;
+    case DXGI_FORMAT_X24_TYPELESS_G8_UINT:          return 24;
 
     case DXGI_FORMAT_R16G16B16A16_TYPELESS:
     case DXGI_FORMAT_R16G16B16A16_FLOAT:
@@ -814,14 +731,11 @@ size_t DirectX::BitsPerColor(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_Y216:
     case XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT:
     case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
-    case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:
-        return 16;
+    case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:     return 16;
 
-    case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
-        return 14;
+    case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:            return 14;
 
-    case DXGI_FORMAT_R11G11B10_FLOAT:
-        return 11;
+    case DXGI_FORMAT_R11G11B10_FLOAT:               return 11;
 
     case DXGI_FORMAT_R10G10B10A2_TYPELESS:
     case DXGI_FORMAT_R10G10B10A2_UNORM:
@@ -832,8 +746,7 @@ size_t DirectX::BitsPerColor(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_Y210:
     case XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT:
     case XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT:
-    case XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM:
-        return 10;
+    case XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM: return 10;
 
     case DXGI_FORMAT_R8G8B8A8_TYPELESS:
     case DXGI_FORMAT_R8G8B8A8_UNORM:
@@ -873,13 +786,11 @@ size_t DirectX::BitsPerColor(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_NV11:
     case WIN10_DXGI_FORMAT_P208:
     case WIN10_DXGI_FORMAT_V208:
-    case WIN10_DXGI_FORMAT_V408:
-        return 8;
+    case WIN10_DXGI_FORMAT_V408:                    return 8;
 
     case DXGI_FORMAT_BC7_TYPELESS:
     case DXGI_FORMAT_BC7_UNORM:
-    case DXGI_FORMAT_BC7_UNORM_SRGB:
-        return 7;
+    case DXGI_FORMAT_BC7_UNORM_SRGB:                return 7;
 
     case DXGI_FORMAT_BC1_TYPELESS:
     case DXGI_FORMAT_BC1_UNORM:
@@ -890,19 +801,15 @@ size_t DirectX::BitsPerColor(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_BC3_TYPELESS:
     case DXGI_FORMAT_BC3_UNORM:
     case DXGI_FORMAT_BC3_UNORM_SRGB:
-    case DXGI_FORMAT_B5G6R5_UNORM:
-        return 6;
+    case DXGI_FORMAT_B5G6R5_UNORM:                  return 6;
 
-    case DXGI_FORMAT_B5G5R5A1_UNORM:
-        return 5;
+    case DXGI_FORMAT_B5G5R5A1_UNORM:                return 5;
 
     case DXGI_FORMAT_B4G4R4A4_UNORM:
     case XBOX_DXGI_FORMAT_R4G4_UNORM:
-    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:
-        return 4;
+    case WIN11_DXGI_FORMAT_A4B4G4R4_UNORM:          return 4;
 
-    case DXGI_FORMAT_R1_UNORM:
-        return 1;
+    case DXGI_FORMAT_R1_UNORM:                      return 1;
 
     case DXGI_FORMAT_AI44:
     case DXGI_FORMAT_IA44:
@@ -910,17 +817,14 @@ size_t DirectX::BitsPerColor(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_A8P8:
         // Palettized formats return 0 for this function
 
-    default:
-        return 0;
+    default:                                        return 0;
     }
 }
-
 
 //-------------------------------------------------------------------------------------
 // Returns bytes per block for a given DXGI BC format, or 0 on failure
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-size_t DirectX::BytesPerBlock(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ size_t DirectX::BytesPerBlock(DXGI_FORMAT fmt) noexcept
 {
     switch (fmt)
     {
@@ -929,8 +833,7 @@ size_t DirectX::BytesPerBlock(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_BC1_UNORM_SRGB:
     case DXGI_FORMAT_BC4_TYPELESS:
     case DXGI_FORMAT_BC4_UNORM:
-    case DXGI_FORMAT_BC4_SNORM:
-        return 8;
+    case DXGI_FORMAT_BC4_SNORM:      return 8;
 
     case DXGI_FORMAT_BC2_TYPELESS:
     case DXGI_FORMAT_BC2_UNORM:
@@ -946,14 +849,11 @@ size_t DirectX::BytesPerBlock(DXGI_FORMAT fmt) noexcept
     case DXGI_FORMAT_BC6H_SF16:
     case DXGI_FORMAT_BC7_TYPELESS:
     case DXGI_FORMAT_BC7_UNORM:
-    case DXGI_FORMAT_BC7_UNORM_SRGB:
-        return 16;
+    case DXGI_FORMAT_BC7_UNORM_SRGB: return 16;
 
-    default:
-        return 0;
+    default:                         return 0;
     }
 }
-
 
 namespace
 {
@@ -962,7 +862,7 @@ namespace
     // computations rather than at every individual site.
     inline uint64_t MulOverflow(uint64_t a, uint64_t b, bool& overflow) noexcept
     {
-    #if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__) || defined(__clang__)
         uint64_t result = 0;
         if (__builtin_mul_overflow(a, b, &result))
         {
@@ -970,8 +870,8 @@ namespace
             return 0;
         }
         return result;
-    #elif defined(_MSC_VER) && (defined(_M_ARM64) || defined(_M_ARM64EC))
-        const uint64_t high = __umulh(a, b);
+#elif defined(_MSC_VER) && (defined(_M_ARM64) || defined(_M_ARM64EC))
+        const uint64_t high   = __umulh(a, b);
         const uint64_t result = a * b;
         if (high != 0)
         {
@@ -979,8 +879,8 @@ namespace
             return 0;
         }
         return result;
-    #elif defined(_MSC_VER) && defined(_M_X64)
-        uint64_t high = 0;
+#elif defined(_MSC_VER) && defined(_M_X64)
+        uint64_t       high   = 0;
         const uint64_t result = _umul128(a, b, &high);
         if (high != 0)
         {
@@ -988,7 +888,7 @@ namespace
             return 0;
         }
         return result;
-    #else
+#else
         const uint64_t result = a * b;
         if ((a != 0) && ((result / a) != b))
         {
@@ -996,26 +896,24 @@ namespace
             return 0;
         }
         return result;
-    #endif
+#endif
     }
-}
+} // namespace
 
 //-------------------------------------------------------------------------------------
 // Computes the image row pitch in bytes, and the slice ptich (size in bytes of the image)
 // based on DXGI format, width, and height
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
-    size_t& rowPitch, size_t& slicePitch, CP_FLAGS flags) noexcept
+_Use_decl_annotations_ HRESULT
+DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height, size_t& rowPitch, size_t& slicePitch, CP_FLAGS flags) noexcept
 {
-    uint64_t pitch = 0;
-    uint64_t slice = 0;
-    bool overflow = false;
+    uint64_t pitch    = 0;
+    uint64_t slice    = 0;
+    bool     overflow = false;
 
     switch (static_cast<int>(fmt))
     {
-    case DXGI_FORMAT_UNKNOWN:
-        return E_INVALIDARG;
+    case DXGI_FORMAT_UNKNOWN: return E_INVALIDARG;
 
     case DXGI_FORMAT_BC1_TYPELESS:
     case DXGI_FORMAT_BC1_UNORM:
@@ -1029,15 +927,15 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
             {
                 const size_t nbw = width >> 2;
                 const size_t nbh = height >> 2;
-                pitch = std::max<uint64_t>(1u, MulOverflow(nbw, 8u, overflow));
-                slice = std::max<uint64_t>(1u, MulOverflow(pitch, nbh, overflow));
+                pitch            = std::max<uint64_t>(1u, MulOverflow(nbw, 8u, overflow));
+                slice            = std::max<uint64_t>(1u, MulOverflow(pitch, nbh, overflow));
             }
             else
             {
                 const uint64_t nbw = std::max<uint64_t>(1u, (uint64_t(width) >> 2) + ((width & 3u) ? 1u : 0u));
                 const uint64_t nbh = std::max<uint64_t>(1u, (uint64_t(height) >> 2) + ((height & 3u) ? 1u : 0u));
-                pitch = MulOverflow(nbw, 8u, overflow);
-                slice = MulOverflow(pitch, nbh, overflow);
+                pitch              = MulOverflow(nbw, 8u, overflow);
+                slice              = MulOverflow(pitch, nbh, overflow);
             }
         }
         break;
@@ -1063,15 +961,15 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
             {
                 const size_t nbw = width >> 2;
                 const size_t nbh = height >> 2;
-                pitch = std::max<uint64_t>(1u, MulOverflow(nbw, 16u, overflow));
-                slice = std::max<uint64_t>(1u, MulOverflow(pitch, nbh, overflow));
+                pitch            = std::max<uint64_t>(1u, MulOverflow(nbw, 16u, overflow));
+                slice            = std::max<uint64_t>(1u, MulOverflow(pitch, nbh, overflow));
             }
             else
             {
                 const uint64_t nbw = std::max<uint64_t>(1u, (uint64_t(width) >> 2) + ((width & 3u) ? 1u : 0u));
                 const uint64_t nbh = std::max<uint64_t>(1u, (uint64_t(height) >> 2) + ((height & 3u) ? 1u : 0u));
-                pitch = MulOverflow(nbw, 16u, overflow);
-                slice = MulOverflow(pitch, nbh, overflow);
+                pitch              = MulOverflow(nbw, 16u, overflow);
+                slice              = MulOverflow(pitch, nbh, overflow);
             }
         }
         break;
@@ -1111,13 +1009,13 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
             return E_INVALIDARG;
         }
 
-    #if (__cplusplus >= 201703L)
+#if (__cplusplus >= 201703L)
         [[fallthrough]];
-    #elif defined(__clang__)
+#elif defined(__clang__)
         [[clang::fallthrough]];
-    #elif defined(_MSC_VER)
+#elif defined(_MSC_VER)
         __fallthrough;
-    #endif
+#endif
 
     case XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT:
     case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
@@ -1233,21 +1131,18 @@ HRESULT DirectX::ComputePitch(DXGI_FORMAT fmt, size_t width, size_t height,
     static_assert(sizeof(size_t) == 8, "Not a 64-bit platform!");
 #endif
 
-    rowPitch = static_cast<size_t>(pitch);
+    rowPitch   = static_cast<size_t>(pitch);
     slicePitch = static_cast<size_t>(slice);
 
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-size_t DirectX::ComputeScanlines(DXGI_FORMAT fmt, size_t height) noexcept
+_Use_decl_annotations_ size_t DirectX::ComputeScanlines(DXGI_FORMAT fmt, size_t height) noexcept
 {
     switch (static_cast<int>(fmt))
     {
-    case DXGI_FORMAT_UNKNOWN:
-        return 0;
+    case DXGI_FORMAT_UNKNOWN:                    return 0;
 
     case DXGI_FORMAT_BC1_TYPELESS:
     case DXGI_FORMAT_BC1_UNORM:
@@ -1269,22 +1164,14 @@ size_t DirectX::ComputeScanlines(DXGI_FORMAT fmt, size_t height) noexcept
     case DXGI_FORMAT_BC6H_SF16:
     case DXGI_FORMAT_BC7_TYPELESS:
     case DXGI_FORMAT_BC7_UNORM:
-    case DXGI_FORMAT_BC7_UNORM_SRGB:
-        assert(IsCompressed(fmt));
-        return std::max<size_t>(1, (height + 3) / 4);
+    case DXGI_FORMAT_BC7_UNORM_SRGB:             assert(IsCompressed(fmt)); return std::max<size_t>(1, (height + 3) / 4);
 
     case DXGI_FORMAT_NV11:
-    case WIN10_DXGI_FORMAT_P208:
-        assert(IsPlanar(fmt));
-        return height * 2;
+    case WIN10_DXGI_FORMAT_P208:                 assert(IsPlanar(fmt)); return height * 2;
 
-    case WIN10_DXGI_FORMAT_V208:
-        assert(IsPlanar(fmt));
-        return height + (((height + 1) >> 1) * 2);
+    case WIN10_DXGI_FORMAT_V208:                 assert(IsPlanar(fmt)); return height + (((height + 1) >> 1) * 2);
 
-    case WIN10_DXGI_FORMAT_V408:
-        assert(IsPlanar(fmt));
-        return height + ((height >> 1) * 4);
+    case WIN10_DXGI_FORMAT_V408:                 assert(IsPlanar(fmt)); return height + ((height >> 1) * 4);
 
     case DXGI_FORMAT_NV12:
     case DXGI_FORMAT_P010:
@@ -1292,9 +1179,7 @@ size_t DirectX::ComputeScanlines(DXGI_FORMAT fmt, size_t height) noexcept
     case DXGI_FORMAT_420_OPAQUE:
     case XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT:
     case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
-    case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:
-        assert(IsPlanar(fmt));
-        return height + ((height + 1) >> 1);
+    case XBOX_DXGI_FORMAT_X16_TYPELESS_G8_UINT:  assert(IsPlanar(fmt)); return height + ((height + 1) >> 1);
 
     default:
         assert(IsValid(fmt));
@@ -1302,7 +1187,6 @@ size_t DirectX::ComputeScanlines(DXGI_FORMAT fmt, size_t height) noexcept
         return height;
     }
 }
-
 
 //-------------------------------------------------------------------------------------
 // Compute standard tile shape for 64KB tiles
@@ -1312,11 +1196,7 @@ namespace
     constexpr size_t TILED_RESOURCE_TILE_SIZE_IN_BYTES = 65536;
 }
 
-_Use_decl_annotations_
-HRESULT DirectX::ComputeTileShape(
-    DXGI_FORMAT fmt,
-    TEX_DIMENSION dimension,
-    TileShape& tiling) noexcept
+_Use_decl_annotations_ HRESULT DirectX::ComputeTileShape(DXGI_FORMAT fmt, TEX_DIMENSION dimension, TileShape& tiling) noexcept
 {
     tiling = {};
 
@@ -1335,7 +1215,7 @@ HRESULT DirectX::ComputeTileShape(
         if (iscompressed)
             return E_INVALIDARG;
 
-        tiling.width = (bpp) ? ((TILED_RESOURCE_TILE_SIZE_IN_BYTES * 8) / bpp) : TILED_RESOURCE_TILE_SIZE_IN_BYTES;
+        tiling.width  = (bpp) ? ((TILED_RESOURCE_TILE_SIZE_IN_BYTES * 8) / bpp) : TILED_RESOURCE_TILE_SIZE_IN_BYTES;
         tiling.height = tiling.depth = 1;
         break;
 
@@ -1347,16 +1227,13 @@ HRESULT DirectX::ComputeTileShape(
             switch (bpb)
             {
             case 8:
-                tiling.width = 128 * 4;
+                tiling.width  = 128 * 4;
                 tiling.height = 64 * 4;
                 break;
 
-            case 16:
-                tiling.width = tiling.height = 64 * 4;
-                break;
+            case 16: tiling.width = tiling.height = 64 * 4; break;
 
-            default:
-                return E_INVALIDARG;
+            default: return E_INVALIDARG;
             }
 
             assert(((tiling.width / 4) * (tiling.height / 4) * bpb) == TILED_RESOURCE_TILE_SIZE_IN_BYTES);
@@ -1369,7 +1246,7 @@ HRESULT DirectX::ComputeTileShape(
             }
             else if (bpp <= 16)
             {
-                tiling.width = 256;
+                tiling.width  = 256;
                 tiling.height = 128;
             }
             else if (bpp <= 32)
@@ -1378,7 +1255,7 @@ HRESULT DirectX::ComputeTileShape(
             }
             else if (bpp <= 64)
             {
-                tiling.width = 128;
+                tiling.width  = 128;
                 tiling.height = 64;
             }
             else if (bpp <= 128)
@@ -1402,18 +1279,17 @@ HRESULT DirectX::ComputeTileShape(
             switch (bpb)
             {
             case 8:
-                tiling.width = 32 * 4;
+                tiling.width  = 32 * 4;
                 tiling.height = 16 * 4;
-                tiling.depth = 16;
+                tiling.depth  = 16;
                 break;
 
             case 16:
                 tiling.width = tiling.height = 16 * 4;
-                tiling.depth = 16;
+                tiling.depth                 = 16;
                 break;
 
-            default:
-                return E_INVALIDARG;
+            default: return E_INVALIDARG;
             }
 
             assert(((tiling.width / 4) * (tiling.height / 4) * tiling.depth * bpb) == TILED_RESOURCE_TILE_SIZE_IN_BYTES);
@@ -1422,7 +1298,7 @@ HRESULT DirectX::ComputeTileShape(
         {
             if (bpp <= 8)
             {
-                tiling.width = 64;
+                tiling.width  = 64;
                 tiling.height = tiling.depth = 32;
             }
             else if (bpp <= 16)
@@ -1432,11 +1308,11 @@ HRESULT DirectX::ComputeTileShape(
             else if (bpp <= 32)
             {
                 tiling.width = tiling.height = 32;
-                tiling.depth = 16;
+                tiling.depth                 = 16;
             }
             else if (bpp <= 64)
             {
-                tiling.width = 32;
+                tiling.width  = 32;
                 tiling.height = tiling.depth = 16;
             }
             else if (bpp <= 128)
@@ -1453,297 +1329,224 @@ HRESULT DirectX::ComputeTileShape(
         }
         break;
 
-    default:
-        return E_INVALIDARG;
+    default: return E_INVALIDARG;
     }
 
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Converts to an SRGB equivalent type if available
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-DXGI_FORMAT DirectX::MakeSRGB(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ DXGI_FORMAT DirectX::MakeSRGB(DXGI_FORMAT fmt) noexcept
 {
     switch (fmt)
     {
-    case DXGI_FORMAT_R8G8B8A8_UNORM:
-        return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    case DXGI_FORMAT_R8G8B8A8_UNORM: return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 
-    case DXGI_FORMAT_BC1_UNORM:
-        return DXGI_FORMAT_BC1_UNORM_SRGB;
+    case DXGI_FORMAT_BC1_UNORM:      return DXGI_FORMAT_BC1_UNORM_SRGB;
 
-    case DXGI_FORMAT_BC2_UNORM:
-        return DXGI_FORMAT_BC2_UNORM_SRGB;
+    case DXGI_FORMAT_BC2_UNORM:      return DXGI_FORMAT_BC2_UNORM_SRGB;
 
-    case DXGI_FORMAT_BC3_UNORM:
-        return DXGI_FORMAT_BC3_UNORM_SRGB;
+    case DXGI_FORMAT_BC3_UNORM:      return DXGI_FORMAT_BC3_UNORM_SRGB;
 
-    case DXGI_FORMAT_B8G8R8A8_UNORM:
-        return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    case DXGI_FORMAT_B8G8R8A8_UNORM: return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 
-    case DXGI_FORMAT_B8G8R8X8_UNORM:
-        return DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
+    case DXGI_FORMAT_B8G8R8X8_UNORM: return DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
 
-    case DXGI_FORMAT_BC7_UNORM:
-        return DXGI_FORMAT_BC7_UNORM_SRGB;
+    case DXGI_FORMAT_BC7_UNORM:      return DXGI_FORMAT_BC7_UNORM_SRGB;
 
-    default:
-        return fmt;
+    default:                         return fmt;
     }
 }
-
 
 //-------------------------------------------------------------------------------------
 // Converts to an non-SRGB equivalent type
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-DXGI_FORMAT DirectX::MakeLinear(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ DXGI_FORMAT DirectX::MakeLinear(DXGI_FORMAT fmt) noexcept
 {
     switch (fmt)
     {
-    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-        return DXGI_FORMAT_R8G8B8A8_UNORM;
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB: return DXGI_FORMAT_R8G8B8A8_UNORM;
 
-    case DXGI_FORMAT_BC1_UNORM_SRGB:
-        return DXGI_FORMAT_BC1_UNORM;
+    case DXGI_FORMAT_BC1_UNORM_SRGB:      return DXGI_FORMAT_BC1_UNORM;
 
-    case DXGI_FORMAT_BC2_UNORM_SRGB:
-        return DXGI_FORMAT_BC2_UNORM;
+    case DXGI_FORMAT_BC2_UNORM_SRGB:      return DXGI_FORMAT_BC2_UNORM;
 
-    case DXGI_FORMAT_BC3_UNORM_SRGB:
-        return DXGI_FORMAT_BC3_UNORM;
+    case DXGI_FORMAT_BC3_UNORM_SRGB:      return DXGI_FORMAT_BC3_UNORM;
 
-    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-        return DXGI_FORMAT_B8G8R8A8_UNORM;
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB: return DXGI_FORMAT_B8G8R8A8_UNORM;
 
-    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-        return DXGI_FORMAT_B8G8R8X8_UNORM;
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB: return DXGI_FORMAT_B8G8R8X8_UNORM;
 
-    case DXGI_FORMAT_BC7_UNORM_SRGB:
-        return DXGI_FORMAT_BC7_UNORM;
+    case DXGI_FORMAT_BC7_UNORM_SRGB:      return DXGI_FORMAT_BC7_UNORM;
 
-    default:
-        return fmt;
+    default:                              return fmt;
     }
 }
-
 
 //-------------------------------------------------------------------------------------
 // Converts to a format to an equivalent TYPELESS format if available
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-DXGI_FORMAT DirectX::MakeTypeless(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ DXGI_FORMAT DirectX::MakeTypeless(DXGI_FORMAT fmt) noexcept
 {
     switch (static_cast<int>(fmt))
     {
     case DXGI_FORMAT_R32G32B32A32_FLOAT:
     case DXGI_FORMAT_R32G32B32A32_UINT:
-    case DXGI_FORMAT_R32G32B32A32_SINT:
-        return DXGI_FORMAT_R32G32B32A32_TYPELESS;
+    case DXGI_FORMAT_R32G32B32A32_SINT:             return DXGI_FORMAT_R32G32B32A32_TYPELESS;
 
     case DXGI_FORMAT_R32G32B32_FLOAT:
     case DXGI_FORMAT_R32G32B32_UINT:
-    case DXGI_FORMAT_R32G32B32_SINT:
-        return DXGI_FORMAT_R32G32B32_TYPELESS;
+    case DXGI_FORMAT_R32G32B32_SINT:                return DXGI_FORMAT_R32G32B32_TYPELESS;
 
     case DXGI_FORMAT_R16G16B16A16_FLOAT:
     case DXGI_FORMAT_R16G16B16A16_UNORM:
     case DXGI_FORMAT_R16G16B16A16_UINT:
     case DXGI_FORMAT_R16G16B16A16_SNORM:
-    case DXGI_FORMAT_R16G16B16A16_SINT:
-        return DXGI_FORMAT_R16G16B16A16_TYPELESS;
+    case DXGI_FORMAT_R16G16B16A16_SINT:             return DXGI_FORMAT_R16G16B16A16_TYPELESS;
 
     case DXGI_FORMAT_R32G32_FLOAT:
     case DXGI_FORMAT_R32G32_UINT:
-    case DXGI_FORMAT_R32G32_SINT:
-        return DXGI_FORMAT_R32G32_TYPELESS;
+    case DXGI_FORMAT_R32G32_SINT:                   return DXGI_FORMAT_R32G32_TYPELESS;
 
     case DXGI_FORMAT_R10G10B10A2_UNORM:
     case DXGI_FORMAT_R10G10B10A2_UINT:
     case XBOX_DXGI_FORMAT_R10G10B10_7E3_A2_FLOAT:
     case XBOX_DXGI_FORMAT_R10G10B10_6E4_A2_FLOAT:
-    case XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM:
-        return DXGI_FORMAT_R10G10B10A2_TYPELESS;
+    case XBOX_DXGI_FORMAT_R10G10B10_SNORM_A2_UNORM: return DXGI_FORMAT_R10G10B10A2_TYPELESS;
 
     case DXGI_FORMAT_R8G8B8A8_UNORM:
     case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
     case DXGI_FORMAT_R8G8B8A8_UINT:
     case DXGI_FORMAT_R8G8B8A8_SNORM:
-    case DXGI_FORMAT_R8G8B8A8_SINT:
-        return DXGI_FORMAT_R8G8B8A8_TYPELESS;
+    case DXGI_FORMAT_R8G8B8A8_SINT:                 return DXGI_FORMAT_R8G8B8A8_TYPELESS;
 
     case DXGI_FORMAT_R16G16_FLOAT:
     case DXGI_FORMAT_R16G16_UNORM:
     case DXGI_FORMAT_R16G16_UINT:
     case DXGI_FORMAT_R16G16_SNORM:
-    case DXGI_FORMAT_R16G16_SINT:
-        return DXGI_FORMAT_R16G16_TYPELESS;
+    case DXGI_FORMAT_R16G16_SINT:                   return DXGI_FORMAT_R16G16_TYPELESS;
 
     case DXGI_FORMAT_D32_FLOAT:
     case DXGI_FORMAT_R32_FLOAT:
     case DXGI_FORMAT_R32_UINT:
-    case DXGI_FORMAT_R32_SINT:
-        return DXGI_FORMAT_R32_TYPELESS;
+    case DXGI_FORMAT_R32_SINT:                      return DXGI_FORMAT_R32_TYPELESS;
 
     case DXGI_FORMAT_R8G8_UNORM:
     case DXGI_FORMAT_R8G8_UINT:
     case DXGI_FORMAT_R8G8_SNORM:
-    case DXGI_FORMAT_R8G8_SINT:
-        return DXGI_FORMAT_R8G8_TYPELESS;
+    case DXGI_FORMAT_R8G8_SINT:                     return DXGI_FORMAT_R8G8_TYPELESS;
 
     case DXGI_FORMAT_R16_FLOAT:
     case DXGI_FORMAT_D16_UNORM:
     case DXGI_FORMAT_R16_UNORM:
     case DXGI_FORMAT_R16_UINT:
     case DXGI_FORMAT_R16_SNORM:
-    case DXGI_FORMAT_R16_SINT:
-        return DXGI_FORMAT_R16_TYPELESS;
+    case DXGI_FORMAT_R16_SINT:                      return DXGI_FORMAT_R16_TYPELESS;
 
     case DXGI_FORMAT_R8_UNORM:
     case DXGI_FORMAT_R8_UINT:
     case DXGI_FORMAT_R8_SNORM:
     case DXGI_FORMAT_R8_SINT:
-    case XBOX_DXGI_FORMAT_R4G4_UNORM:
-        return DXGI_FORMAT_R8_TYPELESS;
+    case XBOX_DXGI_FORMAT_R4G4_UNORM:               return DXGI_FORMAT_R8_TYPELESS;
 
     case DXGI_FORMAT_BC1_UNORM:
-    case DXGI_FORMAT_BC1_UNORM_SRGB:
-        return DXGI_FORMAT_BC1_TYPELESS;
+    case DXGI_FORMAT_BC1_UNORM_SRGB:                return DXGI_FORMAT_BC1_TYPELESS;
 
     case DXGI_FORMAT_BC2_UNORM:
-    case DXGI_FORMAT_BC2_UNORM_SRGB:
-        return DXGI_FORMAT_BC2_TYPELESS;
+    case DXGI_FORMAT_BC2_UNORM_SRGB:                return DXGI_FORMAT_BC2_TYPELESS;
 
     case DXGI_FORMAT_BC3_UNORM:
-    case DXGI_FORMAT_BC3_UNORM_SRGB:
-        return DXGI_FORMAT_BC3_TYPELESS;
+    case DXGI_FORMAT_BC3_UNORM_SRGB:                return DXGI_FORMAT_BC3_TYPELESS;
 
     case DXGI_FORMAT_BC4_UNORM:
-    case DXGI_FORMAT_BC4_SNORM:
-        return DXGI_FORMAT_BC4_TYPELESS;
+    case DXGI_FORMAT_BC4_SNORM:                     return DXGI_FORMAT_BC4_TYPELESS;
 
     case DXGI_FORMAT_BC5_UNORM:
-    case DXGI_FORMAT_BC5_SNORM:
-        return DXGI_FORMAT_BC5_TYPELESS;
+    case DXGI_FORMAT_BC5_SNORM:                     return DXGI_FORMAT_BC5_TYPELESS;
 
     case DXGI_FORMAT_B8G8R8A8_UNORM:
-    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-        return DXGI_FORMAT_B8G8R8A8_TYPELESS;
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:           return DXGI_FORMAT_B8G8R8A8_TYPELESS;
 
     case DXGI_FORMAT_B8G8R8X8_UNORM:
-    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-        return DXGI_FORMAT_B8G8R8X8_TYPELESS;
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:           return DXGI_FORMAT_B8G8R8X8_TYPELESS;
 
     case DXGI_FORMAT_BC6H_UF16:
-    case DXGI_FORMAT_BC6H_SF16:
-        return DXGI_FORMAT_BC6H_TYPELESS;
+    case DXGI_FORMAT_BC6H_SF16:                     return DXGI_FORMAT_BC6H_TYPELESS;
 
     case DXGI_FORMAT_BC7_UNORM:
-    case DXGI_FORMAT_BC7_UNORM_SRGB:
-        return DXGI_FORMAT_BC7_TYPELESS;
+    case DXGI_FORMAT_BC7_UNORM_SRGB:                return DXGI_FORMAT_BC7_TYPELESS;
 
-    default:
-        return fmt;
+    default:                                        return fmt;
     }
 }
-
 
 //-------------------------------------------------------------------------------------
 // Converts to a TYPELESS format to an equivalent UNORM format if available
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-DXGI_FORMAT DirectX::MakeTypelessUNORM(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ DXGI_FORMAT DirectX::MakeTypelessUNORM(DXGI_FORMAT fmt) noexcept
 {
     switch (fmt)
     {
-    case DXGI_FORMAT_R16G16B16A16_TYPELESS:
-        return DXGI_FORMAT_R16G16B16A16_UNORM;
+    case DXGI_FORMAT_R16G16B16A16_TYPELESS: return DXGI_FORMAT_R16G16B16A16_UNORM;
 
-    case DXGI_FORMAT_R10G10B10A2_TYPELESS:
-        return DXGI_FORMAT_R10G10B10A2_UNORM;
+    case DXGI_FORMAT_R10G10B10A2_TYPELESS:  return DXGI_FORMAT_R10G10B10A2_UNORM;
 
-    case DXGI_FORMAT_R8G8B8A8_TYPELESS:
-        return DXGI_FORMAT_R8G8B8A8_UNORM;
+    case DXGI_FORMAT_R8G8B8A8_TYPELESS:     return DXGI_FORMAT_R8G8B8A8_UNORM;
 
-    case DXGI_FORMAT_R16G16_TYPELESS:
-        return DXGI_FORMAT_R16G16_UNORM;
+    case DXGI_FORMAT_R16G16_TYPELESS:       return DXGI_FORMAT_R16G16_UNORM;
 
-    case DXGI_FORMAT_R8G8_TYPELESS:
-        return DXGI_FORMAT_R8G8_UNORM;
+    case DXGI_FORMAT_R8G8_TYPELESS:         return DXGI_FORMAT_R8G8_UNORM;
 
-    case DXGI_FORMAT_R16_TYPELESS:
-        return DXGI_FORMAT_R16_UNORM;
+    case DXGI_FORMAT_R16_TYPELESS:          return DXGI_FORMAT_R16_UNORM;
 
-    case DXGI_FORMAT_R8_TYPELESS:
-        return DXGI_FORMAT_R8_UNORM;
+    case DXGI_FORMAT_R8_TYPELESS:           return DXGI_FORMAT_R8_UNORM;
 
-    case DXGI_FORMAT_BC1_TYPELESS:
-        return DXGI_FORMAT_BC1_UNORM;
+    case DXGI_FORMAT_BC1_TYPELESS:          return DXGI_FORMAT_BC1_UNORM;
 
-    case DXGI_FORMAT_BC2_TYPELESS:
-        return DXGI_FORMAT_BC2_UNORM;
+    case DXGI_FORMAT_BC2_TYPELESS:          return DXGI_FORMAT_BC2_UNORM;
 
-    case DXGI_FORMAT_BC3_TYPELESS:
-        return DXGI_FORMAT_BC3_UNORM;
+    case DXGI_FORMAT_BC3_TYPELESS:          return DXGI_FORMAT_BC3_UNORM;
 
-    case DXGI_FORMAT_BC4_TYPELESS:
-        return DXGI_FORMAT_BC4_UNORM;
+    case DXGI_FORMAT_BC4_TYPELESS:          return DXGI_FORMAT_BC4_UNORM;
 
-    case DXGI_FORMAT_BC5_TYPELESS:
-        return DXGI_FORMAT_BC5_UNORM;
+    case DXGI_FORMAT_BC5_TYPELESS:          return DXGI_FORMAT_BC5_UNORM;
 
-    case DXGI_FORMAT_B8G8R8A8_TYPELESS:
-        return DXGI_FORMAT_B8G8R8A8_UNORM;
+    case DXGI_FORMAT_B8G8R8A8_TYPELESS:     return DXGI_FORMAT_B8G8R8A8_UNORM;
 
-    case DXGI_FORMAT_B8G8R8X8_TYPELESS:
-        return DXGI_FORMAT_B8G8R8X8_UNORM;
+    case DXGI_FORMAT_B8G8R8X8_TYPELESS:     return DXGI_FORMAT_B8G8R8X8_UNORM;
 
-    case DXGI_FORMAT_BC7_TYPELESS:
-        return DXGI_FORMAT_BC7_UNORM;
+    case DXGI_FORMAT_BC7_TYPELESS:          return DXGI_FORMAT_BC7_UNORM;
 
-    default:
-        return fmt;
+    default:                                return fmt;
     }
 }
-
 
 //-------------------------------------------------------------------------------------
 // Converts to a TYPELESS format to an equivalent FLOAT format if available
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-DXGI_FORMAT DirectX::MakeTypelessFLOAT(DXGI_FORMAT fmt) noexcept
+_Use_decl_annotations_ DXGI_FORMAT DirectX::MakeTypelessFLOAT(DXGI_FORMAT fmt) noexcept
 {
     switch (fmt)
     {
-    case DXGI_FORMAT_R32G32B32A32_TYPELESS:
-        return DXGI_FORMAT_R32G32B32A32_FLOAT;
+    case DXGI_FORMAT_R32G32B32A32_TYPELESS: return DXGI_FORMAT_R32G32B32A32_FLOAT;
 
-    case DXGI_FORMAT_R32G32B32_TYPELESS:
-        return DXGI_FORMAT_R32G32B32_FLOAT;
+    case DXGI_FORMAT_R32G32B32_TYPELESS:    return DXGI_FORMAT_R32G32B32_FLOAT;
 
-    case DXGI_FORMAT_R16G16B16A16_TYPELESS:
-        return DXGI_FORMAT_R16G16B16A16_FLOAT;
+    case DXGI_FORMAT_R16G16B16A16_TYPELESS: return DXGI_FORMAT_R16G16B16A16_FLOAT;
 
-    case DXGI_FORMAT_R32G32_TYPELESS:
-        return DXGI_FORMAT_R32G32_FLOAT;
+    case DXGI_FORMAT_R32G32_TYPELESS:       return DXGI_FORMAT_R32G32_FLOAT;
 
-    case DXGI_FORMAT_R16G16_TYPELESS:
-        return DXGI_FORMAT_R16G16_FLOAT;
+    case DXGI_FORMAT_R16G16_TYPELESS:       return DXGI_FORMAT_R16G16_FLOAT;
 
-    case DXGI_FORMAT_R32_TYPELESS:
-        return DXGI_FORMAT_R32_FLOAT;
+    case DXGI_FORMAT_R32_TYPELESS:          return DXGI_FORMAT_R32_FLOAT;
 
-    case DXGI_FORMAT_R16_TYPELESS:
-        return DXGI_FORMAT_R16_FLOAT;
+    case DXGI_FORMAT_R16_TYPELESS:          return DXGI_FORMAT_R16_FLOAT;
 
-    default:
-        return fmt;
+    default:                                return fmt;
     }
 }
-
 
 //=====================================================================================
 // TexMetadata
@@ -1764,7 +1567,7 @@ size_t TexMetadata::ComputeIndex(size_t mip, size_t item, size_t slice) const no
         if (item >= arraySize)
             return size_t(-1);
 
-        return (item*(mipLevels)+mip);
+        return (item * (mipLevels) + mip);
 
     case TEX_DIMENSION_TEXTURE3D:
         if (item > 0)
@@ -1775,7 +1578,7 @@ size_t TexMetadata::ComputeIndex(size_t mip, size_t item, size_t slice) const no
         else
         {
             size_t index = 0;
-            size_t d = depth;
+            size_t d     = depth;
 
             for (size_t level = 0; level < mip; ++level)
             {
@@ -1792,8 +1595,7 @@ size_t TexMetadata::ComputeIndex(size_t mip, size_t item, size_t slice) const no
             return index;
         }
 
-    default:
-        return size_t(-1);
+    default: return size_t(-1);
     }
 }
 
@@ -1810,7 +1612,7 @@ uint32_t TexMetadata::CalculateSubresource(size_t mip, size_t item) const noexce
         case TEX_DIMENSION_TEXTURE2D:
             if (item < arraySize)
             {
-                return static_cast<uint32_t>(mip + item*mipLevels);
+                return static_cast<uint32_t>(mip + item * mipLevels);
             }
             break;
 
@@ -1822,8 +1624,7 @@ uint32_t TexMetadata::CalculateSubresource(size_t mip, size_t item) const noexce
             }
             break;
 
-        default:
-            break;
+        default: break;
         }
     }
 
@@ -1843,7 +1644,7 @@ uint32_t TexMetadata::CalculateSubresource(size_t mip, size_t item, size_t plane
         case TEX_DIMENSION_TEXTURE2D:
             if (item < arraySize)
             {
-                return static_cast<uint32_t>(mip + item*mipLevels + plane*mipLevels*arraySize);
+                return static_cast<uint32_t>(mip + item * mipLevels + plane * mipLevels * arraySize);
             }
             break;
 
@@ -1851,34 +1652,32 @@ uint32_t TexMetadata::CalculateSubresource(size_t mip, size_t item, size_t plane
             // No support for arrays of volumes
             if (item == 0)
             {
-                result = static_cast<uint32_t>(mip + plane*mipLevels);
+                result = static_cast<uint32_t>(mip + plane * mipLevels);
             }
             break;
 
-        default:
-            break;
+        default: break;
         }
     }
 
     return result;
 }
 
-
 //=====================================================================================
 // Blob - Bitmap image container
 //=====================================================================================
 
-Blob& Blob::operator= (Blob&& moveFrom) noexcept
+Blob& Blob::operator=(Blob&& moveFrom) noexcept
 {
     if (this != &moveFrom)
     {
         Release();
 
         m_buffer = moveFrom.m_buffer;
-        m_size = moveFrom.m_size;
+        m_size   = moveFrom.m_size;
 
         moveFrom.m_buffer = nullptr;
-        moveFrom.m_size = 0;
+        moveFrom.m_size   = 0;
     }
     return *this;
 }
@@ -1894,8 +1693,7 @@ void Blob::Release() noexcept
     m_size = 0;
 }
 
-_Use_decl_annotations_
-HRESULT Blob::Initialize(size_t size) noexcept
+_Use_decl_annotations_ HRESULT Blob::Initialize(size_t size) noexcept
 {
     if (!size)
         return E_INVALIDARG;
@@ -1947,7 +1745,7 @@ HRESULT Blob::Resize(size_t size) noexcept
     Release();
 
     m_buffer = tbuffer;
-    m_size = size;
+    m_size   = size;
 
     return S_OK;
 }

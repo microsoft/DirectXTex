@@ -47,11 +47,8 @@ static_assert(static_cast<int>(TEX_DIMENSION_TEXTURE3D) == static_cast<int>(D3D1
 
 namespace
 {
-    template<typename T, typename PT> void AdjustPlaneResource(
-        _In_ DXGI_FORMAT fmt,
-        _In_ size_t height,
-        _In_ size_t slicePlane,
-        _Inout_ T& res) noexcept
+    template<typename T, typename PT>
+    void AdjustPlaneResource(_In_ DXGI_FORMAT fmt, _In_ size_t height, _In_ size_t slicePlane, _Inout_ T& res) noexcept
     {
         switch (static_cast<int>(fmt))
         {
@@ -69,7 +66,7 @@ namespace
             else
             {
                 // Plane 1
-                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * PT(height));
+                res.pData      = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * PT(height));
                 res.SlicePitch = res.RowPitch * static_cast<PT>((height + 1) >> 1);
             }
             break;
@@ -83,24 +80,21 @@ namespace
             else
             {
                 // Plane 1
-                res.pData = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * PT(height));
-                res.RowPitch = (res.RowPitch >> 1);
+                res.pData      = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(res.pData) + res.RowPitch * PT(height));
+                res.RowPitch   = (res.RowPitch >> 1);
                 res.SlicePitch = res.RowPitch * static_cast<PT>(height);
             }
             break;
 
-        default:
-            break;
+        default: break;
         }
     }
 
-
     //--------------------------------------------------------------------------------------
-    inline void TransitionResource(
-        _In_ ID3D12GraphicsCommandList* commandList,
-        _In_ ID3D12Resource* resource,
-        _In_ D3D12_RESOURCE_STATES stateBefore,
-        _In_ D3D12_RESOURCE_STATES stateAfter)
+    inline void TransitionResource(_In_ ID3D12GraphicsCommandList* commandList,
+        _In_ ID3D12Resource*                                       resource,
+        _In_ D3D12_RESOURCE_STATES                                 stateBefore,
+        _In_ D3D12_RESOURCE_STATES                                 stateAfter)
     {
         assert(commandList != nullptr);
         assert(resource != nullptr);
@@ -109,27 +103,26 @@ namespace
             return;
 
         D3D12_RESOURCE_BARRIER desc = {};
-        desc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        desc.Transition.pResource = resource;
+        desc.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        desc.Transition.pResource   = resource;
         desc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         desc.Transition.StateBefore = stateBefore;
-        desc.Transition.StateAfter = stateAfter;
+        desc.Transition.StateAfter  = stateAfter;
 
         commandList->ResourceBarrier(1, &desc);
     }
 
-
     //--------------------------------------------------------------------------------------
     HRESULT Capture(_In_ ID3D12Device* device,
-        _In_ ID3D12CommandQueue* pCommandQ,
-        _In_ ID3D12Resource* pSource,
-        const D3D12_RESOURCE_DESC& desc,
-        _COM_Outptr_ ID3D12Resource** pStaging,
-        std::unique_ptr<uint8_t[]>& layoutBuff,
-        UINT& numberOfPlanes,
-        UINT& numberOfResources,
-        D3D12_RESOURCE_STATES beforeState,
-        D3D12_RESOURCE_STATES afterState) noexcept
+        _In_ ID3D12CommandQueue*       pCommandQ,
+        _In_ ID3D12Resource*           pSource,
+        const D3D12_RESOURCE_DESC&     desc,
+        _COM_Outptr_ ID3D12Resource**  pStaging,
+        std::unique_ptr<uint8_t[]>&    layoutBuff,
+        UINT&                          numberOfPlanes,
+        UINT&                          numberOfResources,
+        D3D12_RESOURCE_STATES          beforeState,
+        D3D12_RESOURCE_STATES          afterState) noexcept
     {
         if (pStaging)
         {
@@ -149,8 +142,7 @@ namespace
             return HRESULT_E_NOT_SUPPORTED;
         }
 
-        numberOfResources = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
-            ? 1u : desc.DepthOrArraySize;
+        numberOfResources = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) ? 1u : desc.DepthOrArraySize;
         numberOfResources *= desc.MipLevels;
         numberOfResources *= numberOfPlanes;
 
@@ -165,16 +157,15 @@ namespace
         if (!layoutBuff)
             return E_OUTOFMEMORY;
 
-        auto pLayout = reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(layoutBuff.get());
+        auto pLayout          = reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(layoutBuff.get());
         auto pRowSizesInBytes = reinterpret_cast<UINT64*>(pLayout + numberOfResources);
-        auto pNumRows = reinterpret_cast<UINT*>(pRowSizesInBytes + numberOfResources);
+        auto pNumRows         = reinterpret_cast<UINT*>(pRowSizesInBytes + numberOfResources);
 
         UINT64 totalResourceSize = 0;
-        device->GetCopyableFootprints(&desc, 0, numberOfResources, 0,
-            pLayout, pNumRows, pRowSizesInBytes, &totalResourceSize);
+        device->GetCopyableFootprints(&desc, 0, numberOfResources, 0, pLayout, pNumRows, pRowSizesInBytes, &totalResourceSize);
 
         D3D12_HEAP_PROPERTIES sourceHeapProperties;
-        HRESULT hr = pSource->GetHeapProperties(&sourceHeapProperties, nullptr);
+        HRESULT               hr = pSource->GetHeapProperties(&sourceHeapProperties, nullptr);
         if (SUCCEEDED(hr) && sourceHeapProperties.Type == D3D12_HEAP_TYPE_READBACK)
         {
             // Handle case where the source is already a staging texture we can use directly
@@ -191,7 +182,11 @@ namespace
 
         // Spin up a new command list
         ComPtr<ID3D12GraphicsCommandList> commandList;
-        hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAlloc.Get(), nullptr, IID_GRAPHICS_PPV_ARGS(commandList.GetAddressOf()));
+        hr = device->CreateCommandList(0,
+            D3D12_COMMAND_LIST_TYPE_DIRECT,
+            commandAlloc.Get(),
+            nullptr,
+            IID_GRAPHICS_PPV_ARGS(commandList.GetAddressOf()));
         if (FAILED(hr))
             return hr;
 
@@ -206,31 +201,30 @@ namespace
 
         // Readback resources must be buffers
         D3D12_RESOURCE_DESC bufferDesc = {};
-        bufferDesc.DepthOrArraySize = 1;
-        bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        bufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-        bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
-        bufferDesc.Height = 1;
-        bufferDesc.Width = totalResourceSize;
-        bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        bufferDesc.MipLevels = 1;
-        bufferDesc.SampleDesc.Count = 1;
+        bufferDesc.DepthOrArraySize    = 1;
+        bufferDesc.Dimension           = D3D12_RESOURCE_DIMENSION_BUFFER;
+        bufferDesc.Flags               = D3D12_RESOURCE_FLAG_NONE;
+        bufferDesc.Format              = DXGI_FORMAT_UNKNOWN;
+        bufferDesc.Height              = 1;
+        bufferDesc.Width               = totalResourceSize;
+        bufferDesc.Layout              = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        bufferDesc.MipLevels           = 1;
+        bufferDesc.SampleDesc.Count    = 1;
 
         ComPtr<ID3D12Resource> copySource(pSource);
-        D3D12_RESOURCE_STATES beforeStateSource = beforeState;
+        D3D12_RESOURCE_STATES  beforeStateSource = beforeState;
         if (desc.SampleDesc.Count > 1)
         {
             TransitionResource(commandList.Get(), pSource, beforeState, D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
 
             // MSAA content must be resolved before being copied to a staging texture
-            auto descCopy = desc;
-            descCopy.SampleDesc.Count = 1;
+            auto descCopy               = desc;
+            descCopy.SampleDesc.Count   = 1;
             descCopy.SampleDesc.Quality = 0;
-            descCopy.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+            descCopy.Alignment          = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 
             ComPtr<ID3D12Resource> pTemp;
-            hr = device->CreateCommittedResource(
-                &defaultHeapProperties,
+            hr = device->CreateCommittedResource(&defaultHeapProperties,
                 D3D12_HEAP_FLAG_NONE,
                 &descCopy,
                 D3D12_RESOURCE_STATE_RESOLVE_DEST,
@@ -269,7 +263,7 @@ namespace
                 }
             }
 
-            copySource = pTemp;
+            copySource  = pTemp;
             beforeState = D3D12_RESOURCE_STATE_RESOLVE_DEST;
         }
         else
@@ -278,8 +272,7 @@ namespace
         }
 
         // Create a staging texture
-        hr = device->CreateCommittedResource(
-            &readBackHeapProperties,
+        hr = device->CreateCommittedResource(&readBackHeapProperties,
             D3D12_HEAP_FLAG_NONE,
             &bufferDesc,
             D3D12_RESOURCE_STATE_COPY_DEST,
@@ -319,17 +312,16 @@ namespace
         // Block until the copy is complete
         while (fence->GetCompletedValue() < 1)
         {
-        #ifdef _WIN32
+#ifdef _WIN32
             SwitchToThread();
-        #else
+#else
             std::this_thread::yield();
-        #endif
+#endif
         }
 
         return S_OK;
     }
-}
-
+} // namespace
 
 //=====================================================================================
 // Entry-points
@@ -338,10 +330,7 @@ namespace
 //-------------------------------------------------------------------------------------
 // Determine if given texture metadata is supported on the given device
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-bool DirectX::IsSupportedTexture(
-    ID3D12Device* pDevice,
-    const TexMetadata& metadata) noexcept
+_Use_decl_annotations_ bool DirectX::IsSupportedTexture(ID3D12Device* pDevice, const TexMetadata& metadata) noexcept
 {
     if (!pDevice)
         return false;
@@ -352,7 +341,7 @@ bool DirectX::IsSupportedTexture(
     if (!IsValid(fmt))
         return false;
 
-    const size_t iWidth = metadata.width;
+    const size_t iWidth  = metadata.width;
     const size_t iHeight = metadata.height;
 
     switch (static_cast<int>(fmt))
@@ -361,8 +350,7 @@ bool DirectX::IsSupportedTexture(
     case DXGI_FORMAT_P010:
     case DXGI_FORMAT_P016:
     case DXGI_FORMAT_420_OPAQUE:
-        if ((metadata.dimension != TEX_DIMENSION_TEXTURE2D)
-            || (iWidth % 2) != 0 || (iHeight % 2) != 0)
+        if ((metadata.dimension != TEX_DIMENSION_TEXTURE2D) || (iWidth % 2) != 0 || (iHeight % 2) != 0)
         {
             return false;
         }
@@ -393,15 +381,13 @@ bool DirectX::IsSupportedTexture(
         return false;
 
     case WIN10_DXGI_FORMAT_V208:
-        if ((metadata.dimension != TEX_DIMENSION_TEXTURE2D)
-            || (iHeight % 2) != 0)
+        if ((metadata.dimension != TEX_DIMENSION_TEXTURE2D) || (iHeight % 2) != 0)
         {
             return false;
         }
         break;
 
-    default:
-        break;
+    default: break;
     }
 
     // Validate miplevel count
@@ -410,7 +396,7 @@ bool DirectX::IsSupportedTexture(
 
     // Validate array size, dimension, and width/height
     const size_t arraySize = metadata.arraySize;
-    const size_t iDepth = metadata.depth;
+    const size_t iDepth    = metadata.depth;
 
     // Most cases are known apriori based on feature level, but we use this for robustness to handle the few optional cases
     D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { fmt, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
@@ -431,8 +417,7 @@ bool DirectX::IsSupportedTexture(
         if (!(formatSupport.Support1 & D3D12_FORMAT_SUPPORT1_TEXTURE1D))
             return false;
 
-        if ((arraySize > D3D12_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION)
-            || (iWidth > D3D12_REQ_TEXTURE1D_U_DIMENSION))
+        if ((arraySize > D3D12_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION) || (iWidth > D3D12_REQ_TEXTURE1D_U_DIMENSION))
             return false;
 
         {
@@ -448,8 +433,7 @@ bool DirectX::IsSupportedTexture(
             if (!(formatSupport.Support1 & D3D12_FORMAT_SUPPORT1_TEXTURECUBE))
                 return false;
 
-            if ((arraySize > D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION)
-                || (iWidth > D3D12_REQ_TEXTURECUBE_DIMENSION)
+            if ((arraySize > D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) || (iWidth > D3D12_REQ_TEXTURECUBE_DIMENSION)
                 || (iHeight > D3D12_REQ_TEXTURECUBE_DIMENSION))
                 return false;
         }
@@ -458,8 +442,7 @@ bool DirectX::IsSupportedTexture(
             if (!(formatSupport.Support1 & D3D12_FORMAT_SUPPORT1_TEXTURE2D))
                 return false;
 
-            if ((arraySize > D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION)
-                || (iWidth > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION)
+            if ((arraySize > D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION) || (iWidth > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION)
                 || (iHeight > D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION))
                 return false;
         }
@@ -475,9 +458,7 @@ bool DirectX::IsSupportedTexture(
         if (!(formatSupport.Support1 & D3D12_FORMAT_SUPPORT1_TEXTURE3D))
             return false;
 
-        if ((arraySize > 1)
-            || (iWidth > D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION)
-            || (iHeight > D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION)
+        if ((arraySize > 1) || (iWidth > D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION) || (iHeight > D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION)
             || (iDepth > D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION))
             return false;
 
@@ -495,29 +476,21 @@ bool DirectX::IsSupportedTexture(
     return true;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Create a texture resource
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::CreateTexture(
-    ID3D12Device* pDevice,
-    const TexMetadata& metadata,
-    ID3D12Resource** ppResource) noexcept
+_Use_decl_annotations_ HRESULT DirectX::CreateTexture(ID3D12Device* pDevice,
+    const TexMetadata&                                              metadata,
+    ID3D12Resource**                                                ppResource) noexcept
 {
-    return CreateTextureEx(
-        pDevice, metadata,
-        D3D12_RESOURCE_FLAG_NONE, CREATETEX_DEFAULT,
-        ppResource);
+    return CreateTextureEx(pDevice, metadata, D3D12_RESOURCE_FLAG_NONE, CREATETEX_DEFAULT, ppResource);
 }
 
-_Use_decl_annotations_
-HRESULT DirectX::CreateTextureEx(
-    ID3D12Device* pDevice,
-    const TexMetadata& metadata,
-    D3D12_RESOURCE_FLAGS resFlags,
-    CREATETEX_FLAGS flags,
-    ID3D12Resource** ppResource) noexcept
+_Use_decl_annotations_ HRESULT DirectX::CreateTextureEx(ID3D12Device* pDevice,
+    const TexMetadata&                                                metadata,
+    D3D12_RESOURCE_FLAGS                                              resFlags,
+    CREATETEX_FLAGS                                                   flags,
+    ID3D12Resource**                                                  ppResource) noexcept
 {
     if (!pDevice || !ppResource)
         return E_INVALIDARG;
@@ -527,8 +500,8 @@ HRESULT DirectX::CreateTextureEx(
     if (!metadata.mipLevels || !metadata.arraySize)
         return E_INVALIDARG;
 
-    if ((metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX)
-        || (metadata.mipLevels > UINT16_MAX) || (metadata.arraySize > UINT16_MAX))
+    if ((metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX) || (metadata.mipLevels > UINT16_MAX)
+        || (metadata.arraySize > UINT16_MAX))
         return E_INVALIDARG;
 
     DXGI_FORMAT format = metadata.format;
@@ -542,46 +515,41 @@ HRESULT DirectX::CreateTextureEx(
     }
 
     D3D12_RESOURCE_DESC desc = {};
-    desc.Width = static_cast<UINT>(metadata.width);
-    desc.Height = static_cast<UINT>(metadata.height);
-    desc.MipLevels = static_cast<UINT16>(metadata.mipLevels);
-    desc.DepthOrArraySize = (metadata.dimension == TEX_DIMENSION_TEXTURE3D)
-        ? static_cast<UINT16>(metadata.depth)
-        : static_cast<UINT16>(metadata.arraySize);
-    desc.Format = format;
-    desc.Flags = resFlags;
+    desc.Width               = static_cast<UINT>(metadata.width);
+    desc.Height              = static_cast<UINT>(metadata.height);
+    desc.MipLevels           = static_cast<UINT16>(metadata.mipLevels);
+    desc.DepthOrArraySize
+        = (metadata.dimension == TEX_DIMENSION_TEXTURE3D) ? static_cast<UINT16>(metadata.depth) : static_cast<UINT16>(metadata.arraySize);
+    desc.Format           = format;
+    desc.Flags            = resFlags;
     desc.SampleDesc.Count = 1;
-    desc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);
+    desc.Dimension        = static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);
 
     const CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 
-    HRESULT hr = pDevice->CreateCommittedResource(
-        &defaultHeapProperties,
+    HRESULT hr = pDevice->CreateCommittedResource(&defaultHeapProperties,
         D3D12_HEAP_FLAG_NONE,
         &desc,
-    #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
         D3D12_RESOURCE_STATE_COPY_DEST,
-    #else
+#else
         D3D12_RESOURCE_STATE_COMMON,
-    #endif
+#endif
         nullptr,
         IID_GRAPHICS_PPV_ARGS(ppResource));
 
     return hr;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Prepares a texture resource for upload
 //-------------------------------------------------------------------------------------
 
-_Use_decl_annotations_
-HRESULT DirectX::PrepareUpload(
-    ID3D12Device* pDevice,
-    const Image* srcImages,
-    size_t nimages,
-    const TexMetadata& metadata,
-    std::vector<D3D12_SUBRESOURCE_DATA>& subresources)
+_Use_decl_annotations_ HRESULT DirectX::PrepareUpload(ID3D12Device* pDevice,
+    const Image*                                                    srcImages,
+    size_t                                                          nimages,
+    const TexMetadata&                                              metadata,
+    std::vector<D3D12_SUBRESOURCE_DATA>&                            subresources)
 {
     if (!pDevice || !srcImages || !nimages || !metadata.mipLevels || !metadata.arraySize)
         return E_INVALIDARG;
@@ -596,8 +564,7 @@ HRESULT DirectX::PrepareUpload(
         return HRESULT_E_NOT_SUPPORTED;
     }
 
-    size_t numberOfResources = (metadata.dimension == TEX_DIMENSION_TEXTURE3D)
-        ? 1u : metadata.arraySize;
+    size_t numberOfResources = (metadata.dimension == TEX_DIMENSION_TEXTURE3D) ? 1u : metadata.arraySize;
     numberOfResources *= metadata.mipLevels;
     numberOfResources *= numberOfPlanes;
 
@@ -654,21 +621,14 @@ HRESULT DirectX::PrepareUpload(
                     if (!timg.pixels)
                         return E_POINTER;
 
-                    if (timg.pixels != pSlice
-                        || timg.format != metadata.format
-                        || timg.rowPitch != img.rowPitch
+                    if (timg.pixels != pSlice || timg.format != metadata.format || timg.rowPitch != img.rowPitch
                         || timg.slicePitch != img.slicePitch)
                         return E_FAIL;
 
                     pSlice = timg.pixels + img.slicePitch;
                 }
 
-                D3D12_SUBRESOURCE_DATA res =
-                {
-                    img.pixels,
-                    static_cast<LONG_PTR>(img.rowPitch),
-                    static_cast<LONG_PTR>(img.slicePitch)
-                };
+                D3D12_SUBRESOURCE_DATA res = { img.pixels, static_cast<LONG_PTR>(img.rowPitch), static_cast<LONG_PTR>(img.slicePitch) };
 
                 AdjustPlaneResource<D3D12_SUBRESOURCE_DATA, intptr_t>(metadata.format, img.height, plane, res);
 
@@ -700,12 +660,7 @@ HRESULT DirectX::PrepareUpload(
                     if (!img.pixels)
                         return E_POINTER;
 
-                    D3D12_SUBRESOURCE_DATA res =
-                    {
-                        img.pixels,
-                        static_cast<LONG_PTR>(img.rowPitch),
-                        static_cast<LONG_PTR>(img.slicePitch)
-                    };
+                    D3D12_SUBRESOURCE_DATA res = { img.pixels, static_cast<LONG_PTR>(img.rowPitch), static_cast<LONG_PTR>(img.slicePitch) };
 
                     AdjustPlaneResource<D3D12_SUBRESOURCE_DATA, intptr_t>(metadata.format, img.height, plane, res);
 
@@ -718,18 +673,15 @@ HRESULT DirectX::PrepareUpload(
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Save a texture resource
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::CaptureTexture(
-    ID3D12CommandQueue* pCommandQueue,
-    ID3D12Resource* pSource,
-    bool isCubeMap,
-    ScratchImage& result,
-    D3D12_RESOURCE_STATES beforeState,
-    D3D12_RESOURCE_STATES afterState) noexcept
+_Use_decl_annotations_ HRESULT DirectX::CaptureTexture(ID3D12CommandQueue* pCommandQueue,
+    ID3D12Resource*                                                        pSource,
+    bool                                                                   isCubeMap,
+    ScratchImage&                                                          result,
+    D3D12_RESOURCE_STATES                                                  beforeState,
+    D3D12_RESOURCE_STATES                                                  afterState) noexcept
 {
     if (!pCommandQueue || !pSource)
         return E_INVALIDARG;
@@ -741,13 +693,13 @@ HRESULT DirectX::CaptureTexture(
     const auto desc = pSource->GetDesc();
 #else
     D3D12_RESOURCE_DESC tmpDesc;
-    const auto& desc = *pSource->GetDesc(&tmpDesc);
+    const auto&         desc = *pSource->GetDesc(&tmpDesc);
 #endif
 
-    ComPtr<ID3D12Resource> pStaging;
+    ComPtr<ID3D12Resource>     pStaging;
     std::unique_ptr<uint8_t[]> layoutBuff;
-    UINT numberOfPlanes, numberOfResources;
-    HRESULT hr = Capture(device.Get(),
+    UINT                       numberOfPlanes, numberOfResources;
+    HRESULT                    hr = Capture(device.Get(),
         pCommandQueue,
         pSource,
         desc,
@@ -763,83 +715,77 @@ HRESULT DirectX::CaptureTexture(
     if (!layoutBuff || !numberOfPlanes || !numberOfResources)
         return E_UNEXPECTED;
 
-    auto pLayout = reinterpret_cast<const D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(layoutBuff.get());
+    auto pLayout          = reinterpret_cast<const D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(layoutBuff.get());
     auto pRowSizesInBytes = reinterpret_cast<const UINT64*>(pLayout + numberOfResources);
-    auto pNumRows = reinterpret_cast<const UINT*>(pRowSizesInBytes + numberOfResources);
+    auto pNumRows         = reinterpret_cast<const UINT*>(pRowSizesInBytes + numberOfResources);
 
     switch (desc.Dimension)
     {
-    case D3D12_RESOURCE_DIMENSION_TEXTURE1D:
-        {
-            TexMetadata mdata;
-            mdata.width = static_cast<size_t>(desc.Width);
-            mdata.height = mdata.depth = 1;
-            mdata.arraySize = desc.DepthOrArraySize;
-            mdata.mipLevels = desc.MipLevels;
-            mdata.miscFlags = 0;
-            mdata.miscFlags2 = 0;
-            mdata.format = desc.Format;
-            mdata.dimension = TEX_DIMENSION_TEXTURE1D;
+    case D3D12_RESOURCE_DIMENSION_TEXTURE1D: {
+        TexMetadata mdata;
+        mdata.width  = static_cast<size_t>(desc.Width);
+        mdata.height = mdata.depth = 1;
+        mdata.arraySize            = desc.DepthOrArraySize;
+        mdata.mipLevels            = desc.MipLevels;
+        mdata.miscFlags            = 0;
+        mdata.miscFlags2           = 0;
+        mdata.format               = desc.Format;
+        mdata.dimension            = TEX_DIMENSION_TEXTURE1D;
 
-            hr = result.Initialize(mdata);
-            if (FAILED(hr))
-                return hr;
-        }
-        break;
+        hr = result.Initialize(mdata);
+        if (FAILED(hr))
+            return hr;
+    }
+    break;
 
-    case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
-        {
-            TexMetadata mdata;
-            mdata.width = static_cast<size_t>(desc.Width);
-            mdata.height = desc.Height;
-            mdata.depth = 1;
-            mdata.arraySize = desc.DepthOrArraySize;
-            mdata.mipLevels = desc.MipLevels;
-            mdata.miscFlags = isCubeMap ? TEX_MISC_TEXTURECUBE : 0u;
-            mdata.miscFlags2 = 0;
-            mdata.format = desc.Format;
-            mdata.dimension = TEX_DIMENSION_TEXTURE2D;
+    case D3D12_RESOURCE_DIMENSION_TEXTURE2D: {
+        TexMetadata mdata;
+        mdata.width      = static_cast<size_t>(desc.Width);
+        mdata.height     = desc.Height;
+        mdata.depth      = 1;
+        mdata.arraySize  = desc.DepthOrArraySize;
+        mdata.mipLevels  = desc.MipLevels;
+        mdata.miscFlags  = isCubeMap ? TEX_MISC_TEXTURECUBE : 0u;
+        mdata.miscFlags2 = 0;
+        mdata.format     = desc.Format;
+        mdata.dimension  = TEX_DIMENSION_TEXTURE2D;
 
-            hr = result.Initialize(mdata);
-            if (FAILED(hr))
-                return hr;
-        }
-        break;
+        hr = result.Initialize(mdata);
+        if (FAILED(hr))
+            return hr;
+    }
+    break;
 
-    case D3D12_RESOURCE_DIMENSION_TEXTURE3D:
-        {
-            TexMetadata mdata;
-            mdata.width = static_cast<size_t>(desc.Width);
-            mdata.height = desc.Height;
-            mdata.depth = desc.DepthOrArraySize;
-            mdata.arraySize = 1;
-            mdata.mipLevels = desc.MipLevels;
-            mdata.miscFlags = 0;
-            mdata.miscFlags2 = 0;
-            mdata.format = desc.Format;
-            mdata.dimension = TEX_DIMENSION_TEXTURE3D;
+    case D3D12_RESOURCE_DIMENSION_TEXTURE3D: {
+        TexMetadata mdata;
+        mdata.width      = static_cast<size_t>(desc.Width);
+        mdata.height     = desc.Height;
+        mdata.depth      = desc.DepthOrArraySize;
+        mdata.arraySize  = 1;
+        mdata.mipLevels  = desc.MipLevels;
+        mdata.miscFlags  = 0;
+        mdata.miscFlags2 = 0;
+        mdata.format     = desc.Format;
+        mdata.dimension  = TEX_DIMENSION_TEXTURE3D;
 
-            hr = result.Initialize(mdata);
-            if (FAILED(hr))
-                return hr;
-        }
-        break;
+        hr = result.Initialize(mdata);
+        if (FAILED(hr))
+            return hr;
+    }
+    break;
 
-    default:
-        return E_FAIL;
+    default: return E_FAIL;
     }
 
     BYTE* pData = nullptr;
-    hr = pStaging->Map(0, nullptr, reinterpret_cast<void**>(&pData));
+    hr          = pStaging->Map(0, nullptr, reinterpret_cast<void**>(&pData));
     if (FAILED(hr))
     {
         result.Release();
         return E_FAIL;
     }
 
-    const UINT arraySize = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
-        ? 1u
-        : desc.DepthOrArraySize;
+    const UINT arraySize = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) ? 1u : desc.DepthOrArraySize;
 
     for (UINT plane = 0; plane < numberOfPlanes; ++plane)
     {
@@ -869,12 +815,9 @@ HRESULT DirectX::CaptureTexture(
 
                 AdjustPlaneResource<D3D12_MEMCPY_DEST, uintptr_t>(img->format, img->height, plane, destData);
 
-                D3D12_SUBRESOURCE_DATA srcData =
-                {
-                    pData + pLayout[dindex].Offset,
+                D3D12_SUBRESOURCE_DATA srcData = { pData + pLayout[dindex].Offset,
                     static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch),
-                    static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch) * static_cast<LONG_PTR>(pNumRows[dindex])
-                };
+                    static_cast<LONG_PTR>(pLayout[dindex].Footprint.RowPitch) * static_cast<LONG_PTR>(pNumRows[dindex]) };
 
                 if (pRowSizesInBytes[dindex] > SIZE_T(-1))
                 {
@@ -883,7 +826,8 @@ HRESULT DirectX::CaptureTexture(
                     return E_FAIL;
                 }
 
-                MemcpySubresource(&destData, &srcData,
+                MemcpySubresource(&destData,
+                    &srcData,
                     static_cast<SIZE_T>(pRowSizesInBytes[dindex]),
                     pNumRows[dindex],
                     pLayout[dindex].Footprint.Depth);
