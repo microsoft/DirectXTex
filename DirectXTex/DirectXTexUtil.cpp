@@ -370,7 +370,7 @@ _Use_decl_annotations_ bool DirectX::IsPlanar(DXGI_FORMAT fmt, bool isd3d12) noe
     case WIN10_DXGI_FORMAT_P208:                           // 4:2:2 8-bit
     case WIN10_DXGI_FORMAT_V208:                           // 4:4:0 8-bit
     case WIN10_DXGI_FORMAT_V408:                           // 4:4:4 8-bit
-                                 // These are JPEG Hardware decode formats (DXGI 1.4)
+                                                           // These are JPEG Hardware decode formats (DXGI 1.4)
 
     case XBOX_DXGI_FORMAT_D16_UNORM_S8_UINT:
     case XBOX_DXGI_FORMAT_R16_UNORM_X8_TYPELESS:
