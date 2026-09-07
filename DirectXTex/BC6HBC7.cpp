@@ -57,6 +57,7 @@ namespace
     // Partition, Shape, Pixel (index into 4x4 block)
     const uint8_t g_aPartitionTable[3][64][16] =
     {
+        // clang-format off
         {   // 1 Region case has no subsets (all 0)
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
             { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -259,11 +260,13 @@ namespace
             { 0, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 }, // Shape 62
             { 0, 1, 1, 1, 2, 0, 1, 1, 2, 2, 0, 1, 2, 2, 2, 0 }  // Shape 63
         }
+        // clang-format on
     };
 
     // Partition, Shape, Fixup
     const uint8_t g_aFixUp[3][64][3] =
     {
+        // clang-format off
         {   // No fix-ups for 1st subset for BC6H or BC7
             { 0, 0, 0 },{ 0, 0, 0 },{ 0, 0, 0 },{ 0, 0, 0 },
             { 0, 0, 0 },{ 0, 0, 0 },{ 0, 0, 0 },{ 0, 0, 0 },
@@ -322,6 +325,7 @@ namespace
             { 0, 5,15 },{ 0,10,15 },{ 0, 8,15 },{ 0,13,15 },
             { 0,15, 3 },{ 0,12,15 },{ 0, 3,15 },{ 0, 3, 8 }
         }
+        // clang-format on
     };
 
     const int g_aWeights2[] = { 0, 21, 43, 64 };
@@ -878,6 +882,7 @@ namespace
 // BC6H Compression
 const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[D3DX_BC6H::c_NumModes][82] =
 {
+    // clang-format off
     {   // Mode 1 (0x00) - 10 5 5 5
         { M, 0}, { M, 1}, {GY, 4}, {BY, 4}, {BZ, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
         {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
@@ -1045,11 +1050,13 @@ const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[D3DX_BC6H::c_NumModes][82] =
         {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
         {NA, 0}, {NA, 0},
     },
+    // clang-format on
 };
 
 // Mode, Partitions, Transformed, IndexPrec, RGBAPrec
 const D3DX_BC6H::ModeInfo D3DX_BC6H::ms_aInfo[D3DX_BC6H::c_NumModes] =
 {
+    // clang-format off
     {0x00, 1, true,  3, { { LDRColorA(10,10,10,0), LDRColorA(5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 1
     {0x01, 1, true,  3, { { LDRColorA(7, 7, 7,0), LDRColorA(6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 2
     {0x02, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(5, 4, 4,0) }, { LDRColorA(5,4,4,0), LDRColorA(5,4,4,0) } } }, // Mode 3
@@ -1064,6 +1071,7 @@ const D3DX_BC6H::ModeInfo D3DX_BC6H::ms_aInfo[D3DX_BC6H::c_NumModes] =
     {0x07, 0, true,  4, { { LDRColorA(11,11,11,0), LDRColorA(9, 9, 9,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 12
     {0x0b, 0, true,  4, { { LDRColorA(12,12,12,0), LDRColorA(8, 8, 8,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 13
     {0x0f, 0, true,  4, { { LDRColorA(16,16,16,0), LDRColorA(4, 4, 4,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 14
+    // clang-format on
 };
 
 const int D3DX_BC6H::ms_aModeToInfo[D3DX_BC6H::c_NumModeInfo] =
@@ -1105,6 +1113,7 @@ const int D3DX_BC6H::ms_aModeToInfo[D3DX_BC6H::c_NumModeInfo] =
 // BC7 compression: uPartitions, uPartitionBits, uPBits, uRotationBits, uIndexModeBits, uIndexPrec, uIndexPrec2, RGBAPrec, RGBAPrecWithP
 const D3DX_BC7::ModeInfo D3DX_BC7::ms_aInfo[D3DX_BC7::c_NumModes] =
 {
+    // clang-format off
     {2, 4, 6, 0, 0, 3, 0, LDRColorA(4,4,4,0), LDRColorA(5,5,5,0)},
         // Mode 0: Color only, 3 Subsets, RGBP 4441 (unique P-bit), 3-bit indecies, 16 partitions
     {1, 6, 2, 0, 0, 3, 0, LDRColorA(6,6,6,0), LDRColorA(7,7,7,0)},
@@ -1121,6 +1130,7 @@ const D3DX_BC7::ModeInfo D3DX_BC7::ms_aInfo[D3DX_BC7::c_NumModes] =
         // Mode 6: Color+Alpha, 1 Subset, RGBAP 77771 (unique P-bit), 16x4-bit indecies
     {1, 6, 4, 0, 0, 2, 0, LDRColorA(5,5,5,5), LDRColorA(6,6,6,6)}
         // Mode 7: Color+Alpha, 2 Subsets, RGBAP 55551 (unique P-bit), 2-bit indices, 64 partitions
+    // clang-format on
 };
 
 

@@ -38,6 +38,7 @@ namespace
         // Directly support the formats listed in XnaTexUtil::g_WICFormats, so no conversion required
         // Note target GUID in this conversion table must be one of those directly supported formats.
 
+        // clang-format off
         { GUID_WICPixelFormat1bppIndexed,           GUID_WICPixelFormat32bppRGBA, TEX_ALPHA_MODE_UNKNOWN }, // DXGI_FORMAT_R8G8B8A8_UNORM
         { GUID_WICPixelFormat2bppIndexed,           GUID_WICPixelFormat32bppRGBA, TEX_ALPHA_MODE_UNKNOWN }, // DXGI_FORMAT_R8G8B8A8_UNORM
         { GUID_WICPixelFormat4bppIndexed,           GUID_WICPixelFormat32bppRGBA, TEX_ALPHA_MODE_UNKNOWN }, // DXGI_FORMAT_R8G8B8A8_UNORM
@@ -87,6 +88,7 @@ namespace
         { GUID_WICPixelFormat64bppPRGBAHalf,        GUID_WICPixelFormat64bppRGBAHalf, TEX_ALPHA_MODE_UNKNOWN }, // DXGI_FORMAT_R16G16B16A16_FLOAT
 
         // We don't support n-channel formats
+        // clang-format on
     };
 
     //-------------------------------------------------------------------------------------

@@ -84,6 +84,7 @@ namespace
 
     constexpr WICTranslate g_WICFormats[] =
     {
+        // clang-format off
         { GUID_WICPixelFormat128bppRGBAFloat,       DXGI_FORMAT_R32G32B32A32_FLOAT },
 
         { GUID_WICPixelFormat64bppRGBAHalf,         DXGI_FORMAT_R16G16B16A16_FLOAT },
@@ -107,6 +108,7 @@ namespace
         { GUID_WICPixelFormat8bppAlpha,             DXGI_FORMAT_A8_UNORM },
 
         { GUID_WICPixelFormat96bppRGBFloat,         DXGI_FORMAT_R32G32B32_FLOAT },
+        // clang-format on
     };
 
     //-------------------------------------------------------------------------------------
@@ -125,6 +127,7 @@ namespace
 
     constexpr WICConvert g_WICConvert[] =
     {
+        // clang-format off
         // Note target GUID in this conversion table must be one of those directly supported formats (above).
 
         { GUID_WICPixelFormatBlackWhite,            GUID_WICPixelFormat8bppGray }, // DXGI_FORMAT_R8_UNORM
@@ -181,6 +184,7 @@ namespace
         { GUID_WICPixelFormat96bppRGBFixedPoint,   GUID_WICPixelFormat96bppRGBFloat }, // DXGI_FORMAT_R32G32B32_FLOAT
 
         // We don't support n-channel formats
+        // clang-format on
     };
 
     BOOL WINAPI InitializeWICFactory(PINIT_ONCE, PVOID, PVOID* ifactory) noexcept

@@ -72,6 +72,7 @@ namespace
 
     constexpr WICTranslate g_WICFormats[] =
     {
+        // clang-format off
         { GUID_WICPixelFormat128bppRGBAFloat,       D3DFMT_A32B32G32R32F },
 
         { GUID_WICPixelFormat64bppRGBAHalf,         D3DFMT_A16B16G16R16F },
@@ -91,6 +92,7 @@ namespace
         { GUID_WICPixelFormat8bppGray,              D3DFMT_L8 },
 
         { GUID_WICPixelFormat8bppAlpha,             D3DFMT_A8 },
+        // clang-format on
     };
 
     //-------------------------------------------------------------------------------------
@@ -109,6 +111,7 @@ namespace
 
     constexpr WICConvert g_WICConvert[] =
     {
+        // clang-format off
         // Note target GUID in this conversion table must be one of those directly supported formats (above).
 
         { GUID_WICPixelFormatBlackWhite,            GUID_WICPixelFormat8bppGray }, // D3DFMT_L8
@@ -164,6 +167,7 @@ namespace
         { GUID_WICPixelFormat96bppRGBFloat,         GUID_WICPixelFormat128bppRGBAFloat }, // D3DFMT_A32B32G32R32F
 
         // We don't support n-channel formats
+        // clang-format on
     };
 
     //--------------------------------------------------------------------------------------
