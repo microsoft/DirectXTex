@@ -68,10 +68,7 @@ namespace
             }
         }
 
-        size_t GetIndex(size_t uOffset) const noexcept
-        {
-            return static_cast<size_t>((data >> (3 * uOffset + 16)) & 0x07);
-        }
+        size_t GetIndex(size_t uOffset) const noexcept { return static_cast<size_t>((data >> (3 * uOffset + 16)) & 0x07); }
 
         void SetIndex(size_t uOffset, size_t uIndex) noexcept
         {
@@ -127,10 +124,7 @@ namespace
             }
         }
 
-        size_t GetIndex(size_t uOffset) const noexcept
-        {
-            return static_cast<size_t>((data >> (3 * uOffset + 16)) & 0x07);
-        }
+        size_t GetIndex(size_t uOffset) const noexcept { return static_cast<size_t>((data >> (3 * uOffset + 16)) & 0x07); }
 
         void SetIndex(size_t uOffset, size_t uIndex) noexcept
         {
@@ -142,8 +136,8 @@ namespace
         {
             struct
             {
-                int8_t red_0;
-                int8_t red_1;
+                int8_t  red_0;
+                int8_t  red_1;
                 uint8_t indices[6];
             };
             uint64_t data;
@@ -155,18 +149,16 @@ namespace
     //-------------------------------------------------------------------------------------
     // Convert a floating point value to an 8-bit SNORM
     //-------------------------------------------------------------------------------------
-    void inline FloatToSNorm(_In_ float fVal, _Out_ int8_t *piSNorm) noexcept
+    void inline FloatToSNorm(_In_ float fVal, _Out_ int8_t* piSNorm) noexcept
     {
         constexpr uint32_t dwMostNeg = (1 << (8 * sizeof(int8_t) - 1));
 
         if (isnan(fVal))
             fVal = 0;
-        else
-            if (fVal > 1)
-                fVal = 1;    // Clamp to 1
-            else
-                if (fVal < -1)
-                    fVal = -1;    // Clamp to -1
+        else if (fVal > 1)
+            fVal = 1;  // Clamp to 1
+        else if (fVal < -1)
+            fVal = -1; // Clamp to -1
 
         fVal = fVal * static_cast<int8_t>(dwMostNeg - 1);
 
@@ -178,12 +170,8 @@ namespace
         *piSNorm = static_cast<int8_t>(fVal);
     }
 
-
     //------------------------------------------------------------------------------
-    void FindEndPointsBC4U(
-        _In_reads_(BLOCK_SIZE) const float theTexelsU[],
-        _Out_ uint8_t &endpointU_0,
-        _Out_ uint8_t &endpointU_1) noexcept
+    void FindEndPointsBC4U(_In_reads_(BLOCK_SIZE) const float theTexelsU[], _Out_ uint8_t& endpointU_0, _Out_ uint8_t& endpointU_1) noexcept
     {
         // The boundary of codec for signed/unsigned format
         constexpr float MIN_NORM = 0.f;
@@ -217,7 +205,7 @@ namespace
             OptimizeAlpha<false>(&fStart, &fEnd, theTexelsU, 8);
 
             auto iStart = static_cast<uint8_t>(fStart * 255.0f);
-            auto iEnd = static_cast<uint8_t>(fEnd * 255.0f);
+            auto iEnd   = static_cast<uint8_t>(fEnd * 255.0f);
 
             endpointU_0 = iEnd;
             endpointU_1 = iStart;
@@ -228,17 +216,14 @@ namespace
             OptimizeAlpha<false>(&fStart, &fEnd, theTexelsU, 6);
 
             auto iStart = static_cast<uint8_t>(fStart * 255.0f);
-            auto iEnd = static_cast<uint8_t>(fEnd * 255.0f);
+            auto iEnd   = static_cast<uint8_t>(fEnd * 255.0f);
 
             endpointU_1 = iEnd;
             endpointU_0 = iStart;
         }
     }
 
-    void FindEndPointsBC4S(
-        _In_reads_(BLOCK_SIZE) const float theTexelsU[],
-        _Out_ int8_t &endpointU_0,
-        _Out_ int8_t &endpointU_1) noexcept
+    void FindEndPointsBC4S(_In_reads_(BLOCK_SIZE) const float theTexelsU[], _Out_ int8_t& endpointU_0, _Out_ int8_t& endpointU_1) noexcept
     {
         //  The boundary of codec for signed/unsigned format
         constexpr float MIN_NORM = -1.f;
@@ -292,39 +277,33 @@ namespace
         }
     }
 
-
     //------------------------------------------------------------------------------
-    inline void FindEndPointsBC5U(
-        _In_reads_(BLOCK_SIZE) const float theTexelsU[],
-        _In_reads_(BLOCK_SIZE) const float theTexelsV[],
-        _Out_ uint8_t &endpointU_0,
-        _Out_ uint8_t &endpointU_1,
-        _Out_ uint8_t &endpointV_0,
-        _Out_ uint8_t &endpointV_1) noexcept
+    inline void FindEndPointsBC5U(_In_reads_(BLOCK_SIZE) const float theTexelsU[],
+        _In_reads_(BLOCK_SIZE) const float                           theTexelsV[],
+        _Out_ uint8_t&                                               endpointU_0,
+        _Out_ uint8_t&                                               endpointU_1,
+        _Out_ uint8_t&                                               endpointV_0,
+        _Out_ uint8_t&                                               endpointV_1) noexcept
     {
-        //Encoding the U and V channel by BC4 codec separately.
+        // Encoding the U and V channel by BC4 codec separately.
         FindEndPointsBC4U(theTexelsU, endpointU_0, endpointU_1);
         FindEndPointsBC4U(theTexelsV, endpointV_0, endpointV_1);
     }
 
-    inline void FindEndPointsBC5S(
-        _In_reads_(BLOCK_SIZE) const float theTexelsU[],
-        _In_reads_(BLOCK_SIZE) const float theTexelsV[],
-        _Out_ int8_t &endpointU_0,
-        _Out_ int8_t &endpointU_1,
-        _Out_ int8_t &endpointV_0,
-        _Out_ int8_t &endpointV_1) noexcept
+    inline void FindEndPointsBC5S(_In_reads_(BLOCK_SIZE) const float theTexelsU[],
+        _In_reads_(BLOCK_SIZE) const float                           theTexelsV[],
+        _Out_ int8_t&                                                endpointU_0,
+        _Out_ int8_t&                                                endpointU_1,
+        _Out_ int8_t&                                                endpointV_0,
+        _Out_ int8_t&                                                endpointV_1) noexcept
     {
-        //Encoding the U and V channel by BC4 codec separately.
+        // Encoding the U and V channel by BC4 codec separately.
         FindEndPointsBC4S(theTexelsU, endpointU_0, endpointU_1);
         FindEndPointsBC4S(theTexelsV, endpointV_0, endpointV_1);
     }
 
-
     //------------------------------------------------------------------------------
-    void FindClosestUNORM(
-        _Inout_ BC4_UNORM* pBC,
-        _In_reads_(NUM_PIXELS_PER_BLOCK) const float theTexelsU[]) noexcept
+    void FindClosestUNORM(_Inout_ BC4_UNORM* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const float theTexelsU[]) noexcept
     {
         float rGradient[8];
         for (size_t i = 0; i < 8; ++i)
@@ -335,7 +314,7 @@ namespace
         for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
             size_t uBestIndex = 0;
-            float fBestDelta = 100000;
+            float  fBestDelta = 100000;
             for (size_t uIndex = 0; uIndex < 8; uIndex++)
             {
                 const float fCurrentDelta = fabsf(rGradient[uIndex] - theTexelsU[i]);
@@ -349,9 +328,7 @@ namespace
         }
     }
 
-    void FindClosestSNORM(
-        _Inout_ BC4_SNORM* pBC,
-        _In_reads_(NUM_PIXELS_PER_BLOCK) const float theTexelsU[]) noexcept
+    void FindClosestSNORM(_Inout_ BC4_SNORM* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const float theTexelsU[]) noexcept
     {
         float rGradient[8];
         for (size_t i = 0; i < 8; ++i)
@@ -362,7 +339,7 @@ namespace
         for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
             size_t uBestIndex = 0;
-            float fBestDelta = 100000;
+            float  fBestDelta = 100000;
             for (size_t uIndex = 0; uIndex < 8; uIndex++)
             {
                 const float fCurrentDelta = fabsf(rGradient[uIndex] - theTexelsU[i]);
@@ -375,8 +352,7 @@ namespace
             pBC->SetIndex(i, uBestIndex);
         }
     }
-}
-
+} // namespace
 
 //=====================================================================================
 // Entry points
@@ -385,8 +361,7 @@ namespace
 //-------------------------------------------------------------------------------------
 // BC4 Compression
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-void DirectX::D3DXDecodeBC4U(XMVECTOR *pColor, const uint8_t *pBC) noexcept
+_Use_decl_annotations_ void DirectX::D3DXDecodeBC4U(XMVECTOR* pColor, const uint8_t* pBC) noexcept
 {
     assert(pColor && pBC);
     static_assert(sizeof(BC4_UNORM) == 8, "BC4_UNORM should be 8 bytes");
@@ -395,13 +370,12 @@ void DirectX::D3DXDecodeBC4U(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
-    #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
+#pragma prefast(suppress : 22103, "writing blocks in two halves confuses tool")
         pColor[i] = XMVectorSet(pBC4->R(i), 0, 0, 1.0f);
     }
 }
 
-_Use_decl_annotations_
-void DirectX::D3DXDecodeBC4S(XMVECTOR *pColor, const uint8_t *pBC) noexcept
+_Use_decl_annotations_ void DirectX::D3DXDecodeBC4S(XMVECTOR* pColor, const uint8_t* pBC) noexcept
 {
     assert(pColor && pBC);
     static_assert(sizeof(BC4_SNORM) == 8, "BC4_SNORM should be 8 bytes");
@@ -410,13 +384,12 @@ void DirectX::D3DXDecodeBC4S(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
-    #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
+#pragma prefast(suppress : 22103, "writing blocks in two halves confuses tool")
         pColor[i] = XMVectorSet(pBC4->R(i), 0, 0, 1.0f);
     }
 }
 
-_Use_decl_annotations_
-void DirectX::D3DXEncodeBC4U(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
+_Use_decl_annotations_ void DirectX::D3DXEncodeBC4U(uint8_t* pBC, const XMVECTOR* pColor, uint32_t flags) noexcept
 {
     UNREFERENCED_PARAMETER(flags);
 
@@ -424,7 +397,7 @@ void DirectX::D3DXEncodeBC4U(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flag
     static_assert(sizeof(BC4_UNORM) == 8, "BC4_UNORM should be 8 bytes");
 
     memset(pBC, 0, sizeof(BC4_UNORM));
-    auto pBC4 = reinterpret_cast<BC4_UNORM*>(pBC);
+    auto  pBC4 = reinterpret_cast<BC4_UNORM*>(pBC);
     float theTexelsU[NUM_PIXELS_PER_BLOCK];
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
@@ -436,8 +409,7 @@ void DirectX::D3DXEncodeBC4U(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flag
     FindClosestUNORM(pBC4, theTexelsU);
 }
 
-_Use_decl_annotations_
-void DirectX::D3DXEncodeBC4S(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
+_Use_decl_annotations_ void DirectX::D3DXEncodeBC4S(uint8_t* pBC, const XMVECTOR* pColor, uint32_t flags) noexcept
 {
     UNREFERENCED_PARAMETER(flags);
 
@@ -445,7 +417,7 @@ void DirectX::D3DXEncodeBC4S(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flag
     static_assert(sizeof(BC4_SNORM) == 8, "BC4_SNORM should be 8 bytes");
 
     memset(pBC, 0, sizeof(BC4_UNORM));
-    auto pBC4 = reinterpret_cast<BC4_SNORM*>(pBC);
+    auto  pBC4 = reinterpret_cast<BC4_SNORM*>(pBC);
     float theTexelsU[NUM_PIXELS_PER_BLOCK];
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
@@ -457,12 +429,10 @@ void DirectX::D3DXEncodeBC4S(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flag
     FindClosestSNORM(pBC4, theTexelsU);
 }
 
-
 //-------------------------------------------------------------------------------------
 // BC5 Compression
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-void DirectX::D3DXDecodeBC5U(XMVECTOR *pColor, const uint8_t *pBC) noexcept
+_Use_decl_annotations_ void DirectX::D3DXDecodeBC5U(XMVECTOR* pColor, const uint8_t* pBC) noexcept
 {
     assert(pColor && pBC);
     static_assert(sizeof(BC4_UNORM) == 8, "BC4_UNORM should be 8 bytes");
@@ -472,13 +442,12 @@ void DirectX::D3DXDecodeBC5U(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
-    #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
+#pragma prefast(suppress : 22103, "writing blocks in two halves confuses tool")
         pColor[i] = XMVectorSet(pBCR->R(i), pBCG->R(i), 0, 1.0f);
     }
 }
 
-_Use_decl_annotations_
-void DirectX::D3DXDecodeBC5S(XMVECTOR *pColor, const uint8_t *pBC) noexcept
+_Use_decl_annotations_ void DirectX::D3DXDecodeBC5S(XMVECTOR* pColor, const uint8_t* pBC) noexcept
 {
     assert(pColor && pBC);
     static_assert(sizeof(BC4_SNORM) == 8, "BC4_SNORM should be 8 bytes");
@@ -488,13 +457,12 @@ void DirectX::D3DXDecodeBC5S(XMVECTOR *pColor, const uint8_t *pBC) noexcept
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
-    #pragma prefast(suppress:22103, "writing blocks in two halves confuses tool")
+#pragma prefast(suppress : 22103, "writing blocks in two halves confuses tool")
         pColor[i] = XMVectorSet(pBCR->R(i), pBCG->R(i), 0, 1.0f);
     }
 }
 
-_Use_decl_annotations_
-void DirectX::D3DXEncodeBC5U(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
+_Use_decl_annotations_ void DirectX::D3DXEncodeBC5U(uint8_t* pBC, const XMVECTOR* pColor, uint32_t flags) noexcept
 {
     UNREFERENCED_PARAMETER(flags);
 
@@ -502,8 +470,8 @@ void DirectX::D3DXEncodeBC5U(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flag
     static_assert(sizeof(BC4_UNORM) == 8, "BC4_UNORM should be 8 bytes");
 
     memset(pBC, 0, sizeof(BC4_UNORM) * 2);
-    auto pBCR = reinterpret_cast<BC4_UNORM*>(pBC);
-    auto pBCG = reinterpret_cast<BC4_UNORM*>(pBC + sizeof(BC4_UNORM));
+    auto  pBCR = reinterpret_cast<BC4_UNORM*>(pBC);
+    auto  pBCG = reinterpret_cast<BC4_UNORM*>(pBC + sizeof(BC4_UNORM));
     float theTexelsU[NUM_PIXELS_PER_BLOCK];
     float theTexelsV[NUM_PIXELS_PER_BLOCK];
 
@@ -515,20 +483,13 @@ void DirectX::D3DXEncodeBC5U(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flag
         theTexelsV[i] = clr.y;
     }
 
-    FindEndPointsBC5U(
-        theTexelsU,
-        theTexelsV,
-        pBCR->red_0,
-        pBCR->red_1,
-        pBCG->red_0,
-        pBCG->red_1);
+    FindEndPointsBC5U(theTexelsU, theTexelsV, pBCR->red_0, pBCR->red_1, pBCG->red_0, pBCG->red_1);
 
     FindClosestUNORM(pBCR, theTexelsU);
     FindClosestUNORM(pBCG, theTexelsV);
 }
 
-_Use_decl_annotations_
-void DirectX::D3DXEncodeBC5S(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
+_Use_decl_annotations_ void DirectX::D3DXEncodeBC5S(uint8_t* pBC, const XMVECTOR* pColor, uint32_t flags) noexcept
 {
     UNREFERENCED_PARAMETER(flags);
 
@@ -536,8 +497,8 @@ void DirectX::D3DXEncodeBC5S(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flag
     static_assert(sizeof(BC4_SNORM) == 8, "BC4_SNORM should be 8 bytes");
 
     memset(pBC, 0, sizeof(BC4_UNORM) * 2);
-    auto pBCR = reinterpret_cast<BC4_SNORM*>(pBC);
-    auto pBCG = reinterpret_cast<BC4_SNORM*>(pBC + sizeof(BC4_SNORM));
+    auto  pBCR = reinterpret_cast<BC4_SNORM*>(pBC);
+    auto  pBCG = reinterpret_cast<BC4_SNORM*>(pBC + sizeof(BC4_SNORM));
     float theTexelsU[NUM_PIXELS_PER_BLOCK];
     float theTexelsV[NUM_PIXELS_PER_BLOCK];
 
@@ -549,13 +510,7 @@ void DirectX::D3DXEncodeBC5S(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flag
         theTexelsV[i] = clr.y;
     }
 
-    FindEndPointsBC5S(
-        theTexelsU,
-        theTexelsV,
-        pBCR->red_0,
-        pBCR->red_1,
-        pBCG->red_0,
-        pBCG->red_1);
+    FindEndPointsBC5S(theTexelsU, theTexelsV, pBCR->red_0, pBCR->red_1, pBCG->red_0, pBCG->red_1);
 
     FindClosestSNORM(pBCR, theTexelsU);
     FindClosestSNORM(pBCG, theTexelsV);

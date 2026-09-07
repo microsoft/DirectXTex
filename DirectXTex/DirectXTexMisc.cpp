@@ -24,12 +24,7 @@ namespace
     const XMVECTORF32 g_Gamma22 = { { { 2.2f, 2.2f, 2.2f, 1.f } } };
 
     //-------------------------------------------------------------------------------------
-    HRESULT ComputeMSE_(
-        const Image& image1,
-        const Image& image2,
-        float& mse,
-        _Out_writes_opt_(4) float* mseV,
-        CMSE_FLAGS flags) noexcept
+    HRESULT ComputeMSE_(const Image& image1, const Image& image2, float& mse, _Out_writes_opt_(4) float* mseV, CMSE_FLAGS flags) noexcept
     {
         if (!image1.pixels || !image2.pixels)
             return E_POINTER;
@@ -46,57 +41,43 @@ namespace
         // Flags implied from image formats
         switch (image1.format)
         {
-        case DXGI_FORMAT_B8G8R8X8_UNORM:
-            flags |= CMSE_IGNORE_ALPHA;
-            break;
+        case DXGI_FORMAT_B8G8R8X8_UNORM:      flags |= CMSE_IGNORE_ALPHA; break;
 
-        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-            flags |= CMSE_IMAGE1_SRGB | CMSE_IGNORE_ALPHA;
-            break;
+        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB: flags |= CMSE_IMAGE1_SRGB | CMSE_IGNORE_ALPHA; break;
 
         case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
         case DXGI_FORMAT_BC1_UNORM_SRGB:
         case DXGI_FORMAT_BC2_UNORM_SRGB:
         case DXGI_FORMAT_BC3_UNORM_SRGB:
         case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-        case DXGI_FORMAT_BC7_UNORM_SRGB:
-            flags |= CMSE_IMAGE1_SRGB;
-            break;
+        case DXGI_FORMAT_BC7_UNORM_SRGB:      flags |= CMSE_IMAGE1_SRGB; break;
 
-        default:
-            break;
+        default:                              break;
         }
 
         switch (image2.format)
         {
-        case DXGI_FORMAT_B8G8R8X8_UNORM:
-            flags |= CMSE_IGNORE_ALPHA;
-            break;
+        case DXGI_FORMAT_B8G8R8X8_UNORM:      flags |= CMSE_IGNORE_ALPHA; break;
 
-        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-            flags |= CMSE_IMAGE2_SRGB | CMSE_IGNORE_ALPHA;
-            break;
+        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB: flags |= CMSE_IMAGE2_SRGB | CMSE_IGNORE_ALPHA; break;
 
         case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
         case DXGI_FORMAT_BC1_UNORM_SRGB:
         case DXGI_FORMAT_BC2_UNORM_SRGB:
         case DXGI_FORMAT_BC3_UNORM_SRGB:
         case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-        case DXGI_FORMAT_BC7_UNORM_SRGB:
-            flags |= CMSE_IMAGE2_SRGB;
-            break;
+        case DXGI_FORMAT_BC7_UNORM_SRGB:      flags |= CMSE_IMAGE2_SRGB; break;
 
-        default:
-            break;
+        default:                              break;
         }
 
-        const uint8_t *pSrc1 = image1.pixels;
-        const size_t rowPitch1 = image1.rowPitch;
+        const uint8_t* pSrc1     = image1.pixels;
+        const size_t   rowPitch1 = image1.rowPitch;
 
-        const uint8_t *pSrc2 = image2.pixels;
-        const size_t rowPitch2 = image2.rowPitch;
+        const uint8_t* pSrc2     = image2.pixels;
+        const size_t   rowPitch2 = image2.rowPitch;
 
-        XMVECTOR acc = g_XMZero;
+        XMVECTOR           acc = g_XMZero;
         static XMVECTORF32 two = { { { 2.0f, 2.0f, 2.0f, 2.0f } } };
 
         for (size_t h = 0; h < image1.height; ++h)
@@ -176,8 +157,7 @@ namespace
     }
 
     //-------------------------------------------------------------------------------------
-    HRESULT EvaluateImage_(
-        const Image& image,
+    HRESULT EvaluateImage_(const Image&                                                                      image,
         const std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)>& pixelFunc)
     {
         if (!pixelFunc)
@@ -194,8 +174,8 @@ namespace
         if (!scanline)
             return E_OUTOFMEMORY;
 
-        const uint8_t *pSrc = image.pixels;
-        const size_t rowPitch = image.rowPitch;
+        const uint8_t* pSrc     = image.pixels;
+        const size_t   rowPitch = image.rowPitch;
 
         for (size_t h = 0; h < image.height; ++h)
         {
@@ -210,11 +190,11 @@ namespace
         return S_OK;
     }
 
-
     //-------------------------------------------------------------------------------------
-    HRESULT TransformImage_(
-        const Image& srcImage,
-        const std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)>& pixelFunc,
+    HRESULT TransformImage_(const Image& srcImage,
+        const std::function<
+            void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)>&
+                     pixelFunc,
         const Image& destImage)
     {
         if (!pixelFunc)
@@ -235,10 +215,10 @@ namespace
         XMVECTOR* sScanline = scanlines.get();
         XMVECTOR* dScanline = scanlines.get() + width;
 
-        const uint8_t *pSrc = srcImage.pixels;
-        const size_t spitch = srcImage.rowPitch;
+        const uint8_t* pSrc   = srcImage.pixels;
+        const size_t   spitch = srcImage.rowPitch;
 
-        uint8_t *pDest = destImage.pixels;
+        uint8_t*     pDest  = destImage.pixels;
         const size_t dpitch = destImage.rowPitch;
 
         for (size_t h = 0; h < srcImage.height; ++h)
@@ -246,9 +226,9 @@ namespace
             if (!LoadScanline(sScanline, width, pSrc, spitch, srcImage.format))
                 return E_FAIL;
 
-        #ifdef _DEBUG
-            memset(dScanline, 0xCD, sizeof(XMVECTOR)*width);
-        #endif
+#ifdef _DEBUG
+            memset(dScanline, 0xCD, sizeof(XMVECTOR) * width);
+#endif
 
             pixelFunc(dScanline, sScanline, width, h);
 
@@ -261,8 +241,7 @@ namespace
 
         return S_OK;
     }
-};
-
+}; // namespace
 
 //=====================================================================================
 // Entry points
@@ -271,20 +250,17 @@ namespace
 //-------------------------------------------------------------------------------------
 // Copies a rectangle from one image into another
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::CopyRectangle(
-    const Image& srcImage,
-    const Rect& srcRect,
-    const Image& dstImage,
-    TEX_FILTER_FLAGS filter,
-    size_t xOffset,
-    size_t yOffset) noexcept
+_Use_decl_annotations_ HRESULT DirectX::CopyRectangle(const Image& srcImage,
+    const Rect&                                                    srcRect,
+    const Image&                                                   dstImage,
+    TEX_FILTER_FLAGS                                               filter,
+    size_t                                                         xOffset,
+    size_t                                                         yOffset) noexcept
 {
     if (!srcImage.pixels || !dstImage.pixels)
         return E_POINTER;
 
-    if (IsCompressed(srcImage.format) || IsCompressed(dstImage.format)
-        || IsPlanar(srcImage.format) || IsPlanar(dstImage.format)
+    if (IsCompressed(srcImage.format) || IsCompressed(dstImage.format) || IsPlanar(srcImage.format) || IsPlanar(dstImage.format)
         || IsPalettized(srcImage.format) || IsPalettized(dstImage.format))
         return HRESULT_E_NOT_SUPPORTED;
 
@@ -310,8 +286,8 @@ HRESULT DirectX::CopyRectangle(
         return HRESULT_E_NOT_SUPPORTED;
     }
 
-    const uint8_t* pEndSrc = srcImage.pixels + srcImage.rowPitch*srcImage.height;
-    const uint8_t* pEndDest = dstImage.pixels + dstImage.rowPitch*dstImage.height;
+    const uint8_t* pEndSrc  = srcImage.pixels + srcImage.rowPitch * srcImage.height;
+    const uint8_t* pEndDest = dstImage.pixels + dstImage.rowPitch * dstImage.height;
 
     // Round to bytes
     sbpp = (sbpp + 7) / 8;
@@ -321,7 +297,7 @@ HRESULT DirectX::CopyRectangle(
     if (srcImage.format == dstImage.format)
     {
         // Direct copy case (avoid intermediate conversions)
-        uint8_t* pDest = dstImage.pixels + (yOffset * dstImage.rowPitch) + (xOffset * sbpp);
+        uint8_t*     pDest = dstImage.pixels + (yOffset * dstImage.rowPitch) + (xOffset * sbpp);
         const size_t copyW = srcRect.w * sbpp;
         for (size_t h = 0; h < srcRect.h; ++h)
         {
@@ -380,17 +356,11 @@ HRESULT DirectX::CopyRectangle(
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Computes the Mean-Squared-Error (MSE) between two images
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::ComputeMSE(
-    const Image& image1,
-    const Image& image2,
-    float& mse,
-    float* mseV,
-    CMSE_FLAGS flags) noexcept
+_Use_decl_annotations_ HRESULT
+DirectX::ComputeMSE(const Image& image1, const Image& image2, float& mse, float* mseV, CMSE_FLAGS flags) noexcept
 {
     if (!image1.pixels || !image2.pixels)
         return E_POINTER;
@@ -401,8 +371,7 @@ HRESULT DirectX::ComputeMSE(
     if (!IsValid(image1.format) || !IsValid(image2.format))
         return E_INVALIDARG;
 
-    if (IsPlanar(image1.format) || IsPlanar(image2.format)
-        || IsPalettized(image1.format) || IsPalettized(image2.format)
+    if (IsPlanar(image1.format) || IsPlanar(image2.format) || IsPalettized(image1.format) || IsPalettized(image2.format)
         || IsTypeless(image1.format) || IsTypeless(image2.format))
         return HRESULT_E_NOT_SUPPORTED;
 
@@ -412,7 +381,7 @@ HRESULT DirectX::ComputeMSE(
         {
             // Case 1: both images are compressed, expand to RGBA32F
             ScratchImage temp1;
-            HRESULT hr = Decompress(image1, DXGI_FORMAT_R32G32B32A32_FLOAT, temp1);
+            HRESULT      hr = Decompress(image1, DXGI_FORMAT_R32G32B32A32_FLOAT, temp1);
             if (FAILED(hr))
                 return hr;
 
@@ -432,7 +401,7 @@ HRESULT DirectX::ComputeMSE(
         {
             // Case 2: image1 is compressed, expand to RGBA32F
             ScratchImage temp;
-            HRESULT hr = Decompress(image1, DXGI_FORMAT_R32G32B32A32_FLOAT, temp);
+            HRESULT      hr = Decompress(image1, DXGI_FORMAT_R32G32B32A32_FLOAT, temp);
             if (FAILED(hr))
                 return hr;
 
@@ -449,7 +418,7 @@ HRESULT DirectX::ComputeMSE(
         {
             // Case 3: image2 is compressed, expand to RGBA32F
             ScratchImage temp;
-            HRESULT hr = Decompress(image2, DXGI_FORMAT_R32G32B32A32_FLOAT, temp);
+            HRESULT      hr = Decompress(image2, DXGI_FORMAT_R32G32B32A32_FLOAT, temp);
             if (FAILED(hr))
                 return hr;
 
@@ -467,17 +436,13 @@ HRESULT DirectX::ComputeMSE(
     }
 }
 
-
 //-------------------------------------------------------------------------------------
 // Evaluates a user-supplied function for all the pixels in the image
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::EvaluateImage(
-    const Image& image,
+_Use_decl_annotations_ HRESULT DirectX::EvaluateImage(const Image&                                image,
     std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)> pixelFunc)
 {
-    if (image.width > UINT32_MAX
-        || image.height > UINT32_MAX)
+    if (image.width > UINT32_MAX || image.height > UINT32_MAX)
         return E_INVALIDARG;
 
     if (!IsValid(image.format))
@@ -489,7 +454,7 @@ HRESULT DirectX::EvaluateImage(
     if (IsCompressed(image.format))
     {
         ScratchImage temp;
-        HRESULT hr = Decompress(image, DXGI_FORMAT_R32G32B32A32_FLOAT, temp);
+        HRESULT      hr = Decompress(image, DXGI_FORMAT_R32G32B32A32_FLOAT, temp);
         if (FAILED(hr))
             return hr;
 
@@ -505,11 +470,9 @@ HRESULT DirectX::EvaluateImage(
     }
 }
 
-_Use_decl_annotations_
-HRESULT DirectX::EvaluateImage(
-    const Image* images,
-    size_t nimages,
-    const TexMetadata& metadata,
+_Use_decl_annotations_ HRESULT DirectX::EvaluateImage(const Image*                                images,
+    size_t                                                                                        nimages,
+    const TexMetadata&                                                                            metadata,
     std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)> pixelFunc)
 {
     if (!images || !nimages)
@@ -521,15 +484,14 @@ HRESULT DirectX::EvaluateImage(
     if (IsPlanar(metadata.format) || IsPalettized(metadata.format) || IsTypeless(metadata.format))
         return HRESULT_E_NOT_SUPPORTED;
 
-    if (metadata.width > UINT32_MAX
-        || metadata.height > UINT32_MAX)
+    if (metadata.width > UINT32_MAX || metadata.height > UINT32_MAX)
         return E_INVALIDARG;
 
     if (metadata.IsVolumemap() && metadata.depth > UINT16_MAX)
         return E_INVALIDARG;
 
     ScratchImage temp;
-    DXGI_FORMAT format = metadata.format;
+    DXGI_FORMAT  format = metadata.format;
     if (IsCompressed(format))
     {
         HRESULT hr = Decompress(images, nimages, metadata, DXGI_FORMAT_R32G32B32A32_FLOAT, temp);
@@ -562,54 +524,49 @@ HRESULT DirectX::EvaluateImage(
         }
         break;
 
-    case TEX_DIMENSION_TEXTURE3D:
+    case TEX_DIMENSION_TEXTURE3D: {
+        size_t index = 0;
+        size_t d     = metadata.depth;
+        for (size_t level = 0; level < metadata.mipLevels; ++level)
         {
-            size_t index = 0;
-            size_t d = metadata.depth;
-            for (size_t level = 0; level < metadata.mipLevels; ++level)
+            for (size_t slice = 0; slice < d; ++slice, ++index)
             {
-                for (size_t slice = 0; slice < d; ++slice, ++index)
-                {
-                    if (index >= nimages)
-                        return E_FAIL;
+                if (index >= nimages)
+                    return E_FAIL;
 
-                    const Image& img = images[index];
-                    if (img.format != format)
-                        return E_FAIL;
+                const Image& img = images[index];
+                if (img.format != format)
+                    return E_FAIL;
 
-                    if ((img.width > UINT32_MAX) || (img.height > UINT32_MAX))
-                        return E_FAIL;
+                if ((img.width > UINT32_MAX) || (img.height > UINT32_MAX))
+                    return E_FAIL;
 
-                    HRESULT hr = EvaluateImage_(img, pixelFunc);
-                    if (FAILED(hr))
-                        return hr;
-                }
-
-                if (d > 1)
-                    d >>= 1;
+                HRESULT hr = EvaluateImage_(img, pixelFunc);
+                if (FAILED(hr))
+                    return hr;
             }
-        }
-        break;
 
-    default:
-        return E_FAIL;
+            if (d > 1)
+                d >>= 1;
+        }
+    }
+    break;
+
+    default: return E_FAIL;
     }
 
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Use a user-supplied function to compute a new image from an input image
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::TransformImage(
-    const Image& image,
-    std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
+_Use_decl_annotations_ HRESULT DirectX::TransformImage(const Image& image,
+    std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)>
+                  pixelFunc,
     ScratchImage& result)
 {
-    if (image.width > UINT32_MAX
-        || image.height > UINT32_MAX)
+    if (image.width > UINT32_MAX || image.height > UINT32_MAX)
         return E_INVALIDARG;
 
     if (IsPlanar(image.format) || IsPalettized(image.format) || IsCompressed(image.format) || IsTypeless(image.format))
@@ -636,11 +593,11 @@ HRESULT DirectX::TransformImage(
     return S_OK;
 }
 
-_Use_decl_annotations_
-HRESULT DirectX::TransformImage(
-    const Image* srcImages,
-    size_t nimages, const TexMetadata& metadata,
-    std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
+_Use_decl_annotations_ HRESULT DirectX::TransformImage(const Image* srcImages,
+    size_t                                                          nimages,
+    const TexMetadata&                                              metadata,
+    std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)>
+                  pixelFunc,
     ScratchImage& result)
 {
     if (!srcImages || !nimages)
@@ -649,8 +606,7 @@ HRESULT DirectX::TransformImage(
     if (IsPlanar(metadata.format) || IsPalettized(metadata.format) || IsCompressed(metadata.format) || IsTypeless(metadata.format))
         return HRESULT_E_NOT_SUPPORTED;
 
-    if (metadata.width > UINT32_MAX
-        || metadata.height > UINT32_MAX)
+    if (metadata.width > UINT32_MAX || metadata.height > UINT32_MAX)
         return E_INVALIDARG;
 
     if (metadata.IsVolumemap() && metadata.depth > UINT16_MAX)
@@ -709,58 +665,55 @@ HRESULT DirectX::TransformImage(
         }
         break;
 
-    case TEX_DIMENSION_TEXTURE3D:
+    case TEX_DIMENSION_TEXTURE3D: {
+        size_t index = 0;
+        size_t d     = metadata.depth;
+        for (size_t level = 0; level < metadata.mipLevels; ++level)
         {
-            size_t index = 0;
-            size_t d = metadata.depth;
-            for (size_t level = 0; level < metadata.mipLevels; ++level)
+            for (size_t slice = 0; slice < d; ++slice, ++index)
             {
-                for (size_t slice = 0; slice < d; ++slice, ++index)
+                if (index >= nimages)
                 {
-                    if (index >= nimages)
-                    {
-                        result.Release();
-                        return E_FAIL;
-                    }
-
-                    const Image& src = srcImages[index];
-                    if (src.format != metadata.format)
-                    {
-                        result.Release();
-                        return E_FAIL;
-                    }
-
-                    if ((src.width > UINT32_MAX) || (src.height > UINT32_MAX))
-                    {
-                        result.Release();
-                        return E_FAIL;
-                    }
-
-                    const Image& dst = dest[index];
-
-                    if (src.width != dst.width || src.height != dst.height)
-                    {
-                        result.Release();
-                        return E_FAIL;
-                    }
-
-                    hr = TransformImage_(src, pixelFunc, dst);
-                    if (FAILED(hr))
-                    {
-                        result.Release();
-                        return hr;
-                    }
+                    result.Release();
+                    return E_FAIL;
                 }
 
-                if (d > 1)
-                    d >>= 1;
-            }
-        }
-        break;
+                const Image& src = srcImages[index];
+                if (src.format != metadata.format)
+                {
+                    result.Release();
+                    return E_FAIL;
+                }
 
-    default:
-        result.Release();
-        return E_FAIL;
+                if ((src.width > UINT32_MAX) || (src.height > UINT32_MAX))
+                {
+                    result.Release();
+                    return E_FAIL;
+                }
+
+                const Image& dst = dest[index];
+
+                if (src.width != dst.width || src.height != dst.height)
+                {
+                    result.Release();
+                    return E_FAIL;
+                }
+
+                hr = TransformImage_(src, pixelFunc, dst);
+                if (FAILED(hr))
+                {
+                    result.Release();
+                    return hr;
+                }
+            }
+
+            if (d > 1)
+                d >>= 1;
+        }
+    }
+    break;
+
+    default: result.Release(); return E_FAIL;
     }
 
     return S_OK;

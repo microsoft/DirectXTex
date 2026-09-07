@@ -21,14 +21,17 @@
 #ifndef _WIN32
 #include <cstdlib>
 
-struct aligned_deleter { void operator()(void* p) noexcept { free(p); } };
+struct aligned_deleter
+{
+    void operator()(void* p) noexcept { free(p); }
+};
 
 using ScopedAlignedArrayFloat = std::unique_ptr<float[], aligned_deleter>;
 
 inline ScopedAlignedArrayFloat make_AlignedArrayFloat(uint64_t count)
 {
     uint64_t size = sizeof(float) * count;
-    size = (size + 15u) & ~0xF;
+    size          = (size + 15u) & ~0xF;
     if (size > static_cast<uint64_t>(UINT32_MAX))
         return nullptr;
 
@@ -47,11 +50,14 @@ inline ScopedAlignedArrayXMVECTOR make_AlignedArrayXMVECTOR(uint64_t count)
     return ScopedAlignedArrayXMVECTOR(static_cast<DirectX::XMVECTOR*>(ptr));
 }
 
-#else // WIN32
+#else  // WIN32
 //---------------------------------------------------------------------------------
 #include <malloc.h>
 
-struct aligned_deleter { void operator()(void* p) noexcept { _aligned_free(p); } };
+struct aligned_deleter
+{
+    void operator()(void* p) noexcept { _aligned_free(p); }
+};
 
 using ScopedAlignedArrayFloat = std::unique_ptr<float[], aligned_deleter>;
 
@@ -76,14 +82,33 @@ inline ScopedAlignedArrayXMVECTOR make_AlignedArrayXMVECTOR(uint64_t count)
 }
 
 //---------------------------------------------------------------------------------
-struct handle_closer { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) CloseHandle(h); } };
+struct handle_closer
+{
+    void operator()(HANDLE h) noexcept
+    {
+        assert(h != INVALID_HANDLE_VALUE);
+        if (h)
+            CloseHandle(h);
+    }
+};
 
 using ScopedHandle = std::unique_ptr<void, handle_closer>;
 
-inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
+inline HANDLE safe_handle(HANDLE h) noexcept
+{
+    return (h == INVALID_HANDLE_VALUE) ? nullptr : h;
+}
 
 //---------------------------------------------------------------------------------
-struct find_closer { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
+struct find_closer
+{
+    void operator()(HANDLE h) noexcept
+    {
+        assert(h != INVALID_HANDLE_VALUE);
+        if (h)
+            FindClose(h);
+    }
+};
 
 using ScopedFindHandle = std::unique_ptr<void, find_closer>;
 
@@ -91,9 +116,11 @@ using ScopedFindHandle = std::unique_ptr<void, find_closer>;
 class auto_delete_file
 {
 public:
-    auto_delete_file(HANDLE hFile) noexcept : m_handle(hFile) {}
+    auto_delete_file(HANDLE hFile) noexcept
+        : m_handle(hFile)
+    {}
 
-    auto_delete_file(const auto_delete_file&) = delete;
+    auto_delete_file(const auto_delete_file&)            = delete;
     auto_delete_file& operator=(const auto_delete_file&) = delete;
 
     ~auto_delete_file()
@@ -101,8 +128,8 @@ public:
         if (m_handle)
         {
             FILE_DISPOSITION_INFO info = {};
-            info.DeleteFile = TRUE;
-            std::ignore = SetFileInformationByHandle(m_handle, FileDispositionInfo, &info, sizeof(info));
+            info.DeleteFile            = TRUE;
+            std::ignore                = SetFileInformationByHandle(m_handle, FileDispositionInfo, &info, sizeof(info));
         }
     }
 

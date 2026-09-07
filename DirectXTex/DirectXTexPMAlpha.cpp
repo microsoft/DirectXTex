@@ -19,9 +19,12 @@ namespace
     constexpr TEX_FILTER_FLAGS GetSRGBFlags(_In_ TEX_PMALPHA_FLAGS compress) noexcept
     {
         static_assert(TEX_FILTER_SRGB_IN == 0x1000000, "TEX_FILTER_SRGB flag values don't match TEX_FILTER_SRGB_MASK");
-        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
-        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_OUT) == static_cast<int>(TEX_FILTER_SRGB_OUT), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
-        static_assert(static_cast<int>(TEX_PMALPHA_SRGB) == static_cast<int>(TEX_FILTER_SRGB), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN),
+            "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_OUT) == static_cast<int>(TEX_FILTER_SRGB_OUT),
+            "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB) == static_cast<int>(TEX_FILTER_SRGB),
+            "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
         return static_cast<TEX_FILTER_FLAGS>(compress & TEX_FILTER_SRGB_MASK);
     }
 
@@ -36,8 +39,8 @@ namespace
         if (!scanline)
             return E_OUTOFMEMORY;
 
-        const uint8_t *pSrc = srcImage.pixels;
-        uint8_t *pDest = destImage.pixels;
+        const uint8_t* pSrc  = srcImage.pixels;
+        uint8_t*       pDest = destImage.pixels;
         if (!pSrc || !pDest)
             return E_POINTER;
 
@@ -49,10 +52,10 @@ namespace
             XMVECTOR* ptr = scanline.get();
             for (size_t w = 0; w < srcImage.width; ++w)
             {
-                const XMVECTOR v = *ptr;
-                XMVECTOR alpha = XMVectorSplatW(*ptr);
-                alpha = XMVectorMultiply(v, alpha);
-                *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
+                const XMVECTOR v     = *ptr;
+                XMVECTOR       alpha = XMVectorSplatW(*ptr);
+                alpha                = XMVectorMultiply(v, alpha);
+                *(ptr++)             = XMVectorSelect(v, alpha, g_XMSelect1110);
             }
 
             if (!StoreScanline(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width))
@@ -70,17 +73,20 @@ namespace
         assert(srcImage.width == destImage.width);
         assert(srcImage.height == destImage.height);
 
-        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN), "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
-        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_OUT) == static_cast<int>(TEX_FILTER_SRGB_OUT), "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
-        static_assert(static_cast<int>(TEX_PMALPHA_SRGB) == static_cast<int>(TEX_FILTER_SRGB), "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN),
+            "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_OUT) == static_cast<int>(TEX_FILTER_SRGB_OUT),
+            "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB) == static_cast<int>(TEX_FILTER_SRGB),
+            "TEX_PMALHPA_SRGB* should match TEX_FILTER_SRGB*");
         flags &= TEX_PMALPHA_SRGB;
 
         auto scanline = make_AlignedArrayXMVECTOR(srcImage.width);
         if (!scanline)
             return E_OUTOFMEMORY;
 
-        const uint8_t *pSrc = srcImage.pixels;
-        uint8_t *pDest = destImage.pixels;
+        const uint8_t* pSrc  = srcImage.pixels;
+        uint8_t*       pDest = destImage.pixels;
         if (!pSrc || !pDest)
             return E_POINTER;
 
@@ -94,10 +100,10 @@ namespace
             XMVECTOR* ptr = scanline.get();
             for (size_t w = 0; w < srcImage.width; ++w)
             {
-                const XMVECTOR v = *ptr;
-                XMVECTOR alpha = XMVectorSplatW(*ptr);
-                alpha = XMVectorMultiply(v, alpha);
-                *(ptr++) = XMVectorSelect(v, alpha, g_XMSelect1110);
+                const XMVECTOR v     = *ptr;
+                XMVECTOR       alpha = XMVectorSplatW(*ptr);
+                alpha                = XMVectorMultiply(v, alpha);
+                *(ptr++)             = XMVectorSelect(v, alpha, g_XMSelect1110);
             }
 
             if (!StoreScanlineLinear(pDest, destImage.rowPitch, destImage.format, scanline.get(), srcImage.width, filter))
@@ -121,8 +127,8 @@ namespace
         if (!scanline)
             return E_OUTOFMEMORY;
 
-        const uint8_t *pSrc = srcImage.pixels;
-        uint8_t *pDest = destImage.pixels;
+        const uint8_t* pSrc  = srcImage.pixels;
+        uint8_t*       pDest = destImage.pixels;
         if (!pSrc || !pDest)
             return E_POINTER;
 
@@ -134,8 +140,8 @@ namespace
             XMVECTOR* ptr = scanline.get();
             for (size_t w = 0; w < srcImage.width; ++w)
             {
-                const XMVECTOR v = *ptr;
-                XMVECTOR alpha = XMVectorSplatW(*ptr);
+                const XMVECTOR v     = *ptr;
+                XMVECTOR       alpha = XMVectorSplatW(*ptr);
                 if (XMVectorGetX(alpha) > 0)
                 {
                     alpha = XMVectorDivide(v, alpha);
@@ -158,17 +164,20 @@ namespace
         assert(srcImage.width == destImage.width);
         assert(srcImage.height == destImage.height);
 
-        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
-        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_OUT) == static_cast<int>(TEX_FILTER_SRGB_OUT), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
-        static_assert(static_cast<int>(TEX_PMALPHA_SRGB) == static_cast<int>(TEX_FILTER_SRGB), "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_IN) == static_cast<int>(TEX_FILTER_SRGB_IN),
+            "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB_OUT) == static_cast<int>(TEX_FILTER_SRGB_OUT),
+            "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
+        static_assert(static_cast<int>(TEX_PMALPHA_SRGB) == static_cast<int>(TEX_FILTER_SRGB),
+            "TEX_PMALPHA_SRGB* should match TEX_FILTER_SRGB*");
         flags &= TEX_PMALPHA_SRGB;
 
         auto scanline = make_AlignedArrayXMVECTOR(srcImage.width);
         if (!scanline)
             return E_OUTOFMEMORY;
 
-        const uint8_t *pSrc = srcImage.pixels;
-        uint8_t *pDest = destImage.pixels;
+        const uint8_t* pSrc  = srcImage.pixels;
+        uint8_t*       pDest = destImage.pixels;
         if (!pSrc || !pDest)
             return E_POINTER;
 
@@ -182,8 +191,8 @@ namespace
             XMVECTOR* ptr = scanline.get();
             for (size_t w = 0; w < srcImage.width; ++w)
             {
-                const XMVECTOR v = *ptr;
-                XMVECTOR alpha = XMVectorSplatW(*ptr);
+                const XMVECTOR v     = *ptr;
+                XMVECTOR       alpha = XMVectorSplatW(*ptr);
                 if (XMVectorGetX(alpha) > 0)
                 {
                     alpha = XMVectorDivide(v, alpha);
@@ -200,8 +209,7 @@ namespace
 
         return S_OK;
     }
-}
-
+} // namespace
 
 //=====================================================================================
 // Entry-points
@@ -210,19 +218,12 @@ namespace
 //-------------------------------------------------------------------------------------
 // Converts to/from a premultiplied alpha version of the texture
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::PremultiplyAlpha(
-    const Image& srcImage,
-    TEX_PMALPHA_FLAGS flags,
-    ScratchImage& image) noexcept
+_Use_decl_annotations_ HRESULT DirectX::PremultiplyAlpha(const Image& srcImage, TEX_PMALPHA_FLAGS flags, ScratchImage& image) noexcept
 {
     if (!srcImage.pixels)
         return E_POINTER;
 
-    if (IsCompressed(srcImage.format)
-        || IsPlanar(srcImage.format)
-        || IsPalettized(srcImage.format)
-        || IsTypeless(srcImage.format)
+    if (IsCompressed(srcImage.format) || IsPlanar(srcImage.format) || IsPalettized(srcImage.format) || IsTypeless(srcImage.format)
         || !HasAlpha(srcImage.format))
         return HRESULT_E_NOT_SUPPORTED;
 
@@ -233,7 +234,7 @@ HRESULT DirectX::PremultiplyAlpha(
     if (FAILED(hr))
         return hr;
 
-    const Image *rimage = image.GetImage(0, 0, 0);
+    const Image* rimage = image.GetImage(0, 0, 0);
     if (!rimage)
     {
         image.Release();
@@ -257,25 +258,19 @@ HRESULT DirectX::PremultiplyAlpha(
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Converts to/from a premultiplied alpha version of the texture (complex)
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::PremultiplyAlpha(
-    const Image* srcImages,
-    size_t nimages,
-    const TexMetadata& metadata,
-    TEX_PMALPHA_FLAGS flags,
-    ScratchImage& result) noexcept
+_Use_decl_annotations_ HRESULT DirectX::PremultiplyAlpha(const Image* srcImages,
+    size_t                                                            nimages,
+    const TexMetadata&                                                metadata,
+    TEX_PMALPHA_FLAGS                                                 flags,
+    ScratchImage&                                                     result) noexcept
 {
     if (!srcImages || !nimages)
         return E_INVALIDARG;
 
-    if (IsCompressed(metadata.format)
-        || IsPlanar(metadata.format)
-        || IsPalettized(metadata.format)
-        || IsTypeless(metadata.format)
+    if (IsCompressed(metadata.format) || IsPlanar(metadata.format) || IsPalettized(metadata.format) || IsTypeless(metadata.format)
         || !HasAlpha(metadata.format))
         return HRESULT_E_NOT_SUPPORTED;
 

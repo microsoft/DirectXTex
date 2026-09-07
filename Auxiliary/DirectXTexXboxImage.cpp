@@ -143,36 +143,34 @@ static_assert(static_cast<int>(XG_RESOURCE_MISC_TEXTURECUBE) == static_cast<int>
 // Initialize memory
 //--------------------------------------------------------------------------------------
 
-XboxImage& XboxImage::operator= (XboxImage&& moveFrom) noexcept
+XboxImage& XboxImage::operator=(XboxImage&& moveFrom) noexcept
 {
     if (this != &moveFrom)
     {
         Release();
 
-        dataSize = moveFrom.dataSize;
+        dataSize      = moveFrom.dataSize;
         baseAlignment = moveFrom.baseAlignment;
-        tilemode = moveFrom.tilemode;
-        metadata = moveFrom.metadata;
-        memory = moveFrom.memory;
+        tilemode      = moveFrom.tilemode;
+        metadata      = moveFrom.metadata;
+        memory        = moveFrom.memory;
 
-        moveFrom.dataSize = 0;
+        moveFrom.dataSize      = 0;
         moveFrom.baseAlignment = 0;
-        moveFrom.tilemode = c_XboxTileModeInvalid;
-        moveFrom.memory = nullptr;
+        moveFrom.tilemode      = c_XboxTileModeInvalid;
+        moveFrom.memory        = nullptr;
     }
     return *this;
 }
 
-_Use_decl_annotations_
-HRESULT XboxImage::Initialize(const XG_TEXTURE1D_DESC& desc, const XG_RESOURCE_LAYOUT& layout, uint32_t miscFlags2)
+_Use_decl_annotations_ HRESULT XboxImage::Initialize(const XG_TEXTURE1D_DESC& desc, const XG_RESOURCE_LAYOUT& layout, uint32_t miscFlags2)
 {
     if (!layout.SizeBytes || !layout.BaseAlignmentBytes)
         return E_INVALIDARG;
 
     Release();
 
-    if (layout.SizeBytes > UINT32_MAX
-        || layout.BaseAlignmentBytes > UINT32_MAX)
+    if (layout.SizeBytes > UINT32_MAX || layout.BaseAlignmentBytes > UINT32_MAX)
         return E_FAIL;
 
     memory = reinterpret_cast<uint8_t*>(_aligned_malloc(layout.SizeBytes, 16));
@@ -182,16 +180,16 @@ HRESULT XboxImage::Initialize(const XG_TEXTURE1D_DESC& desc, const XG_RESOURCE_L
     memset(memory, 0, layout.SizeBytes);
 
     memset(&metadata, 0, sizeof(metadata));
-    metadata.width = desc.Width;
-    metadata.height = 1;
-    metadata.depth = 1;
-    metadata.arraySize = desc.ArraySize;
-    metadata.mipLevels = layout.MipLevels;
-    metadata.format = static_cast<DXGI_FORMAT>(desc.Format);
-    metadata.dimension = TEX_DIMENSION_TEXTURE1D;
+    metadata.width      = desc.Width;
+    metadata.height     = 1;
+    metadata.depth      = 1;
+    metadata.arraySize  = desc.ArraySize;
+    metadata.mipLevels  = layout.MipLevels;
+    metadata.format     = static_cast<DXGI_FORMAT>(desc.Format);
+    metadata.dimension  = TEX_DIMENSION_TEXTURE1D;
     metadata.miscFlags2 = miscFlags2;
 
-    dataSize = static_cast<uint32_t>(layout.SizeBytes);
+    dataSize      = static_cast<uint32_t>(layout.SizeBytes);
     baseAlignment = static_cast<uint32_t>(layout.BaseAlignmentBytes);
 #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
     tilemode = desc.SwizzleMode;
@@ -202,17 +200,14 @@ HRESULT XboxImage::Initialize(const XG_TEXTURE1D_DESC& desc, const XG_RESOURCE_L
     return S_OK;
 }
 
-
-_Use_decl_annotations_
-HRESULT XboxImage::Initialize(const XG_TEXTURE2D_DESC& desc, const XG_RESOURCE_LAYOUT& layout, uint32_t miscFlags2)
+_Use_decl_annotations_ HRESULT XboxImage::Initialize(const XG_TEXTURE2D_DESC& desc, const XG_RESOURCE_LAYOUT& layout, uint32_t miscFlags2)
 {
     if (!layout.SizeBytes || !layout.BaseAlignmentBytes)
         return E_INVALIDARG;
 
     Release();
 
-    if (layout.SizeBytes > UINT32_MAX
-        || layout.BaseAlignmentBytes > UINT32_MAX)
+    if (layout.SizeBytes > UINT32_MAX || layout.BaseAlignmentBytes > UINT32_MAX)
         return E_FAIL;
 
     memory = reinterpret_cast<uint8_t*>(_aligned_malloc(layout.SizeBytes, 16));
@@ -222,17 +217,17 @@ HRESULT XboxImage::Initialize(const XG_TEXTURE2D_DESC& desc, const XG_RESOURCE_L
     memset(memory, 0, layout.SizeBytes);
 
     memset(&metadata, 0, sizeof(metadata));
-    metadata.width = desc.Width;
-    metadata.height = desc.Height;
-    metadata.depth = 1;
-    metadata.arraySize = desc.ArraySize;
-    metadata.mipLevels = layout.MipLevels;
-    metadata.miscFlags = (desc.MiscFlags & XG_RESOURCE_MISC_TEXTURECUBE) ? TEX_MISC_TEXTURECUBE : 0;
-    metadata.format = static_cast<DXGI_FORMAT>(desc.Format);
-    metadata.dimension = TEX_DIMENSION_TEXTURE2D;
+    metadata.width      = desc.Width;
+    metadata.height     = desc.Height;
+    metadata.depth      = 1;
+    metadata.arraySize  = desc.ArraySize;
+    metadata.mipLevels  = layout.MipLevels;
+    metadata.miscFlags  = (desc.MiscFlags & XG_RESOURCE_MISC_TEXTURECUBE) ? TEX_MISC_TEXTURECUBE : 0;
+    metadata.format     = static_cast<DXGI_FORMAT>(desc.Format);
+    metadata.dimension  = TEX_DIMENSION_TEXTURE2D;
     metadata.miscFlags2 = miscFlags2;
 
-    dataSize = static_cast<uint32_t>(layout.SizeBytes);
+    dataSize      = static_cast<uint32_t>(layout.SizeBytes);
     baseAlignment = static_cast<uint32_t>(layout.BaseAlignmentBytes);
 #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
     tilemode = desc.SwizzleMode;
@@ -243,17 +238,14 @@ HRESULT XboxImage::Initialize(const XG_TEXTURE2D_DESC& desc, const XG_RESOURCE_L
     return S_OK;
 }
 
-
-_Use_decl_annotations_
-HRESULT XboxImage::Initialize(const XG_TEXTURE3D_DESC& desc, const XG_RESOURCE_LAYOUT& layout, uint32_t miscFlags2)
+_Use_decl_annotations_ HRESULT XboxImage::Initialize(const XG_TEXTURE3D_DESC& desc, const XG_RESOURCE_LAYOUT& layout, uint32_t miscFlags2)
 {
     if (!layout.SizeBytes || !layout.BaseAlignmentBytes)
         return E_INVALIDARG;
 
     Release();
 
-    if (layout.SizeBytes > UINT32_MAX
-        || layout.BaseAlignmentBytes > UINT32_MAX)
+    if (layout.SizeBytes > UINT32_MAX || layout.BaseAlignmentBytes > UINT32_MAX)
         return E_FAIL;
 
     memory = reinterpret_cast<uint8_t*>(_aligned_malloc(layout.SizeBytes, 16));
@@ -263,16 +255,16 @@ HRESULT XboxImage::Initialize(const XG_TEXTURE3D_DESC& desc, const XG_RESOURCE_L
     memset(memory, 0, layout.SizeBytes);
 
     memset(&metadata, 0, sizeof(metadata));
-    metadata.width = desc.Width;
-    metadata.height = desc.Height;
-    metadata.depth = desc.Depth;
-    metadata.arraySize = 1;
-    metadata.mipLevels = layout.MipLevels;
-    metadata.format = static_cast<DXGI_FORMAT>(desc.Format);
-    metadata.dimension = TEX_DIMENSION_TEXTURE3D;
+    metadata.width      = desc.Width;
+    metadata.height     = desc.Height;
+    metadata.depth      = desc.Depth;
+    metadata.arraySize  = 1;
+    metadata.mipLevels  = layout.MipLevels;
+    metadata.format     = static_cast<DXGI_FORMAT>(desc.Format);
+    metadata.dimension  = TEX_DIMENSION_TEXTURE3D;
     metadata.miscFlags2 = miscFlags2;
 
-    dataSize = static_cast<uint32_t>(layout.SizeBytes);
+    dataSize      = static_cast<uint32_t>(layout.SizeBytes);
     baseAlignment = static_cast<uint32_t>(layout.BaseAlignmentBytes);
 #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
     tilemode = desc.SwizzleMode;
@@ -283,9 +275,7 @@ HRESULT XboxImage::Initialize(const XG_TEXTURE3D_DESC& desc, const XG_RESOURCE_L
     return S_OK;
 }
 
-
-_Use_decl_annotations_
-HRESULT XboxImage::Initialize(const DirectX::TexMetadata& mdata, XboxTileMode tm, uint32_t size, uint32_t alignment)
+_Use_decl_annotations_ HRESULT XboxImage::Initialize(const DirectX::TexMetadata& mdata, XboxTileMode tm, uint32_t size, uint32_t alignment)
 {
     if (!size || !alignment || tm == c_XboxTileModeInvalid)
         return E_INVALIDARG;
@@ -300,13 +290,12 @@ HRESULT XboxImage::Initialize(const DirectX::TexMetadata& mdata, XboxTileMode tm
 
     metadata = mdata;
 
-    dataSize = size;
+    dataSize      = size;
     baseAlignment = alignment;
-    tilemode = tm;
+    tilemode      = tm;
 
     return S_OK;
 }
-
 
 //--------------------------------------------------------------------------------------
 // Release memory
