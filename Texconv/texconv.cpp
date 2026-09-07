@@ -197,6 +197,7 @@ namespace
 
     static_assert(OPT_FLAGS_MAX <= 64, "dwOptions is a unsigned int bitfield");
 
+    // clang-format off
     const SValue<uint64_t> g_pOptions[] =
     {
         { L"r",             OPT_RECURSIVE },
@@ -618,6 +619,7 @@ namespace
         { L"12.2", 16384 },
         { nullptr, 0 },
     };
+    // clang-format on
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1097,6 +1099,7 @@ namespace
 
     const XMVECTORF32 c_MaxNitsFor2084 = { { { 10000.0f, 10000.0f, 10000.0f, 1.f } } };
 
+    // clang-format off
     // HDTV to UHDTV (Rec.709 color primaries into Rec.2020)
     const XMMATRIX c_from709to2020 =
     {
@@ -1141,6 +1144,7 @@ namespace
         0.0000000f,     0.0000000f,    1.098273600f, 0.f,
         0.f,            0.f,           0.f,          1.f
     };
+    // clang-format on
 
     inline float LinearToST2084(float normalizedLinearValue) noexcept
     {

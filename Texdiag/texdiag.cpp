@@ -131,6 +131,7 @@ namespace
     //////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////
 
+    // clang-format off
     const SValue<uint32_t> g_pCommands[] =
     {
         { L"info",      CMD_INFO },
@@ -454,6 +455,7 @@ namespace
     #endif
         { nullptr,  CODEC_DDS      }
     };
+    // clang-format on
 
     void PrintUsage(bool full = false) noexcept
     {
