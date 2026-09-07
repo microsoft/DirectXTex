@@ -14,6 +14,7 @@ using namespace DirectX;
 using namespace Xbox;
 
 // Sanity check XG library values against DirectXTex's values
+// clang-format off
 static_assert(static_cast<int>(XG_FORMAT_UNKNOWN)                       == static_cast<int>(DXGI_FORMAT_UNKNOWN), "XG vs. DXGI mismatch");
 static_assert(static_cast<int>(XG_FORMAT_R32G32B32A32_TYPELESS)         == static_cast<int>(DXGI_FORMAT_R32G32B32A32_TYPELESS), "XG vs. DXGI mismatch");
 static_assert(static_cast<int>(XG_FORMAT_R32G32B32A32_FLOAT)            == static_cast<int>(DXGI_FORMAT_R32G32B32A32_FLOAT), "XG vs. DXGI mismatch");
@@ -136,6 +137,7 @@ static_assert(static_cast<int>(XG_RESOURCE_DIMENSION_TEXTURE2D) == static_cast<i
 static_assert(static_cast<int>(XG_RESOURCE_DIMENSION_TEXTURE3D) == static_cast<int>(TEX_DIMENSION_TEXTURE3D), "XG vs. Direct3D 11 mismatch");
 
 static_assert(static_cast<int>(XG_RESOURCE_MISC_TEXTURECUBE) == static_cast<int>(TEX_MISC_TEXTURECUBE), "XG vs. Direct3D 11 mismatch");
+// clang-format on
 
 //--------------------------------------------------------------------------------------
 // Initialize memory

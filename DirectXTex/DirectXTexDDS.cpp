@@ -60,6 +60,7 @@ namespace
 
     const LegacyDDS g_LegacyDDSMap[] =
     {
+        // clang-format off
         { DXGI_FORMAT_BC1_UNORM,          CONV_FLAGS_NONE,      DDSPF_DXT1 }, // D3DFMT_DXT1
         { DXGI_FORMAT_BC2_UNORM,          CONV_FLAGS_NONE,      DDSPF_DXT3 }, // D3DFMT_DXT3
         { DXGI_FORMAT_BC3_UNORM,          CONV_FLAGS_NONE,      DDSPF_DXT5 }, // D3DFMT_DXT5
@@ -163,6 +164,7 @@ namespace
                                                                 DDSPF_L6V5U5 },      // D3DFMT_L6V5U5
         { DXGI_FORMAT_R8G8B8A8_UNORM,     CONV_FLAGS_L8U8V8,    DDSPF_X8L8V8U8 },    // D3DFMT_X8L8V8U8
         { DXGI_FORMAT_R10G10B10A2_UNORM,  CONV_FLAGS_WUV10,     DDSPF_A2W10V10U10 }, // D3DFMT_A2W10V10U10
+        // clang-format on
     };
 
     // Note that many common DDS reader/writers (including D3DX) swap the

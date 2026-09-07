@@ -663,24 +663,28 @@ HRESULT InitDevice(const TexMetadata& mdata)
     // Create index buffer
     static const WORD indicesCube[] =
     {
-            0, 1, 2,
-            2, 1, 3,
-            4, 5, 6,
-            6, 5, 7,
-            8, 9, 10,
-            10, 9, 11,
-            12, 13, 14,
-            14, 13, 15,
-            16, 17, 18,
-            18, 17, 19,
-            20, 21, 22,
-            22, 21, 23
+        // clang-format off
+        0, 1, 2,
+        2, 1, 3,
+        4, 5, 6,
+        6, 5, 7,
+        8, 9, 10,
+        10, 9, 11,
+        12, 13, 14,
+        14, 13, 15,
+        16, 17, 18,
+        18, 17, 19,
+        20, 21, 22,
+        22, 21, 23
+        // clang-format on
     };
 
     static const WORD indices[] =
     {
-            0, 1, 2,
-            2, 1, 3
+        // clang-format off
+        0, 1, 2,
+        2, 1, 3
+        // clang-format on
     };
 
     if (isCubeMap)

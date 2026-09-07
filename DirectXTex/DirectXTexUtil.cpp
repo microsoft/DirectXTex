@@ -55,6 +55,7 @@ namespace
 
     constexpr WICTranslate g_WICFormats[] =
     {
+        // clang-format off
         { GUID_WICPixelFormat128bppRGBAFloat,       DXGI_FORMAT_R32G32B32A32_FLOAT,         false },
 
         { GUID_WICPixelFormat64bppRGBAHalf,         DXGI_FORMAT_R16G16B16A16_FLOAT,         false },
@@ -78,6 +79,7 @@ namespace
         { GUID_WICPixelFormat8bppAlpha,             DXGI_FORMAT_A8_UNORM,                   false },
 
         { GUID_WICPixelFormatBlackWhite,            DXGI_FORMAT_R1_UNORM,                   false },
+        // clang-format on
     };
 
     bool g_WIC2 = false;
