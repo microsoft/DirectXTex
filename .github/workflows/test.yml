@@ -55,18 +55,7 @@ jobs:
         build_type: [x64-Debug, x64-Release]
         arch: [amd64]
         include:
-          - toolver: '14.29'
-            build_type: x86-Debug
-            arch: amd64_x86
-          - toolver: '14.29'
-            build_type: x86-Release
-            arch: amd64_x86
-          - toolver: '14'
-            build_type: x86-Debug
-            arch: amd64_x86
-          - toolver: '14'
-            build_type: x86-Release
-            arch: amd64_x86
+          # We skip x86-Debug and x86-Release for VS 2022 currently due to an ICE in the openjph library via vcpkg.
           - toolver: '14'
             build_type: arm64-Debug
             arch: amd64_arm64

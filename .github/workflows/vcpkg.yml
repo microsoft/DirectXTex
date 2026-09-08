@@ -50,7 +50,7 @@ jobs:
         arch: [amd64]
         shared: ['OFF']
         include:
-          # We skip x86-Debug-VCPKG for VS 2022 currently due to an ICE in the openjph library via vcpkg which uses MSVC.
+          # We skip x86-Debug-VCPKG for VS 2022 currently due to an ICE in the openjph library via vcpkg.
           - toolver: '14'
             build_type: x64-Debug-Clang-VCPKG
             arch: amd64
