@@ -146,7 +146,7 @@ namespace
             {
             case JPEG_HEADER_TABLES_ONLY: [[fallthrough]];
             case JPEG_HEADER_OK:          break;
-            case JPEG_SUSPENDED:          return E_FAIL;
+            default:                      return E_FAIL;
             }
             GetMetadata(metadata);
             return S_OK;
@@ -178,8 +178,8 @@ namespace
             switch (jpeg_read_header(&dec, true))
             {
             case JPEG_HEADER_TABLES_ONLY: GetMetadata(metadata); [[fallthrough]];
-            case JPEG_SUSPENDED:          return E_FAIL;
             case JPEG_HEADER_OK:          break;
+            default:                      return E_FAIL;
             }
             GetMetadata(metadata);
 
