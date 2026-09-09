@@ -15,7 +15,6 @@
 
 #include "DirectXTex.h"
 
-
 namespace DirectX
 {
     enum JPEG_FLAGS : uint32_t
@@ -26,21 +25,12 @@ namespace DirectX
         // Return non-SRGB formats intead of sRGB
     };
 
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromJPEGFile(
-        _In_z_ const wchar_t* szFile,
-        JPEG_FLAGS flags,
-        _Out_ TexMetadata& metadata);
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromJPEGFile(_In_z_ const wchar_t* szFile, JPEG_FLAGS flags, _Out_ TexMetadata& metadata);
 
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromJPEGFile(
-        _In_z_ const wchar_t* szFile,
-        JPEG_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata,
-        _Out_ ScratchImage& image);
+    DIRECTX_TEX_API HRESULT __cdecl
+    LoadFromJPEGFile(_In_z_ const wchar_t* szFile, JPEG_FLAGS flags, _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image);
 
-    DIRECTX_TEX_API HRESULT __cdecl SaveToJPEGFile(
-        _In_ const Image& image,
-        JPEG_FLAGS flags,
-        _In_z_ const wchar_t* szFile);
+    DIRECTX_TEX_API HRESULT __cdecl SaveToJPEGFile(_In_ const Image& image, JPEG_FLAGS flags, _In_z_ const wchar_t* szFile);
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -48,9 +38,9 @@ namespace DirectX
 #pragma clang diagnostic ignored "-Wextra-semi-stmt"
 #endif
 
-DEFINE_ENUM_FLAG_OPERATORS(JPEG_FLAGS);
+    DEFINE_ENUM_FLAG_OPERATORS(JPEG_FLAGS);
 
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-}
+} // namespace DirectX
