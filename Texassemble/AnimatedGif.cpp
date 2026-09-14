@@ -13,7 +13,7 @@
 // https://go.microsoft.com/fwlink/?LinkId=248926
 //--------------------------------------------------------------------------------------
 
-#ifdef  _MSC_VER
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #endif
@@ -24,7 +24,7 @@
 #define NOMCX
 #define NOSERVICE
 #define NOHELP
-#ifdef  _MSC_VER
+#ifdef _MSC_VER
 #pragma warning(pop)
 #endif
 
@@ -39,7 +39,7 @@
 
 #include <wincodec.h>
 
-#ifdef  _MSC_VER
+#ifdef _MSC_VER
 #pragma warning(disable : 4619 4616 26812)
 #endif
 
@@ -52,22 +52,18 @@ namespace
 {
     enum
     {
-        DM_UNDEFINED = 0,
-        DM_NONE = 1,
+        DM_UNDEFINED  = 0,
+        DM_NONE       = 1,
         DM_BACKGROUND = 2,
-        DM_PREVIOUS = 3
+        DM_PREVIOUS   = 3
     };
-
 
     void FillRectangle(const Image& img, const RECT& destRect, uint32_t color)
     {
-        RECT clipped =
-        {
-            (destRect.left < 0) ? 0 : destRect.left,
+        RECT clipped = { (destRect.left < 0) ? 0 : destRect.left,
             (destRect.top < 0) ? 0 : destRect.top,
             (destRect.right > static_cast<long>(img.width)) ? static_cast<long>(img.width) : destRect.right,
-            (destRect.bottom > static_cast<long>(img.height)) ? static_cast<long>(img.height) : destRect.bottom
-        };
+            (destRect.bottom > static_cast<long>(img.height)) ? static_cast<long>(img.height) : destRect.bottom };
 
         auto ptr = reinterpret_cast<uint8_t*>(img.pixels + size_t(clipped.top) * img.rowPitch + size_t(clipped.left) * sizeof(uint32_t));
 
@@ -83,26 +79,20 @@ namespace
         }
     }
 
-
     void BlendRectangle(const Image& composed, const Image& raw, const RECT& destRect, uint32_t transparent)
     {
-        RECT clipped =
-        {
-            (destRect.left < 0) ? 0 : destRect.left,
+        RECT clipped = { (destRect.left < 0) ? 0 : destRect.left,
             (destRect.top < 0) ? 0 : destRect.top,
             (destRect.right > static_cast<long>(composed.width)) ? static_cast<long>(composed.width) : destRect.right,
-            (destRect.bottom > static_cast<long>(composed.height)) ? static_cast<long>(composed.height) : destRect.bottom
-        };
+            (destRect.bottom > static_cast<long>(composed.height)) ? static_cast<long>(composed.height) : destRect.bottom };
 
-        auto rawPtr = reinterpret_cast<uint8_t*>(raw.pixels);
+        auto rawPtr      = reinterpret_cast<uint8_t*>(raw.pixels);
         auto composedPtr = reinterpret_cast<uint8_t*>(
-            composed.pixels
-            + size_t(clipped.top) * composed.rowPitch
-            + size_t(clipped.left) * sizeof(uint32_t));
+            composed.pixels + size_t(clipped.top) * composed.rowPitch + size_t(clipped.left) * sizeof(uint32_t));
 
         for (long y = clipped.top; y < clipped.bottom; ++y)
         {
-            auto srcPtr = reinterpret_cast<uint32_t*>(rawPtr);
+            auto srcPtr  = reinterpret_cast<uint32_t*>(rawPtr);
             auto destPtr = reinterpret_cast<uint32_t*>(composedPtr);
             for (long x = clipped.left; x < clipped.right; ++x, ++srcPtr, ++destPtr)
             {
@@ -116,7 +106,7 @@ namespace
             composedPtr += composed.rowPitch;
         }
     }
-}
+} // namespace
 
 HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<ScratchImage>>& loadedImages, bool usebgcolor)
 {
@@ -153,7 +143,7 @@ HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<Scrat
 
     // Get palette
     WICColor rgbColors[256] = {};
-    UINT actualColors = 0;
+    UINT     actualColors   = 0;
     {
         ComPtr<IWICPalette> palette;
         hr = pWIC->CreatePalette(palette.GetAddressOf());
@@ -201,7 +191,7 @@ HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<Scrat
     }
 
     // Get global frame size
-    UINT width = 0;
+    UINT width  = 0;
     UINT height = 0;
 
     hr = metareader->GetMetadataByName(L"/logscrdesc/Width", &propValue);
@@ -230,7 +220,7 @@ HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<Scrat
         return hr;
 
     UINT disposal = DM_UNDEFINED;
-    RECT rct = {};
+    RECT rct      = {};
 
     UINT previousFrame = 0;
     for (UINT iframe = 0; iframe < fcount; ++iframe)
@@ -333,7 +323,7 @@ HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<Scrat
             }
 
             disposal = DM_UNDEFINED;
-            hr = frameMeta->GetMetadataByName(L"/grctlext/Disposal", &propValue);
+            hr       = frameMeta->GetMetadataByName(L"/grctlext/Disposal", &propValue);
             if (SUCCEEDED(hr))
             {
                 hr = (propValue.vt == VT_UI1 ? S_OK : E_FAIL);
@@ -363,7 +353,6 @@ HRESULT LoadAnimatedGif(const wchar_t* szFile, std::vector<std::unique_ptr<Scrat
                 }
                 PropVariantClear(&propValue);
             }
-
         }
 
         UINT w, h;

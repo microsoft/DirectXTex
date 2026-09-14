@@ -20,11 +20,8 @@ namespace
     //-------------------------------------------------------------------------------------
     // Do flip/rotate operation using WIC
     //-------------------------------------------------------------------------------------
-    HRESULT PerformFlipRotateUsingWIC(
-        const Image& srcImage,
-        TEX_FR_FLAGS flags,
-        const WICPixelFormatGUID& pfGUID,
-        const Image& destImage) noexcept
+    HRESULT
+    PerformFlipRotateUsingWIC(const Image& srcImage, TEX_FR_FLAGS flags, const WICPixelFormatGUID& pfGUID, const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -32,18 +29,22 @@ namespace
         assert(srcImage.format == destImage.format);
 
         bool iswic2 = false;
-        auto pWIC = GetWICFactory(iswic2);
+        auto pWIC   = GetWICFactory(iswic2);
         if (!pWIC)
             return E_NOINTERFACE;
 
-        if (srcImage.rowPitch > UINT32_MAX || srcImage.slicePitch > UINT32_MAX
-            || destImage.rowPitch > UINT32_MAX || destImage.slicePitch > UINT32_MAX)
+        if (srcImage.rowPitch > UINT32_MAX || srcImage.slicePitch > UINT32_MAX || destImage.rowPitch > UINT32_MAX
+            || destImage.slicePitch > UINT32_MAX)
             return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         ComPtr<IWICBitmap> source;
-        HRESULT hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height), pfGUID,
-            static_cast<UINT>(srcImage.rowPitch), static_cast<UINT>(srcImage.slicePitch),
-            srcImage.pixels, source.GetAddressOf());
+        HRESULT            hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(srcImage.width),
+            static_cast<UINT>(srcImage.height),
+            pfGUID,
+            static_cast<UINT>(srcImage.rowPitch),
+            static_cast<UINT>(srcImage.slicePitch),
+            srcImage.pixels,
+            source.GetAddressOf());
         if (FAILED(hr))
             return hr;
 
@@ -82,17 +83,13 @@ namespace
         return S_OK;
     }
 
-
     //-------------------------------------------------------------------------------------
     // Do conversion, flip/rotate using WIC, conversion cycle
     //
     // For large images we have to use F16 instead of F32 to avoid exceeding the 32-bit
     // memory limitations of WIC.
     //-------------------------------------------------------------------------------------
-    HRESULT PerformFlipRotateViaF16(
-        const Image& srcImage,
-        TEX_FR_FLAGS flags,
-        const Image& destImage) noexcept
+    HRESULT PerformFlipRotateViaF16(const Image& srcImage, TEX_FR_FLAGS flags, const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -101,11 +98,11 @@ namespace
         assert(srcImage.format == destImage.format);
 
         ScratchImage temp;
-        HRESULT hr = ConvertToR16G16B16A16(srcImage, temp);
+        HRESULT      hr = ConvertToR16G16B16A16(srcImage, temp);
         if (FAILED(hr))
             return hr;
 
-        const Image *tsrc = temp.GetImage(0, 0, 0);
+        const Image* tsrc = temp.GetImage(0, 0, 0);
         if (!tsrc)
             return E_POINTER;
 
@@ -114,7 +111,7 @@ namespace
         if (FAILED(hr))
             return hr;
 
-        const Image *tdest = rtemp.GetImage(0, 0, 0);
+        const Image* tdest = rtemp.GetImage(0, 0, 0);
         if (!tdest)
             return E_POINTER;
 
@@ -131,10 +128,7 @@ namespace
         return S_OK;
     }
 
-    HRESULT PerformFlipRotateViaF32(
-        const Image& srcImage,
-        TEX_FR_FLAGS flags,
-        const Image& destImage) noexcept
+    HRESULT PerformFlipRotateViaF32(const Image& srcImage, TEX_FR_FLAGS flags, const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -143,11 +137,11 @@ namespace
         assert(srcImage.format == destImage.format);
 
         ScratchImage temp;
-        HRESULT hr = ConvertToR32G32B32A32(srcImage, temp);
+        HRESULT      hr = ConvertToR32G32B32A32(srcImage, temp);
         if (FAILED(hr))
             return hr;
 
-        const Image *tsrc = temp.GetImage(0, 0, 0);
+        const Image* tsrc = temp.GetImage(0, 0, 0);
         if (!tsrc)
             return E_POINTER;
 
@@ -156,7 +150,7 @@ namespace
         if (FAILED(hr))
             return hr;
 
-        const Image *tdest = rtemp.GetImage(0, 0, 0);
+        const Image* tdest = rtemp.GetImage(0, 0, 0);
         if (!tdest)
             return E_POINTER;
 
@@ -172,8 +166,7 @@ namespace
 
         return S_OK;
     }
-}
-
+} // namespace
 
 //=====================================================================================
 // Entry-points
@@ -182,11 +175,7 @@ namespace
 //-------------------------------------------------------------------------------------
 // Flip/rotate image
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::FlipRotate(
-    const Image& srcImage,
-    TEX_FR_FLAGS flags,
-    ScratchImage& image) noexcept
+_Use_decl_annotations_ HRESULT DirectX::FlipRotate(const Image& srcImage, TEX_FR_FLAGS flags, ScratchImage& image) noexcept
 {
     if (!srcImage.pixels)
         return E_POINTER;
@@ -204,11 +193,16 @@ HRESULT DirectX::FlipRotate(
     }
 
     static_assert(static_cast<int>(TEX_FR_ROTATE0) == static_cast<int>(WICBitmapTransformRotate0), "TEX_FR_ROTATE0 no longer matches WIC");
-    static_assert(static_cast<int>(TEX_FR_ROTATE90) == static_cast<int>(WICBitmapTransformRotate90), "TEX_FR_ROTATE90 no longer matches WIC");
-    static_assert(static_cast<int>(TEX_FR_ROTATE180) == static_cast<int>(WICBitmapTransformRotate180), "TEX_FR_ROTATE180 no longer matches WIC");
-    static_assert(static_cast<int>(TEX_FR_ROTATE270) == static_cast<int>(WICBitmapTransformRotate270), "TEX_FR_ROTATE270 no longer matches WIC");
-    static_assert(static_cast<int>(TEX_FR_FLIP_HORIZONTAL) == static_cast<int>(WICBitmapTransformFlipHorizontal), "TEX_FR_FLIP_HORIZONTAL no longer matches WIC");
-    static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical), "TEX_FR_FLIP_VERTICAL no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE90) == static_cast<int>(WICBitmapTransformRotate90),
+        "TEX_FR_ROTATE90 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE180) == static_cast<int>(WICBitmapTransformRotate180),
+        "TEX_FR_ROTATE180 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE270) == static_cast<int>(WICBitmapTransformRotate270),
+        "TEX_FR_ROTATE270 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_FLIP_HORIZONTAL) == static_cast<int>(WICBitmapTransformFlipHorizontal),
+        "TEX_FR_FLIP_HORIZONTAL no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical),
+        "TEX_FR_FLIP_VERTICAL no longer matches WIC");
 
     // Only supports 90, 180, 270, or no rotation flags... not a combination of rotation flags
     const int rotateMode = static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270));
@@ -218,19 +212,17 @@ HRESULT DirectX::FlipRotate(
     case 0:
     case TEX_FR_ROTATE90:
     case TEX_FR_ROTATE180:
-    case TEX_FR_ROTATE270:
-        break;
+    case TEX_FR_ROTATE270: break;
 
-    default:
-        return E_INVALIDARG;
+    default:               return E_INVALIDARG;
     }
 
-    size_t nwidth = srcImage.width;
+    size_t nwidth  = srcImage.width;
     size_t nheight = srcImage.height;
 
     if ((rotateMode == TEX_FR_ROTATE90) || (rotateMode == TEX_FR_ROTATE270))
     {
-        nwidth = srcImage.height;
+        nwidth  = srcImage.height;
         nheight = srcImage.width;
     }
 
@@ -238,7 +230,7 @@ HRESULT DirectX::FlipRotate(
     if (FAILED(hr))
         return hr;
 
-    const Image *rimage = image.GetImage(0, 0, 0);
+    const Image* rimage = image.GetImage(0, 0, 0);
     if (!rimage)
     {
         image.Release();
@@ -275,17 +267,11 @@ HRESULT DirectX::FlipRotate(
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Flip/rotate image (complex)
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::FlipRotate(
-    const Image* srcImages,
-    size_t nimages,
-    const TexMetadata& metadata,
-    TEX_FR_FLAGS flags,
-    ScratchImage& result) noexcept
+_Use_decl_annotations_ HRESULT
+DirectX::FlipRotate(const Image* srcImages, size_t nimages, const TexMetadata& metadata, TEX_FR_FLAGS flags, ScratchImage& result) noexcept
 {
     if (!srcImages || !nimages)
         return E_INVALIDARG;
@@ -297,11 +283,16 @@ HRESULT DirectX::FlipRotate(
     }
 
     static_assert(static_cast<int>(TEX_FR_ROTATE0) == static_cast<int>(WICBitmapTransformRotate0), "TEX_FR_ROTATE0 no longer matches WIC");
-    static_assert(static_cast<int>(TEX_FR_ROTATE90) == static_cast<int>(WICBitmapTransformRotate90), "TEX_FR_ROTATE90 no longer matches WIC");
-    static_assert(static_cast<int>(TEX_FR_ROTATE180) == static_cast<int>(WICBitmapTransformRotate180), "TEX_FR_ROTATE180 no longer matches WIC");
-    static_assert(static_cast<int>(TEX_FR_ROTATE270) == static_cast<int>(WICBitmapTransformRotate270), "TEX_FR_ROTATE270 no longer matches WIC");
-    static_assert(static_cast<int>(TEX_FR_FLIP_HORIZONTAL) == static_cast<int>(WICBitmapTransformFlipHorizontal), "TEX_FR_FLIP_HORIZONTAL no longer matches WIC");
-    static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical), "TEX_FR_FLIP_VERTICAL no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE90) == static_cast<int>(WICBitmapTransformRotate90),
+        "TEX_FR_ROTATE90 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE180) == static_cast<int>(WICBitmapTransformRotate180),
+        "TEX_FR_ROTATE180 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_ROTATE270) == static_cast<int>(WICBitmapTransformRotate270),
+        "TEX_FR_ROTATE270 no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_FLIP_HORIZONTAL) == static_cast<int>(WICBitmapTransformFlipHorizontal),
+        "TEX_FR_FLIP_HORIZONTAL no longer matches WIC");
+    static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical),
+        "TEX_FR_FLIP_VERTICAL no longer matches WIC");
 
     // Only supports 90, 180, 270, or no rotation flags... not a combination of rotation flags
     const int rotateMode = static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270));
@@ -311,11 +302,9 @@ HRESULT DirectX::FlipRotate(
     case 0:
     case TEX_FR_ROTATE90:
     case TEX_FR_ROTATE180:
-    case TEX_FR_ROTATE270:
-        break;
+    case TEX_FR_ROTATE270: break;
 
-    default:
-        return E_INVALIDARG;
+    default:               return E_INVALIDARG;
     }
 
     TexMetadata mdata2 = metadata;
@@ -323,8 +312,8 @@ HRESULT DirectX::FlipRotate(
     bool flipwh = false;
     if ((rotateMode == TEX_FR_ROTATE90) || (rotateMode == TEX_FR_ROTATE270))
     {
-        flipwh = true;
-        mdata2.width = metadata.height;
+        flipwh        = true;
+        mdata2.width  = metadata.height;
         mdata2.height = metadata.width;
     }
 
@@ -346,7 +335,7 @@ HRESULT DirectX::FlipRotate(
     }
 
     WICPixelFormatGUID pfGUID;
-    const bool wicpf = DXGIToWIC(metadata.format, pfGUID);
+    const bool         wicpf = DXGIToWIC(metadata.format, pfGUID);
 
     for (size_t index = 0; index < nimages; ++index)
     {

@@ -31,7 +31,7 @@
 #include <dxguids/dxguids.h>
 #else
 #include <d3d12.h>
-#pragma comment(lib,"dxguid.lib")
+#pragma comment(lib, "dxguid.lib")
 #endif
 
 #ifdef _WIN32
@@ -44,26 +44,23 @@
 #include <functional>
 #endif
 
-
 namespace DirectX
 {
-    HRESULT __cdecl SaveDDSTextureToFile(
-        _In_ ID3D12CommandQueue* pCommandQueue,
-        _In_ ID3D12Resource* pSource,
-        _In_z_ const wchar_t* fileName,
-        D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET,
-        D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_RENDER_TARGET) noexcept;
+    HRESULT __cdecl SaveDDSTextureToFile(_In_ ID3D12CommandQueue* pCommandQueue,
+        _In_ ID3D12Resource*                                      pSource,
+        _In_z_ const wchar_t*                                     fileName,
+        D3D12_RESOURCE_STATES                                     beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATES                                     afterState  = D3D12_RESOURCE_STATE_RENDER_TARGET) noexcept;
 
 #ifdef _WIN32
-    HRESULT __cdecl SaveWICTextureToFile(
-        _In_ ID3D12CommandQueue* pCommandQ,
-        _In_ ID3D12Resource* pSource,
-        REFGUID guidContainerFormat,
-        _In_z_ const wchar_t* fileName,
-        D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET,
-        D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_RENDER_TARGET,
-        _In_opt_ const GUID* targetFormat = nullptr,
-        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr,
-        bool forceSRGB = false);
+    HRESULT __cdecl SaveWICTextureToFile(_In_ ID3D12CommandQueue* pCommandQ,
+        _In_ ID3D12Resource*                                      pSource,
+        REFGUID                                                   guidContainerFormat,
+        _In_z_ const wchar_t*                                     fileName,
+        D3D12_RESOURCE_STATES                                     beforeState  = D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATES                                     afterState   = D3D12_RESOURCE_STATE_RENDER_TARGET,
+        _In_opt_ const GUID*                                      targetFormat = nullptr,
+        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps        = nullptr,
+        bool                                             forceSRGB             = false);
 #endif
-}
+} // namespace DirectX

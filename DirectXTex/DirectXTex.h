@@ -51,13 +51,13 @@ struct IWICMetadataQueryReader;
 
 #if defined(_WIN32) && defined(DIRECTX_TEX_EXPORT)
 #ifdef __GNUC__
-#define DIRECTX_TEX_API __attribute__ ((dllexport))
+#define DIRECTX_TEX_API __attribute__((dllexport))
 #else
 #define DIRECTX_TEX_API __declspec(dllexport)
 #endif
 #elif defined(_WIN32) && defined(DIRECTX_TEX_IMPORT)
 #ifdef __GNUC__
-#define DIRECTX_TEX_API __attribute__ ((dllimport))
+#define DIRECTX_TEX_API __attribute__((dllimport))
 #else
 #define DIRECTX_TEX_API __declspec(dllimport)
 #endif
@@ -71,15 +71,15 @@ namespace DirectX
     //---------------------------------------------------------------------------------
     // DXGI Format Utilities
     DIRECTX_TEX_API constexpr bool __cdecl IsValid(_In_ DXGI_FORMAT fmt) noexcept;
-    DIRECTX_TEX_API bool __cdecl IsCompressed(_In_ DXGI_FORMAT fmt) noexcept;
-    DIRECTX_TEX_API bool __cdecl IsPacked(_In_ DXGI_FORMAT fmt) noexcept;
-    DIRECTX_TEX_API bool __cdecl IsVideo(_In_ DXGI_FORMAT fmt) noexcept;
-    DIRECTX_TEX_API bool __cdecl IsPlanar(_In_ DXGI_FORMAT fmt, _In_ bool isd3d12 = false) noexcept;
-    DIRECTX_TEX_API bool __cdecl IsPalettized(_In_ DXGI_FORMAT fmt) noexcept;
-    DIRECTX_TEX_API bool __cdecl IsDepthStencil(_In_ DXGI_FORMAT fmt) noexcept;
-    DIRECTX_TEX_API bool __cdecl IsSRGB(_In_ DXGI_FORMAT fmt) noexcept;
-    DIRECTX_TEX_API bool __cdecl IsBGR(_In_ DXGI_FORMAT fmt) noexcept;
-    DIRECTX_TEX_API bool __cdecl IsTypeless(_In_ DXGI_FORMAT fmt, _In_ bool partialTypeless = true) noexcept;
+    DIRECTX_TEX_API bool __cdecl           IsCompressed(_In_ DXGI_FORMAT fmt) noexcept;
+    DIRECTX_TEX_API bool __cdecl           IsPacked(_In_ DXGI_FORMAT fmt) noexcept;
+    DIRECTX_TEX_API bool __cdecl           IsVideo(_In_ DXGI_FORMAT fmt) noexcept;
+    DIRECTX_TEX_API bool __cdecl           IsPlanar(_In_ DXGI_FORMAT fmt, _In_ bool isd3d12 = false) noexcept;
+    DIRECTX_TEX_API bool __cdecl           IsPalettized(_In_ DXGI_FORMAT fmt) noexcept;
+    DIRECTX_TEX_API bool __cdecl           IsDepthStencil(_In_ DXGI_FORMAT fmt) noexcept;
+    DIRECTX_TEX_API bool __cdecl           IsSRGB(_In_ DXGI_FORMAT fmt) noexcept;
+    DIRECTX_TEX_API bool __cdecl           IsBGR(_In_ DXGI_FORMAT fmt) noexcept;
+    DIRECTX_TEX_API bool __cdecl           IsTypeless(_In_ DXGI_FORMAT fmt, _In_ bool partialTypeless = true) noexcept;
 
     DIRECTX_TEX_API bool __cdecl HasAlpha(_In_ DXGI_FORMAT fmt) noexcept;
 
@@ -137,15 +137,18 @@ namespace DirectX
         // Don't allow pixel allocations in excess of 4GB (always true for 32-bit)
     };
 
-    DIRECTX_TEX_API HRESULT __cdecl ComputePitch(
-        _In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height,
-        _Out_ size_t& rowPitch, _Out_ size_t& slicePitch, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl ComputePitch(_In_ DXGI_FORMAT fmt,
+        _In_ size_t                                               width,
+        _In_ size_t                                               height,
+        _Out_ size_t&                                             rowPitch,
+        _Out_ size_t&                                             slicePitch,
+        _In_ CP_FLAGS                                             flags = CP_FLAGS_NONE) noexcept;
 
     DIRECTX_TEX_API size_t __cdecl ComputeScanlines(_In_ DXGI_FORMAT fmt, _In_ size_t height) noexcept;
 
     DIRECTX_TEX_API bool __cdecl CalculateMipLevels(_In_ size_t width, _In_ size_t height, _Inout_ size_t& mipLevels) noexcept;
-    DIRECTX_TEX_API bool __cdecl CalculateMipLevels3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth,
-        _Inout_ size_t& mipLevels) noexcept;
+    DIRECTX_TEX_API bool __cdecl
+    CalculateMipLevels3D(_In_ size_t width, _In_ size_t height, _In_ size_t depth, _Inout_ size_t& mipLevels) noexcept;
 
     DIRECTX_TEX_API DXGI_FORMAT __cdecl MakeSRGB(_In_ DXGI_FORMAT fmt) noexcept;
     DIRECTX_TEX_API DXGI_FORMAT __cdecl MakeLinear(_In_ DXGI_FORMAT fmt) noexcept;
@@ -156,7 +159,7 @@ namespace DirectX
     //---------------------------------------------------------------------------------
     // Texture metadata
     enum TEX_DIMENSION : uint32_t
-        // Subset here matches D3D10_RESOURCE_DIMENSION and D3D11_RESOURCE_DIMENSION
+    // Subset here matches D3D10_RESOURCE_DIMENSION and D3D11_RESOURCE_DIMENSION
     {
         TEX_DIMENSION_TEXTURE1D = 2,
         TEX_DIMENSION_TEXTURE2D = 3,
@@ -164,7 +167,7 @@ namespace DirectX
     };
 
     enum TEX_MISC_FLAG : uint32_t
-        // Subset here matches D3D10_RESOURCE_MISC_FLAG and D3D11_RESOURCE_MISC_FLAG
+    // Subset here matches D3D10_RESOURCE_MISC_FLAG and D3D11_RESOURCE_MISC_FLAG
     {
         TEX_MISC_TEXTURECUBE = 0x4L,
     };
@@ -175,56 +178,59 @@ namespace DirectX
     };
 
     enum TEX_ALPHA_MODE : uint32_t
-        // Matches DDS_ALPHA_MODE, encoded in MISC_FLAGS2
+    // Matches DDS_ALPHA_MODE, encoded in MISC_FLAGS2
     {
-        TEX_ALPHA_MODE_UNKNOWN = 0,
-        TEX_ALPHA_MODE_STRAIGHT = 1,
+        TEX_ALPHA_MODE_UNKNOWN       = 0,
+        TEX_ALPHA_MODE_STRAIGHT      = 1,
         TEX_ALPHA_MODE_PREMULTIPLIED = 2,
-        TEX_ALPHA_MODE_OPAQUE = 3,
-        TEX_ALPHA_MODE_CUSTOM = 4,
+        TEX_ALPHA_MODE_OPAQUE        = 3,
+        TEX_ALPHA_MODE_CUSTOM        = 4,
     };
 
     struct DIRECTX_TEX_API TexMetadata
     {
-        size_t          width;
-        size_t          height;     // Should be 1 for 1D textures
-        size_t          depth;      // Should be 1 for 1D or 2D textures
-        size_t          arraySize;  // For cubemap, this is a multiple of 6
-        size_t          mipLevels;
-        uint32_t        miscFlags;
-        uint32_t        miscFlags2;
-        DXGI_FORMAT     format;
-        TEX_DIMENSION   dimension;
+        size_t        width;
+        size_t        height;    // Should be 1 for 1D textures
+        size_t        depth;     // Should be 1 for 1D or 2D textures
+        size_t        arraySize; // For cubemap, this is a multiple of 6
+        size_t        mipLevels;
+        uint32_t      miscFlags;
+        uint32_t      miscFlags2;
+        DXGI_FORMAT   format;
+        TEX_DIMENSION dimension;
 
         size_t __cdecl ComputeIndex(size_t mip, size_t item, size_t slice) const noexcept;
-            // Returns size_t(-1) to indicate an out-of-range error
+        // Returns size_t(-1) to indicate an out-of-range error
 
         bool __cdecl IsCubemap() const noexcept { return (miscFlags & TEX_MISC_TEXTURECUBE) != 0; }
-            // Helper for miscFlags
+        // Helper for miscFlags
 
         bool __cdecl IsPMAlpha() const noexcept { return ((miscFlags2 & TEX_MISC2_ALPHA_MODE_MASK) == TEX_ALPHA_MODE_PREMULTIPLIED) != 0; }
-        void __cdecl SetAlphaMode(TEX_ALPHA_MODE mode) noexcept { miscFlags2 = (miscFlags2 & ~static_cast<uint32_t>(TEX_MISC2_ALPHA_MODE_MASK)) | static_cast<uint32_t>(mode); }
+        void __cdecl SetAlphaMode(TEX_ALPHA_MODE mode) noexcept
+        {
+            miscFlags2 = (miscFlags2 & ~static_cast<uint32_t>(TEX_MISC2_ALPHA_MODE_MASK)) | static_cast<uint32_t>(mode);
+        }
         TEX_ALPHA_MODE __cdecl GetAlphaMode() const noexcept { return static_cast<TEX_ALPHA_MODE>(miscFlags2 & TEX_MISC2_ALPHA_MODE_MASK); }
-            // Helpers for miscFlags2
+        // Helpers for miscFlags2
 
         bool __cdecl IsVolumemap() const noexcept { return (dimension == TEX_DIMENSION_TEXTURE3D); }
-            // Helper for dimension
+        // Helper for dimension
 
         uint32_t __cdecl CalculateSubresource(size_t mip, size_t item) const noexcept;
         uint32_t __cdecl CalculateSubresource(size_t mip, size_t item, size_t plane) const noexcept;
-            // Returns size_t(-1) to indicate an out-of-range error
+        // Returns size_t(-1) to indicate an out-of-range error
     };
 
     struct DIRECTX_TEX_API DDSMetaData
     {
-        uint32_t    size;           // DDPIXELFORMAT.dwSize
-        uint32_t    flags;          // DDPIXELFORMAT.dwFlags
-        uint32_t    fourCC;         // DDPIXELFORMAT.dwFourCC
-        uint32_t    RGBBitCount;    // DDPIXELFORMAT.dwRGBBitCount/dwYUVBitCount/dwAlphaBitDepth/dwLuminanceBitCount/dwBumpBitCount
-        uint32_t    RBitMask;       // DDPIXELFORMAT.dwRBitMask/dwYBitMask/dwLuminanceBitMask/dwBumpDuBitMask
-        uint32_t    GBitMask;       // DDPIXELFORMAT.dwGBitMask/dwUBitMask/dwBumpDvBitMask
-        uint32_t    BBitMask;       // DDPIXELFORMAT.dwBBitMask/dwVBitMask/dwBumpLuminanceBitMask
-        uint32_t    ABitMask;       // DDPIXELFORMAT.dwRGBAlphaBitMask/dwYUVAlphaBitMask/dwLuminanceAlphaBitMask
+        uint32_t size;        // DDPIXELFORMAT.dwSize
+        uint32_t flags;       // DDPIXELFORMAT.dwFlags
+        uint32_t fourCC;      // DDPIXELFORMAT.dwFourCC
+        uint32_t RGBBitCount; // DDPIXELFORMAT.dwRGBBitCount/dwYUVBitCount/dwAlphaBitDepth/dwLuminanceBitCount/dwBumpBitCount
+        uint32_t RBitMask;    // DDPIXELFORMAT.dwRBitMask/dwYBitMask/dwLuminanceBitMask/dwBumpDuBitMask
+        uint32_t GBitMask;    // DDPIXELFORMAT.dwGBitMask/dwUBitMask/dwBumpDvBitMask
+        uint32_t BBitMask;    // DDPIXELFORMAT.dwBBitMask/dwVBitMask/dwBumpLuminanceBitMask
+        uint32_t ABitMask;    // DDPIXELFORMAT.dwRGBAlphaBitMask/dwYUVAlphaBitMask/dwLuminanceAlphaBitMask
 
         bool __cdecl IsDX10() const noexcept { return (fourCC == 0x30315844); }
     };
@@ -339,98 +345,85 @@ namespace DirectX
         WIC_FLAGS_DITHER_DIFFUSION = 0x20000,
         // Use error-diffusion dithering for any required conversions
 
-        WIC_FLAGS_FILTER_POINT = 0x100000,
+        WIC_FLAGS_FILTER_POINT  = 0x100000,
         WIC_FLAGS_FILTER_LINEAR = 0x200000,
-        WIC_FLAGS_FILTER_CUBIC = 0x300000,
-        WIC_FLAGS_FILTER_FANT = 0x400000, // Combination of Linear and Box filter
-            // Filtering mode to use for any required image resizing (only needed when loading arrays of differently sized images; defaults to Fant)
+        WIC_FLAGS_FILTER_CUBIC  = 0x300000,
+        WIC_FLAGS_FILTER_FANT   = 0x400000, // Combination of Linear and Box filter
+                                            // Filtering mode to use for any required image resizing (only needed when loading arrays of
+                                            // differently sized images; defaults to Fant)
     };
 
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemory(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _In_ DDS_FLAGS flags,
-        _Out_ TexMetadata& metadata) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSFile(
-        _In_z_ const wchar_t* szFile,
-        _In_ DDS_FLAGS flags,
-        _Out_ TexMetadata& metadata) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemory(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                                size,
+        _In_ DDS_FLAGS                                                                             flags,
+        _Out_ TexMetadata&                                                                         metadata) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl
+    GetMetadataFromDDSFile(_In_z_ const wchar_t* szFile, _In_ DDS_FLAGS flags, _Out_ TexMetadata& metadata) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemoryEx(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _In_ DDS_FLAGS flags,
-        _Out_ TexMetadata& metadata,
-        _Out_opt_ DDSMetaData* ddPixelFormat) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSFileEx(
-        _In_z_ const wchar_t* szFile,
-        _In_ DDS_FLAGS flags,
-        _Out_ TexMetadata& metadata,
-        _Out_opt_ DDSMetaData* ddPixelFormat) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemoryEx(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                                  size,
+        _In_ DDS_FLAGS                                                                               flags,
+        _Out_ TexMetadata&                                                                           metadata,
+        _Out_opt_ DDSMetaData*                                                                       ddPixelFormat) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSFileEx(_In_z_ const wchar_t* szFile,
+        _In_ DDS_FLAGS                                                             flags,
+        _Out_ TexMetadata&                                                         metadata,
+        _Out_opt_ DDSMetaData*                                                     ddPixelFormat) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromHDRMemory(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _Out_ TexMetadata& metadata) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromHDRFile(
-        _In_z_ const wchar_t* szFile,
-        _Out_ TexMetadata& metadata) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl
+    GetMetadataFromHDRMemory(_In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size, _Out_ TexMetadata& metadata) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromHDRFile(_In_z_ const wchar_t* szFile, _Out_ TexMetadata& metadata) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromTGAMemory(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _In_ TGA_FLAGS flags,
-        _Out_ TexMetadata& metadata) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromTGAFile(
-        _In_z_ const wchar_t* szFile,
-        _In_ TGA_FLAGS flags,
-        _Out_ TexMetadata& metadata) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromTGAMemory(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                                size,
+        _In_ TGA_FLAGS                                                                             flags,
+        _Out_ TexMetadata&                                                                         metadata) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl
+    GetMetadataFromTGAFile(_In_z_ const wchar_t* szFile, _In_ TGA_FLAGS flags, _Out_ TexMetadata& metadata) noexcept;
 
 #ifdef _WIN32
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromWICMemory(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _In_ WIC_FLAGS flags,
-        _Out_ TexMetadata& metadata,
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromWICMemory(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                                size,
+        _In_ WIC_FLAGS                                                                             flags,
+        _Out_ TexMetadata&                                                                         metadata,
         _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromWICFile(
-        _In_z_ const wchar_t* szFile,
-        _In_ WIC_FLAGS flags,
-        _Out_ TexMetadata& metadata,
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromWICFile(_In_z_ const wchar_t* szFile,
+        _In_ WIC_FLAGS                                                           flags,
+        _Out_ TexMetadata&                                                       metadata,
         _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 #endif
 
     // Compatability helpers
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromTGAMemory(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _Out_ TexMetadata& metadata) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromTGAFile(
-        _In_z_ const wchar_t* szFile,
-        _Out_ TexMetadata& metadata) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl
+    GetMetadataFromTGAMemory(_In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size, _Out_ TexMetadata& metadata) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromTGAFile(_In_z_ const wchar_t* szFile, _Out_ TexMetadata& metadata) noexcept;
 
 #ifdef __cpp_lib_byte
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemory(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _In_ DDS_FLAGS flags,
-        _Out_ TexMetadata& metadata) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemoryEx(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _In_ DDS_FLAGS flags,
-        _Out_ TexMetadata& metadata,
-        _Out_opt_ DDSMetaData* ddPixelFormat) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromHDRMemory(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _Out_ TexMetadata& metadata) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromTGAMemory(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _In_ TGA_FLAGS flags,
-        _Out_ TexMetadata& metadata) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemory(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                                  size,
+        _In_ DDS_FLAGS                                                                               flags,
+        _Out_ TexMetadata&                                                                           metadata) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemoryEx(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                                    size,
+        _In_ DDS_FLAGS                                                                                 flags,
+        _Out_ TexMetadata&                                                                             metadata,
+        _Out_opt_ DDSMetaData*                                                                         ddPixelFormat) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl
+    GetMetadataFromHDRMemory(_In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size, _Out_ TexMetadata& metadata) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromTGAMemory(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                                  size,
+        _In_ TGA_FLAGS                                                                               flags,
+        _Out_ TexMetadata&                                                                           metadata) noexcept;
 
 #ifdef _WIN32
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromWICMemory(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _In_ WIC_FLAGS flags,
-        _Out_ TexMetadata& metadata,
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromWICMemory(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                                  size,
+        _In_ WIC_FLAGS                                                                               flags,
+        _Out_ TexMetadata&                                                                           metadata,
         _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 #endif
 #endif // __cpp_lib_byte
-
 
     //---------------------------------------------------------------------------------
     // Bitmap image container
@@ -448,44 +441,78 @@ namespace DirectX
     {
     public:
         ScratchImage() noexcept
-            : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr)
+            : m_nimages(0),
+              m_size(0),
+              m_metadata{},
+              m_image(nullptr),
+              m_memory(nullptr)
         {}
         ScratchImage(ScratchImage&& moveFrom) noexcept
-            : m_nimages(0), m_size(0), m_metadata{}, m_image(nullptr), m_memory(nullptr)
+            : m_nimages(0),
+              m_size(0),
+              m_metadata{},
+              m_image(nullptr),
+              m_memory(nullptr)
         {
             *this = std::move(moveFrom);
         }
         ~ScratchImage() { Release(); }
 
-        ScratchImage& __cdecl operator= (ScratchImage&& moveFrom) noexcept;
+        ScratchImage& __cdecl operator=(ScratchImage&& moveFrom) noexcept;
 
-        ScratchImage(const ScratchImage&) = delete;
+        ScratchImage(const ScratchImage&)            = delete;
         ScratchImage& operator=(const ScratchImage&) = delete;
 
         HRESULT __cdecl Initialize(_In_ const TexMetadata& mdata, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
 
-        HRESULT __cdecl Initialize1D(_In_ DXGI_FORMAT fmt, _In_ size_t length, _In_ size_t arraySize, _In_ size_t mipLevels, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
-        HRESULT __cdecl Initialize2D(_In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t arraySize, _In_ size_t mipLevels, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
-        HRESULT __cdecl Initialize3D(_In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t depth, _In_ size_t mipLevels, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
-        HRESULT __cdecl InitializeCube(_In_ DXGI_FORMAT fmt, _In_ size_t width, _In_ size_t height, _In_ size_t nCubes, _In_ size_t mipLevels, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
+        HRESULT __cdecl Initialize1D(_In_ DXGI_FORMAT fmt,
+            _In_ size_t                               length,
+            _In_ size_t                               arraySize,
+            _In_ size_t                               mipLevels,
+            _In_ CP_FLAGS                             flags = CP_FLAGS_NONE) noexcept;
+        HRESULT __cdecl Initialize2D(_In_ DXGI_FORMAT fmt,
+            _In_ size_t                               width,
+            _In_ size_t                               height,
+            _In_ size_t                               arraySize,
+            _In_ size_t                               mipLevels,
+            _In_ CP_FLAGS                             flags = CP_FLAGS_NONE) noexcept;
+        HRESULT __cdecl Initialize3D(_In_ DXGI_FORMAT fmt,
+            _In_ size_t                               width,
+            _In_ size_t                               height,
+            _In_ size_t                               depth,
+            _In_ size_t                               mipLevels,
+            _In_ CP_FLAGS                             flags = CP_FLAGS_NONE) noexcept;
+        HRESULT __cdecl InitializeCube(_In_ DXGI_FORMAT fmt,
+            _In_ size_t                                 width,
+            _In_ size_t                                 height,
+            _In_ size_t                                 nCubes,
+            _In_ size_t                                 mipLevels,
+            _In_ CP_FLAGS                               flags = CP_FLAGS_NONE) noexcept;
 
-        HRESULT __cdecl InitializeFromImage(_In_ const Image& srcImage, _In_ bool allow1D = false, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
-        HRESULT __cdecl InitializeArrayFromImages(_In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ bool allow1D = false, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
-        HRESULT __cdecl InitializeCubeFromImages(_In_reads_(nImages) const Image* images, _In_ size_t nImages, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
-        HRESULT __cdecl Initialize3DFromImages(_In_reads_(depth) const Image* images, _In_ size_t depth, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
+        HRESULT __cdecl
+        InitializeFromImage(_In_ const Image& srcImage, _In_ bool allow1D = false, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
+        HRESULT __cdecl InitializeArrayFromImages(_In_reads_(nImages) const Image* images,
+            _In_ size_t                                                            nImages,
+            _In_ bool                                                              allow1D = false,
+            _In_ CP_FLAGS                                                          flags   = CP_FLAGS_NONE) noexcept;
+        HRESULT __cdecl InitializeCubeFromImages(_In_reads_(nImages) const Image* images,
+            _In_ size_t                                                           nImages,
+            _In_ CP_FLAGS                                                         flags = CP_FLAGS_NONE) noexcept;
+        HRESULT __cdecl
+        Initialize3DFromImages(_In_reads_(depth) const Image* images, _In_ size_t depth, _In_ CP_FLAGS flags = CP_FLAGS_NONE) noexcept;
 
         void __cdecl Release() noexcept;
 
         bool __cdecl OverrideFormat(_In_ DXGI_FORMAT f) noexcept;
 
         const TexMetadata& __cdecl GetMetadata() const noexcept { return m_metadata; }
-        const Image* __cdecl GetImage(_In_ size_t mip, _In_ size_t item, _In_ size_t slice) const noexcept;
+        const Image* __cdecl       GetImage(_In_ size_t mip, _In_ size_t item, _In_ size_t slice) const noexcept;
 
         const Image* __cdecl GetImages() const noexcept { return m_image; }
-        size_t __cdecl GetImageCount() const noexcept { return m_nimages; }
+        size_t __cdecl       GetImageCount() const noexcept { return m_nimages; }
 
         uint8_t* __cdecl GetPixels() const noexcept { return m_memory; }
-        size_t __cdecl GetPixelsSize() const noexcept { return m_size; }
+        size_t __cdecl   GetPixelsSize() const noexcept { return m_size; }
 
         bool __cdecl IsAlphaAllOpaque() const noexcept;
 
@@ -502,13 +529,21 @@ namespace DirectX
     class DIRECTX_TEX_API Blob
     {
     public:
-        Blob() noexcept : m_buffer(nullptr), m_size(0) {}
-        Blob(Blob&& moveFrom) noexcept : m_buffer(nullptr), m_size(0) { *this = std::move(moveFrom); }
+        Blob() noexcept
+            : m_buffer(nullptr),
+              m_size(0)
+        {}
+        Blob(Blob&& moveFrom) noexcept
+            : m_buffer(nullptr),
+              m_size(0)
+        {
+            *this = std::move(moveFrom);
+        }
         ~Blob() { Release(); }
 
-        Blob& __cdecl operator= (Blob&& moveFrom) noexcept;
+        Blob& __cdecl operator=(Blob&& moveFrom) noexcept;
 
-        Blob(const Blob&) = delete;
+        Blob(const Blob&)            = delete;
         Blob& operator=(const Blob&) = delete;
 
         HRESULT __cdecl Initialize(_In_ size_t size) noexcept;
@@ -522,10 +557,10 @@ namespace DirectX
         size_t __cdecl GetBufferSize() const noexcept { return m_size; }
 
         HRESULT __cdecl Resize(size_t size) noexcept;
-            // Reallocate for a new size
+        // Reallocate for a new size
 
         HRESULT __cdecl Trim(size_t size) noexcept;
-            // Shorten size without reallocation
+        // Shorten size without reallocation
 
     private:
         uint8_t* m_buffer;
@@ -543,176 +578,194 @@ namespace DirectX
 
         TileShape() = default;
 
-    #if defined(__d3d11_2_h__) || defined(__d3d11_x_h__)
-        TileShape(const D3D11_TILE_SHAPE& tile) :
-            width(tile.WidthInTexels),
-            height(tile.HeightInTexels),
-            depth(tile.DepthInTexels)
+#if defined(__d3d11_2_h__) || defined(__d3d11_x_h__)
+        TileShape(const D3D11_TILE_SHAPE& tile)
+            : width(tile.WidthInTexels),
+              height(tile.HeightInTexels),
+              depth(tile.DepthInTexels)
         {}
 
         void GetTileShape11(D3D11_TILE_SHAPE& tile) const
         {
-            tile.WidthInTexels = static_cast<UINT>(width);
+            tile.WidthInTexels  = static_cast<UINT>(width);
             tile.HeightInTexels = static_cast<UINT>(height);
-            tile.DepthInTexels = static_cast<UINT>(depth);
+            tile.DepthInTexels  = static_cast<UINT>(depth);
         }
-    #endif
+#endif
 
-    #if defined(__d3d12_h__) || defined(__d3d12_x_h__) || defined(__XBOX_D3D12_X__)
-        TileShape(const D3D12_TILE_SHAPE& tile) :
-            width(tile.WidthInTexels),
-            height(tile.HeightInTexels),
-            depth(tile.DepthInTexels)
+#if defined(__d3d12_h__) || defined(__d3d12_x_h__) || defined(__XBOX_D3D12_X__)
+        TileShape(const D3D12_TILE_SHAPE& tile)
+            : width(tile.WidthInTexels),
+              height(tile.HeightInTexels),
+              depth(tile.DepthInTexels)
         {}
 
         void GetTileShape12(D3D12_TILE_SHAPE& tile) const
         {
-            tile.WidthInTexels = static_cast<UINT>(width);
+            tile.WidthInTexels  = static_cast<UINT>(width);
             tile.HeightInTexels = static_cast<UINT>(height);
-            tile.DepthInTexels = static_cast<UINT>(depth);
+            tile.DepthInTexels  = static_cast<UINT>(depth);
         }
-    #endif
+#endif
     };
 
-    DIRECTX_TEX_API HRESULT __cdecl ComputeTileShape(_In_ DXGI_FORMAT fmt, _In_ TEX_DIMENSION dimension,
-        _Out_ TileShape& tiling) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl ComputeTileShape(_In_ DXGI_FORMAT fmt, _In_ TEX_DIMENSION dimension, _Out_ TileShape& tiling) noexcept;
 
     //---------------------------------------------------------------------------------
     // Image I/O
 
     // DDS operations
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemory(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _In_ DDS_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSFile(
-        _In_z_ const wchar_t* szFile,
-        _In_ DDS_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemory(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                         size,
+        _In_ DDS_FLAGS                                                                      flags,
+        _Out_opt_ TexMetadata*                                                              metadata,
+        _Out_ ScratchImage&                                                                 image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSFile(_In_z_ const wchar_t* szFile,
+        _In_ DDS_FLAGS                                                    flags,
+        _Out_opt_ TexMetadata*                                            metadata,
+        _Out_ ScratchImage&                                               image) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemoryEx(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _In_ DDS_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata,
-        _Out_opt_ DDSMetaData* ddPixelFormat,
-        _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSFileEx(
-        _In_z_ const wchar_t* szFile,
-        _In_ DDS_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata,
-        _Out_opt_ DDSMetaData* ddPixelFormat,
-        _Out_ ScratchImage& image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemoryEx(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                           size,
+        _In_ DDS_FLAGS                                                                        flags,
+        _Out_opt_ TexMetadata*                                                                metadata,
+        _Out_opt_ DDSMetaData*                                                                ddPixelFormat,
+        _Out_ ScratchImage&                                                                   image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSFileEx(_In_z_ const wchar_t* szFile,
+        _In_ DDS_FLAGS                                                      flags,
+        _Out_opt_ TexMetadata*                                              metadata,
+        _Out_opt_ DDSMetaData*                                              ddPixelFormat,
+        _Out_ ScratchImage&                                                 image) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl SaveToDDSMemory(
-        _In_ const Image& image,
-        _In_ DDS_FLAGS flags,
-        _Out_ Blob& blob) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl SaveToDDSMemory(
-        _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DDS_FLAGS flags,
-        _Out_ Blob& blob) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl SaveToDDSMemory(_In_ const Image& image, _In_ DDS_FLAGS flags, _Out_ Blob& blob) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl SaveToDDSMemory(_In_reads_(nimages) const Image* images,
+        _In_ size_t                                                                  nimages,
+        _In_ const TexMetadata&                                                      metadata,
+        _In_ DDS_FLAGS                                                               flags,
+        _Out_ Blob&                                                                  blob) noexcept;
 
     DIRECTX_TEX_API HRESULT __cdecl SaveToDDSFile(_In_ const Image& image, _In_ DDS_FLAGS flags, _In_z_ const wchar_t* szFile) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl SaveToDDSFile(
-        _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DDS_FLAGS flags, _In_z_ const wchar_t* szFile) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl SaveToDDSFile(_In_reads_(nimages) const Image* images,
+        _In_ size_t                                                                nimages,
+        _In_ const TexMetadata&                                                    metadata,
+        _In_ DDS_FLAGS                                                             flags,
+        _In_z_ const wchar_t*                                                      szFile) noexcept;
 
     // HDR operations
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromHDRMemory(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromHDRFile(
-        _In_z_ const wchar_t* szFile,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromHDRMemory(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                         size,
+        _Out_opt_ TexMetadata*                                                              metadata,
+        _Out_ ScratchImage&                                                                 image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl
+    LoadFromHDRFile(_In_z_ const wchar_t* szFile, _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
 
     DIRECTX_TEX_API HRESULT __cdecl SaveToHDRMemory(_In_ const Image& image, _Out_ Blob& blob) noexcept;
     DIRECTX_TEX_API HRESULT __cdecl SaveToHDRFile(_In_ const Image& image, _In_z_ const wchar_t* szFile) noexcept;
 
     // TGA operations
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromTGAMemory(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _In_ TGA_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromTGAFile(
-        _In_z_ const wchar_t* szFile,
-        _In_ TGA_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromTGAMemory(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                         size,
+        _In_ TGA_FLAGS                                                                      flags,
+        _Out_opt_ TexMetadata*                                                              metadata,
+        _Out_ ScratchImage&                                                                 image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromTGAFile(_In_z_ const wchar_t* szFile,
+        _In_ TGA_FLAGS                                                    flags,
+        _Out_opt_ TexMetadata*                                            metadata,
+        _Out_ ScratchImage&                                               image) noexcept;
 
     DIRECTX_TEX_API HRESULT __cdecl SaveToTGAMemory(_In_ const Image& image,
-        _In_ TGA_FLAGS flags,
-        _Out_ Blob& blob, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
+        _In_ TGA_FLAGS                                                flags,
+        _Out_ Blob&                                                   blob,
+        _In_opt_ const TexMetadata*                                   metadata = nullptr) noexcept;
     DIRECTX_TEX_API HRESULT __cdecl SaveToTGAFile(_In_ const Image& image,
-        _In_ TGA_FLAGS flags,
-        _In_z_ const wchar_t* szFile, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
+        _In_ TGA_FLAGS                                              flags,
+        _In_z_ const wchar_t*                                       szFile,
+        _In_opt_ const TexMetadata*                                 metadata = nullptr) noexcept;
 
     // WIC operations
 #ifdef _WIN32
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromWICMemory(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _In_ WIC_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromWICMemory(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                         size,
+        _In_ WIC_FLAGS                                                                      flags,
+        _Out_opt_ TexMetadata*                                                              metadata,
+        _Out_ ScratchImage&                                                                 image,
         _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromWICFile(
-        _In_z_ const wchar_t* szFile, _In_ WIC_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromWICFile(_In_z_ const wchar_t* szFile,
+        _In_ WIC_FLAGS                                                    flags,
+        _Out_opt_ TexMetadata*                                            metadata,
+        _Out_ ScratchImage&                                               image,
         _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 
-    DIRECTX_TEX_API HRESULT __cdecl SaveToWICMemory(
-        _In_ const Image& image, _In_ WIC_FLAGS flags, _In_ REFGUID guidContainerFormat,
-        _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr,
-        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
-    DIRECTX_TEX_API HRESULT __cdecl SaveToWICMemory(
-        _In_count_(nimages) const Image* images, _In_ size_t nimages,
-        _In_ WIC_FLAGS flags, _In_ REFGUID guidContainerFormat,
-        _Out_ Blob& blob, _In_opt_ const GUID* targetFormat = nullptr,
-        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
+    DIRECTX_TEX_API HRESULT __cdecl SaveToWICMemory(_In_ const Image& image,
+        _In_ WIC_FLAGS                                                flags,
+        _In_ REFGUID                                                  guidContainerFormat,
+        _Out_ Blob&                                                   blob,
+        _In_opt_ const GUID*                                          targetFormat = nullptr,
+        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps            = nullptr);
+    DIRECTX_TEX_API HRESULT __cdecl SaveToWICMemory(_In_count_(nimages) const Image* images,
+        _In_ size_t                                                                  nimages,
+        _In_ WIC_FLAGS                                                               flags,
+        _In_ REFGUID                                                                 guidContainerFormat,
+        _Out_ Blob&                                                                  blob,
+        _In_opt_ const GUID*                                                         targetFormat = nullptr,
+        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps                           = nullptr);
 
-    DIRECTX_TEX_API HRESULT __cdecl SaveToWICFile(
-        _In_ const Image& image, _In_ WIC_FLAGS flags, _In_ REFGUID guidContainerFormat,
-        _In_z_ const wchar_t* szFile, _In_opt_ const GUID* targetFormat = nullptr,
-        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
-    DIRECTX_TEX_API HRESULT __cdecl SaveToWICFile(
-        _In_count_(nimages) const Image* images, _In_ size_t nimages,
-        _In_ WIC_FLAGS flags, _In_ REFGUID guidContainerFormat,
-        _In_z_ const wchar_t* szFile, _In_opt_ const GUID* targetFormat = nullptr,
-        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
+    DIRECTX_TEX_API HRESULT __cdecl SaveToWICFile(_In_ const Image& image,
+        _In_ WIC_FLAGS                                              flags,
+        _In_ REFGUID                                                guidContainerFormat,
+        _In_z_ const wchar_t*                                       szFile,
+        _In_opt_ const GUID*                                        targetFormat = nullptr,
+        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps          = nullptr);
+    DIRECTX_TEX_API HRESULT __cdecl SaveToWICFile(_In_count_(nimages) const Image* images,
+        _In_ size_t                                                                nimages,
+        _In_ WIC_FLAGS                                                             flags,
+        _In_ REFGUID                                                               guidContainerFormat,
+        _In_z_ const wchar_t*                                                      szFile,
+        _In_opt_ const GUID*                                                       targetFormat = nullptr,
+        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps                         = nullptr);
 #endif // WIN32
 
     // Compatability helpers
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromTGAMemory(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromTGAFile(
-        _In_z_ const wchar_t* szFile,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromTGAMemory(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                         size,
+        _Out_opt_ TexMetadata*                                                              metadata,
+        _Out_ ScratchImage&                                                                 image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl
+    LoadFromTGAFile(_In_z_ const wchar_t* szFile, _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl SaveToTGAMemory(_In_ const Image& image, _Out_ Blob& blob, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl SaveToTGAFile(_In_ const Image& image, _In_z_ const wchar_t* szFile, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl
+    SaveToTGAMemory(_In_ const Image& image, _Out_ Blob& blob, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl
+    SaveToTGAFile(_In_ const Image& image, _In_z_ const wchar_t* szFile, _In_opt_ const TexMetadata* metadata = nullptr) noexcept;
 
 #ifdef __cpp_lib_byte
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemory(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _In_ DDS_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemoryEx(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _In_ DDS_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata,
-        _Out_opt_ DDSMetaData* ddPixelFormat,
-        _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromHDRMemory(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromTGAMemory(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _In_ TGA_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemory(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                           size,
+        _In_ DDS_FLAGS                                                                        flags,
+        _Out_opt_ TexMetadata*                                                                metadata,
+        _Out_ ScratchImage&                                                                   image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemoryEx(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                             size,
+        _In_ DDS_FLAGS                                                                          flags,
+        _Out_opt_ TexMetadata*                                                                  metadata,
+        _Out_opt_ DDSMetaData*                                                                  ddPixelFormat,
+        _Out_ ScratchImage&                                                                     image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromHDRMemory(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                           size,
+        _Out_opt_ TexMetadata*                                                                metadata,
+        _Out_ ScratchImage&                                                                   image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromTGAMemory(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                           size,
+        _In_ TGA_FLAGS                                                                        flags,
+        _Out_opt_ TexMetadata*                                                                metadata,
+        _Out_ ScratchImage&                                                                   image) noexcept;
 
 #ifdef _WIN32
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromWICMemory(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _In_ WIC_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata, _Out_ ScratchImage& image,
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromWICMemory(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                           size,
+        _In_ WIC_FLAGS                                                                        flags,
+        _Out_opt_ TexMetadata*                                                                metadata,
+        _Out_ ScratchImage&                                                                   image,
         _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR = nullptr);
 #endif
 #endif // __cpp_lib_byte
@@ -722,34 +775,36 @@ namespace DirectX
 
     enum TEX_FR_FLAGS : uint32_t
     {
-        TEX_FR_ROTATE0 = 0,
-        TEX_FR_ROTATE90 = 0x1,
-        TEX_FR_ROTATE180 = 0x2,
-        TEX_FR_ROTATE270 = 0x3,
+        TEX_FR_ROTATE0         = 0,
+        TEX_FR_ROTATE90        = 0x1,
+        TEX_FR_ROTATE180       = 0x2,
+        TEX_FR_ROTATE270       = 0x3,
         TEX_FR_FLIP_HORIZONTAL = 0x08,
-        TEX_FR_FLIP_VERTICAL = 0x10,
+        TEX_FR_FLIP_VERTICAL   = 0x10,
     };
 
 #ifdef _WIN32
     DIRECTX_TEX_API HRESULT __cdecl FlipRotate(_In_ const Image& srcImage, _In_ TEX_FR_FLAGS flags, _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl FlipRotate(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ TEX_FR_FLAGS flags, _Out_ ScratchImage& result) noexcept;
-        // Flip and/or rotate image
+    DIRECTX_TEX_API HRESULT __cdecl FlipRotate(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                             nimages,
+        _In_ const TexMetadata&                                                 metadata,
+        _In_ TEX_FR_FLAGS                                                       flags,
+        _Out_ ScratchImage&                                                     result) noexcept;
+    // Flip and/or rotate image
 #endif
 
     enum TEX_FILTER_FLAGS : uint32_t
     {
         TEX_FILTER_DEFAULT = 0,
 
-        TEX_FILTER_WRAP_U = 0x1,
-        TEX_FILTER_WRAP_V = 0x2,
-        TEX_FILTER_WRAP_W = 0x4,
-        TEX_FILTER_WRAP = (TEX_FILTER_WRAP_U | TEX_FILTER_WRAP_V | TEX_FILTER_WRAP_W),
+        TEX_FILTER_WRAP_U   = 0x1,
+        TEX_FILTER_WRAP_V   = 0x2,
+        TEX_FILTER_WRAP_W   = 0x4,
+        TEX_FILTER_WRAP     = (TEX_FILTER_WRAP_U | TEX_FILTER_WRAP_V | TEX_FILTER_WRAP_W),
         TEX_FILTER_MIRROR_U = 0x10,
         TEX_FILTER_MIRROR_V = 0x20,
         TEX_FILTER_MIRROR_W = 0x40,
-        TEX_FILTER_MIRROR = (TEX_FILTER_MIRROR_U | TEX_FILTER_MIRROR_V | TEX_FILTER_MIRROR_W),
+        TEX_FILTER_MIRROR   = (TEX_FILTER_MIRROR_U | TEX_FILTER_MIRROR_V | TEX_FILTER_MIRROR_W),
         // Wrap vs. Mirror vs. Clamp filtering options
 
         TEX_FILTER_SEPARATE_ALPHA = 0x100,
@@ -758,9 +813,9 @@ namespace DirectX
         TEX_FILTER_FLOAT_X2BIAS = 0x200,
         // Enable *2 - 1 conversion cases for unorm<->float and positive-only float formats
 
-        TEX_FILTER_RGB_COPY_RED = 0x1000,
+        TEX_FILTER_RGB_COPY_RED   = 0x1000,
         TEX_FILTER_RGB_COPY_GREEN = 0x2000,
-        TEX_FILTER_RGB_COPY_BLUE = 0x4000,
+        TEX_FILTER_RGB_COPY_BLUE  = 0x4000,
         TEX_FILTER_RGB_COPY_ALPHA = 0x8000,
         // When converting RGB(A) to R, defaults to using grayscale. These flags indicate copying a specific channel instead
         // When converting RGB(A) to RG, defaults to copying RED | GREEN. These flags control which channels are selected instead.
@@ -770,17 +825,17 @@ namespace DirectX
         TEX_FILTER_DITHER_DIFFUSION = 0x20000,
         // Use error-diffusion dithering for any required conversions
 
-        TEX_FILTER_POINT = 0x100000,
-        TEX_FILTER_LINEAR = 0x200000,
-        TEX_FILTER_CUBIC = 0x300000,
-        TEX_FILTER_BOX = 0x400000,
-        TEX_FILTER_FANT = 0x400000, // Equiv to Box filtering for mipmap generation
+        TEX_FILTER_POINT    = 0x100000,
+        TEX_FILTER_LINEAR   = 0x200000,
+        TEX_FILTER_CUBIC    = 0x300000,
+        TEX_FILTER_BOX      = 0x400000,
+        TEX_FILTER_FANT     = 0x400000, // Equiv to Box filtering for mipmap generation
         TEX_FILTER_TRIANGLE = 0x500000,
         // Filtering mode to use for any required image resizing
 
-        TEX_FILTER_SRGB_IN = 0x1000000,
+        TEX_FILTER_SRGB_IN  = 0x1000000,
         TEX_FILTER_SRGB_OUT = 0x2000000,
-        TEX_FILTER_SRGB = (TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT),
+        TEX_FILTER_SRGB     = (TEX_FILTER_SRGB_IN | TEX_FILTER_SRGB_OUT),
         // sRGB <-> RGB for use in conversion operations
         // if the input format type is IsSRGB(), then SRGB_IN is on by default
         // if the output format type is IsSRGB(), then SRGB_OUT is on by default
@@ -793,21 +848,26 @@ namespace DirectX
     };
 
     constexpr uint32_t TEX_FILTER_DITHER_MASK = 0xF0000;
-    constexpr uint32_t TEX_FILTER_MODE_MASK = 0xF00000;
-    constexpr uint32_t TEX_FILTER_SRGB_MASK = 0xF000000;
+    constexpr uint32_t TEX_FILTER_MODE_MASK   = 0xF00000;
+    constexpr uint32_t TEX_FILTER_SRGB_MASK   = 0xF000000;
 
-    DIRECTX_TEX_API HRESULT __cdecl Resize(
-        _In_ const Image& srcImage, _In_ size_t width, _In_ size_t height,
-        _In_ TEX_FILTER_FLAGS filter,
-        _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl Resize(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ size_t width, _In_ size_t height, _In_ TEX_FILTER_FLAGS filter, _Out_ ScratchImage& result) noexcept;
-        // Resize the image to width x height. Defaults to Fant filtering.
-        // Note for a complex resize, the result will always have mipLevels == 1
+    DIRECTX_TEX_API HRESULT __cdecl Resize(_In_ const Image& srcImage,
+        _In_ size_t                                          width,
+        _In_ size_t                                          height,
+        _In_ TEX_FILTER_FLAGS                                filter,
+        _Out_ ScratchImage&                                  image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl Resize(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                         nimages,
+        _In_ const TexMetadata&                                             metadata,
+        _In_ size_t                                                         width,
+        _In_ size_t                                                         height,
+        _In_ TEX_FILTER_FLAGS                                               filter,
+        _Out_ ScratchImage&                                                 result) noexcept;
+    // Resize the image to width x height. Defaults to Fant filtering.
+    // Note for a complex resize, the result will always have mipLevels == 1
 
     constexpr float TEX_THRESHOLD_DEFAULT = 0.5f;
-        // Default value for alpha threshold used when converting to 1-bit alpha
+    // Default value for alpha threshold used when converting to 1-bit alpha
 
     struct ConvertOptions
     {
@@ -815,51 +875,74 @@ namespace DirectX
         float            threshold;
     };
 
-    DIRECTX_TEX_API HRESULT __cdecl Convert(
-        _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold,
-        _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl Convert(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter, _In_ float threshold, _Out_ ScratchImage& result) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl Convert(_In_ const Image& srcImage,
+        _In_ DXGI_FORMAT                                      format,
+        _In_ TEX_FILTER_FLAGS                                 filter,
+        _In_ float                                            threshold,
+        _Out_ ScratchImage&                                   image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl Convert(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                          nimages,
+        _In_ const TexMetadata&                                              metadata,
+        _In_ DXGI_FORMAT                                                     format,
+        _In_ TEX_FILTER_FLAGS                                                filter,
+        _In_ float                                                           threshold,
+        _Out_ ScratchImage&                                                  result) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl ConvertEx(
-        _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ const ConvertOptions& options,
-        _Out_ ScratchImage& image,
+    DIRECTX_TEX_API HRESULT __cdecl ConvertEx(_In_ const Image& srcImage,
+        _In_ DXGI_FORMAT                                        format,
+        _In_ const ConvertOptions&                              options,
+        _Out_ ScratchImage&                                     image,
         _In_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
-    DIRECTX_TEX_API HRESULT __cdecl ConvertEx(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ const ConvertOptions& options, _Out_ ScratchImage& result,
+    DIRECTX_TEX_API HRESULT __cdecl ConvertEx(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                            nimages,
+        _In_ const TexMetadata&                                                metadata,
+        _In_ DXGI_FORMAT                                                       format,
+        _In_ const ConvertOptions&                                             options,
+        _Out_ ScratchImage&                                                    result,
         _In_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
-        // Convert the image to a new format
+    // Convert the image to a new format
 
     DIRECTX_TEX_API HRESULT __cdecl ConvertToSinglePlane(_In_ const Image& srcImage, _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl ConvertToSinglePlane(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _Out_ ScratchImage& image) noexcept;
-        // Converts the image from a planar format to an equivalent non-planar format
+    DIRECTX_TEX_API HRESULT __cdecl ConvertToSinglePlane(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                                       nimages,
+        _In_ const TexMetadata&                                                           metadata,
+        _Out_ ScratchImage&                                                               image) noexcept;
+    // Converts the image from a planar format to an equivalent non-planar format
 
-    DIRECTX_TEX_API HRESULT __cdecl GenerateMipMaps(
-        _In_ const Image& baseImage, _In_ TEX_FILTER_FLAGS filter, _In_ size_t levels,
-        _Inout_ ScratchImage& mipChain, _In_ bool allow1D = false) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl GenerateMipMaps(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ TEX_FILTER_FLAGS filter, _In_ size_t levels, _Inout_ ScratchImage& mipChain);
-        // levels of '0' indicates a full mipchain, otherwise is generates that number of total levels (including the source base image)
-        // Defaults to Fant filtering which is equivalent to a box filter
+    DIRECTX_TEX_API HRESULT __cdecl GenerateMipMaps(_In_ const Image& baseImage,
+        _In_ TEX_FILTER_FLAGS                                         filter,
+        _In_ size_t                                                   levels,
+        _Inout_ ScratchImage&                                         mipChain,
+        _In_ bool                                                     allow1D = false) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl GenerateMipMaps(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                                  nimages,
+        _In_ const TexMetadata&                                                      metadata,
+        _In_ TEX_FILTER_FLAGS                                                        filter,
+        _In_ size_t                                                                  levels,
+        _Inout_ ScratchImage&                                                        mipChain);
+    // levels of '0' indicates a full mipchain, otherwise is generates that number of total levels (including the source base image)
+    // Defaults to Fant filtering which is equivalent to a box filter
 
-    DIRECTX_TEX_API HRESULT __cdecl GenerateMipMaps3D(
-        _In_reads_(depth) const Image* baseImages, _In_ size_t depth, _In_ TEX_FILTER_FLAGS filter, _In_ size_t levels,
-        _Out_ ScratchImage& mipChain) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl GenerateMipMaps3D(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ TEX_FILTER_FLAGS filter, _In_ size_t levels, _Out_ ScratchImage& mipChain);
-        // levels of '0' indicates a full mipchain, otherwise is generates that number of total levels (including the source base image)
-        // Defaults to Fant filtering which is equivalent to a box filter
+    DIRECTX_TEX_API HRESULT __cdecl GenerateMipMaps3D(_In_reads_(depth) const Image* baseImages,
+        _In_ size_t                                                                  depth,
+        _In_ TEX_FILTER_FLAGS                                                        filter,
+        _In_ size_t                                                                  levels,
+        _Out_ ScratchImage&                                                          mipChain) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl GenerateMipMaps3D(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                                    nimages,
+        _In_ const TexMetadata&                                                        metadata,
+        _In_ TEX_FILTER_FLAGS                                                          filter,
+        _In_ size_t                                                                    levels,
+        _Out_ ScratchImage&                                                            mipChain);
+    // levels of '0' indicates a full mipchain, otherwise is generates that number of total levels (including the source base image)
+    // Defaults to Fant filtering which is equivalent to a box filter
 
-    DIRECTX_TEX_API HRESULT __cdecl ScaleMipMapsAlphaForCoverage(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata, _In_ size_t item,
-        _In_ float alphaReference, _Inout_ ScratchImage& mipChain) noexcept;
-
+    DIRECTX_TEX_API HRESULT __cdecl ScaleMipMapsAlphaForCoverage(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                                               nimages,
+        _In_ const TexMetadata&                                                                   metadata,
+        _In_ size_t                                                                               item,
+        _In_ float                                                                                alphaReference,
+        _Inout_ ScratchImage&                                                                     mipChain) noexcept;
 
     enum TEX_PMALPHA_FLAGS : uint32_t
     {
@@ -871,18 +954,21 @@ namespace DirectX
         TEX_PMALPHA_REVERSE = 0x2,
         // converts from premultiplied alpha back to straight alpha
 
-        TEX_PMALPHA_SRGB_IN = 0x1000000,
+        TEX_PMALPHA_SRGB_IN  = 0x1000000,
         TEX_PMALPHA_SRGB_OUT = 0x2000000,
-        TEX_PMALPHA_SRGB = (TEX_PMALPHA_SRGB_IN | TEX_PMALPHA_SRGB_OUT),
+        TEX_PMALPHA_SRGB     = (TEX_PMALPHA_SRGB_IN | TEX_PMALPHA_SRGB_OUT),
         // if the input format type is IsSRGB(), then SRGB_IN is on by default
         // if the output format type is IsSRGB(), then SRGB_OUT is on by default
     };
 
-    DIRECTX_TEX_API HRESULT __cdecl PremultiplyAlpha(_In_ const Image& srcImage, _In_ TEX_PMALPHA_FLAGS flags, _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl PremultiplyAlpha(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ TEX_PMALPHA_FLAGS flags, _Out_ ScratchImage& result) noexcept;
-        // Converts to/from a premultiplied alpha version of the texture
+    DIRECTX_TEX_API HRESULT __cdecl
+    PremultiplyAlpha(_In_ const Image& srcImage, _In_ TEX_PMALPHA_FLAGS flags, _Out_ ScratchImage& image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl PremultiplyAlpha(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                                   nimages,
+        _In_ const TexMetadata&                                                       metadata,
+        _In_ TEX_PMALPHA_FLAGS                                                        flags,
+        _Out_ ScratchImage&                                                           result) noexcept;
+    // Converts to/from a premultiplied alpha version of the texture
 
     enum TEX_COMPRESS_FLAGS : uint32_t
     {
@@ -906,9 +992,9 @@ namespace DirectX
         TEX_COMPRESS_BC7_QUICK = 0x100000,
         // Minimal modes (usually mode 6) for BC7 compression
 
-        TEX_COMPRESS_SRGB_IN = 0x1000000,
+        TEX_COMPRESS_SRGB_IN  = 0x1000000,
         TEX_COMPRESS_SRGB_OUT = 0x2000000,
-        TEX_COMPRESS_SRGB = (TEX_COMPRESS_SRGB_IN | TEX_COMPRESS_SRGB_OUT),
+        TEX_COMPRESS_SRGB     = (TEX_COMPRESS_SRGB_IN | TEX_COMPRESS_SRGB_OUT),
         // if the input format type is IsSRGB(), then SRGB_IN is on by default
         // if the output format type is IsSRGB(), then SRGB_OUT is on by default
 
@@ -917,7 +1003,7 @@ namespace DirectX
     };
 
     constexpr float TEX_ALPHA_WEIGHT_DEFAULT = 1.0f;
-        // Default value for alpha weight used for GPU BC7 compression
+    // Default value for alpha weight used for GPU BC7 compression
 
     struct CompressOptions
     {
@@ -926,46 +1012,72 @@ namespace DirectX
         float              alphaWeight;
     };
 
-    DIRECTX_TEX_API HRESULT __cdecl Compress(
-        _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold,
-        _Out_ ScratchImage& cImage) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl Compress(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float threshold, _Out_ ScratchImage& cImages) noexcept;
-        // Note that threshold is only used by BC1. TEX_THRESHOLD_DEFAULT is a typical value to use
+    DIRECTX_TEX_API HRESULT __cdecl Compress(_In_ const Image& srcImage,
+        _In_ DXGI_FORMAT                                       format,
+        _In_ TEX_COMPRESS_FLAGS                                compress,
+        _In_ float                                             threshold,
+        _Out_ ScratchImage&                                    cImage) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl Compress(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                           nimages,
+        _In_ const TexMetadata&                                               metadata,
+        _In_ DXGI_FORMAT                                                      format,
+        _In_ TEX_COMPRESS_FLAGS                                               compress,
+        _In_ float                                                            threshold,
+        _Out_ ScratchImage&                                                   cImages) noexcept;
+    // Note that threshold is only used by BC1. TEX_THRESHOLD_DEFAULT is a typical value to use
 
-    DIRECTX_TEX_API HRESULT __cdecl CompressEx(
-        _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ const CompressOptions& options,
-        _Out_ ScratchImage& cImage,
+    DIRECTX_TEX_API HRESULT __cdecl CompressEx(_In_ const Image& srcImage,
+        _In_ DXGI_FORMAT                                         format,
+        _In_ const CompressOptions&                              options,
+        _Out_ ScratchImage&                                      cImage,
         _In_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
-    DIRECTX_TEX_API HRESULT __cdecl CompressEx(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ const CompressOptions& options, _Out_ ScratchImage& cImages,
+    DIRECTX_TEX_API HRESULT __cdecl CompressEx(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                             nimages,
+        _In_ const TexMetadata&                                                 metadata,
+        _In_ DXGI_FORMAT                                                        format,
+        _In_ const CompressOptions&                                             options,
+        _Out_ ScratchImage&                                                     cImages,
         _In_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
 
 #if defined(__d3d11_h__) || defined(__d3d11_x_h__)
-    DIRECTX_TEX_API HRESULT __cdecl Compress(
-        _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress,
-        _In_ float alphaWeight, _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl Compress(
-        _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ TEX_COMPRESS_FLAGS compress, _In_ float alphaWeight, _Out_ ScratchImage& cImages) noexcept;
-        // DirectCompute-based compression (alphaWeight is only used by BC7. 1.0 is the typical value to use)
+    DIRECTX_TEX_API HRESULT __cdecl Compress(_In_ ID3D11Device* pDevice,
+        _In_ const Image&                                       srcImage,
+        _In_ DXGI_FORMAT                                        format,
+        _In_ TEX_COMPRESS_FLAGS                                 compress,
+        _In_ float                                              alphaWeight,
+        _Out_ ScratchImage&                                     image) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl Compress(_In_ ID3D11Device* pDevice,
+        _In_ const Image*                                       srcImages,
+        _In_ size_t                                             nimages,
+        _In_ const TexMetadata&                                 metadata,
+        _In_ DXGI_FORMAT                                        format,
+        _In_ TEX_COMPRESS_FLAGS                                 compress,
+        _In_ float                                              alphaWeight,
+        _Out_ ScratchImage&                                     cImages) noexcept;
+    // DirectCompute-based compression (alphaWeight is only used by BC7. 1.0 is the typical value to use)
 
-    DIRECTX_TEX_API HRESULT __cdecl CompressEx(
-        _In_ ID3D11Device* pDevice, _In_ const Image& srcImage, _In_ DXGI_FORMAT format, _In_ const CompressOptions& options,
-        _Out_ ScratchImage& image,
+    DIRECTX_TEX_API HRESULT __cdecl CompressEx(_In_ ID3D11Device* pDevice,
+        _In_ const Image&                                         srcImage,
+        _In_ DXGI_FORMAT                                          format,
+        _In_ const CompressOptions&                               options,
+        _Out_ ScratchImage&                                       image,
         _In_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
-    DIRECTX_TEX_API HRESULT __cdecl CompressEx(
-        _In_ ID3D11Device* pDevice, _In_ const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _In_ const CompressOptions& options, _Out_ ScratchImage& cImages,
+    DIRECTX_TEX_API HRESULT __cdecl CompressEx(_In_ ID3D11Device* pDevice,
+        _In_ const Image*                                         srcImages,
+        _In_ size_t                                               nimages,
+        _In_ const TexMetadata&                                   metadata,
+        _In_ DXGI_FORMAT                                          format,
+        _In_ const CompressOptions&                               options,
+        _Out_ ScratchImage&                                       cImages,
         _In_ std::function<bool __cdecl(size_t, size_t)> statusCallBack = nullptr);
 #endif
 
     DIRECTX_TEX_API HRESULT __cdecl Decompress(_In_ const Image& cImage, _In_ DXGI_FORMAT format, _Out_ ScratchImage& image) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl Decompress(
-        _In_reads_(nimages) const Image* cImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ DXGI_FORMAT format, _Out_ ScratchImage& images) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl Decompress(_In_reads_(nimages) const Image* cImages,
+        _In_ size_t                                                             nimages,
+        _In_ const TexMetadata&                                                 metadata,
+        _In_ DXGI_FORMAT                                                        format,
+        _Out_ ScratchImage&                                                     images) noexcept;
 
     //---------------------------------------------------------------------------------
     // Normal map operations
@@ -974,17 +1086,17 @@ namespace DirectX
     {
         CNMAP_DEFAULT = 0,
 
-        CNMAP_CHANNEL_RED = 0x1,
-        CNMAP_CHANNEL_GREEN = 0x2,
-        CNMAP_CHANNEL_BLUE = 0x3,
-        CNMAP_CHANNEL_ALPHA = 0x4,
+        CNMAP_CHANNEL_RED       = 0x1,
+        CNMAP_CHANNEL_GREEN     = 0x2,
+        CNMAP_CHANNEL_BLUE      = 0x3,
+        CNMAP_CHANNEL_ALPHA     = 0x4,
         CNMAP_CHANNEL_LUMINANCE = 0x5,
         // Channel selection when evaluting color value for height
         // Luminance is a combination of red, green, and blue
 
         CNMAP_MIRROR_U = 0x1000,
         CNMAP_MIRROR_V = 0x2000,
-        CNMAP_MIRROR = 0x3000,
+        CNMAP_MIRROR   = 0x3000,
         // Use mirror semantics for scanline references (defaults to wrap)
 
         CNMAP_INVERT_SIGN = 0x4000,
@@ -994,12 +1106,18 @@ namespace DirectX
         // Computes a crude occlusion term stored in the alpha channel
     };
 
-    DIRECTX_TEX_API HRESULT __cdecl ComputeNormalMap(
-        _In_ const Image& srcImage, _In_ CNMAP_FLAGS flags, _In_ float amplitude,
-        _In_ DXGI_FORMAT format, _Out_ ScratchImage& normalMap) noexcept;
-    DIRECTX_TEX_API HRESULT __cdecl ComputeNormalMap(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ CNMAP_FLAGS flags, _In_ float amplitude, _In_ DXGI_FORMAT format, _Out_ ScratchImage& normalMaps) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl ComputeNormalMap(_In_ const Image& srcImage,
+        _In_ CNMAP_FLAGS                                               flags,
+        _In_ float                                                     amplitude,
+        _In_ DXGI_FORMAT                                               format,
+        _Out_ ScratchImage&                                            normalMap) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl ComputeNormalMap(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                                   nimages,
+        _In_ const TexMetadata&                                                       metadata,
+        _In_ CNMAP_FLAGS                                                              flags,
+        _In_ float                                                                    amplitude,
+        _In_ DXGI_FORMAT                                                              format,
+        _Out_ ScratchImage&                                                           normalMaps) noexcept;
 
     //---------------------------------------------------------------------------------
     // Misc image operations
@@ -1012,12 +1130,20 @@ namespace DirectX
         size_t h;
 
         Rect() = default;
-        Rect(size_t _x, size_t _y, size_t _w, size_t _h) noexcept : x(_x), y(_y), w(_w), h(_h) {}
+        Rect(size_t _x, size_t _y, size_t _w, size_t _h) noexcept
+            : x(_x),
+              y(_y),
+              w(_w),
+              h(_h)
+        {}
     };
 
-    DIRECTX_TEX_API HRESULT __cdecl CopyRectangle(
-        _In_ const Image& srcImage, _In_ const Rect& srcRect, _In_ const Image& dstImage,
-        _In_ TEX_FILTER_FLAGS filter, _In_ size_t xOffset, _In_ size_t yOffset) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl CopyRectangle(_In_ const Image& srcImage,
+        _In_ const Rect&                                            srcRect,
+        _In_ const Image&                                           dstImage,
+        _In_ TEX_FILTER_FLAGS                                       filter,
+        _In_ size_t                                                 xOffset,
+        _In_ size_t                                                 yOffset) noexcept;
 
     enum CMSE_FLAGS : uint32_t
     {
@@ -1027,9 +1153,9 @@ namespace DirectX
         CMSE_IMAGE2_SRGB = 0x2,
         // Indicates that image needs gamma correction before comparision
 
-        CMSE_IGNORE_RED = 0x10,
+        CMSE_IGNORE_RED   = 0x10,
         CMSE_IGNORE_GREEN = 0x20,
-        CMSE_IGNORE_BLUE = 0x40,
+        CMSE_IGNORE_BLUE  = 0x40,
         CMSE_IGNORE_ALPHA = 0x80,
         // Ignore the channel when computing MSE
 
@@ -1038,24 +1164,30 @@ namespace DirectX
         // Indicates that image should be scaled and biased before comparison (i.e. UNORM -> SNORM)
     };
 
-    DIRECTX_TEX_API HRESULT __cdecl ComputeMSE(_In_ const Image& image1, _In_ const Image& image2, _Out_ float& mse, _Out_writes_opt_(4) float* mseV, _In_ CMSE_FLAGS flags = CMSE_DEFAULT) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl ComputeMSE(_In_ const Image& image1,
+        _In_ const Image&                                        image2,
+        _Out_ float&                                             mse,
+        _Out_writes_opt_(4) float*                               mseV,
+        _In_ CMSE_FLAGS                                          flags = CMSE_DEFAULT) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl EvaluateImage(
-        _In_ const Image& image,
+    DIRECTX_TEX_API HRESULT __cdecl EvaluateImage(_In_ const Image& image,
         _In_ std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)> pixelFunc);
-    DIRECTX_TEX_API HRESULT __cdecl EvaluateImage(
-        _In_reads_(nimages) const Image* images, _In_ size_t nimages, _In_ const TexMetadata& metadata,
+    DIRECTX_TEX_API HRESULT __cdecl EvaluateImage(_In_reads_(nimages) const Image* images,
+        _In_ size_t                                                                nimages,
+        _In_ const TexMetadata&                                                    metadata,
         _In_ std::function<void __cdecl(_In_reads_(width) const XMVECTOR* pixels, size_t width, size_t y)> pixelFunc);
 
-    DIRECTX_TEX_API HRESULT __cdecl TransformImage(
-        _In_ const Image& image,
-        _In_ std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels,
-            _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
+    DIRECTX_TEX_API HRESULT __cdecl TransformImage(_In_ const Image& image,
+        _In_                                                         std::function<
+                                                                    void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)>
+                      pixelFunc,
         ScratchImage& result);
-    DIRECTX_TEX_API HRESULT __cdecl TransformImage(
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ std::function<void __cdecl(_Out_writes_(width) XMVECTOR* outPixels,
-            _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)> pixelFunc,
+    DIRECTX_TEX_API HRESULT __cdecl TransformImage(_In_reads_(nimages) const Image* srcImages,
+        _In_ size_t                                                                 nimages,
+        _In_ const TexMetadata&                                                     metadata,
+        _In_                                                                        std::function<
+                                                                                   void __cdecl(_Out_writes_(width) XMVECTOR* outPixels, _In_reads_(width) const XMVECTOR* inPixels, size_t width, size_t y)>
+                      pixelFunc,
         ScratchImage& result);
 
     //---------------------------------------------------------------------------------
@@ -1063,39 +1195,42 @@ namespace DirectX
 #ifdef _WIN32
     enum WICCodecs : uint32_t
     {
-        WIC_CODEC_BMP = 1,          // Windows Bitmap (.bmp)
-        WIC_CODEC_JPEG,             // Joint Photographic Experts Group (.jpg, .jpeg)
-        WIC_CODEC_PNG,              // Portable Network Graphics (.png)
-        WIC_CODEC_TIFF,             // Tagged Image File Format  (.tif, .tiff)
-        WIC_CODEC_GIF,              // Graphics Interchange Format  (.gif)
-        WIC_CODEC_WMP,              // Windows Media Photo / HD Photo / JPEG XR (.hdp, .jxr, .wdp)
-        WIC_CODEC_ICO,              // Windows Icon (.ico)
-        WIC_CODEC_HEIF,             // High Efficiency Image File (.heif, .heic)
+        WIC_CODEC_BMP = 1, // Windows Bitmap (.bmp)
+        WIC_CODEC_JPEG,    // Joint Photographic Experts Group (.jpg, .jpeg)
+        WIC_CODEC_PNG,     // Portable Network Graphics (.png)
+        WIC_CODEC_TIFF,    // Tagged Image File Format  (.tif, .tiff)
+        WIC_CODEC_GIF,     // Graphics Interchange Format  (.gif)
+        WIC_CODEC_WMP,     // Windows Media Photo / HD Photo / JPEG XR (.hdp, .jxr, .wdp)
+        WIC_CODEC_ICO,     // Windows Icon (.ico)
+        WIC_CODEC_HEIF,    // High Efficiency Image File (.heif, .heic)
     };
 
     DIRECTX_TEX_API REFGUID __cdecl GetWICCodec(_In_ WICCodecs codec) noexcept;
 
     DIRECTX_TEX_API IWICImagingFactory* __cdecl GetWICFactory(bool& iswic2) noexcept;
-    DIRECTX_TEX_API void __cdecl SetWICFactory(_In_opt_ IWICImagingFactory* pWIC) noexcept;
+    DIRECTX_TEX_API void __cdecl                SetWICFactory(_In_opt_ IWICImagingFactory* pWIC) noexcept;
 #endif
 
     //---------------------------------------------------------------------------------
     // DDS helper functions
-    DIRECTX_TEX_API HRESULT __cdecl EncodeDDSHeader(
-        _In_ const TexMetadata& metadata, DDS_FLAGS flags,
-        _Out_writes_bytes_to_opt_(maxsize, required) uint8_t* pDestination, _In_ size_t maxsize,
-        _Out_ size_t& required) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl EncodeDDSHeader(_In_ const TexMetadata& metadata,
+        DDS_FLAGS                                                           flags,
+        _Out_writes_bytes_to_opt_(maxsize, required) uint8_t*               pDestination,
+        _In_ size_t                                                         maxsize,
+        _Out_ size_t&                                                       required) noexcept;
 
 #ifdef __cpp_lib_byte
-    DIRECTX_TEX_API HRESULT __cdecl EncodeDDSHeader(
-        _In_ const TexMetadata& metadata, DDS_FLAGS flags,
-        _Out_writes_bytes_to_opt_(maxsize, required) std::byte* pDestination, _In_ size_t maxsize,
-        _Out_ size_t& required) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl EncodeDDSHeader(_In_ const TexMetadata& metadata,
+        DDS_FLAGS                                                           flags,
+        _Out_writes_bytes_to_opt_(maxsize, required) std::byte*             pDestination,
+        _In_ size_t                                                         maxsize,
+        _Out_ size_t&                                                       required) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl EncodeDDSHeader(
-        _In_ const TexMetadata& metadata, DDS_FLAGS flags,
-        _Reserved_ std::nullptr_t, _In_ size_t maxsize,
-        _Out_ size_t& required) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl EncodeDDSHeader(_In_ const TexMetadata& metadata,
+        DDS_FLAGS                                                           flags,
+        _Reserved_                                                          std::nullptr_t,
+        _In_ size_t                                                         maxsize,
+        _Out_ size_t&                                                       required) noexcept;
 #endif
 
     //---------------------------------------------------------------------------------
@@ -1103,8 +1238,8 @@ namespace DirectX
 
     enum CREATETEX_FLAGS : uint32_t
     {
-        CREATETEX_DEFAULT = 0,
-        CREATETEX_FORCE_SRGB = 0x1,
+        CREATETEX_DEFAULT     = 0,
+        CREATETEX_FORCE_SRGB  = 0x1,
         CREATETEX_IGNORE_SRGB = 0x2,
     };
 
@@ -1112,50 +1247,71 @@ namespace DirectX
 #if defined(__d3d11_h__) || defined(__d3d11_x_h__)
     DIRECTX_TEX_API bool __cdecl IsSupportedTexture(_In_ ID3D11Device* pDevice, _In_ const TexMetadata& metadata) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl CreateTexture(
-        _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _Outptr_ ID3D11Resource** ppResource) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl CreateTexture(_In_ ID3D11Device* pDevice,
+        _In_reads_(nimages) const Image*                             srcImages,
+        _In_ size_t                                                  nimages,
+        _In_ const TexMetadata&                                      metadata,
+        _Outptr_ ID3D11Resource**                                    ppResource) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl CreateShaderResourceView(
-        _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _Outptr_ ID3D11ShaderResourceView** ppSRV) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl CreateShaderResourceView(_In_ ID3D11Device* pDevice,
+        _In_reads_(nimages) const Image*                                        srcImages,
+        _In_ size_t                                                             nimages,
+        _In_ const TexMetadata&                                                 metadata,
+        _Outptr_ ID3D11ShaderResourceView**                                     ppSRV) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl CreateTextureEx(
-        _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ CREATETEX_FLAGS flags,
-        _Outptr_ ID3D11Resource** ppResource) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl CreateTextureEx(_In_ ID3D11Device* pDevice,
+        _In_reads_(nimages) const Image*                               srcImages,
+        _In_ size_t                                                    nimages,
+        _In_ const TexMetadata&                                        metadata,
+        _In_ D3D11_USAGE                                               usage,
+        _In_ unsigned int                                              bindFlags,
+        _In_ unsigned int                                              cpuAccessFlags,
+        _In_ unsigned int                                              miscFlags,
+        _In_ CREATETEX_FLAGS                                           flags,
+        _Outptr_ ID3D11Resource**                                      ppResource) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl CreateShaderResourceViewEx(
-        _In_ ID3D11Device* pDevice, _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        _In_ D3D11_USAGE usage, _In_ unsigned int bindFlags, _In_ unsigned int cpuAccessFlags, _In_ unsigned int miscFlags, _In_ CREATETEX_FLAGS flags,
-        _Outptr_ ID3D11ShaderResourceView** ppSRV) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl CreateShaderResourceViewEx(_In_ ID3D11Device* pDevice,
+        _In_reads_(nimages) const Image*                                          srcImages,
+        _In_ size_t                                                               nimages,
+        _In_ const TexMetadata&                                                   metadata,
+        _In_ D3D11_USAGE                                                          usage,
+        _In_ unsigned int                                                         bindFlags,
+        _In_ unsigned int                                                         cpuAccessFlags,
+        _In_ unsigned int                                                         miscFlags,
+        _In_ CREATETEX_FLAGS                                                      flags,
+        _Outptr_ ID3D11ShaderResourceView**                                       ppSRV) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl CaptureTexture(_In_ ID3D11Device* pDevice, _In_ ID3D11DeviceContext* pContext, _In_ ID3D11Resource* pSource, _Out_ ScratchImage& result) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl CaptureTexture(_In_ ID3D11Device* pDevice,
+        _In_ ID3D11DeviceContext*                                     pContext,
+        _In_ ID3D11Resource*                                          pSource,
+        _Out_ ScratchImage&                                           result) noexcept;
 #endif
 
     // Direct3D 12 functions
 #if defined(__d3d12_h__) || defined(__d3d12_x_h__) || defined(__XBOX_D3D12_X__)
     DIRECTX_TEX_API bool __cdecl IsSupportedTexture(_In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl CreateTexture(
-        _In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata,
-        _Outptr_ ID3D12Resource** ppResource) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl
+    CreateTexture(_In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata, _Outptr_ ID3D12Resource** ppResource) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl CreateTextureEx(
-        _In_ ID3D12Device* pDevice, _In_ const TexMetadata& metadata,
-        _In_ D3D12_RESOURCE_FLAGS resFlags, _In_ CREATETEX_FLAGS flags,
-        _Outptr_ ID3D12Resource** ppResource) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl CreateTextureEx(_In_ ID3D12Device* pDevice,
+        _In_ const TexMetadata&                                        metadata,
+        _In_ D3D12_RESOURCE_FLAGS                                      resFlags,
+        _In_ CREATETEX_FLAGS                                           flags,
+        _Outptr_ ID3D12Resource**                                      ppResource) noexcept;
 
-    DIRECTX_TEX_API HRESULT __cdecl PrepareUpload(
-        _In_ ID3D12Device* pDevice,
-        _In_reads_(nimages) const Image* srcImages, _In_ size_t nimages, _In_ const TexMetadata& metadata,
-        std::vector<D3D12_SUBRESOURCE_DATA>& subresources);
+    DIRECTX_TEX_API HRESULT __cdecl PrepareUpload(_In_ ID3D12Device* pDevice,
+        _In_reads_(nimages) const Image*                             srcImages,
+        _In_ size_t                                                  nimages,
+        _In_ const TexMetadata&                                      metadata,
+        std::vector<D3D12_SUBRESOURCE_DATA>&                         subresources);
 
-    DIRECTX_TEX_API HRESULT __cdecl CaptureTexture(
-        _In_ ID3D12CommandQueue* pCommandQueue, _In_ ID3D12Resource* pSource, _In_ bool isCubeMap,
-        _Out_ ScratchImage& result,
-        _In_ D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET,
-        _In_ D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_RENDER_TARGET) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl CaptureTexture(_In_ ID3D12CommandQueue* pCommandQueue,
+        _In_ ID3D12Resource*                                                pSource,
+        _In_ bool                                                           isCubeMap,
+        _Out_ ScratchImage&                                                 result,
+        _In_ D3D12_RESOURCE_STATES                                          beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET,
+        _In_ D3D12_RESOURCE_STATES                                          afterState  = D3D12_RESOURCE_STATE_RENDER_TARGET) noexcept;
 #endif
 
 #ifdef __clang__
@@ -1165,14 +1321,14 @@ namespace DirectX
 #pragma clang diagnostic ignored "-Wswitch-enum"
 #endif
 
-#ifdef  _MSC_VER
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4619 4616 4061)
 #endif
 
 #include "DirectXTex.inl"
 
-#ifdef  _MSC_VER
+#ifdef _MSC_VER
 #pragma warning(pop)
 #endif
 
@@ -1180,4 +1336,4 @@ namespace DirectX
 #pragma clang diagnostic pop
 #endif
 
-} // namespace
+} // namespace DirectX

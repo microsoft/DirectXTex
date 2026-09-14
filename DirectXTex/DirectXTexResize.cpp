@@ -21,11 +21,8 @@ namespace
 {
 #ifdef _WIN32
     //--- Do image resize using WIC ---
-    HRESULT PerformResizeUsingWIC(
-        const Image& srcImage,
-        TEX_FILTER_FLAGS filter,
-        const WICPixelFormatGUID& pfGUID,
-        const Image& destImage) noexcept
+    HRESULT
+    PerformResizeUsingWIC(const Image& srcImage, TEX_FILTER_FLAGS filter, const WICPixelFormatGUID& pfGUID, const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -33,12 +30,12 @@ namespace
         assert(srcImage.format == destImage.format);
 
         bool iswic2 = false;
-        auto pWIC = GetWICFactory(iswic2);
+        auto pWIC   = GetWICFactory(iswic2);
         if (!pWIC)
             return E_NOINTERFACE;
 
         ComPtr<IWICComponentInfo> componentInfo;
-        HRESULT hr = pWIC->CreateComponentInfo(pfGUID, componentInfo.GetAddressOf());
+        HRESULT                   hr = pWIC->CreateComponentInfo(pfGUID, componentInfo.GetAddressOf());
         if (FAILED(hr))
             return hr;
 
@@ -48,18 +45,22 @@ namespace
             return hr;
 
         BOOL supportsTransparency = FALSE;
-        hr = pixelFormatInfo->SupportsTransparency(&supportsTransparency);
+        hr                        = pixelFormatInfo->SupportsTransparency(&supportsTransparency);
         if (FAILED(hr))
             return hr;
 
-        if (srcImage.rowPitch > UINT32_MAX || srcImage.slicePitch > UINT32_MAX
-            || destImage.rowPitch > UINT32_MAX || destImage.slicePitch > UINT32_MAX)
+        if (srcImage.rowPitch > UINT32_MAX || srcImage.slicePitch > UINT32_MAX || destImage.rowPitch > UINT32_MAX
+            || destImage.slicePitch > UINT32_MAX)
             return HRESULT_E_ARITHMETIC_OVERFLOW;
 
         ComPtr<IWICBitmap> source;
-        hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(srcImage.width), static_cast<UINT>(srcImage.height), pfGUID,
-            static_cast<UINT>(srcImage.rowPitch), static_cast<UINT>(srcImage.slicePitch),
-            srcImage.pixels, source.GetAddressOf());
+        hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(srcImage.width),
+            static_cast<UINT>(srcImage.height),
+            pfGUID,
+            static_cast<UINT>(srcImage.rowPitch),
+            static_cast<UINT>(srcImage.slicePitch),
+            srcImage.pixels,
+            source.GetAddressOf());
         if (FAILED(hr))
             return hr;
 
@@ -77,7 +78,8 @@ namespace
                 return hr;
 
             hr = scaler->Initialize(source.Get(),
-                static_cast<UINT>(destImage.width), static_cast<UINT>(destImage.height),
+                static_cast<UINT>(destImage.width),
+                static_cast<UINT>(destImage.height),
                 GetWICInterp(filter));
             if (FAILED(hr))
                 return hr;
@@ -89,7 +91,10 @@ namespace
 
             if (memcmp(&pfScaler, &pfGUID, sizeof(WICPixelFormatGUID)) == 0)
             {
-                hr = scaler->CopyPixels(nullptr, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
+                hr = scaler->CopyPixels(nullptr,
+                    static_cast<UINT>(destImage.rowPitch),
+                    static_cast<UINT>(destImage.slicePitch),
+                    destImage.pixels);
                 if (FAILED(hr))
                     return hr;
             }
@@ -103,18 +108,20 @@ namespace
                     return hr;
 
                 BOOL canConvert = FALSE;
-                hr = FC->CanConvert(pfScaler, pfGUID, &canConvert);
+                hr              = FC->CanConvert(pfScaler, pfGUID, &canConvert);
                 if (FAILED(hr) || !canConvert)
                 {
                     return E_UNEXPECTED;
                 }
 
-                hr = FC->Initialize(scaler.Get(), pfGUID, GetWICDither(filter), nullptr,
-                    0, WICBitmapPaletteTypeMedianCut);
+                hr = FC->Initialize(scaler.Get(), pfGUID, GetWICDither(filter), nullptr, 0, WICBitmapPaletteTypeMedianCut);
                 if (FAILED(hr))
                     return hr;
 
-                hr = FC->CopyPixels(nullptr, static_cast<UINT>(destImage.rowPitch), static_cast<UINT>(destImage.slicePitch), destImage.pixels);
+                hr = FC->CopyPixels(nullptr,
+                    static_cast<UINT>(destImage.rowPitch),
+                    static_cast<UINT>(destImage.slicePitch),
+                    destImage.pixels);
                 if (FAILED(hr))
                     return hr;
             }
@@ -123,12 +130,8 @@ namespace
         return S_OK;
     }
 
-
     //--- Do conversion, resize using WIC, conversion cycle ---
-    HRESULT PerformResizeViaF32(
-        const Image& srcImage,
-        TEX_FILTER_FLAGS filter,
-        const Image& destImage) noexcept
+    HRESULT PerformResizeViaF32(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
         if (!srcImage.pixels || !destImage.pixels)
             return E_POINTER;
@@ -137,11 +140,11 @@ namespace
         assert(srcImage.format == destImage.format);
 
         ScratchImage temp;
-        HRESULT hr = ConvertToR32G32B32A32(srcImage, temp);
+        HRESULT      hr = ConvertToR32G32B32A32(srcImage, temp);
         if (FAILED(hr))
             return hr;
 
-        const Image *tsrc = temp.GetImage(0, 0, 0);
+        const Image* tsrc = temp.GetImage(0, 0, 0);
         if (!tsrc)
             return E_POINTER;
 
@@ -150,7 +153,7 @@ namespace
         if (FAILED(hr))
             return hr;
 
-        const Image *tdest = rtemp.GetImage(0, 0, 0);
+        const Image* tdest = rtemp.GetImage(0, 0, 0);
         if (!tdest)
             return E_POINTER;
 
@@ -166,7 +169,6 @@ namespace
 
         return S_OK;
     }
-
 
     //--- determine when to use WIC vs. non-WIC paths ---
     bool UseWICFiltering(_In_ DXGI_FORMAT format, _In_ TEX_FILTER_FLAGS filter) noexcept
@@ -189,14 +191,13 @@ namespace
             return false;
         }
 
-    #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
-        if (format == DXGI_FORMAT_R16G16B16A16_FLOAT
-            || format == DXGI_FORMAT_R16_FLOAT)
+#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+        if (format == DXGI_FORMAT_R16G16B16A16_FLOAT || format == DXGI_FORMAT_R16_FLOAT)
         {
             // Use non-WIC code paths as these conversions are not supported by Xbox version of WIC
             return false;
         }
-    #endif
+#endif
 
         static_assert(TEX_FILTER_POINT == 0x100000, "TEX_FILTER_ flag values don't match TEX_FILTER_MASK");
 
@@ -266,12 +267,12 @@ namespace
 
         XMVECTOR* row = target + destImage.width;
 
-    #ifdef _DEBUG
-        memset(row, 0xCD, sizeof(XMVECTOR)*srcImage.width);
-    #endif
+#ifdef _DEBUG
+        memset(row, 0xCD, sizeof(XMVECTOR) * srcImage.width);
+#endif
 
-        const uint8_t* pSrc = srcImage.pixels;
-        uint8_t* pDest = destImage.pixels;
+        const uint8_t* pSrc  = srcImage.pixels;
+        uint8_t*       pDest = destImage.pixels;
 
         const size_t rowPitch = srcImage.rowPitch;
 
@@ -307,7 +308,6 @@ namespace
         return S_OK;
     }
 
-
     //--- Box Filter ---
     HRESULT ResizeBoxFilter(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
@@ -329,16 +329,16 @@ namespace
         XMVECTOR* urow0 = target + destImage.width;
         XMVECTOR* urow1 = urow0 + srcImage.width;
 
-    #ifdef _DEBUG
-        memset(urow0, 0xCD, sizeof(XMVECTOR)*srcImage.width);
-        memset(urow1, 0xDD, sizeof(XMVECTOR)*srcImage.width);
-    #endif
+#ifdef _DEBUG
+        memset(urow0, 0xCD, sizeof(XMVECTOR) * srcImage.width);
+        memset(urow1, 0xDD, sizeof(XMVECTOR) * srcImage.width);
+#endif
 
         const XMVECTOR* urow2 = urow0 + 1;
         const XMVECTOR* urow3 = urow1 + 1;
 
-        const uint8_t* pSrc = srcImage.pixels;
-        uint8_t* pDest = destImage.pixels;
+        const uint8_t* pSrc  = srcImage.pixels;
+        uint8_t*       pDest = destImage.pixels;
 
         const size_t rowPitch = srcImage.rowPitch;
 
@@ -370,7 +370,6 @@ namespace
         return S_OK;
     }
 
-
     //--- Linear Filter ---
     HRESULT ResizeLinearFilter(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
@@ -399,13 +398,13 @@ namespace
         XMVECTOR* row0 = target + destImage.width;
         XMVECTOR* row1 = row0 + srcImage.width;
 
-    #ifdef _DEBUG
-        memset(row0, 0xCD, sizeof(XMVECTOR)*srcImage.width);
-        memset(row1, 0xDD, sizeof(XMVECTOR)*srcImage.width);
-    #endif
+#ifdef _DEBUG
+        memset(row0, 0xCD, sizeof(XMVECTOR) * srcImage.width);
+        memset(row1, 0xDD, sizeof(XMVECTOR) * srcImage.width);
+#endif
 
-        const uint8_t* pSrc = srcImage.pixels;
-        uint8_t* pDest = destImage.pixels;
+        const uint8_t* pSrc  = srcImage.pixels;
+        uint8_t*       pDest = destImage.pixels;
 
         const size_t rowPitch = srcImage.rowPitch;
 
@@ -457,7 +456,6 @@ namespace
         return S_OK;
     }
 
-
     //--- Cubic Filter ---
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wextra-semi-stmt"
@@ -492,15 +490,15 @@ namespace
         XMVECTOR* row2 = row0 + srcImage.width * 2;
         XMVECTOR* row3 = row0 + srcImage.width * 3;
 
-    #ifdef _DEBUG
-        memset(row0, 0xCD, sizeof(XMVECTOR)*srcImage.width);
-        memset(row1, 0xDD, sizeof(XMVECTOR)*srcImage.width);
-        memset(row2, 0xED, sizeof(XMVECTOR)*srcImage.width);
-        memset(row3, 0xFD, sizeof(XMVECTOR)*srcImage.width);
-    #endif
+#ifdef _DEBUG
+        memset(row0, 0xCD, sizeof(XMVECTOR) * srcImage.width);
+        memset(row1, 0xDD, sizeof(XMVECTOR) * srcImage.width);
+        memset(row2, 0xED, sizeof(XMVECTOR) * srcImage.width);
+        memset(row3, 0xFD, sizeof(XMVECTOR) * srcImage.width);
+#endif
 
-        const uint8_t* pSrc = srcImage.pixels;
-        uint8_t* pDest = destImage.pixels;
+        const uint8_t* pSrc  = srcImage.pixels;
+        uint8_t*       pDest = destImage.pixels;
 
         const size_t rowPitch = srcImage.rowPitch;
 
@@ -622,7 +620,6 @@ namespace
         return S_OK;
     }
 
-
     //--- Triangle Filter ---
     HRESULT ResizeTriangleFilter(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
     {
@@ -640,10 +637,10 @@ namespace
         if (!rowActive)
             return E_OUTOFMEMORY;
 
-        TriangleRow * rowFree = nullptr;
+        TriangleRow* rowFree = nullptr;
 
         std::unique_ptr<Filter> tfX;
-        HRESULT hr = CreateTriangleFilter(srcImage.width, destImage.width, (filter & TEX_FILTER_WRAP_U) != 0, tfX);
+        HRESULT                 hr = CreateTriangleFilter(srcImage.width, destImage.width, (filter & TEX_FILTER_WRAP_U) != 0, tfX);
         if (FAILED(hr))
             return hr;
 
@@ -654,15 +651,15 @@ namespace
 
         XMVECTOR* row = scanline.get();
 
-    #ifdef _DEBUG
-        memset(row, 0xCD, sizeof(XMVECTOR)*srcImage.width);
-    #endif
+#ifdef _DEBUG
+        memset(row, 0xCD, sizeof(XMVECTOR) * srcImage.width);
+#endif
 
         auto xFromEnd = reinterpret_cast<const FilterFrom*>(reinterpret_cast<const uint8_t*>(tfX.get()) + tfX->sizeInBytes);
         auto yFromEnd = reinterpret_cast<const FilterFrom*>(reinterpret_cast<const uint8_t*>(tfY.get()) + tfY->sizeInBytes);
 
         // Count times rows get written
-        for (FilterFrom* yFrom = tfY->from; yFrom < yFromEnd; )
+        for (FilterFrom* yFrom = tfY->from; yFrom < yFromEnd;)
         {
             for (size_t j = 0; j < yFrom->count; ++j)
             {
@@ -675,13 +672,13 @@ namespace
         }
 
         // Filter image
-        const uint8_t* pSrc = srcImage.pixels;
-        const size_t rowPitch = srcImage.rowPitch;
-        const uint8_t* pEndSrc = pSrc + rowPitch * srcImage.height;
+        const uint8_t* pSrc     = srcImage.pixels;
+        const size_t   rowPitch = srcImage.rowPitch;
+        const uint8_t* pEndSrc  = pSrc + rowPitch * srcImage.height;
 
         uint8_t* pDest = destImage.pixels;
 
-        for (FilterFrom* yFrom = tfY->from; yFrom < yFromEnd; )
+        for (FilterFrom* yFrom = tfY->from; yFrom < yFromEnd;)
         {
             // Create accumulation rows as needed
             for (size_t j = 0; j < yFrom->count; ++j)
@@ -768,31 +765,34 @@ namespace
                     switch (destImage.format)
                     {
                     case DXGI_FORMAT_R10G10B10A2_UNORM:
-                    case DXGI_FORMAT_R10G10B10A2_UINT:
+                    case DXGI_FORMAT_R10G10B10A2_UINT:  {
+                        // Need to slightly bias results for floating-point error accumulation which can
+                        // be visible with harshly quantized values
+                        static const XMVECTORF32 Bias = { { { 0.f, 0.f, 0.f, 0.1f } } };
+
+                        XMVECTOR* ptr = pAccSrc;
+                        for (size_t i = 0; i < destImage.width; ++i, ++ptr)
                         {
-                            // Need to slightly bias results for floating-point error accumulation which can
-                            // be visible with harshly quantized values
-                            static const XMVECTORF32 Bias = { { { 0.f, 0.f, 0.f, 0.1f } } };
-
-                            XMVECTOR* ptr = pAccSrc;
-                            for (size_t i = 0; i < destImage.width; ++i, ++ptr)
-                            {
-                                *ptr = XMVectorAdd(*ptr, Bias);
-                            }
+                            *ptr = XMVectorAdd(*ptr, Bias);
                         }
-                        break;
+                    }
+                    break;
 
-                    default:
-                        break;
+                    default: break;
                     }
 
                     // This performs any required clamping
-                    if (!StoreScanlineLinear(pDest + (destImage.rowPitch * v), destImage.rowPitch, destImage.format, pAccSrc, destImage.width, filter))
+                    if (!StoreScanlineLinear(pDest + (destImage.rowPitch * v),
+                            destImage.rowPitch,
+                            destImage.format,
+                            pAccSrc,
+                            destImage.width,
+                            filter))
                         return E_FAIL;
 
                     // Put row on freelist to reuse it's allocated scanline
                     rowAcc->next = rowFree;
-                    rowFree = rowAcc;
+                    rowFree      = rowAcc;
                 }
             }
 
@@ -801,7 +801,6 @@ namespace
 
         return S_OK;
     }
-
 
     //--- Custom filter resize ---
     HRESULT PerformResizeUsingCustomFilters(const Image& srcImage, TEX_FILTER_FLAGS filter, const Image& destImage) noexcept
@@ -815,33 +814,27 @@ namespace
         if (!filter_select)
         {
             // Default filter choice
-            filter_select = (((destImage.width << 1) == srcImage.width) && ((destImage.height << 1) == srcImage.height))
-                ? TEX_FILTER_BOX : TEX_FILTER_LINEAR;
+            filter_select = (((destImage.width << 1) == srcImage.width) && ((destImage.height << 1) == srcImage.height)) ?
+                                TEX_FILTER_BOX :
+                                TEX_FILTER_LINEAR;
         }
 
         switch (filter_select)
         {
-        case TEX_FILTER_POINT:
-            return ResizePointFilter(srcImage, destImage);
+        case TEX_FILTER_POINT:    return ResizePointFilter(srcImage, destImage);
 
-        case TEX_FILTER_BOX:
-            return ResizeBoxFilter(srcImage, filter, destImage);
+        case TEX_FILTER_BOX:      return ResizeBoxFilter(srcImage, filter, destImage);
 
-        case TEX_FILTER_LINEAR:
-            return ResizeLinearFilter(srcImage, filter, destImage);
+        case TEX_FILTER_LINEAR:   return ResizeLinearFilter(srcImage, filter, destImage);
 
-        case TEX_FILTER_CUBIC:
-            return ResizeCubicFilter(srcImage, filter, destImage);
+        case TEX_FILTER_CUBIC:    return ResizeCubicFilter(srcImage, filter, destImage);
 
-        case TEX_FILTER_TRIANGLE:
-            return ResizeTriangleFilter(srcImage, filter, destImage);
+        case TEX_FILTER_TRIANGLE: return ResizeTriangleFilter(srcImage, filter, destImage);
 
-        default:
-            return HRESULT_E_NOT_SUPPORTED;
+        default:                  return HRESULT_E_NOT_SUPPORTED;
         }
     }
-}
-
+} // namespace
 
 //=====================================================================================
 // Entry-points
@@ -850,13 +843,8 @@ namespace
 //-------------------------------------------------------------------------------------
 // Resize image
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::Resize(
-    const Image& srcImage,
-    size_t width,
-    size_t height,
-    TEX_FILTER_FLAGS filter,
-    ScratchImage& image) noexcept
+_Use_decl_annotations_ HRESULT
+DirectX::Resize(const Image& srcImage, size_t width, size_t height, TEX_FILTER_FLAGS filter, ScratchImage& image) noexcept
 {
     if (width == 0 || height == 0)
         return E_INVALIDARG;
@@ -880,12 +868,12 @@ HRESULT DirectX::Resize(
     bool usewic = UseWICFiltering(srcImage.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
-    const bool wicpf = (usewic) ? DXGIToWIC(srcImage.format, pfGUID, true) : false;
+    const bool         wicpf  = (usewic) ? DXGIToWIC(srcImage.format, pfGUID, true) : false;
 
     if (usewic && !wicpf)
     {
         // Check to see if the source and/or result size is too big for WIC
-        const uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
+        const uint64_t expandedSize  = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
         const uint64_t expandedSize2 = uint64_t(srcImage.width) * uint64_t(srcImage.height) * sizeof(float) * 4;
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
@@ -901,7 +889,7 @@ HRESULT DirectX::Resize(
     if (FAILED(hr))
         return hr;
 
-    const Image *rimage = image.GetImage(0, 0, 0);
+    const Image* rimage = image.GetImage(0, 0, 0);
     if (!rimage)
         return E_POINTER;
 
@@ -920,7 +908,7 @@ HRESULT DirectX::Resize(
         }
     }
     else
-    #endif
+#endif
     {
         // Case 3: not using WIC resizing
         hr = PerformResizeUsingCustomFilters(srcImage, filter, *rimage);
@@ -935,33 +923,28 @@ HRESULT DirectX::Resize(
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Resize image (complex)
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::Resize(
-    const Image* srcImages,
-    size_t nimages,
-    const TexMetadata& metadata,
-    size_t width,
-    size_t height,
-    TEX_FILTER_FLAGS filter,
-    ScratchImage& result) noexcept
+_Use_decl_annotations_ HRESULT DirectX::Resize(const Image* srcImages,
+    size_t                                                  nimages,
+    const TexMetadata&                                      metadata,
+    size_t                                                  width,
+    size_t                                                  height,
+    TEX_FILTER_FLAGS                                        filter,
+    ScratchImage&                                           result) noexcept
 {
     if (!srcImages || !nimages || width == 0 || height == 0)
         return E_INVALIDARG;
 
-    if ((width > UINT32_MAX) || (height > UINT32_MAX)
-        || (metadata.width > UINT32_MAX)
-        || (metadata.height > UINT32_MAX))
+    if ((width > UINT32_MAX) || (height > UINT32_MAX) || (metadata.width > UINT32_MAX) || (metadata.height > UINT32_MAX))
         return E_INVALIDARG;
 
     TexMetadata mdata2 = metadata;
-    mdata2.width = width;
-    mdata2.height = height;
-    mdata2.mipLevels = 1;
-    HRESULT hr = result.Initialize(mdata2);
+    mdata2.width       = width;
+    mdata2.height      = height;
+    mdata2.mipLevels   = 1;
+    HRESULT hr         = result.Initialize(mdata2);
     if (FAILED(hr))
         return hr;
 
@@ -969,12 +952,12 @@ HRESULT DirectX::Resize(
     bool usewic = !metadata.IsPMAlpha() && UseWICFiltering(metadata.format, filter);
 
     WICPixelFormatGUID pfGUID = {};
-    const bool wicpf = (usewic) ? DXGIToWIC(metadata.format, pfGUID, true) : false;
+    const bool         wicpf  = (usewic) ? DXGIToWIC(metadata.format, pfGUID, true) : false;
 
     if (usewic && !wicpf)
     {
         // Check to see if the source and/or result size is too big for WIC
-        const uint64_t expandedSize = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
+        const uint64_t expandedSize  = uint64_t(width) * uint64_t(height) * sizeof(float) * 4;
         const uint64_t expandedSize2 = uint64_t(metadata.width) * uint64_t(metadata.height) * sizeof(float) * 4;
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {
@@ -1001,7 +984,7 @@ HRESULT DirectX::Resize(
                 return E_FAIL;
             }
 
-            const Image* srcimg = &srcImages[srcIndex];
+            const Image* srcimg  = &srcImages[srcIndex];
             const Image* destimg = result.GetImage(0, item, 0);
             if (!srcimg || !destimg)
             {
@@ -1021,7 +1004,7 @@ HRESULT DirectX::Resize(
                 return E_FAIL;
             }
 
-        #ifdef _WIN32
+#ifdef _WIN32
             if (usewic)
             {
                 if (wicpf)
@@ -1036,7 +1019,7 @@ HRESULT DirectX::Resize(
                 }
             }
             else
-            #endif
+#endif
             {
                 // Case 3: not using WIC resizing
                 hr = PerformResizeUsingCustomFilters(*srcimg, filter, *destimg);
@@ -1062,7 +1045,7 @@ HRESULT DirectX::Resize(
                 return E_FAIL;
             }
 
-            const Image* srcimg = &srcImages[srcIndex];
+            const Image* srcimg  = &srcImages[srcIndex];
             const Image* destimg = result.GetImage(0, 0, slice);
             if (!srcimg || !destimg)
             {
@@ -1082,7 +1065,7 @@ HRESULT DirectX::Resize(
                 return E_FAIL;
             }
 
-        #ifdef _WIN32
+#ifdef _WIN32
             if (usewic)
             {
                 if (wicpf)
@@ -1097,7 +1080,7 @@ HRESULT DirectX::Resize(
                 }
             }
             else
-            #endif
+#endif
             {
                 // Case 3: not using WIC resizing
                 hr = PerformResizeUsingCustomFilters(*srcimg, filter, *destimg);
@@ -1111,9 +1094,7 @@ HRESULT DirectX::Resize(
         }
         break;
 
-    default:
-        result.Release();
-        return E_FAIL;
+    default: result.Release(); return E_FAIL;
     }
 
     return S_OK;

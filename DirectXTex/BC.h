@@ -23,9 +23,9 @@ namespace DirectX
 // Because these are used in SAL annotations, they need to remain macros rather than const values
 #define NUM_PIXELS_PER_BLOCK 16
 
-//-------------------------------------------------------------------------------------
-// Constants
-//-------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------
+    // Constants
+    //-------------------------------------------------------------------------------------
 
     enum BC_FLAGS : uint32_t
     {
@@ -59,43 +59,36 @@ namespace DirectX
 
     public:
         HDRColorA() = default;
-        HDRColorA(float _r, float _g, float _b, float _a) noexcept : r(_r), g(_g), b(_b), a(_a) {}
+        HDRColorA(float _r, float _g, float _b, float _a) noexcept
+            : r(_r),
+              g(_g),
+              b(_b),
+              a(_a)
+        {}
 
-        HDRColorA(HDRColorA const&) = default;
-        HDRColorA& operator= (const HDRColorA&) = default;
+        HDRColorA(HDRColorA const&)            = default;
+        HDRColorA& operator=(const HDRColorA&) = default;
 
-        HDRColorA(HDRColorA&&) = default;
-        HDRColorA& operator= (HDRColorA&&) = default;
+        HDRColorA(HDRColorA&&)            = default;
+        HDRColorA& operator=(HDRColorA&&) = default;
 
         // binary operators
-        HDRColorA operator + (const HDRColorA& c) const noexcept
-        {
-            return HDRColorA(r + c.r, g + c.g, b + c.b, a + c.a);
-        }
+        HDRColorA operator+(const HDRColorA& c) const noexcept { return HDRColorA(r + c.r, g + c.g, b + c.b, a + c.a); }
 
-        HDRColorA operator - (const HDRColorA& c) const noexcept
-        {
-            return HDRColorA(r - c.r, g - c.g, b - c.b, a - c.a);
-        }
+        HDRColorA operator-(const HDRColorA& c) const noexcept { return HDRColorA(r - c.r, g - c.g, b - c.b, a - c.a); }
 
-        HDRColorA operator * (float f) const noexcept
-        {
-            return HDRColorA(r * f, g * f, b * f, a * f);
-        }
+        HDRColorA operator*(float f) const noexcept { return HDRColorA(r * f, g * f, b * f, a * f); }
 
-        HDRColorA operator / (float f) const noexcept
+        HDRColorA operator/(float f) const noexcept
         {
             const float fInv = 1.0f / f;
             return HDRColorA(r * fInv, g * fInv, b * fInv, a * fInv);
         }
 
-        float operator * (const HDRColorA& c) const noexcept
-        {
-            return r * c.r + g * c.g + b * c.b + a * c.a;
-        }
+        float operator*(const HDRColorA& c) const noexcept { return r * c.r + g * c.g + b * c.b + a * c.a; }
 
         // assignment operators
-        HDRColorA& operator += (const HDRColorA& c) noexcept
+        HDRColorA& operator+=(const HDRColorA& c) noexcept
         {
             r += c.r;
             g += c.g;
@@ -104,7 +97,7 @@ namespace DirectX
             return *this;
         }
 
-        HDRColorA& operator -= (const HDRColorA& c) noexcept
+        HDRColorA& operator-=(const HDRColorA& c) noexcept
         {
             r -= c.r;
             g -= c.g;
@@ -113,7 +106,7 @@ namespace DirectX
             return *this;
         }
 
-        HDRColorA& operator *= (float f) noexcept
+        HDRColorA& operator*=(float f) noexcept
         {
             r *= f;
             g *= f;
@@ -122,7 +115,7 @@ namespace DirectX
             return *this;
         }
 
-        HDRColorA& operator /= (float f) noexcept
+        HDRColorA& operator/=(float f) noexcept
         {
             const float fInv = 1.0f / f;
             r *= fInv;
@@ -142,11 +135,11 @@ namespace DirectX
         }
 
         HDRColorA(const LDRColorA& c) noexcept;
-        HDRColorA& operator = (const LDRColorA& c) noexcept;
-        LDRColorA ToLDRColorA() const noexcept;
+        HDRColorA& operator=(const LDRColorA& c) noexcept;
+        LDRColorA  ToLDRColorA() const noexcept;
     };
 
-    inline HDRColorA* HDRColorALerp(_Out_ HDRColorA *pOut, _In_ const HDRColorA *pC1, _In_ const HDRColorA *pC2, _In_ float s) noexcept
+    inline HDRColorA* HDRColorALerp(_Out_ HDRColorA* pOut, _In_ const HDRColorA* pC1, _In_ const HDRColorA* pC2, _In_ float s) noexcept
     {
         pOut->r = pC1->r + s * (pC2->r - pC1->r);
         pOut->g = pC1->g + s * (pC2->g - pC1->g);
@@ -155,27 +148,27 @@ namespace DirectX
         return pOut;
     }
 
-#pragma pack(push,1)
-// BC1/DXT1 compression (4 bits per texel)
+#pragma pack(push, 1)
+    // BC1/DXT1 compression (4 bits per texel)
     struct D3DX_BC1
     {
-        uint16_t    rgb[2]; // 565 colors
-        uint32_t    bitmap; // 2bpp rgb bitmap
+        uint16_t rgb[2]; // 565 colors
+        uint32_t bitmap; // 2bpp rgb bitmap
     };
 
     // BC2/DXT2/3 compression (8 bits per texel)
     struct D3DX_BC2
     {
-        uint32_t    bitmap[2];  // 4bpp alpha bitmap
-        D3DX_BC1    bc1;        // BC1 rgb data
+        uint32_t bitmap[2]; // 4bpp alpha bitmap
+        D3DX_BC1 bc1;       // BC1 rgb data
     };
 
     // BC3/DXT4/5 compression (8 bits per texel)
     struct D3DX_BC3
     {
-        uint8_t     alpha[2];   // alpha values
-        uint8_t     bitmap[6];  // 3bpp alpha bitmap
-        D3DX_BC1    bc1;        // BC1 rgb data
+        uint8_t  alpha[2];  // alpha values
+        uint8_t  bitmap[6]; // 3bpp alpha bitmap
+        D3DX_BC1 bc1;       // BC1 rgb data
     };
 #pragma pack(pop)
 
@@ -184,15 +177,18 @@ namespace DirectX
 //-------------------------------------------------------------------------------------
 #pragma warning(push)
 #pragma warning(disable : 4127)
-    template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPoints, uint32_t cSteps) noexcept
+    template<bool bRange>
+    void OptimizeAlpha(float* pX, float* pY, const float* pPoints, uint32_t cSteps) noexcept
     {
         static const float pC6[] = { 5.0f / 5.0f, 4.0f / 5.0f, 3.0f / 5.0f, 2.0f / 5.0f, 1.0f / 5.0f, 0.0f / 5.0f };
         static const float pD6[] = { 0.0f / 5.0f, 1.0f / 5.0f, 2.0f / 5.0f, 3.0f / 5.0f, 4.0f / 5.0f, 5.0f / 5.0f };
-        static const float pC8[] = { 7.0f / 7.0f, 6.0f / 7.0f, 5.0f / 7.0f, 4.0f / 7.0f, 3.0f / 7.0f, 2.0f / 7.0f, 1.0f / 7.0f, 0.0f / 7.0f };
-        static const float pD8[] = { 0.0f / 7.0f, 1.0f / 7.0f, 2.0f / 7.0f, 3.0f / 7.0f, 4.0f / 7.0f, 5.0f / 7.0f, 6.0f / 7.0f, 7.0f / 7.0f };
+        static const float pC8[]
+            = { 7.0f / 7.0f, 6.0f / 7.0f, 5.0f / 7.0f, 4.0f / 7.0f, 3.0f / 7.0f, 2.0f / 7.0f, 1.0f / 7.0f, 0.0f / 7.0f };
+        static const float pD8[]
+            = { 0.0f / 7.0f, 1.0f / 7.0f, 2.0f / 7.0f, 3.0f / 7.0f, 4.0f / 7.0f, 5.0f / 7.0f, 6.0f / 7.0f, 7.0f / 7.0f };
 
-        const float *pC = (6 == cSteps) ? pC6 : pC8;
-        const float *pD = (6 == cSteps) ? pD6 : pD8;
+        const float* pC = (6 == cSteps) ? pC6 : pC8;
+        const float* pD = (6 == cSteps) ? pD6 : pD8;
 
         constexpr float MAX_VALUE = 1.0f;
         constexpr float MIN_VALUE = (bRange) ? -1.0f : 0.0f;
@@ -252,8 +248,8 @@ namespace DirectX
             }
 
             // Evaluate function, and derivatives
-            float dX = 0.0f;
-            float dY = 0.0f;
+            float dX  = 0.0f;
+            float dY  = 0.0f;
             float d2X = 0.0f;
             float d2Y = 0.0f;
 
@@ -299,7 +295,9 @@ namespace DirectX
 
             if (fX > fY)
             {
-                const float f = fX; fX = fY; fY = f;
+                const float f = fX;
+                fX            = fY;
+                fY            = f;
             }
 
             if ((dX * dX < (1.0f / 64.0f)) && (dY * dY < (1.0f / 64.0f)))
@@ -311,35 +309,47 @@ namespace DirectX
     }
 #pragma warning(pop)
 
-//-------------------------------------------------------------------------------------
-// Functions
-//-------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------
+    // Functions
+    //-------------------------------------------------------------------------------------
 
-    typedef void (*BC_DECODE)(XMVECTOR *pColor, const uint8_t *pBC);
-    typedef void (*BC_ENCODE)(uint8_t *pDXT, const XMVECTOR *pColor, uint32_t flags);
+    typedef void (*BC_DECODE)(XMVECTOR* pColor, const uint8_t* pBC);
+    typedef void (*BC_ENCODE)(uint8_t* pDXT, const XMVECTOR* pColor, uint32_t flags);
 
-    void D3DXDecodeBC1(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(8) const uint8_t *pBC) noexcept;
-    void D3DXDecodeBC2(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
-    void D3DXDecodeBC3(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
-    void D3DXDecodeBC4U(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(8) const uint8_t *pBC) noexcept;
-    void D3DXDecodeBC4S(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(8) const uint8_t *pBC) noexcept;
-    void D3DXDecodeBC5U(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
-    void D3DXDecodeBC5S(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
-    void D3DXDecodeBC6HU(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
-    void D3DXDecodeBC6HS(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
-    void D3DXDecodeBC7(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR *pColor, _In_reads_(16) const uint8_t *pBC) noexcept;
+    void D3DXDecodeBC1(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR* pColor, _In_reads_(8) const uint8_t* pBC) noexcept;
+    void D3DXDecodeBC2(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR* pColor, _In_reads_(16) const uint8_t* pBC) noexcept;
+    void D3DXDecodeBC3(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR* pColor, _In_reads_(16) const uint8_t* pBC) noexcept;
+    void D3DXDecodeBC4U(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR* pColor, _In_reads_(8) const uint8_t* pBC) noexcept;
+    void D3DXDecodeBC4S(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR* pColor, _In_reads_(8) const uint8_t* pBC) noexcept;
+    void D3DXDecodeBC5U(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR* pColor, _In_reads_(16) const uint8_t* pBC) noexcept;
+    void D3DXDecodeBC5S(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR* pColor, _In_reads_(16) const uint8_t* pBC) noexcept;
+    void D3DXDecodeBC6HU(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR* pColor, _In_reads_(16) const uint8_t* pBC) noexcept;
+    void D3DXDecodeBC6HS(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR* pColor, _In_reads_(16) const uint8_t* pBC) noexcept;
+    void D3DXDecodeBC7(_Out_writes_(NUM_PIXELS_PER_BLOCK) XMVECTOR* pColor, _In_reads_(16) const uint8_t* pBC) noexcept;
 
-    void D3DXEncodeBC1(_Out_writes_(8) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ float threshold, _In_ uint32_t flags) noexcept;
-        // BC1 requires one additional parameter, so it doesn't match signature of BC_ENCODE above
+    void D3DXEncodeBC1(_Out_writes_(8) uint8_t*          pBC,
+        _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR* pColor,
+        _In_ float                                       threshold,
+        _In_ uint32_t                                    flags) noexcept;
+    // BC1 requires one additional parameter, so it doesn't match signature of BC_ENCODE above
 
-    void D3DXEncodeBC2(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ uint32_t flags) noexcept;
-    void D3DXEncodeBC3(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ uint32_t flags) noexcept;
-    void D3DXEncodeBC4U(_Out_writes_(8) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ uint32_t flags) noexcept;
-    void D3DXEncodeBC4S(_Out_writes_(8) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ uint32_t flags) noexcept;
-    void D3DXEncodeBC5U(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ uint32_t flags) noexcept;
-    void D3DXEncodeBC5S(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ uint32_t flags) noexcept;
-    void D3DXEncodeBC6HU(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ uint32_t flags) noexcept;
-    void D3DXEncodeBC6HS(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ uint32_t flags) noexcept;
-    void D3DXEncodeBC7(_Out_writes_(16) uint8_t *pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR *pColor, _In_ uint32_t flags) noexcept;
+    void
+    D3DXEncodeBC2(_Out_writes_(16) uint8_t* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR* pColor, _In_ uint32_t flags) noexcept;
+    void
+    D3DXEncodeBC3(_Out_writes_(16) uint8_t* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR* pColor, _In_ uint32_t flags) noexcept;
+    void
+    D3DXEncodeBC4U(_Out_writes_(8) uint8_t* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR* pColor, _In_ uint32_t flags) noexcept;
+    void
+    D3DXEncodeBC4S(_Out_writes_(8) uint8_t* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR* pColor, _In_ uint32_t flags) noexcept;
+    void
+    D3DXEncodeBC5U(_Out_writes_(16) uint8_t* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR* pColor, _In_ uint32_t flags) noexcept;
+    void
+    D3DXEncodeBC5S(_Out_writes_(16) uint8_t* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR* pColor, _In_ uint32_t flags) noexcept;
+    void
+    D3DXEncodeBC6HU(_Out_writes_(16) uint8_t* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR* pColor, _In_ uint32_t flags) noexcept;
+    void
+    D3DXEncodeBC6HS(_Out_writes_(16) uint8_t* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR* pColor, _In_ uint32_t flags) noexcept;
+    void
+    D3DXEncodeBC7(_Out_writes_(16) uint8_t* pBC, _In_reads_(NUM_PIXELS_PER_BLOCK) const XMVECTOR* pColor, _In_ uint32_t flags) noexcept;
 
-} // namespace
+} // namespace DirectX

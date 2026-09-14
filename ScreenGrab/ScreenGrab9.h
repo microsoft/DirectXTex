@@ -31,17 +31,13 @@
 
 #include <functional>
 
-
 namespace DirectX
 {
-    HRESULT __cdecl SaveDDSTextureToFile(
-        _In_ LPDIRECT3DSURFACE9 pSource,
-        _In_z_ const wchar_t* fileName) noexcept;
+    HRESULT __cdecl SaveDDSTextureToFile(_In_ LPDIRECT3DSURFACE9 pSource, _In_z_ const wchar_t* fileName) noexcept;
 
-    HRESULT __cdecl SaveWICTextureToFile(
-        _In_ LPDIRECT3DSURFACE9 pSource,
-        _In_ REFGUID guidContainerFormat,
-        _In_z_ const wchar_t* fileName,
-        _In_opt_ const GUID* targetFormat = nullptr,
-        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps = nullptr);
-}
+    HRESULT __cdecl SaveWICTextureToFile(_In_ LPDIRECT3DSURFACE9 pSource,
+        _In_ REFGUID                                             guidContainerFormat,
+        _In_z_ const wchar_t*                                    fileName,
+        _In_opt_ const GUID*                                     targetFormat = nullptr,
+        _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps       = nullptr);
+} // namespace DirectX

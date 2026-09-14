@@ -22,22 +22,22 @@ namespace
     //-------------------------------------------------------------------------------------
     struct WICConvert
     {
-        const GUID&     source;
-        const GUID&     target;
-        TEX_ALPHA_MODE  alphaMode;
+        const GUID&    source;
+        const GUID&    target;
+        TEX_ALPHA_MODE alphaMode;
 
-        constexpr WICConvert(const GUID& src, const GUID& tgt, TEX_ALPHA_MODE mode) noexcept :
-            source(src),
-            target(tgt),
-            alphaMode(mode)
+        constexpr WICConvert(const GUID& src, const GUID& tgt, TEX_ALPHA_MODE mode) noexcept
+            : source(src),
+              target(tgt),
+              alphaMode(mode)
         {}
     };
 
-    constexpr WICConvert g_WICConvert[] =
-    {
+    constexpr WICConvert g_WICConvert[] = {
         // Directly support the formats listed in XnaTexUtil::g_WICFormats, so no conversion required
         // Note target GUID in this conversion table must be one of those directly supported formats.
 
+        // clang-format off
         { GUID_WICPixelFormat1bppIndexed,           GUID_WICPixelFormat32bppRGBA, TEX_ALPHA_MODE_UNKNOWN }, // DXGI_FORMAT_R8G8B8A8_UNORM
         { GUID_WICPixelFormat2bppIndexed,           GUID_WICPixelFormat32bppRGBA, TEX_ALPHA_MODE_UNKNOWN }, // DXGI_FORMAT_R8G8B8A8_UNORM
         { GUID_WICPixelFormat4bppIndexed,           GUID_WICPixelFormat32bppRGBA, TEX_ALPHA_MODE_UNKNOWN }, // DXGI_FORMAT_R8G8B8A8_UNORM
@@ -87,17 +87,17 @@ namespace
         { GUID_WICPixelFormat64bppPRGBAHalf,        GUID_WICPixelFormat64bppRGBAHalf, TEX_ALPHA_MODE_UNKNOWN }, // DXGI_FORMAT_R16G16B16A16_FLOAT
 
         // We don't support n-channel formats
+        // clang-format on
     };
 
     //-------------------------------------------------------------------------------------
     // Returns the DXGI format and optionally the WIC pixel GUID to convert to
     //-------------------------------------------------------------------------------------
-    DXGI_FORMAT DetermineFormat(
-        _In_ const WICPixelFormatGUID& pixelFormat,
-        WIC_FLAGS flags,
-        bool iswic2,
-        _Out_opt_ WICPixelFormatGUID* pConvert,
-        _Out_ TEX_ALPHA_MODE* alphaMode) noexcept
+    DXGI_FORMAT DetermineFormat(_In_ const WICPixelFormatGUID& pixelFormat,
+        WIC_FLAGS                                              flags,
+        bool                                                   iswic2,
+        _Out_opt_ WICPixelFormatGUID*                          pConvert,
+        _Out_ TEX_ALPHA_MODE*                                  alphaMode) noexcept
     {
         if (pConvert)
             memset(pConvert, 0, sizeof(WICPixelFormatGUID));
@@ -120,7 +120,7 @@ namespace
                 {
                     if (pConvert)
                         memcpy_s(pConvert, sizeof(WICPixelFormatGUID), &GUID_WICPixelFormat128bppRGBAFloat, sizeof(GUID));
-                    format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+                    format     = DXGI_FORMAT_R32G32B32A32_FLOAT;
                     *alphaMode = TEX_ALPHA_MODE_OPAQUE;
                 }
             }
@@ -145,8 +145,8 @@ namespace
         // Handle special cases based on flags
         switch (format)
         {
-        case DXGI_FORMAT_B8G8R8A8_UNORM:    // BGRA
-        case DXGI_FORMAT_B8G8R8X8_UNORM:    // BGRX
+        case DXGI_FORMAT_B8G8R8A8_UNORM: // BGRA
+        case DXGI_FORMAT_B8G8R8X8_UNORM: // BGRX
             if (flags & WIC_FLAGS_FORCE_RGB)
             {
                 format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -184,24 +184,22 @@ namespace
             }
             break;
 
-        default:
-            break;
+        default: break;
         }
 
         return format;
     }
-
 
     //-------------------------------------------------------------------------------------
     // IStream over a Blob for WIC in-memory write functions
     //-------------------------------------------------------------------------------------
     class MemoryStreamOnBlob : public IStream
     {
-        MemoryStreamOnBlob(Blob& blob) noexcept :
-            mBlob(blob),
-            m_streamPosition(0),
-            m_streamEOF(0),
-            mRefCount(1)
+        MemoryStreamOnBlob(Blob& blob) noexcept
+            : mBlob(blob),
+              m_streamPosition(0),
+              m_streamEOF(0),
+              mRefCount(1)
         {
             assert(mBlob.GetConstBufferPointer() && mBlob.GetBufferSize() > 0);
         }
@@ -209,18 +207,16 @@ namespace
     public:
         virtual ~MemoryStreamOnBlob() = default;
 
-        MemoryStreamOnBlob(MemoryStreamOnBlob&&) = delete;
-        MemoryStreamOnBlob& operator= (MemoryStreamOnBlob&&) = delete;
+        MemoryStreamOnBlob(MemoryStreamOnBlob&&)            = delete;
+        MemoryStreamOnBlob& operator=(MemoryStreamOnBlob&&) = delete;
 
-        MemoryStreamOnBlob(MemoryStreamOnBlob const&) = delete;
-        MemoryStreamOnBlob& operator= (MemoryStreamOnBlob const&) = delete;
+        MemoryStreamOnBlob(MemoryStreamOnBlob const&)            = delete;
+        MemoryStreamOnBlob& operator=(MemoryStreamOnBlob const&) = delete;
 
         // IUnknown
         HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** ppvObject) override
         {
-            if (iid == __uuidof(IUnknown)
-                || iid == __uuidof(IStream)
-                || iid == __uuidof(ISequentialStream))
+            if (iid == __uuidof(IUnknown) || iid == __uuidof(IStream) || iid == __uuidof(ISequentialStream))
             {
                 *ppvObject = static_cast<IStream*>(this);
                 AddRef();
@@ -230,10 +226,7 @@ namespace
                 return E_NOINTERFACE;
         }
 
-        ULONG STDMETHODCALLTYPE AddRef() override
-        {
-            return InterlockedIncrement(&mRefCount);
-        }
+        ULONG STDMETHODCALLTYPE AddRef() override { return InterlockedIncrement(&mRefCount); }
 
         ULONG STDMETHODCALLTYPE Release() override
         {
@@ -249,7 +242,7 @@ namespace
         HRESULT STDMETHODCALLTYPE Read(void* pv, ULONG cb, ULONG* pcbRead) override
         {
             size_t maxRead = m_streamEOF - m_streamPosition;
-            auto ptr = mBlob.GetBufferPointer();
+            auto   ptr     = mBlob.GetBufferPointer();
             if (cb > maxRead)
             {
                 const uint64_t pos = uint64_t(m_streamPosition) + uint64_t(maxRead);
@@ -286,9 +279,9 @@ namespace
 
         HRESULT STDMETHODCALLTYPE Write(void const* pv, ULONG cb, ULONG* pcbWritten) override
         {
-            const size_t blobSize = mBlob.GetBufferSize();
+            const size_t blobSize       = mBlob.GetBufferSize();
             const size_t spaceAvailable = blobSize - m_streamPosition;
-            size_t growAmount = cb;
+            size_t       growAmount     = cb;
 
             if (spaceAvailable > 0)
             {
@@ -304,9 +297,9 @@ namespace
 
             if (growAmount > 0)
             {
-                uint64_t newSize = uint64_t(blobSize);
+                uint64_t       newSize    = uint64_t(blobSize);
                 const uint64_t targetSize = uint64_t(blobSize) + growAmount;
-                HRESULT hr = ComputeGrowSize(newSize, targetSize);
+                HRESULT        hr         = ComputeGrowSize(newSize, targetSize);
                 if (FAILED(hr))
                     return hr;
 
@@ -323,7 +316,7 @@ namespace
             memcpy(&ptr[m_streamPosition], pv, cb);
 
             m_streamPosition = static_cast<size_t>(pos);
-            m_streamEOF = std::max(m_streamEOF, m_streamPosition);
+            m_streamEOF      = std::max(m_streamEOF, m_streamPosition);
 
             if (pcbWritten)
             {
@@ -352,9 +345,9 @@ namespace
             }
             else
             {
-                uint64_t newSize = uint64_t(blobSize);
+                uint64_t       newSize    = uint64_t(blobSize);
                 const uint64_t targetSize = uint64_t(size.QuadPart);
-                HRESULT hr = ComputeGrowSize(newSize, targetSize);
+                HRESULT        hr         = ComputeGrowSize(newSize, targetSize);
                 if (FAILED(hr))
                     return hr;
 
@@ -379,35 +372,17 @@ namespace
             return S_OK;
         }
 
-        HRESULT STDMETHODCALLTYPE CopyTo(IStream*, ULARGE_INTEGER, ULARGE_INTEGER*, ULARGE_INTEGER*) override
-        {
-            return E_NOTIMPL;
-        }
+        HRESULT STDMETHODCALLTYPE CopyTo(IStream*, ULARGE_INTEGER, ULARGE_INTEGER*, ULARGE_INTEGER*) override { return E_NOTIMPL; }
 
-        HRESULT STDMETHODCALLTYPE Commit(DWORD) override
-        {
-            return E_NOTIMPL;
-        }
+        HRESULT STDMETHODCALLTYPE Commit(DWORD) override { return E_NOTIMPL; }
 
-        HRESULT STDMETHODCALLTYPE Revert() override
-        {
-            return E_NOTIMPL;
-        }
+        HRESULT STDMETHODCALLTYPE Revert() override { return E_NOTIMPL; }
 
-        HRESULT STDMETHODCALLTYPE LockRegion(ULARGE_INTEGER, ULARGE_INTEGER, DWORD) override
-        {
-            return E_NOTIMPL;
-        }
+        HRESULT STDMETHODCALLTYPE LockRegion(ULARGE_INTEGER, ULARGE_INTEGER, DWORD) override { return E_NOTIMPL; }
 
-        HRESULT STDMETHODCALLTYPE UnlockRegion(ULARGE_INTEGER, ULARGE_INTEGER, DWORD) override
-        {
-            return E_NOTIMPL;
-        }
+        HRESULT STDMETHODCALLTYPE UnlockRegion(ULARGE_INTEGER, ULARGE_INTEGER, DWORD) override { return E_NOTIMPL; }
 
-        HRESULT STDMETHODCALLTYPE Clone(IStream**) override
-        {
-            return E_NOTIMPL;
-        }
+        HRESULT STDMETHODCALLTYPE Clone(IStream**) override { return E_NOTIMPL; }
 
         HRESULT STDMETHODCALLTYPE Seek(LARGE_INTEGER liDistanceToMove, DWORD dwOrigin, ULARGE_INTEGER* lpNewFilePointer) override
         {
@@ -415,20 +390,13 @@ namespace
 
             switch (dwOrigin)
             {
-            case STREAM_SEEK_SET:
-                newPosition = liDistanceToMove.QuadPart;
-                break;
+            case STREAM_SEEK_SET: newPosition = liDistanceToMove.QuadPart; break;
 
-            case STREAM_SEEK_CUR:
-                newPosition = static_cast<LONGLONG>(m_streamPosition) + liDistanceToMove.QuadPart;
-                break;
+            case STREAM_SEEK_CUR: newPosition = static_cast<LONGLONG>(m_streamPosition) + liDistanceToMove.QuadPart; break;
 
-            case STREAM_SEEK_END:
-                newPosition = static_cast<LONGLONG>(m_streamEOF) + liDistanceToMove.QuadPart;
-                break;
+            case STREAM_SEEK_END: newPosition = static_cast<LONGLONG>(m_streamEOF) + liDistanceToMove.QuadPart; break;
 
-            default:
-                return STG_E_INVALIDFUNCTION;
+            default:              return STG_E_INVALIDFUNCTION;
             }
 
             HRESULT result = S_OK;
@@ -436,12 +404,12 @@ namespace
             if (newPosition > static_cast<LONGLONG>(m_streamEOF))
             {
                 m_streamPosition = m_streamEOF;
-                result = E_BOUNDS;
+                result           = E_BOUNDS;
             }
             else if (newPosition < 0)
             {
                 m_streamPosition = 0;
-                result = E_BOUNDS;
+                result           = E_BOUNDS;
             }
             else
             {
@@ -489,10 +457,10 @@ namespace
         }
 
     private:
-        Blob& mBlob;
+        Blob&  mBlob;
         size_t m_streamPosition;
         size_t m_streamEOF;
-        ULONG mRefCount;
+        ULONG  mRefCount;
 
         static HRESULT ComputeGrowSize(uint64_t& newSize, const uint64_t targetSize) noexcept
         {
@@ -518,12 +486,11 @@ namespace
     //-------------------------------------------------------------------------------------
     // Determines metadata for image
     //-------------------------------------------------------------------------------------
-    HRESULT DecodeMetadata(
-        WIC_FLAGS flags,
-        bool iswic2,
-        _In_ IWICBitmapDecoder *decoder,
-        _In_ IWICBitmapFrameDecode *frame,
-        _Out_ TexMetadata& metadata,
+    HRESULT DecodeMetadata(WIC_FLAGS  flags,
+        bool                          iswic2,
+        _In_ IWICBitmapDecoder*       decoder,
+        _In_ IWICBitmapFrameDecode*   frame,
+        _Out_ TexMetadata&            metadata,
         _Out_opt_ WICPixelFormatGUID* pConvert,
         _In_ std::function<void(IWICMetadataQueryReader*)> getMQR)
     {
@@ -531,16 +498,16 @@ namespace
             return E_POINTER;
 
         memset(&metadata, 0, sizeof(TexMetadata));
-        metadata.depth = 1;
+        metadata.depth     = 1;
         metadata.mipLevels = 1;
         metadata.dimension = TEX_DIMENSION_TEXTURE2D;
 
-        UINT w, h;
+        UINT    w, h;
         HRESULT hr = frame->GetSize(&w, &h);
         if (FAILED(hr))
             return hr;
 
-        metadata.width = w;
+        metadata.width  = w;
         metadata.height = h;
 
         if (flags & WIC_FLAGS_ALL_FRAMES)
@@ -600,7 +567,7 @@ namespace
                         sRGB = (flags & WIC_FLAGS_DEFAULT_SRGB) != 0;
                     }
                 }
-            #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
                 else if (memcmp(&containerFormat, &GUID_ContainerFormatJpeg, sizeof(GUID)) == 0)
                 {
                     if (SUCCEEDED(metareader->GetMetadataByName(L"/app1/ifd/exif/{ushort=40961}", &value)) && value.vt == VT_UI2)
@@ -623,7 +590,7 @@ namespace
                         sRGB = (flags & WIC_FLAGS_DEFAULT_SRGB) != 0;
                     }
                 }
-            #else
+#else
                 else if (SUCCEEDED(metareader->GetMetadataByName(L"System.Image.ColorSpace", &value)) && value.vt == VT_UI2)
                 {
                     sRGB = (value.uiVal == 1);
@@ -632,7 +599,7 @@ namespace
                 {
                     sRGB = (flags & WIC_FLAGS_DEFAULT_SRGB) != 0;
                 }
-            #endif
+#endif
 
                 std::ignore = PropVariantClear(&value);
 
@@ -658,16 +625,14 @@ namespace
         return hr;
     }
 
-
     //-------------------------------------------------------------------------------------
     // Decodes a single frame
     //-------------------------------------------------------------------------------------
-    HRESULT DecodeSingleFrame(
-        WIC_FLAGS flags,
-        const TexMetadata& metadata,
-        const WICPixelFormatGUID& convertGUID,
-        _In_ IWICBitmapFrameDecode *frame,
-        _Inout_ ScratchImage& image)
+    HRESULT DecodeSingleFrame(WIC_FLAGS flags,
+        const TexMetadata&              metadata,
+        const WICPixelFormatGUID&       convertGUID,
+        _In_ IWICBitmapFrameDecode*     frame,
+        _Inout_ ScratchImage&           image)
     {
         if (!frame)
             return E_POINTER;
@@ -676,12 +641,12 @@ namespace
         if (FAILED(hr))
             return hr;
 
-        const Image *img = image.GetImage(0, 0, 0);
+        const Image* img = image.GetImage(0, 0, 0);
         if (!img)
             return E_POINTER;
 
         bool iswic2 = false;
-        auto pWIC = GetWICFactory(iswic2);
+        auto pWIC   = GetWICFactory(iswic2);
         if (!pWIC)
             return E_NOINTERFACE;
 
@@ -707,14 +672,13 @@ namespace
                 return hr;
 
             BOOL canConvert = FALSE;
-            hr = FC->CanConvert(pixelFormat, convertGUID, &canConvert);
+            hr              = FC->CanConvert(pixelFormat, convertGUID, &canConvert);
             if (FAILED(hr) || !canConvert)
             {
                 return E_UNEXPECTED;
             }
 
-            hr = FC->Initialize(frame, convertGUID, GetWICDither(flags), nullptr,
-                0, WICBitmapPaletteTypeMedianCut);
+            hr = FC->Initialize(frame, convertGUID, GetWICDither(flags), nullptr, 0, WICBitmapPaletteTypeMedianCut);
             if (FAILED(hr))
                 return hr;
 
@@ -726,15 +690,10 @@ namespace
         return S_OK;
     }
 
-
     //-------------------------------------------------------------------------------------
     // Decodes an image array, resizing/format converting as needed
     //-------------------------------------------------------------------------------------
-    HRESULT DecodeMultiframe(
-        WIC_FLAGS flags,
-        const TexMetadata& metadata,
-        _In_ IWICBitmapDecoder *decoder,
-        _Inout_ ScratchImage& image)
+    HRESULT DecodeMultiframe(WIC_FLAGS flags, const TexMetadata& metadata, _In_ IWICBitmapDecoder* decoder, _Inout_ ScratchImage& image)
     {
         if (!decoder)
             return E_POINTER;
@@ -744,7 +703,7 @@ namespace
             return hr;
 
         bool iswic2 = false;
-        auto pWIC = GetWICFactory(iswic2);
+        auto pWIC   = GetWICFactory(iswic2);
         if (!pWIC)
             return E_NOINTERFACE;
 
@@ -793,14 +752,13 @@ namespace
                         return hr;
 
                     BOOL canConvert = FALSE;
-                    hr = FC->CanConvert(pfGuid, sourceGUID, &canConvert);
+                    hr              = FC->CanConvert(pfGuid, sourceGUID, &canConvert);
                     if (FAILED(hr) || !canConvert)
                     {
                         return E_UNEXPECTED;
                     }
 
-                    hr = FC->Initialize(frame.Get(), sourceGUID, GetWICDither(flags), nullptr,
-                        0, WICBitmapPaletteTypeMedianCut);
+                    hr = FC->Initialize(frame.Get(), sourceGUID, GetWICDither(flags), nullptr, 0, WICBitmapPaletteTypeMedianCut);
                     if (FAILED(hr))
                         return hr;
 
@@ -818,7 +776,8 @@ namespace
                     return hr;
 
                 hr = scaler->Initialize(frame.Get(),
-                    static_cast<UINT>(metadata.width), static_cast<UINT>(metadata.height),
+                    static_cast<UINT>(metadata.width),
+                    static_cast<UINT>(metadata.height),
                     GetWICInterp(flags));
                 if (FAILED(hr))
                     return hr;
@@ -844,14 +803,13 @@ namespace
                         return hr;
 
                     BOOL canConvert = FALSE;
-                    hr = FC->CanConvert(pfScaler, sourceGUID, &canConvert);
+                    hr              = FC->CanConvert(pfScaler, sourceGUID, &canConvert);
                     if (FAILED(hr) || !canConvert)
                     {
                         return E_UNEXPECTED;
                     }
 
-                    hr = FC->Initialize(scaler.Get(), sourceGUID, GetWICDither(flags), nullptr,
-                        0, WICBitmapPaletteTypeMedianCut);
+                    hr = FC->Initialize(scaler.Get(), sourceGUID, GetWICDither(flags), nullptr, 0, WICBitmapPaletteTypeMedianCut);
                     if (FAILED(hr))
                         return hr;
 
@@ -865,21 +823,16 @@ namespace
         return S_OK;
     }
 
-
     //-------------------------------------------------------------------------------------
     // Encodes image metadata
     //-------------------------------------------------------------------------------------
-    HRESULT EncodeMetadata(
-        WIC_FLAGS flags,
-        _In_ IWICBitmapFrameEncode* frame,
-        const GUID& containerFormat,
-        DXGI_FORMAT format)
+    HRESULT EncodeMetadata(WIC_FLAGS flags, _In_ IWICBitmapFrameEncode* frame, const GUID& containerFormat, DXGI_FORMAT format)
     {
         if (!frame)
             return E_POINTER;
 
         ComPtr<IWICMetadataQueryWriter> metawriter;
-        HRESULT hr = frame->GetMetadataQueryWriter(metawriter.GetAddressOf());
+        HRESULT                         hr = frame->GetMetadataQueryWriter(metawriter.GetAddressOf());
         if (SUCCEEDED(hr))
         {
             PROPVARIANT value;
@@ -887,7 +840,7 @@ namespace
 
             const bool sRGB = ((flags & WIC_FLAGS_FORCE_LINEAR) == 0) && ((flags & WIC_FLAGS_FORCE_SRGB) != 0 || IsSRGB(format));
 
-            value.vt = VT_LPSTR;
+            value.vt     = VT_LPSTR;
             value.pszVal = const_cast<char*>("DirectXTex");
 
             if (memcmp(&containerFormat, &GUID_ContainerFormatPng, sizeof(GUID)) == 0)
@@ -898,22 +851,22 @@ namespace
                 // Set sRGB chunk
                 if (sRGB)
                 {
-                    value.vt = VT_UI1;
-                    value.bVal = 0;
+                    value.vt    = VT_UI1;
+                    value.bVal  = 0;
                     std::ignore = metawriter->SetMetadataByName(L"/sRGB/RenderingIntent", &value);
                 }
                 else
                 {
                     // add gAMA chunk with gamma 1.0
-                    value.vt = VT_UI4;
+                    value.vt      = VT_UI4;
                     value.uintVal = 100000; // gama value * 100,000 -- i.e. gamma 1.0
-                    std::ignore = metawriter->SetMetadataByName(L"/gAMA/ImageGamma", &value);
+                    std::ignore   = metawriter->SetMetadataByName(L"/gAMA/ImageGamma", &value);
 
                     // remove sRGB chunk which is added by default.
                     std::ignore = metawriter->RemoveMetadataByName(L"/sRGB/RenderingIntent");
                 }
             }
-        #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+#if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
             else if (memcmp(&containerFormat, &GUID_ContainerFormatJpeg, sizeof(GUID)) == 0)
             {
                 // Set Software name
@@ -922,7 +875,7 @@ namespace
                 if (sRGB)
                 {
                     // Set EXIF Colorspace of sRGB
-                    value.vt = VT_UI2;
+                    value.vt    = VT_UI2;
                     value.uiVal = 1;
                     std::ignore = metawriter->SetMetadataByName(L"/app1/ifd/exif/{ushort=40961}", &value);
                 }
@@ -935,12 +888,12 @@ namespace
                 if (sRGB)
                 {
                     // Set EXIF Colorspace of sRGB
-                    value.vt = VT_UI2;
+                    value.vt    = VT_UI2;
                     value.uiVal = 1;
                     std::ignore = metawriter->SetMetadataByName(L"/ifd/exif/{ushort=40961}", &value);
                 }
             }
-        #else
+#else
             else
             {
                 // Set Software name
@@ -949,12 +902,12 @@ namespace
                 if (sRGB)
                 {
                     // Set EXIF Colorspace of sRGB
-                    value.vt = VT_UI2;
+                    value.vt    = VT_UI2;
                     value.uiVal = 1;
                     std::ignore = metawriter->SetMetadataByName(L"System.Image.ColorSpace", &value);
                 }
             }
-        #endif
+#endif
         }
         else if (hr == WINCODEC_ERR_UNSUPPORTEDOPERATION)
         {
@@ -965,17 +918,15 @@ namespace
         return hr;
     }
 
-
     //-------------------------------------------------------------------------------------
     // Encodes a single frame
     //-------------------------------------------------------------------------------------
-    HRESULT EncodeImage(
-        const Image& image,
-        WIC_FLAGS flags,
-        _In_ REFGUID containerFormat,
-        _In_ IWICBitmapFrameEncode* frame,
-        _In_opt_ IPropertyBag2* props,
-        _In_opt_ const GUID* targetFormat)
+    HRESULT EncodeImage(const Image& image,
+        WIC_FLAGS                    flags,
+        _In_ REFGUID                 containerFormat,
+        _In_ IWICBitmapFrameEncode*  frame,
+        _In_opt_ IPropertyBag2*      props,
+        _In_opt_ const GUID*         targetFormat)
     {
         if (!frame || !image.pixels)
             return E_POINTER;
@@ -1003,7 +954,7 @@ namespace
             return hr;
 
         WICPixelFormatGUID targetGuid = (targetFormat) ? (*targetFormat) : pfGuid;
-        hr = frame->SetPixelFormat(&targetGuid);
+        hr                            = frame->SetPixelFormat(&targetGuid);
         if (FAILED(hr))
             return hr;
 
@@ -1021,14 +972,18 @@ namespace
         {
             // Conversion required to write
             bool iswic2 = false;
-            auto pWIC = GetWICFactory(iswic2);
+            auto pWIC   = GetWICFactory(iswic2);
             if (!pWIC)
                 return E_NOINTERFACE;
 
             ComPtr<IWICBitmap> source;
-            hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(image.width), static_cast<UINT>(image.height), pfGuid,
-                static_cast<UINT>(image.rowPitch), static_cast<UINT>(image.slicePitch),
-                image.pixels, source.GetAddressOf());
+            hr = pWIC->CreateBitmapFromMemory(static_cast<UINT>(image.width),
+                static_cast<UINT>(image.height),
+                pfGuid,
+                static_cast<UINT>(image.rowPitch),
+                static_cast<UINT>(image.slicePitch),
+                image.pixels,
+                source.GetAddressOf());
             if (FAILED(hr))
                 return hr;
 
@@ -1038,26 +993,27 @@ namespace
                 return hr;
 
             BOOL canConvert = FALSE;
-            hr = FC->CanConvert(pfGuid, targetGuid, &canConvert);
+            hr              = FC->CanConvert(pfGuid, targetGuid, &canConvert);
             if (FAILED(hr) || !canConvert)
             {
                 return E_UNEXPECTED;
             }
 
-            hr = FC->Initialize(source.Get(), targetGuid, GetWICDither(flags), nullptr,
-                0, WICBitmapPaletteTypeMedianCut);
+            hr = FC->Initialize(source.Get(), targetGuid, GetWICDither(flags), nullptr, 0, WICBitmapPaletteTypeMedianCut);
             if (FAILED(hr))
                 return hr;
 
             WICRect rect = { 0, 0, static_cast<INT>(image.width), static_cast<INT>(image.height) };
-            hr = frame->WriteSource(FC.Get(), &rect);
+            hr           = frame->WriteSource(FC.Get(), &rect);
             if (FAILED(hr))
                 return hr;
         }
         else
         {
             // No conversion required
-            hr = frame->WritePixels(static_cast<UINT>(image.height), static_cast<UINT>(image.rowPitch), static_cast<UINT>(image.slicePitch),
+            hr = frame->WritePixels(static_cast<UINT>(image.height),
+                static_cast<UINT>(image.rowPitch),
+                static_cast<UINT>(image.slicePitch),
                 reinterpret_cast<uint8_t*>(image.pixels));
             if (FAILED(hr))
                 return hr;
@@ -1070,12 +1026,11 @@ namespace
         return S_OK;
     }
 
-    HRESULT EncodeSingleFrame(
-        const Image& image,
-        WIC_FLAGS flags,
-        _In_ REFGUID containerFormat,
-        _Inout_ IStream* stream,
-        _In_opt_ const GUID* targetFormat,
+    HRESULT EncodeSingleFrame(const Image& image,
+        WIC_FLAGS                          flags,
+        _In_ REFGUID                       containerFormat,
+        _Inout_ IStream*                   stream,
+        _In_opt_ const GUID*               targetFormat,
         _In_ std::function<void(IPropertyBag2*)> setCustomProps)
     {
         if (!stream)
@@ -1083,12 +1038,12 @@ namespace
 
         // Initialize WIC
         bool iswic2 = false;
-        auto pWIC = GetWICFactory(iswic2);
+        auto pWIC   = GetWICFactory(iswic2);
         if (!pWIC)
             return E_NOINTERFACE;
 
         ComPtr<IWICBitmapEncoder> encoder;
-        HRESULT hr = pWIC->CreateEncoder(containerFormat, nullptr, encoder.GetAddressOf());
+        HRESULT                   hr = pWIC->CreateEncoder(containerFormat, nullptr, encoder.GetAddressOf());
         if (FAILED(hr))
             return hr;
 
@@ -1097,7 +1052,7 @@ namespace
             return hr;
 
         ComPtr<IWICBitmapFrameEncode> frame;
-        ComPtr<IPropertyBag2> props;
+        ComPtr<IPropertyBag2>         props;
         hr = encoder->CreateNewFrame(frame.GetAddressOf(), props.GetAddressOf());
         if (FAILED(hr))
             return hr;
@@ -1109,9 +1064,9 @@ namespace
             option.pstrName = const_cast<wchar_t*>(L"EnableV5Header32bppBGRA");
 
             VARIANT varValue;
-            varValue.vt = VT_BOOL;
+            varValue.vt      = VT_BOOL;
             varValue.boolVal = VARIANT_TRUE;
-            std::ignore = props->Write(1, &option, &varValue);
+            std::ignore      = props->Write(1, &option, &varValue);
         }
 
         if (setCustomProps)
@@ -1130,17 +1085,15 @@ namespace
         return S_OK;
     }
 
-
     //-------------------------------------------------------------------------------------
     // Encodes an image array
     //-------------------------------------------------------------------------------------
-    HRESULT EncodeMultiframe(
-        _In_reads_(nimages) const Image* images,
-        size_t nimages,
-        WIC_FLAGS flags,
-        _In_ REFGUID containerFormat,
-        _Inout_ IStream* stream,
-        _In_opt_ const GUID* targetFormat,
+    HRESULT EncodeMultiframe(_In_reads_(nimages) const Image* images,
+        size_t                                                nimages,
+        WIC_FLAGS                                             flags,
+        _In_ REFGUID                                          containerFormat,
+        _Inout_ IStream*                                      stream,
+        _In_opt_ const GUID*                                  targetFormat,
         _In_ std::function<void(IPropertyBag2*)> setCustomProps)
     {
         assert(nimages > 1);
@@ -1149,12 +1102,12 @@ namespace
 
         // Initialize WIC
         bool iswic2 = false;
-        auto pWIC = GetWICFactory(iswic2);
+        auto pWIC   = GetWICFactory(iswic2);
         if (!pWIC)
             return E_NOINTERFACE;
 
         ComPtr<IWICBitmapEncoder> encoder;
-        HRESULT hr = pWIC->CreateEncoder(containerFormat, nullptr, encoder.GetAddressOf());
+        HRESULT                   hr = pWIC->CreateEncoder(containerFormat, nullptr, encoder.GetAddressOf());
         if (FAILED(hr))
             return hr;
 
@@ -1164,7 +1117,7 @@ namespace
             return hr;
 
         BOOL mframe = FALSE;
-        hr = einfo->DoesSupportMultiframe(&mframe);
+        hr          = einfo->DoesSupportMultiframe(&mframe);
         if (FAILED(hr))
             return hr;
 
@@ -1178,7 +1131,7 @@ namespace
         for (size_t index = 0; index < nimages; ++index)
         {
             ComPtr<IWICBitmapFrameEncode> frame;
-            ComPtr<IPropertyBag2> props;
+            ComPtr<IPropertyBag2>         props;
             hr = encoder->CreateNewFrame(frame.GetAddressOf(), props.GetAddressOf());
             if (FAILED(hr))
                 return hr;
@@ -1199,8 +1152,7 @@ namespace
 
         return S_OK;
     }
-}
-
+} // namespace
 
 //=====================================================================================
 // Entry-points
@@ -1209,13 +1161,11 @@ namespace
 //-------------------------------------------------------------------------------------
 // Obtain metadata from WIC-supported file in memory
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::GetMetadataFromWICMemory(
-    const uint8_t* pSource,
-    size_t size,
-    WIC_FLAGS flags,
-    TexMetadata& metadata,
-    std::function<void(IWICMetadataQueryReader*)> getMQR)
+_Use_decl_annotations_ HRESULT DirectX::GetMetadataFromWICMemory(const uint8_t* pSource,
+    size_t                                                                      size,
+    WIC_FLAGS                                                                   flags,
+    TexMetadata&                                                                metadata,
+    std::function<void(IWICMetadataQueryReader*)>                               getMQR)
 {
     if (!pSource || size == 0)
         return E_INVALIDARG;
@@ -1224,18 +1174,17 @@ HRESULT DirectX::GetMetadataFromWICMemory(
         return HRESULT_E_FILE_TOO_LARGE;
 
     bool iswic2 = false;
-    auto pWIC = GetWICFactory(iswic2);
+    auto pWIC   = GetWICFactory(iswic2);
     if (!pWIC)
         return E_NOINTERFACE;
 
     // Create input stream for memory
     ComPtr<IWICStream> stream;
-    HRESULT hr = pWIC->CreateStream(stream.GetAddressOf());
+    HRESULT            hr = pWIC->CreateStream(stream.GetAddressOf());
     if (FAILED(hr))
         return hr;
 
-    hr = stream->InitializeFromMemory(static_cast<BYTE*>(const_cast<uint8_t*>(pSource)),
-        static_cast<UINT>(size));
+    hr = stream->InitializeFromMemory(static_cast<BYTE*>(const_cast<uint8_t*>(pSource)), static_cast<UINT>(size));
     if (FAILED(hr))
         return hr;
 
@@ -1258,22 +1207,19 @@ HRESULT DirectX::GetMetadataFromWICMemory(
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Obtain metadata from WIC-supported file on disk
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::GetMetadataFromWICFile(
-    const wchar_t* szFile,
-    WIC_FLAGS flags,
-    TexMetadata& metadata,
-    std::function<void(IWICMetadataQueryReader*)> getMQR)
+_Use_decl_annotations_ HRESULT DirectX::GetMetadataFromWICFile(const wchar_t* szFile,
+    WIC_FLAGS                                                                 flags,
+    TexMetadata&                                                              metadata,
+    std::function<void(IWICMetadataQueryReader*)>                             getMQR)
 {
     if (!szFile)
         return E_INVALIDARG;
 
     bool iswic2 = false;
-    auto pWIC = GetWICFactory(iswic2);
+    auto pWIC   = GetWICFactory(iswic2);
     if (!pWIC)
         return E_NOINTERFACE;
 
@@ -1296,18 +1242,15 @@ HRESULT DirectX::GetMetadataFromWICFile(
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Load a WIC-supported file in memory
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::LoadFromWICMemory(
-    const uint8_t* pSource,
-    size_t size,
-    WIC_FLAGS flags,
-    TexMetadata* metadata,
-    ScratchImage& image,
-    std::function<void(IWICMetadataQueryReader*)> getMQR)
+_Use_decl_annotations_ HRESULT DirectX::LoadFromWICMemory(const uint8_t* pSource,
+    size_t                                                               size,
+    WIC_FLAGS                                                            flags,
+    TexMetadata*                                                         metadata,
+    ScratchImage&                                                        image,
+    std::function<void(IWICMetadataQueryReader*)>                        getMQR)
 {
     if (!pSource || size == 0)
         return E_INVALIDARG;
@@ -1316,7 +1259,7 @@ HRESULT DirectX::LoadFromWICMemory(
         return HRESULT_E_FILE_TOO_LARGE;
 
     bool iswic2 = false;
-    auto pWIC = GetWICFactory(iswic2);
+    auto pWIC   = GetWICFactory(iswic2);
     if (!pWIC)
         return E_NOINTERFACE;
 
@@ -1324,7 +1267,7 @@ HRESULT DirectX::LoadFromWICMemory(
 
     // Create input stream for memory
     ComPtr<IWICStream> stream;
-    HRESULT hr = pWIC->CreateStream(stream.GetAddressOf());
+    HRESULT            hr = pWIC->CreateStream(stream.GetAddressOf());
     if (FAILED(hr))
         return hr;
 
@@ -1344,9 +1287,9 @@ HRESULT DirectX::LoadFromWICMemory(
         return hr;
 
     // Get metadata
-    TexMetadata mdata = {};
+    TexMetadata        mdata       = {};
     WICPixelFormatGUID convertGUID = {};
-    hr = DecodeMetadata(flags, iswic2, decoder.Get(), frame.Get(), mdata, &convertGUID, getMQR);
+    hr                             = DecodeMetadata(flags, iswic2, decoder.Get(), frame.Get(), mdata, &convertGUID, getMQR);
     if (FAILED(hr))
         return hr;
 
@@ -1371,23 +1314,20 @@ HRESULT DirectX::LoadFromWICMemory(
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Load a WIC-supported file from disk
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::LoadFromWICFile(
-    const wchar_t* szFile,
-    WIC_FLAGS flags,
-    TexMetadata* metadata,
-    ScratchImage& image,
-    std::function<void(IWICMetadataQueryReader*)> getMQR)
+_Use_decl_annotations_ HRESULT DirectX::LoadFromWICFile(const wchar_t* szFile,
+    WIC_FLAGS                                                          flags,
+    TexMetadata*                                                       metadata,
+    ScratchImage&                                                      image,
+    std::function<void(IWICMetadataQueryReader*)>                      getMQR)
 {
     if (!szFile)
         return E_INVALIDARG;
 
     bool iswic2 = false;
-    auto pWIC = GetWICFactory(iswic2);
+    auto pWIC   = GetWICFactory(iswic2);
     if (!pWIC)
         return E_NOINTERFACE;
 
@@ -1405,9 +1345,9 @@ HRESULT DirectX::LoadFromWICFile(
         return hr;
 
     // Get metadata
-    TexMetadata mdata = {};
+    TexMetadata        mdata       = {};
     WICPixelFormatGUID convertGUID = {};
-    hr = DecodeMetadata(flags, iswic2, decoder.Get(), frame.Get(), mdata, &convertGUID, getMQR);
+    hr                             = DecodeMetadata(flags, iswic2, decoder.Get(), frame.Get(), mdata, &convertGUID, getMQR);
     if (FAILED(hr))
         return hr;
 
@@ -1432,18 +1372,15 @@ HRESULT DirectX::LoadFromWICFile(
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Save a WIC-supported file to memory
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::SaveToWICMemory(
-    const Image& image,
-    WIC_FLAGS flags,
-    REFGUID containerFormat,
-    Blob& blob,
-    const GUID* targetFormat,
-    std::function<void(IPropertyBag2*)> setCustomProps)
+_Use_decl_annotations_ HRESULT DirectX::SaveToWICMemory(const Image& image,
+    WIC_FLAGS                                                        flags,
+    REFGUID                                                          containerFormat,
+    Blob&                                                            blob,
+    const GUID*                                                      targetFormat,
+    std::function<void(IPropertyBag2*)>                              setCustomProps)
 {
     if (!image.pixels)
         return E_POINTER;
@@ -1479,15 +1416,13 @@ HRESULT DirectX::SaveToWICMemory(
     return S_OK;
 }
 
-_Use_decl_annotations_
-HRESULT DirectX::SaveToWICMemory(
-    const Image* images,
-    size_t nimages,
-    WIC_FLAGS flags,
-    REFGUID containerFormat,
-    Blob& blob,
-    const GUID* targetFormat,
-    std::function<void(IPropertyBag2*)> setCustomProps)
+_Use_decl_annotations_ HRESULT DirectX::SaveToWICMemory(const Image* images,
+    size_t                                                           nimages,
+    WIC_FLAGS                                                        flags,
+    REFGUID                                                          containerFormat,
+    Blob&                                                            blob,
+    const GUID*                                                      targetFormat,
+    std::function<void(IPropertyBag2*)>                              setCustomProps)
 {
     if (!images || nimages == 0)
         return E_INVALIDARG;
@@ -1527,18 +1462,15 @@ HRESULT DirectX::SaveToWICMemory(
     return S_OK;
 }
 
-
 //-------------------------------------------------------------------------------------
 // Save a WIC-supported file to disk
 //-------------------------------------------------------------------------------------
-_Use_decl_annotations_
-HRESULT DirectX::SaveToWICFile(
-    const Image& image,
-    WIC_FLAGS flags,
-    REFGUID containerFormat,
-    const wchar_t* szFile,
-    const GUID* targetFormat,
-    std::function<void(IPropertyBag2*)> setCustomProps)
+_Use_decl_annotations_ HRESULT DirectX::SaveToWICFile(const Image& image,
+    WIC_FLAGS                                                      flags,
+    REFGUID                                                        containerFormat,
+    const wchar_t*                                                 szFile,
+    const GUID*                                                    targetFormat,
+    std::function<void(IPropertyBag2*)>                            setCustomProps)
 {
     if (!szFile)
         return E_INVALIDARG;
@@ -1547,12 +1479,12 @@ HRESULT DirectX::SaveToWICFile(
         return E_POINTER;
 
     bool iswic2 = false;
-    auto pWIC = GetWICFactory(iswic2);
+    auto pWIC   = GetWICFactory(iswic2);
     if (!pWIC)
         return E_NOINTERFACE;
 
     ComPtr<IWICStream> stream;
-    HRESULT hr = pWIC->CreateStream(stream.GetAddressOf());
+    HRESULT            hr = pWIC->CreateStream(stream.GetAddressOf());
     if (FAILED(hr))
         return hr;
 
@@ -1571,26 +1503,24 @@ HRESULT DirectX::SaveToWICFile(
     return S_OK;
 }
 
-_Use_decl_annotations_
-HRESULT DirectX::SaveToWICFile(
-    const Image* images,
-    size_t nimages,
-    WIC_FLAGS flags,
-    REFGUID containerFormat,
-    const wchar_t* szFile,
-    const GUID* targetFormat,
-    std::function<void(IPropertyBag2*)> setCustomProps)
+_Use_decl_annotations_ HRESULT DirectX::SaveToWICFile(const Image* images,
+    size_t                                                         nimages,
+    WIC_FLAGS                                                      flags,
+    REFGUID                                                        containerFormat,
+    const wchar_t*                                                 szFile,
+    const GUID*                                                    targetFormat,
+    std::function<void(IPropertyBag2*)>                            setCustomProps)
 {
     if (!szFile || !images || nimages == 0)
         return E_INVALIDARG;
 
     bool iswic2 = false;
-    auto pWIC = GetWICFactory(iswic2);
+    auto pWIC   = GetWICFactory(iswic2);
     if (!pWIC)
         return E_NOINTERFACE;
 
     ComPtr<IWICStream> stream;
-    HRESULT hr = pWIC->CreateStream(stream.GetAddressOf());
+    HRESULT            hr = pWIC->CreateStream(stream.GetAddressOf());
     if (FAILED(hr))
         return hr;
 
@@ -1613,7 +1543,6 @@ HRESULT DirectX::SaveToWICFile(
     return S_OK;
 }
 
-
 //--------------------------------------------------------------------------------------
 // Adapters for /Zc:wchar_t- clients
 
@@ -1621,47 +1550,54 @@ HRESULT DirectX::SaveToWICFile(
 
 namespace DirectX
 {
-    HRESULT __cdecl GetMetadataFromWICFile(
-        _In_z_ const __wchar_t* szFile,
-        _In_ WIC_FLAGS flags,
-        _Out_ TexMetadata& metadata,
+    HRESULT __cdecl GetMetadataFromWICFile(_In_z_ const __wchar_t* szFile,
+        _In_ WIC_FLAGS                                             flags,
+        _Out_ TexMetadata&                                         metadata,
         _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR)
     {
         return GetMetadataFromWICFile(reinterpret_cast<const unsigned short*>(szFile), flags, metadata, getMQR);
     }
 
-    HRESULT __cdecl LoadFromWICFile(
-        _In_z_ const __wchar_t* szFile,
-        _In_ WIC_FLAGS flags,
-        _Out_opt_ TexMetadata* metadata,
-        _Out_ ScratchImage& image,
+    HRESULT __cdecl LoadFromWICFile(_In_z_ const __wchar_t* szFile,
+        _In_ WIC_FLAGS                                      flags,
+        _Out_opt_ TexMetadata*                              metadata,
+        _Out_ ScratchImage&                                 image,
         _In_ std::function<void __cdecl(IWICMetadataQueryReader*)> getMQR)
     {
         return LoadFromWICFile(reinterpret_cast<const unsigned short*>(szFile), flags, metadata, image, getMQR);
     }
 
-    HRESULT __cdecl SaveToWICFile(
-        _In_ const Image& image,
-        _In_ WIC_FLAGS flags,
-        _In_ REFGUID guidContainerFormat,
-        _In_z_ const __wchar_t* szFile,
-        _In_opt_ const GUID* targetFormat,
+    HRESULT __cdecl SaveToWICFile(_In_ const Image& image,
+        _In_ WIC_FLAGS                              flags,
+        _In_ REFGUID                                guidContainerFormat,
+        _In_z_ const __wchar_t*                     szFile,
+        _In_opt_ const GUID*                        targetFormat,
         _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps)
     {
-        return SaveToWICFile(image, flags, guidContainerFormat, reinterpret_cast<const unsigned short*>(szFile), targetFormat, setCustomProps);
+        return SaveToWICFile(image,
+            flags,
+            guidContainerFormat,
+            reinterpret_cast<const unsigned short*>(szFile),
+            targetFormat,
+            setCustomProps);
     }
 
-    HRESULT __cdecl SaveToWICFile(
-        _In_count_(nimages) const Image* images,
-        _In_ size_t nimages,
-        _In_ WIC_FLAGS flags,
-        _In_ REFGUID guidContainerFormat,
-        _In_z_ const __wchar_t* szFile,
-        _In_opt_ const GUID* targetFormat,
+    HRESULT __cdecl SaveToWICFile(_In_count_(nimages) const Image* images,
+        _In_ size_t                                                nimages,
+        _In_ WIC_FLAGS                                             flags,
+        _In_ REFGUID                                               guidContainerFormat,
+        _In_z_ const __wchar_t*                                    szFile,
+        _In_opt_ const GUID*                                       targetFormat,
         _In_ std::function<void __cdecl(IPropertyBag2*)> setCustomProps)
     {
-        return SaveToWICFile(images, nimages, flags, guidContainerFormat, reinterpret_cast<const unsigned short*>(szFile), targetFormat, setCustomProps);
+        return SaveToWICFile(images,
+            nimages,
+            flags,
+            guidContainerFormat,
+            reinterpret_cast<const unsigned short*>(szFile),
+            targetFormat,
+            setCustomProps);
     }
-}
+} // namespace DirectX
 
 #endif // !_NATIVE_WCHAR_T_DEFINED

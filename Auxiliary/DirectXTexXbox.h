@@ -49,121 +49,135 @@
 namespace Xbox
 {
 #if defined(_GAMING_XBOX_SCARLETT) || defined(_USE_SCARLETT)
-    using XboxTileMode = XG_SWIZZLE_MODE;
+    using XboxTileMode                           = XG_SWIZZLE_MODE;
     constexpr XboxTileMode c_XboxTileModeInvalid = XG_SWIZZLE_MODE_INVALID;
-    constexpr XboxTileMode c_XboxTileModeLinear = XG_SWIZZLE_MODE_LINEAR;
+    constexpr XboxTileMode c_XboxTileModeLinear  = XG_SWIZZLE_MODE_LINEAR;
 #else
-    using XboxTileMode = XG_TILE_MODE;
+    using XboxTileMode                           = XG_TILE_MODE;
     constexpr XboxTileMode c_XboxTileModeInvalid = XG_TILE_MODE_INVALID;
-    constexpr XboxTileMode c_XboxTileModeLinear = XG_TILE_MODE_LINEAR;
+    constexpr XboxTileMode c_XboxTileModeLinear  = XG_TILE_MODE_LINEAR;
 #endif
 
     class DIRECTX_TEX_API XboxImage
     {
     public:
         XboxImage() noexcept
-            : dataSize(0), baseAlignment(0), tilemode(c_XboxTileModeInvalid), metadata{}, memory(nullptr)
+            : dataSize(0),
+              baseAlignment(0),
+              tilemode(c_XboxTileModeInvalid),
+              metadata{},
+              memory(nullptr)
         {}
         XboxImage(XboxImage&& moveFrom) noexcept
-            : dataSize(0), baseAlignment(0), tilemode(c_XboxTileModeInvalid), metadata{}, memory(nullptr)
+            : dataSize(0),
+              baseAlignment(0),
+              tilemode(c_XboxTileModeInvalid),
+              metadata{},
+              memory(nullptr)
         {
             *this = std::move(moveFrom);
         }
         ~XboxImage() { Release(); }
 
-        XboxImage& __cdecl operator= (XboxImage&& moveFrom) noexcept;
+        XboxImage& __cdecl operator=(XboxImage&& moveFrom) noexcept;
 
-        XboxImage(const XboxImage&) = delete;
+        XboxImage(const XboxImage&)            = delete;
         XboxImage& operator=(const XboxImage&) = delete;
 
         HRESULT __cdecl Initialize(_In_ const XG_TEXTURE1D_DESC& desc, _In_ const XG_RESOURCE_LAYOUT& layout, _In_ uint32_t miscFlags2 = 0);
         HRESULT __cdecl Initialize(_In_ const XG_TEXTURE2D_DESC& desc, _In_ const XG_RESOURCE_LAYOUT& layout, _In_ uint32_t miscFlags2 = 0);
         HRESULT __cdecl Initialize(_In_ const XG_TEXTURE3D_DESC& desc, _In_ const XG_RESOURCE_LAYOUT& layout, _In_ uint32_t miscFlags2 = 0);
-        HRESULT __cdecl Initialize(_In_ const DirectX::TexMetadata& mdata, _In_ XboxTileMode tm, _In_ uint32_t size, _In_ uint32_t alignment);
+        HRESULT __cdecl
+        Initialize(_In_ const DirectX::TexMetadata& mdata, _In_ XboxTileMode tm, _In_ uint32_t size, _In_ uint32_t alignment);
 
         void __cdecl Release();
 
         const DirectX::TexMetadata& GetMetadata() const { return metadata; }
-        XboxTileMode GetTileMode() const { return tilemode; }
+        XboxTileMode                GetTileMode() const { return tilemode; }
 
         uint32_t GetSize() const { return dataSize; }
         uint32_t GetAlignment() const { return baseAlignment; }
         uint8_t* GetPointer() const { return memory; }
 
     private:
-        uint32_t                dataSize;
-        uint32_t                baseAlignment;
-        XboxTileMode            tilemode;
-        DirectX::TexMetadata    metadata;
-        uint8_t*                memory;
+        uint32_t             dataSize;
+        uint32_t             baseAlignment;
+        XboxTileMode         tilemode;
+        DirectX::TexMetadata metadata;
+        uint8_t*             memory;
     };
 
     //---------------------------------------------------------------------------------
     // Image I/O
 
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemory(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox);
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSFile(
-        _In_z_ const wchar_t* szFile, _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox);
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemory(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                                size,
+        _Out_ DirectX::TexMetadata& metadata,
+        _Out_ bool&                 isXbox);
+    DIRECTX_TEX_API HRESULT __cdecl
+    GetMetadataFromDDSFile(_In_z_ const wchar_t* szFile, _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox);
 
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemoryEx(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox,
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSMemoryEx(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                                  size,
+        _Out_ DirectX::TexMetadata& metadata,
+        _Out_ bool&                 isXbox,
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat);
-    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSFileEx(
-        _In_z_ const wchar_t* szFile, _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox,
+    DIRECTX_TEX_API HRESULT __cdecl GetMetadataFromDDSFileEx(_In_z_ const wchar_t* szFile,
+        _Out_ DirectX::TexMetadata& metadata,
+        _Out_ bool&                 isXbox,
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat);
 
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemory(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
-        _Out_opt_ DirectX::TexMetadata* metadata, _Out_ XboxImage& image);
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSFile(
-        _In_z_ const wchar_t* szFile,
-        _Out_opt_ DirectX::TexMetadata* metadata, _Out_ XboxImage& image);
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemory(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                         size,
+        _Out_opt_ DirectX::TexMetadata* metadata,
+        _Out_ XboxImage&                image);
+    DIRECTX_TEX_API HRESULT __cdecl
+    LoadFromDDSFile(_In_z_ const wchar_t* szFile, _Out_opt_ DirectX::TexMetadata* metadata, _Out_ XboxImage& image);
 
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemoryEx(
-        _In_reads_bytes_(size) const uint8_t* pSource, _In_ size_t size,
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSMemoryEx(_In_reads_bytes_(size) const uint8_t* pSource,
+        _In_ size_t                                                                           size,
         _Out_opt_ DirectX::TexMetadata* metadata,
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat,
-        _Out_ XboxImage& image);
-    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSFileEx(
-        _In_z_ const wchar_t* szFile,
+        _Out_ XboxImage&                image);
+    DIRECTX_TEX_API HRESULT __cdecl LoadFromDDSFileEx(_In_z_ const wchar_t* szFile,
         _Out_opt_ DirectX::TexMetadata* metadata,
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat,
-        _Out_ XboxImage& image);
+        _Out_ XboxImage&                image);
 
     DIRECTX_TEX_API HRESULT __cdecl SaveToDDSMemory(_In_ const XboxImage& xbox, _Out_ DirectX::Blob& blob);
     DIRECTX_TEX_API HRESULT __cdecl SaveToDDSFile(_In_ const XboxImage& xbox, _In_z_ const wchar_t* szFile);
 
 #ifdef __cpp_lib_byte
-    inline HRESULT __cdecl GetMetadataFromDDSMemory(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox)
+    inline HRESULT __cdecl GetMetadataFromDDSMemory(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                         size,
+        _Out_ DirectX::TexMetadata& metadata,
+        _Out_ bool&                 isXbox)
     {
         return GetMetadataFromDDSMemory(reinterpret_cast<const uint8_t*>(pSource), size, metadata, isXbox);
     }
 
-    inline HRESULT __cdecl GetMetadataFromDDSMemoryEx(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _Out_ DirectX::TexMetadata& metadata, _Out_ bool& isXbox,
+    inline HRESULT __cdecl GetMetadataFromDDSMemoryEx(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                           size,
+        _Out_ DirectX::TexMetadata& metadata,
+        _Out_ bool&                 isXbox,
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat)
     {
         return GetMetadataFromDDSMemoryEx(reinterpret_cast<const uint8_t*>(pSource), size, metadata, isXbox, ddPixelFormat);
     }
 
-    inline HRESULT __cdecl LoadFromDDSMemory(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
-        _Out_opt_ DirectX::TexMetadata* metadata, _Out_ XboxImage& image)
+    inline HRESULT __cdecl LoadFromDDSMemory(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                  size,
+        _Out_opt_ DirectX::TexMetadata* metadata,
+        _Out_ XboxImage&                image)
     {
         return LoadFromDDSMemory(reinterpret_cast<const uint8_t*>(pSource), size, metadata, image);
     }
 
-    inline HRESULT __cdecl LoadFromDDSMemoryEx(
-        _In_reads_bytes_(size) const std::byte* pSource, _In_ size_t size,
+    inline HRESULT __cdecl LoadFromDDSMemoryEx(_In_reads_bytes_(size) const std::byte* pSource,
+        _In_ size_t                                                                    size,
         _Out_opt_ DirectX::TexMetadata* metadata,
         _Out_opt_ DirectX::DDSMetaData* ddPixelFormat,
-        _Out_ XboxImage& image)
+        _Out_ XboxImage&                image)
     {
         return LoadFromDDSMemoryEx(reinterpret_cast<const uint8_t*>(pSource), size, metadata, ddPixelFormat, image);
     }
@@ -172,10 +186,13 @@ namespace Xbox
     //---------------------------------------------------------------------------------
     // Xbox Texture Tiling / Detiling (requires XG DLL to be present at runtime)
 
-    DIRECTX_TEX_API HRESULT __cdecl Tile(_In_ const DirectX::Image& srcImage, _Out_ XboxImage& xbox, _In_ XboxTileMode mode = c_XboxTileModeInvalid);
-    DIRECTX_TEX_API HRESULT __cdecl Tile(
-        _In_ const DirectX::Image* srcImages, _In_ size_t nimages, _In_ const DirectX::TexMetadata& metadata,
-        _Out_ XboxImage& xbox, _In_ XboxTileMode mode = c_XboxTileModeInvalid);
+    DIRECTX_TEX_API HRESULT __cdecl
+    Tile(_In_ const DirectX::Image& srcImage, _Out_ XboxImage& xbox, _In_ XboxTileMode mode = c_XboxTileModeInvalid);
+    DIRECTX_TEX_API HRESULT __cdecl Tile(_In_ const DirectX::Image* srcImages,
+        _In_ size_t                                                 nimages,
+        _In_ const DirectX::TexMetadata& metadata,
+        _Out_ XboxImage&                 xbox,
+        _In_ XboxTileMode                mode = c_XboxTileModeInvalid);
 
     DIRECTX_TEX_API HRESULT __cdecl Detile(_In_ const XboxImage& xbox, _Out_ DirectX::ScratchImage& image);
 
@@ -184,13 +201,15 @@ namespace Xbox
 
 #if defined(_XBOX_ONE) && defined(_TITLE) && defined(__d3d11_x_h__)
 
-    DIRECTX_TEX_API HRESULT __cdecl CreateTexture(
-        _In_ ID3D11DeviceX* d3dDevice,
-        _In_ const XboxImage& xbox, _Outptr_opt_ ID3D11Resource** ppResource, _Outptr_ void** grfxMemory);
+    DIRECTX_TEX_API HRESULT __cdecl CreateTexture(_In_ ID3D11DeviceX* d3dDevice,
+        _In_ const XboxImage&                                         xbox,
+        _Outptr_opt_ ID3D11Resource**                                 ppResource,
+        _Outptr_ void**                                               grfxMemory);
 
-    DIRECTX_TEX_API HRESULT __cdecl CreateShaderResourceView(
-        _In_ ID3D11DeviceX* d3dDevice,
-        _In_ const XboxImage& xbox, _Outptr_opt_ ID3D11ShaderResourceView** ppSRV, _Outptr_ void** grfxMemory);
+    DIRECTX_TEX_API HRESULT __cdecl CreateShaderResourceView(_In_ ID3D11DeviceX* d3dDevice,
+        _In_ const XboxImage&                                                    xbox,
+        _Outptr_opt_ ID3D11ShaderResourceView**                                  ppSRV,
+        _Outptr_ void**                                                          grfxMemory);
 
     DIRECTX_TEX_API void __cdecl FreeTextureMemory(_In_ ID3D11DeviceX* d3dDevice, _In_opt_ void* grfxMemory);
 
@@ -201,9 +220,10 @@ namespace Xbox
 
 #if ((defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)) && (defined(__d3d12_x_h__) || defined(__XBOX_D3D12_X__))
 
-    DIRECTX_TEX_API HRESULT __cdecl CreateTexture(
-        _In_ ID3D12Device* d3dDevice,
-        _In_ const XboxImage& xbox, _Outptr_opt_ ID3D12Resource** ppResource, _Outptr_ void** grfxMemory);
+    DIRECTX_TEX_API HRESULT __cdecl CreateTexture(_In_ ID3D12Device* d3dDevice,
+        _In_ const XboxImage&                                        xbox,
+        _Outptr_opt_ ID3D12Resource**                                ppResource,
+        _Outptr_ void**                                              grfxMemory);
 
     DIRECTX_TEX_API void __cdecl FreeTextureMemory(_In_ ID3D12Device* d3dDevice, _In_opt_ void* grfxMemory);
 
@@ -211,17 +231,15 @@ namespace Xbox
 
     //---------------------------------------------------------------------------------
     // DDS helper functions
-    DIRECTX_TEX_API HRESULT __cdecl EncodeDDSHeader(
-        const XboxImage& xbox,
-        _Out_writes_bytes_(maxsize) uint8_t* pDestination, _In_ size_t maxsize) noexcept;
+    DIRECTX_TEX_API HRESULT __cdecl
+    EncodeDDSHeader(const XboxImage& xbox, _Out_writes_bytes_(maxsize) uint8_t* pDestination, _In_ size_t maxsize) noexcept;
 
 #ifdef __cpp_lib_byte
-    inline HRESULT __cdecl EncodeDDSHeader(
-        const XboxImage& xbox,
-        _Out_writes_bytes_(maxsize) std::byte* pDestination, _In_ size_t maxsize) noexcept
+    inline HRESULT __cdecl
+    EncodeDDSHeader(const XboxImage& xbox, _Out_writes_bytes_(maxsize) std::byte* pDestination, _In_ size_t maxsize) noexcept
     {
         return EncodeDDSHeader(xbox, reinterpret_cast<uint8_t*>(pDestination), maxsize);
     }
 #endif
 
-} // namespace
+} // namespace Xbox
