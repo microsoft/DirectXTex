@@ -28,7 +28,7 @@
 
 #include <wincodec.h>
 
-#include <wrl\client.h>
+#include <wrl/client.h>
 
 #ifdef _MSC_VER
 // Off by default warnings

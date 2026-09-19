@@ -178,7 +178,7 @@
 #include <Ole2.h>
 #endif
 #include <wincodec.h>
-#include <wrl\client.h>
+#include <wrl/client.h>
 #else
 using WICPixelFormatGUID = GUID;
 #endif

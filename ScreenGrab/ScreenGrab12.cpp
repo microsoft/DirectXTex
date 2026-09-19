@@ -34,7 +34,7 @@
 
 #ifdef _WIN32
 #include <wincodec.h>
-#include <wrl\client.h>
+#include <wrl/client.h>
 #else
 #include <fstream>
 #include <filesystem>

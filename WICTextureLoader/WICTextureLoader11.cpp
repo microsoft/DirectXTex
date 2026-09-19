@@ -30,7 +30,7 @@
 
 #include <wincodec.h>
 
-#include <wrl\client.h>
+#include <wrl/client.h>
 
 #include <algorithm>
 #include <cassert>
