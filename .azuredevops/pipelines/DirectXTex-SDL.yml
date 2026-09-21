@@ -105,7 +105,6 @@ jobs:
         inputs:
           AnalyzeTargetBinskim: ''
           AnalyzeTargetGlob: +:file|out\bin\**\RelWithDebInfo\*.exe
-          AnalyzeVerbose: true
       - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
         displayName: 'Post Analysis'
         inputs:
@@ -156,7 +155,6 @@ jobs:
         inputs:
           AnalyzeTargetBinskim: ''
           AnalyzeTargetGlob: +:file|out\bin\**\RelWithDebInfo\*.dll
-          AnalyzeVerbose: true
       - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
         displayName: 'Post Analysis'
         inputs:
