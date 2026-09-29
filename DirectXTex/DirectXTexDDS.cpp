@@ -442,6 +442,12 @@ namespace
             case DDS_DIMENSION_TEXTURE2D:
                 if (d3d10ext->miscFlag & DDS_RESOURCE_MISC_TEXTURECUBE)
                 {
+                    // DDS_HEADER_DXT10.arraySize is a count of cubemaps; TexMetadata stores their faces.
+                    if (metadata.arraySize > UINT16_MAX)
+                    {
+                        return HRESULT_E_ARITHMETIC_OVERFLOW;
+                    }
+
                     metadata.miscFlags |= TEX_MISC_TEXTURECUBE;
                     metadata.arraySize *= 6;
                 }
