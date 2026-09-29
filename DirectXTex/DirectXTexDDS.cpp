@@ -443,7 +443,7 @@ namespace
                 if (d3d10ext->miscFlag & DDS_RESOURCE_MISC_TEXTURECUBE)
                 {
                     // DDS_HEADER_DXT10.arraySize is a count of cubemaps; TexMetadata stores their faces.
-                    if (metadata.arraySize > (SIZE_MAX / 6))
+                    if (metadata.arraySize > UINT16_MAX)
                     {
                         return HRESULT_E_ARITHMETIC_OVERFLOW;
                     }
