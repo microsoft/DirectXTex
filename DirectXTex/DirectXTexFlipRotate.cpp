@@ -169,7 +169,7 @@ namespace
 
         return S_OK;
     }
-#else // !WIN32
+#else  // !WIN32
     //-------------------------------------------------------------------------------------
     // Flip/rotate by moving whole pixels, which needs a fixed number of bytes per pixel
     //-------------------------------------------------------------------------------------
@@ -201,20 +201,13 @@ namespace
 
         switch (static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270)))
         {
-        case TEX_FR_ROTATE90:
-            swapXY = flipX = true;
-            break;
+        case TEX_FR_ROTATE90:  swapXY = flipX = true; break;
 
-        case TEX_FR_ROTATE180:
-            flipX = flipY = true;
-            break;
+        case TEX_FR_ROTATE180: flipX = flipY = true; break;
 
-        case TEX_FR_ROTATE270:
-            swapXY = flipY = true;
-            break;
+        case TEX_FR_ROTATE270: swapXY = flipY = true; break;
 
-        default:
-            break;
+        default:               break;
         }
 
         if (flags & TEX_FR_FLIP_HORIZONTAL)
@@ -250,7 +243,7 @@ namespace
 
         for (size_t y = 0; y < height; ++y)
         {
-            const size_t sy   = flipY ? (height - 1 - y) : y;
+            const size_t sy    = flipY ? (height - 1 - y) : y;
             uint8_t*     pDest = destImage.pixels + y * destImage.rowPitch;
 
             if (!swapXY && !flipX)
@@ -261,10 +254,9 @@ namespace
 
             for (size_t x = 0; x < width; ++x)
             {
-                const size_t sx = flipX ? (width - 1 - x) : x;
-                const uint8_t* pSrc = swapXY
-                    ? srcImage.pixels + sx * srcImage.rowPitch + sy * bytesPerPixel
-                    : srcImage.pixels + sy * srcImage.rowPitch + sx * bytesPerPixel;
+                const size_t   sx   = flipX ? (width - 1 - x) : x;
+                const uint8_t* pSrc = swapXY ? srcImage.pixels + sx * srcImage.rowPitch + sy * bytesPerPixel :
+                                               srcImage.pixels + sy * srcImage.rowPitch + sx * bytesPerPixel;
                 memcpy(pDest + x * bytesPerPixel, pSrc, bytesPerPixel);
             }
         }
