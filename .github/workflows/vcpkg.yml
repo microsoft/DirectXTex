@@ -62,10 +62,7 @@ jobs:
             build_type: arm64-Debug-VCPKG
             arch: amd64_arm64
             shared: 'OFF'
-          - toolver: '14'
-            build_type: arm64ec-Debug-VCPKG
-            arch: amd64_arm64
-            shared: 'OFF'
+          # arm64ec-Debug-VCPKG failing due to libspng issue
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -162,9 +159,7 @@ jobs:
           - build_type: arm64-Debug-VCPKG
             arch: amd64_arm64
             shared: 'OFF'
-          - build_type: arm64ec-Debug-VCPKG
-            arch: amd64_arm64
-            shared: 'OFF'
+          # arm64ec-Debug-VCPKG failing due to libspng issue
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
