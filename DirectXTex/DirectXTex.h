@@ -783,7 +783,6 @@ namespace DirectX
         TEX_FR_FLIP_VERTICAL   = 0x10,
     };
 
-#ifdef _WIN32
     DIRECTX_TEX_API HRESULT __cdecl FlipRotate(_In_ const Image& srcImage, _In_ TEX_FR_FLAGS flags, _Out_ ScratchImage& image) noexcept;
     DIRECTX_TEX_API HRESULT __cdecl FlipRotate(_In_reads_(nimages) const Image* srcImages,
         _In_ size_t                                                             nimages,
@@ -791,7 +790,6 @@ namespace DirectX
         _In_ TEX_FR_FLAGS                                                       flags,
         _Out_ ScratchImage&                                                     result) noexcept;
     // Flip and/or rotate image
-#endif
 
     enum TEX_FILTER_FLAGS : uint32_t
     {
