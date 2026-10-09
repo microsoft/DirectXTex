@@ -8,6 +8,9 @@
         "platform": "linux | (windows & !arm64ec)"
       },
       "libpng",
-      "libjpeg-turbo"
+      {
+        "name": "libjpeg-turbo",
+        "platform": "linux | (windows & !arm64ec)"
+      }
     ]
 }
