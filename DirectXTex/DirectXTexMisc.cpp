@@ -270,9 +270,8 @@ _Use_decl_annotations_ HRESULT DirectX::CopyRectangle(const Image& srcImage,
             return HRESULT_E_NOT_SUPPORTED;
 
         if (!srcRect.w || !srcRect.h || srcRect.x >= srcImage.width || srcRect.y >= srcImage.height
-            || srcRect.w > srcImage.width - srcRect.x || srcRect.h > srcImage.height - srcRect.y
-            || xOffset >= dstImage.width || yOffset >= dstImage.height
-            || srcRect.w > dstImage.width - xOffset || srcRect.h > dstImage.height - yOffset)
+            || srcRect.w > srcImage.width - srcRect.x || srcRect.h > srcImage.height - srcRect.y || xOffset >= dstImage.width
+            || yOffset >= dstImage.height || srcRect.w > dstImage.width - xOffset || srcRect.h > dstImage.height - yOffset)
             return E_INVALIDARG;
 
         // Copy whole 4x4 blocks covering srcRect, including pixels outside it.
@@ -282,32 +281,29 @@ _Use_decl_annotations_ HRESULT DirectX::CopyRectangle(const Image& srcImage,
         const size_t dstX = xOffset / 4;
         const size_t dstY = yOffset / 4;
 
-        const size_t blockWidth = (srcRect.x + srcRect.w - 1) / 4 + 1 - srcX;
+        const size_t blockWidth  = (srcRect.x + srcRect.w - 1) / 4 + 1 - srcX;
         const size_t blockHeight = (srcRect.y + srcRect.h - 1) / 4 + 1 - srcY;
-        const size_t dstWidth = (dstImage.width - 1) / 4 + 1;
-        const size_t dstHeight = (dstImage.height - 1) / 4 + 1;
+        const size_t dstWidth    = (dstImage.width - 1) / 4 + 1;
+        const size_t dstHeight   = (dstImage.height - 1) / 4 + 1;
         if (blockWidth > dstWidth - dstX || blockHeight > dstHeight - dstY)
             return E_INVALIDARG;
 
-        const auto validStorage = [bytesPerBlock](const Image& image, size_t x, size_t y,
-            size_t width, size_t height) noexcept
+        const auto validStorage = [bytesPerBlock](const Image& image, size_t x, size_t y, size_t width, size_t height) noexcept
         {
             const size_t imageBlocks = (image.width - 1) / 4 + 1;
             if (!image.rowPitch || imageBlocks > image.rowPitch / bytesPerBlock)
                 return false;
 
             const size_t rowEnd = (x + width) * bytesPerBlock;
-            return rowEnd <= image.slicePitch
-                && y + height - 1 <= (image.slicePitch - rowEnd) / image.rowPitch;
+            return rowEnd <= image.slicePitch && y + height - 1 <= (image.slicePitch - rowEnd) / image.rowPitch;
         };
 
-        if (!validStorage(srcImage, srcX, srcY, blockWidth, blockHeight)
-            || !validStorage(dstImage, dstX, dstY, blockWidth, blockHeight))
+        if (!validStorage(srcImage, srcX, srcY, blockWidth, blockHeight) || !validStorage(dstImage, dstX, dstY, blockWidth, blockHeight))
             return E_FAIL;
 
-        const size_t copyBytes = blockWidth * bytesPerBlock;
-        const uint8_t* pSrc = srcImage.pixels + srcY * srcImage.rowPitch + srcX * bytesPerBlock;
-        uint8_t* pDest = dstImage.pixels + dstY * dstImage.rowPitch + dstX * bytesPerBlock;
+        const size_t   copyBytes = blockWidth * bytesPerBlock;
+        const uint8_t* pSrc      = srcImage.pixels + srcY * srcImage.rowPitch + srcX * bytesPerBlock;
+        uint8_t*       pDest     = dstImage.pixels + dstY * dstImage.rowPitch + dstX * bytesPerBlock;
         for (size_t row = 0; row < blockHeight; ++row)
         {
             memcpy(pDest, pSrc, copyBytes);
@@ -321,8 +317,7 @@ _Use_decl_annotations_ HRESULT DirectX::CopyRectangle(const Image& srcImage,
         return S_OK;
     }
 
-    if (IsPlanar(srcImage.format) || IsPlanar(dstImage.format)
-        || IsPalettized(srcImage.format) || IsPalettized(dstImage.format))
+    if (IsPlanar(srcImage.format) || IsPlanar(dstImage.format) || IsPalettized(srcImage.format) || IsPalettized(dstImage.format))
         return HRESULT_E_NOT_SUPPORTED;
 
     // Validate rectangle/offset
