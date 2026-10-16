@@ -782,7 +782,7 @@ namespace DirectX
         TEX_FR_FLIP_HORIZONTAL = 0x08,
         TEX_FR_FLIP_VERTICAL   = 0x10,
 
-        TEX_FR_FORCE_NON_WIC   = 0x1000,
+        TEX_FR_FORCE_NON_WIC = 0x1000,
         // Forces use of the non-WIC path on Windows (it is the only path on other platforms)
     };
 
