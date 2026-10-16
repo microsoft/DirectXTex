@@ -260,6 +260,9 @@ _Use_decl_annotations_ HRESULT DirectX::CopyRectangle(const Image& srcImage,
     if (!srcImage.pixels || !dstImage.pixels)
         return E_POINTER;
 
+    if (IsPlanar(srcImage.format) || IsPlanar(dstImage.format) || IsPalettized(srcImage.format) || IsPalettized(dstImage.format))
+        return HRESULT_E_NOT_SUPPORTED;
+
     if (IsCompressed(srcImage.format) || IsCompressed(dstImage.format))
     {
         if (srcImage.format != dstImage.format)
@@ -316,51 +319,92 @@ _Use_decl_annotations_ HRESULT DirectX::CopyRectangle(const Image& srcImage,
 
         return S_OK;
     }
-
-    if (IsPlanar(srcImage.format) || IsPlanar(dstImage.format) || IsPalettized(srcImage.format) || IsPalettized(dstImage.format))
-        return HRESULT_E_NOT_SUPPORTED;
-
-    // Validate rectangle/offset
-    if (!srcRect.w || !srcRect.h || ((srcRect.x + srcRect.w) > srcImage.width) || ((srcRect.y + srcRect.h) > srcImage.height))
+    else
     {
-        return E_INVALIDARG;
-    }
+        // Validate rectangle/offset
+        if (!srcRect.w || !srcRect.h || ((srcRect.x + srcRect.w) > srcImage.width) || ((srcRect.y + srcRect.h) > srcImage.height))
+        {
+            return E_INVALIDARG;
+        }
 
-    if (((xOffset + srcRect.w) > dstImage.width) || ((yOffset + srcRect.h) > dstImage.height))
-    {
-        return E_INVALIDARG;
-    }
+        if (((xOffset + srcRect.w) > dstImage.width) || ((yOffset + srcRect.h) > dstImage.height))
+        {
+            return E_INVALIDARG;
+        }
 
-    // Compute source bytes-per-pixel
-    size_t sbpp = BitsPerPixel(srcImage.format);
-    if (!sbpp)
-        return E_INVALIDARG;
+        // Compute source bytes-per-pixel
+        size_t sbpp = BitsPerPixel(srcImage.format);
+        if (!sbpp)
+            return E_INVALIDARG;
 
-    if (sbpp < 8)
-    {
-        // We don't support monochrome (DXGI_FORMAT_R1_UNORM)
-        return HRESULT_E_NOT_SUPPORTED;
-    }
+        if (sbpp < 8)
+        {
+            // We don't support monochrome (DXGI_FORMAT_R1_UNORM)
+            return HRESULT_E_NOT_SUPPORTED;
+        }
 
-    const uint8_t* pEndSrc  = srcImage.pixels + srcImage.rowPitch * srcImage.height;
-    const uint8_t* pEndDest = dstImage.pixels + dstImage.rowPitch * dstImage.height;
+        const uint8_t* pEndSrc  = srcImage.pixels + srcImage.rowPitch * srcImage.height;
+        const uint8_t* pEndDest = dstImage.pixels + dstImage.rowPitch * dstImage.height;
 
-    // Round to bytes
-    sbpp = (sbpp + 7) / 8;
+        // Round to bytes
+        sbpp = (sbpp + 7) / 8;
 
-    const uint8_t* pSrc = srcImage.pixels + (srcRect.y * srcImage.rowPitch) + (srcRect.x * sbpp);
+        const uint8_t* pSrc = srcImage.pixels + (srcRect.y * srcImage.rowPitch) + (srcRect.x * sbpp);
 
-    if (srcImage.format == dstImage.format)
-    {
-        // Direct copy case (avoid intermediate conversions)
-        uint8_t*     pDest = dstImage.pixels + (yOffset * dstImage.rowPitch) + (xOffset * sbpp);
-        const size_t copyW = srcRect.w * sbpp;
+        if (srcImage.format == dstImage.format)
+        {
+            // Direct copy case (avoid intermediate conversions)
+            uint8_t*     pDest = dstImage.pixels + (yOffset * dstImage.rowPitch) + (xOffset * sbpp);
+            const size_t copyW = srcRect.w * sbpp;
+            for (size_t h = 0; h < srcRect.h; ++h)
+            {
+                if (((pSrc + copyW) > pEndSrc) || (pDest > pEndDest))
+                    return E_FAIL;
+
+                memcpy(pDest, pSrc, copyW);
+
+                pSrc += srcImage.rowPitch;
+                pDest += dstImage.rowPitch;
+            }
+
+            return S_OK;
+        }
+
+        // Compute destination bytes-per-pixel (not the same format as source)
+        size_t dbpp = BitsPerPixel(dstImage.format);
+        if (!dbpp)
+            return E_INVALIDARG;
+
+        if (dbpp < 8)
+        {
+            // We don't support monochrome (DXGI_FORMAT_R1_UNORM)
+            return HRESULT_E_NOT_SUPPORTED;
+        }
+
+        // Round to bytes
+        dbpp = (dbpp + 7) / 8;
+
+        uint8_t* pDest = dstImage.pixels + (yOffset * dstImage.rowPitch) + (xOffset * dbpp);
+
+        auto scanline = make_AlignedArrayXMVECTOR(srcRect.w);
+        if (!scanline)
+            return E_OUTOFMEMORY;
+
+        const size_t copyS = srcRect.w * sbpp;
+        const size_t copyD = srcRect.w * dbpp;
+
         for (size_t h = 0; h < srcRect.h; ++h)
         {
-            if (((pSrc + copyW) > pEndSrc) || (pDest > pEndDest))
+            if (((pSrc + copyS) > pEndSrc) || ((pDest + copyD) > pEndDest))
                 return E_FAIL;
 
-            memcpy(pDest, pSrc, copyW);
+            if (!LoadScanline(scanline.get(), srcRect.w, pSrc, copyS, srcImage.format))
+                return E_FAIL;
+
+            ConvertScanline(scanline.get(), srcRect.w, dstImage.format, srcImage.format, filter);
+
+            if (!StoreScanline(pDest, copyD, dstImage.format, scanline.get(), srcRect.w))
+                return E_FAIL;
 
             pSrc += srcImage.rowPitch;
             pDest += dstImage.rowPitch;
@@ -368,48 +412,6 @@ _Use_decl_annotations_ HRESULT DirectX::CopyRectangle(const Image& srcImage,
 
         return S_OK;
     }
-
-    // Compute destination bytes-per-pixel (not the same format as source)
-    size_t dbpp = BitsPerPixel(dstImage.format);
-    if (!dbpp)
-        return E_INVALIDARG;
-
-    if (dbpp < 8)
-    {
-        // We don't support monochrome (DXGI_FORMAT_R1_UNORM)
-        return HRESULT_E_NOT_SUPPORTED;
-    }
-
-    // Round to bytes
-    dbpp = (dbpp + 7) / 8;
-
-    uint8_t* pDest = dstImage.pixels + (yOffset * dstImage.rowPitch) + (xOffset * dbpp);
-
-    auto scanline = make_AlignedArrayXMVECTOR(srcRect.w);
-    if (!scanline)
-        return E_OUTOFMEMORY;
-
-    const size_t copyS = srcRect.w * sbpp;
-    const size_t copyD = srcRect.w * dbpp;
-
-    for (size_t h = 0; h < srcRect.h; ++h)
-    {
-        if (((pSrc + copyS) > pEndSrc) || ((pDest + copyD) > pEndDest))
-            return E_FAIL;
-
-        if (!LoadScanline(scanline.get(), srcRect.w, pSrc, copyS, srcImage.format))
-            return E_FAIL;
-
-        ConvertScanline(scanline.get(), srcRect.w, dstImage.format, srcImage.format, filter);
-
-        if (!StoreScanline(pDest, copyD, dstImage.format, scanline.get(), srcRect.w))
-            return E_FAIL;
-
-        pSrc += srcImage.rowPitch;
-        pDest += dstImage.rowPitch;
-    }
-
-    return S_OK;
 }
 
 //-------------------------------------------------------------------------------------
