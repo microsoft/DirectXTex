@@ -781,6 +781,9 @@ namespace DirectX
         TEX_FR_ROTATE270       = 0x3,
         TEX_FR_FLIP_HORIZONTAL = 0x08,
         TEX_FR_FLIP_VERTICAL   = 0x10,
+
+        TEX_FR_FORCE_NON_WIC   = 0x1000,
+        // Forces use of the non-WIC path on Windows (it is the only path on other platforms)
     };
 
     DIRECTX_TEX_API HRESULT __cdecl FlipRotate(_In_ const Image& srcImage, _In_ TEX_FR_FLAGS flags, _Out_ ScratchImage& image) noexcept;
