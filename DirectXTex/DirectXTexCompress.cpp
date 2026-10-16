@@ -297,7 +297,24 @@ namespace
             return HRESULT_E_NOT_SUPPORTED;
 
         // Refactored version of loop to support parallel independance
-        const size_t nBlocks = std::max<size_t>(1, (image.width + 3) / 4) * std::max<size_t>(1, (image.height + 3) / 4);
+        // The existing loop iterator and coordinate calculations use int. Limit
+        // their input dimensions before calculating the block count.
+        // Direct3D texture size limits are below INT32_MAX, so this should not pose a problem in practice.
+        if (image.width > static_cast<size_t>(INT32_MAX) || image.height > static_cast<size_t>(INT32_MAX))
+        {
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+        }
+
+        // The dimension check keeps the rounded counts and their product within uint64_t.
+        const uint64_t nbWidthBlocks  = std::max<uint64_t>(1, (uint64_t(image.width) + 3) / 4);
+        const uint64_t nbHeightBlocks = std::max<uint64_t>(1, (uint64_t(image.height) + 3) / 4);
+        const uint64_t blockCount     = nbWidthBlocks * nbHeightBlocks;
+        if (blockCount > INT32_MAX)
+        {
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+        }
+
+        const auto nBlocks = static_cast<size_t>(blockCount);
 
         bool fail = false;
 
@@ -317,7 +334,7 @@ namespace
                 continue;
             }
 
-            const int nbWidth = std::max<int>(1, int((image.width + 3) / 4));
+            const int nbWidth = static_cast<int>(nbWidthBlocks);
 
             int       y = nb / nbWidth;
             const int x = (nb - (y * nbWidth)) * 4;
