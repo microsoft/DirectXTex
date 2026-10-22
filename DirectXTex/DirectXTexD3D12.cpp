@@ -91,6 +91,48 @@ namespace
     }
 
     //--------------------------------------------------------------------------------------
+    // Direct3D 12 stores depth and stencil in separate planes, but DDS files store them
+    // interleaved per pixel. These copy one scanline into plane 0 (4 bytes per pixel)
+    // and plane 1 (1 byte per pixel).
+    inline void CopyScanlineD24S8(_Out_writes_bytes_(width * 4) uint8_t* pDepth,
+        _Out_writes_bytes_(width) uint8_t*                              pStencil,
+        _In_reads_bytes_(width * 4) const uint8_t*                      pSource,
+        size_t                                                          width) noexcept
+    {
+        for (size_t x = 0; x < width; ++x)
+        {
+            pDepth[0] = pSource[0]; // D
+            pDepth[1] = pSource[1]; // D
+            pDepth[2] = pSource[2]; // D
+            pDepth[3] = 0;          // X8 must be zero
+            pStencil[0] = pSource[3]; // S
+
+            pSource += 4;
+            pDepth += 4;
+            pStencil += 1;
+        }
+    }
+
+    inline void CopyScanlineD32S8X24(   _Out_writes_bytes_(width * 4) uint8_t* pDepth,
+        _Out_writes_bytes_(width) uint8_t*                                 pStencil,
+        _In_reads_bytes_(width * 8) const uint8_t*                         pSource,
+        size_t                                                             width) noexcept
+    {
+        for (size_t x = 0; x < width; ++x)
+        {
+            pDepth[0] = pSource[0]; // D
+            pDepth[1] = pSource[1]; // D
+            pDepth[2] = pSource[2]; // D
+            pDepth[3] = pSource[3]; // D
+            pStencil[0] = pSource[4]; // S (bytes 5-7 unused)
+
+            pSource += 8;
+            pDepth += 4;
+            pStencil += 1;
+        }
+    }
+
+    //--------------------------------------------------------------------------------------
     inline void TransitionResource(_In_ ID3D12GraphicsCommandList* commandList,
         _In_ ID3D12Resource*                                       resource,
         _In_ D3D12_RESOURCE_STATES                                 stateBefore,
@@ -667,6 +709,143 @@ _Use_decl_annotations_ HRESULT DirectX::PrepareUpload(ID3D12Device* pDevice,
                     subresources.emplace_back(res);
                 }
             }
+        }
+    }
+
+    return S_OK;
+}
+
+//-------------------------------------------------------------------------------------
+// Prepares a texture resource for upload, rearranging interleaved depth/stencil
+// data into the separate planes Direct3D 12 expects
+//-------------------------------------------------------------------------------------
+_Use_decl_annotations_ HRESULT DirectX::PrepareUploadEx(ID3D12Device* pDevice,
+    const Image*                                                      srcImages,
+    size_t                                                            nimages,
+    const TexMetadata&                                                metadata,
+    std::vector<D3D12_SUBRESOURCE_DATA>&                              subresources,
+    Blob&                                                             planarData)
+{
+    planarData.Release();
+
+    size_t bytesPerPixel = 0;
+    switch (static_cast<int>(metadata.format))
+    {
+    case DXGI_FORMAT_R24G8_TYPELESS:
+    case DXGI_FORMAT_D24_UNORM_S8_UINT:
+    case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+    case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+        bytesPerPixel = 4;
+        break;
+
+    case DXGI_FORMAT_R32G8X24_TYPELESS:
+    case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+    case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+    case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+        bytesPerPixel = 8;
+        break;
+
+    default:
+        // All other formats need no rearranging
+        return PrepareUpload(pDevice, srcImages, nimages, metadata, subresources);
+    }
+
+    if (!pDevice || !srcImages || !nimages || !metadata.mipLevels || !metadata.arraySize)
+        return E_INVALIDARG;
+
+    if (metadata.IsVolumemap())
+        return HRESULT_E_NOT_SUPPORTED;
+
+    const UINT numberOfPlanes = D3D12GetFormatPlaneCount(pDevice, metadata.format);
+    if (numberOfPlanes != 2)
+        return E_UNEXPECTED;
+
+    const uint64_t numberOfResources = uint64_t(metadata.arraySize) * uint64_t(metadata.mipLevels) * numberOfPlanes;
+    if (numberOfResources > D3D12_REQ_SUBRESOURCES)
+        return E_INVALIDARG;
+
+    // Validate the images and count their pixels
+    uint64_t totalPixels = 0;
+    for (size_t item = 0; item < metadata.arraySize; ++item)
+    {
+        for (size_t level = 0; level < metadata.mipLevels; ++level)
+        {
+            const size_t index = metadata.ComputeIndex(level, item, 0);
+            if (index >= nimages)
+                return E_FAIL;
+
+            const Image& img = srcImages[index];
+
+            if (img.format != metadata.format)
+                return E_FAIL;
+
+            if (!img.pixels)
+                return E_POINTER;
+
+            if (img.rowPitch < img.width * bytesPerPixel)
+                return E_FAIL;
+
+            totalPixels += uint64_t(img.width) * uint64_t(img.height);
+        }
+    }
+
+    // Plane 0 (depth) is 4 bytes per pixel, plane 1 (stencil) is 1 byte per pixel
+    const uint64_t totalBytes = totalPixels * 5;
+    if (totalBytes > SIZE_MAX)
+        return HRESULT_E_ARITHMETIC_OVERFLOW;
+
+    HRESULT hr = planarData.Initialize(static_cast<size_t>(totalBytes));
+    if (FAILED(hr))
+        return hr;
+
+    uint8_t* pDepth = planarData.GetBufferPointer();
+    uint8_t* pStencil = pDepth + totalPixels * 4;
+
+    subresources.clear();
+    subresources.resize(static_cast<size_t>(numberOfResources));
+
+    // Rearrange each image into the two planes
+    for (size_t item = 0; item < metadata.arraySize; ++item)
+    {
+        for (size_t level = 0; level < metadata.mipLevels; ++level)
+        {
+            const Image& img = srcImages[metadata.ComputeIndex(level, item, 0)];
+
+            const size_t depthRowPitch = img.width * 4;
+            const size_t stencilRowPitch = img.width;
+
+            const uint8_t* pSource = img.pixels;
+            uint8_t* pDepthRow = pDepth;
+            uint8_t* pStencilRow = pStencil;
+            for (size_t y = 0; y < img.height; ++y)
+            {
+                if (bytesPerPixel == 4)
+                {
+                    CopyScanlineD24S8(pDepthRow, pStencilRow, pSource, img.width);
+                }
+                else
+                {
+                    CopyScanlineD32S8X24(pDepthRow, pStencilRow, pSource, img.width);
+                }
+
+                pSource += img.rowPitch;
+                pDepthRow += depthRowPitch;
+                pStencilRow += stencilRowPitch;
+            }
+
+            const UINT depthIndex = D3D12CalcSubresource(static_cast<UINT>(level), static_cast<UINT>(item), 0,
+                static_cast<UINT>(metadata.mipLevels), static_cast<UINT>(metadata.arraySize));
+            const UINT stencilIndex = D3D12CalcSubresource(static_cast<UINT>(level), static_cast<UINT>(item), 1,
+                static_cast<UINT>(metadata.mipLevels), static_cast<UINT>(metadata.arraySize));
+
+            subresources[depthIndex]
+                = { pDepth, static_cast<LONG_PTR>(depthRowPitch), static_cast<LONG_PTR>(depthRowPitch * img.height) };
+            subresources[stencilIndex]
+                = { pStencil, static_cast<LONG_PTR>(stencilRowPitch), static_cast<LONG_PTR>(stencilRowPitch * img.height) };
+
+            // The next image starts where this one ended
+            pDepth = pDepthRow;
+            pStencil = pStencilRow;
         }
     }
 
