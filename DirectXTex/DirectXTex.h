@@ -1306,6 +1306,13 @@ namespace DirectX
         _In_ const TexMetadata&                                      metadata,
         std::vector<D3D12_SUBRESOURCE_DATA>&                         subresources);
 
+    DIRECTX_TEX_API HRESULT __cdecl PrepareUploadEx(_In_ ID3D12Device* pDevice,
+        _In_reads_(nimages) const Image*                               srcImages,
+        _In_ size_t                                                    nimages,
+        _In_ const TexMetadata&                                        metadata,
+        std::vector<D3D12_SUBRESOURCE_DATA>&                           subresources,
+        _Out_ Blob&                                                    planarData);
+
     DIRECTX_TEX_API HRESULT __cdecl CaptureTexture(_In_ ID3D12CommandQueue* pCommandQueue,
         _In_ ID3D12Resource*                                                pSource,
         _In_ bool                                                           isCubeMap,
