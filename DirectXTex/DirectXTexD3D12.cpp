@@ -95,16 +95,16 @@ namespace
     // interleaved per pixel. These copy one scanline into plane 0 (4 bytes per pixel)
     // and plane 1 (1 byte per pixel).
     inline void CopyScanlineD24S8(_Out_writes_bytes_(width * 4) uint8_t* pDepth,
-        _Out_writes_bytes_(width) uint8_t*                              pStencil,
-        _In_reads_bytes_(width * 4) const uint8_t*                      pSource,
-        size_t                                                          width) noexcept
+        _Out_writes_bytes_(width) uint8_t*                               pStencil,
+        _In_reads_bytes_(width * 4) const uint8_t*                       pSource,
+        size_t                                                           width) noexcept
     {
         for (size_t x = 0; x < width; ++x)
         {
-            pDepth[0] = pSource[0]; // D
-            pDepth[1] = pSource[1]; // D
-            pDepth[2] = pSource[2]; // D
-            pDepth[3] = 0;          // X8 must be zero
+            pDepth[0]   = pSource[0]; // D
+            pDepth[1]   = pSource[1]; // D
+            pDepth[2]   = pSource[2]; // D
+            pDepth[3]   = 0;          // X8 must be zero
             pStencil[0] = pSource[3]; // S
 
             pSource += 4;
@@ -113,17 +113,17 @@ namespace
         }
     }
 
-    inline void CopyScanlineD32S8X24(   _Out_writes_bytes_(width * 4) uint8_t* pDepth,
-        _Out_writes_bytes_(width) uint8_t*                                 pStencil,
-        _In_reads_bytes_(width * 8) const uint8_t*                         pSource,
-        size_t                                                             width) noexcept
+    inline void CopyScanlineD32S8X24(_Out_writes_bytes_(width * 4) uint8_t* pDepth,
+        _Out_writes_bytes_(width) uint8_t*                                  pStencil,
+        _In_reads_bytes_(width * 8) const uint8_t*                          pSource,
+        size_t                                                              width) noexcept
     {
         for (size_t x = 0; x < width; ++x)
         {
-            pDepth[0] = pSource[0]; // D
-            pDepth[1] = pSource[1]; // D
-            pDepth[2] = pSource[2]; // D
-            pDepth[3] = pSource[3]; // D
+            pDepth[0]   = pSource[0]; // D
+            pDepth[1]   = pSource[1]; // D
+            pDepth[2]   = pSource[2]; // D
+            pDepth[3]   = pSource[3]; // D
             pStencil[0] = pSource[4]; // S (bytes 5-7 unused)
 
             pSource += 8;
@@ -734,16 +734,12 @@ _Use_decl_annotations_ HRESULT DirectX::PrepareUploadEx(ID3D12Device* pDevice,
     case DXGI_FORMAT_R24G8_TYPELESS:
     case DXGI_FORMAT_D24_UNORM_S8_UINT:
     case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
-    case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
-        bytesPerPixel = 4;
-        break;
+    case DXGI_FORMAT_X24_TYPELESS_G8_UINT:     bytesPerPixel = 4; break;
 
     case DXGI_FORMAT_R32G8X24_TYPELESS:
     case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
     case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
-    case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
-        bytesPerPixel = 8;
-        break;
+    case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:  bytesPerPixel = 8; break;
 
     default:
         // All other formats need no rearranging
@@ -798,7 +794,7 @@ _Use_decl_annotations_ HRESULT DirectX::PrepareUploadEx(ID3D12Device* pDevice,
     if (FAILED(hr))
         return hr;
 
-    uint8_t* pDepth = planarData.GetBufferPointer();
+    uint8_t* pDepth   = planarData.GetBufferPointer();
     uint8_t* pStencil = pDepth + totalPixels * 4;
 
     subresources.clear();
@@ -811,12 +807,12 @@ _Use_decl_annotations_ HRESULT DirectX::PrepareUploadEx(ID3D12Device* pDevice,
         {
             const Image& img = srcImages[metadata.ComputeIndex(level, item, 0)];
 
-            const size_t depthRowPitch = img.width * 4;
+            const size_t depthRowPitch   = img.width * 4;
             const size_t stencilRowPitch = img.width;
 
-            const uint8_t* pSource = img.pixels;
-            uint8_t* pDepthRow = pDepth;
-            uint8_t* pStencilRow = pStencil;
+            const uint8_t* pSource     = img.pixels;
+            uint8_t*       pDepthRow   = pDepth;
+            uint8_t*       pStencilRow = pStencil;
             for (size_t y = 0; y < img.height; ++y)
             {
                 if (bytesPerPixel == 4)
@@ -833,18 +829,23 @@ _Use_decl_annotations_ HRESULT DirectX::PrepareUploadEx(ID3D12Device* pDevice,
                 pStencilRow += stencilRowPitch;
             }
 
-            const UINT depthIndex = D3D12CalcSubresource(static_cast<UINT>(level), static_cast<UINT>(item), 0,
-                static_cast<UINT>(metadata.mipLevels), static_cast<UINT>(metadata.arraySize));
-            const UINT stencilIndex = D3D12CalcSubresource(static_cast<UINT>(level), static_cast<UINT>(item), 1,
-                static_cast<UINT>(metadata.mipLevels), static_cast<UINT>(metadata.arraySize));
+            const UINT depthIndex   = D3D12CalcSubresource(static_cast<UINT>(level),
+                static_cast<UINT>(item),
+                0,
+                static_cast<UINT>(metadata.mipLevels),
+                static_cast<UINT>(metadata.arraySize));
+            const UINT stencilIndex = D3D12CalcSubresource(static_cast<UINT>(level),
+                static_cast<UINT>(item),
+                1,
+                static_cast<UINT>(metadata.mipLevels),
+                static_cast<UINT>(metadata.arraySize));
 
-            subresources[depthIndex]
-                = { pDepth, static_cast<LONG_PTR>(depthRowPitch), static_cast<LONG_PTR>(depthRowPitch * img.height) };
+            subresources[depthIndex] = { pDepth, static_cast<LONG_PTR>(depthRowPitch), static_cast<LONG_PTR>(depthRowPitch * img.height) };
             subresources[stencilIndex]
                 = { pStencil, static_cast<LONG_PTR>(stencilRowPitch), static_cast<LONG_PTR>(stencilRowPitch * img.height) };
 
             // The next image starts where this one ended
-            pDepth = pDepthRow;
+            pDepth   = pDepthRow;
             pStencil = pStencilRow;
         }
     }
