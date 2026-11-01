@@ -13,10 +13,13 @@
 
 using namespace DirectX;
 using namespace DirectX::Internal;
+#ifdef _WIN32
 using Microsoft::WRL::ComPtr;
+#endif
 
 namespace
 {
+#ifdef _WIN32
     //-------------------------------------------------------------------------------------
     // Do flip/rotate operation using WIC
     //-------------------------------------------------------------------------------------
@@ -53,7 +56,7 @@ namespace
         if (FAILED(hr))
             return hr;
 
-        hr = FR->Initialize(source.Get(), static_cast<WICBitmapTransformOptions>(flags));
+        hr = FR->Initialize(source.Get(), static_cast<WICBitmapTransformOptions>(flags & ~TEX_FR_FORCE_NON_WIC));
         if (FAILED(hr))
             return hr;
 
@@ -166,6 +169,110 @@ namespace
 
         return S_OK;
     }
+
+    //-------------------------------------------------------------------------------------
+    // Determine when to use WIC vs. non-WIC paths
+    //-------------------------------------------------------------------------------------
+    bool UseWICFlipRotate(TEX_FR_FLAGS flags) noexcept
+    {
+        // Explicit flag indicates use of non-WIC code paths
+        return (flags & TEX_FR_FORCE_NON_WIC) == 0;
+    }
+#endif // WIN32
+
+    //-------------------------------------------------------------------------------------
+    // Flip/rotate by moving whole pixels, which needs a fixed number of bytes per pixel
+    //-------------------------------------------------------------------------------------
+    bool IsSupportedForFlipRotate(DXGI_FORMAT format) noexcept
+    {
+        if (IsCompressed(format) || IsPacked(format) || IsPlanar(format) || IsPalettized(format))
+            return false;
+
+        const size_t bpp = BitsPerPixel(format);
+        return (bpp >= 8) && ((bpp % 8) == 0);
+    }
+
+    HRESULT PerformFlipRotate(const Image& srcImage, TEX_FR_FLAGS flags, const Image& destImage) noexcept
+    {
+        if (!srcImage.pixels || !destImage.pixels)
+            return E_POINTER;
+
+        assert(srcImage.format == destImage.format);
+
+        const size_t bytesPerPixel = BitsPerPixel(srcImage.format) / 8;
+        if (!bytesPerPixel)
+            return HRESULT_E_NOT_SUPPORTED;
+
+        // Each destination pixel (x, y) is read from the source pixel (sx, sy), or (sy, sx) when the rotation
+        // swaps the axes. The flip flags are applied to the source before the rotation, as WIC does.
+        bool swapXY = false;
+        bool flipX  = false;
+        bool flipY  = false;
+
+        switch (static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270)))
+        {
+        case TEX_FR_ROTATE90:  swapXY = flipX = true; break;
+
+        case TEX_FR_ROTATE180: flipX = flipY = true; break;
+
+        case TEX_FR_ROTATE270: swapXY = flipY = true; break;
+
+        default:               break;
+        }
+
+        if (flags & TEX_FR_FLIP_HORIZONTAL)
+        {
+            if (swapXY)
+                flipY = !flipY;
+            else
+                flipX = !flipX;
+        }
+
+        if (flags & TEX_FR_FLIP_VERTICAL)
+        {
+            if (swapXY)
+                flipX = !flipX;
+            else
+                flipY = !flipY;
+        }
+
+        const size_t width  = destImage.width;
+        const size_t height = destImage.height;
+
+        if (swapXY)
+        {
+            if (srcImage.width != height || srcImage.height != width)
+                return E_FAIL;
+        }
+        else if (srcImage.width != width || srcImage.height != height)
+        {
+            return E_FAIL;
+        }
+
+        const size_t rowBytes = width * bytesPerPixel;
+
+        for (size_t y = 0; y < height; ++y)
+        {
+            const size_t sy    = flipY ? (height - 1 - y) : y;
+            uint8_t*     pDest = destImage.pixels + y * destImage.rowPitch;
+
+            if (!swapXY && !flipX)
+            {
+                memcpy(pDest, srcImage.pixels + sy * srcImage.rowPitch, rowBytes);
+                continue;
+            }
+
+            for (size_t x = 0; x < width; ++x)
+            {
+                const size_t   sx   = flipX ? (width - 1 - x) : x;
+                const uint8_t* pSrc = swapXY ? srcImage.pixels + sx * srcImage.rowPitch + sy * bytesPerPixel :
+                                               srcImage.pixels + sy * srcImage.rowPitch + sx * bytesPerPixel;
+                memcpy(pDest + x * bytesPerPixel, pSrc, bytesPerPixel);
+            }
+        }
+
+        return S_OK;
+    }
 } // namespace
 
 //=====================================================================================
@@ -180,7 +287,7 @@ _Use_decl_annotations_ HRESULT DirectX::FlipRotate(const Image& srcImage, TEX_FR
     if (!srcImage.pixels)
         return E_POINTER;
 
-    if (!flags)
+    if (!(flags & ~TEX_FR_FORCE_NON_WIC))
         return E_INVALIDARG;
 
     if ((srcImage.width > UINT32_MAX) || (srcImage.height > UINT32_MAX))
@@ -192,6 +299,16 @@ _Use_decl_annotations_ HRESULT DirectX::FlipRotate(const Image& srcImage, TEX_FR
         return HRESULT_E_NOT_SUPPORTED;
     }
 
+#ifdef _WIN32
+    const bool usewic = UseWICFlipRotate(flags);
+#else
+    constexpr bool usewic = false;
+#endif
+
+    if (!usewic && !IsSupportedForFlipRotate(srcImage.format))
+        return HRESULT_E_NOT_SUPPORTED;
+
+#ifdef _WIN32
     static_assert(static_cast<int>(TEX_FR_ROTATE0) == static_cast<int>(WICBitmapTransformRotate0), "TEX_FR_ROTATE0 no longer matches WIC");
     static_assert(static_cast<int>(TEX_FR_ROTATE90) == static_cast<int>(WICBitmapTransformRotate90),
         "TEX_FR_ROTATE90 no longer matches WIC");
@@ -203,6 +320,7 @@ _Use_decl_annotations_ HRESULT DirectX::FlipRotate(const Image& srcImage, TEX_FR
         "TEX_FR_FLIP_HORIZONTAL no longer matches WIC");
     static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical),
         "TEX_FR_FLIP_VERTICAL no longer matches WIC");
+#endif
 
     // Only supports 90, 180, 270, or no rotation flags... not a combination of rotation flags
     const int rotateMode = static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270));
@@ -237,8 +355,13 @@ _Use_decl_annotations_ HRESULT DirectX::FlipRotate(const Image& srcImage, TEX_FR
         return E_POINTER;
     }
 
+#ifdef _WIN32
     WICPixelFormatGUID pfGUID;
-    if (DXGIToWIC(srcImage.format, pfGUID))
+    if (!usewic)
+    {
+        hr = PerformFlipRotate(srcImage, flags, *rimage);
+    }
+    else if (DXGIToWIC(srcImage.format, pfGUID))
     {
         // Case 1: Source format is supported by Windows Imaging Component
         hr = PerformFlipRotateUsingWIC(srcImage, flags, pfGUID, *rimage);
@@ -257,6 +380,9 @@ _Use_decl_annotations_ HRESULT DirectX::FlipRotate(const Image& srcImage, TEX_FR
             hr = PerformFlipRotateViaF32(srcImage, flags, *rimage);
         }
     }
+#else
+    hr = PerformFlipRotate(srcImage, flags, *rimage);
+#endif
 
     if (FAILED(hr))
     {
@@ -282,6 +408,16 @@ DirectX::FlipRotate(const Image* srcImages, size_t nimages, const TexMetadata& m
         return HRESULT_E_NOT_SUPPORTED;
     }
 
+#ifdef _WIN32
+    const bool usewic = UseWICFlipRotate(flags);
+#else
+    constexpr bool usewic = false;
+#endif
+
+    if (!usewic && !IsSupportedForFlipRotate(metadata.format))
+        return HRESULT_E_NOT_SUPPORTED;
+
+#ifdef _WIN32
     static_assert(static_cast<int>(TEX_FR_ROTATE0) == static_cast<int>(WICBitmapTransformRotate0), "TEX_FR_ROTATE0 no longer matches WIC");
     static_assert(static_cast<int>(TEX_FR_ROTATE90) == static_cast<int>(WICBitmapTransformRotate90),
         "TEX_FR_ROTATE90 no longer matches WIC");
@@ -293,6 +429,7 @@ DirectX::FlipRotate(const Image* srcImages, size_t nimages, const TexMetadata& m
         "TEX_FR_FLIP_HORIZONTAL no longer matches WIC");
     static_assert(static_cast<int>(TEX_FR_FLIP_VERTICAL) == static_cast<int>(WICBitmapTransformFlipVertical),
         "TEX_FR_FLIP_VERTICAL no longer matches WIC");
+#endif
 
     // Only supports 90, 180, 270, or no rotation flags... not a combination of rotation flags
     const int rotateMode = static_cast<int>(flags & (TEX_FR_ROTATE0 | TEX_FR_ROTATE90 | TEX_FR_ROTATE180 | TEX_FR_ROTATE270));
@@ -334,8 +471,10 @@ DirectX::FlipRotate(const Image* srcImages, size_t nimages, const TexMetadata& m
         return E_POINTER;
     }
 
+#ifdef _WIN32
     WICPixelFormatGUID pfGUID;
     const bool         wicpf = DXGIToWIC(metadata.format, pfGUID);
+#endif
 
     for (size_t index = 0; index < nimages; ++index)
     {
@@ -369,7 +508,12 @@ DirectX::FlipRotate(const Image* srcImages, size_t nimages, const TexMetadata& m
             }
         }
 
-        if (wicpf)
+#ifdef _WIN32
+        if (!usewic)
+        {
+            hr = PerformFlipRotate(src, flags, dst);
+        }
+        else if (wicpf)
         {
             // Case 1: Source format is supported by Windows Imaging Component
             hr = PerformFlipRotateUsingWIC(src, flags, pfGUID, dst);
@@ -388,6 +532,9 @@ DirectX::FlipRotate(const Image* srcImages, size_t nimages, const TexMetadata& m
                 hr = PerformFlipRotateViaF32(src, flags, dst);
             }
         }
+#else
+        hr = PerformFlipRotate(src, flags, dst);
+#endif
 
         if (FAILED(hr))
         {
