@@ -2016,8 +2016,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 #ifndef USE_XBOX_EXTS
         constexpr
 #endif
-            bool isXbox
-            = false;
+            bool isXbox = false;
         if (_wcsicmp(ext.c_str(), L".dds") == 0 || _wcsicmp(ext.c_str(), L".ddx") == 0)
         {
 #ifdef USE_XBOX_EXTS

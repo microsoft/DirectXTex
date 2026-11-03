@@ -210,7 +210,7 @@ namespace DirectX
         const XMVECTOR vdx2 = XMVectorMultiply(vdx, vdx);                                                                      \
         const XMVECTOR vdx3 = XMVectorMultiply(vdx2, vdx);                                                                     \
         res                 = XMVectorAdd(XMVectorAdd(XMVectorAdd(a0, XMVectorMultiply(a1, vdx)), XMVectorMultiply(a2, vdx2)), \
-            XMVectorMultiply(a3, vdx3));                                                                       \
+            XMVectorMultiply(a3, vdx3));                                                                                       \
     }
 
         //-------------------------------------------------------------------------------------
