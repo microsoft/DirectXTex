@@ -13,13 +13,12 @@
 
 using namespace DirectX;
 using namespace DirectX::Internal;
-#ifdef _WIN32
-using Microsoft::WRL::ComPtr;
-#endif
 
 namespace
 {
 #ifdef _WIN32
+    using Microsoft::WRL::ComPtr;
+
     //-------------------------------------------------------------------------------------
     // Do flip/rotate operation using WIC
     //-------------------------------------------------------------------------------------
