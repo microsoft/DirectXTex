@@ -111,6 +111,7 @@ set(LIBRARY_SOURCES
     DirectXTex/DirectXTexCompress.cpp
     DirectXTex/DirectXTexConvert.cpp
     DirectXTex/DirectXTexDDS.cpp
+    DirectXTex/DirectXTexFlipRotate.cpp
     DirectXTex/DirectXTexHDR.cpp
     DirectXTex/DirectXTexImage.cpp
     DirectXTex/DirectXTexMipmaps.cpp
@@ -123,7 +124,6 @@ set(LIBRARY_SOURCES
 
 if(WIN32)
    list(APPEND LIBRARY_SOURCES
-       DirectXTex/DirectXTexFlipRotate.cpp
        DirectXTex/DirectXTexWIC.cpp)
 endif()
 
