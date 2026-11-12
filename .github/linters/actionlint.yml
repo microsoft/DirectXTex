@@ -3,3 +3,5 @@ self-hosted-runner:
   labels:
     - windows-11-arm
     - windows-2025-vs2026
+    - ubuntu-26.04
+    - ubuntu-26.04-arm
