@@ -41,14 +41,14 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     strategy:
       fail-fast: false
 
       matrix:
         build_type: [x64-Debug-Linux, x64-Release-Linux]
-        gcc: [12, 13, 14]
+        gcc: [13, 14, 15]
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -113,14 +113,14 @@ jobs:
         run: cmake --build out/build/${{ matrix.build_type }}
 
   buildclang:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     strategy:
       fail-fast: false
 
       matrix:
         build_type: [x64-Debug-Linux, x64-Release-Linux]
-        clang: [16, 17, 18]
+        clang: [20, 21, 22]
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -179,6 +179,78 @@ jobs:
         env:
           CC: clang-${{ matrix.clang }}
           CXX: clang++-${{ matrix.clang }}
+
+      - name: 'Build (-shared)'
+        working-directory: ${{ github.workspace }}
+        run: cmake --build out/build/${{ matrix.build_type }}
+
+  buildarm64:
+    runs-on: ubuntu-26.04-arm
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        build_type: [arm64-Debug-Linux, arm64-Release-Linux]
+        gcc: [13, 14, 15]
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: seanmiddleditch/gha-setup-ninja@3b1f8f94a2f8254bd26914c4ab9474d4f0015f67 # v6
+
+      - name: Get vcpkg commit hash
+        shell: pwsh
+        run: |
+          if ($Env:vcpkgRelease) {
+              echo "Using vcpkg commit from repo variable..."
+              $VCPKG_COMMIT_ID = $Env:vcpkgRelease
+          }
+          else {
+              echo "Fetching latest vcpkg commit hash..."
+              $commit = (git ls-remote https://github.com/microsoft/vcpkg.git HEAD | Select-String -Pattern '([a-f0-9]{40})').Matches.Value
+              $VCPKG_COMMIT_ID = $commit
+          }
+          Write-Host "VCPKG_COMMIT_ID=$VCPKG_COMMIT_ID"
+          echo "VCPKG_COMMIT_ID=$VCPKG_COMMIT_ID" >> $env:GITHUB_ENV
+        env:
+          vcpkgRelease: '${{ vars.VCPKG_COMMIT_ID }}'
+
+      - uses: lukka/run-vcpkg@d4e6061274d7ffb3e33694898aed9fb6ece66310 # v11
+        with:
+          runVcpkgInstall: true
+          vcpkgJsonGlob: '**/build/vcpkg.json'
+          vcpkgGitCommitId: '${{ env.VCPKG_COMMIT_ID }}'
+
+      - name: 'Configure CMake'
+        working-directory: ${{ github.workspace }}
+        run: >
+          cmake --preset=${{ matrix.build_type }} -DENABLE_OPENEXR_SUPPORT=ON -DENABLE_LIBJPEG_SUPPORT=ON -DENABLE_LIBPNG_SUPPORT=ON
+          -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/build"
+          -DVCPKG_TARGET_TRIPLET="arm64-linux"
+
+        env:
+          CC: gcc-${{ matrix.gcc }}
+          CXX: g++-${{ matrix.gcc }}
+
+      - name: 'Build'
+        working-directory: ${{ github.workspace }}
+        run: cmake --build out/build/${{ matrix.build_type }}
+
+      - name: 'Clean up'
+        working-directory: ${{ github.workspace }}
+        run: rm -rf out
+
+      - name: 'Configure CMake (-shared)'
+        working-directory: ${{ github.workspace }}
+        run: >
+          cmake --preset=${{ matrix.build_type }} -DENABLE_OPENEXR_SUPPORT=ON -DENABLE_LIBJPEG_SUPPORT=ON -DENABLE_LIBPNG_SUPPORT=ON
+          -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_DIR="${{ github.workspace }}/build"
+          -DVCPKG_TARGET_TRIPLET="arm64-linux" -DBUILD_SHARED_LIBS=ON
+
+        env:
+          CC: gcc-${{ matrix.gcc }}
+          CXX: g++-${{ matrix.gcc }}
 
       - name: 'Build (-shared)'
         working-directory: ${{ github.workspace }}

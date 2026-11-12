@@ -54,40 +54,40 @@ jobs:
         toolver: ['14.29', '14']
         build_type: [x64-Debug, x64-Release]
         arch: [amd64]
-        jpeg: [ON]
+        jpeg: [true]
         include:
           - toolver: '14.29'
             build_type: x86-Debug
             arch: amd64_x86
-            jpeg: ON
+            jpeg: true
           - toolver: '14.29'
             build_type: x86-Release
             arch: amd64_x86
-            jpeg: ON
+            jpeg: true
           - toolver: '14'
             build_type: x86-Debug
             arch: amd64_x86
-            jpeg: ON
+            jpeg: true
           - toolver: '14'
             build_type: x86-Release
             arch: amd64_x86
-            jpeg: ON
+            jpeg: true
           - toolver: '14'
             build_type: arm64-Debug
             arch: amd64_arm64
-            jpeg: ON
+            jpeg: true
           - toolver: '14'
             build_type: arm64-Release
             arch: amd64_arm64
-            jpeg: ON
+            jpeg: true
           - toolver: '14'
             build_type: arm64ec-Debug
             arch: amd64_arm64
-            jpeg: OFF
+            jpeg: false
           - toolver: '14'
             build_type: arm64ec-Release
             arch: amd64_arm64
-            jpeg: OFF
+            jpeg: false
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
