@@ -2079,7 +2079,8 @@ _Use_decl_annotations_ bool DirectX::Internal::StoreScanline(void* pDestination,
                 if (sPtr >= ePtr)
                     break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>(*sPtr++);
-#if (DIRECTX_MATH_VERSION < 322) && (defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__)
+#if (DIRECTX_MATH_VERSION < 322) \
+    && (defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__)
                 v = XMVectorMultiplyAdd(v, s_Scale, g_XMOneHalf);
 #else
                 v = XMVectorMultiply(v, s_Scale);
@@ -2094,7 +2095,8 @@ _Use_decl_annotations_ bool DirectX::Internal::StoreScanline(void* pDestination,
         if (size >= sizeof(XMU555))
         {
             static const XMVECTORF32 s_Scale = { { { 31.f, 31.f, 31.f, 1.f } } };
-#if (DIRECTX_MATH_VERSION < 322) && (defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__)
+#if (DIRECTX_MATH_VERSION < 322) \
+    && (defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__)
             static const XMVECTORF32 s_OneHalfXYZ = { { { 0.5f, 0.5f, 0.5f, 0.f } } };
 #endif
             XMU555* __restrict dPtr = static_cast<XMU555*>(pDestination);
@@ -2103,7 +2105,8 @@ _Use_decl_annotations_ bool DirectX::Internal::StoreScanline(void* pDestination,
                 if (sPtr >= ePtr)
                     break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>(*sPtr++);
-#if (DIRECTX_MATH_VERSION < 322) && (defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__)
+#if (DIRECTX_MATH_VERSION < 322) \
+    && (defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__)
                 v = XMVectorMultiplyAdd(v, s_Scale, s_OneHalfXYZ);
 #else
                 v = XMVectorMultiply(v, s_Scale);
@@ -2392,7 +2395,8 @@ _Use_decl_annotations_ bool DirectX::Internal::StoreScanline(void* pDestination,
                 if (sPtr >= ePtr)
                     break;
                 XMVECTOR v = XMVectorSwizzle<2, 1, 0, 3>(*sPtr++);
-#if (DIRECTX_MATH_VERSION < 322) && (defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__)
+#if (DIRECTX_MATH_VERSION < 322) \
+    && (defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__)
                 v = XMVectorMultiplyAdd(v, s_Scale, g_XMOneHalf);
 #else
                 v = XMVectorMultiply(v, s_Scale);
@@ -2413,7 +2417,8 @@ _Use_decl_annotations_ bool DirectX::Internal::StoreScanline(void* pDestination,
                 if (sPtr >= ePtr)
                     break;
                 XMVECTOR v = XMVectorSwizzle<3, 2, 1, 0>(*sPtr++);
-#if (DIRECTX_MATH_VERSION < 322) && (defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__)
+#if (DIRECTX_MATH_VERSION < 322) \
+    && (defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__)
                 v = XMVectorMultiplyAdd(v, s_Scale, g_XMOneHalf);
 #else
                 v = XMVectorMultiply(v, s_Scale);
@@ -2496,7 +2501,8 @@ _Use_decl_annotations_ bool DirectX::Internal::StoreScanline(void* pDestination,
             {
                 if (sPtr >= ePtr)
                     break;
-#if (DIRECTX_MATH_VERSION < 322) && (defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__)
+#if (DIRECTX_MATH_VERSION < 322) \
+    && (defined(_M_ARM) || defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || __arm__ || __aarch64__)
                 const XMVECTOR v = XMVectorMultiplyAdd(*sPtr++, s_Scale, g_XMOneHalf);
 #else
                 const XMVECTOR v = XMVectorMultiply(*sPtr++, s_Scale);
