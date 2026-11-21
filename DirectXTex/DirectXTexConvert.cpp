@@ -632,7 +632,7 @@ _Use_decl_annotations_ bool DirectX::Internal::ExpandScanline(void* pDestination
                 const uint16_t t = *(sPtr++);
 
                 uint32_t t1 = uint32_t(((t & 0xf800) >> 8) | ((t & 0xe000) >> 13));
-                uint32_t t2 = uint32_t(((t & 0x07e0) << 5) | ((t & 0x0600) >> 5));
+                uint32_t t2 = uint32_t(((t & 0x07e0) << 5) | ((t & 0x0600) >> 1));
                 uint32_t t3 = uint32_t(((t & 0x001f) << 19) | ((t & 0x001c) << 14));
 
                 *(dPtr++) = t1 | t2 | t3 | 0xff000000;
