@@ -2912,8 +2912,8 @@ DirectX::GenerateMipMaps(const Image& baseImage, TEX_FILTER_FLAGS filter, size_t
     if (usewic && !wicpf)
     {
         // Check to see if the source and/or result size is too big for WIC
-        const uint64_t expandedSize = uint64_t(std::max<size_t>(1, baseImage.width >> 1))
-                                      * uint64_t(std::max<size_t>(1, baseImage.height >> 1)) * sizeof(float) * 4;
+        const uint64_t expandedSize  = uint64_t(std::max<size_t>(1, baseImage.width >> 1))
+                                       * uint64_t(std::max<size_t>(1, baseImage.height >> 1)) * sizeof(float) * 4;
         const uint64_t expandedSize2 = uint64_t(baseImage.width) * uint64_t(baseImage.height) * sizeof(float) * 4;
         if (expandedSize > UINT32_MAX || expandedSize2 > UINT32_MAX)
         {

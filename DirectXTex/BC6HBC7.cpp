@@ -682,7 +682,7 @@ namespace
             {
                 const size_t uFirstIndexBits = 8 - uBase;
                 const size_t uNextIndexBits  = uNumBits - uFirstIndexBits;
-                ret                          = static_cast<uint8_t>((unsigned(m_uBits[uIndex]) >> uBase)
+                ret = static_cast<uint8_t>((unsigned(m_uBits[uIndex]) >> uBase)
                                            | ((unsigned(m_uBits[uIndex + 1]) & ((1u << uNextIndexBits) - 1)) << uFirstIndexBits));
             }
             else
@@ -816,41 +816,41 @@ namespace
         static bool EndPointsFit(_In_ const EncodeParams* pEP, _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aEndPts[]) noexcept;
 
         void        GeneratePaletteQuantized(_In_ const EncodeParams* pEP,
-                   _In_ const INTEndPntPair&                          endPts,
-                   _Out_writes_(BC6H_MAX_INDICES) INTColor            aPalette[]) const noexcept;
+            _In_ const INTEndPntPair&                          endPts,
+            _Out_writes_(BC6H_MAX_INDICES) INTColor            aPalette[]) const noexcept;
         float       MapColorsQuantized(_In_ const EncodeParams* pEP,
-                  _In_reads_(np) const INTColor                 aColors[],
-                  _In_ size_t                                   np,
-                  _In_ const INTEndPntPair&                     endPts) const noexcept;
+            _In_reads_(np) const INTColor                 aColors[],
+            _In_ size_t                                   np,
+            _In_ const INTEndPntPair&                     endPts) const noexcept;
         float       PerturbOne(_In_ const EncodeParams* pEP,
-                  _In_reads_(np) const INTColor         aColors[],
-                  _In_ size_t                           np,
-                  _In_ uint8_t                          ch,
-                  _In_ const INTEndPntPair&             oldEndPts,
-                  _Out_ INTEndPntPair&                  newEndPts,
-                  _In_ float                            fOldErr,
-                  _In_ int                              do_b) const noexcept;
+            _In_reads_(np) const INTColor         aColors[],
+            _In_ size_t                           np,
+            _In_ uint8_t                          ch,
+            _In_ const INTEndPntPair&             oldEndPts,
+            _Out_ INTEndPntPair&                  newEndPts,
+            _In_ float                            fOldErr,
+            _In_ int                              do_b) const noexcept;
         void        OptimizeOne(_In_ const EncodeParams* pEP,
-                   _In_reads_(np) const INTColor         aColors[],
-                   _In_ size_t                           np,
-                   _In_ float                            aOrgErr,
-                   _In_ const INTEndPntPair&             aOrgEndPts,
-                   _Out_ INTEndPntPair&                  aOptEndPts) const noexcept;
+            _In_reads_(np) const INTColor         aColors[],
+            _In_ size_t                           np,
+            _In_ float                            aOrgErr,
+            _In_ const INTEndPntPair&             aOrgEndPts,
+            _Out_ INTEndPntPair&                  aOptEndPts) const noexcept;
         void        OptimizeEndPoints(_In_ const EncodeParams*      pEP,
-                   _In_reads_(BC6H_MAX_REGIONS) const float         aOrgErr[],
-                   _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aOrgEndPts[],
-                   _Out_writes_all_(BC6H_MAX_REGIONS) INTEndPntPair aOptEndPts[]) const noexcept;
+            _In_reads_(BC6H_MAX_REGIONS) const float         aOrgErr[],
+            _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aOrgEndPts[],
+            _Out_writes_all_(BC6H_MAX_REGIONS) INTEndPntPair aOptEndPts[]) const noexcept;
         static void SwapIndices(_In_ const EncodeParams*        pEP,
             _Inout_updates_all_(BC6H_MAX_REGIONS) INTEndPntPair aEndPts[],
             _In_reads_(NUM_PIXELS_PER_BLOCK) size_t             aIndices[]) noexcept;
         void        AssignIndices(_In_ const EncodeParams*          pEP,
-                   _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aEndPts[],
-                   _Out_writes_(NUM_PIXELS_PER_BLOCK) size_t        aIndices[],
-                   _Out_writes_(BC6H_MAX_REGIONS) float             aTotErr[]) const noexcept;
+            _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aEndPts[],
+            _Out_writes_(NUM_PIXELS_PER_BLOCK) size_t        aIndices[],
+            _Out_writes_(BC6H_MAX_REGIONS) float             aTotErr[]) const noexcept;
         void        QuantizeEndPts(_In_ const EncodeParams* pEP, _Out_writes_(BC6H_MAX_REGIONS) INTEndPntPair* qQntEndPts) const noexcept;
         void        EmitBlock(_In_ const EncodeParams*              pEP,
-                   _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aEndPts[],
-                   _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t    aIndices[]) noexcept;
+            _In_reads_(BC6H_MAX_REGIONS) const INTEndPntPair aEndPts[],
+            _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t    aIndices[]) noexcept;
         void        Refine(_Inout_ EncodeParams* pEP) noexcept;
 
         static void GeneratePaletteUnquantized(_In_ const EncodeParams* pEP,
@@ -946,9 +946,9 @@ namespace
         }
 
         void  GeneratePaletteQuantized(_In_ const EncodeParams* pEP,
-             _In_ size_t                                        uIndexMode,
-             _In_ const LDREndPntPair&                          endpts,
-             _Out_writes_(BC7_MAX_INDICES) LDRColorA            aPalette[]) const noexcept;
+            _In_ size_t                                        uIndexMode,
+            _In_ const LDREndPntPair&                          endpts,
+            _Out_writes_(BC7_MAX_INDICES) LDRColorA            aPalette[]) const noexcept;
         float PerturbOne(_In_ const EncodeParams* pEP,
             _In_reads_(np) const LDRColorA        colors[],
             _In_ size_t                           np,
@@ -959,50 +959,50 @@ namespace
             _In_ float                            old_err,
             _In_ uint8_t                          do_b) const noexcept;
         void  Exhaustive(_In_ const EncodeParams* pEP,
-             _In_reads_(np) const LDRColorA       aColors[],
-             _In_ size_t                          np,
-             _In_ size_t                          uIndexMode,
-             _In_ size_t                          ch,
-             _Inout_ float&                       fOrgErr,
-             _Inout_ LDREndPntPair&               optEndPt) const noexcept;
+            _In_reads_(np) const LDRColorA       aColors[],
+            _In_ size_t                          np,
+            _In_ size_t                          uIndexMode,
+            _In_ size_t                          ch,
+            _Inout_ float&                       fOrgErr,
+            _Inout_ LDREndPntPair&               optEndPt) const noexcept;
         void  OptimizeOne(_In_ const EncodeParams* pEP,
-             _In_reads_(np) const LDRColorA        colors[],
-             _In_ size_t                           np,
-             _In_ size_t                           uIndexMode,
-             _In_ float                            orig_err,
-             _In_ const LDREndPntPair&             orig_endpts,
-             _Out_ LDREndPntPair&                  opt_endpts) const noexcept;
+            _In_reads_(np) const LDRColorA        colors[],
+            _In_ size_t                           np,
+            _In_ size_t                           uIndexMode,
+            _In_ float                            orig_err,
+            _In_ const LDREndPntPair&             orig_endpts,
+            _Out_ LDREndPntPair&                  opt_endpts) const noexcept;
         void  OptimizeEndPoints(_In_ const EncodeParams*     pEP,
-             _In_ size_t                                     uShape,
-             _In_ size_t                                     uIndexMode,
-             _In_reads_(BC7_MAX_REGIONS) const float         orig_err[],
-             _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair orig_endpts[],
-             _Out_writes_(BC7_MAX_REGIONS) LDREndPntPair     opt_endpts[]) const noexcept;
+            _In_ size_t                                     uShape,
+            _In_ size_t                                     uIndexMode,
+            _In_reads_(BC7_MAX_REGIONS) const float         orig_err[],
+            _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair orig_endpts[],
+            _Out_writes_(BC7_MAX_REGIONS) LDREndPntPair     opt_endpts[]) const noexcept;
         void  AssignIndices(_In_ const EncodeParams*   pEP,
-             _In_ size_t                               uShape,
-             _In_ size_t                               uIndexMode,
-             _In_reads_(BC7_MAX_REGIONS) LDREndPntPair endpts[],
-             _Out_writes_(NUM_PIXELS_PER_BLOCK) size_t aIndices[],
-             _Out_writes_(NUM_PIXELS_PER_BLOCK) size_t aIndices2[],
-             _Out_writes_(BC7_MAX_REGIONS) float       afTotErr[]) const noexcept;
+            _In_ size_t                               uShape,
+            _In_ size_t                               uIndexMode,
+            _In_reads_(BC7_MAX_REGIONS) LDREndPntPair endpts[],
+            _Out_writes_(NUM_PIXELS_PER_BLOCK) size_t aIndices[],
+            _Out_writes_(NUM_PIXELS_PER_BLOCK) size_t aIndices2[],
+            _Out_writes_(BC7_MAX_REGIONS) float       afTotErr[]) const noexcept;
         void  EmitBlock(_In_ const EncodeParams*             pEP,
-             _In_ size_t                                     uShape,
-             _In_ size_t                                     uRotation,
-             _In_ size_t                                     uIndexMode,
-             _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair aEndPts[],
-             _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t   aIndex[],
-             _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t   aIndex2[]) noexcept;
+            _In_ size_t                                     uShape,
+            _In_ size_t                                     uRotation,
+            _In_ size_t                                     uIndexMode,
+            _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair aEndPts[],
+            _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t   aIndex[],
+            _In_reads_(NUM_PIXELS_PER_BLOCK) const size_t   aIndex2[]) noexcept;
         void  FixEndpointPBits(_In_ const EncodeParams*       pEP,
-             _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair* pOrigEndpoints,
-             _Out_writes_(BC7_MAX_REGIONS) LDREndPntPair*     pFixedEndpoints) noexcept;
+            _In_reads_(BC7_MAX_REGIONS) const LDREndPntPair* pOrigEndpoints,
+            _Out_writes_(BC7_MAX_REGIONS) LDREndPntPair*     pFixedEndpoints) noexcept;
         float Refine(_In_ const EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uRotation, _In_ size_t uIndexMode) noexcept;
 
         float        MapColors(_In_ const EncodeParams* pEP,
-                   _In_reads_(np) const LDRColorA       aColors[],
-                   _In_ size_t                          np,
-                   _In_ size_t                          uIndexMode,
-                   _In_ const LDREndPntPair&            endPts,
-                   _In_ float                           fMinErr) const noexcept;
+            _In_reads_(np) const LDRColorA       aColors[],
+            _In_ size_t                          np,
+            _In_ size_t                          uIndexMode,
+            _In_ const LDREndPntPair&            endPts,
+            _In_ float                           fMinErr) const noexcept;
         static float RoughMSE(_Inout_ EncodeParams* pEP, _In_ size_t uShape, _In_ size_t uIndexMode) noexcept;
 
     private:

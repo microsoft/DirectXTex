@@ -17,6 +17,11 @@
 #pragma clang diagnostic ignored "-Wunused-macros"
 #endif
 
+// Workaround for issue with D3DX12 headers and some compiler toolsets
+#ifndef E_ILLEGAL_STATE_CHANGE
+#define E_ILLEGAL_STATE_CHANGE _HRESULT_TYPEDEF_(0x8000000D)
+#endif
+
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
 #ifdef _GAMING_XBOX_SCARLETT
